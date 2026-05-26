@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "design-google-maps-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор functional и non-functional requirements точнее всего описывает Google Maps на интервью senior-уровня?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Functional: tile display по lat/lon + zoom, POI-search, routing для driving/walking/transit/cycling, ETA с real-time traffic, forward/reverse geocoding, offline maps, place details, Street View, location sharing; non-functional: 2B+ users, tile load p99 < 100 ms, routing p99 < 500 ms, 99.99% availability, multi-region с data sovereignty (China/RU отдельные стеки), 50+ языков.",
+              "correct": true,
+              "sections": {
+                "explanation": "Senior сразу делит требования на static layer (tiles агрессивно кэшируются на CDN) и dynamic layer (traffic, search, routing — recompute постоянно). Functional покрывает все user journeys: посмотреть карту, найти место, доехать, узнать ETA, использовать offline. NFR диктуют архитектуру: 2B users требуют CDN с 95%+ hit ratio, tile p99 < 100 ms задаёт edge POP, routing < 500 ms на planet graph задаёт CH/CRP preprocessing, data sovereignty задаёт per-region stacks.",
+                "example": "Google Maps реально держит 100B tile requests в день, 95%+ из них уходят на edge CDN, и только miss долетает до Bigtable origin; routing использует CRP-derived алгоритм с re-customize за секунды при traffic update.",
+                "when_to_apply": "Фиксируй эти требования до архитектуры, чтобы потом обосновать quadtree/S2/H3, tile pyramid, CDN, routing preprocessing и multi-region split.",
+                "edge_cases": "3D rendering это Google Earth (отдельный продукт), real-time collaborative annotation не в scope, voice turn-by-turn поверх routing — не core; China полностью отдельный стек (Baidu/Gaode локально доступны).",
+                "related": "Q2 capacity; Q3 SLA; Q22 архитектура; Q24 multi-region."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно отображения карты и базового routing — offline maps, real-time traffic и data sovereignty это nice-to-have, можно не упоминать в core scope.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Offline maps критичны для emerging markets и travel-сценариев без роуминга, real-time traffic — главная фича Google Maps vs бумажный атлас, а data sovereignty это legal requirement (GDPR, китайский firewall), без которого продукт нельзя выпустить в EU и CN.",
+                "source_of_confusion": "Кандидат думает в категориях desktop static map (типа Google Maps 2005 года), а не современной mobile-first geo-platform.",
+                "if_it_were_true": "Google Maps был бы заменён OpenStreetMap viewer и не удержал бы 2B users без traffic и offline.",
+                "how_it_should_be": "Включить offline regions, live traffic, multi-region с data sovereignty, multi-modal routing и multi-language в core functional требования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное — поддержать SLA облачного провайдера GCP/AWS, конкретные NFR-цифры (2B users, tile p99, routing latency, MAPE ETA) проговаривать необязательно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без явных NFR (2B users, 100B tile req/day, tile p99 < 100 ms, routing p99 < 500 ms, eta_mape < 8%) невозможно обосновать ни CDN, ни CH/CRP preprocessing, ни ML ETA модель, ни регионализацию.",
+                "source_of_confusion": "Перенос enterprise-практики «SLA задаст облако» на consumer-scale geo platform.",
+                "if_it_were_true": "Любой single-region setup на VM с raster Mapnik считался бы валидным для 2B users.",
+                "how_it_should_be": "Назвать конкретные числа: users, tile/search/routing QPS, tile/routing latency, MAPE ETA — и считать capacity (Q2)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Real-time collaborative editing карты, video transcoding fly-over туров и voice chat между водителями — обязательная часть scope Google Maps-интервью.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Collaborative annotation вынесено в отдельные продукты (My Maps), 3D fly-over это Google Earth, voice chat вообще не в Maps. Core scope — tile delivery, search, routing, ETA, traffic, places.",
+                "source_of_confusion": "Смешение Google Maps с Google Earth, Waze chat, YouTube.",
+                "if_it_were_true": "Архитектура крутилась бы вокруг WebRTC и encoding farm вместо tile pyramid, CH/CRP и ETA модели.",
+                "how_it_should_be": "Явно исключить 3D fly-over, voice chat, real-time collaborative editing и сфокусироваться на static + dynamic geo features."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "2B users, 100B tile requests/day, zoom 0-21. Какая capacity estimate ближе всего к Google Maps-масштабу?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "~50 GB tiles total, ~10K tile req/sec global, road graph 100 MB — обычный профиль для regional map-сервиса одной страны без CDN.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это масштаб локального OSM-tileserver для одной области, а не Google Maps с 2B users. Реальные числа в миллион раз больше — планетарный tile pyramid это сотни TB на vector и эксабайты на satellite imagery.",
+                "source_of_confusion": "Подмена глобальной geo-platform на корпоративный/региональный map service.",
+                "if_it_were_true": "Google Maps обошёлся бы одним Mapnik-сервером и не нужны были бы Bigtable, CDN и CRP preprocessing.",
+                "how_it_should_be": "Считать: 100B tile/day × 20 KB ≈ 2 PB/day egress, vector tiles ~150 TB, raster ~500 TB, satellite imagery эксабайты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "~500 TB vector + ~150 TB raster + эксабайты satellite imagery; tile pyramid: zoom 21 даёт 4^21 ≈ 4.4T возможных tiles, реально ~500B над land+populated areas; tile QPS peak 5-10M/sec global, 95%+ через CDN → origin ~100K/sec; probe events 33K/sec/region × 50 regions ≈ 1.5M/sec; road graph 10-50 GB per routing instance.",
+              "correct": true,
+              "sections": {
+                "explanation": "Считаем поэтапно: на zoom Z — 4^Z tiles, на zoom 21 (max Google Maps) ~4.4T возможных, но генерируем только над land и populated → ~500B реальных. Tile 5-30 KB vector, 20-50 KB raster. 100B req/day × 20 KB = 2 PB/day egress, peak × 5 ≈ 5-10M tile/sec global. CDN hit 95%+ снимает 95% — origin держит ~100K/sec. Probe data — 1M телефонов × 1 update/30 sec = 33K events/sec на регион, ×50 регионов ≈ 1.5M/sec. Road graph compact: 50M edges × 100-200 B ≈ 10 GB, помещается в memory-mapped файл routing-сервера.",
+                "example": "Google Maps в проде держит 100B+ tile req/day, CDN hit ratio 95-98%, dispatched cars + satellites обновляют imagery петабайтами, routing crp re-customize выполняется за секунды на continental graph 100M edges.",
+                "when_to_apply": "Этим расчётом обосновываешь CDN edge layer (Q12), Bigtable tile storage (Q23), CH/CRP preprocessing (Q14, Q15) и ML traffic ingest (Q28).",
+                "edge_cases": "Пиковый QPS US+EU overlap может удвоить нагрузку; в час пик пятницы probe events × 2, что требует elastic Flink cluster.",
+                "related": "Q9 tile pyramid; Q12 CDN; Q28 traffic."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "~10 ZB tile storage, ~10 TB/sec непрерывного origin egress без CDN, road graph 10 PB в Postgres.",
+              "correct": false,
+              "sections": {
+                "what_actually": "10 ZB — уровень всех данных Интернета, а не одного Google Maps. Без CDN 10 TB/sec origin egress означало бы потребление больше, чем весь global Internet egress, что невозможно.",
+                "source_of_confusion": "Перепутаны единицы (ZB vs TB) и проигнорирована роль CDN, которая снимает 95%+ нагрузки.",
+                "if_it_were_true": "Google Maps потреблял бы больше bandwidth чем все CDN-провайдеры вместе взятые, road graph не помещался бы ни в один Postgres.",
+                "how_it_should_be": "Корректировать: ~500 TB vector + ~150 TB raster, ~2 PB/day egress, ~100K/sec origin после CDN, road graph 10-50 GB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Capacity estimate в Google Maps-интервью не требуется — достаточно сказать «много tiles и users» и сразу переходить к выбору индекса (S2/H3).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без чисел нельзя обосновать ни CDN edge layer, ни Bigtable вместо Postgres для tiles, ни CH/CRP preprocessing, ни partitioning road graph. Senior отличается от middle умением считать.",
+                "source_of_confusion": "Кандидат избегает арифметики, надеясь на качественные аргументы.",
+                "if_it_were_true": "Все архитектурные решения свелись бы к bullet-points без обоснования, и реалистичность оценки была бы нулевой.",
+                "how_it_should_be": "Считать: tile QPS (peak), egress GB/day, road graph GB, probe events/sec — и обосновывать ими каждое design-решение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор SLA/SLO ближе всего к production Google Maps и описывает корректные tile/search/routing цели?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "tile_load_p99 < 5 сек, cdn_hit_ratio > 50%, routing_p99 < 30 сек, eta_mape < 50% — нормальные значения для consumer geo-сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tile latency 5 сек убьёт UX — карта будет «рваться» при панорамировании. CDN hit 50% означало бы 50 PB/day origin egress, что нерентабельно. Routing 30 сек означало бы Naive Dijkstra без CH/CRP. ETA MAPE 50% — карта говорит «20 мин», реально 30 — пользователь не доверяет приложению.",
+                "source_of_confusion": "Подмена web-page latency budget (3-5 сек) на map UX, где tile UX ожидается под 100 ms.",
+                "if_it_were_true": "Карты пользовались бы хуже бумажного атласа; CDN cost разорил бы продукт.",
+                "how_it_should_be": "Корректные числа: tile p99 < 100 ms (cached), CDN hit > 95%, routing p99 < 500 ms, eta_mape < 8%."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все метрики на p50 без p99, без алертов на CDN hit, без quality-метрик типа eta_mape — мониторинг latency среднего достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "p50 скрывает хвостовые проблемы: 99% запросов могут быть быстрыми, но 1% × 100B/day = 1B медленных tile/day портят UX. CDN hit ratio это первичный сигнал стоимости и доступности — без алерта потеряешь миллионы. eta_mape — единственный quality-метрик для routing, без неё model regression невидим.",
+                "source_of_confusion": "Перенос практики из web-app monitoring (где p50 часто хватает) на geo-platform, где tail latency и quality критичны.",
+                "if_it_were_true": "Хвостовая деградация tile loads и model regression eta остались бы невидимы до user-complaints.",
+                "how_it_should_be": "Использовать p99 на latency, алерт на cdn_hit_ratio < 90%, отдельная quality-метрика eta_mape < 8%."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "tile_load_p99 < 100 ms (cached) с алертом > 500 ms 10 минут, cdn_hit_ratio > 95% алерт < 90% 1 час, search_p99 < 300 ms, routing_p99 < 500 ms (Europe-wide), eta_mape < 8% алерт > 15%, geocoding_p99 < 200 ms, availability 99.99%, tile_freshness_lag < 24 ч.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tile p99 100 ms — потолок ощущения «карта мгновенная». CDN hit > 95% — экономика edge layer (origin egress дорого). Routing 500 ms — компромисс между UX и сложностью continental graph. ETA MAPE 8% — реальная цифра Google Maps (улучшается до 5% с DeepMind WaveNet-derived моделями). Geocoding 200 ms — autocomplete пользовательских адресов реактивный. Availability 99.99% = 52 мин downtime/год. Freshness 24 ч — баланс между новыми road updates и cost of reprocessing.",
+                "example": "Google Maps в Production Monitoring Dashboard реально использует похожие пороги: tile p99 на edge < 80 ms, CDN hit 96-98% по регионам, routing crp < 300 ms на cold start, eta_mape по странам 7-12%.",
+                "when_to_apply": "Используй эти числа как ориентиры для capacity, оценки CDN cost и обоснования CH/CRP preprocessing, ML модели ETA, и regional fallback strategy.",
+                "edge_cases": "Failure modes: CDN miss → origin (медленно но работает); routing overload → A* без CH (fallback); traffic data lag → historical averages (less accurate но functional).",
+                "related": "Q12 CDN; Q17 ETA; Q29 monitoring."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно одного SLA «availability 99.99%» — все остальные метрики (latency, MAPE, CDN hit) выводимы из неё автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Availability сама по себе не описывает UX: сервис может быть «доступен» (HTTP 200), но отдавать tiles за 5 сек и routing за 30 сек — формально up, фактически непригоден. SLA должна включать latency targets, CDN hit ratio, quality (eta_mape), tile freshness.",
+                "source_of_confusion": "Сведение всех SLO к binary up/down метрике.",
+                "if_it_were_true": "Можно было бы поставить any-page-loads-eventually и закрыть SLA, при этом UX был бы ужасным.",
+                "how_it_should_be": "Декомпозировать: latency p99 per service, CDN hit ratio, quality (eta_mape, search_ctr), freshness — и алертовать каждую отдельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое quadtree и почему он базис для всех geo-систем (tile pyramid, Google Maps, Mapbox)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это in-memory hash-таблица lat/lon → object_id, разработанная Google для быстрых point lookup без иерархии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quadtree — иерархическая древовидная структура: пространство рекурсивно делится на 4 квадранта. У него есть parent/children отношения, что хеш-таблица не предоставляет. Хеш-таблица не поддерживает range queries или zoom.",
+                "source_of_confusion": "Смешение quadtree (hierarchical) с geohash (spatial hash) и с обычной hash map.",
+                "if_it_were_true": "Не было бы tile pyramid (нужны parent tiles для zoom-out) и range queries по bbox.",
+                "how_it_should_be": "Quadtree — рекурсивное деление на 4 квадранта, sparse, hierarchical, O(log N), Morton-order для linear IDs."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Quadtree это структура R-tree с balanced bounding rectangles для PostGIS — другое название одного и того же индекса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quadtree и R-tree — разные структуры. Quadtree рекурсивно делит пространство на фиксированные квадранты (space-driven). R-tree балансирует MBR-узлы вокруг data points (data-driven). R-tree поддерживает updates лучше (rebalance), quadtree лучше для tile pyramid (фиксированная сетка).",
+                "source_of_confusion": "Обе структуры spatial, и кандидат запутался в их различиях.",
+                "if_it_were_true": "Не было бы выбора между PostGIS GiST (R-tree) и tile pyramid (quadtree) — это разные use cases.",
+                "how_it_should_be": "Различать: quadtree = space-driven, фиксированная сетка, лучше для tile/static; R-tree = data-driven MBR, balanced, лучше для polygons и updates (Q7)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Quadtree это разновидность hexagonal grid от Uber для surge pricing.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quadtree использует 4 квадранта (squares), а hexagonal grid (H3 от Uber) использует 6 соседей (hexagons). Это разные структуры с разными свойствами: quadtree хорош для tile pyramid, H3 — для radial/spatial analytics.",
+                "source_of_confusion": "Смешение quadtree с H3 (hexagonal hierarchical индекс).",
+                "if_it_were_true": "Tile pyramid Google Maps был бы из шестиугольников, что не позволяло бы рендерить прямоугольные tile координаты.",
+                "how_it_should_be": "Различать: quadtree = 4 квадранта (Google tile, Mapbox); H3 = hexagons (Uber surge); S2 = quadtree + cube projection + Hilbert curve (Google geo)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это рекурсивная иерархическая структура: пространство делится на 4 квадранта; каждый — на 4 ещё, и так до нужной глубины. Sparse: cells создаются только где есть data (populated areas). O(log N) lookup. Cell ID = path from root или Morton order. Используется для tile pyramid (Google Maps), Mapbox vector tiles, HBase row keys для geo.",
+              "correct": true,
+              "sections": {
+                "explanation": "Quadtree даёт два ключевых свойства одновременно: иерархию (zoom out = ancestor cell, что напрямую отображается на tile pyramid) и sparsity (cells только где есть data — пустой океан не разбиваем глубоко). На уровне Z получаем 4^Z потенциальных cells, что точно совпадает с tile pyramid формулой. Morton order (Z-order curve) превращает 2D координаты в 1D ID с сохранением locality, что критично для HBase/Bigtable row keys.",
+                "example": "Google tile pyramid: каждый tile это quadtree cell с координатами (zoom, x, y). При запросе /18/152437/82854.pbf ищем cell на 18-м уровне — путь от корня закодирован в (x,y). Mapbox vector tiles используют тот же принцип.",
+                "when_to_apply": "Применяй при иерархическом zoom-сценарии, region queries, sparse density data, и когда нужен прямой mapping на tile pyramid.",
+                "edge_cases": "Asymmetric neighbors: cell на границе квадранта может иметь «далёкого» соседа в id-space (proximity proximityqueries лучше делать через S2 или H3). Pure quadtree не оптимален для radial queries.",
+                "related": "Q5 S2; Q9 tile pyramid; Q23 storage."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое S2 от Google и почему его используют для geo indexing вместо чистого quadtree?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "S2 — Google library для geo indexing: Земля проецируется на куб (6 граней), каждая грань разбивается quadtree-style на 30 уровней, cells линеаризуются через Hilbert curve. 64-bit cell ID, hierarchical (prefix = parent), level 0 ~85M км² → level 30 ~1 см². Hilbert curve обеспечивает что соседи в curve-space обычно близки в physical space — отличный locality для range queries.",
+              "correct": true,
+              "sections": {
+                "explanation": "S2 решает две главные проблемы чистого quadtree: (1) polar issues — Земля сферическая, прямая 2D-сетка вырождается у полюсов; cube projection (6 граней) даёт равномерное покрытие глобуса; (2) locality — Morton order (Z-order) хуже Hilbert curve по сохранению пространственной близости, а S2 использует именно Hilbert. 64-bit cell ID позволяет O(1) parent/children lookup через bit manipulation. 30 уровней покрывают весь масштаб от континента до сантиметра.",
+                "example": "S2 используется в Foursquare proximity search, BigQuery geo functions (ST_S2*), Snowflake geo indexing и Uber до миграции на H3. Python: s2.S2CellId.FromLatLng(s2.S2LatLng.FromDegrees(55.7558, 37.6173)).parent(15) даёт level 15 cell для Москвы.",
+                "when_to_apply": "Применяй когда нужны эффективные range queries (всё в bbox = непрерывный диапазон S2 IDs), глобальное покрытие без polar issues, hierarchical lookup, и tight integration с Google ecosystem (BigQuery).",
+                "edge_cases": "На стыке cube faces (12 ребер куба) соседи S2 могут быть в разных faces — нужно проверять neighbors через S2 API, а не наивно по диапазону IDs.",
+                "related": "Q4 quadtree; Q6 H3; Q8 geohash."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "S2 это hexagonal grid от Google аналогичный Uber H3, но с 32-bit cell ID и 10 уровнями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "S2 использует squares (quadtree на cube faces), а не hexagons. Cell ID 64-bit (не 32), уровней 30 (не 10). Hexagonal grid это H3 от Uber. S2 разработан Google, опубликован раньше H3.",
+                "source_of_confusion": "Смешение S2 (Google, squares) и H3 (Uber, hexagons).",
+                "if_it_were_true": "S2 не подходил бы для tile pyramid (нужны squares) и был бы дубликатом H3.",
+                "how_it_should_be": "S2 = squares + cube projection + Hilbert curve + 64-bit ID + 30 уровней (Google); H3 = hexagons + aperture 7 + 64-bit ID + 16 уровней (Uber)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "S2 это просто переименование geohash от Google для рекламных целей — алгоритм идентичный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Geohash interleave-encode bits lat/lon в base32 string, что вызывает boundary issues и проблемы на полюсах. S2 использует cube projection + Hilbert curve и таких проблем не имеет. Это принципиально разные алгоритмы с разными свойствами.",
+                "source_of_confusion": "Оба encoding lat/lon в numeric/string ID, и кандидат думает что это одна техника с разными названиями.",
+                "if_it_were_true": "S2 имел бы те же polar и antimeridian issues что и geohash, и не был бы migration path с него.",
+                "how_it_should_be": "Geohash = legacy, base32, boundary/polar issues; S2 = production-ready, cube + Hilbert, без этих issues."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "S2 это PostGIS-альтернатива на основе R-tree, не имеет hierarchical свойства.",
+              "correct": false,
+              "sections": {
+                "what_actually": "S2 — hierarchical (prefix S2 ID = parent cell), что R-tree не предоставляет напрямую. S2 работает с cell IDs в памяти (in-process library, не extension базы), R-tree — это database index PostGIS. Использование разное.",
+                "source_of_confusion": "Кандидат не знает что S2 in-process library, а не БД.",
+                "if_it_were_true": "Нельзя было бы делать parent/children lookup в S2 и не было бы естественной интеграции с tile pyramid.",
+                "how_it_should_be": "S2 = client-side library (C++, Python, Java, Go) с hierarchical 64-bit IDs; R-tree = на стороне БД (GiST PostGIS) с balanced MBR-узлами (Q7)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое H3 от Uber и зачем hexagonal grid вместо квадратов S2?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "H3 это hexagonal grid от Foursquare 2010 года; используется только для venue clustering в туристических приложениях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "H3 разработан Uber и опубликован open-source в 2018, не Foursquare 2010. Foursquare использовал S2. H3 применяется широко: surge pricing Uber, демография, Snowflake geo SQL, Foursquare venue clustering — но это не его исходный или единственный кейс.",
+                "source_of_confusion": "Смешение open-source истории geo libraries (Foursquare vs Uber, S2 vs H3).",
+                "if_it_were_true": "H3 не имел бы Uber-specific оптимизации для surge/demand и не был бы стандартом в ride-hailing.",
+                "how_it_should_be": "H3 = Uber 2018, hexagonal hierarchical, 16 уровней, 64-bit ID, для surge pricing, demand prediction, ETA per area."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "H3 это hexagonal hierarchical geo index от Uber (open-source 2018). Hexagons имеют 6 соседей на одинаковом расстоянии (в отличие от squares: 4 edge + 4 corner на разном) — лучше для radial queries (surge pricing, demand heat maps) и path cost. 16 уровней (0-15), 64-bit ID, иерархия через aperture 7 (parent ≈ 7 children с ~14% overflow на границах).",
+              "correct": true,
+              "sections": {
+                "explanation": "Hexagons дают uniform neighbor distance, что критично для radial queries вокруг точки (surge zones, demand prediction, isochrone). У square cells corner-соседи в √2 раз дальше edge-соседей — это вносит асимметрию в распределённые расстояния и аналитику. Trade-off: hexagons не tile иерархически идеально (parent hex не покрывает ровно 7 children — отсюда aperture 7 с 14% overflow), но в обмен — гораздо более точная radial-математика. 16 уровней от res 0 (~4.3M км², 122 cells глобально) до res 15 (~0.9 м², parking space).",
+                "example": "Uber surge pricing: цена считается per H3 hex; demand heat maps в Uber dashboard используют H3 res 9 (~0.1 км²). Python: h3.latlng_to_cell(55.7558, 37.6173, 9) → '891faaaaaaaaaaa'; h3.grid_disk(cell, 1) выдаёт все 6 соседей.",
+                "when_to_apply": "Применяй для radial/spatial analytics (heat maps, demand), uniform neighbor distance критичен, ride-hailing/delivery аналитика, Snowflake H3 SQL функции.",
+                "edge_cases": "Hexagonal иерархия неидеальна: child может выходить за parent boundary на ~14% — для strict containment queries это требует доп. проверки. На полюсах H3 имеет 12 pentagonal cells (вместо hexagonal) — особые случаи.",
+                "related": "Q4 quadtree; Q5 S2; Q7 R-tree."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "H3 — это database extension для Postgres от Uber, замена PostGIS GIST индексам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "H3 — client-side library (C, Python, JavaScript, Java, Go), не database extension. Есть Snowflake H3 SQL functions и community Postgres extensions, но core H3 это in-process библиотека, аналогично S2.",
+                "source_of_confusion": "Кандидат предполагает что geo index это всегда database extension.",
+                "if_it_were_true": "H3 нельзя было бы использовать в Spark, Flink, mobile-клиентах — а это его типичный use case.",
+                "how_it_should_be": "H3 = client-side hierarchical library, integrable во все языки и SQL-engines; не альтернатива PostGIS, а complement."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "H3 идентичен S2 по структуре — обе используют квадраты, разница только в названии библиотеки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "H3 hexagonal, S2 square (quadtree на cube). Соседство: H3 — 6 равноудалённых, S2 — 4 edge + 4 corner на разных расстояниях. Иерархия: S2 идеальная (4 children = parent), H3 приближённая (aperture 7 с overflow).",
+                "source_of_confusion": "Обе библиотеки 64-bit ID и hierarchical, и кандидат предполагает что они одинаковые.",
+                "if_it_were_true": "Не было бы оснований выбирать одно или другое; Uber не разрабатывал бы H3 при наличии S2.",
+                "how_it_should_be": "Различать: S2 (squares, идеальная иерархия, range queries) vs H3 (hexagons, uniform neighbors, radial аналитика)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда применять R-tree (PostGIS GiST/SP-GiST) вместо S2 или H3?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "R-tree это устаревший индекс 1980-х, заменён H3 во всех современных продакшнах; PostGIS уже мигрирует с GiST на H3.",
+              "correct": false,
+              "sections": {
+                "what_actually": "R-tree (1984, Guttman) активно используется и в 2026: PostGIS GiST/SP-GiST — это R-tree варианты, стандарт для polygon queries, ST_DWithin, ST_Intersects. PostGIS не мигрирует на H3 — H3 это complement, не замена. R-tree уникально хорош там, где нужны updates и polygon containment.",
+                "source_of_confusion": "Кандидат думает что новые индексы всегда заменяют старые.",
+                "if_it_were_true": "PostGIS прекратил бы развитие GiST, что не так — это активный, поддерживаемый индекс.",
+                "how_it_should_be": "R-tree (PostGIS GiST/SP-GiST) — production-ready 2026 для polygons + updates; S2/H3 — для read-only pre-computed hierarchical cells."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "R-tree подходит только для in-memory кеша, на диске работает медленнее B-tree даже для point lookup.",
+              "correct": false,
+              "sections": {
+                "what_actually": "R-tree специально оптимизирован для disk-based spatial queries: bbox/radial/intersection. Для point lookup B-tree быстрее, но для spatial queries R-tree это правильный индекс. PostGIS GiST использует R-tree варианты на диске в production.",
+                "source_of_confusion": "Перенос B-tree-интуиции на spatial индексы.",
+                "if_it_were_true": "PostGIS не мог бы быть стандартом geo-БД, и spatial queries требовали бы in-memory обработки.",
+                "how_it_should_be": "R-tree = disk-based, спецификация для spatial queries; B-tree = 1D ordered lookup. Use case разный."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "R-tree (PostGIS GiST/SP-GiST) — generic spatial index с balanced MBR-узлами; применяй когда: (1) работа с полигонами (boundary стран, neighborhoods); (2) нужны updates/deletes (S2/H3 — read-only после indexing); (3) ST_DWithin/ST_Intersects/ST_Contains запросы; (4) данные динамичны. ST_DWithin(geom, point, 1000) для радиуса 1 км — типичный кейс.",
+              "correct": true,
+              "sections": {
+                "explanation": "R-tree — balanced дерево вложенных bounding rectangles (MBR). В отличие от space-driven quadtree/S2/H3, R-tree data-driven: узлы балансируются вокруг реальных объектов. Это даёт два уникальных преимущества: (1) updates/deletes как в B-tree (rebalance), что для S2/H3 потребовало бы reindexing; (2) работа с полигонами и линиями (не только точки). PostGIS GiST поддерживает Generalized Search Tree на R-tree, SP-GiST — partitioned variant.",
+                "example": "PostGIS пример: CREATE INDEX idx_geom ON places USING GIST(geom); SELECT name FROM places WHERE ST_DWithin(geom, ST_MakePoint(37.6, 55.7)::geography, 1000); — все места в радиусе 1 км. Используется для boundaries neighborhoods, district lookup, polygon containment.",
+                "when_to_apply": "Применяй при работе с полигонами (countries, neighborhoods), dynamic data с UPDATE/DELETE, ST_DWithin/ST_Intersects запросах, и когда нужна транзакционность PostGIS.",
+                "edge_cases": "R-tree updates становятся медленными при heavy write workload — solution: tier-based (hot writes в PostGIS, cold reads в pre-computed S2 indexes). Очень узкие или вырожденные MBR (длинная река) могут давать плохое поведение поиска.",
+                "related": "Q4 quadtree; Q5 S2; Q6 H3; Q8 geohash."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "R-tree используется в Google Maps как primary geo index вместо S2 — это рекомендация Google Maps Platform docs.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Google Maps использует S2 для proximity и cell-based indexing внутри своего pipeline; PostGIS R-tree применяется в external geo workloads (Yandex, OSM-services). Google Maps Platform docs описывают S2 как фундамент geo-indexing у Google.",
+                "source_of_confusion": "Смешение Google Maps internals (S2) с general PostGIS workflow (R-tree).",
+                "if_it_were_true": "Google не разрабатывал бы S2 как библиотеку — это потеряло бы смысл.",
+                "how_it_should_be": "Google Maps = S2 (in-process); PostGIS — для проектов где нужны транзакционные обновления полигональных данных."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему geohash считается legacy в современных geo-системах, и где он ещё применяется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Geohash полностью устарел; ни одна современная система его не использует, включая Elasticsearch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Geohash всё ещё используется: Elasticsearch geohash queries и aggregations, простые системы где precision не критична, кейсы с human-readable IDs (например, координаты места встречи u4pruydqqvj). Это не «полностью устаревший», а legacy для новых production geo-platforms.",
+                "source_of_confusion": "Кандидат либо знает что geohash хуже S2/H3, либо overshoot — «совсем не используется».",
+                "if_it_were_true": "Elasticsearch удалил бы geohash query API.",
+                "how_it_should_be": "Geohash legacy для new production map systems, но ещё актуален для ES aggregations и simpler use cases."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Geohash лучше S2 и H3 в современных системах, потому что base32 encoding делает prefix matching O(1), а cube projection S2 ломает производительность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: S2/H3 лучше geohash в production. Cube projection S2 решает polar issues geohash. Prefix matching работает в обеих структурах — у S2 это битовая операция на 64-bit ID, ещё быстрее. Geohash имеет boundary issues, S2/H3 — нет.",
+                "source_of_confusion": "Кандидат смотрит на «base32 string выглядит проще» и не учитывает структурные недостатки.",
+                "if_it_were_true": "Google не разрабатывал бы S2; Uber не разрабатывал бы H3.",
+                "how_it_should_be": "Признать что geohash хуже на boundaries, polar, antimeridian; S2/H3 — современный стандарт."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Geohash требует proprietary license и поэтому не используется в open-source проектах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Geohash — открытый алгоритм (Gustavo Niemeyer, 2008, public domain). Лицензия не проблема. Reason для legacy-статуса — технические недостатки (boundary jumps, polar issues), а не лицензионные.",
+                "source_of_confusion": "Путаница с другими geo-форматами (Google Plus Codes лицензированы Open Location Code License).",
+                "if_it_were_true": "Elasticsearch не имел бы geohash queries (он open-source).",
+                "how_it_should_be": "Geohash открытый; legacy по техническим причинам — boundary issues, polar problems, неоптимально для radial queries."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Geohash interleave-encode bits lat/lon в base32 string (u4pruydqqvj = Москва high precision). Pros: human-readable, prefix matching = same region, ES geohash queries. Cons (почему S2/H3 лучше): boundary issue (соседние cells на стыке квадрантов имеют сильно разные prefix), не подходит для antimeridian, полюса вырождены (curve degenerate), неоптимально для radial queries. Применяется ещё в ES aggregations и простых системах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Geohash interleave-encode bits — длина string ↔ precision (1 char ≈ 5000 км, 12 chars ≈ 4 см). Это даёт человеко-читаемые IDs с prefix matching. Но фундаментальные недостатки: (1) на стыке квадрантов глобуса (например, между u и s) соседи имеют сильно разные prefix — false positives и misses в queries; (2) longitudinal wrap (антимеридиан ±180°) — соседние точки получают противоположные prefix; (3) на полюсах curve вырождается. S2 cube projection решает (1) и (3), H3 hexagons решают (2) и (4).",
+                "example": "Geohash используется в Elasticsearch geohash_grid aggregation, OpenSearch geo bucket aggregations, simple маркетинговых системах где hash в URL должен быть читаемым. В Google Maps, Uber, Mapbox geohash не используется как primary index.",
+                "when_to_apply": "Применяй когда нужен human-readable identifier, precision не критична, ES/OpenSearch geohash aggregations, или legacy совместимость. Не применяй для proximity queries, polar regions, новых production geo-platform.",
+                "edge_cases": "Boundary jump: точки на расстоянии 100 м могут иметь geohash prefix отличающиеся в первом символе. Antimeridian: longitude +179.9° и -179.9° (рядом физически) имеют противоположные geohash. На полюсах precision деградирует.",
+                "related": "Q5 S2; Q6 H3; Q4 quadtree."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен tile pyramid Google Maps (zoom 0-21, 256×256 px, 4^Z формула)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tile pyramid — иерархия 256×256 px tiles на 22 уровнях zoom (0..21). На zoom Z = 2^Z × 2^Z = 4^Z tiles. Zoom 0 = 1 tile (whole world), zoom 10 ≈ 1M, zoom 21 ≈ 4.4T возможных. Реально генерируется ~500B (10% — land + populated). Tile URL: /zoom/x/y.png, Web Mercator EPSG:3857. Static layers pre-rendered at build; dynamic (traffic, POI) overlay on top. Origin: Bigtable с row key (zoom, x, y) → O(1) lookup, перед ним CDN edge.",
+              "correct": true,
+              "sections": {
+                "explanation": "Web Mercator EPSG:3857 — стандарт всех carto-сервисов (Google, OSM, Mapbox), потому что angle-preserving (углы локально правильные, что важно для navigation). Tile сетка 256×256 — исторический стандарт (Google 2005), Retina/Hi-DPI использует 512×512 за счёт 4× файла. Формула 4^Z даёт экспоненциальный рост: zoom 18 = 68B, zoom 21 = 4.4T. Но сгенерировать все нереально и не нужно — 70% Земли это океан без POI; в результате только ~500B реальных tiles. Bigtable row key (zoom, x, y) даёт O(1) lookup и допускает range scan для region.",
+                "example": "Tile URL примеры: /18/152437/82854.png у Google, /18/152437/82854.pbf у Mapbox (vector). При zoom-in клиент запрашивает 4 children tiles, при zoom-out — 1 parent. Tile coordinates с origin top-left (0,0), bottom-right (2^Z-1, 2^Z-1).",
+                "when_to_apply": "Используй tile pyramid для всех map UIs с zoom/pan, не пытайся ré-render каждый кадр сервером — кешируй и переиспользуй.",
+                "edge_cases": "На максимальном zoom (21) tile показывает площадь меньше 1 м² — реалистично только для городов. На zoom 0-2 tiles полностью одинаковы для всех users (max CDN cacheability).",
+                "related": "Q4 quadtree; Q10 vector; Q12 CDN; Q23 storage."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tile pyramid это flat-структура без иерархии: один storage layer для всех zoom levels, lookup через linear scan tile_id.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tile pyramid — иерархическая структура: tile на zoom Z соответствует 4 tiles на zoom Z+1 (рекурсивная quadtree). Lookup через (zoom, x, y) — O(1) в Bigtable, не linear scan. Без иерархии невозможно zoom-out/zoom-in (нужно знать parent для caching).",
+                "source_of_confusion": "Кандидат не различает logical pyramid (иерархия zoom) и physical storage (KV (zoom,x,y) → bytes).",
+                "if_it_were_true": "Zoom-in/zoom-out был бы O(N) в количестве tiles, что невозможно при 4.4T cells.",
+                "how_it_should_be": "Иерархия zoom 0-21 на основе quadtree, O(1) lookup по (zoom,x,y) в Bigtable, CDN кеш по тому же ключу."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Каждый zoom level увеличивает количество tiles в 2 раза (не 4), и пирамида имеет всего 10 уровней.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На zoom Z = 2^Z × 2^Z = 4^Z tiles (не 2^Z). Каждое увеличение zoom на 1 даёт 4× tiles (× 2 по каждой оси). Google Maps использует zoom 0-21 (22 уровня), а не 10. OSM поддерживает 0-19, специализированные сервисы — до 23.",
+                "source_of_confusion": "Кандидат считает только одну ось вместо двух.",
+                "if_it_were_true": "На zoom 21 было бы 2M tiles вместо 4.4T — не хватило бы precision на building level.",
+                "how_it_should_be": "4^Z tiles на zoom Z; Google Maps 22 уровня (0-21), zoom 21 = building-level, ~4.4T возможных, ~500B реальных."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Tile pyramid не подходит для production — Google Maps рендерит каждый кадр на сервере и shipping client raw imagery без кэширования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это противоположно реальности: Google Maps массово кеширует tiles на CDN (95%+ hit ratio); server-side rendering работает только при cache miss или динамических overlays (traffic). Без tile pyramid и CDN сервис не выдержал бы 100B requests/day.",
+                "source_of_confusion": "Подмена static map (Mapnik on-demand) на agile pre-rendered pyramid.",
+                "if_it_were_true": "Origin servers перегружены 100B requests/day, latency tile была бы секундной, и продукт развалился бы.",
+                "how_it_should_be": "Pre-render статических layers в tile pyramid, кешировать на CDN, overlay dynamic data (traffic) client-side."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему vector tiles (PBF) предпочтительнее raster tiles (PNG/JPEG) в современных map UIs?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Raster tiles меньше vector в 5 раз, рендерятся быстрее на любом железе и проще для offline. Vector полностью устарел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vector tiles 3-5× МЕНЬШЕ raster (5-30 KB vs 20-50 KB), а не наоборот. Vector лучше для offline (геометрия вместо bitmap), позволяет re-styling и интерактивность. Vector — современный стандарт (Apple Maps с 2018, Google гибрид, Mapbox 100% vector).",
+                "source_of_confusion": "Кандидат думает что image format всегда меньше structured data.",
+                "if_it_were_true": "Apple Maps не мигрировал бы на vector в 2018, Mapbox не строил бы 100% vector pipeline.",
+                "how_it_should_be": "Vector меньше за счёт компактного protobuf, лучше для offline, re-styleable, interactive — современный стандарт."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Vector tiles (Mapbox Vector Tile spec, .pbf) 3-5× меньше raster (5-30 KB vs 20-50 KB), client-side render на WebGL/Metal GPU, dynamic styling (dark mode = смена client style без re-download), interactive (clickable features), Hi-DPI без отдельных tiles, лучше для offline (геометрия вместо bitmap). Apple Maps с 2018, Mapbox 100% vector, Google гибрид (vector base + raster satellite).",
+              "correct": true,
+              "sections": {
+                "explanation": "Vector tiles содержат geometry (points/lines/polygons), layers (roads, water, buildings, labels), properties (name, type) в protobuf-формате. Преимущества: (1) размер: protobuf + Brotli/gzip даёт 3-5× меньше raster image; (2) styling: dark mode/satellite/light — это client-side style.json, без re-download; (3) Hi-DPI: client рендерит на нужный DPI, не нужны @2x tiles; (4) interactivity: можно clickable features; (5) offline: страна в vector ≈ MB, в raster ≈ GB.",
+                "example": "Mapbox 100% vector с самого начала (2014); Apple Maps Vector redesign 2018; Google Maps hybrid — vector tiles для base map + raster для satellite imagery (фото нельзя векторизовать). OpenStreetMap отдаёт оба формата.",
+                "when_to_apply": "Применяй vector для base map (roads, POI, terrain), interactive features, offline regions, multi-DPI. Raster — только для satellite/photo content и где WebGL недоступен (legacy devices).",
+                "edge_cases": "Старые/low-end devices без WebGL/GPU тяжело справляются с vector render; первый render медленнее raster (GPU shader compilation). Solution: fallback на raster для old browsers.",
+                "related": "Q9 tile pyramid; Q11 rendering; Q12 CDN; Q25 offline."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Vector tiles нельзя использовать на mobile — только raster PNG поддерживается iOS/Android SDK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vector tiles нативно поддерживаются всеми mobile SDK: Mapbox Mobile SDK, MapLibre Native, Google Maps SDK (внутри Google client), Apple MapKit. WebGL/Metal/Vulkan доступны на современных iOS/Android. Vector — стандарт для mobile с 2018.",
+                "source_of_confusion": "Кандидат думает что mobile = только image rendering, не GPU-aware.",
+                "if_it_were_true": "Apple Maps не мог бы быть vector since 2018.",
+                "how_it_should_be": "Vector tiles работают на mobile через MapLibre/Mapbox/Apple/Google SDK с использованием GPU."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Raster tiles это будущее, потому что raster компактнее vector в 3-5 раз и не требует GPU.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер: vector 5-30 KB compressed, raster 20-50 KB — vector меньше в 3-5 раз. Тренд индустрии в обратную сторону: vector становится стандартом, raster остаётся для satellite imagery. Mapbox 100% vector, Apple вектор с 2018.",
+                "source_of_confusion": "Подмена «image format обычно компактен» на «всегда компактен».",
+                "if_it_were_true": "Все производители map SDK мигрировали бы на raster, что противоречит тренду.",
+                "how_it_should_be": "Vector — современный стандарт, raster — только для satellite imagery; vector меньше за счёт compact protobuf + Brotli."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между server-side и client-side map rendering pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Server-side = обработка происходит на телефоне в Android Runtime; client-side = в облаке Google.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Терминология обратная. Server-side rendering = карта рендерится на сервере (Mapnik/GeoServer) в готовый PNG/JPEG; client-side rendering = клиент получает vector данные (.pbf) и рендерит сам на GPU (WebGL/Metal).",
+                "source_of_confusion": "Кандидат путает термины «server» и «client» в контексте rendering.",
+                "if_it_were_true": "Все статьи по Mapnik/Mapbox/MapLibre использовали бы противоположную терминологию.",
+                "how_it_should_be": "Server-side rendering = baked в image на server; client-side rendering = vector data + GPU render на client."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Между ними нет разницы в архитектуре — обе подходят отдают raster PNG из CDN.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Принципиальная разница: server-side отдаёт raster image (PNG/JPEG/WebP) уже с baked styling, client-side отдаёт vector data (PBF) и стиль применяется на клиенте. Это влияет на storage (raster pre-rendered per style; vector один на все стили), CDN cache key, и UX (interactivity, hi-DPI, offline).",
+                "source_of_confusion": "Кандидат фокусируется на «оба идут через CDN» и игнорирует разницу в payload и rendering.",
+                "if_it_were_true": "Не было бы причин выбирать одно или другое; vs vector tile spec потерял бы смысл.",
+                "how_it_should_be": "Раздельный pipeline: server-side для raster (Mapnik+Bigtable+CDN); client-side для vector (tilemaker → MBTiles/PMTiles → CDN → WebGL)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Server-side rendering (raster tiles): OSM data → Mapnik/GeoServer → PNG per zoom/x/y → Bigtable → CDN. Client-side rendering (vector tiles): OSM data → tilemaker → MBTiles/PMTiles vector → Bigtable/S3 → CDN → клиент рендерит на WebGL/Metal с style.json. Vector hi-DPI без отдельных tiles, client-side быстрее для re-styling.",
+              "correct": true,
+              "sections": {
+                "explanation": "Server-side: tile renderer (Mapnik C++/Python, GeoServer Java) загружает map data из PostGIS, применяет style.xml, рендерит PNG, кеширует в Bigtable. Pre-rendering (batch job весь pyramid) или on-demand при cache miss. Hi-DPI требует отдельных @2x tiles → 4× storage. Client-side: tilemaker генерирует vector tiles из OSM в MBTiles (SQLite файл) или PMTiles (single-file format). Клиент получает .pbf, применяет MapLibre Style Spec, рендерит на GPU. Один и тот же tile рендерится в light/dark/satellite styles.",
+                "example": "Server-side: OSM Tile Server (Mapnik + Apache + tile cache); Strava heat map (pre-rendered raster). Client-side: Mapbox GL JS / MapLibre / Apple MapKit / Google Maps (vector since 2014 для Web). PMTiles — новый format (2022+) для serving из S3 без сервера.",
+                "when_to_apply": "Server-side — для legacy compatibility, raster-only требований, simple infra. Client-side — для современных map UIs, interactivity, multi-style, offline, hi-DPI.",
+                "edge_cases": "Hybrid: vector для base map + raster для satellite (Google Maps). PMTiles позволяет serve vector tiles напрямую из S3 без tile server — революция 2022 для small projects.",
+                "related": "Q9 tile pyramid; Q10 vector; Q12 CDN."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Client-side rendering всегда быстрее server-side, потому что не требует сетевых запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Client-side тоже требует сетевых запросов (за vector tiles по сети). Скорость первого render может быть медленнее raster (GPU shader compilation). Преимущество не в скорости initial render, а в re-styling, interactivity, hi-DPI, offline.",
+                "source_of_confusion": "Кандидат предполагает что «client-side» = «без network».",
+                "if_it_were_true": "Не было бы CDN-аспектов в client-side pipeline (а они есть).",
+                "how_it_should_be": "Client-side != без network; преимущества — re-styling, hi-DPI без extra tiles, interactivity, smaller payload."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена CDN-доставка tiles в Google Maps (95%+ hit ratio, predictive prefetch, compression)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tiles надо стримить напрямую из origin Bigtable, CDN не используется — он плохо подходит для geo content.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без CDN 100B tile/day × 20 KB = 2 PB/day origin egress — недостижимо и не рентабельно. CDN с 95%+ hit ratio снимает 95% нагрузки, оставляя origin ~100K/sec. CDN отлично подходит для tiles (immutable, versioned, geo-localized requests).",
+                "source_of_confusion": "Кандидат не понимает economy of CDN для static-ish content.",
+                "if_it_were_true": "Tile load latency был бы 200-500 ms (cross-region), не 100 ms; стоимость egress в 20× больше.",
+                "how_it_should_be": "CDN edge POP per region с 95%+ hit ratio, origin Bigtable только для cache miss."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "TTL для tiles 1 секунда — карта быстро меняется, кеш бессмысленен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL для static map tiles (base layer): days-weeks (карта меняется редко). Только dynamic overlay (traffic) обновляется в минутах. Версионирование через URL (/v123/...) позволяет долгий TTL + instant invalidation при обновлении.",
+                "source_of_confusion": "Кандидат смешивает static tile pyramid и dynamic traffic overlay.",
+                "if_it_were_true": "CDN hit ratio падал бы до < 5%, что нерентабельно.",
+                "how_it_should_be": "Static layers TTL дни-недели, dynamic minutes, versioned URLs (/v123/18/152437/82854.pbf) для invalidation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CDN cache key должен быть только URL без учёта DPI и style — иначе hit ratio падает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cache key должен включать (zoom, x, y, style_version) для vector или (zoom, x, y, dpi) для raster — потому что разные styles/DPI дают разный контент. Без этого user в light mode и dark mode получили бы один и тот же tile, что некорректно.",
+                "source_of_confusion": "Кандидат упрощает cache key до URL path без query parameters.",
+                "if_it_were_true": "Dark mode users видели бы light tiles или наоборот — broken UX.",
+                "how_it_should_be": "Cache key включает style_version (vector) или dpi (raster) в дополнение к (zoom, x, y); versioned URLs для invalidation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CDN: edge POP per region с 95%+ hit ratio; cache key (zoom, x, y, style_version) для vector или (zoom, x, y, dpi) для raster; TTL static layers days-weeks, dynamic (traffic) minutes; versioned URLs (/v123/18/152437/82854.pbf) для invalidation; Brotli для vector, WebP для raster; predictive prefetch (next zoom level, neighboring tiles) через HTTP/2 push или QUIC; cost ~2 PB/day, ~$40K/day на стандартном CDN.",
+              "correct": true,
+              "sections": {
+                "explanation": "95%+ hit ratio достигается за счёт: (1) immutable versioned URLs (cache forever, invalidate by version bump); (2) предсказуемого паттерна доступа (popular zoom levels 12-18 в городах); (3) per-region edge POP (Москва-tile кеш ближе к российскому пользователю); (4) HTTP/2 multiplexing для batching tiles. Brotli даёт ~20% лучше gzip на protobuf; WebP 30-50% меньше PNG. Predictive prefetch: при zoom-in prefetch child tiles, при pan prefetch neighbors.",
+                "example": "Google Maps в реальности использует internal CDN (как Netflix Open Connect, но для tile) с edge POP в каждом регионе. Mapbox + Cloudflare/Fastly. Cost-конкуренция: ~$0.02/GB egress × 2 PB/day = ~$40K/day — большой бизнес-кейс для собственного CDN на 100B+ tile requests.",
+                "when_to_apply": "Используй CDN с долгим TTL + versioned URLs для всех static tiles; отдельный pipeline для dynamic overlay (traffic) с коротким TTL; predictive prefetch при пользовательском zoom/pan.",
+                "edge_cases": "Major map update (новые roads) → bump version → all tiles invalidated. Partial updates можно делать с per-area version (если изменения локальные). Brotli не поддерживается старыми клиентами — fallback на gzip.",
+                "related": "Q9 tile pyramid; Q10 vector; Q23 storage."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая эволюция routing algorithms подходит для planet-scale map (Dijkstra → A* → CH → CRP)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Dijkstra (1959): O(V log V + E), но на planet graph (50M edges) — 5-30 сек/query, медленно. A* (1968): Dijkstra + heuristic (straight-line distance к target), 2-10× быстрее, но всё ещё медленно. Contraction Hierarchies (Geisberger 2008): preprocessing graph с node order и shortcuts, 1-10 мс query на continental graph (используется в OSRM). Customizable Route Planning (CRP, Microsoft 2013): preprocessing split на metric-independent + customizable, re-customize за секунды на traffic update (Google Maps, Bing Maps).",
+              "correct": true,
+              "sections": {
+                "explanation": "Эволюция отражает понимание trade-off между preprocessing и query time. Vanilla Dijkstra — 5-30 сек, неприемлемо для real-time. A* добавляет heuristic (Euclidean/great-circle distance), что в 2-10 раз быстрее, но не масштабируется до континентального графа. CH (Geisberger 2008) — preprocessing в часы, query 1-10 мс, но требует full re-preprocess при изменении edge weights. CRP (Microsoft Sanders, Schultes, 2013) разделил preprocessing на metric-independent partitioning (часы, делается раз) и customizable overlay (секунды, делается при каждом traffic update) — позволяя real-time traffic-aware routing на planet scale.",
+                "example": "OSRM (open-source) использует CH для статического routing; Google Maps использует CRP-derived proprietary алгоритм с traffic re-customize каждые ~30 сек. Yandex Maps — гибрид CH/CRP. Преимущество CRP — multi-criteria optimization (быстрейший vs кратчайший vs scenic).",
+                "when_to_apply": "Используй CH для static metric (без traffic), CRP когда нужно реагировать на traffic в real-time, A* как fallback при перегрузе routing-сервиса.",
+                "edge_cases": "Multi-modal (drive + transit + walk) и time-dependent edges (transit schedules) усложняют preprocessing — нужны специализированные подходы (RAPTOR, Connection Scan Algorithm).",
+                "related": "Q14 CH; Q15 CRP; Q17 ETA."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для production достаточно vanilla Dijkstra на planet graph — современное железо справится за 5 мс/query.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На planet graph (50M edges, иногда больше) Dijkstra даёт 5-30 сек/query — нереально для real-time UI. Даже с очень быстрым железом O(V log V + E) на 50M edges не сжимается до мс без preprocessing. Production обязательно использует CH или CRP.",
+                "source_of_confusion": "Кандидат не знает разницы между preprocessing-based и naive алгоритмами.",
+                "if_it_were_true": "Не нужны были бы статьи Geisberger 2008 и Microsoft 2013; OSRM и Google Maps использовали бы Dijkstra.",
+                "how_it_should_be": "Vanilla Dijkstra fail на continental scale; нужно preprocessing (CH = 1-10 мс, CRP = 5-50 мс с traffic-awareness)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CH и CRP это одно и то же — оба используют hierarchical clustering без разницы в preprocessing.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Принципиальная разница: CH добавляет shortcuts на основе node ordering, и re-preprocess занимает часы при изменении весов. CRP разделяет preprocessing на metric-independent partitioning (часы, делается раз) и metric-customizable overlay (секунды на traffic update). Это делает CRP пригодным для real-time traffic, CH — нет.",
+                "source_of_confusion": "Оба preprocessing-based hierarchical, и кандидат смешивает.",
+                "if_it_were_true": "OSRM и Google Maps использовали бы один и тот же подход — а это не так (Google использует CRP-derived).",
+                "how_it_should_be": "CH = node order + shortcuts, re-preprocess часы (Geisberger 2008); CRP = partitioning + customize, re-customize секунды (Microsoft 2013)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Routing для planet надо делать через ML (Transformer-based) вместо algorithmic graph search.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ML используется для ETA prediction (Q17), не для shortest path. Для shortest path алгоритмические подходы (CH/CRP) дают exact answers за мс; ML-routing не масштабируется до миллиардов queries/day и не даёт guarantees. ETA — отдельный layer поверх routing.",
+                "source_of_confusion": "Hype вокруг ML для всего; кандидат не разделяет routing (graph algorithm) и ETA (ML).",
+                "if_it_were_true": "Google Maps не использовал бы CRP — а используют.",
+                "how_it_should_be": "Routing = CH/CRP graph algorithm для exact path; ETA = ML model поверх (LightGBM, DeepETA Uber, DLRM Google)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Contraction Hierarchies (Geisberger 2008) для ускорения shortest-path на continental graph?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CH использует ML-модель для предсказания shortest path без graph search.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CH — детерминистический graph algorithm без ML. Preprocessing: node ordering (важности) + shortcuts. Query: bidirectional Dijkstra только upward в иерархии. Даёт exact shortest path (not approximation), что ML не гарантирует.",
+                "source_of_confusion": "Hype-смешение всех optimization techniques с ML.",
+                "if_it_were_true": "CH не давал бы exact answer, что противоречит его свойствам.",
+                "how_it_should_be": "CH = классический graph algorithm: preprocessing с node ordering + shortcuts, query bidirectional Dijkstra upward."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Идея CH: (1) preprocessing — order nodes по важности (edge-difference + level + ...), затем contract least important node: remove + для каждой пары соседей add shortcut если shortest path шёл через него; повторить для всех; результат — graph + shortcuts с node ordering. (2) Query — bidirectional Dijkstra только upward в иерархии: from source upward и from target upward; meeting point = shortest path. Continental query 1-10 мс, 1000-10000× faster Dijkstra. Используется в OSRM.",
+              "correct": true,
+              "sections": {
+                "explanation": "Гениальность CH в комбинации node ordering и shortcuts. Importance node — эвристика (например, разница «edges in - edges out при contraction»). Contracting node добавляет shortcut только если he sits на shortest path между соседями — preserving correctness. Bidirectional Dijkstra ограничена upward edges → space search drastically reduced. Preprocessing часы для Europe (~20M roads), query 1-10 мс. Decomposition shortcuts обратно в original edges делается lazily при reconstruction пути.",
+                "example": "OSRM (Open Source Routing Machine) — production-grade CH implementation; preprocessing для Europe ~2-4 часа на mid-size server, query 1-10 мс на API. GraphHopper тоже использует CH (с собственными optimizations).",
+                "when_to_apply": "Применяй для static routing (без traffic updates), где можно позволить часы preprocessing один раз; idealen для drive routing на car-graph.",
+                "edge_cases": "Static metric: при изменении edge weights (traffic) нужен full re-preprocess (hours). Multi-criteria (быстрейший vs кратчайший) требует отдельных CH per criterion. Time-dependent edges (transit) не поддерживаются.",
+                "related": "Q13 routing; Q15 CRP; Q16 OSM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CH не требует preprocessing, query время такое же как Dijkstra.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главное свойство CH — heavy preprocessing (часы) для существенного ускорения query (1-10 мс вместо 5-30 сек Dijkstra). Без preprocessing нет shortcuts, и CH вырождается в обычный bidirectional Dijkstra.",
+                "source_of_confusion": "Кандидат не различает preprocessing-based и naive алгоритмы.",
+                "if_it_were_true": "Не было бы смысла в публикации Geisberger 2008.",
+                "how_it_should_be": "CH = trade-off: hours preprocessing один раз → query 1-10 мс forever (пока не меняются edge weights)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CH работает только на dense graphs (где V ≈ E²) и не подходит для road networks.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CH разработан именно для sparse road networks (V ≈ E, в road graph ~50M nodes и ~150M edges — типично 2-5 edges per node). На dense graphs (например, complete graph K_n) shortcuts не дают ускорения.",
+                "source_of_confusion": "Confusion между sparse и dense graph alg.",
+                "if_it_were_true": "OSRM/GraphHopper не использовали бы CH для road networks.",
+                "how_it_should_be": "CH = sparse graph (road networks), V ≈ E; на dense graphs shortcuts не помогают."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Customizable Route Planning (CRP, Microsoft 2013) и почему он подходит для real-time traffic?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CRP это просто другое название Dijkstra с заранее загруженным графом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CRP — отдельный алгоритм (Delling, Goldberg, Pajor, Werneck, Microsoft 2013) с двухфазной preprocessing: metric-independent partitioning (часы) + metric-customizable overlay (секунды). Это позволяет real-time traffic update. Vanilla Dijkstra не имеет этого свойства.",
+                "source_of_confusion": "Кандидат не знает CRP и приписывает его свойства Dijkstra.",
+                "if_it_were_true": "Не было бы статьи Microsoft 2013 и не было бы преимущества Google Maps в real-time traffic.",
+                "how_it_should_be": "CRP = metric-independent + customizable, два уровня preprocessing с разными цикл-временами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CRP это база данных для tile storage, не routing algorithm.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CRP — routing algorithm (shortest path), не storage. Microsoft 2013 paper «Customizable Route Planning in Road Networks». Tile storage — Bigtable/HBase, что отдельная компонента (Q23).",
+                "source_of_confusion": "Совпадение CRP с другими аббревиатурами.",
+                "if_it_were_true": "Google Maps не использовал бы CRP-derived для routing.",
+                "how_it_should_be": "CRP = routing algorithm с разделением preprocessing на metric-independent + customizable; для traffic-aware routing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Идея CRP: разделить preprocessing на (1) metric-independent (hours) — partitioning графа на иерархические cells + overlay edges только между boundaries; (2) metric-customizable (seconds) — compute shortest paths через overlay с current edge weights, re-customize при traffic update. Query: local within cell + overlay через high-level cells = 5-50 мс на continental graph. Преимущества vs CH: re-customize в секунды (не hours), multi-criteria, multi-modal. Google Maps использует CRP-derived.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевое отличие CRP от CH — двухфазная preprocessing с разными жизненными циклами. Phase 1 (metric-independent) делается раз на change графа (новые roads): иерархическое partitioning делит граф на supersells разных уровней; overlay graph содержит только edges между cell boundaries. Phase 2 (metric-customizable) — пересчёт shortest paths через overlay с current edge weights. Когда traffic меняет 10% edges, phase 2 пересчитывается за секунды (а не часы как CH). Query тогда: local Dijkstra в cell, overlay Dijkstra через high-level cells — 5-50 мс на continental graph.",
+                "example": "Google Maps использует CRP-derived (proprietary refinements) — re-customize traffic каждые ~30 сек на planet scale. Bing Maps использует CRP напрямую (Microsoft Research). Yandex Maps — гибрид CH/CRP.",
+                "when_to_apply": "Применяй CRP когда нужно real-time traffic-aware routing, multi-criteria optimization (быстрейший/кратчайший/scenic), multi-modal (разные metrics per mode).",
+                "edge_cases": "Query latency немного больше CH (5-50 мс vs 1-10 мс) — trade-off за customizability. Optimal partitioning сложная задача (METIS, KaHIP libraries). Multi-region requires cross-region overlay.",
+                "related": "Q13 routing; Q14 CH; Q16 OSM; Q18 multi-modal."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CRP даёт approximate paths (без exact shortest path), поэтому используется только для preview.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CRP даёт exact shortest path (как и CH), при условии корректного partitioning и overlay. Это не approximate algorithm. Approximation иногда используется в client-side fallback (например, A* при overload), но CRP exact.",
+                "source_of_confusion": "Кандидат предполагает что любая иерархическая структура даёт approximation.",
+                "if_it_were_true": "Google Maps не использовал бы CRP-derived для primary routing.",
+                "how_it_should_be": "CRP = exact shortest path; разница с CH в способе preprocessing (customizable), не в точности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена ingestion road network graph из OpenStreetMap (планетарный pipeline)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "OSM не подходит для production geo-сервисов — все используют только proprietary данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OSM используется многими production services: Mapbox, MapQuest, OSRM, GraphHopper, Apple Maps (частично), Foursquare. Google и Yandex используют proprietary data (sat imagery + dispatched cars + StreetView), но это не означает что OSM непригоден для production.",
+                "source_of_confusion": "Кандидат думает что «open data» = «low quality».",
+                "if_it_were_true": "Mapbox, MapQuest, OSRM не существовали бы.",
+                "how_it_should_be": "OSM — production-grade для многих services; Google/Yandex имеют proprietary data на дополнение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "OSM ingestion это просто HTTP GET planet.osm.pbf раз в неделю — preprocessing routing graph не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OSM planet.osm.pbf ~70 GB compressed, ~1.5 TB uncompressed — нужен серьёзный preprocessing: parse PBF, load в PostGIS через osm2pgsql, extract road graph (GraphHopper/osmnx), preprocess для routing (CH/CRP) — это часы и десятки GB intermediate data.",
+                "source_of_confusion": "Кандидат недооценивает сложность parse + preprocess.",
+                "if_it_were_true": "Никто не разрабатывал бы osm2pgsql, GraphHopper, OSRM — они нужны именно для preprocessing.",
+                "how_it_should_be": "Pipeline: PBF parse → osm2pgsql → PostGIS → extract road graph → preprocess CH/CRP → memory-mapped file."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "OSM updates применяются единоразово в полном dump раз в год; incremental diffs не существуют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OSM публикует minute diffs (~10 MB/day) и hourly/daily aggregates — incremental updates есть. Pipeline применяет diffs к PostGIS, потом периодически re-preprocess routing graph (nightly или weekly).",
+                "source_of_confusion": "Кандидат не знает про OSM diff stream.",
+                "if_it_were_true": "Все OSM-based services отставали бы на год от reality.",
+                "how_it_should_be": "OSM minute/hourly/daily diffs + periodic re-preprocess routing graph."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Road network: nodes = intersections + named places; edges = road segments с properties (length, speed limit, oneway, road type, allowed modes); cost = travel_time = length / speed × traffic_factor. OSM pipeline: planet.osm.pbf (~70 GB compressed) → osm2pgsql → PostGIS → extract road graph (osmnx, GraphHopper) → preprocess CH/CRP → memory-mapped file. Updates: OSM minute diffs (~10 MB/day), incremental load, nightly re-preprocess. Enrichment: speed limits, turn restrictions, lane counts.",
+              "correct": true,
+              "sections": {
+                "explanation": "OSM planet file — XML/PBF dump всей карты мира. PBF (Protocol Buffer Binary Format) ~70 GB compressed более компактен чем XML (~1.5 TB uncompressed). osm2pgsql загружает в PostGIS с правильной geometry. Из PostGIS extract road graph: GraphHopper/osmnx определяют nodes (intersections) и edges (segments). Routing preprocessing (CH или CRP) занимает часы и генерирует memory-mapped binary. Updates через diffs — incremental, не full reload. Enrichment: дополнить недостающие speed limits, turn restrictions, lane counts через partner data или ML.",
+                "example": "OSRM pipeline: ~10 GB road graph для Europe в memory-mapped file, preprocessing 2-4 часа на 16-core server. GraphHopper — Java-based, тот же подход. Mapbox использует OSM + proprietary data on top.",
+                "when_to_apply": "Используй OSM для open-source map services; pipeline стандартный — PBF parse → PostGIS → graph extract → routing preprocess. Updates ежедневно или еженедельно.",
+                "edge_cases": "Атрибуция OSM (ODbL license) обязательна при использовании. Лицензионные ограничения для commercial use. Quality OSM varies по регионам (Европа очень детальная, остальные регионы менее).",
+                "related": "Q13 routing; Q14 CH; Q15 CRP; Q23 storage."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен ETA prediction в Google Maps (historical + real-time probe + ML)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pipeline ETA: probe data (1M phones, ~33K events/sec per region) + historical speeds (per edge × hour × day-of-week) + weather + calendar events → ML model (LightGBM для tabular, DeepETA Uber neural, DLRM/MLP для Google) → predicted ETA. MAPE Google Maps 8-10% (улучшается до 5-7% с DeepMind WaveNet-derived 2020+). Inference latency 10-50 мс, async refresh во время поездки (re-route if congestion ahead). Multi-modal: separate models per mode (drive/walk/transit).",
+              "correct": true,
+              "sections": {
+                "explanation": "Pipeline комбинирует три источника signal: (1) исторические patterns — per edge × hour × day-of-week базовая скорость; (2) real-time probe — current speed (last 5-15 минут); (3) контекстные features — weather, calendar events, construction. Все feeds в ML model: LightGBM/XGBoost для tabular (быстро, interpretable), neural модели (DeepETA Uber, DLRM Google) для лучшей accuracy. Async refresh: пока пользователь едет, периодически пересчитывается ETA и если есть congestion ahead — предлагается re-route.",
+                "example": "Google Maps использует DLRM-derived deep learning model (2020+), интегрирует DeepMind WaveNet-style temporal predictions. Uber DeepETA — neural model специально для ride-hailing. Yandex Maps — gradient boosting с ансамблями.",
+                "when_to_apply": "Используй ML ETA в каждом production geo-сервисе с маршрутизацией; naive formula только для offline mode (Q25).",
+                "edge_cases": "Cold-start для новых roads (нет probe history): fallback на speed limit. Sparse probe data в rural areas: borrow from similar road types. Special events (концерт, авария) — separate signals.",
+                "related": "Q13 routing; Q18 multi-modal; Q28 traffic."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ETA = sum(edge_length / speed_limit) — naive формула достаточно для production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Naive формула игнорирует traffic congestion, time-of-day patterns, day-of-week, weather, special events, construction zones. Реальное travel time резко отличается: в час пик скорость падает в 2-3 раза vs speed limit. MAPE naive ETA ~25-40%, ML ETA ~5-10%.",
+                "source_of_confusion": "Кандидат не знает про real-world deviation от speed limit.",
+                "if_it_were_true": "Google Maps не разрабатывал бы DLRM model и не покупал бы DeepMind для WaveNet-based ETA.",
+                "how_it_should_be": "ETA = ML model с features (historical speed per edge × hour, current probe data, time-of-day, day-of-week, weather, events)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ETA рассчитывается только по historical средним без real-time данных — пользователь не заметит разницы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Historical-only ETA не учитывает текущие события: авария, ремонт дороги, особый поток. Реальный ETA меняется в течение часа — пользователь заметит когда «прогноз 20 мин» оказывается 35 мин из-за пробки, которую не видно в historical patterns.",
+                "source_of_confusion": "Кандидат игнорирует value real-time signal.",
+                "if_it_were_true": "Google Maps не вкладывался бы в probe data pipeline (Q28).",
+                "how_it_should_be": "Hybrid: historical baseline + current real-time probe (last 5-15 минут) + context (weather, events) в ML модели."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ETA inference latency допустимо 5-10 секунд (medium), потому что навигация не критична по времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ETA inference должен быть в пределах 10-50 мс — он часть UX навигации (показ времени в реальном времени), и часто вычисляется параллельно с routing query (общая p99 < 500 мс). 5-10 сек убьёт UX полностью.",
+                "source_of_confusion": "Кандидат не понимает что ETA не разовая операция, а continuous update во время поездки.",
+                "if_it_were_true": "Каждое обновление ETA блокировало бы UI на 5-10 сек.",
+                "how_it_should_be": "ETA inference 10-50 мс; LightGBM/XGBoost для скорости, neural для accuracy в более длинных latency budgets."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен multi-modal routing (drive + walk + transit + bike) в Google Maps?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все modes используют один и тот же road graph с одним set весов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый mode требует своего graph subset: driving excludes pedestrian-only paths, walking includes alleys/parks, cycling boost bike paths и excludes highways, transit использует time-dependent edges (расписание). Один общий graph не учитывает эти различия.",
+                "source_of_confusion": "Кандидат упрощает modes до «одинаковая карта, разные веса».",
+                "if_it_were_true": "Walking routing предложил бы highway, cycling — interstate. Broken UX.",
+                "how_it_should_be": "Separate graphs/filters per mode; combined queries через orchestration layer."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Modes: driving (highways/roads), walking (pedestrian segments — sidewalks, parks, alleys), cycling (bike paths preferred, highways excluded), transit (time-dependent edges — bus/metro schedules + walking transfers), combined (drive + park + walk; bike + transit). Transit routing requires Connection Scan Algorithm (CSA) или RAPTOR (time-dependent graph). Combined через orchestration layer. Real-time traffic affects driving + transit (delays). Edge cases: accessibility (wheelchair), avoid tolls/highways, eco-routing (Google 2021+, carbon footprint).",
+              "correct": true,
+              "sections": {
+                "explanation": "Multi-modal сложнее single-mode потому что (1) разные edge subsets per mode (driving graph ≠ walking graph), (2) transit time-dependent (edge доступна только в время departure), (3) combined modes требуют transfer modeling (drive → park → walk). RAPTOR (Round-Based Public Transit Routing) и CSA (Connection Scan Algorithm) специально разработаны для transit: они обрабатывают расписания эффективнее наивного time-expanded graph. Real-time traffic влияет на driving (затор) и transit (опоздание автобуса).",
+                "example": "Google Maps: separate routing engines per mode + orchestration. Transit: интеграция с GTFS feeds городских транспортных систем + real-time delay predictions. Eco-routing с 2021 года выбирает маршрут с меньшим CO2 (учитывая elevation, traffic, fuel efficiency).",
+                "when_to_apply": "Применяй separate graph/algorithm per mode; combined query через orchestration; для transit обязательно time-dependent (RAPTOR/CSA).",
+                "edge_cases": "Combined routes сложны — drive 5 min к станции, park, train 30 min, walk 5 min — combinatorial problem. Accessibility (wheelchair) требует дополнительного фильтра edges. Avoid tolls/highways — user preferences modifying cost function.",
+                "related": "Q13 routing; Q15 CRP; Q17 ETA."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Transit routing проще driving routing, потому что fixed schedules делают граф deterministic.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Transit routing сложнее: time-dependent edges (edge доступна только в momenrt отправления автобуса), wait time = next departure - arrival, transfer modeling между routes, real-time delay predictions. Driving относительно проще с time-independent edges.",
+                "source_of_confusion": "Кандидат думает что schedule = упрощение, но time-dependent добавляет dimension.",
+                "if_it_were_true": "Не были бы разработаны RAPTOR/CSA специально для transit.",
+                "how_it_should_be": "Transit complex из-за time-dependent edges; RAPTOR/CSA для эффективности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Multi-modal не нужен в production — пользователи всегда выбирают один mode сами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Google Maps активно использует multi-modal: «как доехать общественным транспортом?» (transit), «маршрут для велосипеда» (cycling), «эко-маршрут» (eco-routing с учётом CO2). Это core features продукта.",
+                "source_of_confusion": "Кандидат недооценивает range пользовательских сценариев.",
+                "if_it_were_true": "Google Maps не разрабатывал бы transit routing, cycling layer, eco-routing.",
+                "how_it_should_be": "Multi-modal — обязательная часть production map; combined modes критичны для urban scenarios."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен POI search (geo + text combined) в Google Maps («pizza near me», «best Italian downtown»)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно простого full-text поиска в Elasticsearch без geo-фильтра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Pizza near me» без geo-фильтра вернёт пиццерии Италии вместо ближайших к user. Geo proximity критична для POI search. ES должен сочетать text relevance + geo distance + popularity в ranking.",
+                "source_of_confusion": "Кандидат не учитывает geo-aware nature POI queries.",
+                "if_it_were_true": "User в Москве искал бы «pizza» и получал Pizza Bianca из Рима — broken UX.",
+                "how_it_should_be": "Combined: text component (ES BM25) + geo component (S2/H3 lookup) + ranking ML."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "POI search не использует ML ranking — sorting по distance достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sorting по distance даёт ближайший fast food вместо лучшего ресторана. Ranking учитывает popularity (visits, reviews), quality (rating), open now status, user personalization, text relevance. ML model балансирует все факторы.",
+                "source_of_confusion": "Кандидат упрощает до «ближе = лучше».",
+                "if_it_were_true": "Google Places не имел бы ML ranking team.",
+                "how_it_should_be": "Retrieval (geo + text candidates top-1000) → ranking ML model → diversification."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pipeline: query parser → text component (ES BM25 на name/description), geo component (S2/H3 lookup для current location), category extraction (restaurant/store/etc) → retrieval top-1000 candidates → ML ranking (text relevance + distance + popularity + open now + user personalization + quality) → diversification (не показывать 10 одинаковых) → результаты. p99 < 300 мс, heavy caching popular queries. ES geo_point + text fields + custom scoring + ranking model на top-1000.",
+              "correct": true,
+              "sections": {
+                "explanation": "Двухэтапный pipeline: (1) Retrieval — быстрое narrowing к top-1000 candidates по geo (S2/H3 lookup в bbox или radius) + text (ES BM25 на индексированных полях name/description/aliases). (2) Ranking — ML model (LambdaMART, neural) скорит relevance + popularity + distance + open_now + user history. Diversification гарантирует разнообразие (не показывать 10 пиццерий одного бренда). Heavy caching: popular queries («pizza near me» в популярных районах) кешируются на минуты.",
+                "example": "Google Places API: search/details/autocomplete/nearby; Yandex Places — аналогичная структура; Foursquare Places — поиск + venue clustering через H3. Все используют combined retrieval + ranking.",
+                "when_to_apply": "Применяй для любого POI search; ranking ML критичен для качества; diversification для UX.",
+                "edge_cases": "Cold-start новые POI (нет popularity history) — boost новизны на короткий период. Spam detection — fake reviews влияют на ranking. Multi-language: «Pizza» vs «Пицца» vs «披萨» — поддержка нормализации.",
+                "related": "Q20 geocoding; Q21 places; Q22 архитектура."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "POI search можно сделать только через geo lookup без text indexing — современные maps так делают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Geo lookup даёт только всё в радиусе, без relevance к query («pizza»). Нужен text indexing для семантического match query → POI. Google Places использует ES для text + S2 для geo.",
+                "source_of_confusion": "Кандидат не различает geo-only browsing и text-based search.",
+                "if_it_were_true": "Google не разрабатывал бы Places search с text relevance.",
+                "how_it_should_be": "Combined text + geo + ranking; full-text ES + S2/H3 geo + ML ranking."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают forward geocoding (address → lat/lon) и reverse geocoding (lat/lon → address)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Forward и reverse geocoding это синонимы — описывают одну и ту же операцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Forward: address → lat/lon (input строка адреса, output координаты). Reverse: lat/lon → address (input координаты, output ближайший address). Это противоположные операции с разными algorithms.",
+                "source_of_confusion": "Кандидат не знает терминологии.",
+                "if_it_were_true": "API Google Geocoding имел бы только один endpoint, а имеет два разных.",
+                "how_it_should_be": "Forward = address → coordinates (parsing + gazetteer); Reverse = coordinates → address (spatial query + interpolation)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Geocoding не требует caching — все запросы уникальные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Popular addresses кешируются с 90%+ hit ratio: коммерческие адреса (магазины, рестораны), populated places («Москва», «Санкт-Петербург»), туристические места. Это снижает load и latency.",
+                "source_of_confusion": "Кандидат предполагает high cardinality всех адресов.",
+                "if_it_were_true": "Geocoding API имел бы latency секунды вместо ~200 мс.",
+                "how_it_should_be": "Heavy caching popular addresses; hash query → cached result."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Reverse geocoding (lat/lon → address) использует find nearest address point (spatial query) или nearest road segment + interpolate position; return address если distance < threshold; иначе city/country only.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это часть правильного описания, но утверждение покрывает только reverse. Также не упомянуты: forward (parsing + gazetteer + disambiguation + fallback ES); edge cases (ambiguous, multi-language); caching. Описание неполное.",
+                "source_of_confusion": "Частичное знание, но не охватывает оба направления.",
+                "if_it_were_true": "Описание было бы покрывающим, но пропущена forward сторона.",
+                "how_it_should_be": "Описать обе стороны: forward (parsing + gazetteer + disambiguation) и reverse (spatial query + interpolation); + edge cases."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Forward (address → lat/lon): parse address (street/number/city/country) → search в gazetteer (address database) → disambiguation (nearest/most populous/user history) → fallback к ES text search. Reverse (lat/lon → address): find nearest address point spatial query, или nearest road segment + interpolate position; return address с distance < threshold, иначе city/country. Tools: Nominatim (open-source), Google/Yandex/Mapbox Geocoding. Edge cases: ambiguous («Main Street»), new construction, multi-language («Москва» vs «Moscow»). Heavy caching popular addresses (90%+ hit).",
+              "correct": true,
+              "sections": {
+                "explanation": "Forward: address parser распознаёт компоненты (street, number, city, country). Gazetteer — структурированная база адресов с координатами. Disambiguation решает multiple matches: nearest к user, most populous, user history. Fallback на ES text search если структурный match не найден. Reverse: spatial query (nearest neighbor по lat/lon) к точкам адресов; альтернатива — найти ближайший road segment и interpolate позицию вдоль него по house number. Distance threshold (~50 м) — иначе return только city/country.",
+                "example": "Nominatim — open-source решение на базе OSM; Google Geocoding API; Yandex Geocoder; Mapbox Geocoding. Все поддерживают forward + reverse, autocomplete (typeahead).",
+                "when_to_apply": "Используй forward для address autocomplete и поиска места. Reverse — для «share my location» (показать адрес где user), check-in fixed location.",
+                "edge_cases": "Ambiguous address («Main Street» в нескольких городах) → return list. New construction (отсутствует в gazetteer) → fallback на nearest known. Multi-language: «Москва» / «Moscow» / «موسكو» — normalize и поддерживать synonym index.",
+                "related": "Q19 POI search; Q21 places; Q22 архитектура."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая архитектура хранения данных мест (Google Places, reviews, photos, opening hours) подходит для planet-scale?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Place schema: ID (Google Place ID ~30 char), name, types, geo (lat/lon), address, opening hours (per day), phone/website, photos, reviews (rating + text), popularity (Popular Times). Storage: place metadata в Spanner (global transactions) или Bigtable; reviews отдельно (high write volume); photos blob storage (S3-like, Colossus); geo index = S2 lookup. Update pipeline: business owner verifies → claims → edits через moderation; ML spam detection для fake reviews. Privacy: aggregated only (Popular Times без individuals).",
+              "correct": true,
+              "sections": {
+                "explanation": "Place data комбинирует разные access patterns: metadata (rare writes, frequent reads) подходит для Spanner (global ACID transactions, нужно для business edits) или Bigtable (если нужна большая scale без транзакций). Reviews — high write volume, отдельный store с дешёвой записью. Photos — blob storage (Colossus у Google, S3-equivalent). Geo index — S2 cell ID per place для proximity queries. Update pipeline критичен для quality: владелец business claim → edit → moderation queue → ML spam check → publish.",
+                "example": "Google Places API: search/details/autocomplete/nearby endpoints. Yandex Places API. Foursquare Places. Все используют hybrid storage (metadata + reviews + photos + geo index).",
+                "when_to_apply": "Применяй Spanner для metadata с глобальной consistency (business claim, edits); отдельный store для reviews (high write); blob для photos; S2 index для geo.",
+                "edge_cases": "Privacy: aggregated data only — Popular Times не identifies individuals. Spam: ML detection fake reviews обязательна. Multi-language: place names в разных языках хранятся в localized fields.",
+                "related": "Q19 POI; Q20 geocoding; Q23 storage."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Места можно хранить в одной таблице Postgres с GIN индексом на JSON-поле properties.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один Postgres не выдержит 200M+ places + миллиарды reviews + миллиарды photos на planet scale. Нужно split на metadata (Spanner/Bigtable), reviews (отдельный store), photos (blob), geo index (S2). GIN на JSON — для single-instance, не для planet scale.",
+                "source_of_confusion": "Кандидат масштабирует Postgres подход на планетарный масштаб.",
+                "if_it_were_true": "Google Places API использовал бы один Postgres — а они используют Spanner + Bigtable + blob storage.",
+                "how_it_should_be": "Hybrid: Spanner/Bigtable metadata, отдельный reviews store, blob photos, S2 geo index."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Photos мест хранятся в той же таблице что и metadata (один BLOB column) — отдельный blob storage не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Photos занимают много места (5-20 MB каждое, миллионы photos на place); хранение в metadata таблице раздуло бы её в петабайты и убило бы performance metadata queries. Standard pattern: blob storage (S3/Colossus) для bytes + URL в metadata.",
+                "source_of_confusion": "Кандидат не различает blob/object storage и relational DB.",
+                "if_it_were_true": "Spanner/Postgres metadata имели бы петабайты blob data — невозможно.",
+                "how_it_should_be": "Blob storage (S3-like) для bytes + URL/key в metadata DB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reviews не нуждаются в moderation pipeline и spam detection — пользователи самоорганизуются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fake reviews — major problem в Google Places: competitors paying для negative reviews, business astroturfing positive. ML spam detection критична. Без неё trust в ratings падает и API теряет value.",
+                "source_of_confusion": "Кандидат недооценивает adversarial nature reviews.",
+                "if_it_were_true": "Google не разрабатывал бы ML spam pipeline для reviews.",
+                "how_it_should_be": "Mandatory ML spam detection + manual moderation queue + business verification."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая high-level architecture описывает Google Maps на интервью senior-уровня?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Архитектура: один монолитный сервис на VM в US-East, без разделения на компоненты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Monolith не выдержит 2B users, 100B tile/day, multi-region requirements. Production Google Maps это распределённая система с десятками сервисов: tile service, search, geocoding, routing, traffic, ETA, places, edge CDN.",
+                "source_of_confusion": "Упрощение до monolith.",
+                "if_it_were_true": "Single VM не мог бы держать 100B tile req/day.",
+                "how_it_should_be": "Microservices: Tile + Search + Geocoding + Routing + Traffic + ETA + Places + Edge CDN per region."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Client → Edge POP/CDN (95% tile cache hit) → backend services: Tile Service (Bigtable storage), Search Service (ES + S2), Geocoding Service, Routing Service (CRP graph), Traffic Service (real-time probe + historical), ETA Service (ML inference DLRM/LightGBM), Places Service (Spanner), Auth. Data plane: tile pyramid в Bigtable (PB scale), road graph in-memory (10 GB/instance), POI в Spanner, traffic в Bigtable + Memcached. Async: Kafka → Flink для traffic; Spark batch для OSM nightly; Kafka → ES sync для places updates.",
+              "correct": true,
+              "sections": {
+                "explanation": "Архитектура разделена на edge layer (CDN), синхронные backend services (each отвечает за один domain), data plane (тип хранилища под use case), и async pipelines (для batch processing OSM, real-time probe ingestion, ES index sync). Edge CDN снимает 95% нагрузки. Каждый сервис имеет свой data store по pattern: Bigtable для KV-tiles, Spanner для transactional POI, memory-mapped для routing graph, Redis для hot traffic, Kafka для events.",
+                "example": "Google Maps в production: внутренний CDN (как Netflix Open Connect для tiles), Bigtable для tile pyramid, Spanner для Places metadata, internal Borg-deployed routing servers с memory-mapped graphs, Kafka + Flink для probe data ingestion. Async refresh для traffic ETA каждые ~30 сек.",
+                "when_to_apply": "Используй такую декомпозицию для любого planet-scale geo-сервиса: разделение на static (tile, base map) и dynamic (traffic, routing, search) — это первичный architectural split.",
+                "edge_cases": "Multi-region: per-region stacks с replicated tile pyramid (read-only, identical globally) и localized POI (different content per region). Cross-region failover через DNS.",
+                "related": "Q23 storage; Q24 multi-region; Q28 traffic; Q29 monitoring."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Routing service напрямую читает из Bigtable tile pyramid без in-memory graph.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Routing service использует preprocessed road graph (CH/CRP) в memory-mapped binary файлах (10-50 GB), не Bigtable tile pyramid. Tile pyramid — для отображения карты (raster/vector PNG/PBF), road graph — другая структура (nodes + edges + cost function).",
+                "source_of_confusion": "Кандидат смешивает tile storage и road graph (это два разных datastore).",
+                "if_it_were_true": "Routing query latency был бы секундный (Bigtable lookup для каждого edge) вместо 1-50 мс.",
+                "how_it_should_be": "Tile storage = Bigtable (read для display); Road graph = memory-mapped binary (CH/CRP preprocessed)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все сервисы синхронные — async pipelines (Kafka, Flink) не используются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Async критичны: probe events (1.5M/sec) — Kafka → Flink aggregation; OSM updates — Spark batch nightly re-preprocess; Place edits — Kafka → ES index sync. Sync request-reply не справится с этими volumes.",
+                "source_of_confusion": "Кандидат думает что все processing должно быть синхронным в request path.",
+                "if_it_were_true": "Probe ingestion не справился бы с 1.5M events/sec.",
+                "how_it_should_be": "Hybrid: sync для user-facing (tile, search, routing); async для batch processing и event streams (Kafka + Flink + Spark)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие хранилища выбирать под разные данные Google Maps (tiles, POI, road graph, traffic, imagery)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всё хранить в одном Postgres — управление проще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один Postgres не выдержит: 500B+ tiles (нужен Bigtable для scale), road graph 10-50 GB (нужен memory-mapped для latency), traffic data (нужен Redis для hot tier), satellite imagery эксабайты (нужен blob storage). Каждое хранилище под свой access pattern.",
+                "source_of_confusion": "Кандидат пытается унифицировать storage.",
+                "if_it_were_true": "Single Postgres не справился бы ни с tile volumes ни с routing latency.",
+                "how_it_should_be": "Hybrid: Bigtable tiles, Spanner/Postgres POI, memory-mapped road graph, Redis/Memcached traffic, blob imagery."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Road graph хранить в Bigtable и читать edge-by-edge на каждый routing query.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Routing query touches тысячи edges в графе — если каждый edge это Bigtable lookup, latency будет секундный. Road graph (10-50 GB) загружается полностью в memory-mapped файл routing-сервера → O(1) edge access. Bigtable для tile storage, не road graph.",
+                "source_of_confusion": "Кандидат предполагает что Bigtable универсален.",
+                "if_it_were_true": "Routing p99 был бы 5-30 сек вместо 1-50 мс.",
+                "how_it_should_be": "Road graph in-memory mapped binary; Bigtable для tiles, не для routing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Tiles в Bigtable/HBase с row key (zoom, x, y, tile_type, version) — sequential keys для range scans региона, mass parallel reads для CDN cache fill. POI в Spanner (Google scale, global transactions) или Postgres+PostGIS (Yandex level), schema places/reviews/photos/hours. Road graph — memory-mapped binary файлы с preprocessed CH/CRP, 10-50 GB per routing instance, replicated по fleet. Traffic — Memcached/Redis (hot, last 15 min) + Bigtable (historical 1 year). Imagery — object storage (Colossus, S3), petabyte scale, tile pyramid.",
+              "correct": true,
+              "sections": {
+                "explanation": "Storage decisions диктуются access pattern: (1) tiles — KV lookup по (zoom,x,y), high throughput reads, минимум writes (только при map update) → Bigtable; (2) POI — transactional (business claims/edits), global queries → Spanner или Postgres; (3) road graph — heavy random access (тысячи edges per routing query), latency-critical → in-memory; (4) traffic — hot recent data (last 15 min) + historical (year retention) → Redis + Bigtable; (5) imagery — массивная неизменяемая bytes → blob storage.",
+                "example": "Google: Bigtable (Spanner базовая technology), Colossus (file system), in-memory routing servers на Borg. Yandex: Yandex Database (analog Spanner), S3-compatible blob, in-memory routing.",
+                "when_to_apply": "Используй polyglot persistence: tile storage отдельно от POI отдельно от routing graph отдельно от traffic. Каждое хранилище под свой access pattern.",
+                "edge_cases": "Reviews high write volume → отдельный shard от places metadata. Photos blob с CDN перед blob. Hot traffic в Redis с TTL ~15 минут. Historical traffic в Bigtable с partition by day.",
+                "related": "Q9 tile pyramid; Q14 CH; Q21 places; Q22 архитектура."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Satellite imagery (эксабайты) хранить в Postgres BLOB columns с JSON metadata.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эксабайты imagery не помещаются в Postgres ни в каком виде. Blob storage (Colossus у Google, S3-equivalent) специально для bytes такого масштаба; Postgres — для structured metadata. URL/path в Postgres → bytes в blob.",
+                "source_of_confusion": "Кандидат пытается унифицировать на Postgres.",
+                "if_it_were_true": "Postgres размером в эксабайты — невозможно.",
+                "how_it_should_be": "Imagery в blob storage (Colossus/S3); URL в metadata DB."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовано multi-region и data sovereignty для Google Maps (China, EU GDPR, India)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Multi-region не требуется — single global region с lazy replication работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Single global region не справится: latency для пользователей в Asia/Africa был бы 200-500 мс из US-East, что убивает tile UX. Data sovereignty (GDPR, China firewall, India RBI) требует per-region data storage и compliance. Production map имеет десятки regions.",
+                "source_of_confusion": "Кандидат недооценивает latency и legal requirements.",
+                "if_it_were_true": "Google Maps не работал бы в Asia/Africa с приемлемой latency.",
+                "how_it_should_be": "Multi-region per geography + China отдельный стек + GDPR data residency + India RBI compliance."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все регионы используют одну и ту же дата-копию через геораспределённый Spanner.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GDPR требует EU data в EU only (нельзя реплицировать в US). China полностью отдельный стек (Google Maps не работает в Китае; локально Baidu/Gaode). Single global Spanner replica нарушил бы compliance.",
+                "source_of_confusion": "Кандидат смешивает global database с data sovereignty constraints.",
+                "if_it_were_true": "Google нарушил бы GDPR и был бы запрещён в EU.",
+                "how_it_should_be": "Per-region data residency: EU data в EU, China отдельный stack, India с localization, US/APAC согласно local law."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "China не требует отдельного стека — Google Maps работает там через VPN.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Google Maps заблокирован в China («Great Firewall»); только локальные Baidu Maps и Amap (Gaode) доступны. Google не предоставляет Maps service в China legally. Использование VPN — user-side, не корпоративная strategy.",
+                "source_of_confusion": "Незнание China internet landscape.",
+                "if_it_were_true": "Google официально предоставлял бы Maps в China.",
+                "how_it_should_be": "China — отдельный landscape (Baidu/Gaode локально); Google Maps там не работает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Multi-region: US-East/West (primary US), EU-West Ireland/EU-Central Frankfurt (GDPR), APAC Tokyo/Singapore, South America, Africa, Middle East. China — complete separate stack (Google Maps not available; Baidu/Gaode local). Russia — Yandex Maps dominant. EU GDPR — user data только в EU. India RBI/IT Act — некоторые localization. Per-region: tile pyramid replicated read-only (identical globally), POI localized, search relevance language+cultural tuned, routing graph regional partitions (continental). Cross-region routes orchestration on demand.",
+              "correct": true,
+              "sections": {
+                "explanation": "Regions выбираются по latency (POP per geography), data sovereignty (legal requirements per country), и user demand. Tile pyramid — same world map, replicate everywhere read-only (durability + access). POI — localized (рестораны и места разные per country). Search/ranking — culturally tuned (русские пользователи ищут по-другому чем американские). Routing graph — continental partition (Europe / North America / Asia) — cross-continental rare.",
+                "example": "Google: 30+ regions globally. China: Google Maps not available, локально Baidu Maps + Gaode Maps. Russia: Yandex Maps dominant, Google limited. EU: GDPR — Hamburg, Frankfurt, Dublin POPs с EU data residency. India: некоторые data localization per RBI/IT Act.",
+                "when_to_apply": "Применяй per-region stacks с replicated immutable map data + localized POI + per-region traffic; China и similar markets — complete separate stack; GDPR strict data residency.",
+                "edge_cases": "Failover при region outage — DNS routes к neighbor; map data available везде (replicated), POI temporary inconsistency acceptable. Cross-continental routing редко, orchestration on demand.",
+                "related": "Q22 архитектура; Q23 storage; Q27 privacy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализованы offline maps (download region для no-connectivity) в Google Maps?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Offline maps: user выбирает region; background download vector tiles (zoom 0-12) + POI data + road graph subset; storage MBTiles (SQLite) или PMTiles. Size: vector tiles country ~500 MB, POI ~100-200 MB, road subset ~500 MB - 2 GB, итого 1-3 GB per country. Offline functionality: map display полный, POI search через local index, routing через local graph + simpler algorithm (без real-time traffic), ETA через historical averages. Updates: периодические в Wi-Fi, per-region expiration 30-180 дней, diff updates.",
+              "correct": true,
+              "sections": {
+                "explanation": "Offline maps критичны для emerging markets, travel international (без роуминга), hiking/camping (без cell signal). Vector tiles идеальны для offline — компактны (вся страна в MB) и re-styleable client-side. MBTiles (SQLite файл) — стандартный контейнер. PMTiles новее (2022+), single-file без сервера. POI data — локализованный index для search. Road graph subset — для local routing (без real-time traffic, без advanced ML ETA). Diff updates — только изменения, не полный re-download.",
+                "example": "Google Maps offline: download Moscow region ~500 MB - 1 GB. Maps.me, Organic Maps — open-source offline maps на OSM. MBTiles широко используются для mobile/embedded.",
+                "when_to_apply": "Применяй для всех mobile map apps с возможностью no-connectivity scenarios; vector tiles в MBTiles/PMTiles контейнере; subset road graph для offline routing.",
+                "edge_cases": "No live traffic offline → ETA менее точна. No real-time search ranking (popularity, current open status). Storage on device limited — 1-3 GB per country, multiple countries требуют sync management.",
+                "related": "Q10 vector; Q11 rendering; Q17 ETA."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Offline maps требуют скачивания всех 500B tiles мира на телефон.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Download только выбранный region — country или меньше — и только нужные zoom levels (обычно 0-12, иногда до 16). 500B tiles мира это petabytes, не помещается ни на один телефон. Vector tiles страна ~500 MB.",
+                "source_of_confusion": "Кандидат пытается download всё.",
+                "if_it_were_true": "Offline maps были бы невозможны на mobile.",
+                "how_it_should_be": "Selective download per region и selective zoom levels; vector tiles для компактности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Offline routing невозможно — нужен только online режим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Offline routing работает через subset road graph (downloaded с region) + simpler algorithm (без real-time traffic). ETA менее точна (historical только), но базовый routing функционален.",
+                "source_of_confusion": "Кандидат не знает что road graph compact (10-50 GB total, country ~500 MB - 2 GB) и помещается на phone.",
+                "if_it_were_true": "Offline maps были бы только static viewer без navigation.",
+                "how_it_should_be": "Offline routing: local road graph subset + Dijkstra/A* + historical traffic averages для ETA."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Offline maps надо хранить в raster PNG — vector tiles не поддерживаются offline.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vector tiles предпочтительны для offline: 3-5× меньше raster (страна в MB, не GB), re-styleable client-side (dark mode work offline), interactive. Raster для country = 5-10 GB, vector = 500 MB - 1 GB.",
+                "source_of_confusion": "Кандидат не знает что vector tiles работают offline через WebGL/Metal.",
+                "if_it_were_true": "Mobile offline maps требовали бы 10+ GB per country вместо 1-3 GB.",
+                "how_it_should_be": "Vector tiles в MBTiles/PMTiles контейнере для offline; raster только для satellite layer."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроены Street View и indoor maps (airports, malls, museums) в Google Maps?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Street View это 3D rendering из CGI без реальных фото.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Street View это реальные 360° panorama photos снятые с автомобилей/backpacks, stitched из нескольких камер. CGI 3D rendering — это отдельный продукт Google Earth, не Street View. Реальные фото — основа Street View experience.",
+                "source_of_confusion": "Смешение Street View и Google Earth.",
+                "if_it_were_true": "Google не разъезжал бы по всему миру с Street View cars.",
+                "how_it_should_be": "Street View = реальные 360° panoramas из camera-equipped cars/backpacks; stitched + tiled."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Street View: 360° panorama photos с car/backpack-mounted cameras, stitched из multiple cameras, tiled (как map tiles), linked sequence для движения вдоль улицы. Panorama tiles ~100 KB - 1 MB, multiple zoom levels, linked metadata (heading/pitch/neighbors), эксабайты для world coverage. Privacy: auto-blur faces и license plates (CV models), manual takedown. Indoor maps: airports/malls/museums, multi-floor (elevators/escalators/stairs as edges), indoor positioning (Wi-Fi + Bluetooth beacons), specialized tiles per floor, indoor routing с floor-aware graph.",
+              "correct": true,
+              "sections": {
+                "explanation": "Street View — массивный image asset: миллионы streets × multiple panoramas каждые ~10 м × multiple zoom levels = эксабайты. Tiling работает аналогично map tiles, но с panorama coordinate system (heading angle 0-360°, pitch -90°+90°). Linked sequence позволяет user двигаться вдоль улицы. CV-моделирование auto-blur критично для privacy. Indoor maps добавляют altitude/floor dimension: один (lat, lon, floor) → индивидуальный tile. Routing внутри здания учитывает elevators/escalators как edges с time cost.",
+                "example": "Google Street View: 16M+ km global coverage, обновляется regular drivers + crowdsourced. Indoor maps: airports (LAX, JFK, Heathrow), malls, museums — partners + crowdsourced. Apple Look Around — аналог Street View с 2019.",
+                "when_to_apply": "Street View для urban exploration UX; indoor maps для navigation в больших buildings (airport gates, hospital wards); routing с floor-aware graph.",
+                "edge_cases": "Privacy: facial recognition auto-blur + license plate blur + manual takedown requests. Cultural sensitivity: некоторые страны (Germany) исторически возражали против Street View. Indoor positioning не GPS — Wi-Fi fingerprinting + BLE beacons.",
+                "related": "Q9 tile pyramid; Q22 архитектура; Q27 privacy."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Indoor maps используют GPS как primary positioning.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GPS плохо работает indoor (signal блокируется стенами). Indoor positioning использует Wi-Fi fingerprinting (известные access points → position) + BLE beacons (Bluetooth low-energy в зданиях) + visual SLAM (camera-based в новых системах).",
+                "source_of_confusion": "Кандидат не знает про indoor positioning challenges.",
+                "if_it_were_true": "Indoor maps были бы неточными в airports/malls.",
+                "how_it_should_be": "Indoor positioning: Wi-Fi + BLE + visual SLAM, не GPS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Street View не имеет privacy protections — фото публикуются как есть.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Auto-blur faces и license plates через CV models — стандарт. Manual takedown requests при ошибках blur. Privacy critical для legal/ethical reasons; Germany исторически блокировал Street View в некоторых районах.",
+                "source_of_confusion": "Незнание Street View privacy guidelines.",
+                "if_it_were_true": "Google нарушал бы GDPR и privacy laws.",
+                "how_it_should_be": "Mandatory auto-blur (CV models) + manual takedown + per-country legal compliance."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовано real-time location sharing и privacy (anti-stalking, GDPR) в Google Maps?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Location sharing просто пушит координаты в Redis без consent и retention.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GDPR требует explicit consent, time-limited sharing, right to revoke, audit log. Без consent location sharing нарушает law. Production реализация — explicit opt-in с time limits.",
+                "source_of_confusion": "Кандидат игнорирует privacy requirements.",
+                "if_it_were_true": "Google нарушил бы GDPR и был бы оштрафован миллиардами.",
+                "how_it_should_be": "Explicit consent + time-limited + revoke anytime + encrypted + audit log + auto-delete после retention."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Anti-stalking notifications не требуется в location sharing — это feature only Apple.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Google также имеет anti-stalking features (Find My Device, Unknown Tracker Alerts с 2023). Apple AirTag/Find My piвoneered этот space, но Google followed suit из-за похожих privacy concerns.",
+                "source_of_confusion": "Кандидат думает что только Apple занимается anti-stalking.",
+                "if_it_were_true": "Google игнорировал бы legal/PR pressure после Apple's AirTag controversies.",
+                "how_it_should_be": "Anti-stalking notifications в обоих ecosystems (Apple Find My + Google Find My Device); industry-wide focus с 2023."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Location sharing: client posts location updates каждые 10-30 сек, server stores tail buffer (last 24 ч или session); friends query getLocation(user_id, time). Privacy: explicit consent, time-limited (1ч/24ч/indefinite), revoke anytime, encrypted at-rest, auto-delete after retention. Storage: hot tier Redis (last hour), cold tier Bigtable (history if user wants), or ephemeral (no persistence). Notifications: geofencing trigger («arrived at destination»), anomaly detection («deviated from route»). GDPR: right to access (data export), right to erasure, audit log of who accessed. Anti-stalking: notification if unknown tracker follows you (Apple Find My / AirTag-style, Google аналог 2023+).",
+              "correct": true,
+              "sections": {
+                "explanation": "Location sharing — feature-rich, privacy-sensitive. Hot tier Redis для last hour (быстрый доступ для real-time friends view). Cold tier для history если user wants. Encryption at-rest обязательна. Time-limited sharing (1h/24h/indefinite) минимизирует data exposure. Geofencing для «arrived at destination» — trigger когда user попадает в radius. Anomaly detection для «deviated from route». GDPR rights: access (export), erasure (delete). Anti-stalking — industry-wide focus с 2023 после Apple AirTag misuse.",
+                "example": "Google Maps location sharing (через Plus codes или contacts). Apple Find My с time-limited sharing. Snapchat Snap Map (less stringent privacy). Anti-stalking: Apple Find My alerts если AirTag следует за тобой; Google Find My Device unknown tracker alerts.",
+                "when_to_apply": "Используй для friend/family sharing с explicit consent, time limits, encryption, audit log; anti-stalking notifications mandatory в 2024+.",
+                "edge_cases": "Hot Redis tier с TTL 1 час, cold Bigtable если user wants history. Encryption at-rest и in-transit. Auto-delete после session/retention. Audit log of accesses. Right-to-erasure on user request.",
+                "related": "Q21 places; Q22 архитектура; Q24 multi-region."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Location sharing не требует encryption — данные не sensitive.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Location data — highly sensitive (stalking, harassment, blackmail risks). GDPR классифицирует это special category data. Encryption at-rest и in-transit mandatory. Industry best practice.",
+                "source_of_confusion": "Кандидат недооценивает sensitivity location data.",
+                "if_it_were_true": "Google не использовал бы encryption и был бы взломан / оштрафован.",
+                "how_it_should_be": "Encryption at-rest (AES-256) + in-transit (TLS) + access control + audit log."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена traffic data ingestion (probe data, map-matching, ML smoothing) в Google Maps?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Traffic data собирается через ручные опросы пользователей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Traffic data — anonymous probe pings от phones (~1M phones × 1 update/30 sec = 33K events/sec per region). Manual surveys не масштабируются до миллиона телефонов в секунду. Probe data — automated, anonymized, opt-in.",
+                "source_of_confusion": "Кандидат не знает про automated probe ingestion.",
+                "if_it_were_true": "Real-time traffic было бы невозможно.",
+                "how_it_should_be": "Anonymous probe data от phones (opt-in) + Kafka + Flink streaming pipeline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Probe data не нуждается в anonymization — phone IDs можно хранить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GDPR и user privacy требуют anonymization. Probe data — sensitive (можно реконструировать movement patterns индивидуальных пользователей). Без anonymization нельзя использовать в production.",
+                "source_of_confusion": "Кандидат не учитывает privacy compliance.",
+                "if_it_were_true": "Google нарушил бы GDPR с массивными штрафами.",
+                "how_it_should_be": "Anonymized (no user_id), aggregated only, opt-in based; right-to-erasure compliant."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Map-matching не нужен — GPS координаты используются как есть.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GPS noise 5-15 м может перебросить ping на параллельную улицу или сторону road. Без map-matching traffic estimates искажены: pings ассоциируются с wrong edges. HMM map-matching snap к nearest most-likely road.",
+                "source_of_confusion": "Кандидат не знает про GPS noise issue.",
+                "if_it_were_true": "Traffic estimates были бы значительно искажены, особенно в dense road network.",
+                "how_it_should_be": "Map-matching через HMM (Hidden Markov Model) — most likely path given sequence of noisy GPS pings."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Pipeline traffic: phone GPS → Maps app → Kafka → Flink streaming. Map-matching (snap к nearest road через Hidden Markov Model, GPS noisy 5-15м). Speed estimation (distance/time между pings). Aggregation per edge × 1 минута window (median across many phones — robust to outliers). Smoothing: exponential moving average для stability. Real-time store: Memcached + Bigtable. Sparse data: borrow from historical patterns. Privacy: probe data anonymized (no user_id), aggregated, opt-in. Volume: 33K events/sec per region × 50 regions ≈ 1.5M/sec global. Storage hot: ~30 GB/day per region.",
+              "correct": true,
+              "sections": {
+                "explanation": "Probe ingestion — high-volume streaming pipeline. (1) Phone отправляет anonymized GPS ping каждые 10-30 сек. (2) Kafka шардирован по region/cell. (3) Flink streams: map-matching (HMM snap к road), speed estimation (consecutive pings), aggregation (per-edge median). (4) Median robust к outliers (typo GPS jumps). (5) EMA smoothing для stability (избежать резких изменений). (6) Sparse data — borrow from historical patterns (если edge мало пингов, использовать avg speed last week same hour). Privacy: anonymized (no user_id), aggregated only, opt-in.",
+                "example": "Google Maps traffic: 1M+ phones отправляющих probe data в каждом большом region; Flink cluster обрабатывает 33K/sec на регион; result feeds routing service для ETA и navigation re-routing.",
+                "when_to_apply": "Применяй streaming pipeline (Kafka + Flink) для high-volume sensor data; map-matching обязательно перед использованием в production; median + EMA для robustness.",
+                "edge_cases": "GPS noise 5-15 м может перебросить ping на параллельную улицу — HMM map-matching выбирает most likely path по sequence pings. Sparse data в rural areas — borrow from similar road types или historical. Opt-out users исключены из pipeline.",
+                "related": "Q17 ETA; Q22 архитектура; Q29 monitoring."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие monitoring metrics обязательны для production Google Maps?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Core latency: tile_load_p99 < 100ms cached, cdn_hit_ratio > 95%, search_latency_p99 < 300 мс, routing_latency_p99 < 500 мс, geocoding_latency_p99 < 200 мс, eta_inference_latency_p99 < 50 мс. Quality: eta_accuracy_mape < 8%, route_quality_score, search_ctr, zero_result_rate < 5%. Volume: tile/search/routing/probe events per sec. Failure: tile_render_failure_rate, routing_timeout_rate, traffic_data_staleness_seconds (alert > 5 мин). Business: DAU, places_added_per_day, eta_accuracy_per_country. Tracing OpenTelemetry. Alerting: page tile_p99 > 500 ms 10 min; slack eta_accuracy drop > 5% WoW; email traffic_staleness > 10 min.",
+              "correct": true,
+              "sections": {
+                "explanation": "Monitoring разделяется на четыре категории: (1) Latency — p99 per service, дают user-visible UX; (2) Quality — содержательные метрики, не только latency: eta_mape, ctr, zero_result_rate показывают насколько хорошо product работает; (3) Volume — tracking trends и capacity planning; (4) Failure — explicit failure rates, alerting. Distributed tracing (OpenTelemetry) позволяет видеть «routing query 380 мс = 100 мс graph fetch + 200 мс CRP + 50 мс ETA + 30 мс serialize». Alerts тиражируются по severity: page (critical), slack (warning), email (info).",
+                "example": "Google Maps Production Monitoring: real-time dashboards с p99 latency per service, CDN hit ratio per region, eta_mape per country. Pager alerts на critical latency degradation. SLO objectives автоматически рассчитываются на основе burn rate.",
+                "when_to_apply": "Используй этот набор как baseline для любого planet-scale geo-сервиса; добавляй product-specific metrics по необходимости (Street View access patterns, etc).",
+                "edge_cases": "Per-country break-down критичен для quality (eta_mape varies по country — emerging markets часто хуже). Per-region break-down для CDN hit ratio (некоторые regions могут иметь worse cache locality). Distributed tracing помогает диагностировать tail latency.",
+                "related": "Q3 SLA; Q22 архитектура; Q28 traffic."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно мониторить только availability (up/down) и CPU usage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Availability и CPU не показывают UX и quality. Сервис может быть «up» (HTTP 200), но отдавать tiles за 5 сек или иметь eta_mape 30% — формально up, фактически broken. Нужны latency p99, quality (eta_mape, ctr), CDN hit ratio.",
+                "source_of_confusion": "Упрощение мониторинга до базовых метрик.",
+                "if_it_were_true": "Quality regressions были бы невидимы.",
+                "how_it_should_be": "Multi-dimensional monitoring: latency + quality + volume + failure + business KPI."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "p50 latency достаточно — p99 это overkill.",
+              "correct": false,
+              "sections": {
+                "what_actually": "p50 скрывает tail latency. 1% from 100B requests/day = 1B медленных tile/day — billion bad UX per day. p99 critical для production; p999 для critical paths.",
+                "source_of_confusion": "Кандидат недооценивает scale impact tail latency.",
+                "if_it_were_true": "Tail problems оставались бы невидимы при p50-only мониторинге.",
+                "how_it_should_be": "Use p99 для service-level SLOs; p999 для critical; p50 для general health."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Alerting не нужен — engineers сами заметят проблемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На planet scale problems за секунды влияют миллионы users. Без automated alerting (PagerDuty page при critical latency degradation, slack для quality regression, email для info) engineers узнают слишком поздно.",
+                "source_of_confusion": "Underestimation of scale.",
+                "if_it_were_true": "Production incidents длились бы часы до manual detection.",
+                "how_it_should_be": "Multi-tier alerting: page (critical, < 5 min response), slack (warning), email (info)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор anti-patterns ближе всего к ловушкам в Google Maps system design на интервью?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Anti-patterns: «всегда использовать SQL для всего» и «не нужно мониторинга» — слишком обобщённые и применимы к любому сервису.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти anti-patterns generic. Google Maps-specific anti-patterns: raster everywhere вместо vector, naive Dijkstra на planet, geohash в новых системах, no CDN, no map-matching, sync routing на keystroke, ETA = length/speed_limit, polling traffic, single global routing graph. Конкретика важна.",
+                "source_of_confusion": "Кандидат не приводит domain-specific anti-patterns.",
+                "if_it_were_true": "Senior отвечал бы generic вместо демонстрации Google Maps domain knowledge.",
+                "how_it_should_be": "Geo-specific anti-patterns: raster, naive Dijkstra, geohash, no CDN, no map-matching, etc."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "(1) Raster tiles на всех zoom levels (vector 3-5× меньше; fix: vector default, raster только для satellite). (2) Naive Dijkstra на planet (5-30 сек/query; fix: CH/CRP preprocessing). (3) Geohash в новых системах (boundary/polar issues; fix: S2/H3). (4) No CDN для tile delivery (origin перегружен 100B/day; fix: 95%+ hit ratio CDN). (5) Sync routing на каждый keystroke (15 сек UI lag; fix: client-side prediction + async). (6) Single global routing graph (slow cross-continental rare; fix: continental partitions). (7) ETA = length/speed_limit (naive; fix: ML model). (8) Не invalidate tiles при map updates (fix: versioned URLs). (9) POI search без geo proximity (fix: combine text + geo). (10) Polling traffic на client (3M QPS; fix: WebSocket push). (11) Без map-matching probe (fix: HMM). (12) Без data sovereignty handling (fix: per-region stacks). (13) Same data для всех languages (fix: localized labels).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый anti-pattern привязан к конкретному architectural decision Google Maps. Raster vs vector — Q10. Naive Dijkstra vs CH/CRP — Q13-15. Geohash vs S2/H3 — Q5-8. No CDN — Q12. Routing на keystroke — UX problem (15 sec lag = 30 keystroke × 500 ms). Single global graph vs continental — Q24. ETA = naive formula — Q17. Tile invalidation — Q12. POI без geo — Q19. Polling traffic — Q28. Map-matching — Q28. Data sovereignty — Q24. Multi-language — Q24.",
+                "example": "Senior отвечает «не использовать naive Dijkstra на planet — нужно CH или CRP preprocessing» — это показывает domain knowledge. Junior отвечает «не использовать SQL» — общая фраза без specific.",
+                "when_to_apply": "Используй эти anti-patterns как checklist при design review; каждый attaches к корректному pattern в Q4-Q29.",
+                "edge_cases": "Некоторые «anti-patterns» context-dependent: например, raster appropriate для satellite layer, naive Dijkstra acceptable для маленького region. Анти-паттерн = wrong choice given scale.",
+                "related": "Q9 tile pyramid; Q12 CDN; Q13 routing; Q24 multi-region."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главные anti-patterns — choice cloud provider (AWS vs GCP vs Azure) и language (Java vs Go).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cloud и language choices не главные anti-patterns Google Maps system design. Основные ловушки domain-specific: raster vs vector, Dijkstra vs CH/CRP, geohash vs S2/H3, no CDN, etc. Cloud и language — детали implementation.",
+                "source_of_confusion": "Кандидат фокусируется на infrastructure rather than design.",
+                "if_it_were_true": "Senior отвечал бы implementation deta вместо design quality.",
+                "how_it_should_be": "Domain-specific anti-patterns: tile format, routing algorithm, geo index, CDN, ETA model, multi-region."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Anti-patterns не нужно знать — main thing это правильный design.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Knowing common anti-patterns — часть senior skillset. Они помогают избежать pitfalls в design и показывают depth knowledge на интервью. Без знания anti-patterns можно случайно reinvent broken approach.",
+                "source_of_confusion": "Кандидат недооценивает value negative knowledge.",
+                "if_it_were_true": "Senior не отличался бы от junior в design review.",
+                "how_it_should_be": "Знание anti-patterns обязательно: они checklist «что не делать» который дополняет «что делать»."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
