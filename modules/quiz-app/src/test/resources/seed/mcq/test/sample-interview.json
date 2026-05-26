@@ -6,55 +6,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Test question?",
+          "question_text": "Что произойдёт при модификации `final` коллекции в Java?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Correct option",
+              "text": "Модификация содержимого разрешена; `final` запрещает только переприсваивание ссылки.",
               "correct": true,
               "sections": {
-                "explanation": "Why correct",
-                "example": "Example here",
-                "when_to_apply": "When to apply",
-                "edge_cases": "Edge cases",
-                "related": "[[sample-interview#Q2]] note"
+                "explanation": "Модификатор `final` для переменной означает что нельзя переприсвоить саму ссылку. Содержимое объекта по этой ссылке (например, элементы List) можно менять свободно. Чтобы запретить мутацию содержимого — нужны immutable-обёртки: `List.copyOf(...)`, `Collections.unmodifiableList(...)`, `Set.of(...)`.",
+                "example": "final List<String> list = new ArrayList<>(); list.add(\"x\"); // OK, добавление разрешено. list = new ArrayList<>(); // compile error — переприсваивание запрещено.",
+                "when_to_apply": "Когда нужно зафиксировать ссылку на коллекцию (DI-поле, локальный кэш), но позволить ей наполняться/изменяться внутри метода.",
+                "edge_cases": "Для полной неизменяемости — `List.copyOf(source)` (immutable copy) или `Collections.unmodifiableList(list)` (read-only view; исходный список всё равно может меняться извне).",
+                "related": "[[java-final-interview|final-модификатор]], [[java-collections-interview|immutable collections]]"
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Wrong option 1",
+              "text": "Будет брошен `UnsupportedOperationException` при любой попытке `add`/`remove`.",
               "correct": false,
               "sections": {
-                "what_actually": "Reality",
-                "source_of_confusion": "Confusion",
-                "if_it_were_true": "Symptom",
-                "how_it_should_be": "Bridge"
+                "what_actually": "`final` влияет только на ссылку, не на API объекта. `add`/`remove` работают как обычно. UnsupportedOperationException — это поведение immutable-обёрток (`unmodifiableList`, `List.of`), не `final`.",
+                "source_of_confusion": "Кандидат путает «final-поле» с «immutable-коллекция». Это разные механизмы — final контролирует ссылку, immutability — API.",
+                "if_it_were_true": "Тогда `final List<X> cache = new ArrayList<>(); cache.add(...)` нельзя было бы использовать как DI-поле — а это типовой паттерн.",
+                "how_it_should_be": "Final = нельзя переприсвоить ссылку. Immutable обёртки = нельзя менять содержимое."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Wrong option 2",
+              "text": "Компилятор не пропустит код с `list.add(...)` если поле `list` объявлено final.",
               "correct": false,
               "sections": {
-                "what_actually": "Reality 2",
-                "source_of_confusion": "Confusion 2",
-                "if_it_were_true": "Symptom 2",
-                "how_it_should_be": "Bridge 2"
+                "what_actually": "Компилятор проверяет только переприсваивание ссылки. Вызов методов (`add`, `remove`) на финальной ссылке полностью разрешён.",
+                "source_of_confusion": "Параллель с C++ const — там const-объект действительно ограничивает вызовы non-const методов. В Java такого механизма нет.",
+                "if_it_were_true": "Lombok `@RequiredArgsConstructor` для final-полей был бы бесполезен для коллекций (`final List<X> items`).",
+                "how_it_should_be": "Java компилятор пропускает любые вызовы методов на final-ссылке."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Wrong option 3",
+              "text": "Поведение зависит от того, инициализирована ли коллекция через `List.of(...)` или `new ArrayList<>()`.",
               "correct": false,
               "sections": {
-                "what_actually": "Reality 3",
-                "source_of_confusion": "Confusion 3",
-                "if_it_were_true": "Symptom 3",
-                "how_it_should_be": "Bridge 3"
+                "what_actually": "Эффект от инициализатора есть, но он не связан с `final`. `List.of(...)` immutable независимо от final/non-final; `new ArrayList<>()` mutable независимо от final/non-final.",
+                "source_of_confusion": "Half-truth: разные initializer'ы действительно дают разные коллекции — но это не из-за `final`, а из-за выбранного фабричного метода.",
+                "if_it_were_true": "Тогда было бы 4 комбинации поведения (final/non-final × of/ArrayList). На самом деле только 2 (mutable vs immutable), и зависит только от initializer.",
+                "how_it_should_be": "Final — про ссылку, mutability — про сам объект; смешивать не надо."
               }
             }
           ]

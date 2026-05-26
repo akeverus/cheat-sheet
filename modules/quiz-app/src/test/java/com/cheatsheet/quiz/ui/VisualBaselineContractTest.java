@@ -45,7 +45,6 @@ class VisualBaselineContractTest {
                 .getContentAsString();
 
         String focusState = body.contains("id=\"interview-form\"") ? "question" : "empty";
-        assertThat(focusState).isIn("question", "empty");
 
         String signature = String.join("\n",
                 "title=" + firstGroup(body, "<title>([^<]+)</title>"),
@@ -57,13 +56,10 @@ class VisualBaselineContractTest {
                 "focusState=" + focusState
         );
 
-        // На свежем Postgres-контейнере БД пустая → empty. После того как кто-то
-        // первый раз сходил в /, импорт мог наполнить → question. Принимаем оба
-        // baseline'а, лишь бы оболочка совпадала с одним из них.
-        String baseline = "question".equals(focusState)
-                ? readBaseline("visual-baseline/focus-shell.txt")
-                : readBaseline("visual-baseline/focus-shell-empty.txt");
-        assertThat(signature).isEqualTo(baseline);
+        // Тест-фикстура (programming/java-strings.md + JSON-сид с 4 опциями)
+        // гарантирует focusState=question на свежем контейнере. Если падает с
+        // empty — значит сломан импорт или сидер.
+        assertThat(signature).isEqualTo(readBaseline("visual-baseline/focus-shell.txt"));
     }
 
     @Test

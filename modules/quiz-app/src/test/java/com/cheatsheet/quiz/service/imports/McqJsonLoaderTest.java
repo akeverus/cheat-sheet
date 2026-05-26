@@ -51,10 +51,16 @@ class McqJsonLoaderTest {
         List<AnswerOptionCreate> creates = captor.getValue();
         assertThat(creates).hasSize(4);
         assertThat(creates.get(0).correct()).isTrue();
-        assertThat(creates.get(0).optionText()).isEqualTo("A. Correct option");
-        assertThat(creates.get(0).explanation()).contains("**Развёрнутое объяснение.**", "Why correct");
+        // Option text формируется как "<LABEL>. <text>" — проверяем только префикс,
+        // чтобы тест не зависел от смысла seed-контента.
+        assertThat(creates.get(0).optionText()).startsWith("A. ");
+        assertThat(creates.get(0).explanation())
+                .contains("**Развёрнутое объяснение.**")
+                .contains("**Пример.**")
+                .contains("**Связанные вопросы.**");
         assertThat(creates.get(1).correct()).isFalse();
-        assertThat(creates.get(1).explanation()).contains("**Что на самом деле.**", "Reality");
+        assertThat(creates.get(1).optionText()).startsWith("B. ");
+        assertThat(creates.get(1).explanation()).contains("**Что на самом деле.**");
     }
 
     @Test

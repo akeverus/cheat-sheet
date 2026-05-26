@@ -1,0 +1,185 @@
+{
+  "topic_slug": "java-strings",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему String в Java immutable?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Из-за thread-safety, кэширования в string pool и безопасности использования в качестве ключа HashMap.",
+              "correct": true,
+              "sections": {
+                "explanation": "Immutable-объекты безопасно шарить между потоками без блокировок; неизменяемость гарантирует, что hashCode остаётся стабильным (важно для HashMap key); string pool безопасно интернирует литералы — два потока не «увидят» разное содержимое одного литерала.",
+                "example": "String a = \"hello\"; a.toUpperCase(); System.out.println(a); // \"hello\" — оригинал не изменился.",
+                "when_to_apply": "Когда передаёшь строку как ключ HashMap, кэшируешь её, шарринг между потоками — immutable исключает классы багов.",
+                "edge_cases": "С Java 9+ String внутри использует byte[] (Compact Strings) вместо char[], но контракт immutability не меняется.",
+                "related": "[[java-collections-interview|HashMap и контракт hashCode]]"
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Так решили в JLS, чтобы запретить разработчикам менять строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JLS фиксирует свойство, но за immutability стоят инженерные причины (string pool, hashCode-стабильность, thread-safety), не запрет ради запрета.",
+                "source_of_confusion": "На уровне «правило в спецификации» формально верно — но это следствие, а не причина.",
+                "if_it_were_true": "Тогда было бы непонятно зачем существует StringBuilder/StringBuffer как mutable-альтернативы для performance-критичного кода.",
+                "how_it_should_be": "Immutable из-за thread-safety + string pool + надёжного hashCode — JLS просто закрепляет дизайн."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Потому что char[] внутри String помечен как final и не может изменяться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поле value действительно private final, но это лишь механизм. Immutability на уровне API: класс не выставляет методов мутации, а reflection-обход — это нарушение invariant, не часть контракта.",
+                "source_of_confusion": "`final` рядом с массивом многим кажется достаточным условием — на самом деле final-ссылка не запрещает менять содержимое массива.",
+                "if_it_were_true": "Можно было бы сделать поле просто private (не final) — JVM всё равно дала бы immutability через API. Final тут для оптимизаций (constant folding), не для безопасности.",
+                "how_it_should_be": "Immutability — свойство API класса String, а private final value — деталь реализации, не первопричина."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы JIT мог инлайнить вызовы методов String — иначе компиляция была бы невозможна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JIT отлично инлайнит вызовы и для mutable-объектов (ArrayList, StringBuilder). Inlining не требует immutability.",
+                "source_of_confusion": "Звучит «технически» — JIT и immutability оба про performance, легко спутать.",
+                "if_it_were_true": "Тогда любой mutable-класс не мог бы быть JIT-оптимизирован — что неправда (см. любой mutable hot-path).",
+                "how_it_should_be": "Immutability помогает escape analysis и кэшированию hashCode, но JIT-inlining работает и без неё."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `==` отличается от `.equals()` для строк?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`==` сравнивает ссылки (адрес объекта в куче), `.equals()` сравнивает содержимое посимвольно.",
+              "correct": true,
+              "sections": {
+                "explanation": "`==` для объектов всегда сверяет, указывают ли две ссылки на один объект. `.equals()` у String переопределён и сравнивает посимвольно. Для литералов из string pool `==` иногда «работает» — это интернирование, а не контракт.",
+                "example": "String a = \"x\"; String b = new String(\"x\"); a == b // false; a.equals(b) // true.",
+                "when_to_apply": "Сравнение содержимого строк (логика домена) — всегда `.equals()`. `==` для строк допустимо только когда осознанно опираешься на интернирование (редкий случай).",
+                "edge_cases": "Если одна из ссылок null — `.equals()` падает с NPE. Безопаснее `Objects.equals(a, b)` или `\"literal\".equals(maybeNull)`.",
+                "related": "[[java-equality-interview|equals/hashCode-контракт]]"
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`==` всегда работает для строк, потому что Java интернирует все экземпляры автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Интернируются только литералы и явные `intern()`. Строка из `new String(...)`, `StringBuilder.toString()`, ввода пользователя, парсинга JSON — отдельные объекты.",
+                "source_of_confusion": "На простых литералах `\"a\" == \"a\"` действительно true, и кажется что это правило.",
+                "if_it_were_true": "Тогда `String s = new String(\"a\"); s == \"a\"` было бы true — но это false. Реальный bug-сценарий: парсинг входа.",
+                "how_it_should_be": "Для логики содержимого — всегда `.equals()` или `Objects.equals`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`.equals()` сравнивает строки только если у них одинаковая длина, иначе бросает IllegalArgumentException.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`String.equals` сначала проверяет длину как fast-path; если длины разные — возвращает false. Никаких исключений не бросает.",
+                "source_of_confusion": "Похоже на ситуацию когда длина действительно проверяется первым делом — но это оптимизация, а не контракт.",
+                "if_it_were_true": "Тогда любое сравнение строк было бы exception-prone, что разрушило бы базовые библиотеки.",
+                "how_it_should_be": "Разные длины → возврат false, без исключения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Java 17+ `==` для String переопределён через перегрузку оператора и эквивалентен `.equals()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java НЕ поддерживает перегрузку операторов. `==` для всех reference-типов всегда сверяет ссылки независимо от версии.",
+                "source_of_confusion": "В Kotlin/Scala `==` действительно делегирует на `equals`. Кандидат переносит эту модель на Java.",
+                "if_it_were_true": "Сломались бы существующие проверки `if (a == b) {...}` где сравнивались именно ссылки (например, в кэшах).",
+                "how_it_should_be": "Семантика `==` для ссылок в Java неизменна с 1.0."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как развернуть строку в Java?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`new StringBuilder(s).reverse().toString()` — O(n) по времени, корректно работает с surrogate pairs.",
+              "correct": true,
+              "sections": {
+                "explanation": "StringBuilder.reverse — встроенный метод, специально обрабатывающий suplementary characters (символы за пределами BMP, например emoji): не разрывает high/low surrogate. По времени O(n), по памяти O(n) на builder.",
+                "example": "new StringBuilder(\"abc\").reverse().toString() → \"cba\"; new StringBuilder(\"a😀b\").reverse().toString() → \"b😀a\" (emoji сохраняется как единое целое).",
+                "when_to_apply": "Любой production-код, где нужен разворот строки. Для educational кода — char[] + two pointers (видишь алгоритм).",
+                "edge_cases": "Surrogate pairs: char[] + два указателя без явной поддержки сломают emoji. StringBuilder.reverse это знает.",
+                "related": "[[java-string-interview|String API]], [[unicode-interview|UTF-16 и surrogate pairs]]"
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Строки в Java развернуть нельзя, потому что они immutable — нужно конвертировать в C через JNI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Immutability не запрещает создать новый объект (развёрнутая копия). StringBuilder/char[]/Stream — все работают, никакого JNI не нужно.",
+                "source_of_confusion": "«Immutable = ничего нельзя» — частое упрощение. На самом деле immutable = «существующий объект не меняется», новые объекты создавать можно.",
+                "if_it_were_true": "Тогда вся стандартная библиотека (String.toUpperCase, substring) тоже была бы недоступна.",
+                "how_it_should_be": "Immutable объекты заменяются новыми; reverse — частный случай."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать `System.arraycopy` — это единственный способ, через ручной обход char[].",
+              "correct": false,
+              "sections": {
+                "what_actually": "arraycopy — один из инструментов, но точно не «единственный». StringBuilder.reverse, char[]+swap, Stream API — все валидны.",
+                "source_of_confusion": "Кандидат знает arraycopy как «системный» метод и считает его единственно правильным.",
+                "if_it_were_true": "Решение через StringBuilder было бы deprecated. Это не так.",
+                "how_it_should_be": "StringBuilder.reverse — идиоматичное; arraycopy — на низком уровне иногда полезен для perf, но не «единственный»."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reverse возможен только для строк короче 1000 символов, иначе StackOverflowError.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нет такого ограничения. StringBuilder.reverse — итеративный, не рекурсивный, никакого стека.",
+                "source_of_confusion": "StackOverflow возможен в наивном рекурсивном reverse (reverse(s.substring(1)) + s.charAt(0)) — но это другая реализация, не стандартный путь.",
+                "if_it_were_true": "Тогда обработка длинных строк в Java была бы невозможна без буфера и обхода JVM.",
+                "how_it_should_be": "StringBuilder.reverse работает для строк любой длины, ограничено только heap-памятью."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
