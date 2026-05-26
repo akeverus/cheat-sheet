@@ -15,6 +15,9 @@
 | `cheatsheet-autofix-all.py` | Единая точка входа: прогоняет все 3 прохода + regenerate-toc по порядку. | ✓ |
 | `seed-options.py` | **DEPRECATED** (2026-05-25). Был оффлайн-сидером `answer_options` через Claude SDK прямо в SQLite. После перехода на PostgreSQL + JSON-сидеры заменён на stub. Текущий workflow — skill `mcq-quality-fixer` → JSON в `seed/mcq/`. | ✗ deprecated |
 | `insert-options.py` | **DEPRECATED** (2026-05-25). Ручной инсерт батча опций в SQLite. Тот же путь миграции — см. `seed-options.py`. | ✗ deprecated |
+| `healthcheck.sh` | Локальный smoke-test поднятого приложения: liveness/readiness probes + рендеринг страниц + static. Дефолт `http://localhost:8080`. | ✓ |
+| `verify-mcq-json.sh` | Валидирует MCQ JSON-сидеры по схеме `mcq-schema.json` (ajv или python jsonschema). Поддерживает staged-files режим для pre-commit. | ✓ |
+| `verify-md-no-mcq.sh` | Гарантирует отсутствие legacy MCQ-конструкций (`> [!mcq]`, эмодзи-маркеров) в `cheatsheets/interview/**.md`. MCQ должны жить только в JSON-сидерах. | ✓ |
 
 ## Запуск
 
