@@ -12,7 +12,14 @@ RUN gradle :quiz-app:bootJar --no-daemon -q
 # Финальный образ от непривилегированного пользователя
 FROM eclipse-temurin:17-jre
 ARG VERSION=0.0.1-SNAPSHOT
-LABEL org.opencontainers.image.version="${VERSION}"
+# OCI-стандарт labels — registries (GHCR, Docker Hub) их подхватывают для
+# карточки образа и интеграции с GitHub.
+LABEL org.opencontainers.image.title="cheat-sheet-quiz" \
+      org.opencontainers.image.description="Interview prep app with MCQ engine and spaced repetition" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/sergeyvoronin/cheat-sheet" \
+      org.opencontainers.image.documentation="https://github.com/sergeyvoronin/cheat-sheet#readme"
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
