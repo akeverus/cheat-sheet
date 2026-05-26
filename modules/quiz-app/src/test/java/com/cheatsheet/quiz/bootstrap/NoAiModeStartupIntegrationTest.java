@@ -11,6 +11,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -34,6 +35,16 @@ class NoAiModeStartupIntegrationTest {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("Вопросы временно недоступны"))));
+    }
+
+    @Test
+    void readinessProbeIsUp_inNoAiMode() throws Exception {
+        // Без AI-ключей и при дефолтном AI_FALLBACK_ENABLED=false:
+        // readiness обязан быть UP (db + seedCoverage оба ОК), потому что
+        // sample-interview сидер уже загружен из test-resources.
+        mockMvc.perform(get("/actuator/health/readiness"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
     }
 
     @Test
