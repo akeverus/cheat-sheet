@@ -31,6 +31,15 @@ spring:
     clean-disabled: ${FLYWAY_CLEAN_DISABLED:true}
   thymeleaf:
     cache: false
+  # Статика (CSS/JS/images) — version-busted через ?v=N в head fragment,
+  # поэтому безопасно кэшировать агрессивно. В dev переопредели
+  # через STATIC_RESOURCES_CACHE_SECONDS=0 если правишь styles.css вживую.
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: ${STATIC_RESOURCES_CACHE_SECONDS:86400}s
+          must-revalidate: true
 
 # ===========================
 # Конфигурация приложения
