@@ -471,6 +471,23 @@ MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always \
 с деталями `questionsTotal / questionsWithOptions / coverageRatio` до того,
 как пользователи откроют флешкарты вместо MCQ.
 
+### `/actuator/info` — состав образа
+
+Поле `seeds` в `/actuator/info` содержит сводку bundled JSON-сидеров:
+
+```json
+{
+  "build": { "version": "0.0.1-SNAPSHOT", "time": "..." },
+  "seeds": {
+    "totalTopics": 77,
+    "byCategory": { "algorithms": 4, "api": 1, "behavioral": 2, "...": "..." }
+  }
+}
+```
+
+Подходит для diff между деплоями («новая категория `ai-ml` приехала?»)
+и для быстрого ответа на вопрос «что вообще в этом контейнере».
+
 ### Бизнес-метрики (Micrometer)
 
 | Метрика                                            | Назначение                                                                                            |
