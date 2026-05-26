@@ -1,86 +1,35 @@
 #!/usr/bin/env python3
-"""Инсертит варианты ответа из JSON в answer_options. quality_profile_version=2.
+"""DEPRECATED: SQLite-based answer_options inserter.
 
-Usage:
-    python3 scripts/insert-options.py path/to/batch.json
-JSON format: см. контракт interview-options-writer.
+С 2026-05-25 проект использует PostgreSQL, а MCQ-опции живут в JSON-сидерах
+по пути ``modules/quiz-app/src/main/resources/seed/mcq/<category>/<topic>.json``.
+Этот скрипт ссылался на ``modules/quiz-app/data/db/interview.db`` (SQLite),
+которой больше нет, и потому при попытке запуска падал молча на коннекте.
+
+Современный workflow:
+    1. Создать/расширить JSON-сидер по схеме ``mcq-schema.json``.
+    2. Запустить приложение (или INTERVIEW_RESET_ON_STARTUP=true) — McqJsonLoader
+       загрузит опции в PostgreSQL автоматически.
+    3. Контрактом всех сидеров занимается SeedSchemaContractTest на каждом
+       ``./gradlew check``.
+
+См. также skill ``mcq-quality-fixer`` (заменил deprecated interview-options-writer).
 """
-from __future__ import annotations
-import json
-import sqlite3
 import sys
-from pathlib import Path
 
-DB = Path(__file__).resolve().parent.parent / "modules/quiz-app/data/db/interview.db"
-SOURCE = "CLAUDE"
-PROMPT_VERSION = 2
-QUALITY_PROFILE_VERSION = 2
+_MSG = (
+    "scripts/insert-options.py больше не поддерживается.\n"
+    "MCQ-опции теперь живут в JSON-сидерах:\n"
+    "  modules/quiz-app/src/main/resources/seed/mcq/<category>/<topic>.json\n"
+    "Используй skill mcq-quality-fixer или правь JSON напрямую — на старте "
+    "McqJsonLoader загрузит их в Postgres.\n"
+)
 
 
-def main(json_path: str) -> int:
-    data = json.loads(Path(json_path).read_text(encoding="utf-8"))
-    if not isinstance(data, list):
-        print("expected JSON array", file=sys.stderr)
-        return 2
-
-    conn = sqlite3.connect(str(DB))
-    conn.execute("PRAGMA foreign_keys = ON")
-    inserted_q = 0
-    inserted_o = 0
-
-    try:
-        conn.execute("BEGIN")
-        for entry in data:
-            qid = entry["qid"]
-            opts = entry["options"]
-            if len(opts) != 4:
-                raise ValueError(f"qid {qid}: expected 4 options, got {len(opts)}")
-            correct_count = sum(1 for o in opts if o.get("correct"))
-            if correct_count != 1:
-                raise ValueError(f"qid {qid}: expected 1 correct, got {correct_count}")
-
-            existing = conn.execute(
-                "SELECT COUNT(*) FROM answer_options WHERE question_id = ?", (qid,)
-            ).fetchone()[0]
-            if existing:
-                print(f"qid {qid}: skip (has {existing} options already)")
-                continue
-
-            for idx, o in enumerate(opts):
-                conn.execute(
-                    """
-                    INSERT INTO answer_options
-                      (question_id, option_text, is_correct, display_order,
-                       source, explanation, prompt_version, quality_profile_version)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        qid,
-                        o["text"],
-                        1 if o["correct"] else 0,
-                        idx,
-                        SOURCE,
-                        o.get("explanation"),
-                        PROMPT_VERSION,
-                        QUALITY_PROFILE_VERSION,
-                    ),
-                )
-                inserted_o += 1
-            inserted_q += 1
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        print(f"ROLLBACK: {e}", file=sys.stderr)
-        return 1
-    finally:
-        conn.close()
-
-    print(f"OK: questions={inserted_q} options={inserted_o}")
-    return 0
+def main() -> int:
+    sys.stderr.write(_MSG)
+    return 2
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: insert-options.py BATCH.json", file=sys.stderr)
-        sys.exit(2)
-    sys.exit(main(sys.argv[1]))
+    sys.exit(main())
