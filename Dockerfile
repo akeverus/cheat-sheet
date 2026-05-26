@@ -31,7 +31,10 @@ LABEL org.opencontainers.image.title="cheat-sheet-quiz" \
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -r app && useradd -r -g app -s /bin/false app
+# Explicit UID/GID (10001) делает образ совместимым с K8s
+# `securityContext.runAsUser: 10001`/`runAsGroup: 10001` и предсказуемым
+# на bind-mounted volumes — chown снаружи знает конкретные числа.
+RUN groupadd -r -g 10001 app && useradd -r -u 10001 -g app -s /bin/false app
 WORKDIR /app
 
 COPY --from=builder /build/modules/quiz-app/build/libs/*.jar app.jar
