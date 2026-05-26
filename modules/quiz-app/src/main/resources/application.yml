@@ -154,6 +154,16 @@ management:
         enabled: true
       show-details: never
       show-components: never
+      # liveness намеренно МИНИМАЛЕН: жив, если JVM не зависла. Не должен
+      # упасть от деградации БД или сидеров — иначе K8s рестартанёт под
+      # без шанса на самовосстановление.
+      # readiness включает реальные зависимости: если БД отключилась или
+      # сиды не загрузились — под выключается из трафика, но не рестартится.
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db,seedCoverage
   info:
     env:
       enabled: false
