@@ -21,6 +21,13 @@ spring:
     hikari:
       maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
       minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      # reWriteBatchedInserts превращает N мелких INSERT в один большой
+      # INSERT VALUES (...), (...), (...) на стороне драйвера. На стартовом
+      # импорте сидеров (77 топиков × N вопросов × 4 опции) даёт 5-10×
+      # speedup; для обычного OLTP-трафика прозрачно — без бэтча действует
+      # как обычный INSERT.
+      data-source-properties:
+        reWriteBatchedInserts: true
   flyway:
     locations: classpath:db/migration
     baseline-on-migrate: true
