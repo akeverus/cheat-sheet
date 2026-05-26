@@ -405,7 +405,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Design YouTube`](system-design/design-youtube-interview.md) — `28` вопросов
 - [Вопросы на собеседовании: `Design Web Crawler`](system-design/design-web-crawler-interview.md) — `26` вопросов
 - [Вопросы на собеседовании: `Design Key-Value Store`](system-design/design-key-value-store-interview.md) — `30` вопросов
-- [Вопросы на собеседовании: `Design Typeahead / Autocomplete`](system-design/design-typeahead-interview.md) — `25` вопросов
+- [Вопросы на собеседовании: `Design Typeahead / Autocomplete`](system-design/design-typeahead-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `OO Design: Parking Lot`](system-design/design-parking-lot-oo-interview.md) — `28` вопросов
 - [Вопросы на собеседовании: `OO Design: Elevator System`](system-design/design-elevator-oo-interview.md) — `26` вопросов
 - [Вопросы на собеседовании: `OO Design: Vending Machine`](system-design/design-vending-machine-oo-interview.md) — `24` вопроса

@@ -39,7 +39,7 @@ Master-план генерации interview-материалов через с�
 ## Фаза 2 — расширить тонкие
 
 - [x] **design-url-shortener-interview** ~~(8 Q → 28+ Q)~~ → **30 Q + 30 MCQ JSON** (rotation 8/8/7/7, ratio 1.14, schema VALID, BUILD SUCCESSFUL, 174 KB; очистил file от MCQ-callouts/Tier1 эмодзи/wikilinks). Завершено 2026-05-26.
-- [ ] **design-typeahead-interview** (25 Q — добить до 30+, добавить ML-ranking, personalization, multi-language).
+- [x] **design-typeahead-interview** ~~(25 Q — добить до 30+)~~ → **30 Q + 30 MCQ JSON** (rotation 8/8/7/7, ratio 1.14, schema VALID, BUILD SUCCESSFUL, 130 KB; добавлены Q26-Q30: ML ranking LambdaMART, query understanding, multi-language ICU, monitoring metrics, антипаттерны). Завершено 2026-05-26.
 - [ ] **design-search-interview** (20 Q → 28+). Inverted index, TF-IDF, BM25, vector search hybrid, faceted search, autocomplete, geo-search.
 
 ## Фаза 3 — добавить недостающие критичные
@@ -65,5 +65,7 @@ Master-план генерации interview-материалов через с�
 ## Состояние
 
 Запущено: 2026-05-26.
-Текущая итерация: **Фаза 2** → следующее **design-typeahead-interview** (25 Q → 30+ Q + ML ranking, multilanguage).
-Закрыто: design-feed-system, design-payment-system, design-rate-limiter, design-url-shortener (все по 30 Q + 30 MCQ, BUILD SUCCESSFUL).
+Текущая итерация: **Фаза 2** → следующее **design-search-interview** (20 Q → 28+ Q: BM25, vector hybrid, faceted, geo-search).
+Закрыто (Фаза 1): design-feed-system, design-payment-system, design-rate-limiter.
+Закрыто (Фаза 2): design-url-shortener, design-typeahead.
+Все: 30 Q + 30 MCQ JSON, BUILD SUCCESSFUL.
