@@ -4,6 +4,12 @@ server:
   # но даёт активным завершиться. K8s/docker compose шлют SIGTERM до SIGKILL
   # (по умолчанию 30s grace), поэтому Spring lifecycle тоже 30s.
   shutdown: graceful
+  # При работе за reverse proxy (nginx, Cloudflare, K8s Ingress) поднимаем
+  # X-Forwarded-* headers, чтобы Spring видел реальную схему (https) и IP
+  # клиента. Без этого Spring Security ломает same-site cookies, а
+  # CookieCsrfTokenRepository — Secure флаг. SERVER_FORWARD_HEADERS=none
+  # для случая «без proxy», по умолчанию — framework.
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS:framework}
   # GZIP для текстового контента. /stats и /index возвращают большой HTML —
   # сжатие даёт 5-10× меньше bandwidth. min-response-size=1KB чтобы не
   # тратить CPU на мелкие ответы (actuator/health, JSON-фрагменты).
