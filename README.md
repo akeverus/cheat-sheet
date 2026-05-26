@@ -22,6 +22,7 @@
 - [Профили Spring](#профили-spring)
 - [Доступ к приложению](#доступ-к-приложению)
 - [Проверка работоспособности](#проверка-работоспособности)
+- [Наблюдаемость (актуатор + метрики)](#наблюдаемость-актуатор--метрики)
 - [Управление данными](#управление-данными)
 - [Сборка и тесты](#сборка-и-тесты)
 - [Структура проекта](#структура-проекта)
@@ -447,22 +448,61 @@ curl -I http://localhost:8080/swagger-ui.html
 
 ---
 
-## Управление данными
+## Наблюдаемость (актуатор + метрики)
 
-### SQLite-файл
-
-По умолчанию БД находится в `data/db/interview.db` относительно рабочей директории при запуске. Чтобы начать с нуля:
+Эндпоинты `/actuator/health` и `/actuator/info` открыты по умолчанию. Чтобы
+включить `/actuator/metrics` и видеть детали health-компонентов:
 
 ```bash
-# Полный сброс — при следующем старте Flyway пересоздаст схему
-rm -rf data/db/
+MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,metrics \
+MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always \
 ./gradlew bootRun
 ```
 
-Альтернатива — флаг автосброса:
+### Health-компоненты
+
+| Компонент                | Что показывает                                                         |
+|--------------------------|------------------------------------------------------------------------|
+| `db`                     | Подключение к PostgreSQL.                                              |
+| `liveness` / `readiness` | Spring-стандартные пробы для K8s/Docker.                               |
+| `seedCoverage`           | Доля вопросов с загруженными опциями (из JSON-сидеров). DOWN при <50%. |
+
+Поломанный seed-импорт ловится `seedCoverage`: оператор увидит `DOWN`
+с деталями `questionsTotal / questionsWithOptions / coverageRatio` до того,
+как пользователи откроют флешкарты вместо MCQ.
+
+### Бизнес-метрики (Micrometer)
+
+| Метрика                                            | Назначение                                                                                            |
+|----------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| `mcq.seed.topic.requests{result=found\|notfound}`  | Сколько тем запрошено и сколько нашли JSON-сид.                                                       |
+| `mcq.seed.options.inserted`                        | Сумма опций, вставленных из сидеров за время жизни процесса.                                          |
+| `mcq.seed.questions.skipped`                       | Seed-вопросы, для которых в БД нет соответствующей записи (обычно — рассинхрон сидера и markdown).    |
+| `mcq.ai.fallback{outcome=suppressed\|called\|error}` | `suppressed` — seed-first сработал (норма). `called` — ушли в AI (только при `AI_FALLBACK_ENABLED=true`). `error` — AI-ответ упал. |
+
+Если `mcq.ai.fallback{outcome=called}` растёт без флага `AI_FALLBACK_ENABLED`
+или `mcq.seed.questions.skipped` непустой — это сигнал расследовать.
+
+---
+
+## Управление данными
+
+### База данных (PostgreSQL)
+
+Локальная разработка — `docker compose up -d postgres` (см. [Способ 4](#способ-4-docker-compose-с-postgresql)). Volume сохраняется между рестартами.
+
+Полный сброс БД при следующем старте — через флаг (TRUNCATE без пересоздания контейнера):
 
 ```bash
 INTERVIEW_RESET_ON_STARTUP=true ./gradlew bootRun
+```
+
+Чистый снос с volume (например при сбое миграции):
+
+```bash
+docker compose down -v   # удаляет volume
+docker compose up -d postgres
+./gradlew bootRun        # Flyway раскатает схему заново
 ```
 
 ### Сброс банка AI-вариантов
