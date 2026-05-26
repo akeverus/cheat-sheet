@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "design-search-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор требований точнее всего описывает search-сервис уровня e-commerce / site search?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Full-text + autocomplete + typo tolerance + facets + sort/pagination/highlight; нефункционально p99 < 200ms, peak ~10K QPS, freshness в секунды, 99.9%+ доступности и измеримая relevance quality.",
+              "correct": true,
+              "sections": {
+                "explanation": "Functional требования закрывают пользовательский путь: поиск по тексту, подсказки, опечатки, фильтры, сортировки, подсветка совпадений. Нефункционально для интерактивного UI критичны p99 < 200ms, тысячи QPS на пике, индексация в секунды и явные метрики relevance (recall@k, NDCG). Без этих SLO нельзя обоснованно выбрать архитектуру индекса, шардинг и кэширование.",
+                "example": "Shopify Search и Algolia держат p99 < 100-200ms при тысячах QPS на магазин, индексируют изменения каталога за секунды через CDC из product DB.",
+                "when_to_apply": "На interview сразу фиксируешь FR/NFR, чтобы потом обосновать BM25, scatter-gather, refresh_interval и LTR (см. Q10, Q18).",
+                "edge_cases": "Web-scale crawler уровня Google — отдельная тема (фокус на crawling, не на site search). Real-time чат-поиск требует freshness < 1s — refresh_interval надо тюнить.",
+                "related": "Q2 capacity; Q9 query flow; Q29 quality metrics."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно одного functional требования: вернуть документы по подстроке; SLO и freshness не обсуждаются на этапе сбора требований.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без NFR (latency, QPS, freshness, availability) невозможно выбрать ни тип индекса, ни sharding strategy. Это базовый каркас design-интервью.",
+                "source_of_confusion": "Кандидат прыгает в детали реализации, минуя discovery-фазу.",
+                "if_it_were_true": "Любой LIKE %x% на одной БД считался бы валидным решением для 100M документов.",
+                "how_it_should_be": "Сначала FR + NFR + scope, потом архитектура. См. Q1 шпаргалки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное требование — web-scale crawling миллиардов страниц по всему интернету, остальное вторично.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Site/product search специально вынес web crawler из scope — это отдельная подсистема (см. design-web-crawler-interview).",
+                "source_of_confusion": "Смешение Google web search и e-commerce site search.",
+                "if_it_were_true": "Каждое interview-задание сводилось бы к проектированию Googlebot.",
+                "how_it_should_be": "Уточнить scope (e-commerce, site, log search) и закрепить документы как «уже предоставлены»."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно требовать p99 < 5 секунд — пользователи привыкли к долгим поискам в корпоративных системах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Интерактивный UI требует p99 < 200ms; > 1s ощущается как лаг и обрушивает CTR и conversion.",
+                "source_of_confusion": "Перенос привычек legacy enterprise search на современный e-commerce.",
+                "if_it_were_true": "Никто не пользовался бы фичей; bounce rate взлетел бы.",
+                "how_it_should_be": "Закладывать p99 < 200ms и считать его в budget query understanding + retrieval + ranking."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "100M документов × ~1KB, 10K peak QPS, 3 копии. Какой capacity estimate ближе всего к правде?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "~10 GB raw + 1 шард: одного среднего сервера хватит на весь корпус и весь трафик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100M × 1KB = 100GB raw, а не 10GB; плюс inverted index ~50% от raw, плюс репликация — итого сотни GB.",
+                "source_of_confusion": "Ошибка на порядок (100M путают с 10M).",
+                "if_it_were_true": "Хватило бы одного шарда — но на 100M документов он бы упёрся в merge/GC/OOM.",
+                "how_it_should_be": "Считать docs × size аккуратно, накидывать overhead на индекс и репликацию (см. Q12)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "~100 GB raw, ~150-200 GB inverted index, ×3 копии ≈ 450-600 GB, шард 20-50 GB → ~10-15 шардов и порядка 10 data-нод для 10K QPS.",
+              "correct": true,
+              "sections": {
+                "explanation": "100M × 1KB даёт 100 GB raw данных. Inverted index с postings, positions, stored fields добавляет ~50% сверху → 150-200 GB одной копии. При 3 копиях (1 primary + 2 replicas) — 450-600 GB совокупного storage. Удерживая shard size 20-50 GB, получаем ~10-15 primary shards. Per-query CPU ~10 ms × 10K QPS / параллелизм по 10 шардам → нужно около 10 data-нод плюс отдельные master/coordinator.",
+                "example": "Типичный e-commerce Elasticsearch-кластер на 100M SKU: 10-15 шардов по 30 GB, 3 replica set, 10 hot data-нод с ~64-128 GB RAM каждая, hot indices частично в RAM.",
+                "when_to_apply": "На interview этим расчётом обосновываешь sharding/replication и капасити данные перед выбором ES vs Vespa vs Solr.",
+                "edge_cases": "Если документы намного больше 1KB (PDF, JSON с nested) — пересчёт; vector embeddings 1536 dim float32 добавляют ~6 KB на документ, что меняет картину.",
+                "related": "Q12 sharding; Q13 replication; Q22 hybrid + vector storage."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "~10 TB только под inverted index, и шарды по 1 TB — иначе индекс не построится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inverted index примерно равен или чуть больше raw; для 100GB raw это ~100-200 GB, не 10 TB.",
+                "source_of_confusion": "Путают объём индекса с объёмом logging-кластера на петабайт логов.",
+                "if_it_were_true": "Шарды 1 TB были бы неработоспособны — Lucene merge упирался бы в I/O и память.",
+                "how_it_should_be": "Шард 20-50 GB — практический sweet spot; rebalance и recovery остаются разумными."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Capacity не считают — Elasticsearch автоматически решит, сколько шардов нужно, и сам отскейлится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Number of shards задаётся при создании индекса и в общем случае не меняется (без reindex); auto-scaling не предсказывает sharding plan.",
+                "source_of_confusion": "Маркетинг managed-сервисов («serverless ES») создаёт иллюзию полной автоматизации.",
+                "if_it_were_true": "Можно было бы не считать capacity и не платить за oversharding.",
+                "how_it_should_be": "Считать руками: shard size, replication, hot data в RAM, peak QPS."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое inverted index и почему он эффективнее обычного forward index для full-text search?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это структура doc_id → text без изменений, просто стандартная таблица БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Doc_id → text — это forward index (то, как лежит таблица); inverted — это term → postings list.",
+                "source_of_confusion": "Терминологическая инверсия: «индекс» в БД и inverted index в IR не одно и то же.",
+                "if_it_were_true": "Любой SELECT по таблице был бы инвертированным индексом.",
+                "how_it_should_be": "Чётко разделять forward (doc→text) и inverted (term→docs)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это full table scan по всем документам при каждом запросе — медленно, но точно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inverted index как раз избавляет от full scan, обращаясь сразу к postings нужного term.",
+                "source_of_confusion": "Кандидат описывает наивный LIKE %x% поиск, а не IR-структуру.",
+                "if_it_were_true": "Поиск по 100M документам занимал бы минуты вместо миллисекунд.",
+                "how_it_should_be": "Подчеркнуть, что inverted index даёт O(matches), а не O(corpus)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Map term → postings list `[(doc_id, frequency, positions)]`; query «quick fox» пересекает postings двух слов вместо скана корпуса, давая O(matches) вместо O(corpus).",
+              "correct": true,
+              "sections": {
+                "explanation": "Inverted index хранит, для каждого term, отсортированный список documents с term frequency и positions. Запрос пересекает postings нужных term'ов — это даёт сложность пропорциональную числу совпадений, а не размеру корпуса. Positions позволяют фразовые запросы и proximity scoring. На диске постинги сжаты через variable-byte и delta encoding, hot terms кэшируются в RAM.",
+                "example": "Apache Lucene хранит posting lists в .doc/.pos/.pay файлах; Elasticsearch и Apache Solr строят кластер вокруг этого формата. Term «running» в каталоге Nike сразу даёт постинги релевантных SKU без сканирования миллионов товаров.",
+                "when_to_apply": "Любой full-text search; основа BM25/TF-IDF scoring (см. Q10).",
+                "edge_cases": "Очень частотные terms («the», «a») имеют огромные postings — отсюда стоп-слова и оптимизации типа block-max WAND. Update инвертированного индекса дорогой — отсюда сегменты Lucene и refresh_interval (Q25).",
+                "related": "Q4 analyzer pipeline; Q10 BM25; Q25 Lucene segments."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это просто sorted index на одной колонке таблицы, как B-tree в PostgreSQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "B-tree индекс ищет точное значение или диапазон по колонке; inverted index работает на уровне токенов внутри документа и поддерживает позиции, частоты, фразы.",
+                "source_of_confusion": "Унификация всех «индексов» под одну ментальную модель из БД.",
+                "if_it_were_true": "ElasticSearch и PostgreSQL B-tree были бы одинаково эффективны для full-text — но именно поэтому в Postgres есть отдельные GIN/tsvector индексы.",
+                "how_it_should_be": "Различать структурные индексы БД и IR-структуры; для full-text использовать inverted (Lucene, GIN)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой принцип analyzer pipeline критичен, чтобы запрос пользователя реально совпал с проиндексированными term'ами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pipeline применяется только при индексации; на query документ ищется по сырому тексту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Query тоже проходит через analyzer; иначе term «Running» не совпадёт с проиндексированным «run».",
+                "source_of_confusion": "Кандидат считает analyzer одноразовой preprocessing-стадией.",
+                "if_it_were_true": "Recall падал бы катастрофически — любая разница в регистре, склонении, диакритике ломала бы поиск.",
+                "how_it_should_be": "Один и тот же analyzer на index и query side (или совместимая пара index/search analyzer)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Стемминг и стоп-слова не нужны, если корпус большой — статистика BM25 всё нивелирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BM25 не убирает разницу между «running» и «run» — это работа analyzer; без stemming пользователь и индекс хранят разные term'ы.",
+                "source_of_confusion": "Смешение ranking-фазы и analysis-фазы.",
+                "if_it_were_true": "Можно было бы выкинуть analyzer и оставить только BM25.",
+                "how_it_should_be": "Tokenize → normalize (lowercase, NFKC, ASCII fold) → optional stop → stem/lemmatize, и одинаково на index/query."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно lowercase; tokenization и stemming делает БД при подстановке параметров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "БД не делает токенизацию и стемминг; этим занимаются Lucene/ES analyzers или явные NLP-библиотеки.",
+                "source_of_confusion": "Перенос ответственности на нижний слой, который её не несёт.",
+                "if_it_were_true": "PostgreSQL без `to_tsvector` уже искал бы по корням слов — но в реальности этим управляет analyzer.",
+                "how_it_should_be": "Описать pipeline в маппинге индекса; одинаковый analyzer для индекса и запроса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Один и тот же pipeline (tokenize → lowercase → ASCII fold → stop → stem/lemmatize) должен применяться при индексации и при query — иначе term'ы не совпадут.",
+              "correct": true,
+              "sections": {
+                "explanation": "Analyzer трансформирует и индексируемый, и запросный текст в одинаковый набор term'ов. Если на индексе применили `english` stemmer и привели «Running» к «run», а на query оставили сырое слово, никакой match не произойдёт. Стандартный pipeline: character filters → tokenizer → lowercase → ASCII fold/NFKC → optional stop words → stemmer/lemmatizer. Synonyms можно применять либо на индексе (раз — но больше storage), либо на query (гибко, но дороже на каждый запрос).",
+                "example": "Elasticsearch: `analyzer: english` на полях каталога SKU + тот же analyzer на match query. Apache Solr и OpenSearch строятся вокруг той же модели Lucene Analyzer.",
+                "when_to_apply": "Любой site search; multi-language платформы (Shopify, Booking) выбирают per-language analyzer.",
+                "edge_cases": "CJK языки требуют отдельных tokenizer'ов (kuromoji для японского, smartcn для китайского). Mismatch index/query analyzer — классический баг с «нулевыми» результатами в проде.",
+                "related": "Q26 query understanding; Q30 антипаттерн «нет analyzer per language»."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевая разница между Apache Lucene и Elasticsearch?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Lucene — Java-библиотека для индексирования и поиска на одной машине; Elasticsearch — distributed wrapper над Lucene с REST API, шардингом, репликацией и aggregations поверх кластера.",
+              "correct": true,
+              "sections": {
+                "explanation": "Lucene живёт как in-process Java library: построение индекса, scoring, query parsing. Elasticsearch берёт Lucene, добавляет cluster management (master/data nodes), шардинг, репликацию, JSON-based REST API, aggregations, snapshot/restore, security и Kibana-экосистему. То есть ES — это distributed product, а Lucene — engine внутри каждого узла.",
+                "example": "OpenSearch — форк Elasticsearch (AWS) на той же Lucene-базе. Apache Solr — альтернативный distributed product поверх Lucene. Vespa использует собственный engine, не Lucene.",
+                "when_to_apply": "Когда выбираешь стек для site/product search: standalone Lucene почти никогда (за пределами embed-ed JVM-сервисов), ES/OpenSearch/Solr — для кластерного поиска.",
+                "edge_cases": "Lucene напрямую — для embedded use cases (например, локальный desktop search). Typesense/Meilisearch построены без Lucene и нацелены на простоту ops.",
+                "related": "Q3 inverted index (Lucene format); Q25 Lucene segments + refresh_interval."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это два независимых поисковых движка с разной архитектурой; общий код они не делят.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Elasticsearch построен поверх Lucene; Lucene внутри каждого data-нода выполняет фактический поиск.",
+                "source_of_confusion": "Маркетинговое название Elasticsearch скрывает зависимость от Lucene.",
+                "if_it_were_true": "ES команда поддерживала бы собственный inverted index engine — но они активно контрибьютят в Lucene.",
+                "how_it_should_be": "ES = Lucene + cluster + REST + aggregations + ecosystem."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Lucene — это REST-сервис, Elasticsearch — встраиваемая библиотека.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: Lucene — библиотека на Java, ES — REST/JSON сервис.",
+                "source_of_confusion": "Кандидат перепутал направления.",
+                "if_it_were_true": "Можно было бы установить Lucene daemon и общаться через REST.",
+                "how_it_should_be": "Запомнить: Lucene — engine, ES/Solr/OpenSearch — distributed product над ним."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Elasticsearch и Lucene используют разные query languages, поэтому несовместимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ES Query DSL транслируется в Lucene queries; они тесно связаны.",
+                "source_of_confusion": "JSON DSL vs Lucene Query Parser выглядят разными синтаксически.",
+                "if_it_were_true": "Невозможно было бы делать fallback на raw Lucene queries (`query_string`).",
+                "how_it_should_be": "Понимать, что DSL ES — обёртка над теми же Lucene queries."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая high-level архитектура site search ближе всего к проверенной production-схеме?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Клиенты ходят SQL-запросом напрямую в основную OLTP-БД, без отдельного поискового слоя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OLTP-БД не выдержит full-text + facets на 100M документов и 10K QPS; нужен отдельный поисковый кластер.",
+                "source_of_confusion": "Соблазн «упростить» архитектуру для маленького проекта переносится на крупный.",
+                "if_it_were_true": "Главная БД деградировала бы под search-трафиком; OLTP-нагрузка страдала бы.",
+                "how_it_should_be": "Source → CDC → search index; reads через отдельный search-сервис (см. правильный вариант)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Data sources (Product DB, CMS) → indexing pipeline (CDC/Kafka) → Elasticsearch cluster; на чтение: clients → API Gateway → Query Service → ES scatter-gather, с Redis-кэшем популярных запросов и analytics-фидбеком для LTR.",
+              "correct": true,
+              "sections": {
+                "explanation": "Архитектура разделяет write-path (индексация) и read-path (запросы). Источники (Product DB, CMS) шлют изменения через CDC (Debezium) или event stream (Kafka) в indexing pipeline, который трансформирует, анализирует и пишет в Elasticsearch. На чтение клиенты приходят через API Gateway в Query Service: парсинг запроса, обращение к ES через scatter-gather, post-processing, Redis-кэш популярных запросов. Click logs из UI идут в analytics для LTR-обучения и A/B-тестов.",
+                "example": "Shopify Search и Airbnb listing search используют ровно эту схему: CDC от Postgres → Kafka → ES; query API с Redis caching и LTR re-ranker поверх top-1000 кандидатов.",
+                "when_to_apply": "Любой site/product search с миллионами документов и тысячами QPS.",
+                "edge_cases": "Для очень больших корпусов (LinkedIn, Amazon) добавляют отдельные tiers: hot, warm, cold; cross-cluster search для гео-распределения.",
+                "related": "Q7 indexing pipeline; Q9 scatter-gather; Q18 LTR; Q19 cache."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один монолит держит и OLTP, и поисковый индекс в одном процессе и одной таблице.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поисковый workload (write-heavy на индексацию, scatter-gather на чтение) принципиально отличается от OLTP по паттернам и тюнингу.",
+                "source_of_confusion": "Желание избежать «лишних» сервисов на ранних этапах.",
+                "if_it_were_true": "Каждый рост каталога и трафика бил бы и в основной продукт, и в поиск.",
+                "how_it_should_be": "Разделить write-path и read-path, выделить search-сервис и кластер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно одного Redis: все документы хранятся в нём как key/value, поиск идёт через SCAN.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redis SCAN — линейный обход всех ключей, неприменим для full-text поиска по миллионам документов.",
+                "source_of_confusion": "Redis удобен для кеша/leaderboard, но не заменяет inverted index.",
+                "if_it_were_true": "Любой запрос был бы O(N) по корпусу; p99 в минутах.",
+                "how_it_should_be": "Redis как cache layer (Q19), Elasticsearch как primary search engine."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно построить indexing pipeline, чтобы изменения каталога попадали в search-индекс с минимальной задержкой и без потери документов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cron раз в сутки делает SELECT * FROM products и переиндексирует весь каталог с нуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Full reindex раз в сутки даёт суточный lag — не подходит для e-commerce с частыми изменениями цен/наличия.",
+                "source_of_confusion": "Простая batch-схема работает на маленьких проектах, но не на 100M документов и десятков тысяч обновлений в час.",
+                "if_it_were_true": "Цены и stock-availability отставали бы от реальности на 24 часа.",
+                "how_it_should_be": "CDC + Kafka для near real-time; batch только для bootstrap/rebuild."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Приложение в одном HTTP-запросе пишет в БД и синхронно в ES; если ES упал, write fails — это гарантирует консистентность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это классический антипаттерн (Q30 п.2): availability продукта привязана к доступности ES; задержка пользовательского write = ES latency; нет ретраев на временные сбои.",
+                "source_of_confusion": "Иллюзия strong consistency «всё или ничего» поверх двух разных систем.",
+                "if_it_were_true": "Каждый ES hiccup ломал бы create product / update price на проде.",
+                "how_it_should_be": "Async pipeline через CDC + Kafka; идемпотентный consumer + retries + DLQ."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Source DB → Debezium CDC → Kafka topic → indexing consumer, который трансформирует и пишет в ES bulk API (500-5000 docs за batch) с идемпотентным document_id, ретраями и DLQ для failures.",
+              "correct": true,
+              "sections": {
+                "explanation": "CDC через Debezium читает WAL/binlog исходной БД и публикует изменения в Kafka. Indexing consumer применяет трансформации (enrich, denormalize, analyzer на стороне ES), затем пишет батчами 500-5000 документов через _bulk API. Document ID идёт из source primary key — это даёт идемпотентность: повторный consume того же event не создаёт дубликат, а перезаписывает документ. Failures идут в dead-letter queue для ручного разбора. Retry с backoff закрывает временные ES outage.",
+                "example": "Shopify и Booking используют Debezium из Postgres → Kafka → ES consumer с bulk write 1000 docs/batch. ID = product PK, никаких дубликатов при replay topic.",
+                "when_to_apply": "Любая система с большим write throughput и требованием freshness в секунды.",
+                "edge_cases": "Schema evolution в source DB требует версионирования событий и совместимого mapping в ES. Hot partitions Kafka — pre-partition by source_id. Backpressure при ES throttling — слушать reject и тормозить consumer.",
+                "related": "Q8 refresh_interval; Q25 translog durability; Q30 антипаттерны 2, 10, 13."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно polling из приложения раз в 5 минут: SELECT WHERE updated_at > last_check, потом INSERT в ES.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Polling бьёт по основной БД (особенно без правильного индекса), пропускает удаления (нет soft-delete tracking) и не масштабируется на десятки тысяч событий в секунду (Q30 п.10).",
+                "source_of_confusion": "Polling кажется простым, но в проде ломается на удалениях и при network gaps.",
+                "if_it_were_true": "DB load росла бы линейно с количеством search consumers; удалённые товары всё ещё в индексе.",
+                "how_it_should_be": "CDC из WAL/binlog — никакой нагрузки на основную БД сверх логирования, ловит INSERT/UPDATE/DELETE."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Elasticsearch обеспечивает near real-time поиск и какую роль играют refresh_interval и translog?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ES записывает документ напрямую в Lucene segment на каждый write — никаких буферов и логов не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lucene segments immutable; нельзя на каждый write создавать сегмент — переполнит I/O и merge. Поэтому есть in-memory buffer + refresh.",
+                "source_of_confusion": "Незнание Lucene segment model и role of refresh.",
+                "if_it_were_true": "Bulk indexing был бы невозможен; каждый документ = отдельный мелкий сегмент = cluster melt.",
+                "how_it_should_be": "Buffer → refresh → segment + translog для durability."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "refresh_interval — это TTL для документов; после истечения они автоматически удаляются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "refresh_interval управляет частотой превращения buffer'а в searchable segment, а не TTL документа.",
+                "source_of_confusion": "Терминологическая путаница: «refresh» как «обновление TTL» из Redis vs «refresh segment» из ES.",
+                "if_it_were_true": "Документы исчезали бы каждую секунду; продукт не работал бы.",
+                "how_it_should_be": "Понимать: refresh = flush buffer → new segment → visible to search."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Translog — это формат поискового запроса в Elasticsearch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Translog (translation log) — write-ahead log для durability: записывает write до того, как он появится в сегменте.",
+                "source_of_confusion": "Случайная ассоциация со словом «translate» и query language.",
+                "if_it_were_true": "Был бы отдельный диалект DSL под названием translog.",
+                "how_it_should_be": "Translog = WAL; refresh = flush buffer → segment; flush = fsync translog."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Документы пишутся в in-memory buffer, refresh_interval (default 1s) превращает buffer в новый immutable Lucene segment (видим для поиска); translog (WAL) даёт durability независимо от refresh — на bulk load полезно ставить refresh_interval=-1, потом возвращать 1s.",
+              "correct": true,
+              "sections": {
+                "explanation": "Архитектура NRT в ES: write → in-memory buffer + translog (WAL). refresh каждые 1s flush'ит buffer в новый Lucene segment, который становится searchable. Search идёт по всем сегментам, background merge объединяет мелкие сегменты в крупные. Translog отделён от refresh: он fsync'ится на каждый request (или async каждые 5s) и обеспечивает durability независимо от того, попал документ уже в сегмент или ещё в buffer. На bulk load выгодно отключить refresh (`refresh_interval: -1`), снизить число replicas, прогрузить данные и вернуть настройки — это даёт 3-5× ускорение.",
+                "example": "Elastic Stack для логов ставит `refresh_interval: 30s` и async translog; product search держит 1-5s; chat search оставляет 1s default.",
+                "when_to_apply": "Tuning под профиль нагрузки: real-time UI, bulk load, mass write logs, analytics-only.",
+                "edge_cases": "`translog.durability: async` экономит I/O, но даёт окно потери до 5s — недопустимо для financial/compliance (Q30 п.14). Force merge снижает число сегментов на холодных индексах.",
+                "related": "Q25 segments deep dive; Q30 антипаттерны 13, 14."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое scatter-gather в распределённом поиске и где у него болевые точки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Coordinator node получает запрос, рассылает (scatter) его всем шардам параллельно, каждый шард делает локальный top-K, coordinator мержит результаты глобально (gather), затем фетчит полные документы по ID; p99 определяется самым медленным шардом.",
+              "correct": true,
+              "sections": {
+                "explanation": "Распределённый поиск работает в две фазы. Query phase: coordinator парсит запрос и параллельно посылает его на все нужные шарды (или их реплики). Каждый шард выполняет локальный поиск, возвращает (doc_id, score) для своих top-K. Coordinator мержит локальные top-K в глобальный top-K. Fetch phase: coordinator делает targeted _mget по ID для финального top-K и собирает ответ. Главная боль — tail latency: общая p99 ≈ slowest_shard + merge + fetch, slow shard портит весь запрос (scatter-gather amplifies tail).",
+                "example": "Elasticsearch использует `adaptive_replica_selection` для маршрутизации на быстрейшую реплику; `search_timeout` обрезает медленные шарды; pre-filter (date range, tenant filter) сокращает scope до релевантных шардов.",
+                "when_to_apply": "Любой распределённый поиск (ES, Solr, Vespa); понимание critical для tuning p99.",
+                "edge_cases": "Hot shard (uneven routing) — постоянно tail latency. Cross-cluster search без timeout — один медленный кластер блокирует всё (Q30 п.15). Deep pagination через scatter-gather квадратично дорого — используется search_after / scroll.",
+                "related": "Q12 sharding; Q13 replicas; Q19 cache; Q30 антипаттерны 15."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Coordinator опрашивает шарды по очереди (последовательно), чтобы не перегружать сеть.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шарды опрашиваются параллельно; sequential убил бы latency пропорционально числу шардов.",
+                "source_of_confusion": "Кандидат смешивает sequential pagination со scatter-gather.",
+                "if_it_were_true": "p99 при 20 шардах был бы в 20× больше latency одного шарда.",
+                "how_it_should_be": "Parallel fan-out с timeout и adaptive replica selection."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Coordinator знает топ-K глобально без обращения к шардам — индекс агрегирован централизованно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Глобально агрегированного индекса не существует — данные физически шардированы, координатор обязан опросить шарды.",
+                "source_of_confusion": "Желание избежать fan-out в дизайне.",
+                "if_it_were_true": "Не было бы tail latency от шардов; но и масштабирование было бы невозможно.",
+                "how_it_should_be": "Принять scatter-gather как фундамент distributed search."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Каждый шард шлёт свои документы клиенту напрямую, минуя coordinator.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без координатора нельзя сделать global merge top-K; клиенту нечего делать с 10 фрагментами.",
+                "source_of_confusion": "Желание убрать «лишний» хоп.",
+                "if_it_were_true": "Клиент собирал бы и ранжировал результаты сам — но он не знает scores из других шардов.",
+                "how_it_should_be": "Coordinator делает merge top-K и fetch, отдаёт клиенту единый ответ."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем BM25 принципиально лучше классического TF-IDF и почему это default в Lucene/Elasticsearch?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "BM25 — это просто TF-IDF с другой формулой нормализации; качественной разницы нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BM25 вводит principled term-frequency saturation и length normalization — это меняет ranking качественно, особенно на текстах разной длины.",
+                "source_of_confusion": "Поверхностное чтение формул без понимания эффектов.",
+                "if_it_were_true": "Lucene не менял бы default scoring с TF-IDF на BM25 в 5.x.",
+                "how_it_should_be": "Понимать роль k1 (saturation) и b (length norm) — это и есть причина перехода."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "BM25 добавляет term-frequency saturation (parameter k1 ≈ 1.2 — 10 повторений term'а уже не дают 10× прироста score) и document length normalization (b ≈ 0.75 — длинные документы получают штраф); это устойчивее к keyword stuffing и сравнению документов разной длины.",
+              "correct": true,
+              "sections": {
+                "explanation": "Формула BM25: `score = IDF(t) × (TF × (k1+1)) / (TF + k1 × (1 - b + b × |D|/avgdl))`. Параметр k1 контролирует saturation: при k1=1.2 первые 1-2 встречи term'а дают основной прирост, дальше score асимптотически приближается к пределу — keyword stuffing перестаёт работать. Параметр b управляет length normalization: длинные документы получают penalty пропорционально |D|/avgdl, иначе они автоматически выигрывали бы за счёт большего числа вхождений. Это особенно важно при ранжировании смешанных корпусов (title vs body).",
+                "example": "Lucene 6+ и Elasticsearch 5+ переехали на BM25 как default similarity. BM25F расширяет на multi-field (title weight ×3, body ×1) — стандарт для product search.",
+                "when_to_apply": "Любой site/product search; BM25 — разумный default. Tuning k1/b через grid search на validation set для специфичных доменов (legal, medical).",
+                "edge_cases": "Короткие документы (title, name) часто лучше с `b=0.0` — отключение length penalty. Очень редкие term'ы (low df) — IDF может доминировать, для контроля используют BM25+.",
+                "related": "Q21 формулы и saturation; Q11 ranking beyond text; Q22 hybrid."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "BM25 не использует IDF и опирается только на term frequency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BM25 включает IDF(t) как множитель: редкие term'ы получают больший вес, как и в TF-IDF.",
+                "source_of_confusion": "Чтение только TF-части формулы.",
+                "if_it_were_true": "Очень частые слова доминировали бы в score, search был бы практически бесполезен.",
+                "how_it_should_be": "Помнить, что BM25 = IDF × normalized_TF."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "BM25 — это нейросетевой ranking, обученный на click logs.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BM25 — детерминированная probabilistic функция без ML training. ML-ranking — это LTR (см. Q11, Q18).",
+                "source_of_confusion": "Смешение probabilistic IR и learning-to-rank.",
+                "if_it_were_true": "Не было бы причин делать отдельный LTR re-ranker поверх BM25.",
+                "how_it_should_be": "BM25 — retrieval; LTR — re-ranking; они дополняют друг друга."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать ranking для e-commerce с учётом сигналов помимо текстовой релевантности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Использовать только BM25 — клики и популярность вносят шум.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pure BM25 игнорирует freshness, popularity, conversion — на e-commerce это убивает revenue (Q30 п.11).",
+                "source_of_confusion": "Желание не усложнять ranking.",
+                "if_it_were_true": "Топ выдачи был бы максимально текстуально релевантен, но плохо конвертил бы.",
+                "how_it_should_be": "BM25 как base + boost фичи (popularity, freshness) + LTR re-rank."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Заменить BM25 на нейросетевую модель, которая делает scoring сразу на всех 100M документах за один запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нейросеть не может scoring'ить весь корпус за p99 < 200ms; модели применяются только на top-K кандидатов после retrieval.",
+                "source_of_confusion": "Идея «end-to-end neural search» переоценивает компьют-бюджет.",
+                "if_it_were_true": "p99 был бы секунды; cost compute astronomical.",
+                "how_it_should_be": "Two-stage: cheap retrieval (BM25 / hybrid) → expensive re-rank на top-100/1000."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Two-stage: stage 1 — cheap retrieval (BM25 или hybrid BM25+dense) даёт top-1000 кандидатов; stage 2 — ML re-ranker (XGBoost/LambdaMART или cross-encoder) с user/query/doc фичами ре-ранкирует до top-100; деплоится через A/B test с метриками CTR / NDCG / conversion.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандарт modern search: разделение retrieval и re-ranking. Stage 1 быстро и дёшево вытаскивает топ-1000 кандидатов через BM25 или hybrid (Q22) — миллисекунды. Stage 2 применяет дорогую ML-модель (LambdaMART, two-tower или cross-encoder) к этим кандидатам с фичами query (intent, длина), document (popularity, freshness, click-through history), user (preferences, location, history). Это даёт лучшую precision на top-K без необходимости запускать тяжёлую модель на всём корпусе. Модель обучается на click logs (с position bias correction через inverse propensity) и деплоится через A/B test против baseline.",
+                "example": "Amazon, eBay, Booking, LinkedIn используют именно two-stage. Elasticsearch LTR plugin позволяет хранить feature extractors внутри ES и применять XGBoost-модель на rescore phase.",
+                "when_to_apply": "E-commerce, content platforms, job/listing search — везде, где есть business-метрики (conversion, CTR) сверх текстовой релевантности.",
+                "edge_cases": "Cold start новой модели — pre-warm cache. Position bias в обучающих кликах — IPS, click model. Latency budget re-ranker'а 10-30ms на CPU; cross-encoder ставят с осторожностью.",
+                "related": "Q18 LTR analytics; Q22 hybrid retrieval; Q28 personalization."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Жёстко прибить score = BM25 + 1000 × is_bestseller, без обучения и A/B тестов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Жёсткие веса не отражают реальное поведение пользователей, не учитывают контекст запроса, ломаются при изменении каталога.",
+                "source_of_confusion": "«Простое» правило кажется лучше «непонятного» ML.",
+                "if_it_were_true": "Бестселлеры доминировали бы в любых запросах, релевантность падала бы.",
+                "how_it_should_be": "Hand-tuned формулы — только как baseline; LTR + A/B test для production."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая sharding-стратегия адекватна для site search на 100M+ документов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один большой shard на весь индекс — проще управлять.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один shard на 100M документов даёт 100-200 GB на одной ноде: медленный merge, full GC, OOM (Q30 п.1).",
+                "source_of_confusion": "Желание избежать distributed complexity.",
+                "if_it_were_true": "Не было бы понятия sharding в ES/Solr.",
+                "how_it_should_be": "Shard size 20-50 GB, считать число shards заранее (изменение требует reindex)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "По одному shard на каждый документ — максимальная параллелизация.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тысячи мелких шардов = огромный metadata overhead, scatter-gather на каждые 100 шардов амплифицирует tail latency.",
+                "source_of_confusion": "Кандидат экстраполирует «больше шардов = лучше» в абсурд.",
+                "if_it_were_true": "ES cluster развалился бы под cluster state size.",
+                "how_it_should_be": "Считать `total_data_size / 20-50GB` для оптимального числа шардов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все шарды на одной ноде, чтобы упростить data locality.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не sharding, а просто несколько lucene-индексов на одной машине; HA и horizontal scaling отсутствуют.",
+                "source_of_confusion": "Поверхностное понимание data locality.",
+                "if_it_were_true": "Падение одной ноды = потеря всего индекса.",
+                "how_it_should_be": "Distributed: шарды и реплики по разным нодам, не на одной машине."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Считать целевой shard size 20-50 GB, плюс выбрать sharding mode: default hash by doc_id для ровного распределения; custom routing key (например, tenant_id) для targeted query при multi-tenancy; time-based индексы (logs-YYYY-MM) с alias для логов и time-series workload.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sharding strategy зависит от профиля workload. Default — hash by doc_id, документы ровно размазываются по N шардам; запрос идёт scatter-gather на все. Custom routing (`routing=tenant_id`) кладёт документы одного tenant'а на один shard, query с тем же routing бьёт только в один shard — это огромная экономия CPU при многотенантности, но требует контроля hot tenants. Time-based — индекс на день/месяц с rollover alias; запросы с date filter затрагивают только релевантные индексы, старые уходят в cold tier или удаляются.",
+                "example": "Shopify Search использует routing by shop_id; ELK для логов делает daily indices `logs-2026-05-26` с ILM. Amazon Product Search — hash-based default sharding по миллионам SKU.",
+                "when_to_apply": "Любая системная архитектура: matched workload pattern → matched sharding strategy.",
+                "edge_cases": "Hot tenant в routing-mode даёт hot shard — нужен tiered подход (Q27). Изменение number_of_shards требует reindex через alias swap (Q20).",
+                "related": "Q13 replication; Q20 rollover; Q27 multi-tenancy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужны replica shards и как правильно их конфигурировать в Elasticsearch?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Replica shard — это copy primary shard для HA (node failure → replica промоутится в primary) и для read throughput (queries балансируются между primary и replicas); типично 1-2 replicas на primary, расположенных на разных нодах, write идёт sync на primary + все in-sync replicas перед ACK.",
+              "correct": true,
+              "sections": {
+                "explanation": "Replica shard выполняет двойную функцию: durability и read scaling. На каждый primary создаётся N replicas (типично N=1 для умеренной HA, N=2 для quorum-style). Replicas распределяются по разным нодам — нельзя двум репликам одного shard'а жить на одной машине, иначе HA фиктивна. Write flow: запрос идёт на primary, primary параллельно реплицирует на все in-sync replicas, ждёт ack от них, потом отвечает клиенту (sync replication). Read flow: balancer выбирает primary или replica (adaptive replica selection — fastest). При падении primary — replica автоматически промоутится.",
+                "example": "Production cluster: 10 data nodes, index с 10 primary shards и 1 replica каждый = 20 shards total, hardware redundancy на любую single-node failure без потери данных. Booking, Algolia держат replica count 2-3 для критичных индексов.",
+                "when_to_apply": "Любая prod-инсталляция с требованием HA; read-heavy workload (search) особенно выигрывает от множества реплик.",
+                "edge_cases": "Bulk loading: временно ставят `number_of_replicas: 0`, грузят, потом возвращают — ускоряет 2-3×. Cross-AZ replicas необходимы для AZ failure tolerance.",
+                "related": "Q12 sharding; Q9 scatter-gather; Q25 translog durability."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Replica нужны только для read scale; для HA они бесполезны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Replica — это и copy для durability при node failure, и дополнительные «руки» для read.",
+                "source_of_confusion": "Кандидат разделяет HA и replicas, не понимая failover promotion.",
+                "if_it_were_true": "Падение data node означало бы потерю данных.",
+                "how_it_should_be": "Replica = HA + read scaling одновременно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Replicas можно разместить на той же ноде, что и primary — это сокращает network latency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ES запрещает primary и replica одного shard на одной ноде; иначе HA фиктивна (нода падает — пропали обе копии).",
+                "source_of_confusion": "Желание оптимизировать network latency игнорирует цель HA.",
+                "if_it_were_true": "Один отказ = потеря данных, replicas не давали бы никакой защиты.",
+                "how_it_should_be": "Replicas на разных нодах (а лучше — в разных AZ); ES enforce'ит это через shard allocation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ES автоматически создаёт 100 replicas каждой shard для максимальной отказоустойчивости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Default number_of_replicas = 1; пользователь задаёт явно. 100 replicas — абсурдный storage cost.",
+                "source_of_confusion": "Кандидат не знает defaults и подгоняет под «больше — лучше».",
+                "if_it_were_true": "Каждый write реплицировался бы 100 раз, write throughput падал бы катастрофически.",
+                "how_it_should_be": "1-2 replicas — sweet spot; 0 на этапе bulk load."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать autocomplete (typeahead) с подсказками за десятки миллисекунд?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Использовать обычный full-text search с wildcard `*query*` на основном индексе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Leading wildcard — антипаттерн (Q30 п.6); latency взлетает до секунд, ranking хаотичен.",
+                "source_of_confusion": "Желание переиспользовать существующий поисковый индекс без специализированной структуры.",
+                "if_it_were_true": "Typeahead был бы непригоден для UI.",
+                "how_it_should_be": "Специализированная структура: FST (completion suggester) или Redis sorted sets с pre-computed top-K."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Elasticsearch completion suggester на базе FST (Finite State Transducer) для in-memory prefix lookup, или Redis sorted sets `ZADD prefix:{p} score term` для каждого префикса с popularity score; обе структуры дают sub-50ms latency и поддерживают ranking + опционально fuzzy match.",
+              "correct": true,
+              "sections": {
+                "explanation": "Specialised autocomplete структуры решают две задачи: prefix lookup за O(prefix_length) и ranking по popularity. ES completion suggester использует FST — компактная in-memory структура с shared prefixes; поддерживает fuzzy с edit distance, контексты (category, location), scoring. Альтернатива — Redis sorted sets: ключ — префикс (например, `ac:nik`), значения — кандидаты с popularity scores; `ZRANGE` за O(log N) даёт top-K. Pre-compute из query logs, refresh каждые несколько минут. Trie или radix tree — embedded вариант в API-сервисе.",
+                "example": "Booking, Airbnb, LinkedIn используют ES completion suggester. Поиск в Twitter / X строится на in-memory radix trie с popularity scoring. См. design-typeahead-interview для глубокого погружения.",
+                "when_to_apply": "Любой UI с поисковой строкой; высоконагруженные сервисы выделяют typeahead в отдельный сервис.",
+                "edge_cases": "Multi-locale — отдельные структуры per язык. Real-time updates популярности (vir события) — separate stream с rebuild. Personalization добавляется на re-ranking стадии после top-K из trie.",
+                "related": "Q15 fuzzy match; см. design-typeahead-interview Q3 trie sizing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно SQL `LIKE 'prefix%'` на основной БД — простое решение для любого масштаба.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SQL LIKE 'prefix%' с B-tree индексом работает на маленьких объёмах, но без popularity ranking и при высокой QPS бьёт по основной БД.",
+                "source_of_confusion": "Кандидат недооценивает требования к p99 и popularity.",
+                "if_it_were_true": "Production typeahead на LIKE деградировал бы при росте QPS и каталога.",
+                "how_it_should_be": "Specialised structure (FST/Trie/Redis sorted sets) с pre-computed ranking."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Не нужно отдельной структуры — обычный inverted index ES автоматически работает как typeahead.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inverted index оптимизирован под full-term match, не под prefix lookup с low latency и ranking.",
+                "source_of_confusion": "Думают, что ES «всё умеет из коробки» без знания специальных features.",
+                "if_it_were_true": "Не было бы отдельного completion suggester и edge_ngram analyzer.",
+                "how_it_should_be": "Использовать completion suggester или edge_ngram + boost popularity."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить typo tolerance, чтобы запрос «appel» нашёл «apple»?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Запретить опечатки в UI — пользователь должен писать правильно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Опечатки — норма (~10-20% запросов); запрет ломает UX.",
+                "source_of_confusion": "Желание упростить backend перекидыванием ответственности на пользователя.",
+                "if_it_were_true": "Bounce rate и abandonment взлетели бы.",
+                "how_it_should_be": "Fuzzy match, n-gram, phonetic — производство нормально терпит опечатки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Хранить полный словарь возможных опечаток для каждого term'а вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не масштабируется — комбинации опечаток экспоненциально растут, новые term'ы постоянно появляются.",
+                "source_of_confusion": "Желание заменить алгоритмический подход словарём.",
+                "if_it_were_true": "Поддержка словаря стала бы full-time job команды.",
+                "how_it_should_be": "Edit distance / phonetic / ML — алгоритмически, без ручных словарей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать Levenshtein edit distance (fuzzy query с `fuzziness: AUTO` — 0 для слов < 3 символов, 1 для 3-5, 2 для длинных), опционально n-gram analyzer для partial match и phonetic кодирование (Soundex/Metaphone) для имён; trade-off — больше recall за счёт меньшего precision.",
+              "correct": true,
+              "sections": {
+                "explanation": "Fuzzy match строится на нескольких слоях. Edit distance (Damerau-Levenshtein считает и transposition) — основа: term матчится, если до него можно дойти ≤ N изменений. Elasticsearch `fuzziness: AUTO` динамически выбирает порог по длине term'а (короткие слова — строже). N-gram analyzer индексирует подстроки длиной 3-4 — это покрывает partial match при потере середины слова. Phonetic encoding (Soundex, Metaphone) переводит слова в звуковой код («Smith» и «Smyth» совпадут) — особенно полезно для имён. На каждый слой растёт recall (находим больше) и падает precision (попадаются ложные срабатывания), порог настраивается через A/B.",
+                "example": "Algolia предоставляет typo tolerance из коробки с тюнингом. Booking использует ES fuzzy для названий городов и hotels. Meilisearch делает typo tolerance default.",
+                "when_to_apply": "Любой user-facing search; e-commerce, travel, healthcare names.",
+                "edge_cases": "Очень короткие слова (< 3 chars) — fuzzy даёт false positives, лучше exact. Multi-lingual — phonetic коды зависят от языка. ML spell correction (`Did you mean ...`) обучается на query logs.",
+                "related": "Q14 autocomplete fuzzy; Q26 spell correction в query understanding."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только полнотекстовый BM25 — он сам справится с опечатками через TF-IDF.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BM25 не знает про опечатки; «appel» и «apple» для него разные term'ы и не матчатся.",
+                "source_of_confusion": "Смешение scoring и matching: BM25 ранжирует, fuzzy расширяет matching.",
+                "if_it_were_true": "Не было бы fuzzy query в ES.",
+                "how_it_should_be": "Fuzzy matching + BM25 ranking — два разных слоя."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно реализовать faceted search (фильтры по brand/price/rating с counts) в Elasticsearch?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Делать отдельный SQL-запрос с GROUP BY на основной БД для каждой фасеты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GROUP BY на 100M строк OLTP-БД при каждом search не выдержит нагрузку; нужен агрегатор поверх поискового индекса.",
+                "source_of_confusion": "Желание переиспользовать привычный SQL.",
+                "if_it_were_true": "OLTP-БД упала бы под search traffic.",
+                "how_it_should_be": "Использовать aggregations поискового движка (ES terms/range), не основной БД."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Хранить все возможные комбинации фильтров заранее в Redis.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Комбинации фасетов экспоненциальны (brand × category × price × rating × N) — нельзя precompute все.",
+                "source_of_confusion": "Желание решить proble через кеш всего и сразу.",
+                "if_it_were_true": "Storage был бы петабайтным.",
+                "how_it_should_be": "Cache hot combinations, считать остальные через aggregations on demand."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Frontend сам собирает фасеты, проходя по всем документам в выдаче.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Frontend видит только top-K документов; полная картинка counts по всему результату не строится из клиента.",
+                "source_of_confusion": "Желание упростить backend, но теряется правильность counts.",
+                "if_it_were_true": "Counts в UI отражали бы только страницу, а не весь результат.",
+                "how_it_should_be": "Backend агрегирует на полном result set, отдаёт facets + paged docs."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать ES aggregations: `terms` для категориальных полей (brand.keyword), `range` для price, `avg/cardinality` для метрик; задействовать `post_filter` чтобы выбранный facet не влиял на counts остальных; следить за cardinality (HyperLogLog для high-cardinality) и кешировать через ES `request_cache`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандарт e-commerce: `query` определяет основной result set и scoring; внутри блока `aggs` считаются counts по facet-полям (`terms` для brand/category, `range` для price ranges, `avg` для ratings); ключевой паттерн — `post_filter`: фильтр выбранной фасеты применяется ПОСЛЕ aggregations, чтобы UI показывал actual counts для всех brands даже когда юзер выбрал один. Для high-cardinality полей (user_id, session_id) используется `cardinality` (HyperLogLog) — точные counts невозможны на миллиардах значений без OOM. `request_cache` ES кеширует aggregations при `size=0`.",
+                "example": "Amazon, eBay, ASOS показывают counts на каждом filter; Airbnb — фильтры по price/amenities/location со счётчиками listings.",
+                "when_to_apply": "Любой e-commerce / marketplace / classifieds search.",
+                "edge_cases": "Terms aggregation по millions+ значений → fielddata OOM (Q30 п.7); ограничивать `size: 100` и использовать `composite` aggregation для pagination. Cardinality > 100K → HyperLogLog с настройкой precision_threshold.",
+                "related": "Q23 facets deep dive; Q30 антипаттерны 7."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем добавлять semantic search (vector embeddings) поверх BM25 и как это устроено технически?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Embedded в общий поисковый пайплайн dense vector поверх embedding model (BGE-M3, OpenAI text-embedding-3, Cohere embed-v3) и ANN-индекс (HNSW в ES 8+, Qdrant, Pinecone, Weaviate, pgvector); hybrid search комбинирует BM25 + cosine similarity (через weighted sum или RRF) — лексическая точность для exact match + семантика для синонимов и парафразов.",
+              "correct": true,
+              "sections": {
+                "explanation": "BM25 — лексический подход: матчит конкретные term'ы, не понимает синонимов и парафраз («running shoes» не матчит «jogging footwear»). Semantic search строит embedding-векторы (768-1536 dim) для query и документов и ищет nearest neighbors в векторном пространстве через ANN-индекс — обычно HNSW (Hierarchical Navigable Small World), который даёт sub-100ms поиск на миллионах векторов. Hybrid combines lexical и semantic: BM25 (exact keyword match) + cosine similarity (semantic) — fusion через weighted sum или Reciprocal Rank Fusion. Это лучшее из обоих: точность на product IDs / brand names + recall на парафразах.",
+                "example": "Elasticsearch 8+ умеет dense_vector + HNSW + RRF. Qdrant, Pinecone, Weaviate, Milvus — dedicated vector DBs. pgvector — расширение Postgres для < 10M векторов. Embedding models: BGE-M3 (open-source multilingual), OpenAI text-embedding-3, Cohere embed-v3.",
+                "when_to_apply": "Любой modern search; обязательно для RAG (LLM retrieval); полезно для e-commerce description search, content discovery, multilingual.",
+                "edge_cases": "Embedding model update требует re-index всего корпуса (cold start). Long documents — chunk на 256-512 tokens с parent_id. Storage cost: float32 × 1536 dim ≈ 6 KB на вектор, quantization (int8, binary) уменьшает.",
+                "related": "Q22 hybrid + RRF deep dive; см. embeddings-interview."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Vector search полностью заменяет BM25 — лексический поиск устарел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BM25 побеждает на exact terms (product IDs, brand names, error codes); dense vectors могут пропустить точное совпадение в пользу «семантически близкого».",
+                "source_of_confusion": "Хайп вокруг embeddings.",
+                "if_it_were_true": "Никто не делал бы hybrid search; все перешли бы на pure vector.",
+                "how_it_should_be": "Hybrid: BM25 + dense + fusion (RRF) — индустриальный стандарт 2024-2026."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно хранить embeddings в обычной таблице SQL и делать линейный scan по cosine similarity.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Linear scan по 100M векторам — секунды латентности; нужен ANN-индекс (HNSW, IVF, PQ).",
+                "source_of_confusion": "Недооценка stoимости brute force на векторных данных.",
+                "if_it_were_true": "Pinecone, Qdrant, Weaviate, Milvus не существовали бы.",
+                "how_it_should_be": "ANN-индекс — обязательная часть vector search на масштабе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Vector search — это просто другое название full-text BM25.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Совсем разные подходы: BM25 матчит лексические term'ы, vector — близость в семантическом пространстве.",
+                "source_of_confusion": "Маркетинговая путаница терминов.",
+                "if_it_were_true": "Не нужны были бы embedding models и ANN-индексы.",
+                "how_it_should_be": "Чётко различать lexical (BM25) и dense (embeddings) retrieval."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать LTR (Learning to Rank) и feedback loop через click analytics?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Обучать модель сразу на сырых кликах без учёта position bias.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сырые клики содержат position bias (верхние позиции получают больше кликов независимо от релевантности); прямое обучение даст модель, которая просто воспроизводит текущий порядок.",
+                "source_of_confusion": "Игнорирование causal inference в логах поведения.",
+                "if_it_were_true": "Модель никогда не улучшалась бы — feedback loop сводил бы к baseline.",
+                "how_it_should_be": "Inverse propensity scoring (IPS) / click model для position bias correction."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Логировать query/results/clicks/dwell/conversions, строить training data с релевантными labels (clicked = positive с поправкой на position bias через IPS/click model), обучать LambdaMART или DNN, деплоить через A/B test с метриками NDCG/CTR/conversion, и итерировать.",
+              "correct": true,
+              "sections": {
+                "explanation": "LTR — это feedback loop, а не одноразовый ML-проект. Стадии: (1) логирование query, shown results, clicks, dwell time, conversion → query logs в Kafka/ClickHouse/BigQuery; (2) построение training data с labels (clicked = relevant; не клик = менее relevant) и position bias correction через inverse propensity scoring или click model; (3) обучение модели — LambdaMART (GBM) как стандартный baseline (интерпретируемый, быстрый), two-tower neural или transformer cross-encoder для top quality; (4) deploy через A/B test против baseline; ключевые метрики — NDCG@K, CTR, conversion rate, abandonment rate; (5) итерация: новые features, online learning, evaluation.",
+                "example": "Amazon, LinkedIn, Booking имеют ML platforms специально для LTR. Elasticsearch LTR plugin позволяет хранить feature extractors внутри ES и применять XGBoost-модель на rescore phase.",
+                "when_to_apply": "Любой production search с business-метриками (conversion, CTR). Без LTR e-commerce теряет revenue (Q30 п.11).",
+                "edge_cases": "Cold start новой модели — pre-warm cache и shadow traffic. Counterfactual evaluation (IPS) позволяет оценить «если бы ранкер был другим» без полного A/B.",
+                "related": "Q11 two-stage ranking; Q28 personalization; Q29 metrics."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "LTR — это академический термин, на практике не применяется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LTR — индустриальный стандарт у Amazon, eBay, Booking, LinkedIn, Airbnb, Yandex и др.",
+                "source_of_confusion": "Слабая экспозиция в open-source / startup-окружении.",
+                "if_it_were_true": "Не было бы LTR plugins в ES/Solr.",
+                "how_it_should_be": "LTR — обязательный stage 2 поверх retrieval в любом крупном search."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно один раз сделать ручную тюнинг весов в формуле и оставить навсегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Веса в hand-tuned формуле быстро устаревают (новый каталог, сезонность, тренды); без feedback loop качество деградирует.",
+                "source_of_confusion": "Желание избежать ML complexity.",
+                "if_it_were_true": "Бизнес не реагировал бы на изменения поведения пользователей.",
+                "how_it_should_be": "ML-модель + continuous feedback + A/B тесты."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно кешировать популярные search-запросы, чтобы выдержать peak load?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Кешировать каждый запрос навечно в Redis, инвалидация не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без invalidation выдача застывает: новые товары / изменения цен / out-of-stock не отражаются.",
+                "source_of_confusion": "Желание получить максимальный hit rate за счёт игнорирования freshness.",
+                "if_it_were_true": "Stale data приводила бы к негативному UX и потере доверия.",
+                "how_it_should_be": "TTL 60s-5min + event-driven invalidation для критичных изменений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Полностью отказаться от кеша — кеш только усложняет архитектуру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "20% запросов = 80% трафика; без кеша ES перегружен под peak load.",
+                "source_of_confusion": "Преждевременное упрощение.",
+                "if_it_were_true": "Кластер ES стоил бы в разы дороже для того же QPS.",
+                "how_it_should_be": "Layered cache: CDN (анонимные) + Redis (60s TTL) + ES request_cache."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать layered cache: ES `request_cache` (filter results, bitsets) включён по default, добавить Redis с key=hash(query+filters+sort) и TTL 60s для популярных запросов (правило 20/80), event-driven invalidation на критичные изменения (out-of-stock, price drop), и опционально CDN для анонимных public queries.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cache на нескольких слоях. (1) ES внутренний: `query_cache` (filter bitsets) и `request_cache` (полные shard-level results для aggregations с size=0) — почти бесплатные, включены по default. (2) Application Redis: key=hash(query+filters+sort+pagination), value=result IDs + scores + metadata; TTL 60s-5min; pre-warm для hottest queries. (3) CDN/HTTP cache для public anonymous queries (`Cache-Control: public, max-age=60`). Invalidation: TTL по умолчанию, event-driven на критичные обновления (out-of-stock product → invalidate ключ). Метрика — hit ratio (цель > 60%, см. Q29).",
+                "example": "Algolia, Elastic Cloud, Shopify Search применяют именно layered cache. Amazon Product Search кеширует aggregations через ES request_cache, а раздаёт фрагменты статикой через CloudFront.",
+                "when_to_apply": "Любой production search с тысячами QPS и явной power-law distribution популярных запросов.",
+                "edge_cases": "Personalized queries (с user_id) практически невозможно кешировать на CDN — только locally в Redis с очень коротким TTL. Stale risk vs freshness trade-off — настраивается через TTL.",
+                "related": "Q29 cache hit ratio metric; Q30 антипаттерн 4 (отсутствие cache)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно кешировать только пагинационные хвосты (page 100+), популярные первые страницы не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большая часть трафика — первая страница популярных запросов; именно её надо кешировать в первую очередь.",
+                "source_of_confusion": "Кандидат думает о deep pagination, не о power-law популярных запросов.",
+                "if_it_were_true": "Cache hit ratio был бы низким — основной трафик мимо.",
+                "how_it_should_be": "Кешировать прежде всего top hottest queries (правило 20/80)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как делать zero-downtime rebuild / rollover индекса (например, при смене analyzer или схемы)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Остановить трафик, дропнуть индекс, ребилдить с нуля, запустить трафик обратно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это полный downtime; rebuild 100M документов занимает часы → недопустимо для production.",
+                "source_of_confusion": "Простейшее решение без понимания alias pattern.",
+                "if_it_were_true": "SLA 99.9% нельзя было бы держать при любых schema migrations.",
+                "how_it_should_be": "Alias swap: построить new рядом, атомарно переключить alias."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Делать ALTER INDEX в Elasticsearch — он сам пересоберёт всё на лету.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большинство mapping-параметров (analyzer, number_of_shards) не меняются в существующем индексе; нужен reindex в новый.",
+                "source_of_confusion": "Перенос ALTER TABLE из SQL ментальной модели.",
+                "if_it_were_true": "Не было бы reindex API и alias pattern.",
+                "how_it_should_be": "Build new index → reindex → alias swap → drop old."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать на проде update_by_query для обновления каждого документа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "update_by_query на проде во время traffic — антипаттерн (Q30 п.9): сильно бьёт I/O, может конфликтовать с активной индексацией.",
+                "source_of_confusion": "Кандидат знает API, но не знает его операционных издержек.",
+                "if_it_were_true": "Любой schema change ломал бы prod cluster.",
+                "how_it_should_be": "Reindex в новый индекс + alias swap; update_by_query — только для маленьких controlled ситуаций."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Создать новый индекс рядом со старым, прогрузить через _reindex API (или CDC replay), атомарно перекинуть alias `products` со старого `products-v1` на новый `products-v2`, дать поработать, потом дропнуть старый; для time-series — паттерн rollover с автоматическим переключением по размеру/возрасту через ILM.",
+              "correct": true,
+              "sections": {
+                "explanation": "Zero-downtime pattern на ES: alias swap. Шаги: (1) создать новый индекс `products-v2` с обновлённым mapping/analyzer; (2) прогрузить данные — через `_reindex` API из старого или через replay CDC из source; (3) валидировать качество результатов на новом индексе через shadow traffic / A/B; (4) атомарно перевести alias: одна транзакция в `_aliases` снимает `products → products-v1` и ставит `products → products-v2`; (5) клиенты не замечают переключения; (6) подержать старый ещё некоторое время на случай отката, потом дропнуть. Для time-series (logs) — rollover policy: alias всегда указывает на current, новый индекс создаётся при достижении size/age.",
+                "example": "Elastic Stack ILM (Index Lifecycle Management) автоматизирует rollover для логов. E-commerce обычно делает alias swap при major schema changes (новый language analyzer, добавление dense_vector field).",
+                "when_to_apply": "Любая schema migration; sharding plan change; analyzer update; bulk reload данных.",
+                "edge_cases": "Double storage временно требуется (старый + новый). Для огромных индексов — приоритизировать поэтапный reindex. Тест нового индекса до swap обязателен.",
+                "related": "Q22 cold start новой embedding-модели; Q30 антипаттерн 9 (update_by_query на проде)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что именно означают параметры k1=1.2 и b=0.75 в формуле BM25 и как они влияют на ranking?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "k1 управляет term-frequency saturation: при k1=1.2 после нескольких повторений term'а прирост score замедляется (защита от keyword stuffing); b управляет document length normalization: b=0.75 пенализирует длинные документы пропорционально |D|/avgdl (b=0 — penalty выключен, b=1 — полная нормализация); по доменам имеет смысл grid-search оптимальных значений через `_explain` и A/B test.",
+              "correct": true,
+              "sections": {
+                "explanation": "Формула BM25: `score(q,d) = Σ_t IDF(t) × (TF(t,d) × (k1+1)) / (TF(t,d) + k1 × (1 - b + b × |D|/avgdl))`. Параметр k1 (по умолчанию 1.2 в Lucene/ES) — точка saturation: при TF → ∞ score стремится к IDF × (k1+1), то есть конечному пределу. k1=0 — score не зависит от TF (только IDF), k1=∞ — линейно по TF как TF-IDF. Параметр b (по умолчанию 0.75) — степень document length normalization. b=0 — длина документа игнорируется (все доки равны), b=1 — полная нормализация (TF делится на относительную длину). Для коротких полей (title, name) часто используют b=0; для длинных body — default или ближе к 1. Тюнинг через grid search на validation set + A/B test на проде; `_explain` API ES показывает breakdown score.",
+                "example": "Lucene/ES BM25 default k1=1.2, b=0.75 — хороший baseline для смешанных корпусов. Legal/medical корпуса часто тюнят: k1=1.5-2.0 (более линейная TF) для длинных документов с уникальной лексикой.",
+                "when_to_apply": "Когда видишь, что baseline BM25 даёт плохой NDCG или странные top results — стоит сделать grid search.",
+                "edge_cases": "Очень короткие документы (< 5 words) — BM25+ добавляет lower-bound на TF для защиты. Multi-field — BM25F с per-field k1, b, weights.",
+                "related": "Q10 BM25 vs TF-IDF; Q22 hybrid; Q30 _explain debugging."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "k1 — это число шардов, b — число replica.",
+              "correct": false,
+              "sections": {
+                "what_actually": "k1 и b — параметры similarity function BM25, никак не связаны со sharding.",
+                "source_of_confusion": "Случайная переменная-коллизия с ES настройками.",
+                "if_it_were_true": "Не было бы документации Lucene Similarity.",
+                "how_it_should_be": "k1 = TF saturation, b = length norm."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "k1 и b определяют размер кеша ES и не влияют на ranking.",
+              "correct": false,
+              "sections": {
+                "what_actually": "k1 и b определяют форму scoring function, никак не cache size.",
+                "source_of_confusion": "Кандидат не читал формулу.",
+                "if_it_were_true": "Изменение k1/b не влияло бы на ранжирование результатов.",
+                "how_it_should_be": "Понимать математику BM25; меняя k1/b, меняем ранкинг."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "k1=1.2 и b=0.75 — это random magic numbers без какого-либо обоснования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти значения — empirically tuned defaults из IR research (TREC), которые хорошо работают на смешанных корпусах.",
+                "source_of_confusion": "Незнание истории Probabilistic Relevance Framework (Robertson, Spärck Jones).",
+                "if_it_were_true": "Не было бы reproducible результатов BM25 vs TF-IDF в literature.",
+                "how_it_should_be": "Помнить, что 1.2/0.75 — empirical defaults, тюнятся под domain."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как технически реализовать hybrid search (BM25 + dense vectors) с устойчивой фьюжен-стратегией?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Брать только BM25 и игнорировать dense vectors.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pure BM25 не покрывает синонимы и парафразы; теряется recall.",
+                "source_of_confusion": "Консерватизм или опасение complexity dense retrieval.",
+                "if_it_were_true": "Не было бы тренда hybrid в ES 8+, Vespa, Qdrant.",
+                "how_it_should_be": "Hybrid: BM25 + dense + fusion (предпочтительно RRF)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Параллельно делать BM25 top-100 и ANN dense top-100 (например, HNSW в ES 8+ dense_vector с embedding-моделями BGE-M3 / OpenAI text-embedding-3 / Cohere embed-v3), затем фьюзить через Reciprocal Rank Fusion (RRF, k≈60), потому что RRF не требует нормализации scores и устойчив к outliers; опциональный финальный re-rank cross-encoder'ом на top-K.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hybrid search раскладывается на три стадии. (1) Lexical retrieval: BM25 на inverted index даёт top-100/1000 кандидатов с exact match на термах. (2) Dense retrieval: query прогоняется через embedding-модель (BGE-M3 multilingual, OpenAI text-embedding-3, Cohere embed-v3), затем ANN-индекс (HNSW в ES 8+, Qdrant, Pinecone, Weaviate) ищет top-100 ближайших векторов. (3) Fusion: вместо weighted sum (нестабилен из-за разных шкал BM25 и cosine) применяется Reciprocal Rank Fusion — `RRF(d) = Σ 1/(k + rank(d, query))`, где k=60 эмпирически; работает только с rank'ами, не зависит от абсолютных scores, устойчив к outliers. Опционально на top-K применяется cross-encoder re-ranker для финальной полировки.",
+                "example": "Elasticsearch 8+ имеет встроенный RRF rank_constant=60. Vespa делает hybrid native. Qdrant и Weaviate поддерживают hybrid через query API. Перевод документации Microsoft на BGE-M3 + RRF — типичный modern stack.",
+                "when_to_apply": "Modern search (2024+), особенно для multilingual, content discovery, RAG.",
+                "edge_cases": "Cold start новой embedding-модели → re-index всей коллекции, double storage временно. Long documents — chunk на 256-512 tokens с parent_id. Quantization (int8, binary) экономит storage в 4-32×.",
+                "related": "Q17 semantic search; Q11 two-stage; Q21 BM25 формулы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Просто складывать scores: `score = bm25 + cosine_similarity` без нормализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BM25 даёт значения 0..∞, cosine — -1..1; прямая сумма приводит к доминированию одной шкалы.",
+                "source_of_confusion": "Поверхностное понимание score fusion.",
+                "if_it_were_true": "Если score BM25 = 10, cosine = 0.8, BM25 поглощает signal от dense.",
+                "how_it_should_be": "Либо нормализация scores (min-max, z-score), либо rank-based fusion (RRF) — последнее устойчивее."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сохранять embeddings в Redis как обычные строки и искать через `KEYS *`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redis не имеет vector index из коробки (в новых версиях есть RediSearch с HNSW, но это отдельный модуль); `KEYS *` — full scan, недопустим на проде.",
+                "source_of_confusion": "Перенос key-value mental model на vector search.",
+                "if_it_were_true": "Не было бы dedicated vector DBs.",
+                "how_it_should_be": "Использовать vector DB (Qdrant, Pinecone, Weaviate, Milvus) или ES dense_vector + HNSW."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое post_filter в Elasticsearch и зачем он нужен в faceted search?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "post_filter — это синоним обычного `filter` внутри bool query.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный filter применяется ДО aggregations и сокращает их scope; post_filter применяется ПОСЛЕ — это совсем другая семантика.",
+                "source_of_confusion": "Похожие имена, разная семантика.",
+                "if_it_were_true": "В документации ES не было бы отдельного раздела про post_filter.",
+                "how_it_should_be": "filter влияет на query и aggs; post_filter — только на отдаваемый result set, не на aggs."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "post_filter полностью отключает aggregations.",
+              "correct": false,
+              "sections": {
+                "what_actually": "post_filter влияет только на финальный result set; aggregations считаются ДО его применения.",
+                "source_of_confusion": "Неправильная mental model «filter блокирует aggs».",
+                "if_it_were_true": "Нельзя было бы получить counts на full result set одновременно с фильтрованной выдачей.",
+                "how_it_should_be": "Понимать порядок: query → aggs → post_filter → results."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "post_filter применяется ПОСЛЕ aggregations, поэтому позволяет показать актуальные counts для всех facets даже когда пользователь выбрал один (например, выбран `brand: Nike` — counts по другим брендам остаются видимыми); базовый пользовательский запрос идёт в `query` и определяет result set + aggs, а выбранный facet идёт в `post_filter` и сужает только отдаваемый список документов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандартный паттерн e-commerce: пользователь ввёл «running shoes» и выбрал brand:Nike. Если положить brand:Nike в `filter`, aggregations посчитают counts только по Nike — для UI это плохо (пользователь не увидит, сколько товаров у Adidas/Puma). Если положить brand:Nike в `post_filter`, то: query («running shoes») определяет полный result set, на нём считаются aggregations (counts по всем брендам остаются видимыми), и только в самом конце post_filter сужает отдаваемый список до Nike. UI получает корректные counts всех facets + только Nike-документы в выдаче.",
+                "example": "Amazon, ASOS, Booking — все используют этот паттерн. ES документация явно рекомендует post_filter именно для facet UI.",
+                "when_to_apply": "Любой UI с faceted navigation, где counts всех брендов / категорий / диапазонов должны оставаться видимыми после применения одного фильтра.",
+                "edge_cases": "Множественные facets с AND логикой — usually каждый facet в свой post_filter aggregation. High-cardinality terms aggregation → cardinality (HyperLogLog) для счётчиков unique values.",
+                "related": "Q16 базовые facets; Q30 fielddata OOM."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "post_filter — это устаревший API, в современных версиях ES не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "post_filter — актуальный API, активно используется в ES 7/8 для facet UI.",
+                "source_of_confusion": "Кандидат предполагает «легаси» без проверки документации.",
+                "if_it_were_true": "Документация ES помечала бы его как deprecated.",
+                "how_it_should_be": "Использовать post_filter для faceted UI."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую структуру выбрать для geo search и в чём разница между bbox и distance запросами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Считать distance вручную через Haversine для каждой строки таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Full scan + Haversine на каждом запросе не масштабируется; нужен geo-index (geohash, S2, R-tree, H3).",
+                "source_of_confusion": "Простейший подход без geospatial index.",
+                "if_it_were_true": "PostGIS, S2, H3 не существовали бы.",
+                "how_it_should_be": "Использовать geo-index (Elasticsearch geo_point/geo_shape, PostGIS, S2, H3) для retrieval, distance — для финального фильтра."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Игнорировать антимеридиан (180°/-180°) — он не встречается на практике.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bbox через антимеридиан (Pacific dateline) — реальный edge case (Fiji, Aleutians); standard bbox queries ломаются, S2/H3 справляются.",
+                "source_of_confusion": "Эгоцентризм относительно региона эксплуатации.",
+                "if_it_were_true": "Не было бы специальной обработки в S2 / H3 / PostGIS.",
+                "how_it_should_be": "Знать про антимеридиан и полюса; выбирать индекс с учётом edge cases."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для geo лучше всего хранить только string-адреса и матчить full-text.",
+              "correct": false,
+              "sections": {
+                "what_actually": "String matching по адресам не отвечает на «в радиусе 5 км»; нужны координаты + geospatial index.",
+                "source_of_confusion": "Незнание geo-индексов.",
+                "if_it_were_true": "Uber, Yelp, Booking не работали бы.",
+                "how_it_should_be": "Хранить (lat, lon) + geo_point индекс + bbox/distance queries."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Geohash (ES default base32 prefix, простой и работает на inverted index), S2 (Google Hilbert curve, locality preserving, используется в Uber/Foursquare), R-tree (PostGIS, MongoDB 2dsphere — хорош для bbox queries) или H3 (Uber hexagonal hierarchy, равные соседи); bbox в 10× быстрее, но ловит «углы», distance точный (Haversine), но дороже — практика: bbox для retrieval → distance для финального filter.",
+              "correct": true,
+              "sections": {
+                "explanation": "Geo retrieval строится на четырёх семействах структур. (1) Geohash — координата хешируется в base32 строку (`u4pruydqqvj`); префикс = регион; prefix scan по inverted index быстр; edge case — соседние клетки могут иметь разные prefixes на границах квадрантов. (2) S2 (Google, Uber, Foursquare) — Hilbert curve делит сферу на 64-bit cell IDs, локальные соседи близки в ID space, hierarchical levels от 0 до 30 (~1 cm²). (3) R-tree (PostGIS, MongoDB 2dsphere) — дерево bounding rectangles; хорошо для bbox, дороже при write rebalance. (4) H3 (Uber) — hexagonal hierarchy, гарантирует равные расстояния до соседей, используется для surge pricing и ETA. Bbox-запрос на ~10× быстрее distance, но ловит «углы» прямоугольника (~30% лишних кандидатов); distance точный, но дороже (Haversine на каждый). Гибрид: bbox для retrieval → distance для финального filter top-N.",
+                "example": "Uber H3 — hexagonal grid для surge pricing. Yelp использует S2 для proximity search. Airbnb listing search хранит geohash + bbox retrieval. Snowflake GIS и PostGIS — для аналитики.",
+                "when_to_apply": "Любой UI с «near me», radius search, geofencing.",
+                "edge_cases": "Антимеридиан и полюса — S2/H3 покрывают корректно, plain bbox ломается. Web Mercator clamp широты к ±85.05. High-density регионы (Манхэттен) — мелкие H3 cells.",
+                "related": "См. design-uber-interview Q5 (H3 deep dive)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Lucene сегменты + translog + refresh_interval работают вместе и как тюнить под профиль workload?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Writes идут в in-memory buffer + WAL (translog) immediately; `refresh` (default 1s) превращает buffer в новый immutable Lucene segment, видимый для поиска; merge (background) объединяет мелкие сегменты в крупные; tuning: real-time UI → refresh 1s, bulk load → -1 (вернуть после), logs/analytics → 30-60s; translog durability `request` (sync) для критичных данных или `async` (5s) для logs.",
+              "correct": true,
+              "sections": {
+                "explanation": "Lucene сегменты immutable — каждый раз, когда buffer flush'ится по refresh, создаётся новый сегмент-файл. Search обходит все сегменты и мерджит локальные top-K. Background merge объединяет мелкие сегменты в крупные (tiered merge policy). Translog (WAL) пишется до того, как документ попал в сегмент: даже если buffer теряется при crash, translog даёт recovery. Refresh_interval управляет частотой visibility: 1s — near real-time UI; -1 — отключён (для bulk load: 3-5× ускорение, потом вернуть); 30s — типично для logs; 60s — analytics-only. Translog durability: `request` (sync fsync на каждый write — надёжно, медленно), `async` (default 5s — быстрее, 5s data loss window).",
+                "example": "Elastic Stack для логов: refresh_interval 30s + translog async; product search: refresh 1-5s + translog request на критичные индексы (financial). Force merge перед read-only архивированием снижает число сегментов до 1.",
+                "when_to_apply": "Tuning под профиль: интерактивный UI vs bulk load vs analytics.",
+                "edge_cases": "Bulk load без disable refresh → millions of small segments → cluster melt (Q30 п.13). Translog async для financial → data loss window (Q30 п.14). Force merge на горячих индексах с активным write — плохая идея.",
+                "related": "Q8 NRT базовый; Q30 антипаттерны 13, 14."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Refresh и translog — одно и то же, просто разные имена.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Refresh делает buffer → segment (visibility), translog — WAL (durability). Это два независимых механизма.",
+                "source_of_confusion": "Неразличение visibility и durability.",
+                "if_it_were_true": "Невозможно было бы тюнить их независимо.",
+                "how_it_should_be": "Refresh = visibility, translog = durability."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Lucene segments mutable, документы перезаписываются на месте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lucene segments immutable; update = delete + insert; merge объединяет с удалениями.",
+                "source_of_confusion": "Перенос модели BTree из SQL.",
+                "if_it_were_true": "Не было бы concept of segment, merge, refresh.",
+                "how_it_should_be": "Immutable segments + merge — фундамент Lucene."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "refresh_interval=-1 — лучший выбор для production UI, всегда отключайте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "refresh_interval=-1 отключает visibility — новые документы не находятся; используется только временно для bulk load, не для UI.",
+                "source_of_confusion": "Желание ускорить indexing любой ценой.",
+                "if_it_were_true": "Пользователь не видел бы новых товаров никогда.",
+                "how_it_should_be": "-1 только на этап bulk load, потом вернуть 1-5s для UI."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое query understanding pipeline и какие стадии он включает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это просто tokenization запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tokenization — только первая стадия; modern pipelines включают normalization, spell correction, expansion, NER, intent classification.",
+                "source_of_confusion": "Упрощение до одной стадии analyzer.",
+                "if_it_were_true": "Search не понимал бы синонимов, опечаток, intent.",
+                "how_it_should_be": "Многоступенчатый pipeline с budget < 100ms перед retrieval."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Цепочка: tokenize → normalize (lowercase + Unicode NFKC + ASCII fold) → spell correction (edit distance / phonetic / ML) → query expansion (synonyms, abbreviations) → NER (entity extraction типа brand/category) → intent classification (navigational / informational / transactional / local) → routing на lexical / semantic / hybrid retrieval; общий latency budget < 100ms, часть p99 search SLA.",
+              "correct": true,
+              "sections": {
+                "explanation": "Modern query understanding — это полноценный pipeline до retrieval. (1) Tokenize: split по whitespace, punctuation, CJK character-by-character. (2) Normalize: lowercase, Unicode NFKC, ASCII fold (`café → cafe`). (3) Spell correction: edit distance или ML correction по query logs. (4) Query expansion: synonyms (`car → automobile`), abbreviations (`NYC → New York City`), stemming. (5) NER: entity extraction (`Nike (brand)`, `running shoes (category)`) через spaCy / Hugging Face. (6) Intent classification: navigational (facebook.com), informational (how to bake bread), transactional (buy iphone), local (pizza near me). Intent определяет routing: navigational → exact match, informational → semantic, transactional → product index с LTR. Latency budget < 100ms — часть p99 search SLA.",
+                "example": "Google query understanding включает 10+ стадий; Booking использует spaCy для NER hotel/city; LinkedIn определяет intent (people, jobs, content) и роутит в соответствующий index.",
+                "when_to_apply": "Любой modern search с разнообразными типами queries.",
+                "edge_cases": "Multilingual query — отдельные analyzers per language. Mixed-script (`айфон 15 pro` — RU + EN) — общий analyzer с NFKC + script detection. ML inference 20-50 ms на NER требует подбирать модель по latency budget.",
+                "related": "Q4 analyzer pipeline; Q15 typo tolerance; Q11 routing на retrieval/re-rank."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Query understanding делается только во frontend на JavaScript.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Frontend выполняет debouncing, базовые UX-фичи; query understanding с NER/intent — серверная задача с доступом к моделям и словарям.",
+                "source_of_confusion": "Желание ускорить за счёт client-side.",
+                "if_it_were_true": "ML модели NER грузились бы на клиент — недопустимо по размеру и privacy.",
+                "how_it_should_be": "Серверный pipeline с latency budget < 100ms."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Query understanding не нужен — BM25 сам разберётся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BM25 не делает spell correction, NER, intent classification — это всё внешние стадии.",
+                "source_of_confusion": "Кандидат считает BM25 универсальным.",
+                "if_it_were_true": "«Did you mean» подсказки не работали бы; ranking игнорировал бы intent.",
+                "how_it_should_be": "Pipeline перед retrieval критичен для качества modern search."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как разводить multi-tenancy в поисковом сервисе — index per tenant, single index + filter, или routing?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один общий index без любого tenant_id — security обеспечит API gateway.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без tenant_id field в документах фильтрация по tenant невозможна; ACL на API gateway не защитит от bug в backend, который случайно вернёт чужие данные.",
+                "source_of_confusion": "Перекладывание data segregation на verхний слой.",
+                "if_it_were_true": "Любая ошибка в коде давала бы data leak между tenants.",
+                "how_it_should_be": "Tenant_id field обязателен; filter в каждом query — defense in depth."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Тысячи мелких индексов (index-per-user) — максимальная изоляция.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ES имеет рекомендованный limit < 1000 индексов в кластере; тысячи маленьких индексов = metadata overhead, JVM heap pressure, cluster state blow up (Q30 п.5).",
+                "source_of_confusion": "Желание дать каждому tenant полную изоляцию любой ценой.",
+                "if_it_were_true": "ES master node не справился бы с cluster state.",
+                "how_it_should_be": "Tiered подход: dedicated index для top-N крупных tenants, shared index + routing/filter для остальных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подход выбирать по числу tenants: < 100 — index per tenant (полная изоляция, per-tenant analyzer); 100-10K — single index + routing by tenant_id (один shard per tenant = targeted query, но риск hot tenant); 10K+ — single index + tenant_id filter (если каждый tenant маленький); очень разные размеры — tiered (dedicated indices для крупных + shared с routing для мелких); tenant_id filter обязателен везде как defence in depth.",
+              "correct": true,
+              "sections": {
+                "explanation": "Multi-tenancy в поиске зависит от профиля: число tenants, разброс размеров, требования к изоляции. (1) <100 tenants — index per tenant: полная изоляция, индивидуальные analyzer/mapping, drop = удаление tenant. (2) 100-10K — single index + `routing=tenant_id`: документы одного tenant попадают на один shard, query с routing бьёт только в нужный shard (low overhead + быстрый retrieval), риск hot tenant = hot shard. (3) 10K+ — single index + `term: tenant_id filter` в каждом query, scatter-gather по всем шардам (приемлемо для маленьких tenants). (4) Очень разные размеры — tiered: dedicated indices для top-N крупных, shared с routing/filter для small. Tenant_id filter обязателен в любом сценарии как defence in depth от ошибки в routing logic.",
+                "example": "Shopify Search: routing by shop_id + tiered indices для крупнейших магазинов. Algolia: index per application (каждый customer — свой index). Slack search: index per workspace для больших, shared для small.",
+                "when_to_apply": "Любой SaaS с поиском поверх данных нескольких customers / workspaces.",
+                "edge_cases": "Hot tenant в routing-mode — переезд на dedicated index. Per-tenant API key + middleware enforce фильтра. GDPR right-to-erasure → drop dedicated index или delete_by_query с tenant_id.",
+                "related": "Q12 sharding modes (routing); Q30 антипаттерн 5."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все три подхода эквивалентны и масштабируются одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подходы имеют разные trade-offs: изоляция vs metadata overhead vs query latency.",
+                "source_of_confusion": "Поверхностное чтение документации без сравнения.",
+                "if_it_were_true": "Не было бы спора index-per-tenant vs routing vs filter в community.",
+                "how_it_should_be": "Выбирать по числу tenants и разбросу размеров."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как добавить personalization в search (на базе click history, location, purchase) без раздувания latency и cold start проблем?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Personalization внести прямо в retrieval (BM25 boost per user) — пусть retrieve уже учитывает user.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Personalization на retrieval уничтожает cache-friendly retrieval (каждый user — отдельный шорткат), bloat'ит индекс, не даёт offline tuning.",
+                "source_of_confusion": "Желание встроить user signals as early as possible.",
+                "if_it_were_true": "Cache hit ratio падал бы катастрофически, latency росла.",
+                "how_it_should_be": "Stage 1 retrieval — impersonal (cache-friendly), stage 2 re-ranking — personalized."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Personalization делается на frontend: сохранить кликнутые товары в localStorage и переранжировать в браузере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Frontend personalization работает на маленьких объёмах, но не масштабируется (новый device — нет history); серверная модель видит все сессии и обучается централизованно.",
+                "source_of_confusion": "Желание избежать backend complexity.",
+                "if_it_were_true": "Cross-device personalization была бы невозможна.",
+                "how_it_should_be": "Серверная ML-модель + опционально clientside кэш recent items."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Personalization невозможна для search — слишком много сигналов и privacy issues.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Personalization широко применяется в Amazon, LinkedIn, Booking, Airbnb с production ML platforms и privacy compliance.",
+                "source_of_confusion": "Слишком радикальная позиция «privacy блокирует всё».",
+                "if_it_were_true": "Не было бы recommender systems индустрии.",
+                "how_it_should_be": "Personalization с aggregated features, IPS, GDPR compliance — стандарт."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Two-stage: stage 1 retrieval impersonal (BM25/hybrid top-100, cache-friendly), stage 2 re-ranking с ML-моделью (LambdaMART / two-tower / cross-encoder) поверх user features (click embedding, category preferences, location, history); cold start → fallback на global popularity до накопления первых кликов; latency 10-30ms CPU / <5ms GPU batched; deploy через A/B с метриками CTR + conversion + session quality.",
+              "correct": true,
+              "sections": {
+                "explanation": "Personalization в search строится как stage 2 поверх impersonal retrieval. Stage 1 (BM25 или hybrid) возвращает top-100/1000 кандидатов — это cache-friendly, не зависит от user. Stage 2 применяет ML-модель к этим кандидатам: input — (query_features, doc_features, user_features), output — score, который ре-ранкирует top-100. User features: embedding vector от click/purchase history, category preferences (one-hot), demographics (если есть), location, time-of-day. Cold start (новый user без history) — fallback на global popularity; включаем personalization после первых 5-10 кликов. Latency: 10-30ms на CPU (LambdaMART), <5ms на GPU (batched neural). Deploy через A/B test с метриками CTR + conversion + session quality.",
+                "example": "Amazon, LinkedIn, Booking имеют two-tower neural models для personalization. Spotify, Netflix используют похожий подход для recommendations. Click logs идут в Kafka → ClickHouse → training.",
+                "when_to_apply": "E-commerce, content platforms, job/listing search с возвращающимися users.",
+                "edge_cases": "GDPR right-to-erasure → удаление click history по запросу. Privacy: user features hashed/aggregated. Position bias в обучающих кликах → IPS correction.",
+                "related": "Q11 two-stage ranking; Q18 LTR pipeline; Q29 quality metrics."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор метрик закрывает quality и performance search-системы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Quality (relevance): recall@k, precision@k, MRR (mean reciprocal rank), NDCG (учитывает позицию + градацию релевантности); production click signals: CTR @ position 1, mean clicked rank, abandonment rate, reformulation rate; performance: latency p50/p95/p99/p999 (target p99 < 200ms e-commerce), indexing_lag_seconds (< 5s для NRT), search_timeout_total, zero_result_rate (< 5%), cache_hit_ratio (> 60%).",
+              "correct": true,
+              "sections": {
+                "explanation": "Quality метрики: (1) Recall@k — доля релевантных в top-k; (2) Precision@k — доля найденных релевантных из всех релевантных корпуса (сложнее измерить, нужна полная разметка); (3) MRR — среднее 1/rank первого релевантного результата, хорош для navigational queries; (4) NDCG — DCG/ideal_DCG, учитывает позицию И градацию релевантности (0..4), стандарт academic IR. Production click metrics: CTR @ position 1, mean clicked rank, abandonment rate, reformulation rate (пользователь переписал запрос — первый не помог). Performance: latency p99 < 200ms e-commerce, < 1s web; indexing_lag_seconds < 5s для NRT; search_timeout_total для slow shards; zero_result_rate < 5%; cache_hit_ratio > 60%.",
+                "example": "Booking, Algolia, Shopify Search дашборды Grafana/Looker по этим метрикам; PagerDuty alerts на p99 > 200ms и zero_result_rate > 5%.",
+                "when_to_apply": "Любая production search service; обязательно для LTR feedback loop (Q18).",
+                "edge_cases": "NDCG требует human-labeled judgments — дорого; для production чаще click-based proxy. p999 важнее p99 при больших QPS — tail latency users.",
+                "related": "Q18 LTR feedback loop; Q19 cache hit ratio; Q11 NDCG для LTR."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только средний response time достаточно — остальные метрики избыточны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Average latency скрывает tail; quality (NDCG, CTR) не измеряется через latency; freshness требует indexing_lag.",
+                "source_of_confusion": "Упрощение до одной метрики.",
+                "if_it_were_true": "Не было бы понятия p99 latency в SRE.",
+                "how_it_should_be": "Multi-dimensional dashboard: quality + performance + freshness + cache."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Recall важнее precision в любом search.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Зависит от use case: e-commerce ценит precision (top-K должно конвертить), academic search/RAG — recall (нельзя пропустить релевантное).",
+                "source_of_confusion": "Универсализация trade-off.",
+                "if_it_were_true": "Все search-системы оптимизировались бы одинаково.",
+                "how_it_should_be": "Выбирать метрику под use case; NDCG баланс обоих."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "p99 не считают — главное uptime 99.9%.",
+              "correct": false,
+              "sections": {
+                "what_actually": "p99 latency и uptime — независимые метрики; high uptime с p99=10s бессмысленно для interactive search.",
+                "source_of_confusion": "Смешение availability и latency SLI.",
+                "if_it_were_true": "Не было бы SLO на p99 в современном SRE.",
+                "how_it_should_be": "Considered both: uptime 99.9% AND p99 < 200ms."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой список — корректный набор production-антипаттернов и подводных камней при дизайне search-системы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Лучшая практика — хранить все 100M документов в одном shard, всегда писать в ES синхронно из write-path и не использовать analyzer per language.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это перечень анти-практик, а не лучших. Single shard на 100M даёт OOM/slow merge; sync indexing привязывает availability продукта к ES; один analyzer ломает CJK и русскую морфологию.",
+                "source_of_confusion": "Подмена «best practices» на «anti-patterns» по формулировке.",
+                "if_it_were_true": "Production cluster развалился бы за неделю.",
+                "how_it_should_be": "Shard 20-50 GB, async pipeline через CDC, analyzer per language."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Single shard на 100M+ docs, sync indexing на write path, отсутствие analyzer per language, отсутствие cache для popular queries, index per user в multi-tenancy, leading wildcard `*shoes*`, sort string без `.keyword` (fielddata OOM), nested mapping без причины, `update_by_query` на проде во время traffic, polling DB вместо CDC, отсутствие LTR на e-commerce, отсутствие `_explain` debug, bulk indexing без disable refresh, translog `async` для financial данных, cross-cluster search без timeout.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сводка ключевых антипаттернов из шпаргалки. (1) Single big shard → slow merge, full GC, OOM — фиксить sharding plan на этапе создания. (2) Sync indexing на write path → product availability привязан к ES — фиксить через CDC + Kafka. (3) Один analyzer для всех языков → плохая токенизация → analyzer per language (russian, kuromoji). (4) Нет cache → 80% трафика бьёт в ES — Redis 60s + ES request_cache. (5) Index per user → cluster state blow up → routing или single index + filter. (6) Leading wildcard → full scan → edge_ngram. (7) Sort string без .keyword → fielddata OOM. (8) Лишние nested → 5-10× index size. (9) update_by_query на проде во время traffic → I/O conflict. (10) Polling DB → CDC через Debezium. (11) Нет LTR на e-commerce → плохая conversion. (12) Нет _explain в debug-инструментах. (13) Bulk без disable refresh → segment storm. (14) translog async для financial → 5s data loss. (15) Cross-cluster без timeout → один медленный кластер блокирует всё.",
+                "example": "Каждый из этих пунктов — реальный postmortem в индустрии: ELK cluster melt после индексации без disable refresh; e-commerce site без LTR теряет 20% conversion vs конкурент; sort by string field положил heap в OOM на 100M документов.",
+                "when_to_apply": "Чеклист на code review и design review search-сервиса.",
+                "edge_cases": "Некоторые антипаттерны допустимы в специфичных контекстах (translog async для logs приемлем); важно понимать trade-off и осознанно выбирать.",
+                "related": "Все Q1-Q29 этой шпаргалки; каждый антипаттерн отсылает к соответствующему вопросу."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главный антипаттерн — использовать Elasticsearch вообще; всё надо делать на PostgreSQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ES — индустриальный стандарт для site/product search на 100M+ документов; PostgreSQL хорош для < 10M документов и tsvector full-text, но не выдержит facets + scatter-gather на полном масштабе.",
+                "source_of_confusion": "Анти-ES установка из «database hate club».",
+                "if_it_were_true": "Не было бы Elasticsearch / OpenSearch / Solr индустрии.",
+                "how_it_should_be": "ES для крупного поиска, PG/tsvector для маленьких корпусов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Антипаттерны — это устаревший термин, в Elasticsearch 8+ ничего нельзя сделать неправильно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ES 8+ имеет много улучшений, но фундаментальные ошибки (single shard, sync indexing, leading wildcard) всё ещё легко допустить.",
+                "source_of_confusion": "Иллюзия «новой версии без проблем».",
+                "if_it_were_true": "Postmortem'ы и production debugging исчезли бы.",
+                "how_it_should_be": "Знать антипаттерны и активно их избегать на этапе дизайна."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

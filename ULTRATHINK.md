@@ -40,7 +40,7 @@ Master-план генерации interview-материалов через с�
 
 - [x] **design-url-shortener-interview** ~~(8 Q → 28+ Q)~~ → **30 Q + 30 MCQ JSON** (rotation 8/8/7/7, ratio 1.14, schema VALID, BUILD SUCCESSFUL, 174 KB; очистил file от MCQ-callouts/Tier1 эмодзи/wikilinks). Завершено 2026-05-26.
 - [x] **design-typeahead-interview** ~~(25 Q — добить до 30+)~~ → **30 Q + 30 MCQ JSON** (rotation 8/8/7/7, ratio 1.14, schema VALID, BUILD SUCCESSFUL, 130 KB; добавлены Q26-Q30: ML ranking LambdaMART, query understanding, multi-language ICU, monitoring metrics, антипаттерны). Завершено 2026-05-26.
-- [ ] **design-search-interview** (20 Q → 28+). Inverted index, TF-IDF, BM25, vector search hybrid, faceted search, autocomplete, geo-search.
+- [x] **design-search-interview** ~~(20 Q → 28+)~~ → **30 Q + 30 MCQ JSON** (rotation 8/8/7/7, ratio 1.14, schema VALID, BUILD SUCCESSFUL, 153 KB; добавлены Q21-Q30: BM25 vs TF-IDF formulas, hybrid BM25+dense+RRF, faceted refinement, geo geohash/S2/H3, Lucene segments+translog, query understanding pipeline, multi-tenancy strategies, personalization, quality metrics, антипаттерны). Markdown очищен от inline MCQ + Tier1 emoji + wikilinks. Завершено 2026-05-26.
 
 ## Фаза 3 — добавить недостающие критичные
 
@@ -65,7 +65,7 @@ Master-план генерации interview-материалов через с�
 ## Состояние
 
 Запущено: 2026-05-26.
-Текущая итерация: **Фаза 2** → следующее **design-search-interview** (20 Q → 28+ Q: BM25, vector hybrid, faceted, geo-search).
+Текущая итерация: **Фаза 2 завершена** → переходим в **Фаза 3 (NEW cases)** → **design-netflix-interview** (video streaming, Open Connect CDN, ABR, recommendation system).
 Закрыто (Фаза 1): design-feed-system, design-payment-system, design-rate-limiter.
-Закрыто (Фаза 2): design-url-shortener, design-typeahead.
+Закрыто (Фаза 2): design-url-shortener, design-typeahead, design-search.
 Все: 30 Q + 30 MCQ JSON, BUILD SUCCESSFUL.
