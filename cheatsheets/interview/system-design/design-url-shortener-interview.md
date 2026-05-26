@@ -1,242 +1,229 @@
 ---
 title: "Вопросы на собеседовании: Design URL Shortener"
-description: "System design URL shortener (TinyURL, bit.ly): hashing, Base62, collisions, scaling reads, analytics, custom aliases, TTL, caching, DB schema, capacity estimation"
+description: "System design URL shortener (TinyURL, bit.ly): Base62, hash vs counter vs random, collision handling, 301 vs 302, sharding, multi-tier cache, click analytics, custom domains, anti-abuse, high-availability."
 tags:
   - interview
   - system-design
-  - design-url-shortener-interview
+  - design-url-shortener
 type: "interview"
 difficulty: "intermediate"
 aliases:
-  - "Вопросы на собеседовании"
-  - "Design URL Shortener"
-  - "URL Shortener design"
+  - "Design URL Shortener interview"
   - "TinyURL system design"
-prerequisites: []
-next: []
-updated: "2026-05-14"
+  - "bit.ly architecture"
+  - "Дизайн сокращателя ссылок"
+updated: "2026-05-26"
 ---
+
 # Вопросы на собеседовании: `Design URL Shortener`
 
-`URL Shortener` (TinyURL, bit.ly) — **classic system design interview**. Compact (feasible в 45 min), но covers multiple concepts: **hashing, encoding, caching, scale read-heavy, analytics**. Expected на middle/senior interviews.
+`URL Shortener` (TinyURL, bit.ly, t.co) — классический system design кейс. Компактный (укладывается в 45 минут), но покрывает множество концепций: hashing, encoding, caching, read-heavy scale, click analytics, anti-abuse, multi-region. Стандарт middle/senior interviews.
 
 ## Полезные ссылки
 
-- [System Design Primer](https://github.com/donnemartin/system-design-primer)
+- [System Design Primer — url-shortening-service](https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/pastebin/README.md)
 - [TinyURL on High Scalability](http://highscalability.com/)
-- [bit.ly engineering blog](https://word.bitly.com/)
-- [Hiredly: URL Shortener design](https://www.youtube.com/results?search_query=url+shortener+system+design)
-- [Ben Cook — SystemsExpert walkthrough](https://www.algoexpert.io/systems)
+- [Bit.ly engineering blog](https://word.bitly.com/)
+- [Twitter t.co architecture](https://blog.twitter.com/engineering/en_us/topics/infrastructure)
+- [Snowflake ID generation (Twitter)](https://github.com/twitter-archive/snowflake)
+- [Google Safe Browsing API](https://developers.google.com/safe-browsing)
 
 ## Содержание
 
-- [Полезные ссылки](#полезные-ссылки)
-- [See also](#see-also)
-
-**Requirements**
+**Requirements и capacity**
 - [Q1. (!) Functional и non-functional requirements?](#q1--functional-и-non-functional-requirements)
 - [Q2. (!) Capacity estimation — сколько storage, QPS?](#q2--capacity-estimation--сколько-storage-qps)
-
-**API**
 - [Q3. (!) API endpoints и flow?](#q3--api-endpoints-и-flow)
 
-**Encoding**
-- [Q4. (!) Как генерировать short URL? (Base62, hash, counter)](#q4--как-генерировать-short-url-base62-hash-counter)
+**Encoding и generation**
+- [Q4. (!) Как генерировать short URL (Base62/hash/counter)?](#q4--как-генерировать-short-url-base62hashcounter)
 - [Q5. (!) Почему Base62, а не Base64?](#q5--почему-base62-а-не-base64)
 - [Q6. Как избежать collisions?](#q6-как-избежать-collisions)
+- [Q19. (!) Distributed counter (Snowflake, ZooKeeper key ranges)?](#q19--distributed-counter-snowflake-zookeeper-key-ranges)
 
-**Storage**
+**HTTP redirect**
+- [Q18. (!) HTTP 301 vs 302 vs 307 — analytics implications?](#q18--http-301-vs-302-vs-307--analytics-implications)
+
+**Storage и sharding**
 - [Q7. (!) Database schema?](#q7--database-schema)
 - [Q8. SQL vs NoSQL — какой выбор?](#q8-sql-vs-nosql--какой-выбор)
+- [Q11. (!) Sharding strategy?](#q11--sharding-strategy)
+- [Q25. Migration / re-sharding без downtime?](#q25-migration--re-sharding-без-downtime)
 
-**Scalability**
-- [Q9. (!) Как scale reads? (cache, CDN)](#q9--как-scale-reads-cache-cdn)
-- [Q10. (!) Cache strategy (write-through / lazy)?](#q10--cache-strategy-write-through--lazy)
-- [Q11. Как shard DB?](#q11-как-shard-db)
+**Scalability и cache**
+- [Q9. (!) Как scale reads (cache, CDN)?](#q9--как-scale-reads-cache-cdn)
+- [Q10. (!) Cache strategy (write-through vs cache-aside)?](#q10--cache-strategy-write-through-vs-cache-aside)
+- [Q27. Hot key / viral URL handling?](#q27-hot-key--viral-url-handling)
+- [Q28. Cache stampede на популярном коде?](#q28-cache-stampede-на-популярном-коде)
 
 **Features**
 - [Q12. Custom aliases?](#q12-custom-aliases)
 - [Q13. TTL / expiration?](#q13-ttl--expiration)
-- [Q14. Analytics (click tracking)?](#q14-analytics-click-tracking)
+- [Q14. (!) Analytics (click tracking pipeline)?](#q14--analytics-click-tracking-pipeline)
+- [Q21. Custom domains (white-label `brand.com`)?](#q21-custom-domains-white-label-brandcom)
+- [Q22. Bulk shortening API (batch + idempotency)?](#q22-bulk-shortening-api-batch--idempotency)
 
-**Production concerns**
-- [Q15. (!) Reliability и single point of failure?](#q15--reliability-и-single-point-of-failure)
+**Production**
+- [Q15. (!) Reliability и SPOFs?](#q15--reliability-и-spofs)
 - [Q16. Security (spam, phishing)?](#q16-security-spam-phishing)
 - [Q17. Rate limiting?](#q17-rate-limiting)
+- [Q20. (!) High-level architecture (CDN → LB → API → Redis → DB)?](#q20--high-level-architecture-cdn--lb--api--redis--db)
+- [Q23. Anti-bot detection (one-time tokens, CAPTCHA escalation)?](#q23-anti-bot-detection-one-time-tokens-captcha-escalation)
+- [Q24. (!) Geo-distributed (multi-region DNS, edge reads)?](#q24--geo-distributed-multi-region-dns-edge-reads)
+- [Q26. (!) Monitoring metrics обязательные?](#q26--monitoring-metrics-обязательные)
+- [Q29. Bot traffic vs legitimate redirects в analytics?](#q29-bot-traffic-vs-legitimate-redirects-в-analytics)
+- [Q30. (!) Антипаттерны и подводные камни?](#q30--антипаттерны-и-подводные-камни)
 
 ## Q1. (!) Functional и non-functional requirements?
 
 **Functional:**
-- Shorten long URL → short code (7 char typical)
-- Redirect short → long
-- Optional: custom alias (vanity URL)
-- Optional: expiration (TTL)
-- Optional: analytics (click counts)
+- Shorten long URL → short code (7 char typical).
+- Redirect short → long.
+- Optional: custom alias (vanity URL).
+- Optional: expiration (TTL).
+- Optional: analytics (click counts).
 
 **Non-functional:**
-- **Read-heavy** (100:1 ratio reads:writes typical)
-- High availability (99.9%+)
-- **Low latency** (< 100ms redirect)
-- Predictable (not overwhelmed by spike)
-- **Unpredictable URLs** (can't guess next)
-- No duplicate codes
-- Scalability (billions URLs)
+- Read-heavy (100:1 reads:writes typical).
+- High availability (99.99%+).
+- Low latency (< 100 ms redirect).
+- Predictable (не падает на spike).
+- Unpredictable URLs (can't guess next).
+- No duplicate codes.
+- Scalability (billions URLs).
 
 **Explicitly not required (scope tight):**
-- User accounts (MVP no auth)
-- Edit/delete URLs (later)
-- Multi-region consistency — eventual OK
+- User accounts (MVP no auth).
+- Edit/delete URLs (later).
+- Multi-region consistency — eventual OK.
 
 **Interview tip:** clarify с interviewer — scope matters greatly для design.
-
-
-> [!mcq]
-> - [ ] URL shortener — write-heavy сервис: оптимизировать запись, не чтение | ❌ ПОСЛЕДСТВИЕ: Reads:Writes ≈ 100:1; оптимизация записи без массивного caching reads = 100ms+ redirect latency
-> - [x] Read-heavy (100:1), low latency (<100ms), HA 99.9%+, unpredictable URLs (security), billions scale | ✓ ПРИМЕНЯТЬ: NFR для URL shortener, формирующие архитектурные решения 📋 ПРАВИЛО: URL shortener = read-heavy + low latency + HA + unpredictable codes 🔗 См. Q9
-> - [ ] Strong consistency между регионами обязательна | ❌ ПОСЛЕДСТВИЕ: глобальный consensus добавит 100-200ms на write; eventual consistency достаточно — короткий код доступен через секунды глобально
-> - [ ] Custom aliases — обязательная функциональность для MVP | ❌ ПОСЛЕДСТВИЕ: vanity URLs усложняют collision detection и conflict resolution; в MVP лучше отложить, опционально для платных пользователей
 
 ## Q2. (!) Capacity estimation — сколько storage, QPS?
 
 **Assumptions (bit.ly-scale):**
-- 100M new URLs / month = ~40 writes/sec
-- Read:write = 100:1 → ~4000 reads/sec
-- Peak spike: 10x → 40K reads/sec
+- 100M new URLs/month = ~40 writes/sec.
+- Read:write = 100:1 → ~4 000 reads/sec.
+- Peak spike: 10× → 40 K reads/sec.
 
 **Storage per URL:**
-- `short_code`: 7 chars = 7B
-- `long_url`: avg 100B
-- `created_at`, `expires_at`, `user_id`: ~30B
-- Total: ~150B per record
+- `short_code`: 7 chars = 7 B.
+- `long_url`: avg 100 B.
+- `created_at`, `expires_at`, `user_id`: ~30 B.
+- Total: ~150 B per record.
 
 **5 years:**
-- 100M × 12 × 5 = 6 billion URLs
-- 6B × 150B = **900 GB** base data
-- With indexes + replicas: ~3-5 TB
+- 100M × 12 × 5 = **6 billion URLs**.
+- 6B × 150 B = **900 GB** raw.
+- + indexes + replicas: ~3-5 TB.
 
 **Bandwidth:**
-- Read: 4000 QPS × 100B (URL response) ≈ 400 KB/s
-- Write: 40 QPS × 150B ≈ 6 KB/s
-- Peak (10x) читается: 4 MB/s
+- Read: 4 000 QPS × 100 B = 400 KB/s.
+- Peak (10×): 4 MB/s.
+- Write: 40 QPS × 150 B = 6 KB/s.
 
-**Memory для cache (80/20 rule):**
-- 20% URLs get 80% traffic
-- Top 20% of active links = ~200M URLs
-- 200M × 150B = **30GB** — feasible on single large Redis instance
+**Memory для cache (80/20):**
+- 20% URLs дают 80% трафика → top 200M URLs hot.
+- 200M × 150 B = **30 GB** Redis — feasible на крупной single instance, но для HA — Redis Cluster.
 
-**Takeaway:** not a huge system, но requires careful caching для read latency.
-
-
-> [!mcq]
-> - [ ] Cache можно хранить на одной Redis instance — 30GB hot data | ❌ ПОСЛЕДСТВИЕ: single Redis = single point of failure; для HA нужен Redis Cluster или sentinel; 30GB на одной node — но без replication
-> - [ ] Storage 5 лет ≈ 100GB — index не нужен | ❌ ПОСЛЕДСТВИЕ: реально 6B URLs × 150B + индексы на short_code и user_id ≈ 3-5TB; без планирования storage system падает на 50% capacity
-> - [x] 6B URLs × 150B = 900GB raw + indexes ~3-5TB; cache 80/20 ⇒ 30GB Redis для hot URLs | ✓ ПРИМЕНЯТЬ: capacity estimation для read-heavy URL shortener 📋 ПРАВИЛО: 80/20 cache hits hot 20% URLs = огромный QPS hit rate 🔗 См. Q9
-> - [ ] Bandwidth не критичен — URL короткие | ❌ ПОСЛЕДСТВИЕ: при peak 40k QPS × 100B response = 4MB/s; на ingress NIC можно превысить лимит при недостаточной аплинк-пропускной способности
+**Takeaway:** не огромная система, но требует careful caching для read latency.
 
 ## Q3. (!) API endpoints и flow?
 
-**POST /shorten**
+**POST /shorten:**
 ```http
 POST /api/v1/shorten
+Content-Type: application/json
+Authorization: Bearer <token>
+Idempotency-Key: <uuid>
+
 {
   "url": "https://very/long/url",
-  "custom_alias": "myalias",   // optional
-  "ttl_seconds": 2592000        // optional
+  "custom_alias": "myalias",
+  "ttl_seconds": 2592000
 }
-→ 200 OK
+```
+Response:
+```http
+200 OK
 {
-  "short_url": "https://tiny.url/abc1234"
+  "short_url": "https://tiny.url/abc1234",
+  "short_code": "abc1234",
+  "expires_at": "2026-06-25T00:00:00Z"
 }
 ```
 
-**GET /{short_code} (redirect)**
+**GET /{short_code} (redirect):**
 ```http
 GET /abc1234
 → 302 Found
 Location: https://very/long/url
+Cache-Control: private, no-cache
 ```
 
-**Use 301 vs 302?**
-- **301** (permanent): browser caches → fewer server hits, но loses analytics; bad если need tracking
-- **302** (temporary): no cache → each click hits server → track analytics
-- bit.ly uses 301 with short cache (private, max-age=90)
-- For analytics — typically 302 (force server hit)
+**GET /api/v1/stats/{short_code}** — click analytics (auth required).
 
-**GET /api/v1/stats/{short_code}** — click analytics
+**DELETE /api/v1/links/{short_code}** — revocation (owner-only).
 
-**Flow (shorten):**
-1. Validate URL
-2. Check if already shortened (optional — dedup)
-3. Generate short code
-4. Insert to DB
-5. Cache
-6. Return short URL
+**Flow shorten:**
+1. Validate URL syntax + Safe Browsing scan.
+2. Check idempotency-key dedup.
+3. Generate short code (распределённый counter / random pool).
+4. Insert in DB с UNIQUE constraint.
+5. Warm cache.
+6. Return short URL.
 
-**Flow (redirect):**
-1. Lookup cache → hit → redirect
-2. Miss → DB
-3. Found → cache + redirect
-4. Not found → 404
+**Flow redirect:**
+1. Lookup CDN edge cache → hit → 302.
+2. Miss → app server → Redis → hit → 302.
+3. Miss → DB read replica → 302 + warm Redis.
+4. Not found → 404.
+5. Async — Kafka event `url_clicks` for analytics.
 
+## Q4. (!) Как генерировать short URL (Base62/hash/counter)?
 
-> [!mcq]
-> - [ ] Использовать 301 (permanent) для всего — улучшает производительность | ❌ ПОСЛЕДСТВИЕ: 301 кэшируется браузером навсегда; redirect не дойдёт до сервера — analytics клик-трекинг не работает; bit.ly использует 301 с private max-age=90 для компромисса
-> - [x] POST /shorten возвращает короткий URL; GET /{code} → 302 redirect (для analytics) или 301 (cached, лучше perf, без tracking) | ✓ ПРИМЕНЯТЬ: REST API дизайн URL shortener; выбор 301/302 зависит от tracking 📋 ПРАВИЛО: 301 = cached forever (no analytics); 302 = each click hits server 🔗 См. Q14
-> - [ ] Flow shorten: validate → generate → return (без cache write) | ❌ ПОСЛЕДСТВИЕ: первый redirect промахнётся в кэше → DB hit → 50ms latency; pre-warm cache при создании = 5ms latency сразу
-> - [ ] При создании короткого URL обязательно проверять что long_url существует | ❌ ПОСЛЕДСТВИЕ: HEAD request на каждый submit добавляет 200-500ms latency; spam-проверки лучше делать в backend offline
+**Три основных подхода:**
 
-## Q4. (!) Как генерировать short URL? (Base62, hash, counter)
-
-**Three main approaches:**
-
-**1. Hash (MD5/SHA + Base62):**
+**1. Hash (MD5/SHA + Base62 truncate):**
+```python
+hash = md5(long_url + salt)
+short = base62_encode(int(hash, 16))[:7]
 ```
-hash = md5(long_url)
-short = base62_encode(hash)[0:7]
-```
-- Pros: deterministic (same URL → same code — dedup!)
-- Cons: collisions; need check + retry
+- Pros: detеrministic (same URL → same code, free dedup).
+- Cons: collisions неизбежны (birthday paradox); требует retry + UNIQUE constraint.
 
 **2. Counter + Base62:**
-```
-id = autoincrement_counter  // global: 1, 2, 3, ...
+```python
+id = autoincrement_counter
 short = base62_encode(id)
 ```
-- Counter 1 → "1", 100000000000 → "aZl8N0"
-- Pros: no collisions; predictable
+- 1 → `"1"`, 1 000 000 000 → `"aZl8N0"`.
+- Pros: collision-free; predictable.
 - Cons:
-  - Enumerable (/1, /2 → discover all URLs)
-  - Global counter = bottleneck (single point)
-  - Solution: **distributed counter** (Snowflake, key ranges per server)
+  - Enumerable (`/1`, `/2` → discover all URLs — security).
+  - Global counter — bottleneck (single point).
+  - Решение: distributed counter (Snowflake, key ranges per host) — см. Q19.
 
 **3. Random (62^7):**
+```python
+short = ''.join(random.choices(ALPHABET, k=7))
+if db.exists(short): retry()
 ```
-short = random_base62_string(7)
-check_db_collision()
-```
-- 62^7 = 3.5 trillion combinations
-- Pros: unpredictable, no global coordination
-- Cons: probabilistic collisions (rare; ~few at billion scale)
+- 62^7 = 3.5 trillion combinations.
+- Pros: unpredictable, no coordination.
+- Cons: probabilistic collisions (~10M на 6B codes — handle с retry).
 
-**Hybrid (common in practice):**
-- Pre-generate batches of random codes offline
-- Service consumes from pool
-- Pool refilled background
-- No online random/collision work
+**Hybrid (production-pattern):**
+- Pre-generate batches of random codes offline → fill pool в Redis.
+- Service consumes from pool → no online collision work.
+- Pool refilled background job.
 
-**Short code length:**
-- 6 chars: 62^6 = 56B — borderline
-- 7 chars: 3.5T — safe for decade
-- 8 chars: 218T — overkill но flexibility
+**Длина:**
+- 6 chars: 56B combinations — на пределе.
+- 7 chars: 3.5T — safe на decade.
+- 8 chars: 218T — overkill, но flexibility.
 
-**Picked approach:** counter + Base62 с key-range sharding, OR offline-generated random pool.
-
-
-> [!mcq]
-> - [ ] Hash MD5 без collision check — самый надёжный подход | ❌ ПОСЛЕДСТВИЕ: на billion entries birthday paradox даёт несколько collisions; без unique constraint два URL получат одинаковый код = один потеряется
-> - [ ] Глобальный counter без шардинга — самое простое решение | ❌ ПОСЛЕДСТВИЕ: single counter — bottleneck при 40+ writes/sec; на peak load очередь к counter блокирует все writes; нужен distributed counter (Snowflake, key ranges)
-> - [x] Counter+Base62 (no collisions, predictable, нужен distributed) ИЛИ random Base62 7chars (3.5T combos, low collision rate) ИЛИ pre-generated pool (offline batches) | ✓ ПРИМЕНЯТЬ: выбор зависит от scale и предсказуемости URL 📋 ПРАВИЛО: counter = predictable bottleneck; random = unpredictable независимое 🔗 См. Q5
-> - [ ] 6 chars Base62 достаточно — 56 миллиардов комбинаций | ❌ ПОСЛЕДСТВИЕ: 56B комбинаций с 6B existing = пространство уже почти заполнено через 5 лет; collision rate растёт катастрофически; 7 chars = 3.5T = безопасно
+**Industry default:** counter + Base62 с distributed counter (Q19) ИЛИ offline-generated random pool.
 
 ## Q5. (!) Почему Base62, а не Base64?
 
@@ -245,20 +232,19 @@ check_db_collision()
 **Base64 alphabet:** Base62 + `+` и `/` (or `-`, `_` в URL-safe variant).
 
 **Проблема Base64:**
-- `+` и `/` require URL encoding (`%2B`, `%2F`) — уродливо
-- URL-safe Base64 (`-`, `_`) лучше, но не universally supported
+- `+` и `/` требуют URL encoding (`%2B`, `%2F`) — уродливо.
+- URL-safe Base64 (`-`, `_`) лучше, но не universally supported (legacy parsers).
 
 **Base62 advantages:**
-- URL-safe inherently
-- Double-click selects (в textbox) — `-`/`_` may split
-- Aesthetic (clean)
+- URL-safe inherently.
+- Double-click selects (textbox) — `-`/`_` may break selection.
+- Эстетично.
 
-**Why not just Base10 (decimal)?**
-- Shorter encoding with Base62 (4.1x more compact bit-wise)
-- 7 chars Base62 = 3.5T (enough)
-- 7 chars Base10 = 10M (too few)
+**Why not Base10 (decimal)?**
+- 7 chars Base62 = 3.5T, 7 chars Base10 = 10M (too few).
+- Base62 в 4.1× компактнее bit-wise.
 
-**Encoding:**
+**Encoding (Python):**
 ```python
 ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -274,1018 +260,1017 @@ def decode(s):
     return sum(ALPHABET.index(c) * 62**i for i, c in enumerate(reversed(s)))
 ```
 
-
-> [!mcq]
-> - [ ] Base64 универсально лучше — больше алфавит = меньше длина кода | ❌ ПОСЛЕДСТВИЕ: Base64 содержит `+` и `/` — требуют URL encoding (`%2B`, `%2F`); URL уродлив; URL-safe Base64 (`-`,`_`) лучше но менее supported
-> - [ ] Base10 (decimal) — самое читаемое для пользователей | ❌ ПОСЛЕДСТВИЕ: 7 chars Base10 = 10M URLs, исчерпается за месяц; Base62 7 chars = 3.5T, хватит на годы
-> - [x] Base62 [a-zA-Z0-9] — URL-safe inherently, double-click selects, эстетично; 62^7 = 3.5T combinations | ✓ ПРИМЕНЯТЬ: short URL encoding, file IDs, любые URL-safe identifiers 📋 ПРАВИЛО: Base62 = URL-friendly без escape characters 🔗 См. Q4
-> - [ ] Hex (Base16) лучше Base62 — стандартизированно | ❌ ПОСЛЕДСТВИЕ: Hex кодирует только 4 бита/symbol (vs ~6 Base62); 7 hex chars = 268M URLs; для billion масштаба нужно 10+ chars
-
 ## Q6. Как избежать collisions?
 
-**В hash-based approach:**
-- Collision rate низкий, но ≠ 0
-- На billion entries: birthday paradox → few collisions expected
+**В hash-based approach:** collision rate низкий, но не 0. На billion entries birthday paradox даёт несколько collisions.
 
-**Strategies:**
+**Стратегии:**
 
 **1. Check-and-insert:**
 ```python
 while True:
     code = generate_code()
     try:
-        db.insert(code, url)  # unique constraint
+        db.insert(code, url)  # UNIQUE constraint
         break
-    except DuplicateError:
-        continue  # try again
+    except DuplicateKeyError:
+        continue
 ```
-- Simple
-- Race condition: two requests same code → unique constraint handles
+- Race condition защищена UNIQUE constraint.
 
 **2. Bloom filter + DB check:**
-- Bloom filter: fast "probably seen" check
-- Avoid DB hit if bloom says new (99.9% accurate)
-- False positive → DB check anyway
+- Bloom: fast «probably seen» — false positive 1-2%, miss DB check anyway.
+- Negative answer гарантирован — code новый.
 
-**3. Pre-generate pool:**
-- Background job fills pool с unique codes
-- Online consumes from pool
-- No collision check at request time
+**3. Pre-generated pool:**
+- Background job заполняет pool unique codes.
+- Online consumer берёт из pool.
+- Нет collision check на критическом пути.
 
 **4. Counter-based (no collisions):**
-- Monotonic increment
-- Distributed via Snowflake or Redis INCR or key ranges
+- Snowflake / Redis INCR / key ranges per host.
 
 **Suffix trick:**
-- On collision, append char or increment
-- Predictable growth
+- При collision — append char или increment counter в коде.
 
 **Retry limit:**
-- 3-5 retries; if all fail → increase length to 8 chars
+- 3-5 retries; если все fail → увеличить длину до 8 chars (extension API).
 
-**Probability calculation (birthday):**
-- 3.5T space, 6B codes → P(collision) per new ≈ 6B/3.5T = 0.17%
-- ~10M collisions at 6B codes
-- Must handle gracefully
-
-
-> [!mcq]
-> - [ ] Generate random codes без проверки collision — birthday paradox низкий | ❌ ПОСЛЕДСТВИЕ: при 6B codes из 3.5T space P(collision)≈0.17%; это ~10M потерянных URL без unique constraint
-> - [x] Strategies: check-and-insert (unique constraint), Bloom filter, pre-generate pool, counter-based; retry limit 3-5 then increase length | ✓ ПРИМЕНЯТЬ: production URL shortener должен иметь стратегию collision handling 📋 ПРАВИЛО: collision handling = unique constraint + retry с лимитом 🔗 См. Q4
-> - [ ] Bloom filter гарантирует отсутствие collisions | ❌ ПОСЛЕДСТВИЕ: Bloom filter даёт false positives (1-2%); без последующей DB check возможен пропуск collision; Bloom = optimization, не guarantee
-> - [ ] При collision лучше всегда возвращать 409 Conflict — пусть клиент попробует ещё раз | ❌ ПОСЛЕДСТВИЕ: латентность взлетает (RTT × число retries); клиент может не делать retry; сервер должен retry внутри generation logic
+**Probability:**
+- 3.5T space, 6B codes → P(collision) per new = 6B/3.5T = 0.17%.
+- ~10M ожидаемых collisions на 6B → handle gracefully.
 
 ## Q7. (!) Database schema?
 
-**Simple:**
-
+**Главная таблица:**
 ```sql
 CREATE TABLE urls (
   short_code VARCHAR(10) PRIMARY KEY,
-  long_url TEXT NOT NULL,
-  user_id BIGINT,
-  created_at TIMESTAMP DEFAULT NOW(),
-  expires_at TIMESTAMP,
-  click_count BIGINT DEFAULT 0
+  long_url   TEXT NOT NULL,
+  user_id    BIGINT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ,
+  click_count BIGINT DEFAULT 0,
+  is_custom  BOOLEAN DEFAULT FALSE,
+  scan_score REAL,
+  deleted_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_user ON urls(user_id);
-CREATE INDEX idx_expires ON urls(expires_at);
+CREATE INDEX idx_user ON urls (user_id);
+CREATE INDEX idx_expires ON urls (expires_at) WHERE expires_at IS NOT NULL;
 ```
 
-**With analytics (separate table — high write volume):**
+**Clicks (отдельная высокописная таблица):**
 ```sql
 CREATE TABLE clicks (
-  id BIGSERIAL PRIMARY KEY,
-  short_code VARCHAR(10),
-  clicked_at TIMESTAMP DEFAULT NOW(),
-  referrer TEXT,
-  user_agent TEXT,
-  country VARCHAR(2),
-  ip VARCHAR(45)
+  id           BIGSERIAL PRIMARY KEY,
+  short_code   VARCHAR(10),
+  clicked_at   TIMESTAMPTZ DEFAULT NOW(),
+  ip_hash      VARCHAR(64),
+  country      VARCHAR(2),
+  referrer     TEXT,
+  ua_family    VARCHAR(50)
 ) PARTITION BY RANGE (clicked_at);
+
+-- Партиция на месяц — дроп через 12 месяцев.
+CREATE TABLE clicks_2026_05 PARTITION OF clicks
+  FOR VALUES FROM ('2026-05-01') TO ('2026-06-01');
 ```
 
-- Partition by month (easy to drop old)
-- Index short_code для analytics queries
-
-**Users table (если auth):**
+**Users (если auth):**
 ```sql
 CREATE TABLE users (
-  id BIGSERIAL PRIMARY KEY,
+  id    BIGSERIAL PRIMARY KEY,
   email VARCHAR(255) UNIQUE,
-  tier VARCHAR(20),
-  created_at TIMESTAMP
+  tier  VARCHAR(20),
+  created_at TIMESTAMPTZ
 );
 ```
 
 **Considerations:**
-- `short_code` primary key → fast lookup
-- Don't join clicks на each redirect (denormalized counter или async batch)
-- `click_count` eventually consistent (update from clicks stream every N sec)
-
-
-> [!mcq]
-> - [ ] click_count лучше обновлять синхронно при каждом redirect | ❌ ПОСЛЕДСТВИЕ: 40k QPS × UPDATE click_count = lock contention на short_code row; redirect latency взлетает; нужен async batch update
-> - [x] short_code как PRIMARY KEY (fast lookup); clicks separate table partitioned by month; click_count denormalized eventually consistent | ✓ ПРИМЕНЯТЬ: schema дизайн URL shortener с разделением hot/cold paths 📋 ПРАВИЛО: redirect path = lookup-only; analytics path = separate async pipeline 🔗 См. Q14
-> - [ ] Не нужен индекс на user_id если поиск по short_code | ❌ ПОСЛЕДСТВИЕ: "мои URL" страница запрашивает urls WHERE user_id=X; full table scan на 6B records = таймаут
-> - [ ] PARTITION BY HASH лучше PARTITION BY RANGE для кликов | ❌ ПОСЛЕДСТВИЕ: HASH разбрасывает данные равномерно но не позволяет дропнуть старые партиции; RANGE по месяцам = TRUNCATE PARTITION для cleanup
+- `short_code` PRIMARY KEY → быстрый lookup.
+- НЕ join clicks на каждый redirect (counter denormalized, batch update раз в минуту).
+- `click_count` eventually consistent (см. Q14).
 
 ## Q8. SQL vs NoSQL — какой выбор?
 
-**SQL (PostgreSQL/MySQL):**
-- Transactions (важно для counter?)
-- Strong consistency
-- Complex queries (analytics joins)
-- ACID
-- Familiar, battle-tested
+**SQL (PostgreSQL / MySQL):**
+- Transactions, strong consistency.
+- Complex queries (analytics joins).
+- ACID, battle-tested.
+- Vertical scaling предел ~50K QPS.
 
-**NoSQL (DynamoDB, Cassandra):**
-- Key-value fits URL shortener perfectly (short_code → long_url)
-- Unlimited scale
-- Low latency reads at scale
-- No-SQL eventual consistency acceptable
+**NoSQL (DynamoDB / Cassandra):**
+- Key-value паттерн идеально fits (short_code → long_url).
+- Unlimited horizontal scale.
+- p99 ~10 ms на любом масштабе.
+- Eventual consistency acceptable.
 
-**Verdict:** **eivther works; key-value NoSQL preferred for scale**:
-- Primary use case = lookup by key → exactly what KV store optimizes
-- DynamoDB: 10ms p99 at any scale
-- Redis is overkill but works for smaller
+**Verdict:** оба работают; **key-value NoSQL preferred для scale**.
+- Primary use case = lookup by key — exactly what KV stores optimize.
+- DynamoDB: 10 ms p99 при любом scale.
+- Redis as cache, не primary (durability issues).
 
 **Reality:**
-- bit.ly уses **Redis + MySQL** (Redis cache, MySQL persistence)
-- Google-scale: Spanner or BigTable
+- bit.ly — Redis + MySQL (Redis cache, MySQL persistence).
+- Twitter t.co — Manhattan (own KV store).
+- Google-scale (deprecated goo.gl) — Bigtable.
 
 **Schema в DynamoDB:**
 ```
 Table: urls
-  PK: short_code (string)
-  Attrs: long_url, created_at, expires_at (TTL), ...
+  PK: short_code (S)
+  Attrs: long_url, created_at, expires_at (TTL), user_id
+  GSI: user_id-created_at-index (для «My links»)
 ```
 
-**Analytics separate** regardless of main DB:
-- Kafka → Flink/Spark → data warehouse (BigQuery, Redshift)
-- Heavy aggregation off main path
+**Analytics — отдельный pipeline (Kafka → Flink → ClickHouse/BigQuery)** независимо от primary store.
 
+## Q9. (!) Как scale reads (cache, CDN)?
 
-> [!mcq]
->
-> **Вопрос:** Для URL shortener выбирают между PostgreSQL и DynamoDB. Какое утверждение лучше всего обосновывает выбор технологии хранения?
->
-> ---
->
-> #### A) PostgreSQL обязателен — нужны транзакции и ACID для целостности short_code → long_url — ❌ Неверно
->
-> **Что на самом деле:** Запись short_code → long_url — это идемпотентная single-row операция. Никаких multi-table транзакций не требуется: либо INSERT с UNIQUE constraint проходит, либо нет. ACID нужен для финансовых транзакций или сложных бизнес-инвариантов, а не для key-value lookup.
-> **Откуда путаница:** Привычка "DB = ACID = PostgreSQL по умолчанию". Многие backend-разработчики не различают bounded-context: какое именно гарантирование нужно в этой схеме.
-> **Если бы это было правдой:** Bit.ly и TinyURL работали бы на PostgreSQL primary, упирались бы в vertical scale на 50k+ QPS, тратили inflated $$$ на RDS Multi-AZ вместо DynamoDB on-demand с автоматическим горизонтальным split.
->
-> ---
->
-> #### B) Redis — единственный нужный store; persistence через AOF достаточно вместо отдельной DB — ❌ Неверно
->
-> **Что на самом деле:** Redis с AOF теряет 0-1с данных при crash; RDB snapshot — до минут. Для URL shortener это означает потерю свежесозданных коротких ссылок — user отправил клиенту ссылку, через секунду crash → ссылка не разрешается → user-visible 404 на собственную ссылку. Redis нужен как cache layer поверх durable store (MySQL/DynamoDB), а не как единственный source of truth.
-> **Откуда путаница:** "Bit.ly использует Redis" → читают как "Redis вместо DB", хотя там Redis + MySQL.
-> **Если бы это было правдой:** При memory eviction (LRU) старые short_code теряются навсегда; SLA на durability падает до уровня AOF fsync (~99.9% в лучшем случае); compliance аудит (GDPR right-to-erasure logs) проваливается.
->
-> ---
->
-> #### C) Key-value NoSQL (DynamoDB/Cassandra) — оптимальный выбор: схема доступа = lookup by PK, нужна горизонтальная масштабируемость и predictable p99 latency — ✓ Верно
->
-> **Развёрнутое объяснение:** URL shortener — это **canonical key-value workload**: 99% запросов = `GET long_url WHERE short_code = ?`. DynamoDB даёт p99 ≈ 10ms на любом масштабе с auto-partitioning по hash(short_code); on-demand pricing освобождает от capacity planning. Транзакции не нужны — short_code генерируется уникальным (counter+Base62, Snowflake, или INSERT с retry на conflict). Analytics (clicks) идут в отдельный pipeline (Kafka → ClickHouse), не нагружая redirect path.
-> **Пример:**
-> ```
-> Table: urls (DynamoDB)
->   PK: short_code (S)
->   Attrs: long_url, created_at, expires_at (TTL attr), user_id
->   GSI: user_id-created_at-index (для "My links")
-> ```
-> Bit.ly: MySQL + Redis (legacy stack); modern (Yandex Cloud Shortener, Hootsuite Owly) — DynamoDB-style KV. Google goo.gl (до закрытия) — Bigtable.
-> **Когда применять:** Read-heavy workload (100:1 reads:writes), schema-on-read (атрибуты могут эволюционировать без миграций), нужен global secondary index для query patterns кроме PK, multi-region replication из коробки (DynamoDB Global Tables).
-> **Подводные камни:** Cross-partition queries (например, "top-100 URLs by clicks") требуют scan — нужен отдельный analytics store. Hot partition при единичном viral URL — митигировать write sharding (suffix к ключу) или CDN edge cache. Стоимость GSI = удвоение write capacity.
-> **Связанные вопросы:** [[design-url-shortener-interview#Q7]] — Database schema; [[design-url-shortener-interview#Q9]] — scale reads через cache/CDN; [[design-url-shortener-interview#Q11]] — sharding strategies для самой DB.
->
-> ---
->
-> #### D) Cassandra — лучший выбор потому что поддерживает SQL через CQL — ❌ Неверно
->
-> **Что на самом деле:** CQL похож на SQL **синтаксически**, но семантически ограничен: нет JOIN, нет subqueries, WHERE только по partition key (или с ALLOW FILTERING — антипаттерн). Cassandra оптимизирована для write-heavy workload (LSM-tree, append-only), а URL shortener — read-heavy. DynamoDB или Redis-as-primary дадут лучший cost/latency для 100:1 read ratio.
-> **Откуда путаница:** "CQL = SQL = удобно" — обманчивое сходство имени.
-> **Если бы это было правдой:** Tombstones от expired URLs накапливаются в SSTables, compaction overhead растёт; redirect latency через Cassandra p99 ≈ 30-50ms против DynamoDB 10ms; операционная сложность (управление nodetool, repair schedules) выше чем у managed DynamoDB.
+**Read amplification:** один URL может обслуживать миллиарды redirects. Layered cache — единственный способ.
 
-**Read amplification problem:** 1 URL може serve billions of redirects.
+```mermaid
+graph LR
+  User --> CDN[CDN Edge]
+  CDN -->|miss 30%| LB[Load Balancer]
+  LB --> App[App Server]
+  App --> Redis[Redis Cluster]
+  Redis -->|miss 5%| ReplicaDB[(DB Read Replica)]
+  ReplicaDB -->|miss| PrimaryDB[(DB Primary)]
+```
 
 **Layers:**
 
-**L0 — Browser cache (via 301):**
-- Permanent redirect → browser caches
-- Loses analytics (can't track)
-- Use only if no analytics needed
+**L0 — Browser cache (через 301):** уже cached, но теряем analytics.
 
-**L1 — CDN:**
-- Edge cache для redirect response
-- `Cache-Control: public, max-age=86400`
-- Massive offload для top URLs
-- Works with 302 too (configurable)
+**L1 — CDN edge (CloudFront / Cloudflare):** edge cache redirect response, `Cache-Control: public, max-age=300, s-maxage=3600`; hit ratio 50-70% для top URLs.
 
-**L2 — Redis cache:**
-- Hot URLs в memory
-- ~1ms lookup
-- Cache everything, evict LRU/LFU
+**L2 — Redis cluster:** hot URLs in memory, ~1 ms lookup; hit ratio 95%+ от того, что прошло через CDN.
 
-**L3 — DB read replicas:**
-- MySQL replicas читают без primary load
-- Geo-distributed replicas для multi-region
+**L3 — DB read replicas:** rarely touched; geo-distributed replicas.
 
-**Architecture:**
+**Hit ratios cascade:**
 ```
-User → CDN (edge) → Load Balancer → App → Redis → DB (primary+replicas)
+40K QPS global
+   ↓ CDN (hit 60%)
+16K QPS app
+   ↓ Redis (hit 95%)
+800 QPS DB
+   ↓ read replicas split
+~200 QPS на replica
 ```
 
-**Hit ratios typical:**
-- CDN: 50-70% (long tail)
-- Redis: 95%+ (most popular)
-- DB: rarely touched for reads
+**Origin DB видит < 0.1% исходного трафика** — exactly то, что нужно при viral URL.
 
-**80/20 rule:** 20% URLs get 80% traffic → cache effective.
-
-
-> [!mcq]
->
-> **Вопрос:** При scale reads для URL shortener (40k QPS, 100:1 read:write ratio) какая стратегия наиболее эффективна для снижения нагрузки на origin?
->
-> ---
->
-> #### A) Single Redis instance перед DB достаточен — отдаст все hot ключи из памяти — ❌ Неверно
->
-> **Что на самом деле:** Single Redis instance с 30GB RAM покрывает hot set, но даёт single point of failure и upper bound ~100k QPS на инстанс. При 40k QPS глобально это работает, но при viral spike (топ-URL × миллион кликов) Redis instance насыщает NIC раньше, чем CPU; нужен Redis Cluster или multi-tier (in-proc → Redis → DB). Также Redis не решает географическую latency: user из Бразилии всё равно идёт в US-East datacenter.
-> **Откуда путаница:** "Redis = решение проблемы reads" — но single-tier cache игнорирует edge caching и geo-distribution.
-> **Если бы это было правдой:** При DDoS на популярный short_code single Redis колено-в-колено с DB; cross-region users получают 200ms RTT вместо 20ms через CDN edge; Redis OOM при unbounded growth.
->
-> ---
->
-> #### B) 301 Permanent Redirect полностью решает проблему — браузер закеширует — ❌ Неверно
->
-> **Что на самом деле:** 301 действительно кешируется браузером надолго, но даёт два критических минуса: (1) теряется аналитика — последующие переходы не доходят до сервера, нет click_count; (2) нельзя отозвать ссылку — если URL заблокирован за phishing, у миллионов пользователей в браузере останется кеш 301 на месяцы. Большинство shortener используют **302 Found** (не кешируется) + CDN с короткой TTL для контроля.
-> **Откуда путаница:** "Permanent = постоянный = хорошо для производительности" — но в business context каждый клик должен быть наблюдаемым.
-> **Если бы это было правдой:** Аналитика клик-стрима ломается; revocation malicious URL невозможен без X-User-Agent fingerprint; conversion tracking партнёров (UTM-параметры) теряется на повторных кликах.
->
-> ---
->
-> #### C) Sharding DB по short_code решает read scaling без cache — ❌ Неверно
->
-> **Что на самом деле:** Sharding распределяет write load и storage capacity, но **не решает read amplification**: один популярный short_code (viral video link) генерирует миллионы redirect на один shard → этот shard становится hot partition. Cache (Redis/CDN) — единственный способ обработать read amplification, потому что копирует hot ключи близко к edge, минуя origin. Sharding и cache решают **разные** проблемы и применяются вместе.
-> **Откуда путаница:** Смешение write scale (sharding) и read scale (caching) — обе называются "scale", но техники разные.
-> **Если бы это было правдой:** При viral URL один shard упирается в IOPS, остальные простаивают; добавление shard'ов не помогает, потому что трафик идёт в один partition; нужен либо cache, либо write-sharding популярного ключа (suffix trick).
->
-> ---
->
-> #### D) Multi-tier cache (CDN edge → Redis cluster → DB read replicas) + 302 redirect — обрабатывает read amplification на каждом уровне — ✓ Верно
->
-> **Развёрнутое объяснение:** **L0 Browser** — не кешировать (302) для аналитики. **L1 CDN edge** (CloudFront/Cloudflare) — top URLs закешированы в 200+ POP по всему миру, hit ratio 50-70%, latency 5-20ms close to user. **L2 Redis cluster** — hot set (20% URLs = 80% трафика), p99 1ms, hit ratio 95%+ от того что прошло через CDN. **L3 DB read replicas** (Aurora replicas или DynamoDB Global Tables) — rarely touched, обрабатывают cache miss + cold tail. Каждый уровень снижает нагрузку на следующий экспоненциально — origin DB видит < 0.1% исходного трафика.
-> **Пример:**
-> ```
-> 40k QPS глобально
->   ↓ CDN edge (hit 60%)
-> 16k QPS на app servers
->   ↓ Redis cluster (hit 95%)
-> 800 QPS на DB
->   ↓ read replicas split
-> ~200 QPS на каждую replica
-> ```
-> Cache-Control: `public, max-age=300, s-maxage=3600` — короткий browser TTL (revocation), длинный CDN TTL (offload).
-> **Когда применять:** Любой read-heavy KV сервис: bit.ly (Akamai + Redis), TikTok shortlinks (Cloudflare + own KV), Twitter t.co (Fastly + Manhattan KV store). 100:1 read:write — caching обязателен; 10:1 — рекомендован; 1:1 — необязателен.
-> **Подводные камни:** Cache invalidation при revocation — short TTL + explicit purge через CDN API. Stale cache при rolling restart — warm-up через replay logs. CDN cost — CloudFront $0.085/GB egress; для viral URLs можно превысить DB cost.
-> **Связанные вопросы:** [[design-url-shortener-interview#Q10]] — cache-aside vs write-through trade-offs; [[design-url-shortener-interview#Q15]] — graceful degradation при cache outage; [[design-url-shortener-interview#Q11]] — sharding для write capacity (orthogonal к read scaling).
+## Q10. (!) Cache strategy (write-through vs cache-aside)?
 
 **Write-through:**
-- On shorten: write DB + Redis atomically
-- Read always hits Redis
-- Potential issue: Redis full → evict; next read DB cache miss
+- On shorten: write DB + Redis atomically.
+- Read always hits Redis.
+- Cons: write amplification 2× на ВСЕ creates, включая URLs которые никто не кликнет (90% long tail).
 
 **Cache-aside (lazy):**
-- On read: check Redis → miss → DB → store in Redis
-- Simpler; DB is source of truth
-- First read after write uncached
+- On read: check Redis → miss → DB → store в Redis.
+- DB — single source of truth.
+- Первый read after write — cache miss.
+- Default choice для read-heavy KV.
 
-**Write-behind:**
-- Not applicable — short URLs rarely deleted/changed
+**Write-behind (async DB write):**
+- НЕ применимо для URL shortener: после shorten user уже отправил ссылку другу; Redis crash до flush → 404 на user-visible action.
 
-**Recommended:** cache-aside с write-through для hot data.
+**Recommended:** cache-aside с LFU eviction + 24h TTL.
+
+**Eviction policy:**
+- `allkeys-lfu` (Redis 4.0+) — лучше LRU для frequency-based (viral URLs кликают долго, LRU выбросит после burst новых).
+- 30 GB Redis Cluster для top 200M URLs (80/20 rule).
 
 **TTL:**
-- Cache TTL = 24h typical
-- Long TTL OK (URLs immutable after creation)
-- Invalidate on delete (rare)
+- 24h типично; URLs immutable после creation, длинный TTL OK.
+- Negative caching (404) — 60 sec, защита от scanning attacks.
 
-**Eviction:**
-- LFU (Redis `allkeys-lfu`) — keeps popular
-- Memory sized для hot set (30GB для 200M URLs)
+**Thundering herd на cache expiry:** см. Q28.
 
-**Local cache (L1 in-proc):**
-- Super-hot URLs (< 1k) in-proc Caffeine
-- Nanosecond access
-- Invalidate periodically
+## Q11. (!) Sharding strategy?
 
+**Стратегии:**
 
-> [!mcq]
->
-> **Вопрос:** Какая cache strategy + eviction policy наиболее уместна для Redis-слоя URL shortener?
->
-> ---
->
-> #### A) Write-through на все ключи + LRU eviction + TTL=infinity — гарантирует 100% cache hit — ❌ Неверно
->
-> **Что на самом деле:** Write-through на ВСЕ shorten операции означает write amplification 2x (DB + Redis для каждой записи), включая URL которые никогда не будут прочитаны (90% URLs — long tail, < 1 click). Это раздувает Redis memory: 6B URLs × 100 bytes = 600GB Redis-кластер вместо 30GB для hot set. LRU без TTL = ключи никогда не expire сами; при memory pressure eviction случайных old-but-popular ключей.
-> **Откуда путаница:** "Cache hit 100% — святой грааль" — но cost этого выше, чем экономия от cache miss-ов на cold tail.
-> **Если бы это было правдой:** Redis cost вырастает в 20x; write latency на shorten растёт (await Redis write); при partial Redis outage write fails, хотя DB здорова.
->
-> ---
->
-> #### B) Cache-aside (lazy loading) + LFU eviction + TTL=24h — populates только реально востребованное, хранит самые популярные — ✓ Верно
->
-> **Развёрнутое объяснение:** **Cache-aside** означает: read → Redis miss → DB → store в Redis. Это автоматически фильтрует cold tail — URLs которые никто не кликает не занимают cache memory. **LFU** (Least Frequently Used, `maxmemory-policy allkeys-lfu` в Redis) лучше LRU для URL shortener потому что популярные ссылки кликают долго (виральные YouTube-shortlinks 6+ месяцев), а LRU выбросит "старый но часто кликаемый" в пользу "недавно созданного но единожды прочитанного". **TTL 24h** — компромисс: длинный TTL экономит DB reads, короткий — даёт revocation window для phishing URLs.
-> **Пример:**
-> ```
-> # redis.conf
-> maxmemory 32gb
-> maxmemory-policy allkeys-lfu
-> 
-> # Application
-> long_url = redis.get(short_code)
-> if long_url is None:
->     long_url = db.lookup(short_code)
->     if long_url:
->         redis.setex(short_code, 86400, long_url)  # TTL 24h
->     else:
->         redis.setex(f"miss:{short_code}", 60, "1")  # negative cache 1 min
-> return long_url
-> ```
-> **Когда применять:** Read-heavy KV workload с power-law распределением (Pareto 20/80). Twitter t.co, bit.ly, Yandex Cloud Object Storage metadata — все используют cache-aside + LFU. Negative caching (короткий TTL на 404) защищает от amplified DB load при scanning attacks.
-> **Подводные камни:** Thundering herd — cache expiry на популярном ключе → миллион concurrent DB queries; митигировать через probabilistic early refresh (XFetch algorithm) или single-flight pattern. Cold start — после Redis restart первые минуты hit ratio 0%; warm-up через replay top-1000 ключей. Stale data при DB update — invalidate через `DEL short_code` или короткий TTL.
-> **Связанные вопросы:** [[design-url-shortener-interview#Q9]] — multi-tier cache architecture; [[design-url-shortener-interview#Q13]] — TTL и expiration semantics; [[design-url-shortener-interview#Q15]] — graceful degradation при Redis outage.
->
-> ---
->
-> #### C) Write-behind (async DB write) ускоряет shorten endpoint — ❌ Неверно
->
-> **Что на самом деле:** Write-behind означает: write только в Redis, async flush в DB через batch. Для URL shortener это **опасно**: после shorten user получает короткую ссылку и отправляет другу; если Redis crashed до flush — ссылка не разрешается → 404 для user-visible action. Write-behind применим только для idempotent-able loss tolerant данных (analytics counters, кэш hit metrics), но не для durable mapping.
-> **Откуда путаница:** "Async = быстро" — но без durability gates это потеря данных.
-> **Если бы это было правдой:** SLA на "созданная ссылка работает" падает до Redis persistence (~99.5%); compliance аудит (GDPR data retention) ломается потому что DB не имеет полной истории; recovery procedure после Redis crash требует replay из app logs.
->
-> ---
->
-> #### D) LRU eviction всегда лучше LFU для cache — ❌ Неверно
->
-> **Что на самом деле:** LRU оптимален для **recency-based** workloads (file system cache, session cache), но URL shortener имеет **frequency-based** распределение — viral URL популярна месяцами с пиками. LRU выбросит "стабильно популярный" URL когда в кеш попадёт burst of new shorten requests; LFU защищает long-term hot ключи. Redis 4.0+ предлагает оба, но `allkeys-lfu` явно рекомендуется для CDN-style workload (см. Redis docs).
-> **Откуда путаница:** LRU исторически был дефолтом в Redis (до 4.0) и memcached → "стандартный выбор".
-> **Если бы это было правдой:** При viral burst (Black Friday, новостной shortlink) hot set эвакуируется новыми ссылками; hit ratio падает с 95% до 60%; DB read load вырастает в 8x в самый неудобный момент.
+| Подход | Pros | Cons |
+|---|---|---|
+| Hash `mod N` short_code | Even distribution | Resharding = 100% migration |
+| Range по prefix | Простой для debug | Hot shards (новые codes концентрируются) |
+| Consistent hashing + vnodes | Add/remove shard = 1/N migration | Чуть сложнее implementation |
+| By user_id | «My links» fast | Hot user = hot shard; redirect by code requires scatter-gather |
 
-**Sharding strategies:**
+**Production-pattern:** **consistent hashing по short_code** + virtual nodes + shard-prefix encoding.
 
-**By short_code hash:**
-- `shard_id = hash(short_code) % N`
-- Even distribution
-- Lookup: hash → shard → query
-- Resharding pain (см consistent hashing)
+**Shard-prefix encoding:**
+```python
+shard_id = host_local_counter % NUM_SHARDS
+suffix = base62(snowflake_id)
+short_code = base62(shard_id) + suffix   # "aB7xK2p"
 
-**By short_code range:**
-- Shard A: codes a-i, shard B: j-r, ...
-- Prone to hot spots if not uniform
+# Lookup
+shard = decode_prefix(short_code[0])
+long_url = shards[shard].get(short_code)
+```
+Каждый shard генерирует свои коды независимо → нет distributed counter contention.
 
-**By user_id:**
-- User's URLs co-located (good for "my links" page)
-- Hot user = hot shard
+**DynamoDB:** автоматический partitioning по `hash(short_code)`, auto-split при > 1 000 WCU per partition.
 
-**Hybrid (common):**
-- Codes generated by shard ID prefix: "aB" prefix → shard 0, "cD" → shard 1
-- Each shard generates own codes (no collision across)
-- Lookup: prefix → shard
+**Cassandra:** `PARTITION KEY = short_code` + `num_tokens: 256`.
 
-**Replication:**
-- Each shard: primary + 2 replicas
-- Multi-AZ / multi-region для durability
+**Hot partition при viral URL:**
+- Митигация через **write sharding** (suffix к key: `viral_url#0`, `viral_url#1`, ..., aggregation на read) — см. Q27.
+- ИЛИ CDN edge cache (Q9).
 
-**Consistent hashing:**
-- Add/remove shards: rebalance few keys
-- Virtual nodes for evenness
+**Cross-shard query** (например «top URLs by clicks»):
+- Scatter-gather дорого; используем отдельный analytics store (ClickHouse).
 
-**DynamoDB:** hash-based partitioning built-in; auto-split hot partitions (>1000 WCU).
+## Q12. Custom aliases?
 
+User requests `/myalias` instead of `/abc1234`.
 
-> [!mcq]
->
-> **Вопрос:** Как лучше всего шардировать DB для URL shortener с 6B записей, чтобы избежать hot partitions и упростить resharding?
->
-> ---
->
-> #### A) Consistent hashing по short_code с virtual nodes (vnodes) + shard-prefix encoding для co-location генерации — ✓ Верно
->
-> **Развёрнутое объяснение:** **Consistent hashing** минимизирует rebalancing при изменении числа shards: добавили shard — мигрирует только 1/N ключей, а не все. **Virtual nodes** (каждый физический shard представлен 100-500 vnodes на hash-кольце) выравнивают распределение даже при разной ёмкости физических shards. **Shard-prefix encoding** (первые 1-2 символа short_code = shard ID) ускоряет lookup: app server знает shard по prefix без consultation с metadata service; каждый shard генерирует свои коды независимо → нет distributed counter contention. DynamoDB делает это автоматически (auto-split partitions при > 1000 WCU), Cassandra — через token ranges + vnodes.
-> **Пример:**
-> ```
-> # Code generation: shard-prefix encoded
-> shard_id = host_local_counter % NUM_SHARDS
-> suffix = base62(snowflake_id)
-> short_code = base62(shard_id) + suffix   # e.g. "aB7xK2p"
-> 
-> # Lookup
-> shard = decode_prefix(short_code[0])      # O(1)
-> long_url = shards[shard].get(short_code)
-> 
-> # Resharding (add shard N+1)
-> consistent_hash_ring.add_vnodes(N+1, count=200)
-> # Migrate only ~1/(N+1) of vnodes from old shards
-> ```
-> DynamoDB hash partitioning: hash(short_code) → 10GB/3000 RCU partition; auto-split at threshold. Cassandra: `PARTITION KEY = short_code` + `num_tokens: 256`.
-> **Когда применять:** Любая горизонтально-масштабируемая KV-система с unpredictable growth. Используется в DynamoDB, Cassandra, Riak, Twitter Manhattan, Bit.ly's MySQL sharding layer. Особенно важно когда reshard происходит без downtime (online cluster expansion).
-> **Подводные камни:** Hot partition при viral URL — даже с perfect hashing один short_code = один shard; митигировать через write sharding (suffix к ключу — `viral_url#0`, `viral_url#1`, ..., aggregation на read) или CDN edge cache. Cross-shard query ("count URLs created today") требует scatter-gather; для analytics использовать отдельный store (Kafka → ClickHouse). Vnode count tradeoff: больше vnodes = равномернее, но больше metadata overhead.
-> **Связанные вопросы:** [[design-url-shortener-interview#Q4]] — distributed code generation (Snowflake); [[design-url-shortener-interview#Q14]] — analytics в отдельной системе; [[design-url-shortener-interview#Q15]] — replication внутри shard для durability.
->
-> ---
->
-> #### B) Range-based sharding по алфавиту short_code (a-i → shard 0, j-r → shard 1, ...) — проще для debug — ❌ Неверно
->
-> **Что на самом деле:** Range-based sharding по prefix создаёт **hot shards**: Base62 distribution неравномерна — реальный traffic зависит от scheme generation. Если counter monotonically растёт и base62-encoded младший разряд меняется быстрее старшего, новые URLs концентрируются на одном shard, пока range не "продвинется". Также resharding range partitions требует физического move половины данных при split.
-> **Откуда путаница:** Range partitioning из PostgreSQL/MySQL `PARTITION BY RANGE` — проще для timeseries (по дате), но для random keys создаёт hotspots.
-> **Если бы это было правдой:** Все новые short_code попадают на shard 0; через месяц shard 0 имеет 80% данных, shard 5 — 5%; resharding split shard 0 = migration 600GB данных = часы downtime или сложный online split.
->
-> ---
->
-> #### C) Sharding по user_id co-locates URLs одного пользователя — лучший выбор — ❌ Неверно
->
-> **Что на самом деле:** Sharding по user_id оптимизирует **"My links" query** (все URLs пользователя на одном shard), но проваливает основной use case — **redirect by short_code**: чтобы найти long_url нужно либо scatter-gather по всем shards, либо вторичный индекс short_code → user_id (extra lookup). Большинство трафика — redirects (100:1), а не "My links" view; primary access pattern диктует shard key.
-> **Откуда путаница:** Принцип "shard by what you query" применён без учёта весов запросов.
-> **Если бы это было правдой:** Каждый redirect делает либо N parallel queries (scatter), либо 2 sequential lookup (index + shard); p99 latency растёт с 10ms до 30-50ms; system upper bound по QPS падает в N раз для основного use case.
->
-> ---
->
-> #### D) Modulo hashing `shard = hash(short_code) % N` без consistent hashing — простейшее решение — ❌ Неверно
->
-> **Что на самом деле:** `mod N` distribution равномерна, но при изменении N (добавили shard) **почти все ключи** меняют свой shard: `hash(x) % 4 ≠ hash(x) % 5` для большинства x. Это требует full reshuffle = миграция 100% данных. Consistent hashing решает именно эту проблему — переселяется только 1/N ключей. Также `mod N` не поддерживает разные capacity per shard (heterogeneous cluster).
-> **Откуда путаница:** Mod hashing — стандартная техника в учебниках, минимальный код; работает до первой попытки масштабировать кластер.
-> **Если бы это было правдой:** Добавление shard превращается в недельную миграционную операцию; "live resharding" невозможен без сложного proxy-layer (Vitess, ProxySQL); при failure shard невозможно временно redirect трафик на neighbours без перекеширования всего hash space.
-
-**User requests:** `/myalias` instead of `/abc1234`.
-
-**Implementation:**
+**Реализация:**
 ```sql
--- Reuse schema: custom aliases stored as short_code
-INSERT INTO urls (short_code, long_url) VALUES ('myalias', '...');
+INSERT INTO urls (short_code, long_url, user_id, is_custom)
+VALUES ('promo2026', $1, $2, TRUE)
+ON CONFLICT (short_code) DO NOTHING
+RETURNING short_code;
+-- 0 rows → 409 Conflict
 ```
 
-- Check uniqueness (same as regular)
-- Reserve common words (admin, login)
-- Length constraints (3-30 chars)
+**UNIQUE constraint** на `short_code` даёт atomic check-and-insert — две параллельные транзакции не могут оба claim `promo2026`. DB engine гарантирует атомарность; distributed lock (Redis SETNX) — over-engineering.
 
-**Conflict с generated codes:**
-- Reserve namespace: random codes 7+ chars; customs 3-20 chars
-- Or check uniqueness across same table
+**Reserved namespace:** заранее INSERT системных alias (`admin`, `api`, `login`, `support`, `terms`) при bootstrap; user не может claim.
 
-**Pricing:** often paid feature (vanity URLs premium).
+**Case sensitivity:** normalize на write (lowercase) ИЛИ `UNIQUE INDEX ON LOWER(short_code)`.
 
-**Abuse:**
-- Reserved list (trademarks, offensive)
-- Premium namespaces
+**Length constraints:** 3-30 chars (CHECK constraint).
 
+**Abuse / trademarks:**
+- Blocklist trademarks (`apple`, `google`, `tesla`).
+- Premium namespaces (paid only).
 
-> [!mcq]
->
-> **Вопрос:** Два пользователя одновременно пытаются забронировать custom alias `/promo2026`. Какая реализация корректно обрабатывает race condition?
->
-> ---
->
-> #### A) Сначала SELECT WHERE short_code='promo2026', если нет — INSERT — проще всего — ❌ Неверно
->
-> **Что на самом деле:** SELECT-then-INSERT — классический **check-then-act race condition** (TOCTOU). Между SELECT (миллисекунды) и INSERT две параллельные транзакции могут оба прочитать "не существует", оба INSERT — и одна выиграет, другая упадёт на UNIQUE constraint (если он есть) или (хуже) перепишет (если нет). Без UNIQUE constraint один из пользователей получит "успех", а в DB будет данные другого. Защита через application-level lock не работает в multi-instance deployment.
-> **Откуда путаница:** Изоляция READ COMMITTED не предотвращает phantom write; SERIALIZABLE дороже и часто не используется.
-> **Если бы это было правдой:** Под нагрузкой race возможен ежеминутно для популярных alias-имён ("admin", "login"); user видит "alias забронирован", но через секунду открывает свою ссылку — она ведёт на чужой URL; legal/PR issue если premium-аккаунт оплатил vanity URL.
->
-> ---
->
-> #### B) Просто хранить custom_alias в отдельной таблице, FK на urls — race решится сама — ❌ Неверно
->
-> **Что на самом деле:** Отдельная таблица не решает проблему — race condition существует на любой структуре, где не используется constraint или atomic-операция. FK защищает только от orphan references, но не от concurrent claim одинакового alias-значения. Без UNIQUE constraint на `aliases.name` две параллельные транзакции вставят одинаковый alias.
-> **Откуда путаница:** Думают "разделил на таблицы = снял проблему", хотя проблема в отсутствии явного constraint.
-> **Если бы это было правдой:** Двойное хранение (urls + aliases) удваивает write amplification; FK contention на parent row при concurrent insert; всё равно нужен UNIQUE constraint — и можно было сделать без отдельной таблицы.
->
-> ---
->
-> #### C) Использовать distributed lock (Redis SETNX или ZooKeeper) на alias name перед INSERT — ❌ Неверно
->
-> **Что на самом деле:** Distributed lock работает, но это **over-engineering**: добавляет dependency (Redis/ZK availability), сложность с lock TTL и release-on-crash, и performance overhead (round-trip к lock service на каждый INSERT). DB UNIQUE constraint решает ту же задачу atomic-ally за одну операцию без extra dependencies. Distributed locks нужны для координации **между разными ресурсами** (cross-DB state), не для single-row uniqueness.
-> **Откуда путаница:** Гипертрофированное применение "distributed systems" подходов к локальной проблеме.
-> **Если бы это было правдой:** Latency на shorten растёт +5-20ms (lock RTT); при Redis outage shorten ломается, хотя DB здорова; lock timeout misconfigure → stale lock блокирует валидный alias на минуты.
->
-> ---
->
-> #### D) UNIQUE constraint на short_code + INSERT с обработкой conflict (`ON CONFLICT DO NOTHING` / catch DuplicateKeyException) — atomic, durable — ✓ Верно
->
-> **Развёрнутое объяснение:** **UNIQUE constraint** даёт **atomic check-and-insert** на уровне DB — DB engine гарантирует что только одна транзакция выиграет race, остальные получат ошибку конфликта. Это работает идентично для random-generated short_code и custom aliases (один столбец, одна constraint). PostgreSQL: `INSERT ... ON CONFLICT (short_code) DO NOTHING RETURNING id` — если RETURNING вернул строку, выиграл я; иначе alias занят. DynamoDB: `PutItem` с `ConditionExpression: attribute_not_exists(short_code)` — фейлится с `ConditionalCheckFailedException`, если ключ существует.
-> **Пример:**
-> ```sql
-> -- Schema
-> CREATE TABLE urls (
->   short_code VARCHAR(30) PRIMARY KEY,  -- UNIQUE implicit
->   long_url   TEXT NOT NULL,
->   user_id    BIGINT,
->   created_at TIMESTAMPTZ DEFAULT NOW(),
->   is_custom  BOOLEAN DEFAULT FALSE,
->   CHECK (LENGTH(short_code) BETWEEN 3 AND 30)
-> );
-> 
-> -- Claim custom alias (atomic)
-> INSERT INTO urls (short_code, long_url, user_id, is_custom)
-> VALUES ('promo2026', $1, $2, TRUE)
-> ON CONFLICT (short_code) DO NOTHING
-> RETURNING short_code;
-> -- 0 rows returned → 409 Conflict to user
-> ```
-> **Когда применять:** Любой scenario с unique resource claim: usernames (Twitter @handle), email addresses, ticket reservations, vanity URLs (Bit.ly Pro, Rebrandly, TinyURL custom domains). UNIQUE — single source of truth для concurrent integrity.
-> **Подводные камни:** Reserved namespace — заранее INSERT системных alias ("admin", "api", "login", "support", "terms") при bootstrap, чтобы user не мог их claim. Case sensitivity — `ProMo2026` vs `promo2026` должны считаться одинаковыми; либо normalize на write (lowercase), либо `UNIQUE INDEX ON LOWER(short_code)`. Cross-shard uniqueness — при sharding по short_code constraint работает per-shard, но т.к. lookup тоже идёт через hash → один alias = один shard, всё ок.
-> **Связанные вопросы:** [[design-url-shortener-interview#Q6]] — collision avoidance для generated codes; [[design-url-shortener-interview#Q4]] — code generation с гарантией uniqueness; [[design-url-shortener-interview#Q16]] — abuse prevention (reserved trademarks).
+**Pricing:** often paid feature (vanity URL = premium tier).
 
-**DB expiration:**
-- `expires_at` timestamp
-- Application checks on read → 404 if expired
-- Lazy cleanup (cron deletes expired rows)
+## Q13. TTL / expiration?
 
-**Redis TTL:**
+**Logical expiration** (на read):
+```sql
+SELECT long_url FROM urls
+WHERE short_code = $1
+  AND (expires_at IS NULL OR expires_at > NOW())
+  AND deleted_at IS NULL;
+-- 0 rows → 410 Gone
 ```
-SET short_code long_url EX 86400
+
+**Physical cleanup** — два варианта:
+
+**1. DynamoDB TTL attribute:**
+```yaml
+Table: urls
+  TimeToLiveSpecification:
+    AttributeName: expires_at
+    Enabled: true
+# AWS auto-deletes within 48h of expiration, free
 ```
-- Auto-expire в cache
 
-**DynamoDB TTL:**
-- Built-in TTL attribute
-- Auto-delete (eventually) after expiration
+**2. Background sweep (SQL):**
+```sql
+DELETE FROM urls
+WHERE deleted_at < NOW() - INTERVAL '30 days'
+  AND short_code IN (
+    SELECT short_code FROM urls
+    WHERE deleted_at IS NOT NULL
+    ORDER BY deleted_at ASC LIMIT 10000
+  );
+```
+Cron в low-traffic window, batch 10K rows.
 
-**Scheduled deletion:**
-- Cron: `DELETE FROM urls WHERE expires_at < NOW()` (batched)
-- Or soft-delete: mark deleted, purge later
+**Grace window:** между logical expiration и physical delete — 7-30 дней для accidental expiration recovery или legal hold.
 
-**Analytics consideration:**
-- Even expired URLs — preserve click history? Depends on product
+**Redis TTL:** auto-expire в cache (`SETEX 86400`), но Redis ≠ source of truth — DB всегда checked при cache miss.
 
+**Edge case:** DynamoDB TTL — eventual (до 48 часов задержки); для time-critical revocation нужна дополнительная app-level проверка через `deleted_at` flag.
 
-> [!mcq]
->
-> **Вопрос:** Какая стратегия expiration / TTL для URL shortener оптимальна по cost и UX?
->
-> ---
->
-> #### A) Hard DELETE из DB сразу при истечении expires_at через synchronous trigger — гарантирует чистоту — ❌ Неверно
->
-> **Что на самом деле:** Synchronous trigger на каждый redirect (проверять `expires_at < NOW()`, DELETE если истёк) — antipattern: redirect path должен быть read-only, любая запись добавляет lock contention и удваивает latency. Также при concurrent reads тот же expired URL может попасть в N DELETE — wasted work. Hard delete сразу теряет историю clicks и audit trail.
-> **Откуда путаница:** "Истёк → удалить" — интуитивно, но смешивает logical expiration с physical cleanup.
-> **Если бы это было правдой:** p99 redirect latency растёт; concurrent DELETE conflicts; нет возможности восстановить ссылку при ошибочном expiration; analytics за expired URLs ломается.
->
-> ---
->
-> #### B) Не использовать TTL вообще — URLs живут вечно, проще — ❌ Неверно
->
-> **Что на самом деле:** Без TTL DB растёт неограниченно: бесплатные ссылки от анонимных пользователей (90% URLs) живут годами без cleanup. Storage cost растёт linearly, индексы становятся медленнее (B-tree depth, cache footprint), backup/restore времени-затратнее. Также phishing/spam URLs накапливаются — даже после revocation запись остаётся forever. Business model большинства shortener (Bit.ly, TinyURL, Short.io) включает TTL: 30 дней для anonymous, 1-5 лет для paid.
-> **Откуда путаница:** "Storage cheap, не парься" — но при 6B+ записях каждая копейка × миллиарды = реальные деньги.
-> **Если бы это было правдой:** Через 5 лет 60B+ записей в DB, многие никогда не читались; backup time 8+ часов; cold storage tier неприменим без TTL gate; GDPR compliance ("right to be forgotten") требует ручного процесса.
->
-> ---
->
-> #### C) Soft delete (флаг `deleted_at` или `is_expired`) + native DB TTL (DynamoDB TTL attribute) + background sweep с batch DELETE — двухфазный cleanup — ✓ Верно
->
-> **Развёрнутое объяснение:** **Логически** URL считается expired когда `expires_at < NOW()` — app проверяет на read и возвращает 404 (не DELETE), сохраняя audit trail и возможность undo. **Физически** cleanup делается асинхронно: DynamoDB TTL автоматически удаляет items в течение 48 часов после `expires_at` (без cost — фоновая операция); для MySQL/Postgres — batched scheduled DELETE через cron в low-traffic window. Между logical expiration и physical delete — grace window (7-30 дней) когда ссылку можно восстановить (важно для accidental expiration или legal hold).
-> **Пример:**
-> ```sql
-> -- Read path (no write)
-> SELECT long_url FROM urls
-> WHERE short_code = $1
->   AND (expires_at IS NULL OR expires_at > NOW())
->   AND deleted_at IS NULL;
-> -- Returns 0 rows → 404 Gone
-> 
-> -- Background sweep (cron, hourly, batch=10k)
-> DELETE FROM urls
-> WHERE deleted_at < NOW() - INTERVAL '30 days'
->   AND short_code IN (
->     SELECT short_code FROM urls
->     WHERE deleted_at IS NOT NULL
->     ORDER BY deleted_at ASC LIMIT 10000
->   );
-> ```
-> ```yaml
-> # DynamoDB
-> Table: urls
->   TimeToLiveSpecification:
->     AttributeName: expires_at
->     Enabled: true
-> # AWS auto-deletes within 48h of expiration, free
-> ```
-> **Когда применять:** Bit.ly использует DynamoDB TTL для free-tier ссылок (30 days). Twitter t.co — soft delete с 90-day retention для compliance. Любой mass-storage сервис где cleanup нельзя блокировать main flow: S3 Lifecycle Policies, Cloudflare KV namespace expiration, Redis EXPIRE.
-> **Подводные камни:** DynamoDB TTL — eventual (до 48 часов задержки), не подходит для time-critical revocation; в этом случае дополнительная app-level проверка. Index on `expires_at` для sweep — занимает место, но без него full scan. Cache invalidation — expired URL в Redis должен быть удалён или иметь TTL <= DB expires_at, иначе serve expired content из cache.
-> **Связанные вопросы:** [[design-url-shortener-interview#Q9]] — cache TTL coordination; [[design-url-shortener-interview#Q14]] — analytics для expired URLs (preserve history); [[design-url-shortener-interview#Q16]] — revocation для malicious URLs (immediate, not lazy).
->
-> ---
->
-> #### D) Использовать Redis EXPIRE на DB-записях — Redis сам управляет TTL для всех слоёв — ❌ Неверно
->
-> **Что на самом деле:** Redis EXPIRE работает только для Redis keys — не для DB rows. Redis — это **cache layer**, durable store (MySQL/DynamoDB) держит данные независимо. Если Redis expired key — cache miss приведёт к DB lookup, который вернёт URL (потому что DB не знает что Redis expired). Cross-layer TTL coordination требует **одного source of truth** (`expires_at` колонка в DB) + cache TTL <= DB TTL.
-> **Откуда путаница:** Смешивание ролей cache и persistent storage; "Redis имеет TTL — давайте использовать только его".
-> **Если бы это было правдой:** Несогласованность: Redis истёк, но DB вернула долговечный URL — expiration logic некорректна; при Redis restart все TTL теряются — все URLs становятся "вечными"; невозможно сделать revocation на DB-уровне (legal hold) без extra invalidation logic.
+## Q14. (!) Analytics (click tracking pipeline)?
 
-**On redirect:**
-- Emit event async (don't block redirect)
-- Kafka topic: `url_clicks`
-- Don't write to DB synchronously (slow redirect)
+**Цель:** 40K+ redirects/sec без impact на p99 redirect latency.
+
+**Pipeline:**
+
+```mermaid
+graph LR
+  Redirect[Redirect Service] -->|async fire-and-forget| Kafka[(Kafka<br/>url_clicks)]
+  Kafka --> Flink[Flink<br/>1-min tumbling]
+  Flink --> CH[(ClickHouse<br/>clicks_aggregated)]
+  CH -->|batch /min| DB[(Main DB<br/>click_count)]
+  CH --> Dash[Real-time<br/>Dashboard]
+```
+
+**Redirect path остаётся read-only:**
+- После `302 Found` app асинхронно публикует event в Kafka (fire-and-forget с local disk buffer для durability при Kafka outage).
+- НЕ синхронный `UPDATE click_count` — это убивает latency (row lock + WAL fsync).
 
 **Event format:**
 ```json
 {
   "short_code": "abc1234",
-  "clicked_at": "2024-...",
-  "ip": "1.2.3.4",
-  "ua": "Mozilla/...",
-  "referrer": "facebook.com"
+  "ts": 1715616000000,
+  "ip_hash": "sha256(...)",
+  "country": "RU",
+  "referrer": "facebook.com",
+  "ua_family": "Chrome"
 }
 ```
 
-**Processing:**
-- Flink/Spark stream → aggregates (count per code per day)
-- Store в time-series DB (InfluxDB, ClickHouse) or data warehouse
-- Real-time dashboard reads aggregates
+**Kafka topic** partitioned by `short_code` → 100 partitions.
 
-**Counter в main DB:**
-- Not incrementing per-click (contention)
-- Batch update every 1 min from aggregates
-- Eventually consistent view of count
+**Flink** делает 1-min tumbling window, агрегирует counts + geo + UA breakdown, пишет в ClickHouse.
+
+**ClickHouse** — columnar, оптимизирован для time-series aggregation; queries «clicks by day/country/referrer» в миллисекундах.
+
+**Main DB `click_count`** обновляется batch раз в минуту (single UPDATE с aggregated delta вместо +1 на event) — write QPS на main DB снижается в 1 000+ раз.
 
 **Privacy:**
-- IP anonymization (strip last octet)
-- User consent (GDPR)
+- IP hashing on ingest (SHA-256 truncate).
+- Retention policy: raw clicks 30 дней, aggregates вечно.
+- GDPR right-to-erasure → delete user's hashes.
 
-**Country lookup:**
-- IP → country via MaxMind GeoIP DB
+**Edge cases:**
+- At-least-once Kafka → duplicate clicks; dedup по `(short_code, ip_hash, ts_minute)`.
+- Backpressure при Kafka outage — local disk buffer 5-10 мин, alarm metric.
 
+## Q15. (!) Reliability и SPOFs?
 
-> [!mcq]
->
-> **Вопрос:** Какой pipeline для click tracking analytics масштабируется до 40k+ redirects/sec без влияния на p99 redirect latency?
->
-> ---
->
-> #### A) Synchronous `UPDATE urls SET click_count = click_count + 1 WHERE short_code = $1` на каждый redirect — простейшее решение — ❌ Неверно
->
-> **Что на самом деле:** Synchronous UPDATE превращает read-only redirect в write, добавляет row lock и WAL fsync, повышая latency с 10ms до 30-80ms (или больше при contention). Для popular URL row level lock сериализует concurrent updates → throughput одного row ограничен ~1k updates/sec. При viral URL (10k clicks/sec) очередь обновлений растёт неограниченно, redirects начинают timeout.
-> **Откуда путаница:** "Один SQL — что может пойти не так" — недооценка lock contention при skewed workload.
-> **Если бы это было правдой:** p99 redirect 200ms+, viral URL deadlocks, replication lag растёт, replicas отстают от primary; SLA нарушен.
->
-> ---
->
-> #### B) Async event-based pipeline: emit Kafka event на redirect → Flink/Spark aggregation → ClickHouse/Druid → batch counter update — ✓ Верно
->
-> **Развёрнутое объяснение:** Redirect path остаётся **read-only**: после возврата 302 user-у app **асинхронно** публикует event в Kafka (fire-and-forget с local buffer для durability при Kafka outage). Kafka топик `url_clicks` partitioned by short_code → stream processor (Flink) агрегирует counts по окнам (1 min tumbling) и пишет в analytics store (ClickHouse — columnar, оптимизирован для time-series aggregation). Counter в main DB обновляется batch-ом раз в минуту (single UPDATE с aggregated delta вместо +1 на event), что снижает write QPS в 1000+ раз. Real-time dashboard читает из ClickHouse напрямую, не trogая main DB.
-> **Пример:**
-> ```
-> Redirect Service
->      ↓ async, non-blocking
-> Kafka: url_clicks (partitioned by short_code, 100 partitions)
->      ↓
-> Flink job: 1-min tumbling windows
->      ↓
-> ClickHouse: clicks_aggregated (short_code, minute, count, country, ua)
->      ↓ every 1 min batch
-> Main DB: UPDATE urls SET click_count = click_count + delta
-> ```
-> ```json
-> // Event format
-> {
->   "short_code": "abc1234",
->   "ts": 1715616000000,
->   "ip_hash": "sha256(...)",
->   "country": "RU",
->   "referrer": "facebook.com",
->   "ua_family": "Chrome"
-> }
-> ```
-> **Когда применять:** Любой sub-100ms read path с heavy write side-effects: ad-impression tracking (Google Ads), feed view counters (Twitter), purchase events (Shopify). Bit.ly использует Kafka + custom aggregation; YouTube view counts — async pipeline через Bigtable + Dataflow.
-> **Подводные камни:** At-least-once delivery в Kafka → возможны duplicate clicks; дедупликация по `(short_code, ip_hash, ts_minute)`. Backpressure при Kafka outage — local buffer на app server (disk-backed queue, Apache Kafka producer's `acks=1` + `linger.ms=100`) на 5-10 min outage; затем drop с metric alarm. Replay для backfill — возможен через Kafka retention 7 days. GDPR — IP hashing на ingest, retention policy для PII.
-> **Связанные вопросы:** [[design-url-shortener-interview#Q15]] — reliability при Kafka outage; [[design-url-shortener-interview#Q9]] — почему redirect path должен быть read-only; [[design-url-shortener-interview#Q16]] — abuse detection через analytics signals.
->
-> ---
->
-> #### C) Записывать каждый click в отдельную таблицу `clicks(short_code, ts)` synchronous INSERT — простая denormalization — ❌ Неверно
->
-> **Что на самом деле:** Synchronous INSERT добавляет write QPS равный read QPS (40k INSERTs/sec) — масштабирует write side-effect 1:1 с reads, аннулируя весь смысл cache hierarchy. Append-only INSERT быстрее UPDATE (no row lock), но всё ещё блокирует redirect; через час набирается 144M строк/час = 3.5B/день — DB collapse в несколько дней. Также analytics queries (`COUNT(*) WHERE short_code=X`) делают full scan для популярных URL.
-> **Откуда путаница:** "Append-only лучше update" — правда, но всё ещё synchronous блокирует hot path.
-> **Если бы это было правдой:** DB storage растёт на TB/неделю; INSERT latency растёт с ростом таблицы; analytics queries блокируют write throughput через shared resources (page cache eviction, WAL contention).
->
-> ---
->
-> #### D) WebSocket push с client side на каждый redirect — analytics в браузере — ❌ Неверно
->
-> **Что на самом деле:** WebSocket требует persistent connection — но URL shortener redirect не имеет client-side application (user просто follows ссылку, app не загружается). Аналитика должна собираться **server-side** при обработке redirect, потому что только сервер видит **все** клики (включая bots, server-to-server, headless browsers). Client-side analytics (JS pixel) применима только если есть landing page, что contradicts core UX shortener.
-> **Откуда путаница:** Web analytics в обычных продуктах (Google Analytics) делается через JS-пиксели, но shortener redirect — это HTTP 302 без HTML.
-> **Если бы это было правдой:** Большинство кликов (curl, link previews от Facebook/Telegram/Slack, bots) теряются; analytics показывает только desktop browser-based clicks; конкурент с server-side tracking даёт более полную аналитику для paid users.
+**99.99% SLA** = max 52 минуты downtime/year. Single-component failure не должен вызывать user-visible outage.
 
 **SPOFs to eliminate:**
 
-**Load balancer:** multiple LBs (ELB, DNS round-robin).
+| Layer | Mitigation |
+|---|---|
+| Load balancer | Multiple LBs (ELB Multi-AZ, DNS round-robin) |
+| App servers | Horizontal scale + auto-scaling group (stateless) |
+| Cache | Redis Cluster + Sentinel / replicas |
+| DB | Primary + replicas + Multi-AZ automatic failover |
+| Counter (code generation) | Snowflake distributed IDs OR key ranges per host |
+| CDN | Multi-vendor (CloudFront + Cloudflare) optional |
 
-**App servers:** horizontal scale (stateless); auto-scaling group.
+**Circuit breakers (Resilience4j):**
+```java
+@CircuitBreaker(name = "redis", fallbackMethod = "getFromDb")
+String resolve(String shortCode) { return redis.get(shortCode); }
 
-**Cache (Redis):** cluster with replication + sentinel/cluster mode.
+@CircuitBreaker(name = "db", fallbackMethod = "getFromLocalCache")
+String getFromDb(String shortCode, Throwable t) { return db.lookup(shortCode); }
 
-**DB:**
-- Primary + replicas (automatic failover — AWS RDS Multi-AZ)
-- Cross-region replication для DR
+String getFromLocalCache(String shortCode, Throwable t) {
+    return caffeineCache.getIfPresent(shortCode);  // last-resort
+}
+```
 
-**CDN:** multi-vendor (CloudFront + Cloudflare) — rare, но possible.
+**Graceful degradation:**
+- Redis down → fallback DB direct (slower).
+- DB down → serve from cache only (reads); reject writes.
+- Cache + DB down → serve stale из in-proc Caffeine + 503 для cold misses.
 
-**Counter (for code generation):**
-- Single counter = SPOF
-- Snowflake distributed IDs
-- Or key ranges per host (host A uses codes 1-1M, host B 1M-2M)
+**Bulkhead isolation:** отдельные thread pools для DB и Redis — DB outage не exhaust app threads.
 
-**Circuit breakers:**
-- Cache down → fall back to DB (degraded perf но works)
-- DB down → serve from cache only (reads), reject writes
+**Multi-region (active-active)** обязательно для real four-nines: DB recovery time часто > 5 минут, что съедает 99.99% budget.
 
-**Availability target:**
-- 99.99% = ~50 min/year downtime
-- Requires multi-region для planned maintenance too
+**Chaos engineering:** Chaos Monkey, AWS Fault Injection Simulator — регулярно тестировать failover; не тестированные failover работают только 40% времени (Netflix data).
 
+## Q16. Security (spam, phishing)?
 
-> [!mcq]
->
-> **Вопрос:** Какой набор практик обеспечивает 99.99% availability (≤52 мин/год downtime) для URL shortener?
->
-> ---
->
-> #### A) Multi-AZ stateless apps + Redis Cluster + DB primary с автоматическим failover + circuit breakers с degraded reads → graceful degradation на каждом слое — ✓ Верно
->
-> **Развёрнутое объяснение:** **99.99% SLA = max 52 мин downtime/год** = практически любой single-component failure не должен вызывать user-visible outage. Достигается через redundancy на каждом уровне И **graceful degradation** при partial failure. Stateless app servers за load balancer (ELB/NLB across 3 AZs) — instance loss = 0 user impact (auto-scaling group spawns replacement). Redis Cluster с replicas (Sentinel или Redis Cluster mode) — master loss → failover в течение секунд. DB — Aurora Multi-AZ или DynamoDB Global Tables (cross-region replication, single-digit second RTO). **Circuit breakers** (Resilience4j, Hystrix) — при Redis outage app fallback to DB direct (slower, но works); при DB read replica outage → primary; при cache+DB outage → serve stale из in-proc cache (Caffeine) + 503 only для cold misses.
-> **Пример:**
-> ```mermaid
-> graph LR
->   User -->|DNS Round-Robin| LB1[ELB AZ-a]
->   User -->|DNS Round-Robin| LB2[ELB AZ-b]
->   LB1 --> App1[App ASG]
->   LB2 --> App2[App ASG]
->   App1 -->|primary| Redis1[Redis AZ-a]
->   App1 -.->|fallback| Redis2[Redis AZ-b]
->   App1 --> DB[(Aurora Multi-AZ)]
->   App1 -->|circuit-breaker| Caffeine[Local L1 30s TTL]
-> ```
-> ```java
-> // Circuit breaker pattern (Resilience4j)
-> @CircuitBreaker(name = "redis", fallbackMethod = "getFromDb")
-> String resolve(String shortCode) { return redis.get(shortCode); }
-> 
-> @CircuitBreaker(name = "db", fallbackMethod = "getFromLocalCache")
-> String getFromDb(String shortCode, Throwable t) { return db.lookup(shortCode); }
-> 
-> String getFromLocalCache(String shortCode, Throwable t) {
->     return caffeineCache.getIfPresent(shortCode);  // last-resort
-> }
-> ```
-> **Когда применять:** Любой high-availability сервис: bit.ly (multi-region active-active), Cloudflare DNS (anycast + 200+ POP), AWS Route 53 (100% SLA через cross-region replication). Twitter t.co — multi-DC с automatic failover; Yandex Cloud Object Storage — Erasure coding across 3 AZ + cross-region replication.
-> **Подводные камни:** Cascade failures — circuit breakers должны иметь bulkhead isolation (отдельные thread pools для DB и Redis), иначе DB outage exhaust app threads waiting на timeout. Split-brain в Redis Sentinel — конфигурировать quorum правильно (3+ nodes, odd number). Chaos engineering — регулярно тестировать failover (Chaos Monkey, AWS Fault Injection Simulator); не тестированные failover работают только 40% времени (Netflix data). Stateful storage — DB recovery time часто >5 min, что съедает 99.99% budget; multi-region для real four-nines.
-> **Связанные вопросы:** [[design-url-shortener-interview#Q4]] — distributed counter (Snowflake) убирает SPOF при code generation; [[design-url-shortener-interview#Q9]] — multi-tier cache как защита от DB outage; [[design-url-shortener-interview#Q11]] — sharding replicas per shard.
->
-> ---
->
-> #### B) Single high-end primary DB достаточно — managed RDS даёт 99.95% SLA — ❌ Неверно
->
-> **Что на самом деле:** RDS single-AZ SLA = 99.95% ≈ 4.4 часа downtime/год — это не 99.99%. Single primary — SPOF: instance failure (hardware, kernel panic, AZ outage) = full system down до failover (минуты). Также planned maintenance (minor version upgrades) добавляет regular short outages, не предусмотренные SLA budget. Для 99.99% нужны Multi-AZ + автоматический failover.
-> **Откуда путаница:** Cloud provider SLA читают как "приложение получит этот SLA", но это SLA только на сам instance, не на end-to-end.
-> **Если бы это было правдой:** Random AZ outage = час+ downtime, SLA нарушен; user trust в shortener теряется; SLA refunds + reputation cost.
->
-> ---
->
-> #### C) Использовать только Redis как primary storage — он быстрее и проще — ❌ Неверно
->
-> **Что на самом деле:** Redis с AOF даёт persistence через replay log, но не durable enough для primary KV store при network partition или process crash: AOF append может потерять последние секунды (fsync everysec mode), RDB snapshots — минуты. Без durable backing store любой data loss = безвозвратная потеря mapping short→long. Также Redis OOM = data loss (eviction policy эвакуирует данные). 99.99% durability требует replicated WAL (Aurora) или durable KV (DynamoDB).
-> **Откуда путаница:** "Redis имеет persistence — значит можно как primary" — недооценка различия между cache durability и storage durability.
-> **Если бы это было правдой:** Redis-only выдерживает 99% uptime в нормальных условиях, но в catastrophic scenario (data center fire, multi-AZ outage) — full data loss; reputation hit непропорционален SLA budget.
->
-> ---
->
-> #### D) Использовать только CDN с long TTL — нет origin failure если всё в CDN — ❌ Неверно
->
-> **Что на самом деле:** CDN кеширует только **read path** — новые URLs создаются на origin, который остаётся SPOF для shorten endpoint. Также cache miss (новый, редкий, expired URL) идёт на origin — при origin outage user видит 503/504 на cache miss. CDN — это **enhancement layer**, не replacement для HA architecture origin-а.
-> **Откуда путаница:** "CDN решает всё" — но кеширование не покрывает write path и cold reads.
-> **Если бы это было правдой:** Невозможно создать новый URL при origin outage; популярные URLs работают, но shorten endpoint и аналитика недоступны; partial outage с asymmetric UX.
+**Опасность:** shortener скрывает destination → phishing через trusted domain (bit.ly/...).
 
-**Malicious use:** shortener obscures destination → phishing via trusted domain.
+**Defence in depth:**
 
-**Defenses:**
+**1. Create-time URL scan:**
+- Google Safe Browsing API (50ms latency) — known phishing/malware.
+- PhishTank — community-driven.
+- Own ML classifier — score 0-1 по features (домен age, redirect chain, SSL, content).
+- Static blocklist (banking impersonations, scam patterns).
 
-**1. URL scanning:**
-- At creation: check Google Safe Browsing API, Phishtank
-- Block known malicious
+**2. Rate limiting** per IP/account (см. Q17):
+- 10 URLs/hour anon, 1 000/hour authenticated.
+- Отсекает mass-creation атак.
 
-**2. Moderation:**
-- Human review flagged URLs
-- User reporting mechanism
+**3. Display-time interstitial:**
+- «Вы переходите на example.com, продолжить?» для suspicious patterns (новый домен, IDN homograph, mismatch shortener brand).
 
-**3. Banned domains list:**
-- Known scam domains blocklisted
+**4. Continuous re-scan:**
+- Target URL может стать malicious позже (compromised site).
+- Periodic background re-scan с automated revocation при threshold reports/scan score.
 
-**4. Preview page:**
-- First click → interstitial "redirecting to X. Proceed?"
-- Users can abort
+**5. User reporting:**
+- 1-click report button → flagged for human review.
+- Automated revocation при > N reports.
 
-**5. Rate limiting per user:**
-- Anonymous user: 10 URLs/hour
-- Authenticated: higher limit
+**6. Legal/compliance:**
+- Clear ToS, DMCA flow, transparency reports.
+- Log scan decisions для DMCA defence.
 
-**6. Abuse detection:**
-- Many URLs to same domain → flag
-- Patterns (bot activity)
+**Anti-pattern:** полагаться только на Google Safe Browsing — GSB обновляется с задержкой часы-дни для new phishing.
 
-**7. Post-creation monitoring:**
-- Periodically re-scan existing URLs (target may become malicious later)
-- Revoke if target changed to malicious
+## Q17. Rate limiting?
 
-**Terms of service:** clear prohibited use; disable on violation.
-
-
-> [!mcq]
->
-> **Вопрос:** Какой подход обеспечивает многоуровневую защиту от использования URL shortener для phishing и spam?
->
-> ---
->
-> #### A) Запрашивать капчу при каждом shorten — отсекает ботов — ❌ Неверно
->
-> **Что на самом деле:** Капча при каждом shorten ломает API use case (программный shortening через bit.ly API, partner integrations) и UX (chat bots, IFTTT automations). Также капча не защищает от human-operated phishing campaigns — атакующий вручную создаёт 100 ссылок, что для phishing достаточно. Капча — это один инструмент в стеке, не replacement для multi-layer защиты.
-> **Откуда путаница:** "Капча = anti-bot = anti-abuse" — но abuse часто human-driven, а bot-traffic эффективнее ограничивается rate limiting.
-> **Если бы это было правдой:** Bit.ly API теряет 80% программных клиентов; conversion rate на shorten endpoint падает с 95% до 60%; конкурент без капчи отбирает рынок.
->
-> ---
->
-> #### B) Проверять только домен в blocklist при создании — этого достаточно — ❌ Неверно
->
-> **Что на самом деле:** Static blocklist ловит **известные** malicious domains, но не новые phishing (созданный час назад domain не в списке). Также атакующие используют **redirect chains** (legit-looking URL → 302 → phishing) или **compromised legitimate sites** (взломанный WordPress, легальный домен). Защита требует динамической проверки (Google Safe Browsing, VirusTotal, PhishTank) **+** post-creation rescanning (URL может стать malicious после создания) **+** user reporting flow.
-> **Откуда путаница:** Blocklist — самая известная техника, но это lagging indicator.
-> **Если бы это было правдой:** Zero-day phishing проходит проверку; через 30 минут URL уже разослан жертвам; reputation hit на shortener brand ("bit.ly hosted phishing").
->
-> ---
->
-> #### C) Доверять Google Safe Browsing — Google уже всё знает — ❌ Неверно
->
-> **Что на самом деле:** Google Safe Browsing — мощный signal, но **не достаточный** в одиночку: (1) GSB обновляется с задержкой (часы-дни для new phishing), (2) target URL может пройти GSB при создании, но стать malicious позже (compromised site, redirect chain), (3) target может быть legitimate но используется для targeted attacks (CEO impersonation). Нужен defense in depth: GSB + PhishTank + own ML model + user reporting + post-creation monitoring + rate limiting per creator.
-> **Откуда путаница:** "Google знает всё про phishing" — но GSB cover < 50% реального phishing в первые 24 часа.
-> **Если бы это было правдой:** Полагаясь только на GSB, shortener становится conduit для fresh phishing; legal liability при serving known malicious через own domain.
->
-> ---
->
-> #### D) Multi-layer defense: realtime URL scan API (Google Safe Browsing + PhishTank) на create → rate limiting per creator + reserved blocklist → interstitial preview для suspicious → continuous rescan + user reporting + automated revocation — ✓ Верно
->
-> **Развёрнутое объяснение:** **Defense in depth** покрывает разные attack vectors на разных этапах lifecycle ссылки. **Create-time**: query Google Safe Browsing API + PhishTank + own ML-классификатор; static blocklist (известные scam domains, banking impersonations); rate limit per IP/account (10 URLs/hour anon, 1000/hr auth) отсекает mass-creation. **Display-time**: interstitial preview ("вы переходите на example.com, продолжить?") для suspicious patterns (новый домен, IDN homograph, mismatch shortener brand). **Runtime**: периодический re-scan существующих URLs (target мог быть compromised); user reporting button (1-click); automated revocation при threshold reports/scan score. **Legal/compliance**: clear ToS, DMCA flow, transparency reports.
-> **Пример:**
-> ```python
-> async def shorten(long_url, user):
->     # Layer 1: rate limit
->     if not rate_limiter.allow(user.id, "shorten"):
->         raise TooManyRequests()
-> 
->     # Layer 2: static blocklist
->     if domain_of(long_url) in BANNED_DOMAINS:
->         raise Forbidden("banned_domain")
-> 
->     # Layer 3: real-time scan (parallel)
->     gsb, phishtank, ml = await asyncio.gather(
->         google_safe_browsing.check(long_url),
->         phishtank.check(long_url),
->         ml_classifier.score(long_url),
->     )
->     if any([gsb.malicious, phishtank.flagged, ml.score > 0.8]):
->         metrics.malicious_blocked.inc()
->         raise Forbidden("malicious_url")
-> 
->     short_code = generate_code()
->     await db.insert(short_code, long_url, scan_score=ml.score, user.id)
->     await scan_queue.publish(short_code)   # for periodic rescan
->     return short_code
-> ```
-> **Когда применять:** Bit.ly использует именно такой stack (Safe Browsing + own classifier + user reports). Twitter t.co — multi-layer с real-time + ML. Discord invite links — invite scanning + rate limiting + reporting. Любой user-generated link/content платформа: Reddit URLs, Facebook external links.
-> **Подводные камни:** False positives — legitimate URLs (small business, niche blogs) могут не попасть в GSB и быть flagged ML — нужен appeal process. Latency на shorten — Safe Browsing API ~50ms; параллельные calls + cache (известные clean domains кешировать на час). Adversarial — атакующие тестируют classifier через rapid create/revoke цикл; мониторить per-account success rate. Compliance — log scan decisions для DMCA defense.
-> **Связанные вопросы:** [[design-url-shortener-interview#Q17]] — rate limiting как часть anti-abuse; [[design-url-shortener-interview#Q14]] — analytics для anomaly detection; [[design-url-shortener-interview#Q15]] — circuit breaker при Safe Browsing outage (fail-closed vs fail-open).
-
-**Why:** prevent abuse, DoS, cost control.
+**Защита от:** abuse, DoS, cost control.
 
 **Layers:**
+- **Per-IP**: 100 redirects/min.
+- **Per-user**: 10 shortens/hour anonymous, 1 000/hour authenticated.
+- **Per-API-key**: tier-based (Stripe-style — free / paid).
 
-**Global:**
-- Per-IP: 100 requests/min (redirects)
-- Per-user: 10 shortens/hour (unauth), 1000/hr (auth)
+**Algorithm:** token bucket в Redis с Lua script (atomic). Подробности — в [Design Rate Limiter](design-rate-limiter-interview.md).
 
-**Per-feature:**
-- API keys: based on tier
-
-**Algorithms:**
-- Token bucket (flexible)
-- Leaky bucket (smooth)
-- Fixed window (simple)
-- See [[rate-limiter-interview|Rate Limiter design]]
-
-**Storage:** Redis (distributed counter).
-
-**Headers:**
+**Headers (RFC 6585):**
 ```
 X-RateLimit-Limit: 1000
 X-RateLimit-Remaining: 987
-X-RateLimit-Reset: 1640000000
-Retry-After: 60
+X-RateLimit-Reset: 1640003600
+Retry-After: 13
+```
+**HTTP 429 Too Many Requests** при превышении.
+
+**Anti-pattern:** in-memory counter per app server — не distributed; user может делать N × limit (по limit на каждый instance).
+
+**DDoS:** CDN (CloudFront) + WAF handle L7 attacks; rate limiter — application layer.
+
+## Q18. (!) HTTP 301 vs 302 vs 307 — analytics implications?
+
+**301 Moved Permanently:**
+- Browser caches forever (или по `Cache-Control`).
+- Subsequent clicks НЕ доходят до сервера — analytics ломается.
+- Bit.ly использует 301 с `Cache-Control: private, max-age=90` для компромисса.
+
+**302 Found (temporary):**
+- НЕ кешируется по умолчанию.
+- Каждый click hits server — analytics работает.
+- Стандарт для shortener (TinyURL, Bit.ly free tier).
+
+**307 Temporary Redirect:**
+- Как 302, но method preservation (POST остаётся POST).
+- Для shortener малорелевантно (только GET-redirects).
+
+**308 Permanent Redirect:**
+- Как 301, но method preservation.
+- Не используется в shorteners.
+
+| Code | Cached | Analytics | Method preserved | Use case |
+|---|---|---|---|---|
+| 301 | да | сломан | нет (POST→GET) | static migration |
+| 302 | нет | работает | нет | **shortener default** |
+| 307 | нет | работает | да | API redirects |
+| 308 | да | сломан | да | API permanent |
+
+**Trade-off:**
+- 301 → better performance, теряем analytics + сложная revocation (browser cache stale).
+- 302 → каждый click — server hit; nessure analytics + revocation works.
+
+**Revocation problem с 301:**
+- Phishing URL заблокирован → у миллионов пользователей в browser cache остался 301 на месяцы.
+- 302 — invalidation works мгновенно.
+
+**Production-выбор:** **302** для shorteners. Single `Cache-Control: public, max-age=300, s-maxage=3600` (короткий browser TTL для revocation, длинный CDN TTL для offload).
+
+## Q19. (!) Distributed counter (Snowflake, ZooKeeper key ranges)?
+
+**Проблема:** глобальный auto-increment counter → single point of contention. При 40+ writes/sec один counter limits throughput; single counter service = SPOF.
+
+**Решения:**
+
+**1. Snowflake (Twitter):**
+```
+64-bit ID:
+  [1 bit sign] [41 bits timestamp ms] [10 bits machine_id] [12 bits sequence]
+```
+- 41 bits timestamp = 69 лет с custom epoch.
+- 10 bits machine_id = 1 024 workers.
+- 12 bits sequence = 4 096 IDs/ms per worker.
+- Total: ~4M IDs/sec global, monotonically increasing.
+- Pros: no coordination after machine_id assigned.
+- Cons: clock drift sensitivity (требует NTP); machine_id allocation needs coordination (ZooKeeper).
+
+**2. ZooKeeper key ranges:**
+- Каждый host claims range (e.g., 1M IDs).
+- Использует local counter в range; при истощении — запрашивает new range.
+- Pros: no hot key on Redis/ZK после claim.
+- Cons: range gaps (host crashed с unused IDs); coordination для range allocation.
+
+**3. Redis INCR + key ranges (hybrid):**
+- Host A claims `INCR counter_range` → получает 1, использует IDs 1-1M.
+- Host B claims → 2, использует 1M-2M.
+- Local sequential within range, distributed across hosts.
+
+**4. UUID v7 (time-ordered):**
+- 128-bit, time-prefixed → sortable.
+- Cons: 22+ chars Base62 — too long для shortener.
+
+**Production stack:**
+- Twitter: Snowflake.
+- Discord: Snowflake-like.
+- Stripe: own ID generator с region prefix.
+
+**Anti-pattern:** глобальный INCR в Redis без key ranges → bottleneck при peak load; latency на shorten растёт; SPOF на Redis.
+
+## Q20. (!) High-level architecture (CDN → LB → API → Redis → DB)?
+
+```mermaid
+graph LR
+  C[Client]
+  CDN[CDN edge<br/>CloudFront/Cloudflare]
+  LB[Load Balancer<br/>ELB Multi-AZ]
+  GW[API Gateway<br/>auth + rate limit]
+  SS[Shorten Service<br/>Snowflake ID gen]
+  RS[Redirect Service<br/>read-only path]
+  Redis[(Redis Cluster<br/>hot URLs)]
+  DB[(DynamoDB<br/>primary store)]
+  Replica[(DB Read Replicas)]
+  Safe[Safe Browsing<br/>API]
+  Kafka[(Kafka<br/>url_clicks)]
+  Flink[Flink<br/>aggregation]
+  CH[(ClickHouse<br/>analytics)]
+
+  C --> CDN
+  CDN -->|cache hit| C
+  CDN -->|miss| LB --> GW
+  GW --> SS
+  GW --> RS
+  SS --> Safe
+  SS --> DB
+  SS --> Redis
+  RS --> Redis
+  RS --> DB
+  DB --> Replica
+  RS -.async.-> Kafka
+  Kafka --> Flink --> CH
 ```
 
-**429 Too Many Requests** — standard response.
+**Service boundaries:**
+- **CDN edge** — cache redirects близко к user (latency 5-20 ms).
+- **LB** — distribute traffic; multi-AZ.
+- **API Gateway** — auth (JWT), rate limit, routing.
+- **Shorten Service** — generation + Safe Browsing scan + DB insert.
+- **Redirect Service** — read-only; pure lookup + async analytics emit.
+- **Redis Cluster** — hot URLs (30 GB top 200M).
+- **DB (DynamoDB)** — primary store, 10ms p99.
+- **Read replicas** — для analytics queries «My links».
+- **Kafka + Flink + ClickHouse** — async analytics pipeline.
 
-**DDoS:** CDN (CloudFront) + WAF handle layer 7 attacks.
+**Inter-service:**
+- Sync: gRPC + mTLS внутри cluster.
+- Async: Kafka events.
 
+**Multi-region:** active-active с regional Redis + DB replication (DynamoDB Global Tables).
 
-> [!mcq]
->
-> **Вопрос:** Какой rate limiting algorithm + storage backend подходит для distributed URL shortener с burst-friendly UX и точным enforcement?
->
-> ---
->
-> #### A) Fixed window counter в memory app server (`Map<userId, count>`, reset каждую минуту) — простейшее решение — ❌ Неверно
->
-> **Что на самом деле:** In-memory counter per app server **не distributed**: при N app instances behind LB user может делать N × limit запросов (по limit на каждый instance) — реальный лимит размывается. Также fixed window даёт **boundary spike**: лимит 100/min разрешает 200 запросов в 2 секунды на границе окон (последние 100 в 12:00:59 + первые 100 в 12:01:00). Не подходит для serious abuse prevention.
-> **Откуда путаница:** "Counter в map — просто и быстро" — но игнорирует distributed nature и edge case windowing.
-> **Если бы это было правдой:** Effective rate limit = configured × N instances; добавление app capacity усиливает abuse vector; bot за 2 секунды отправляет 200 shorten при заявленном лимите 100.
->
-> ---
->
-> #### B) Distributed lock на каждый request через Redis WATCH/MULTI/EXEC — atomic — ❌ Неверно
->
-> **Что на самом деле:** WATCH/MULTI/EXEC даёт optimistic concurrency, но на каждый rate-limit check добавляет round-trip и possible retry при conflict. Для 40k QPS это слишком дорого: latency на rate-limit check 5-10ms + retry — сериализует hot path. Также lock-based подходы не нужны для simple counter: `INCR` атомарен сам по себе в Redis.
-> **Откуда путаница:** "Lock = safe" — overkill для counter operations.
-> **Если бы это было правдой:** Rate limiting сам становится bottleneck при high QPS; конкурент с lockless подходом получает лучший throughput.
->
-> ---
->
-> #### C) Token bucket или sliding window log в Redis с `INCR + EXPIRE` (или GCRA/Redis-Cell module) — distributed atomic, burst-friendly, точный — ✓ Верно
->
-> **Развёрнутое объяснение:** **Token bucket** — bucket с capacity N токенов, регенерация R токенов/sec; запрос забирает 1 токен, если нет — 429. Это позволяет **burst** (использовать всю capacity сразу) с rate-limited sustained throughput — UX-friendly для chat bots и batch operations. **Sliding window log** — точнее (без boundary spike), но дороже по памяти. Redis как storage даёт **atomic counter ops** (`INCR`, `INCRBY`) + TTL (`EXPIRE`) для auto-cleanup — distributed counter без race condition. Redis-Cell module реализует **GCRA** (Generic Cell Rate Algorithm) — один command `CL.THROTTLE` возвращает allow/deny + retry-after, без round-trips. Для очень high-scale можно делать **probabilistic rate limiting** (sample 1/10 requests) на edge + accurate на origin.
-> **Пример:**
-> ```python
-> # Token bucket via Redis Lua script (atomic)
-> LUA_TOKEN_BUCKET = """
-> local key = KEYS[1]
-> local capacity = tonumber(ARGV[1])
-> local rate = tonumber(ARGV[2])  -- tokens per sec
-> local now = tonumber(ARGV[3])
-> local requested = tonumber(ARGV[4])
-> 
-> local bucket = redis.call('HMGET', key, 'tokens', 'ts')
-> local tokens = tonumber(bucket[1]) or capacity
-> local last_ts = tonumber(bucket[2]) or now
-> 
-> -- refill
-> local delta = (now - last_ts) * rate
-> tokens = math.min(capacity, tokens + delta)
-> 
-> if tokens >= requested then
->     tokens = tokens - requested
->     redis.call('HMSET', key, 'tokens', tokens, 'ts', now)
->     redis.call('EXPIRE', key, math.ceil(capacity / rate) * 2)
->     return {1, tokens}  -- allow
-> else
->     return {0, tokens}  -- deny, suggest retry
-> end
-> """
-> # Per-user: capacity=1000, rate=1000/3600 (1000/hr sustained, bursts up to 1000)
-> ```
-> Response headers:
-> ```
-> X-RateLimit-Limit: 1000
-> X-RateLimit-Remaining: 987
-> X-RateLimit-Reset: 1640003600
-> Retry-After: 13   # only when 429
-> ```
-> **Когда применять:** GitHub API (5000/hr authenticated, token bucket), Stripe API (sliding window, per-API-key), AWS API Gateway (token bucket + WAF). Yandex Cloud — GCRA через Redis. Twitter API v2 — sliding window log для точности. Любой public API: shortener, payment, messaging, AI inference.
-> **Подводные камни:** Cross-region — глобальный rate limit требует replicated Redis (Redis Enterprise Active-Active или DynamoDB conditional update) + eventual consistency на checks; trade-off accuracy vs latency. Cost — Redis storage scaled с N users × N rate-limit policies; partitioning by user_id для horizontal scale. Hot keys — high-traffic API key создаёт single Redis key hotspot; sharding ключа на N parts с aggregation на check. Fail-open vs fail-closed при Redis outage — обычно fail-open (skip rate limit), но logging для audit; fail-closed только для critical anti-abuse.
-> **Связанные вопросы:** [[design-url-shortener-interview#Q15]] — circuit breaker при Redis outage; [[design-url-shortener-interview#Q16]] — rate limiting как часть anti-abuse stack; [[rate-limiter-interview]] — глубокий dive в алгоритмы.
->
-> ---
->
-> #### D) HAProxy / Nginx `limit_req` module — handle всё на edge, no app code — ❌ Неверно
->
-> **Что на самом деле:** Nginx `limit_req` работает per-instance (не distributed) и поддерживает только simple per-IP limiting. Для per-user / per-API-key rate limit требуется доступ к auth data, которая на edge недоступна без decoding JWT (что Nginx может, но не идеально). Также Nginx limits сложно динамически обновлять (нужен reload); rate limit policies в URL shortener зависят от user tier (free/paid) — это application-level concern.
-> **Откуда путаница:** "Edge-level limiting эффективнее" — true для DDoS на L7, но не для bizlogic rate limits.
-> **Если бы это было правдой:** Невозможно дать paid users higher limit; rate limits не работают cross-instance; UX-friendly bursting (token bucket) недоступен в простом `limit_req`.
+## Q21. Custom domains (white-label `brand.com`)?
+
+**Use case:** customer хочет `customer.brand.com/abc` вместо `bit.ly/abc`.
+
+**Architecture:**
+1. Customer создаёт CNAME `customer.brand.com → cnames.shortener.com`.
+2. Customer provides SSL cert (или shortener manages через Let's Encrypt SNI).
+3. Backend ингресс читает `Host` header → lookup customer config → определяет `domain_id`.
+4. Lookup `short_code` в context `domain_id`:
+   ```sql
+   SELECT long_url FROM urls
+   WHERE domain_id = $1 AND short_code = $2
+   ```
+
+**Schema extension:**
+```sql
+ALTER TABLE urls ADD COLUMN domain_id INTEGER REFERENCES domains(id);
+CREATE TABLE domains (
+  id BIGSERIAL PRIMARY KEY,
+  hostname VARCHAR(255) UNIQUE,
+  user_id BIGINT,
+  ssl_cert_arn VARCHAR(500),
+  verified_at TIMESTAMPTZ
+);
+-- Composite key: уникальность по (domain_id, short_code)
+CREATE UNIQUE INDEX idx_domain_code ON urls (domain_id, short_code);
+```
+
+**SSL:**
+- **Option 1:** Customer upload PEM cert + private key.
+- **Option 2:** Shortener provisions cert via ACME (Let's Encrypt) при verification.
+- **Option 3:** AWS Certificate Manager + CloudFront SNI.
+
+**Verification:**
+- Customer adds TXT record `_shortener-verify.brand.com = <token>`.
+- Backend checks DNS до accepting domain.
+
+**Multi-tenant DNS routing:**
+- Single ingress (Cloudflare / nginx) с SNI matching → routes по hostname.
+- Wildcard cert для `*.cnames.shortener.com` + customer-specific cert mounted dynamically.
+
+**Pricing:** обычно premium tier (Bit.ly Brand, Rebrandly).
+
+**Edge cases:**
+- Customer dropped DNS → graceful 503 / redirect to status page.
+- Cert renewal — auto через Let's Encrypt 30 дней до expiry.
+
+## Q22. Bulk shortening API (batch + idempotency)?
+
+**Use case:** marketing campaign creates 10K URLs одной операцией.
+
+**Endpoint:**
+```http
+POST /api/v1/shorten/bulk
+Authorization: Bearer <token>
+Idempotency-Key: <batch-uuid>
+
+{
+  "urls": [
+    { "url": "https://example.com/p1", "custom_alias": null, "client_ref": "campaign-1-link-1" },
+    { "url": "https://example.com/p2", "client_ref": "campaign-1-link-2" },
+    ...
+  ]
+}
+```
+Response:
+```json
+{
+  "batch_id": "bat_abc123",
+  "results": [
+    { "client_ref": "campaign-1-link-1", "short_code": "aB7xK2p", "short_url": "..." },
+    { "client_ref": "campaign-1-link-2", "short_code": "Bc8yL3q", "short_url": "..." }
+  ]
+}
+```
+
+**Реализация:**
+- Limit batch size (e.g., max 10K URLs per call).
+- Process в parallel (concurrent inserts).
+- **Idempotency на двух уровнях:**
+  - Batch-level: `Idempotency-Key` header → если retry, return cached batch_result.
+  - Item-level: `client_ref` provided by client → если retry batch, обновляем mapping `client_ref → short_code` без duplicates.
+
+**Async / job pattern (для очень больших batches > 100K):**
+```http
+POST /api/v1/shorten/batch
+→ 202 Accepted
+{ "batch_id": "bat_abc123", "status_url": "/api/v1/batches/bat_abc123" }
+```
+Client polls status URL.
+
+**Rate limiting:** batch counts proportional к size (10K URLs = 10K tokens).
+
+**Anti-pattern:** synchronous batch без timeout — 10K Safe Browsing API calls могут не уложиться в HTTP timeout 30s; нужен async job pattern.
+
+## Q23. Anti-bot detection (one-time tokens, CAPTCHA escalation)?
+
+**Use case:** атакующий пытается mass-create URLs (spam, phishing) через автоматизацию.
+
+**Defence layers:**
+
+**1. CAPTCHA for anonymous high-volume:**
+- Anonymous user > 5 shortens/hour → CAPTCHA (hCaptcha, reCAPTCHA, Cloudflare Turnstile).
+- Authenticated users — без CAPTCHA (auth уже provides bot resistance).
+
+**2. Device fingerprinting:**
+- Browser canvas, fonts, timezone, screen → unique fingerprint.
+- Suspicious patterns (curl UA, missing browser headers) → CAPTCHA escalation.
+
+**3. Behavioral signals:**
+- Time-to-submit < 1 sec → likely bot.
+- Mouse movement pattern (browsers have it, headless not).
+
+**4. One-time CSRF tokens:**
+- Browser получает token на page load.
+- Submit без token — reject.
+- Bots без full browser context fail.
+
+**5. IP-based throttling:**
+- Same IP > 10 shortens/hour → CAPTCHA.
+- Cloudflare automatically blocks известные bot networks.
+
+**6. Honeypot fields:**
+- Hidden form field `email_url` (CSS hidden) — humans не fill, bots do.
+- Submit с filled honeypot → silent drop.
+
+**7. Account graph analysis:**
+- Many new accounts из one IP/payment → flag.
+- Linked accounts через shared device fingerprint.
+
+**Escalation flow:**
+```
+normal traffic → allow
+suspicious (rate > threshold) → CAPTCHA challenge
+failed CAPTCHA 3× → temp block 1h
+repeat offender → permanent block + log
+```
+
+**Anti-pattern:** CAPTCHA для всех users — ломает API use case (партнёрские integrations) и UX. Только для suspicious.
+
+## Q24. (!) Geo-distributed (multi-region DNS, edge reads)?
+
+**Цель:** redirect latency < 50 ms из любой geo + DR.
+
+**Architecture:**
+
+**Multi-region active-active:**
+- 3-5 regions: US-East, US-West, EU-West, APAC-Singapore, APAC-Tokyo.
+- Каждый region — full stack (Redirect Service + Redis + DB replica).
+- DynamoDB Global Tables — cross-region async replication.
+
+**DNS routing:**
+- AWS Route 53 latency-based routing → user идёт в ближайший region.
+- Health checks → automatic failover при regional outage (TTL 60 sec).
+
+**Edge cache (CDN):**
+- CloudFront / Cloudflare 200+ POPs.
+- Cached redirect response 5-20 ms close to user.
+- Origin shielding: edge → regional shield → origin (доп. cache layer).
+
+**Reads at edge:**
+- Cloudflare Workers + KV — execute redirect logic на edge без origin call.
+- DynamoDB Global Tables — read replica в каждом region.
+
+**Writes:**
+- Customer pinned к home region (geo-IP or registered country).
+- Cross-region replication async (eventual consistency).
+- При новом URL — visible в other regions через 1-5 sec.
+
+**Failover:**
+- Reads — automatic (DNS).
+- Writes — controlled (per-region primary); при primary loss promote replica.
+
+**Data residency:**
+- EU customers' data — only EU region (GDPR).
+- RU data — RU territory (PD-152).
+
+**Edge cases:**
+- Cross-region write для viral URL — replicate через MirrorMaker.
+- Split-brain risk при network partition — accept eventual consistency.
+
+## Q25. Migration / re-sharding без downtime?
+
+**Сценарий:** shards переполнены; нужно добавить новые shards без сервис-downtime.
+
+**Steps (online resharding):**
+
+**1. Dual-write phase:**
+- Application пишет в old и new shards parallel.
+- Reads из old (source of truth).
+- Backfill background job копирует existing data в new shards.
+
+**2. Verification:**
+- Compare row count old vs new.
+- Sample-check random keys.
+
+**3. Read switch:**
+- Flip flag → reads из new shards.
+- Continue dual-write на случай rollback.
+
+**4. Cleanup:**
+- После N дней stability → stop writes в old shards.
+- Delete old shards.
+
+**Tools:**
+- **Vitess** (YouTube/Slack): online resharding для MySQL.
+- **DynamoDB:** автоматический partition split при > 1 000 WCU — no manual resharding.
+- **Cassandra:** add nodes, run `nodetool repair` + `cleanup`.
+
+**Consistent hashing** минимизирует migration (только 1/N keys двигаются при +1 shard).
+
+**Anti-patterns:**
+- Modulo hashing (`hash % N`) — изменение N = 100% data move.
+- Stop-the-world migration — недопустимо для 99.99% SLA.
+
+**Edge case:** in-flight transactions during switch — drain connections, use timeout-based completion.
+
+## Q26. (!) Monitoring metrics обязательные?
+
+**Core metrics:**
+
+| Metric | Type | Alert threshold |
+|---|---|---|
+| `urls_created_total{user_tier}` | counter | growth anomaly |
+| `redirect_latency_seconds` | histogram | p99 > 50 ms |
+| `cache_hit_ratio{layer}` | gauge | Redis < 90%, CDN < 50% |
+| `db_read_qps` | counter | unusual spike = cache outage |
+| `db_write_qps` | counter | abuse if growing |
+| `safe_browsing_blocks_total` | counter | malicious URL rate |
+| `rate_limit_429_total{endpoint}` | counter | per-user abuse |
+| `analytics_pipeline_lag_seconds` | gauge | > 5 min = pipeline degraded |
+| `circuit_breaker_state{service}` | gauge | open = degraded |
+| `top_short_codes` (LFU) | gauge | hot key detection |
+
+**Tracing:**
+- OpenTelemetry; trace ID через все sync calls + Kafka headers.
+- Visibility: `redirect 8 ms = CDN miss + Redis hit 5 ms + 302 response 3 ms`.
+
+**Logging:**
+- Structured JSON; correlation_id, short_code, user_id (где есть).
+- Mask PII (user emails в logs только hash).
+- 90-day online retention.
+
+**Alerting:**
+- Page on-call: `redirect_latency_p99 > 100 ms` 5 минут подряд.
+- Slack: `safe_browsing_blocks_total` spike (DDoS-like creation).
+- Email: `analytics_lag` > 1 час.
+
+**Dashboards:**
+- Per-region health (latency, errors).
+- Top denied keys (potential abuse).
+- Business: creation rate, redirect rate, retention.
+
+## Q27. Hot key / viral URL handling?
+
+**Проблема:** один viral URL получает 100K+ redirects/sec → один Redis shard / DB partition перегружен.
+
+**Mitigation:**
+
+**1. CDN edge cache** (Q9) — миллионы reads без origin hit.
+
+**2. Per-pod L1 in-process cache (Caffeine):**
+- Top-100 URLs in-memory; nanosecond access.
+- TTL 30 sec; periodic refresh.
+
+**3. Probabilistic admission:**
+- На каждый N-й request делаем real lookup; остальные из L1.
+
+**4. Write sharding для hot key:**
+- Не применимо для read-side (один short_code = один key).
+- Применимо если viral URL имеет mutable state (counter): `viral_url#0..15`, aggregate on read.
+
+**5. Auto-detection:**
+- `top_codes` LFU tracker → hot URLs replicated на N Redis shards.
+- Client randomly picks shard for read.
+
+**6. Cloudflare Workers cache:**
+- Viral URLs cached на edge worker для 1 час; origin видит только misses.
+
+**7. Stale-while-revalidate:**
+- Cache TTL 5 минут, но serve stale до 1 часа при cache miss + async refresh.
+
+**Real:** Bit.ly Twitter t.co для viral tweets — multi-tier edge caching доминирует.
+
+## Q28. Cache stampede на популярном коде?
+
+**Проблема:** популярный short_code expires в Redis → миллион concurrent requests миссируют → 1M concurrent DB lookups → DB overload.
+
+**Решения:**
+
+**1. Probabilistic early refresh (XFetch):**
+```python
+delta = -log(random()) * beta * compute_time
+if ttl - delta < 0:
+    refresh_cache_async()
+return cached_value
+```
+Кто-то рефрешит проactively before expiry.
+
+**2. Single-flight / mutex:**
+```python
+def get_url(short_code):
+    val = redis.get(short_code)
+    if val: return val
+    if redis.set(f"lock:{short_code}", 1, nx=True, ex=10):  # acquire lock
+        try:
+            val = db.lookup(short_code)
+            redis.setex(short_code, 86400, val)
+            return val
+        finally:
+            redis.delete(f"lock:{short_code}")
+    else:
+        time.sleep(0.05)  # other request fetching
+        return redis.get(short_code)
+```
+Один process refresh-ит, остальные ждут.
+
+**3. Stale-while-revalidate:**
+- Cache TTL 24h, но serve stale до 25h при miss + async refresh.
+- User не видит latency spike.
+
+**4. Negative cache:**
+- 404 cached 60 sec для предотвращения scanning attack-amplified DB load.
+
+**5. Pre-emptive warming:**
+- Top-1000 URLs cached на app start через replay log.
+
+**Anti-pattern:** `if cache_miss: db_lookup()` без protection → thundering herd при viral key expiry.
+
+## Q29. Bot traffic vs legitimate redirects в analytics?
+
+**Проблема:** до 50% redirects могут быть bots (link preview crawlers, scanners, scrapers); реальная analytics для clients требует фильтрации.
+
+**Bot signals:**
+
+**1. User-Agent patterns:**
+- `Twitterbot`, `facebookexternalhit`, `LinkedInBot`, `Slackbot-LinkExpanding` — link previews.
+- Headless browser fingerprints.
+- Curl / wget без referrer.
+
+**2. Behavioral:**
+- Multiple redirects из one IP < 1 sec apart.
+- No subsequent page load на destination (no JS execution).
+- Geographic anomalies (datacenter IPs vs residential).
+
+**3. JA3/JA4 TLS fingerprint:**
+- Bot frameworks имеют specific TLS handshake patterns.
+- Cloudflare publishes known bot signatures.
+
+**Classification на ingest:**
+```json
+{
+  "short_code": "abc",
+  "ts": 1715616000000,
+  "bot_score": 0.85,
+  "bot_type": "link_preview_crawler",
+  "ip_class": "datacenter"
+}
+```
+
+**Two analytics views:**
+- **Raw clicks** — all hits (cost monitoring, security analysis).
+- **Human clicks** — filtered, что показываем customers (true engagement).
+
+**Privacy:**
+- Bot IPs не PII; can store full.
+- Human IPs — hashed/truncated.
+
+**Edge case:** link previewers (Twitter Card crawler) полезны (показ preview раскручивает CTR), но не считаются human clicks; нужно include в counts с пометкой.
+
+## Q30. (!) Антипаттерны и подводные камни?
+
+**1. UUID как short_code.**
+- 32-36 chars → не «short».
+- Используй Base62 7-8 chars.
+
+**2. Глобальный auto-increment counter без sharding.**
+- SPOF + bottleneck.
+- Используй Snowflake / key ranges (Q19).
+
+**3. Synchronous click counter UPDATE.**
+- Row lock на hot URL → redirect latency 200+ ms.
+- Async Kafka pipeline (Q14).
+
+**4. 301 без consideration analytics impact.**
+- Browser caches → analytics ломается; revocation невозможен.
+- 302 default для shorteners (Q18).
+
+**5. Hash-based codes без UNIQUE constraint.**
+- Birthday paradox → silent overwrites на billion scale.
+- Always UNIQUE constraint + retry (Q6).
+
+**6. Sharding по user_id.**
+- Optimal для «My links», но redirect by short_code requires scatter-gather (Q11).
+- Sharding по short_code = primary access pattern.
+
+**7. Cache write-through на ALL inserts.**
+- 90% URLs (long tail) никогда не читаются → wasted Redis memory.
+- Cache-aside (Q10).
+
+**8. LRU eviction для cache.**
+- Viral URLs популярны месяцами; LRU выбрасывает при burst of new shortens.
+- LFU `allkeys-lfu` (Q10).
+
+**9. Modulo hashing для sharding.**
+- Add shard → 100% data migration.
+- Consistent hashing + vnodes (Q11, Q25).
+
+**10. Single Redis instance.**
+- SPOF + 100 K QPS ceiling.
+- Redis Cluster + replicas.
+
+**11. CAPTCHA на каждый shorten.**
+- Ломает API/programmatic use case.
+- Только на suspicious (Q23).
+
+**12. Synchronous Safe Browsing call в shorten path без timeout.**
+- 200-500 ms API call blocks user-facing latency.
+- Cache known clean domains 1 час; async re-scan.
+
+**13. Hard DELETE при expiration без grace window.**
+- Accidental expiry = permanent loss; нет audit trail.
+- Soft delete + 30-day grace (Q13).
+
+**14. Не нормализованный URL.**
+- `https://example.com/a` и `https://example.com/a/` создают разные codes → дубликаты.
+- Normalize (lowercase host, strip trailing slash, canonical query order) — даёт free dedup для hash-based codes.
+
+**15. Полагаться только на Redis durability.**
+- AOF теряет 1 сек данных при crash; RDB — минуты.
+- Redis как cache, не primary; durable store (DynamoDB/Postgres) — source of truth (Q8, Q15).
 
 ---
 
 ## See also
 
-- [System Design](system-design-interview.md) — общие принципы
-- [Design Rate Limiter](design-rate-limiter-interview.md) — компонент
-- [Caching Strategies](../architecture/caching-strategies-interview.md) — Redis, CDN
-- [Database Architecture](../databases/database-architecture-interview.md) — SQL vs NoSQL
-- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — sharding, replication
-- [Load Balancing](../architecture/load-balancing-interview.md) — fronting app servers
-- [CAP Theorem](../architecture/cap-theorem-interview.md) — consistency trade-offs
-- [Redis](../databases/redis-interview.md) — cache layer
-- [DynamoDB](../databases/dynamodb-interview.md) — NoSQL option
-- [Distributed Systems](../architecture/distributed-systems-interview.md) — sharding, consensus
+- [Design Rate Limiter](design-rate-limiter-interview.md) — token bucket, distributed Redis Lua, 429 + Retry-After
+- [Design Payment System](design-payment-system-interview.md) — idempotency keys + outbox + saga
+- [Design Feed System](design-feed-system-interview.md) — read-heavy at scale, hot keys
+- [System Design Interview](system-design-interview.md) — общая методология
+- [Caching Strategies](../architecture/caching-strategies-interview.md) — Redis, CDN, multi-tier
+- [Database Sharding](../databases/database-sharding-interview.md) — consistent hashing, vnodes
+- [Database Replication](../databases/database-replication-interview.md) — multi-region async replication
+- [Distributed Systems](../architecture/distributed-systems-interview.md) — eventual consistency, CAP
+- [Redis](../databases/redis-interview.md) — cluster, eviction, AOF/RDB
+- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — circuit breaker, graceful degradation
+- [API Security](../security/api-security-interview.md) — Safe Browsing, rate limiting, CAPTCHA
+- [Load Balancing](../architecture/load-balancing-interview.md) — ELB Multi-AZ, DNS routing
+- [Kafka](../messaging/kafka-interview.md) — async analytics pipeline

@@ -38,7 +38,7 @@ Master-план генерации interview-материалов через с�
 
 ## Фаза 2 — расширить тонкие
 
-- [ ] **design-url-shortener-interview** (8 Q → 28+ Q). bit.ly: base62 vs hash vs counter, Zookeeper для распределения диапазонов, redirect 301 vs 302, analytics pipeline, custom alias, expiration, abuse prevention.
+- [x] **design-url-shortener-interview** ~~(8 Q → 28+ Q)~~ → **30 Q + 30 MCQ JSON** (rotation 8/8/7/7, ratio 1.14, schema VALID, BUILD SUCCESSFUL, 174 KB; очистил file от MCQ-callouts/Tier1 эмодзи/wikilinks). Завершено 2026-05-26.
 - [ ] **design-typeahead-interview** (25 Q — добить до 30+, добавить ML-ranking, personalization, multi-language).
 - [ ] **design-search-interview** (20 Q → 28+). Inverted index, TF-IDF, BM25, vector search hybrid, faceted search, autocomplete, geo-search.
 
@@ -65,5 +65,5 @@ Master-план генерации interview-материалов через с�
 ## Состояние
 
 Запущено: 2026-05-26.
-Текущая итерация: **Фаза 1 завершена** → переходим в **Фаза 2 (расширить тонкие)** → design-url-shortener (8 Q → 28+ Q).
-Закрыто: design-feed-system (30 Q + JSON), design-payment-system (30 Q + JSON), design-rate-limiter (30 Q + JSON, BUILD SUCCESSFUL).
+Текущая итерация: **Фаза 2** → следующее **design-typeahead-interview** (25 Q → 30+ Q + ML ranking, multilanguage).
+Закрыто: design-feed-system, design-payment-system, design-rate-limiter, design-url-shortener (все по 30 Q + 30 MCQ, BUILD SUCCESSFUL).
