@@ -45,7 +45,7 @@ Master-план генерации interview-материалов через с�
 ## Фаза 3 — добавить недостающие критичные
 
 - [x] **design-netflix-interview** ~~(NEW)~~ → **30 Q + 30 MCQ JSON** (rotation 8/8/7/7, ratio 1.14, schema VALID, BUILD SUCCESSFUL, 179 KB). Покрыто: Open Connect CDN, encoding pipeline per-title/per-chunk, codec ladder H.264/HEVC/VP9/AV1, ABR BOLA + ML, DRM trio, recommendation 2-stage + bandits, artwork personalization, microservices Netflix OSS, resilience patterns, Chaos Monkey/Kong, multi-region active-active, A/B platform, data platform Kafka+Flink+Iceberg, downloads, anti-fraud household graph, cost optimization. Завершено 2026-05-26.
-- [ ] **design-dropbox-interview** (NEW). File storage + sync: chunking (4 MB blocks), deduplication (content-addressable storage), delta sync (rsync algorithm), conflict resolution, offline mode, sharing model, encryption at rest, mobile uploads.
+- [x] **design-dropbox-interview** ~~(NEW)~~ → **30 Q + 30 MCQ JSON** (rotation 8/8/7/7, ratio 1.14, schema VALID, BUILD SUCCESSFUL, 160 KB). Покрыто: chunking fixed vs CDC через rolling hash, CAS SHA256 + free dedup, Magic Pocket exabyte storage + SMR drives + Reed-Solomon 10+4, delta sync rsync (Adler-32 rolling), sync engine watcher→queue→diff→upload→notify, OS file events (inotify/FSEvents/ReadDirectoryChangesW), conflict resolution .conflict files + CRDT Y.js, multi-region GDPR residency, Smart Sync stub files FUSE, encryption AES-256-GCM + HSM, E2EE trade-offs, anti-abuse DMCA+PhotoDNA, cost optimization 75% saving. Завершено 2026-05-26.
 - [ ] **design-google-maps-interview** (NEW). Geo: quadtree vs S2 vs H3, tile pyramid (zoom 0..21), routing (Dijkstra → CRP/CH/A*), traffic data (real-time + historical), POI search, ETA prediction.
 - [ ] **design-pastebin-interview** (NEW). Document storage: anonymous + auth, short URL, syntax highlighting, expiration, raw vs view, abuse mitigation, full-text search.
 
@@ -65,8 +65,8 @@ Master-план генерации interview-материалов через с�
 ## Состояние
 
 Запущено: 2026-05-26.
-Текущая итерация: **Фаза 3** → следующее **design-dropbox-interview** (NEW: chunking, CAS dedup, delta sync, conflict resolution, offline).
+Текущая итерация: **Фаза 3** → следующее **design-google-maps-interview** (NEW: quadtree/S2/H3, tile pyramid, routing Dijkstra/CRP/CH, traffic, ETA).
 Закрыто (Фаза 1): design-feed-system, design-payment-system, design-rate-limiter.
 Закрыто (Фаза 2): design-url-shortener, design-typeahead, design-search.
-Закрыто (Фаза 3): design-netflix.
+Закрыто (Фаза 3): design-netflix, design-dropbox.
 Все: 30 Q + 30 MCQ JSON, BUILD SUCCESSFUL.

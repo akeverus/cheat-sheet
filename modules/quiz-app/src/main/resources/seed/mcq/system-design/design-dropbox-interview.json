@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "design-dropbox-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор functional и non-functional requirements точнее всего описывает Dropbox-style file sync на интервью senior-уровня?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Upload/download любого размера + sync на N devices + sharing folders/links с ACL + versioning + offline access + selective/Smart Sync + trash + search; нефункционально 700M+ users, эксабайты, sync lag p95 < 5 сек, availability 99.99%, durability 11 nines, multi-region с GDPR-residency, encryption at-rest и in-transit, dedup как первоклассная фича.",
+              "correct": true,
+              "sections": {
+                "explanation": "Senior сразу проговаривает что Dropbox storage-heavy по blob и read/write-heavy по metadata, поэтому два tier — Postgres/Vitess для метаданных и Magic Pocket для блоков. Functional покрывает основные user journeys: загрузить, синкнуть между девайсами, поделиться, восстановить версию, работать offline. NFR диктуют архитектуру: 700M users × 5 GB = 3.5 EB raw, dedup 80% задают CAS-стратегию, sync lag p95 < 5 сек — chunking + delta sync, 11 nines durability — Reed-Solomon 10+4, GDPR — региональная резидентность блоков.",
+                "example": "Dropbox реально держит sync lag меньше 5 сек на small file changes за счёт inotify/FSEvents → SQLite queue → parallel chunk upload через HTTP/2 → long-polling notification к peer devices.",
+                "when_to_apply": "Фиксируй эти требования до архитектуры, чтобы потом обосновать Magic Pocket vs S3, CAS, rsync delta sync, multi-region и erasure coding.",
+                "edge_cases": "Real-time collaborative editing (Google Docs / Paper) — отдельный продукт; video transcoding — extension; voice chat не в scope; China-стек отдельный из-за compliance.",
+                "related": "Q2 capacity; Q3 SLA; Q5 CAS; Q19 multi-region."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно upload/download и базового sharing — versioning, offline и dedup это nice-to-have, не относятся к core cloud storage MVP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Versioning (30-day history) и offline mode критичны для повседневного UX, а dedup даёт 80% storage saving — без него Dropbox storage cost вырос бы в 5 раз и продукт стал бы убыточным.",
+                "source_of_confusion": "Кандидат думает в категориях минимального файлохранилища, а не enterprise-grade sync platform.",
+                "if_it_were_true": "Dropbox не отличался бы от FTP-сервера и не удержал бы 700M+ users.",
+                "how_it_should_be": "Включить versioning, offline cache, dedup через CAS, sharing с ACL и selective/Smart Sync в core functional требования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное — поддержать SLA облачного провайдера AWS, конкретные NFR-цифры (700M users, sync lag, durability, dedup ratio) проговаривать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без явных NFR (700M users, 3.5 EB raw, sync lag < 5 сек, 99.99% availability, 11 nines durability) невозможно обосновать ни Magic Pocket, ни CAS, ни Reed-Solomon, ни multi-region.",
+                "source_of_confusion": "Перенос enterprise-практики «SLA задаст облако» на consumer-scale storage.",
+                "if_it_were_true": "Любой single-region setup на S3 без dedup считался бы валидным для 700M users.",
+                "how_it_should_be": "Назвать конкретные числа: users, total storage, sync lag, durability, dedup ratio — и считать capacity (Q2)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Real-time collaborative editing, video transcoding и voice chat — обязательная часть scope Dropbox-интервью, поэтому VOD-style features упомянуть кратко.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Collaborative editing вынесен в отдельный продукт Dropbox Paper (использует CRDT Y.js), video transcoding это extension, voice chat вообще не в Dropbox. Scope интервью — file sync и blob storage.",
+                "source_of_confusion": "Смешение Dropbox с Google Docs / Slack / YouTube.",
+                "if_it_were_true": "Архитектура крутилась бы вокруг WebRTC и encoding farm, а не вокруг CAS и Magic Pocket.",
+                "how_it_should_be": "Явно исключить real-time editing, transcoding, chat из scope и сфокусироваться на sync и storage requirements."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "700M users, 5 GB avg storage per user, 1B файлов/день. Какой capacity estimate ближе всего к Dropbox-масштабу?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "~100 TB total storage, ~10 GB/sec upload bandwidth, encoding farm на одной EC2-машине — обычный профиль для regional file-сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это масштаб корпоративного NAS для одной компании, а не Dropbox с 700M users. Реальные числа в 100000× больше — речь идёт об эксабайтах, а не терабайтах.",
+                "source_of_confusion": "Подмена глобального cloud sync на корпоративный файл-сервер.",
+                "if_it_were_true": "Dropbox обходился бы парой серверов и одним region без Magic Pocket и dedup.",
+                "how_it_should_be": "Считать поэтапно: 700M × 5 GB = 3.5 EB raw, dedup 80% → ~700 PB unique, × 1.4 erasure coding → 2.1 EB physical."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "~3.5 EB raw без dedup, ~700 PB unique blocks после dedup 80%, × 1.4 erasure coding → ~2.1 EB physical в Magic Pocket; metadata ~5-10 TB sharded Postgres; upload ~12 GB/sec sustained, peak ×3 → ~360 GB/sec; QPS metadata ~230K avg, peak ~1M.",
+              "correct": true,
+              "sections": {
+                "explanation": "Считаем поэтапно: 700M users × 5 GB avg = 3.5 EB raw без dedup. CAS даёт 80%+ dedup на популярных файлах (Office templates, иконки, PDF books) → 700 PB unique chunks. Reed-Solomon 10+4 даёт overhead 1.4× вместо 3× full replication → 2.1 EB physical. Metadata 1B files × 500 B = 500 GB + 30-day versions ×10 = 5 TB, sharded по 100 PG-узлам. Bandwidth 1B files/day × 1 MB avg = 1 PB/day = 12 GB/sec sustained, peak workday ×3 = 360 GB/sec.",
+                "example": "Magic Pocket в проде держит больше 1 EB с 2016 года, dedup даёт 5× saving и без него Dropbox storage cost вырос бы с ~$3M/month до ~$15M/month на 700 PB.",
+                "when_to_apply": "Этим расчётом обосновываешь Magic Pocket (Q7), CAS (Q5), Reed-Solomon (Q20) и sharded metadata (Q6).",
+                "edge_cases": "При запуске популярных вирусных файлов dedup ratio временно растёт до 95%; metadata QPS на пиках US+EU overlap может превышать 1M ops/sec.",
+                "related": "Q5 CAS; Q7 Magic Pocket; Q29 cost."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "~10 ZB постоянного storage, ~10 TB/sec непрерывного upload, encoding farm полностью на On-Demand EC2.",
+              "correct": false,
+              "sections": {
+                "what_actually": "10 ZB это уровень всего Internet, а не одного Dropbox. Bandwidth 10 TB/sec означало бы ~85% global egress только на upload, что нереально.",
+                "source_of_confusion": "Перепутаны единицы (ZB vs EB) и спутан Internet-aggregate с одним сервисом.",
+                "if_it_were_true": "Dropbox потреблял бы больше bandwidth чем все ISP вместе взятые.",
+                "how_it_should_be": "Корректировать: 3.5 EB raw, 700 PB unique, 12 GB/sec sustained upload."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Capacity estimate в Dropbox-интервью не нужен — достаточно сказать «много данных» и сразу переходить к архитектуре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без чисел невозможно обосновать ни выбор Magic Pocket вместо S3, ни Reed-Solomon вместо 3× replication, ни sharding metadata. Senior отличается от middle именно умением считать.",
+                "source_of_confusion": "Кандидат избегает математики, надеясь на качественные аргументы.",
+                "if_it_were_true": "Все архитектурные решения превратились бы в bullet-points без обоснования.",
+                "how_it_should_be": "Считать: users × avg storage, raw vs unique после dedup, multiplier эрasure coding, bandwidth и QPS на metadata."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор SLA/SLO метрик правильнее всего использовать для Dropbox sync pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно следить за uptime сервиса (ping endpoint каждую минуту), остальные метрики не нужны для cloud storage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Uptime endpoint не отражает sync lag, dedup efficiency, durability и upload success rate — основные QoS-метрики для cloud sync.",
+                "source_of_confusion": "Подмена availability SLO на простой liveness check.",
+                "if_it_were_true": "Sync мог бы лагать минутами, dedup упасть с 80% до 30%, и никто бы не заметил пока сервис отвечает на ping.",
+                "how_it_should_be": "Включить sync_lag_p95, upload_success_rate, dedup_ratio, durability, metadata_query_p99 как обязательные SLO."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главное — частота деплоев и lead time, метрики продукта (sync lag, durability) это уже out of scope SRE.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DORA metrics это инженерные процессы, а не product SLO. Sync lag и durability — обязательные user-facing метрики Dropbox.",
+                "source_of_confusion": "Смешение DORA (process metrics) с product SLO.",
+                "if_it_were_true": "Команда быстро деплоила бы регрессии sync, теряла бы файлы и не понимала почему пользователи уходят.",
+                "how_it_should_be": "Использовать DORA отдельно для процессов, а для пользователей — sync_lag_p95, upload_success_rate, durability 11 nines."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "sync_lag_seconds_p95 < 5 сек (alert > 30 сек 10 мин), upload_success_rate > 99% (alert < 97% 5 мин), download_latency_p99 < 200 ms (cached), metadata_query_p99 < 50 ms, dedup_ratio > 80% (alert < 60%), availability 99.99%, durability 99.999999999% (11 nines).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая метрика отражает конкретный аспект пользовательского опыта и пути отказа. sync_lag_p95 < 5 сек — small file changes должны быть видны на peer device почти моментально; upload_success_rate > 99% — клиент не должен ретраить чанки; download_latency_p99 < 200 ms на кешированном metadata; dedup_ratio > 80% — экономия storage и bandwidth; 11 nines durability — Reed-Solomon 10+4 + cross-region snapshots.",
+                "example": "Dropbox в проде alert-ит on-call когда sync_lag_p95 > 30 сек больше 10 минут (обычно метаданные DB или Magic Pocket), а dedup_ratio drop > 10% означает регрессию CDC или CAS.",
+                "when_to_apply": "Эти SLO задают design constraints: dedup_ratio гонит CAS, sync_lag диктует event-driven notification (не polling), durability — Reed-Solomon 10+4.",
+                "edge_cases": "Network partition: sync queue растёт; metadata DB outage: клиент буферит local journal; block storage outage: read через replica.",
+                "related": "Q12 offline journal; Q13 notification; Q20 DR; Q27 monitoring."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главная метрика — number of files в системе и suchlike vanity-метрики; latency и durability вторичны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vanity metrics (number of files, registered users) не отражают качество сервиса. SLO должны быть user-facing и actionable.",
+                "source_of_confusion": "Marketing-style KPI приняты за SRE SLO.",
+                "if_it_were_true": "Можно было бы накопить миллиард файлов и при этом терять данные пользователей.",
+                "how_it_should_be": "Использовать sync_lag_p95, upload_success_rate, durability, availability как primary SLO."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая стратегия chunking лучше всего подходит для file sync с дедупликацией и решает insertion problem?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Грузить весь файл одним блобом без chunking — это упрощает upload и не нужны hashes.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Single blob upload 1 GB при edit 1 KB → re-upload всего 1 GB. Нет dedup, нет resumable upload, retry дорогие.",
+                "source_of_confusion": "Простота API принята за оптимальную стратегию.",
+                "if_it_were_true": "Любое изменение даже одного байта стоило бы re-upload всего файла; bandwidth и storage кошмар.",
+                "how_it_should_be": "Chunk файл на куски 4 MB (fixed или CDC), hash per chunk, upload только missing chunks."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Fixed-size chunking 4 MB от offset 0, без rolling hash — этого достаточно для всех use case Dropbox.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fixed-size решает full re-upload, но страдает от insertion problem: вставка 1 байта в начало файла сдвигает все boundary → все chunks меняют hash → re-upload 100% chunks вместо diff.",
+                "source_of_confusion": "Кандидат знает только fixed chunking и не различает offset-based vs content-defined boundaries.",
+                "if_it_were_true": "Edit в начало большого файла стоил бы full re-upload, dedup не работал бы между похожими файлами.",
+                "how_it_should_be": "Использовать Content-Defined Chunking (CDC) через rolling hash (Buzhash, Rabin, FastCDC) для устойчивости к insertion."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Variable chunk size, но boundary детерминирован monotonic counter — каждый N-й offset создаёт новый chunk независимо от content.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Counter-based boundary это просто fixed-size с другим N, страдает от той же insertion problem. Counter не учитывает content.",
+                "source_of_confusion": "Кандидат пытается смешать idea «variable size» с offset-based boundary.",
+                "if_it_were_true": "Insertion сдвигал бы все последующие boundaries, dedup ломался бы как и в fixed-size.",
+                "how_it_should_be": "Boundary должен зависеть от content (rolling hash), не от offset или counter."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Content-Defined Chunking (CDC) через rolling hash (Buzhash/Rabin/FastCDC): на каждой позиции скользящего окна 48 байт вычисляется hash, boundary chunk завершается когда hash mod N == 0; avg chunk size ~4 MB, min/max limits 1-16 MB; insertion в начало сдвигает только первый chunk, остальные boundary те же.",
+              "correct": true,
+              "sections": {
+                "explanation": "CDC использует rolling hash O(1) update per byte (например Buzhash: hash(i) = (hash(i-1) >> 1) XOR T[byte_at(i + window)]). Boundary определяется content, не offset, поэтому при insertion в начало только локально меняется первый chunk, остальные восстанавливаются на тех же sequence-marker'ах. Avg size настраивается через mod N, min/max limits защищают от дегенерации (длинные runs одного байта).",
+                "example": "Restic и BorgBackup используют Buzhash CDC; FastCDC (Microsoft Research 2016) даёт 10× faster boundary detection чем Rabin при той же dedup-эффективности.",
+                "when_to_apply": "CDC обязателен когда insertion/deletion в середине файла часты (документы, code) и нужна устойчивая дедупликация между версиями.",
+                "edge_cases": "Гомогенный контент (mp4, JPEG) — CDC и fixed работают одинаково; min size защищает от 1-byte chunks; max size защищает от мегабайтных.",
+                "related": "Q5 CAS; Q9 rsync delta; Q16 versioning."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Content-Addressable Storage (CAS) даёт «бесплатную» дедупликацию и integrity check?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Storage key = SHA256(chunk_content) → identical content всегда mapped в одну entry; дедуп работает автоматически при upload (server отвечает «which SHA256 missing?» — клиент грузит только diff); integrity check бесплатно: hash(downloaded) == storage_key проверяет bit rot; immutability — update content = new hash = new entry; GC через refcount tracking.",
+              "correct": true,
+              "sections": {
+                "explanation": "CAS использует cryptographic hash как key, что даёт три эффекта одновременно. Дедуп: два юзера загружают тот же файл → identical SHA256 → один entry, metadata разных users просто references. 80%+ savings на популярных файлах (Office templates, иконки, PDF books). Integrity: hash после download должен совпасть с key — bit rot detected immediately. Immutability: update content = new hash = новый entry, старые chunks никогда не модифицируются. GC: когда refcount = 0 → safe to delete.",
+                "example": "Git objects/ работает по той же модели (SHA-1 ранее, SHA-256 сейчас); Restic, IPFS, BorgBackup используют CAS; Dropbox internal CAS даёт 80% dedup на 700 PB unique vs 3.5 EB raw.",
+                "when_to_apply": "Когда дедуп критичен (cloud sync, backup), нужна integrity check без отдельной системы, и можно жить с immutable storage.",
+                "edge_cases": "SHA-256 collision теоретически 2^256 attempts, никогда не наблюдался; refcount race conditions решаются compare-and-swap; orphaned chunks подметаются background GC.",
+                "related": "Q4 chunking; Q6 metadata separation; Q17 trash GC; Q29 cost."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CAS использует auto-increment ID как key, что обеспечивает уникальность каждого chunk и позволяет ordered traversal.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Auto-increment ID не связан с content — два identical chunks получат разные ID, дедуп не работает. Это просто sequential storage.",
+                "source_of_confusion": "Смешение «content-addressable» с «sequential addressable» (как в SQL primary key).",
+                "if_it_were_true": "Dropbox хранил бы 3.5 EB вместо 700 PB, бюджет на storage вырос бы в 5 раз.",
+                "how_it_should_be": "Key = SHA256(content), а не auto-increment; тогда identical content всегда мапится в одну entry."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CAS работает на уровне whole-file hash, не chunk-level — если файл меняется хоть на байт, новый hash и storage entry.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Whole-file CAS не даёт delta sync: edit 1 KB в 1 GB файле → новый hash всего файла → re-upload 1 GB. Чанк-уровень обязателен для эффективности.",
+                "source_of_confusion": "Упрощение модели CAS до file-level granularity.",
+                "if_it_were_true": "Изменение одного байта в большом файле полностью аннулировало бы dedup и delta sync.",
+                "how_it_should_be": "CAS работает на уровне chunks (4 MB) — изменение 1 KB меняет hash только одного chunk, остальные shared."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CAS требует client-side encryption перед хешированием, иначе integrity check невозможен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Encryption и CAS — ортогональные концепции. Hash(plaintext) даёт integrity и dedup; hash(ciphertext) тоже работает но ломает дедуп между users с разными ключами.",
+                "source_of_confusion": "Смешение E2EE (Q25) и CAS как обязательных вместе.",
+                "if_it_were_true": "Server-side CAS был бы невозможен без E2EE, что противоречит стандартному Dropbox-режиму.",
+                "how_it_should_be": "CAS работает на любом байтовом content; E2EE — отдельный layer и в standard Dropbox не используется."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Dropbox разделяет metadata (Postgres/Vitess) и blob storage (Magic Pocket) на два tier?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это историческое legacy решение, в современном дизайне всё хранится в одной базе для упрощения транзакций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разделение metadata vs blob — фундаментальный pattern Dropbox/Git/S3, не legacy. Современные дизайны (Google Drive, OneDrive) делают то же самое.",
+                "source_of_confusion": "Принятие monolithic storage за «современный» подход.",
+                "if_it_were_true": "Postgres держал бы эксабайты blob, OLTP-нагрузка сломалась бы под весом sequential bulk traffic.",
+                "how_it_should_be": "Metadata в OLTP-store (Postgres/Vitess) для random reads/writes, blob в Magic Pocket для sequential bulk; разные паттерны доступа диктуют разные tier."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Разные access patterns: metadata = OLTP heavy random reads/writes (path, ACL, version), blob = sequential bulk append-only; разные storage types: metadata SSD ($$$), blob HDD/SMR ($); independent scaling; volume ratio 1:70 000 (5-10 TB metadata vs 700 PB blob); EdgeCache (memcached) для hot metadata 95%+ hit ratio; cross-tier consistency через commit ПОСЛЕ blob upload + GC orphaned blob.",
+              "correct": true,
+              "sections": {
+                "explanation": "Metadata (file path, name, size, owner, permissions, chunk references, version history) требует random access, indexes, transactions — это OLTP nature, держится в sharded Postgres или Vitess на SSD. Blob (actual content chunks) append-only immutable, sequential bulk reads, optimized для HDD/SMR drives. Разделение позволяет independent scaling и разные cost-tier'ы. Ratio 1:70000 — 5-10 TB metadata против 700 PB blob.",
+                "example": "Аналог Git — objects/ (blobs CAS) + refs/ (metadata pointers); Dropbox EdgeCache даёт 95%+ hit на metadata queries, что критично для 1M ops/sec peak.",
+                "when_to_apply": "Когда есть два radically different access pattern (OLTP vs bulk) и сильно разное volume — разделение даёт оптимальный cost и scaling.",
+                "edge_cases": "Cross-tier consistency: metadata commit только ПОСЛЕ blob upload success, иначе orphaned blob; orphaned blocks подметаются background GC через N дней (refcount = 0).",
+                "related": "Q5 CAS; Q7 Magic Pocket; Q17 trash GC; Q18 architecture."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Metadata и blob хранятся в одном Cassandra-кластере с разными column families — это упрощает eventual consistency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra не подходит для эксабайтного blob (designed для structured records < 1 MB) и не оптимальна для file metadata с join'ами по folder hierarchy.",
+                "source_of_confusion": "Cassandra hype, особенно в Netflix-кейсах, перенесён на Dropbox без учёта особенностей.",
+                "if_it_were_true": "Cassandra рухнула бы под 700 PB blob; ACID транзакции metadata стали бы eventually consistent.",
+                "how_it_should_be": "Metadata в Postgres/Vitess (sharded), blob в Magic Pocket (CAS + erasure coding); два разных store с разной природой."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Разделение нужно только для GDPR — metadata в EU-DC, blob в US-DC; access patterns тут вторичны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GDPR требует резидентности и metadata, и blob в EU. Разделение metadata vs blob — про access patterns и scaling, а не про географию.",
+                "source_of_confusion": "Смешение data residency (Q19) с two-tier storage architecture.",
+                "if_it_were_true": "Splitting metadata и blob по разным регионам нарушал бы GDPR именно потому что metadata это PII.",
+                "how_it_should_be": "Разделять metadata/blob по типу нагрузки (OLTP vs bulk), а резидентность EU/US делать на уровне региона целиком."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем Dropbox построил собственный Magic Pocket вместо использования AWS S3 для exabyte storage?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Magic Pocket это маркетинговое название обычной AWS S3 bucket; ничего custom в нём нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Magic Pocket — это собственный stack Dropbox: custom storage nodes с SMR drives, Pocket Master metadata server, OSD daemons, Reed-Solomon 10+4 erasure coding, custom 100 Gbps networking между cells.",
+                "source_of_confusion": "Кандидат не знает про Dropbox Tech Blog 2016 «Magic Pocket Infrastructure».",
+                "if_it_were_true": "Dropbox платил бы $16M/month вместо $3M/month на 700 PB, и AWS бы публиковал кейс про Dropbox.",
+                "how_it_should_be": "Magic Pocket — это полностью свой stack с экономией ~75% vs S3 на эксабайтном scale."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Magic Pocket это просто self-hosted MinIO кластер с S3-compatible API на стандартных HDD.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MinIO — generic open-source S3-compatible storage, не оптимизирован под exabyte scale и не использует SMR. Magic Pocket — глубоко custom с host-managed SMR, Reed-Solomon, custom cell architecture.",
+                "source_of_confusion": "Кандидат знает MinIO/Ceph и пытается приложить к Dropbox.",
+                "if_it_were_true": "Dropbox экономил бы 30-40% вместо 75% на cost vs S3.",
+                "how_it_should_be": "Magic Pocket — это purpose-built storage с custom hardware и stack, не off-the-shelf MinIO."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "AWS S3 на эксабайтном scale стоит больше $1B/год, Magic Pocket снизил cost на ~75%; custom hardware с SMR drives (20-30% denser HDD), Reed-Solomon 10+4 (overhead 1.4× vs 3× replication), Pocket Master metadata server, OSD daemons, Volume Manager, custom 100 Gbps networking между cells; контроль над tiering (hot SSD / warm HDD / cold SMR).",
+              "correct": true,
+              "sections": {
+                "explanation": "До 2015 Dropbox хранил всё в AWS S3 — на эксабайтном масштабе это $1B+/год. 2015-2016 проект Magic Pocket мигрировал >90% контента на собственный stack: custom storage nodes с SMR drives (Shingled Magnetic Recording — записываются перекрывающимися дорожками, 20-30% denser чем CMR), Reed-Solomon (10, 4) — 10 data shards + 4 parity, can lose 4 shards, overhead 1.4× vs 3× full replication. Pocket Master управляет metadata cell, OSD хранит raw bytes, Volume Manager координирует erasure coding, GC переисчисляет освобождённые блоки.",
+                "example": "Сопоставимые системы: Facebook f4 (BLOB storage), Backblaze Vaults, Google Colossus. Dropbox first petabyte-scale host-managed SMR deployment.",
+                "when_to_apply": "Когда scale достигает эксабайтов и AWS S3 cost становится major line item — own storage stack окупает себя за 1-2 года.",
+                "edge_cases": "SMR drives дешевле, но slower seek — нужны sequential writes, не подходит для metadata; rebuild при failure медленнее чем 3× replication.",
+                "related": "Q5 CAS; Q20 DR erasure; Q29 cost."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Magic Pocket делает full 3× replication — это даёт лучшую durability чем erasure coding и приемлемо по cost.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Magic Pocket использует Reed-Solomon 10+4 (overhead 1.4×), не 3× replication. На эксабайтном scale 3× replication стоит на 53% больше при той же durability — экономически нерационально.",
+                "source_of_confusion": "Default 3× replication из HDFS/Cassandra принят за best practice без учёта scale.",
+                "if_it_were_true": "Magic Pocket потерял бы 53% storage saving и не оправдал бы инвестиций в собственный stack.",
+                "how_it_should_be": "Reed-Solomon 10+4 даёт overhead 1.4× при той же 11-nines durability, что 50% storage saving vs 3× replication."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой codec выбрать для compression на client перед upload, и в каком порядке относительно chunking?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "gzip — самый универсальный, encode 50 MB/s, ratio 2.9×; применяется до chunking чтобы максимизировать compression ratio на whole file.",
+              "correct": false,
+              "sections": {
+                "what_actually": "gzip медленный на encode (50 MB/s) — bottleneck на client desktop/mobile. Compression ПЕРЕД chunking ломает CAS dedup: compressed bytes между двумя похожими файлами различаются полностью.",
+                "source_of_confusion": "gzip знаком всем, его выбирают по инерции.",
+                "if_it_were_true": "Encode upload-bottleneck на medium laptop ~50 MB/s; dedup ratio упал бы с 80% до 10%.",
+                "how_it_should_be": "Zstandard для balance (400 MB/s encode, ratio 2.8×); compression ПОСЛЕ chunking per chunk, чтобы сохранить dedup."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Brotli — лучший ratio 3.5×, encode 30 MB/s; применяется per chunk для лучшего dedup.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Brotli ratio 3.5× впечатляет, но encode 30 MB/s — слишком медленно для realtime sync (mobile, slow CPU). Brotli оптимален для static web assets.",
+                "source_of_confusion": "Brotli популярен для веб-ресурсов (Cloudflare), но не для general-purpose realtime compression.",
+                "if_it_were_true": "Sync lag на 1 GB файле вырос бы с 5 сек до минут на CPU-bound стадии.",
+                "how_it_should_be": "Zstandard (encode 400 MB/s, ratio 2.8×) — balance speed и ratio для interactive sync."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "LZMA / xz — лучший ratio 4×, encode 5 MB/s; применяется до chunking для максимального storage saving.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LZMA encode 5 MB/s — абсолютно неприемлемо для realtime sync; используется для archive где время encode не критично. До chunking ломает dedup.",
+                "source_of_confusion": "Лучший ratio принят за лучший codec без учёта encode speed и dedup-эффекта.",
+                "if_it_were_true": "Upload 1 GB файла стоил бы 3+ минут только на compression; dedup исчез бы.",
+                "how_it_should_be": "Zstandard post-chunk; LZMA не для realtime sync."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Zstandard — balanced: encode 400 MB/s, decode 800 MB/s, ratio 2.8×; применяется POST-chunking per chunk (чтобы CAS дедупликация работала на raw bytes); skip compression для уже compressed файлов (JPEG/PNG/MP4/PDF) по magic bytes; optional custom dictionary для Office/PDF даёт +10-20%.",
+              "correct": true,
+              "sections": {
+                "explanation": "Zstandard (Facebook 2016) даёт оптимальный balance: encode 400 MB/s приемлемо на client, decode 800 MB/s не блокирует read latency, ratio 2.8× близок к gzip но в 8× быстрее. Critical: compression ПОСЛЕ chunking — если compress whole file, потом chunk, то compressed bytes != raw bytes и dedup ломается; post-chunk compression сохраняет CAS savings. Skip for pre-compressed (JPEG, MP4, ZIP, PDF) — detect через magic bytes/MIME, повторная compression бесполезна и тратит CPU. Custom dictionary для Office/PDF — Zstandard supports trained dictionaries, +10-20% gain.",
+                "example": "Dropbox перешёл на Zstandard ~2018 (с Snappy и LZ4); экономия ~1M$/month на 700 PB при ratio 2-3× для compressible content.",
+                "when_to_apply": "Когда есть mix of compressible (text, code, Office) и incompressible (media) контента, нужен balance speed/ratio.",
+                "edge_cases": "Encrypted данные incompressible — skip; tiny chunks (< 1 KB) compression overhead > saving; HW-acceleration через ZSTD-NI на современных CPU.",
+                "related": "Q4 chunking; Q5 CAS; Q29 cost."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает delta sync через rsync algorithm для передачи только diff в большом файле?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sender (с старым файлом) split на blocks ~700 B, per block считает rolling hash (быстрый, Adler-32) + strong hash (MD5/SHA1); receiver (с новым файлом) скользит окном ширины B и на каждой позиции проверяет rolling hash в dictionary, при hit verifies strong hash (защита от rolling collision) — match → emit «use block N» и прыгает на B байт, miss → emit raw byte и сдвигает окно на 1; output = ссылки + raw bytes; O(file_size) total через O(1) update per shifted byte.",
+              "correct": true,
+              "sections": {
+                "explanation": "Andrew Tridgell (1996) предложил алгоритм где receiver не должен заранее знать содержимое sender'а — достаточно dictionary hash → block_index. Rolling hash (Adler-32: hash(i+1) = hash(i) - byte_at(i) + byte_at(i + B)) позволяет O(1) update при сдвиге окна на 1 байт, что даёт O(file_size) total scan. Strong hash защищает от rolling collisions. Insertion в начало: только small delta (несколько raw bytes + reference to rest); edit middle: small delta вокруг edit + references для unchanged.",
+                "example": "Office 10 MB file, edit 1 параграф → upload ~30 KB delta vs full 10 MB; rsync, rdiff-backup, librsync используют этот алгоритм; Dropbox streaming sync строит на этой идее через CDC.",
+                "when_to_apply": "Когда передача дельты критична (slow network, large files, frequent small edits) и нет встроенного CDC-chunking.",
+                "edge_cases": "Block size B trade-off: маленький B → точнее delta но больше hashes; большой B → меньше hashes но грубее; обычно B = sqrt(file_size).",
+                "related": "Q4 chunking; Q5 CAS; Q10 sync engine."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Sender вычисляет SHA256 от whole файла и сравнивает с receiver — если разные, full re-upload файла; rolling hash не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Whole-file hash говорит «отличаются», но не указывает где именно diff. Без block-level rolling hash нельзя передать только delta.",
+                "source_of_confusion": "Упрощение rsync до простого hash compare.",
+                "if_it_were_true": "1 KB edit в 1 GB файле стоил бы 1 GB re-upload; insertion problem не решена.",
+                "how_it_should_be": "Block-level rolling + strong hash; receiver scans скользящим окном для match."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "rsync работает только для text файлов — для binary (JPEG, MP4) алгоритм неприменим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "rsync байт-агностический — работает на любых byte-streams, включая binary (JPEG, MP4, executables). Для media редко даёт saving (compressed bytes), но не «неприменим».",
+                "source_of_confusion": "Смешение rsync с text-diff утилитами (diff/patch).",
+                "if_it_were_true": "rsync не использовался бы для backup binary файлов, что противоречит rdiff-backup/Restic practice.",
+                "how_it_should_be": "rsync работает на любых байтах; delta-эффективность зависит от того compressible/incompressible content."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "rsync требует receiver знать содержимое sender'а заранее — иначе rolling hash dictionary неполный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: receiver не знает sender, поэтому sender отправляет hash dictionary (rolling + strong), а receiver scans свой файл скользящим окном. Это и есть суть algoritma.",
+                "source_of_confusion": "Перепутаны роли sender/receiver или направление dictionary transfer.",
+                "if_it_were_true": "Алгоритм требовал бы предварительной synchronization, что нивелировало бы delta-эффект.",
+                "how_it_should_be": "Sender отправляет dictionary, receiver скользит окном; знание содержимого sender'а не требуется заранее."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая последовательность шагов в sync engine от изменения файла до notification к peer device?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Watcher → upload файла напрямую без chunking → metadata commit → polling от peer device каждую минуту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без chunking + diff full re-upload каждого изменения; polling раз в минуту даёт sync lag >60 сек вместо целевых 5 сек.",
+                "source_of_confusion": "Самый прямолинейный pipeline без учёта оптимизаций.",
+                "if_it_were_true": "1 KB edit стоил бы full re-upload; sync lag p95 был бы минуты, не секунды.",
+                "how_it_should_be": "Watcher → SQLite queue → diff (re-chunk + hash) → server check missing → parallel upload → metadata commit → push notification (long-polling/WebSocket)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "File watcher (inotify/FSEvents/ReadDirectoryChangesW + debounce 100 ms) → local SQLite queue (persistent, survives restart) → diff engine (re-chunk + SHA256 per chunk + compare with last-known server manifest) → server check «which SHA256 missing?» → parallel uploader (10-50 concurrent connections, HTTP/2 multiplex, resume on partial failure) → metadata commit на сервере → notification service push (long-polling/WebSocket) к peer devices → peers lazy/eager download.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полная цепочка: (1) Watcher слушает OS file system events, batches rapid changes debounce 100 ms; (2) Local queue в SQLite — pending uploads persisted, survives crashes/restarts; (3) Diff engine re-chunks файл (CDC), считает SHA256 per chunk, сравнивает с last-known server manifest; (4) Server check — клиент шлёт список SHA256s, сервер возвращает missing list (избегает re-upload duplicates через CAS dedup); (5) Uploader parallel 10-50 connections, HTTP/2 multiplex, resume on partial failure; (6) Metadata commit ПОСЛЕ blob upload (cross-tier consistency); (7) Notification service push к peer devices (long-polling/WebSocket); (8) Peers download lazy (Smart Sync) или eager.",
+                "example": "Latency budget: detect 10-100 ms (inotify), chunk+hash 100 ms-1 sec (CPU bound), upload по сети, server commit 50 ms, push 100 ms-1 sec → total small file ~1-2 sec sync.",
+                "when_to_apply": "Все эти шаги обязательны для production-grade sync engine — пропуск любого ломает latency или durability.",
+                "edge_cases": "Network partition: queue растёт, resume on reconnect; rapid changes batched через debounce; large files split на параллельные chunks.",
+                "related": "Q4 chunking; Q5 CAS; Q11 file events; Q13 notification."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sync engine синхронный: каждый change блокирует UI до завершения upload и notification всех peer devices.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sync engine asynchronous: save файла мгновенный (просто FS write), upload в background через queue. Иначе при медленной сети save в text editor блокировал бы UI.",
+                "source_of_confusion": "Желание упростить через синхронность ломает UX.",
+                "if_it_were_true": "Save 1 GB файла блокировал бы editor на минуты; user-experience катастрофичен.",
+                "how_it_should_be": "Async pipeline: save → local queue → background upload; UI отвечает мгновенно, sync делается параллельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sync engine не нужен — OS-уровневая репликация (rsync daemon) полностью покрывает функционал Dropbox.",
+              "correct": false,
+              "sections": {
+                "what_actually": "rsync daemon работает point-to-point между двумя машинами без CAS/dedup, без cross-region replication, без conflict detection, без Smart Sync, без mobile push. Это не Dropbox.",
+                "source_of_confusion": "rsync известен и достаточен для homelab, но не для 700M users.",
+                "if_it_were_true": "Dropbox был бы просто хостингом для rsync daemon; ни sharing, ни versioning, ни search не было бы.",
+                "how_it_should_be": "Custom sync engine с watcher, diff, CAS, parallel upload, notification, conflict resolution — далеко за пределами rsync."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие API файловой системы использует Dropbox client для отслеживания изменений на разных OS?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Polling raz в секунду stat() каждого файла в синкаемой папке — universal cross-platform решение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Polling stat() на миллионах файлов даёт миллионные I/O в секунду — недопустимая нагрузка на ОС. Все современные ОС предлагают event-based API.",
+                "source_of_confusion": "Polling универсален и прост, но не масштабируется для типичной Dropbox folder с 100K+ файлов.",
+                "if_it_were_true": "CPU и I/O постоянно загружены на 100% даже когда ничего не меняется.",
+                "how_it_should_be": "inotify (Linux), FSEvents (macOS), ReadDirectoryChangesW (Windows) — event-based API, push events когда что-то меняется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только inotify — Linux-only, на других ОС эмулируется через polling.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У каждой ОС свой native event API: inotify (Linux), FSEvents (macOS), ReadDirectoryChangesW (Windows). Dropbox использует custom watch layer over каждый.",
+                "source_of_confusion": "Linux-bias кандидата, не знаком с macOS/Windows API.",
+                "if_it_were_true": "Dropbox на macOS/Windows работал бы катастрофически медленно из-за polling.",
+                "how_it_should_be": "Использовать native event API per OS; cross-platform abstraction layer над каждым."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "inotify (Linux, per-file events: IN_CREATE/IN_MODIFY/IN_DELETE/IN_MOVED, нужно увеличить fs.inotify.max_user_watches с 8K до 1M для большого Dropbox folder); FSEvents (macOS, per-directory events coarser granularity, batched latency 1-5 сек, FSEventStreamCreate API); ReadDirectoryChangesW (Windows, overlapped I/O асинхронный callback, tracks create/modify/rename/attribute); cross-platform abstraction layer → unified event stream → diff engine.",
+              "correct": true,
+              "sections": {
+                "explanation": "На Linux inotify даёт per-file events с типами IN_CREATE, IN_MODIFY, IN_DELETE, IN_MOVED_FROM, IN_MOVED_TO; ограничение fs.inotify.max_user_watches default 8K — для типичной Dropbox folder с 100K+ файлов нужно увеличить до 1M. На macOS FSEvents работает на уровне директорий (coarser), latency batched 1-5 сек, API через FSEventStreamCreate. На Windows ReadDirectoryChangesW использует overlapped I/O с async callback, отслеживает create/modify/rename/attribute change. Dropbox client держит custom watch layer над всем этим, output — unified event stream к diff engine.",
+                "example": "Linux: sudo sysctl fs.inotify.max_user_watches=1048576; macOS FSEvents latency 5 сек обходится через дополнительный stat() при subscribe; Windows ReadDirectoryChangesW рекурсивно следит за поддеревом.",
+                "when_to_apply": "Когда нужно отслеживать изменения в больших file tree без polling overhead на любой популярной ОС.",
+                "edge_cases": "Atomic save (write temp + rename) → 2 events CREATE temp + RENAME → file, sync engine должен интерпретировать как modification; bulk import 10K файлов → event flood, нужно batch+dedupe; USB disconnect → watcher invalidate, restart on reconnect.",
+                "related": "Q10 sync engine; Q14 Smart Sync FUSE."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все ОС используют единый POSIX inotify API через симлинки и mount-bind.",
+              "correct": false,
+              "sections": {
+                "what_actually": "POSIX не определяет file watch API; inotify — Linux-specific. macOS и Windows имеют свои native API, не POSIX-совместимые.",
+                "source_of_confusion": "Желание увидеть единый стандарт там где его нет.",
+                "if_it_were_true": "kqueue (BSD), FSEvents (macOS), ReadDirectoryChangesW (Windows) не существовали бы.",
+                "how_it_should_be": "Per-OS native API + cross-platform abstraction layer в Dropbox client."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Dropbox client поддерживает offline mode и корректный resume при reconnect?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Offline режим не поддерживается — клиент требует постоянное подключение, иначе любые изменения теряются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Offline это core feature Dropbox (самолёт, метро, mobile dead zone). Client держит local journal pending changes и syncs при reconnect.",
+                "source_of_confusion": "Кандидат не учитывает mobile use cases.",
+                "if_it_were_true": "Dropbox был бы бесполезен для mobile users; конкуренты вытеснили бы.",
+                "how_it_should_be": "Local LSM/SQLite journal pending ops; queue persists через restart; resume sync при reconnect через diff vs server state."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Offline changes хранятся в RAM и теряются при перезапуске — для критичных данных нужно подключение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хранение pending changes в RAM теряет данные при крэше/restart. Local journal обязан быть persistent (SQLite/LSM на диске).",
+                "source_of_confusion": "Упрощение через in-memory queue без учёта надёжности.",
+                "if_it_were_true": "Каждый restart терял бы offline-изменения; пользователи теряли бы файлы.",
+                "how_it_should_be": "Persistent SQLite journal с pending_ops таблицей: id, op_type, file_path, chunk_list, created_at, retry_count."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При reconnect клиент делает full re-sync всей Dropbox folder — это гарантирует консистентность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Full re-sync 1 TB folder после минутного offline недопустим — это re-download terabytes. Resume через since-token + diff обязателен.",
+                "source_of_confusion": "Корректность через грубое полное обновление — анти-паттерн (Q30 #9).",
+                "if_it_were_true": "Bandwidth и время restore вышли бы за пределы разумного.",
+                "how_it_should_be": "Resume через last_sync_token: fetch server changes since T, compare с local journal, apply ordered."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Local SQLite журнал pending_ops (id auto-increment, op_type create/update/delete/rename, file_path, chunk_list JSON, created_at, retry_count); resume flow: (1) fetch server state since last_sync_token, (2) сравнить local journal с server changes — local-only → upload, server-only → download, both changed same file → conflict (Q15), (3) apply ordered: local creates → uploads → server updates → local deletes; долгий offline → batch priority recent files first; disk full → reject new writes, alert user.",
+              "correct": true,
+              "sections": {
+                "explanation": "Local journal в SQLite (или RocksDB-style LSM): таблица pending_ops хранит ordered list operations с retry_count, survives crashes/restarts, идемпотентные операции. При reconnect клиент fetches server state since last_sync_token (incremental, не full), сравнивает local journal с server changes: local-only → upload, server-only → download, both changed same file → conflict resolution (Q15 — .conflict files). Apply ordered: сначала local creates/uploads, потом server updates, потом deletes. Long offline (месяц) → priority recent files first.",
+                "example": "Аналог Git commit log + push на reconnect; SQLite WAL mode даёт ACID transactions на pending_ops; mobile приложение Dropbox держит journal в app sandbox.",
+                "when_to_apply": "Любой sync клиент должен переживать offline периоды без потери данных и без full re-sync.",
+                "edge_cases": "Disk full → reject new writes + alert user; conflict при concurrent edit local/server → .conflict file; long offline → batch priority recent first; retry_count > N → дроп с алёртом.",
+                "related": "Q10 sync engine; Q13 notification; Q15 conflict; Q30 antipatterns."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Dropbox реализует sub-5-second notification к peer devices при изменении файла?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Long-polling baseline (клиент держит HTTP GET /changes?since=T, сервер ответит при изменении или таймауте 30-60 сек) + WebSocket для desktop apps (always-on connection, sub-second latency); FCM/APNs для mobile push (минимальный payload {user_id, since_cursor}, receiver pulls actual changes после notification); распределение по тысячам notification servers, sharded by user_id, каждый держит ~50K-100K connections.",
+              "correct": true,
+              "sections": {
+                "explanation": "Naive polling раз в 30 сек на 200M MAU даёт 400M req/min = 7M QPS просто на polling — недопустимо. Long-polling — клиент открывает GET /changes?since=T, сервер HOLDS request 30-60 сек, если change → respond immediately; снижает QPS, но каждое соединение держится длительно. WebSocket persistent bi-directional connection даёт sub-second latency, нужен для desktop apps always-on. Mobile push через FCM (Android) и APNs (iOS) — OS handles delivery, не нужно держать connection приложением. Payload минимальный: receiver pulls actual changes после notification.",
+                "example": "Dropbox Notification Service исторически long-polling, hybrid с WebSocket; 200M MAU × 1 conn ÷ 50K per server = ~4K notification servers; sharding by user_id даёт locality.",
+                "when_to_apply": "Real-time delivery sub-5 сек, миллионы concurrent users, mobile + desktop поддержка.",
+                "edge_cases": "Connection limit per server (file descriptors, memory); fan-out при shared folder edit к N members; mobile background restrictions on persistent connections.",
+                "related": "Q10 sync engine; Q12 offline; Q18 architecture."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Клиенты polling DB напрямую каждые 30 сек: GET /changes?since=T возвращает changeset; никаких long-polling и WebSocket не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "200M MAU × 2 poll/min = 400M req/min = 7M QPS на polling, при этом 95%+ запросов возвращают «no changes». Wasted load + sync lag минимум 30 сек.",
+                "source_of_confusion": "Polling прост в реализации, но не масштабируется.",
+                "if_it_were_true": "Backend упал бы под нагрузкой polling; sync lag p95 30+ сек не уложился бы в SLA.",
+                "how_it_should_be": "Long-polling или WebSocket для push; mobile через FCM/APNs."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Notification только через email — desktop клиент проверяет inbox раз в минуту и обновляет sync на основе писем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Email как notification механизм абсурден — latency десятки секунд до минут, spam filters блокируют, throughput ограничен SMTP. Никогда не использовался для realtime sync.",
+                "source_of_confusion": "Шуточная или ошибочная подмена protocol.",
+                "if_it_were_true": "Sync lag измерялся бы минутами; гарантия доставки сломалась бы при spam-фильтрации.",
+                "how_it_should_be": "Long-polling/WebSocket для desktop, FCM/APNs для mobile."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Server отправляет SMS на phone number пользователя при каждом изменении файла — это самый надёжный способ notification.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SMS дорого (~$0.01 за сообщение × 1B уведомлений/день = $10M/день), latency секунды-минуты, не подходит для machine-to-machine sync.",
+                "source_of_confusion": "SMS известен как «надёжный», но не для high-frequency sync.",
+                "if_it_were_true": "Стоимость SMS превысила бы выручку Dropbox в десятки раз.",
+                "how_it_should_be": "FCM/APNs для mobile push (бесплатно); long-polling/WebSocket для desktop."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются Selective Sync и Smart Sync, и как реализуются stub files в Smart Sync?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Selective Sync и Smart Sync — одно и то же, просто разные названия маркетинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Selective Sync — folder-level opt-out (не скачивается совсем). Smart Sync — file-level lazy fetch (stub visible, content on-demand). Это разные функции.",
+                "source_of_confusion": "Поверхностное знание features Dropbox.",
+                "if_it_were_true": "Не было бы разделения Free (Selective) и Pro (Smart) plans.",
+                "how_it_should_be": "Selective = folder-level opt-out; Smart = file-level lazy fetch через FUSE/Cloud Files API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Selective Sync (pre-2017): пользователь выбирает which folders to download locally, остальные accessible только через web/mobile; Smart Sync (2017+, Pro feature): все файлы visible в FS как stub files (видны name/size/modified но 0 bytes на диске), content downloaded on-demand при open, background eviction LRU когда disk full; реализация stub files: Linux/macOS через FUSE-like virtual FS, Windows через Cloud Files API (10+, first-class «online-only»), macOS modern через File Provider Extension; pin/online-only/auto-LRU режимы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Selective Sync — простой: user снимает галки с folders → они не скачиваются, доступны только через web. Pre-2017. Smart Sync (2017, Pro) — все файлы видны в OS file system как обычные, но stub — name, size, modified показаны, 0 bytes реально на диске. Открытие файла триггерит fetch с server. Эвикция LRU когда disk space < threshold. Реализация per-OS: Linux/macOS — FUSE-like virtual file system (kernel-level), Windows 10+ — Cloud Files API (first-class «online-only» files), macOS современный — File Provider Extension API. Режимы: pinned (never evict), online-only (never store), auto (LRU eviction).",
+                "example": "Открыл .docx в Word — Smart Sync прозрачно тянет файл с server за 200-500 ms, Word воспринимает как локальный файл; после N дней без доступа эвиктится обратно в stub.",
+                "when_to_apply": "Когда у пользователя большая Dropbox folder (TB+) и небольшой SSD (256 GB) — Smart Sync даёт illusion локальной folder без полного download.",
+                "edge_cases": "Bandwidth optimization: pre-fetch likely files (access patterns); background download during idle; offline-режим — online-only файлы недоступны.",
+                "related": "Q11 file events; Q23 mobile; Q19 multi-region."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Smart Sync реализуется через симлинки на server URL — OS воспринимает как обычные текстовые файлы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Симлинки — это file system pointers внутри одного FS, не работают через сеть и не дают illusion локального файла для приложений типа Word/Excel.",
+                "source_of_confusion": "Упрощение Smart Sync до знакомых симлинок.",
+                "if_it_were_true": "Word при открытии .docx-симлинки на URL не понял бы protocol и упал.",
+                "how_it_should_be": "FUSE virtual file system / Cloud Files API / File Provider Extension — kernel-level integration, прозрачная для приложений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Smart Sync работает только в браузере через JavaScript — desktop клиент не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Smart Sync требует kernel-level integration (FUSE/Cloud Files API) с OS file system, чтобы Word/Excel/Finder видели stub files как обычные. Браузер не может имитировать FS.",
+                "source_of_confusion": "Спутана web-доступность с Smart Sync в native FS.",
+                "if_it_were_true": "Smart Sync был бы просто web file manager — это и есть Dropbox web, но не Smart Sync.",
+                "how_it_should_be": "Desktop client с FUSE-like driver для прозрачной интеграции в OS FS."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Dropbox разрешает conflict при concurrent edits того же файла на двух девайсах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Last-Writer-Wins (LWW): чей sync пришёл последним, тот выиграл; другая версия молча перезаписана.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LWW даёт silent data loss — Bob теряет свои правки, не замечая. Для пользовательских файлов это недопустимо.",
+                "source_of_confusion": "LWW знаком из Cassandra/distributed systems и принят как default.",
+                "if_it_were_true": "Пользователи теряли бы работу при network delays; trust в Dropbox разрушился бы.",
+                "how_it_should_be": "Для binary файлов (docx, pdf) — .conflict files (keep both versions); для Paper collaborative docs — CRDT auto-merge."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Server отклоняет любой второй upload в ту же минуту — пользователь должен подождать и попробовать снова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hard reject без сохранения версии Bob'а теряет его правки, заставляет manually retry — плохой UX и data loss возможен.",
+                "source_of_confusion": "Pessimistic locking перенесён на distributed file sync.",
+                "if_it_were_true": "Concurrent edits были бы невозможны; Dropbox потерял бы collaboration use case.",
+                "how_it_should_be": "Keep both versions через .conflict files (no data loss); для real-time collaboration — CRDT."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для binary файлов (docx, pdf): .conflict files — keep both versions, имя `report.docx` (первый committed) и `report (Bob's conflicted copy 2026-05-26).docx` (второй); user решает вручную. Для collaborative docs (Dropbox Paper): CRDT (Y.js library) даёт automatic merge без вмешательства. Detection через parent_revision_id check: upload включает expected_parent_revision, server fast-forward если current_revision == expected, иначе создаёт .conflict file.",
+              "correct": true,
+              "sections": {
+                "explanation": "Dropbox использует разные стратегии по типу файла. Binary (Word/Excel/PDF/images) — невозможно auto-merge, поэтому .conflict files: keep both versions, user choose. Collaborative documents (Dropbox Paper) — text/structured, можно auto-merge через CRDT (Conflict-Free Replicated Data Types, library Y.js). Detection: каждый файл имеет parent_revision_id; upload включает expected_parent_revision; server проверяет current == expected → fast-forward, иначе → conflict → создание .conflict files.",
+                "example": "Alice offline edits report.docx, Bob editing on phone, оба sync → result: report.docx (Alice's, first commit) + report (Bob's conflicted copy 2026-05-26).docx; Paper документ через Y.js слил бы paragraph-level правки автоматически.",
+                "when_to_apply": "Binary файлы → .conflict files; structured collaborative docs → CRDT; для трёх-стороннего conflict — несколько .conflict files.",
+                "edge_cases": "Three-way conflict (3 devices edit одновременно) → multiple .conflict files; rename + edit conflict → tricky case; small text files можно было бы три-way merge но Dropbox не пытается.",
+                "related": "Q12 offline; Q16 versioning; Q30 antipatterns."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Vector clocks автоматически решают любой conflict через ancestor-checking — никакого manual intervention не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vector clocks ДЕТЕКТИРУЮТ conflict (concurrent edits, neither ancestor), но не РЕШАЮТ его автоматически для binary файлов. Решение остаётся за приложением (.conflict files в Dropbox case).",
+                "source_of_confusion": "Vector clocks путают с CRDT (которые auto-merge).",
+                "if_it_were_true": "Vector clocks для binary files делали бы auto-merge невозможного — это противоречит их назначению.",
+                "how_it_should_be": "Vector clocks для detection (или revision_id для simple linear chain), .conflict files для resolution binary, CRDT для structured collaborative docs."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Dropbox реализует 30-day versioning без квадратичного роста storage?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Каждая версия хранится как полная копия файла — для 30 дней это значит ×30 storage, accepted cost.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Full copy per version даёт ×30 storage для 30-day retention — на 700 PB это +20 EB только для versions, экономически непосильно.",
+                "source_of_confusion": "Наивная модель backup без CAS.",
+                "if_it_were_true": "Storage cost вырос бы в 30 раз; Dropbox разорился бы.",
+                "how_it_should_be": "CAS revisions: unchanged chunks shared across versions, only changed chunks duplicated → overhead 1.5-2× total."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Versioning невозможен на эксабайтном масштабе — Dropbox хранит только current version.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Versioning — обязательная фича Dropbox (free 30 дней, paid plans 180+ дней). CAS делает её экономически жизнеспособной.",
+                "source_of_confusion": "Кандидат недооценивает CAS-эффект на overhead versioning.",
+                "if_it_were_true": "Restore previous version был бы невозможен — конкуренты вытеснили бы.",
+                "how_it_should_be": "CAS-based versioning с shared chunks даёт overhead всего 1.5-2× при retention 30 дней."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Diff-based storage: каждая версия хранит только diff от previous, при restore replay всех diffs от base.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Diff chains страдают от long restore времени (replay 30 diffs) и hard-to-GC: удаление промежуточной версии ломает chain. Dropbox использует CAS — каждая версия независимо ссылается на chunks.",
+                "source_of_confusion": "Diff-storage из rsync / Time Machine принят как single answer.",
+                "if_it_were_true": "Restore p99 latency вырос бы до десятков секунд; GC старых versions ломал бы chain.",
+                "how_it_should_be": "CAS revisions: каждая version — independent metadata entry → chunks list, unchanged chunks shared, GC через refcount."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CAS-based: каждая ревизия = новая metadata entry pointing на (возможно новые) chunks; old chunks НЕ удаляются пока есть references из historical versions, GC после retention period; schema: file_revisions (file_id, revision_id, chunk_list JSONB, size, modified_at, modified_by); unchanged chunks shared между versions через refcount → realistic overhead 1.5-2× vs ×30 days если каждый байт хранился бы; retention 30 days free/Plus, 180 days Business, unlimited Enterprise; restore = create new «current» revision как copy of old.",
+              "correct": true,
+              "sections": {
+                "explanation": "Versioning через CAS бесплатен: каждая ревизия — новая metadata entry в file_revisions с chunk_list. Если файл изменился только в одном chunk, версии разделяют 99% chunks через CAS refcount. Storage overhead vs single-version всего 1.5-2× для типичного 30-day retention, а не ×30 как при full copies. GC: после retention period (30/180/∞) chunks с refcount=0 удаляются. Restore: создание нового «current» revision = copy old metadata entry; other devices видят как обычный update.",
+                "example": "User edits 10 versions of 1 GB Excel файла за месяц, каждый раз меняя 1 sheet (10% chunks) → storage cost ~1 GB + 10 × 100 MB = 2 GB total вместо 10 GB при full copies; Rewind (bulk restore) — replay changes до timestamp, rate-limited.",
+                "when_to_apply": "Любой sync-сервис с retention; CAS делает versioning почти бесплатным.",
+                "edge_cases": "Heavy churn файлы (CI/CD artifacts) дают overhead близкий к ×N versions; legal hold предотвращает GC; bulk restore (Rewind) heavy операция.",
+                "related": "Q5 CAS; Q17 trash; Q29 cost."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Dropbox реализует Trash с 30-day soft delete и какой механизм GC chunks?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Soft delete: user удаляет файл → moved to Trash, metadata flag deleted_at set, не физически удалён, recoverable из Trash UI; retention 30 дней default, после → permanent delete, «Empty Trash» allows immediate purge; background GC: daily job finds deleted_at < NOW - 30 days, decrement refcount chunks, weekly batch актуальной chunk removal (avoid hot operations); schema: ALTER TABLE files ADD COLUMN deleted_at TIMESTAMP, CREATE INDEX idx_deleted WHERE deleted_at IS NOT NULL; GDPR explicit purge endpoint (bypass 30-day), legal hold flag предотвращает deletion.",
+              "correct": true,
+              "sections": {
+                "explanation": "Soft delete: deleted_at flag (TIMESTAMP) в files table, файл остаётся в storage с пометкой. UI Trash показывает deleted_at IS NOT NULL. Recovery — просто clear deleted_at. Background GC ежедневный job: find deleted_at < NOW - 30 days, decrement refcount на referenced chunks. Когда chunk refcount = 0 → eligible для deletion. Actual chunk removal — weekly batch, не hot operation. Index idx_deleted accelerates GC scan. GDPR right-to-erasure требует explicit purge endpoint, bypass 30-day retention; legal hold flag (для litigation) предотвращает любое удаление.",
+                "example": "User удалил папку с 1000 файлов → Trash, через 30 дней GC dekrement refcount chunks, refcount=0 chunks подметаются weekly batch; ~3% Magic Pocket capacity подметается ежемесячно.",
+                "when_to_apply": "Любой storage с soft delete и compliance требованиями; CAS + refcount делает GC недорогим.",
+                "edge_cases": "Shared file deleted by owner → shared link broken (404); restore из Trash — flag cleared; GDPR purge → bypass retention + cascade удаление references; legal hold блокирует.",
+                "related": "Q5 CAS refcount; Q16 versioning; Q24 encryption; Q30 antipatterns."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Trash не нужен — DELETE сразу физически удаляет файл из storage для экономии места.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hard delete без grace period теряет данные при случайных удалениях. Trash — core UX feature любого file storage.",
+                "source_of_confusion": "Желание минимизировать storage cost жертвует UX.",
+                "if_it_were_true": "Случайное удаление папки = безвозвратная потеря, user complaints, отток.",
+                "how_it_should_be": "Soft delete с retention 30+ дней, GC через refcount после grace period."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Chunks удаляются сразу при delete файла — refcount не нужен, потому что каждый chunk используется только одним файлом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CAS даёт dedup — один chunk может ссылаться из тысяч файлов разных users. Без refcount удаление одного файла сломало бы другие.",
+                "source_of_confusion": "Кандидат не учитывает CAS dedup при rationalization GC.",
+                "if_it_were_true": "Удаление одного файла повредило бы другие файлы с тем же contents — массивный data loss.",
+                "how_it_should_be": "Refcount per chunk, GC только когда refcount = 0; immediate delete chunks при file delete сломал бы CAS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Trash хранится локально на клиенте — server не знает про удаления, recovery возможен только если client не sync'нулся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Trash — server-side feature: deleted_at в metadata DB, recoverable через web UI с любого device. Local-only Trash не работает cross-device.",
+                "source_of_confusion": "Желание перенести Recycle Bin model на cloud sync.",
+                "if_it_were_true": "Удаление с phone уничтожало бы файл навсегда на server и других devices.",
+                "how_it_should_be": "Server-side soft delete с deleted_at; Trash UI на любом device; GC server-side через refcount."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая высокоуровневая архитектура Dropbox правильно сочетает Edge POP + Auth + Metadata + Block + Notification + Kafka?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Монолитное Spring Boot приложение, читающее напрямую из Postgres и пишущее файлы на локальный диск — этого достаточно для 700M users.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Монолит на 700M users развалился бы под нагрузкой metadata (1M ops/sec peak) и не выдержал бы blob storage (700 PB). Нужны независимые scalable services.",
+                "source_of_confusion": "Упрощение «всё в одном» из стартап-prototype.",
+                "if_it_were_true": "Один монолит обслуживал бы 700M users, что физически невозможно.",
+                "how_it_should_be": "Edge POP + Auth + Metadata + Block + Notification + Search + Kafka — отдельные services с независимым scaling."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Edge POP (geo entry points с TLS termination и connection pooling) → Auth Service (OAuth tokens, 2FA) → Metadata Service (sharded Postgres/Vitess per user_id) ↔ EdgeCache (memcached для hot metadata) → Block Service (API to Magic Pocket, upload/download chunks, refcount management, GC coordination) → MP (Magic Pocket exabyte storage); Notification Service (long-polling/WebSocket); Kafka event bus (file_created, file_modified, file_deleted, sharing_changed) → consumers: search indexer (Elasticsearch), analytics, notification dispatcher; multi-region full stack с async replication.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый компонент имеет чёткую ответственность. Edge POP — geographical entry с TLS termination, latency optimization. Auth Service — OAuth, 2FA, session. Metadata Service — file hierarchy, ACL, versions в sharded Postgres/Vitess (per-user partition); EdgeCache (memcached-like) даёт 95%+ hit на hot queries. Block Service — API над Magic Pocket: upload/download chunks, refcount, GC coordination. Notification Service — long-polling/WebSocket для real-time push к peer devices. Kafka — event bus для async fanout: file_created/modified/deleted/sharing_changed → consumers (search indexer Elasticsearch, analytics, notification dispatcher).",
+                "example": "Реальный Dropbox использует Vitess (MySQL sharding), Magic Pocket (proprietary), Edgestore/EdgeCache, Kafka, Elasticsearch для search; multi-region — full stack each.",
+                "when_to_apply": "Standard pattern для cloud sync на 700M+ users; разделение метаданных и блобов, event-driven через Kafka, edge для latency.",
+                "edge_cases": "Cross-region: метаданные async replicate (5-30 сек lag), blob per-region; cross-region sharing — first read fetch + cache.",
+                "related": "Q6 metadata vs blob; Q13 notification; Q19 multi-region; Q22 search."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Single Cassandra cluster хранит metadata и blob; Spark пайплайны делают всё остальное (search, notification, analytics).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra не подходит для эксабайтного blob и не оптимальна для file metadata с folder hierarchy и joins. Spark — batch processing, не realtime sync engine.",
+                "source_of_confusion": "Big data hype применён без понимания access patterns.",
+                "if_it_were_true": "Sync lag измерялся бы минутами; storage cost вырос бы в разы.",
+                "how_it_should_be": "Metadata sharded Postgres/Vitess, blob Magic Pocket, Kafka для events, Elasticsearch для search."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Архитектура serverless: AWS Lambda + S3 + DynamoDB обслуживает все 700M users без отдельных services.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lambda cold-start latency 100+ ms убивает sync responsiveness; DynamoDB cost на 5 TB metadata + 1M ops/sec прохожий; S3 на 700 PB стоит $16M/month, что и пытался устранить Magic Pocket.",
+                "source_of_confusion": "Serverless hype без учёта scale economics.",
+                "if_it_were_true": "Dropbox cost вырос бы в разы, sync lag вырос бы.",
+                "how_it_should_be": "Long-running services с persistent connections, custom storage (Magic Pocket), sharded Postgres."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Dropbox реализует multi-region с data residency GDPR и cross-region sharing?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Single region (us-east-1) — глобальная latency приемлема через CloudFront, GDPR не critical для file sync.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EU user → US datacenter latency 100-200 ms неприемлемо для interactive sync; GDPR требует данные EU пользователей хранить в EU (Frankfurt/Dublin).",
+                "source_of_confusion": "Кандидат не учитывает GDPR compliance.",
+                "if_it_were_true": "Dropbox запретили бы работать в EU; огромный штраф 4% global revenue.",
+                "how_it_should_be": "Multi-region: US-East, EU-West (Ireland), AP-Northeast (Tokyo), AP-South (Mumbai); per-region full stack + GDPR-residency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Blob автоматически реплицируется cross-region для всех пользователей — это даёт лучший redundancy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cross-region replication 700 PB blob слишком дорого ($M/month bandwidth) и нарушает GDPR data residency (EU данные не должны утекать в US).",
+                "source_of_confusion": "Желание maximize durability игнорирует cost и compliance.",
+                "if_it_were_true": "Bandwidth cost вырос бы кратно; GDPR violations.",
+                "how_it_should_be": "Blob per-region (no auto cross-region); метаданные async replicate для DR; cross-region access — first read fetch + cache."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Multi-region: US-East-1 (Virginia, primary US), EU-West-1 (Ireland, primary EU), AP-Northeast-1 (Tokyo, primary APAC), ap-south-1 (Mumbai, India); per-region full stack Metadata + Magic Pocket + Notification; cross-region replication: metadata async (5-30 сек lag), blob per-region (NOT cross-region — cost prohibitive); routing: user pinned к home region by signup country; cross-region sharing — first read fetch + cache; GDPR: EU users blob+metadata строго EU (Frankfurt/Dublin), China отдельный stack (compliance, Dropbox restricted from China); failover: region down → DNS shifts, metadata reads from replica, writes paused.",
+              "correct": true,
+              "sections": {
+                "explanation": "Drivers multi-region: latency (EU user → EU DC < 50 ms vs 100-200 ms к US), GDPR (data residency required), DR (regional outage = automatic failover). Per-region full stack: Metadata Service, Magic Pocket cells, Notification Service. Cross-region replication только для метаданных (async 5-30 сек), blob остаётся в home region (cost prohibitive cross-region для эксабайтов). Routing: user pinned по signup country. Cross-region sharing: EU user открывает folder US user'а → blob fetched cross-region на первом access, потом cached в EU.",
+                "example": "Dropbox имеет datacenters в US (San Jose, Ashburn), EU (Dublin, Frankfurt), APAC; миграция EU users из US-DC в EU-DC заняла >1 года после GDPR (2018).",
+                "when_to_apply": "Compliance (GDPR, LGPD, PIPL), latency-критичный UX, DR на уровне региона.",
+                "edge_cases": "Cross-region sharing latency на first read; China отдельный legal jurisdiction; failover writes paused (CP model для writes); travel scenarios (EU user в US) — данные остаются EU.",
+                "related": "Q6 metadata; Q18 architecture; Q20 DR."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sharded by user_id среди regions без географической привязки — random distribution даёт оптимальный load balance.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Random sharding по regions ломает GDPR (EU users могут попасть в US shards) и увеличивает latency (no locality).",
+                "source_of_confusion": "Sharding для load balance перенесён без учёта compliance/latency.",
+                "if_it_were_true": "GDPR violations + bad UX от cross-region latency.",
+                "how_it_should_be": "Geo-pinned routing по signup country; per-region full stack; cross-region только для shared content."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие механизмы Disaster Recovery даёт Dropbox 11-nines durability на уровне cell/rack/DC/region?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DR не нужен — облачный провайдер гарантирует durability через свой SLA, никаких дополнительных мер не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dropbox использует собственный Magic Pocket (не S3) с эксабайтами данных — никакого provider SLA не покрывает 700 PB. Все DR-меры — на самом Dropbox.",
+                "source_of_confusion": "Кандидат не различает SaaS на чужом облаке и self-hosted storage stack.",
+                "if_it_were_true": "Региональный outage = catastrophic data loss; нет backup механизма.",
+                "how_it_should_be": "Свои DR-механизмы: Reed-Solomon erasure coding, cross-region async replication метаданных, periodic Glacier snapshot."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только 3× full replication chunks в одном datacenter — этого достаточно для всех failure scenarios.",
+              "correct": false,
+              "sections": {
+                "what_actually": "3× replication внутри одного DC не защищает от регионального outage; на 700 PB overhead 3× стоит на 53% больше чем Reed-Solomon 10+4 при той же durability.",
+                "source_of_confusion": "Default 3× replication из HDFS принят как достаточный.",
+                "if_it_were_true": "Региональный disaster уничтожил бы все 3 копии одновременно.",
+                "how_it_should_be": "Erasure coding 10+4 внутри региона + cross-region async replication метаданных + Glacier snapshots."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DR работает только через manual restore — admin нажимает кнопку и system восстанавливается из backup.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Manual restore unacceptable на 11-nines durability; failure recovery должен быть автоматизирован (erasure coding self-heal, automatic failover).",
+                "source_of_confusion": "Backup mentality из enterprise IT без понимания cloud-scale automation.",
+                "if_it_were_true": "RTO измерялось бы днями вместо минут; downtime недопустимо длинный.",
+                "how_it_should_be": "Automated mechanisms: erasure coding rebuilds в фоне; cross-region replication continuous; chaos drills."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Layered DR: (1) Single disk failure — Reed-Solomon erasure coding (10+4) handles transparently (can lose 4 shards из 14, overhead 1.4× vs 3× replication); (2) Rack failure — cell-level redundancy distributes shards across racks; (3) DC failure — cross-region async replication метаданных (RPO ~30 сек async lag); (4) Region disaster — cross-region failover (DNS shifts), blob НЕ replicated cross-region (cost prohibitive на exabyte scale, tradeoff = lose region = lose blob, rare event); (5) Backup — daily metadata snapshot к S3 Glacier для extreme scenarios; RTO minutes для метаданных, hours для blob; quarterly chaos drills.",
+              "correct": true,
+              "sections": {
+                "explanation": "Многоуровневая DR-стратегия. Слой 1: Reed-Solomon (10,4) — 10 data + 4 parity shards, can lose 4 → recoverable; overhead 1.4× vs 3× replication = 50% storage saving. Слой 2: shards distributed cross-rack в cell — rack failure transparent. Слой 3: cross-region async replication метаданных (5-30 сек lag, RPO ~30 сек). Слой 4: region-wide disaster — DNS failover к neighbor region; blob НЕ cross-region (700 PB × cross-region cost непосильно), tradeoff — потеря региона = потеря blob (редкое событие); blob critical contracts могут opt-in cross-region. Слой 5: daily metadata snapshot к S3 Glacier для extreme scenarios. Quarterly chaos drills (Netflix-style game days).",
+                "example": "RPO (data loss): ~30 сек async replication lag; RTO (recovery): minutes для метаданных, hours для blob если cross-region; Magic Pocket рутинно ребилдит данные при disk failures без human intervention.",
+                "when_to_apply": "11-nines durability на эксабайтном scale требует layered подход: erasure внутри региона + replication между регионами + offline backup.",
+                "edge_cases": "Cascade failures (region + neighbor одновременно) очень редки но возможны; blob loss при regional disaster — admit and offer best-effort recovery; legal/compliance — backup retention.",
+                "related": "Q7 Magic Pocket; Q19 multi-region; Q27 monitoring."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Dropbox реализует sharing model (folders, links, ACL) с inheritance и revocation?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Folder sharing с member roles (viewer/editor/owner) с sub-folder ACL inheritance from parent; link sharing — generate URL like dropbox.com/sh/abc123/file.docx с permissions (view/download/edit) + optional password/expiration; schema: folder_acl (folder_id, principal_type [user/group/link], principal_id, permission, inherited_from); shared_links (link_token CHAR(32) PK, folder_id, permission, password_hash, expires_at); auth flow: check ACL members → permission level OR check shared link token; quota: shared folder counted в owner's quota, members не tax own quota.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sharing типы: (1) Folder sharing — invite user → joins as member с ролью viewer/editor/owner, sub-folders inherit unless overridden; (2) Link sharing — generate URL с token, permissions (view/download/edit Pro), optional password или expiration; (3) ACL model — per-folder list users + permissions, inherited from parent unless override, public links bypass ACL. Schema folder_acl с principal_type (user/group/link) и inherited_from для tracking. Auth flow: request access к folder F → check ACL members → permission level OR check shared link token в request. Quota: shared folder counted в owner's quota only.",
+                "example": "User shares folder F с Bob как editor → folder_acl row (F, user, bob_id, editor); Bob создаёт public link → shared_links row (token, F, view, NULL, 2026-06-01).",
+                "when_to_apply": "Любая file sharing система с RBAC и inheritance; pattern переиспользуем для S3 bucket policies, Google Drive sharing.",
+                "edge_cases": "User removed → loses access immediately, existing downloads invalid token; link revoked → 404; shared folder deletion notify members; three-way conflicts при concurrent permission changes.",
+                "related": "Q15 conflict; Q22 search; Q28 quota."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все папки и файлы public по умолчанию — для приватности user должен явно set permissions.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Defaults private (только owner). Public access — opt-in через explicit sharing. Default-public нарушал бы privacy и compliance.",
+                "source_of_confusion": "Перепутаны defaults с Pastebin / GitHub Gists.",
+                "if_it_were_true": "Все Dropbox данные были бы public по умолчанию — катастрофа privacy.",
+                "how_it_should_be": "Default private; sharing — explicit action user'а через UI."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sharing только через email-attachment — нет permanent links, каждый share — отдельная копия файла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Email-attachment теряет live updates (получатель видит snapshot), не работает для folders, нет revocation. Real sharing — permanent links с ACL.",
+                "source_of_confusion": "Старый email-attachment workflow без cloud sync.",
+                "if_it_were_true": "Dropbox не предложил бы collaboration улучшения над email.",
+                "how_it_should_be": "Permanent shared folders/links с ACL, revocation, live updates."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ACL хранится в file metadata как полный список users в одном поле — это упрощает access checks.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Список users в одном поле метаданных не масштабируется (10K members в shared folder) и не поддерживает inheritance / groups. Нужна отдельная таблица folder_acl с indexes.",
+                "source_of_confusion": "Упрощение denormalization без учёта query patterns.",
+                "if_it_were_true": "Permission check 10K users в одном string поле = full scan каждый раз.",
+                "how_it_should_be": "Отдельная таблица folder_acl с indexes по folder_id и principal_id, inheritance через parent_folder_id."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Dropbox реализует search по метаданным и file content (PDFs, Office, images через OCR)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Search через LIKE %term% в Postgres files table — простой и достаточный для миллиардов файлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LIKE %term% не использует indexes (full scan), не делает full-text, не поддерживает multi-language analyzers, не делает relevance scoring. На 1B файлов — секунды/минуты query.",
+                "source_of_confusion": "SQL-bias без знания specialized search engines.",
+                "if_it_were_true": "Search latency p99 секунды → пользователи бросают сервис.",
+                "how_it_should_be": "Elasticsearch (или OpenSearch) с sharded by user_id index; multi-language analyzers; content extraction pipeline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Уровни search: (1) Metadata search — file name, path, owner, modified_at, filter by type (PDF/image/doc), fast < 100 ms; (2) Content search — full-text within document body для PDFs, Office, plain text. Content extraction pipeline: upload event → Kafka → extraction worker downloads chunk → extracts text via Apache Tika (PDF, Word, Excel) или OCR (Tesseract, Google Cloud Vision для images), extracted text → Elasticsearch sharded by user_id (privacy isolation), multi-language analyzers; latency: indexing lag 30 сек - 5 мин после upload, search query < 200 ms; privacy: extracted text encrypted at rest, не индексируем E2EE файлы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Двухуровневый search. Metadata search — fast lookup file name/path/owner в Elasticsearch metadata index. Content search — full-text внутри document body, требует extraction pipeline. Pipeline: upload событие в Kafka → extraction worker downloads chunk → Apache Tika для structured docs (PDF, Word, Excel) или OCR (Tesseract, Google Cloud Vision) для images → extracted text в Elasticsearch index. Sharded by user_id для privacy isolation, multi-language analyzers для разных языков. Indexing lag 30 сек - 5 мин (acceptable); search query < 200 ms. Extracted text encrypted at rest. E2EE файлы (Q25) не индексируются — content unavailable to server.",
+                "example": "User upload фото receipt — Tesseract OCR извлекает текст, через 30 сек searchable «coffee Starbucks»; Apache Tika для 1500+ форматов файлов.",
+                "when_to_apply": "Когда search по content критичен (документы, отчёты, изображения с текстом) и есть ресурсы на extraction farm.",
+                "edge_cases": "Encrypted (E2EE) — skip indexing; very large files (> 100 MB) — sample-only extraction; multi-language documents — multiple analyzers; binary без text — skip.",
+                "related": "Q18 architecture Kafka; Q25 E2EE limits."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Search только по file name — индексировать file content слишком дорого и нарушает privacy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Search по content — основной UX feature: «найти контракт где упоминается X». Privacy решается через per-user index isolation + encryption extracted text.",
+                "source_of_confusion": "Privacy-paranoia препятствует основной функциональности.",
+                "if_it_were_true": "User не нашёл бы свой документ если забыл точное название.",
+                "how_it_should_be": "Content extraction + per-user index + encryption at rest extracted text; E2EE opt-in для тех кто не хочет indexing."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "All-in-one global Elasticsearch cluster хранит content всех users без isolation — это упрощает архитектуру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Global cluster без per-user isolation создаёт privacy risk (cross-user content leakage через bugs) и не GDPR-compliant (нет per-user data control).",
+                "source_of_confusion": "Желание упростить через single tenancy.",
+                "if_it_were_true": "Privacy breach при любом index bug = catastrophe.",
+                "how_it_should_be": "Sharded by user_id с isolation; per-user analyzers; encrypted at rest extracted text."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Dropbox mobile client реализует Camera Upload (battery, network, EXIF) для photos/videos?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Upload сразу всех photos через cellular network без учёта battery — пользователь хочет максимально fast sync.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Aggressive upload через cellular даёт огромный bill для пользователя; без battery awareness разряжает phone за час; пользователи отключают функцию.",
+                "source_of_confusion": "Maximize speed без оглядки на mobile constraints.",
+                "if_it_were_true": "Camera Upload feature была бы бесполезна — пользователи выключали бы её сразу.",
+                "how_it_should_be": "Wi-Fi only default, battery > 20%, chunked resumable, EXIF preserve, OS scheduling APIs."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Camera Upload не нужен — пользователь должен manually загружать photos через web.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Camera Upload — главная mobile feature Dropbox (auto-backup photos), отличает от просто file hosting.",
+                "source_of_confusion": "Кандидат не учитывает mobile use cases.",
+                "if_it_were_true": "Mobile users не выбрали бы Dropbox среди конкурентов.",
+                "how_it_should_be": "Background auto-upload с smart constraints (Wi-Fi, battery, charging)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Camera Upload: (1) Network-aware — Wi-Fi only default, optional cellular с warning, pause при metered; (2) Battery-aware — skip < 20%, resume when charging; (3) Chunked + resumable upload (Q4) — survive network drops, large videos через multiple sessions; (4) EXIF preservation — date taken, GPS, camera model, optional strip sensitive для privacy; (5) Background scheduling: iOS Background App Refresh (limited windows), Android WorkManager с constraints (Wi-Fi + charging); (6) Photo deduplication через CAS — same photo across devices одна копия; (7) Original quality default, Pro option down-sized для quota.",
+              "correct": true,
+              "sections": {
+                "explanation": "Mobile-specific challenges: network expensive/slow, battery drain, storage limited. Best practices: Wi-Fi-only default экономит cellular, optional cellular с warning, pause при metered. Battery: skip < 20%, resume при charge. Chunked resumable (Q4 chunking) survive network drops. EXIF preserve metadata (date, GPS, camera). Background scheduling через native APIs: iOS Background App Refresh даёт limited windows, Android WorkManager — constraint-based execution. Photo dedup через CAS — same photo across devices, free saving. Original quality default, Pro option compress.",
+                "example": "iPhone в самолёте на airplane mode → camera capture queued локально → при landing + Wi-Fi → upload resumable; user shoot 200 photos за свадьбу → background uploads через ночь когда charging.",
+                "when_to_apply": "Любое mobile приложение с auto-upload media; battery/network awareness mandatory для retention.",
+                "edge_cases": "Burst photo mode (50 фото за сек) — batch upload; live photos (video + photo) special handling; iOS limited background time vs Android more flexible.",
+                "related": "Q4 chunking; Q11 events; Q28 quota."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Upload только через NFC при близком контакте с charging station — это самый безопасный способ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "NFC имеет range несколько cm и throughput < 1 Mbps — абсолютно не подходит для photo/video upload в облако.",
+                "source_of_confusion": "Шуточная или ошибочная подмена protocol.",
+                "if_it_were_true": "Camera Upload не работал бы в принципе.",
+                "how_it_should_be": "Wi-Fi/cellular через стандартные HTTP/2 chunked upload с native OS scheduling."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая правильная схема encryption at-rest и in-transit для Dropbox?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Encryption не нужен — Magic Pocket физически защищён, никакой posibility breach.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Physical security не покрывает insider threat, disk theft, supply chain attacks, legal subpoenas. Encryption mandatory для compliance (SOC 2, HIPAA, GDPR).",
+                "source_of_confusion": "Перепутана physical security с data confidentiality.",
+                "if_it_were_true": "Один украденный disk = leak гигабайтов user data; compliance violated.",
+                "how_it_should_be": "AES-256-GCM at-rest + TLS 1.3 in-transit; HSM master keys; per-chunk encryption keys."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Single hardcoded encryption key для всего Magic Pocket — это упрощает key management.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Single key = single point of failure: leaked key compromises ВСЁ хранилище. Industry best practice — key hierarchy с rotation.",
+                "source_of_confusion": "Желание упростить key management ценой security.",
+                "if_it_were_true": "Insider или successful attack = full data breach.",
+                "how_it_should_be": "Key hierarchy: Root key (HSM) → Master keys (per-region, rotated yearly) → Per-chunk data keys."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Encryption только in-transit (HTTPS), at-rest не нужен потому что server-side управляется самим Dropbox.",
+              "correct": false,
+              "sections": {
+                "what_actually": "At-rest encryption обязателен независимо от physical control: disk replacement, hardware retirement, subpoena, insider threat — все требуют encrypted disks.",
+                "source_of_confusion": "Спутана transport security с storage security.",
+                "if_it_were_true": "Любой decommissioned disk утечёт plaintext data.",
+                "how_it_should_be": "Both at-rest (AES-256-GCM per chunk) AND in-transit (TLS 1.3); defense in depth."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "In-transit: TLS 1.3 (с 2020), mutual TLS для internal services, certificate pinning на mobile apps; at-rest: AES-256-GCM per-chunk encryption (каждый chunk имеет unique key, per-chunk keys encrypted с master key), master keys в HSM (Hardware Security Module); key hierarchy: Root Key (HSM, never exits) → Master Keys (per-region, rotated yearly) → Per-chunk Data Keys (random per chunk) → Chunk content; performance: AES-NI hardware acceleration 1-2 GB/s per core, negligible impact; compliance: SOC 2, HIPAA, GDPR audit; ограничение — Dropbox holds keys (subpoena), для нулевого знания — E2EE (Q25).",
+              "correct": true,
+              "sections": {
+                "explanation": "Defense-in-depth encryption. In-transit: TLS 1.3 для всех external connections, mutual TLS internal services, certificate pinning mobile apps (защита от MITM). At-rest: AES-256-GCM per-chunk — каждый chunk encrypted unique random key. Per-chunk keys themselves encrypted master key. Master keys в HSM (Hardware Security Module) — никогда не покидают железо. Key hierarchy: Root (HSM, immutable) → Master (per-region, yearly rotation) → Per-chunk data keys. Performance — AES-NI HW acceleration даёт 1-2 GB/s per core, не bottleneck.",
+                "example": "Chunk encrypted: AES-256-GCM(data, per_chunk_key, nonce); per_chunk_key store: encrypted master key, stored alongside metadata; master keys rotation — re-encrypt только key store, не chunks.",
+                "when_to_apply": "Любой compliance-sensitive storage (SOC 2, HIPAA, GDPR, PCI DSS).",
+                "edge_cases": "Subpoena/legal — Dropbox holds keys, может расшифровать; для true zero-knowledge — E2EE (Q25); key rotation procedure документирован; HSM physical breach катастрофичен.",
+                "related": "Q25 E2EE; Q26 anti-abuse; Q5 CAS."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие фундаментальные ограничения End-to-End Encryption (E2EE) в Dropbox style сервисах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "E2EE = client encrypts с user-controlled key перед upload, server хранит encrypted bytes не зная content; Dropbox реальность: standard Dropbox use server-side encryption (Q24, Dropbox holds keys), Dropbox Vault (2020+) и Boxcryptor (acquired 2022) предлагают E2EE для sensitive folders; trade-offs E2EE: НЕТ server-side search content, НЕТ preview thumbnails, НЕТ OCR/indexing, ограниченное sharing (key exchange), НЕТ recovery if forget password; key management — user master key derived из password (PBKDF2/Argon2), optional 24-word seed phrase для recovery; lost key = permanent data loss.",
+              "correct": true,
+              "sections": {
+                "explanation": "E2EE — client encrypts plaintext перед upload с user-controlled key, server видит только ciphertext. Преимущество: даже Dropbox не может расшифровать (subpoena, insider не помогут). Trade-offs из-за server blindness: нет server-side search (Q22) — content extraction невозможен; нет preview/thumbnails — server не видит JPEG; нет OCR; sharing требует key exchange через external channel; lost password = permanent loss (нет server-side recovery). Key derivation: PBKDF2 / Argon2 from password + optional recovery seed phrase 24 word (BIP-39 style).",
+                "example": "Dropbox Vault Pro feature 2020 — E2EE folder для sensitive docs; Boxcryptor 3rd party до acquisition 2022; lawyers/doctors/activists use E2EE despite UX trade-offs.",
+                "when_to_apply": "Когда compliance/privacy критичны (PII, medical, legal docs) и пользователь готов отказаться от search/preview/recovery.",
+                "edge_cases": "Lost password — irreversible loss; recovery key должен храниться offline (paper, USB); sharing E2EE через ассиметричное шифрование per-recipient.",
+                "related": "Q22 search; Q24 encryption; Q26 anti-abuse."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "E2EE даёт все те же features что server-side encryption — нет никаких trade-offs.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fundamental trade-off: server blindness means no server-side processing — no search content, no preview, no OCR, no recovery, limited sharing. Эти ограничения inherent в модель E2EE.",
+                "source_of_confusion": "Желание всё-сразу — E2EE + full functionality.",
+                "if_it_were_true": "Все сервисы давно перешли бы на E2EE; реальность — большинство использует server-side encryption из-за UX trade-offs.",
+                "how_it_should_be": "Признать что E2EE даёт максимум privacy ценой functionality."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "E2EE требует quantum-resistant cryptography (Kyber, Dilithium) — иначе бесполезно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quantum-resistance — отдельная concern (post-quantum migration). Current E2EE использует AES-256 + RSA/ECDH, которые safe для классической attacker. PQ migration в процессе индустрии.",
+                "source_of_confusion": "Quantum hype применён к E2EE некритически.",
+                "if_it_were_true": "Все existing E2EE сервисы (Signal, Wire, ProtonDrive) были бы бесполезны.",
+                "how_it_should_be": "Current AES-256 + ECDH достаточно сейчас; миграция на PQC планируется через NIST стандарты."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "E2EE возможен только если ВСЕ device пользователя имеют идентичный hardware (Apple Silicon Mac, iPhone и т.д.).",
+              "correct": false,
+              "sections": {
+                "what_actually": "E2EE работает на любых devices через cross-platform crypto libraries (libsodium, OpenSSL). Hardware-uniformity не нужна.",
+                "source_of_confusion": "Apple Secure Enclave / iCloud Keychain принят за единственный способ.",
+                "if_it_were_true": "Signal/WhatsApp/ProtonMail не могли бы работать на Android+iOS+Windows одновременно.",
+                "how_it_should_be": "E2EE через standard crypto libraries работает cross-platform; hardware secure storage опционально для key protection."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие механизмы anti-abuse (DMCA, malware, CSAM) использует Dropbox?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Anti-abuse не реализуется на storage layer — это ответственность отдельных vendor приложений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Storage providers обязаны соблюдать DMCA (US copyright), CSAM reporting (NCMEC), malware scanning. Это legal mandate, не optional.",
+                "source_of_confusion": "Спутана content moderation с infrastructure.",
+                "if_it_were_true": "Dropbox получил бы массивные lawsuits и criminal charges.",
+                "how_it_should_be": "Hash-based DMCA matching, ClamAV malware scanning, PhotoDNA CSAM detection с NCMEC reporting."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DMCA: rights holders submit notice → Dropbox обязан remove; auto-detection через hash matching против CAS — file hash on takedown list → upload rejected или existing copy removed, user notified counter-claim возможен; Malware scanning: все uploads scanned (ClamAV или commercial AV), known malware hashes → reject + alert, sandbox execution для suspicious; CSAM: hash matching against NCMEC database, Microsoft PhotoDNA technology, mandatory reporting authorities; phishing/scams: URL reputation + content + suspicious patterns; rate limiting per-user, account suspension repeated TOS violations + permanent ban CSAM/criminal.",
+              "correct": true,
+              "sections": {
+                "explanation": "Layered anti-abuse mandatory для cloud storage. DMCA (US copyright): rights holders submit notice → Dropbox legally obligated to remove. Auto-detection через CAS hash matching — copyrighted file hash в takedown list → upload reject или existing copy remove, user notified для counter-claim. Malware: ClamAV или commercial AV scan на upload, known malware hashes — reject + alert; sandbox execution для suspicious (rare, expensive). CSAM (Child Sexual Abuse Material): hash matching против NCMEC database, Microsoft PhotoDNA technology widely deployed; mandatory reporting to authorities. Rate limiting per-user (Q28), account suspension/ban для violations.",
+                "example": "Pirated movie upload → SHA hash matches DMCA takedown list → reject; malware-laden zip → ClamAV detects → quarantine + alert; PhotoDNA match → automatic NCMEC report + account suspended.",
+                "when_to_apply": "Любой cloud storage operating в US/EU — legal mandate; Section 230 protections require good-faith enforcement.",
+                "edge_cases": "False positives DMCA (fair use, similar hash) — appeal process required; PhotoDNA false positives rare but possible (research showed < 1 in 10B); E2EE files (Q25) не сканируются — отдельный compliance challenge.",
+                "related": "Q5 CAS; Q22 search; Q24 encryption; Q28 throttling."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Malware scanning невозможен после upload — encryption делает контент unreadable.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Server-side encryption (Q24) — Dropbox holds keys, может расшифровать для scanning. Только E2EE (Q25) делает scanning невозможным (отдельный compliance issue).",
+                "source_of_confusion": "Спутана E2EE с server-side encryption.",
+                "if_it_were_true": "Dropbox не мог бы scan malware → подвергался бы legal liability.",
+                "how_it_should_be": "Scan plaintext после server-side decryption (Dropbox holds keys); E2EE files — отдельная политика, обычно не accepted при compliance constraints."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CSAM detection реализуется только через manual review user reports — automated PhotoDNA не используется из privacy concerns.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Manual review не масштабируется до 1B daily uploads; PhotoDNA — industry standard, mandated effectively через NCMEC reporting requirements; privacy через hash-only matching (не reveal содержание).",
+                "source_of_confusion": "Privacy concern перевешен над child protection mandate.",
+                "if_it_were_true": "Cloud providers были бы legally liable для hosting CSAM; criminal charges.",
+                "how_it_should_be": "Automated PhotoDNA + NCMEC reporting + manual review для appeals; standard в industry."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор metrics обязателен для production monitoring Dropbox?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно мониторить CPU/memory hosts — application-level metrics не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Host metrics показывают «что-то работает», но не отражают user-facing SLO (sync lag, durability, dedup ratio). Application metrics обязательны.",
+                "source_of_confusion": "Sysadmin mentality без SRE/product perspective.",
+                "if_it_were_true": "CPU 50% — но sync lag 30 сек, durability нарушена. Никто не заметит до user complaints.",
+                "how_it_should_be": "Application + product metrics: sync_lag_p95, upload_success_rate, dedup_ratio, durability events."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только бизнес-метрики (DAU, revenue) — technical metrics second-class.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Business metrics показывают lagging indicators (отток после bad UX); technical metrics — leading indicators проблем.",
+                "source_of_confusion": "Product-only mindset без operational.",
+                "if_it_were_true": "DAU падает потому что sync lag = 30 сек, но команда не знает почему пользователи уходят.",
+                "how_it_should_be": "Mix: leading indicators (sync_lag_p95, upload_success_rate, durability) + lagging (DAU, churn)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только business metrics — sync_lag_p95 < 5 сек (alert > 30 сек 10 мин), upload_success_rate > 99% (alert < 97% 5 мин), upload_throughput_bytes_per_sec, pending_uploads_queue_depth; storage: dedup_ratio > 80% (alert < 60%), chunk_refcount_distribution, gc_lag_seconds, magic_pocket_usable_capacity_pct (alert > 80%); latency: metadata_query_latency_p99 < 50 ms, block_download_latency_p99 < 200 ms cached, notification_delivery_lag_seconds < 5 sec; failure modes: cross_region_replication_lag_seconds < 30 sec, erasure_coding_repair_jobs_running, client_offline_journal_size_bytes; business: DAU, storage_per_user_distribution, share_create_rate; tracing OpenTelemetry trace ID client → server → storage.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sync pipeline: sync_lag_seconds_p95 < 5 сек (page on-call > 30 сек 10 мин), upload_success_rate > 99%, upload_throughput, pending_uploads_queue_depth — backlog indicator. Storage: dedup_ratio > 80% (slack < 60% — регрессия CDC/CAS), chunk_refcount_distribution — health, gc_lag, magic_pocket_usable_capacity (>80% alert). Latency: metadata_query_p99 < 50 ms, block_download_p99 < 200 ms, notification_delivery < 5 sec. Failure modes: cross_region_replication_lag, erasure_coding_repair_jobs (too many = trouble), client_offline_journal_size (large = sync issues). Business: DAU, storage_per_user, share_create_rate. OpenTelemetry tracing client → server → storage; visibility «Upload 2 sec = 100 ms chunk + 800 ms upload + 50 ms commit».",
+                "example": "Alert: sync_lag_p95 > 30 сек 10 минут → page on-call (обычно metadata DB lag); Slack: upload_failure_rate > 3% 5 мин; Email: dedup_ratio drop > 10% (efficiency regression).",
+                "when_to_apply": "Production monitoring любого cloud sync service; metrics закрывают user-facing SLO (Q3) и operational health.",
+                "edge_cases": "False alerts при deploys (temporary spike); seasonal patterns (holiday upload surge); regional differences (EU vs US peak hours).",
+                "related": "Q3 SLO; Q19 multi-region; Q20 DR."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чем больше metrics, тем лучше — собираем всё подряд через Prometheus без фильтрации alerts.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Alert fatigue — too many alerts → ignored; cardinality explosion → Prometheus cost rises; нужно курировать metrics и alerts по SLO.",
+                "source_of_confusion": "«Метрики хорошо, больше — лучше» без disciplined approach.",
+                "if_it_were_true": "On-call перегружен false alerts, real incidents пропущены.",
+                "how_it_should_be": "Few high-quality SLO-based alerts + dashboards с broader observability metrics."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Dropbox реализует quota и throttling per-user и per-tier?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Unlimited quota всем — это упрощает UX и привлекает пользователей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unlimited без enforcement даёт unbounded storage cost — Dropbox разорился бы. Tiered quotas — основа business model (Free → Plus → Business).",
+                "source_of_confusion": "Marketing «unlimited» взят буквально.",
+                "if_it_were_true": "Один user мог бы загрузить эксабайт; cost вне контроля.",
+                "how_it_should_be": "Tiered quotas: Free 2 GB, Plus 2 TB, Family 2 TB, Pro 3 TB, Business 5 TB, Enterprise as needed."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Throttling реализуется только через rate limiting на IP — per-user не имеет смысла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "IP-based rate limiting не учитывает что один user может работать с нескольких devices/networks; per-user через auth token обязателен.",
+                "source_of_confusion": "IP rate limit известен из CDN/WAF без учёта authenticated API.",
+                "if_it_were_true": "User не мог бы работать с laptop+phone одновременно (shared IP при NAT).",
+                "how_it_should_be": "Per-user rate limit через auth token + IP rate limit для unauthenticated endpoints."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Quota tracking только daily batch — real-time enforcement слишком дорого.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Daily batch quota tracking позволяет user превысить limit на ×100 в течение дня. Real-time check на upload обязателен.",
+                "source_of_confusion": "Желание упростить через batch processing.",
+                "if_it_were_true": "User мог бы загрузить 200 GB на Free 2 GB plan за час, до next batch.",
+                "how_it_should_be": "Real-time quota check на upload + eventual reconciliation для accuracy."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Quotas: Free 2 GB, Plus 2 TB, Family 2 TB shared, Professional 3 TB, Business Standard 5 TB, Business Advanced as needed; enforcement at upload: check quota → reject if exceeded, soft warning 90%, hard stop 100%; throttling: upload bandwidth limit per user (configurable client), server-side rate limit API calls; per-tier limits: API requests/hour, sharing ops/day, concurrent connections; burst allowance (initial library upload temporary higher); anti-abuse aggressive uploads 10× normal → flag; schema user_quota (user_id, plan, used_bytes, limit_bytes, last_calculated_at); calculation: sum bytes non-deleted files owned by user, event-driven + scheduled recalc.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tiered quota — основа SaaS бизнеса. Free 2 GB (acquisition), Plus 2 TB (consumer paid), Family 2 TB shared, Professional 3 TB, Business Standard 5 TB, Business Advanced as needed (enterprise). Enforcement: check quota на upload, soft warning 90% (UI prompt), hard stop 100% (reject). Throttling: client-side bandwidth limit (configurable), server-side rate limit API calls. Per-tier limits: API requests/hour, sharing ops/day, concurrent connections. Burst allowance initial library upload — temporary higher limit. Anti-abuse: aggressive uploads 10× normal → flag for review. Schema user_quota (user_id, plan, used_bytes, limit_bytes); quota calculation = sum bytes non-deleted files owned (excl shared by others), recalc event-driven + scheduled.",
+                "example": "User on Plus 2 TB uploads 1.95 TB → soft warning, next 50 GB allowed но prompt upgrade; reaches 2 TB → reject + UI «upgrade to add more».",
+                "when_to_apply": "Любой SaaS storage; tiered pricing requires per-tier enforcement.",
+                "edge_cases": "Shared folders counted в owner quota; quota recalculation lag (eventual consistency); Enterprise unlimited rare but exists; deleted files в Trash не counted в quota.",
+                "related": "Q17 trash; Q21 sharing; Q26 anti-abuse."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие техники cost optimization дают Dropbox максимальную экономию на exabyte-scale storage?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Layered optimizations: (1) Magic Pocket vs AWS S3 — internal cost ~$0.005/GB-month vs S3 $0.023/GB-month, на 700 PB $3M/month vs $16M/month → $13M/month saved (~75% reduction); (2) Deduplication через CAS — 80% dedup → 5× storage saving (без CAS cost вырос бы в 5 раз); (3) SMR drives 20-30% denser than CMR; (4) Erasure coding 10+4 vs replication 3× — overhead 1.4× vs 3× → 53% storage saving; (5) Compression Zstandard 2-3× reduction → $1M/month saving; (6) Tiering hot SSD / warm HDD / cold SMR; (7) CDN для popular downloads; (8) Lifecycle: Trash → archive after 7 days, versions > 30 days → cold; aggregate ~10× cheaper vs naive S3.",
+              "correct": true,
+              "sections": {
+                "explanation": "На эксабайтном scale каждый процент экономии = миллионы $/year. Top optimizations: (1) Magic Pocket vs S3: $0.023/GB-month S3 vs ~$0.005/GB-month custom = 75% saving. На 700 PB = $13M/month. (2) Deduplication CAS: 80% dedup = 5× saving — без него 3.5 EB вместо 700 PB. (3) SMR drives — 20-30% denser HDD, slightly slower seek (acceptable для cold tier). (4) Erasure coding 10+4 (overhead 1.4×) vs 3× replication = 53% saving при той же durability. (5) Zstandard compression 2-3× для compressible content = $1M/month. (6) Tiering hot SSD (recent) / warm HDD (weekly) / cold SMR (archive). (7) CDN для popular shared files reduces origin egress. (8) Lifecycle management: Trash → archive after 7 days, versions > 30 days → cold.",
+                "example": "Dropbox stated публично ~75% cost reduction от Magic Pocket migration alone (2015-2016); aggregate с dedup + erasure + compression ~10× cheaper vs naive S3 storage.",
+                "when_to_apply": "Cost optimization обязателен когда storage > 1 PB; на эксабайтах все techniques обязательны.",
+                "edge_cases": "Some optimizations conflict: compression перед chunking ломает dedup; tiering migration cost; SMR drives медленнее на random read.",
+                "related": "Q5 CAS; Q7 Magic Pocket; Q8 compression; Q20 erasure coding."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Никакой оптимизации не нужно — AWS S3 Standard за $0.023/GB-month вполне приемлем на эксабайтах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На 700 PB $0.023/GB-month = $16M/month = $192M/year только storage. Custom Magic Pocket даёт $3M/month = $36M/year. Saving $156M/year.",
+                "source_of_confusion": "Игнорирование scale economics.",
+                "if_it_were_true": "Dropbox не строил бы Magic Pocket; затраты в разы выше; цены вырастают для конечного user.",
+                "how_it_should_be": "Custom storage (Magic Pocket), erasure coding, dedup, compression — все обязательны на эксабайтном scale."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только compression LZMA даёт максимальную экономию — все другие techniques вторичны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Compression 2-3× saving meaningful, но dedup даёт 5× и storage tier выбор даёт 75%. Single technique не даёт всех savings.",
+                "source_of_confusion": "Фокус на одну technique вместо comprehensive stack.",
+                "if_it_were_true": "Compression только давал бы $1M/month; пропущены $13M/month от Magic Pocket.",
+                "how_it_should_be": "Layered optimization: custom storage + dedup + erasure + compression + tiering + CDN."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cost optimization не относится к engineering scope — это finance team responsibility.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Storage architecture decisions (S3 vs Magic Pocket, erasure 10+4 vs 3× repl, Zstandard) делают engineers, и они напрямую определяют $/GB-month. Cost — engineering concern на scale.",
+                "source_of_confusion": "Divide engineering vs finance без учёта impact на bottom line.",
+                "if_it_were_true": "Engineers выбирали бы 3× replication «потому что проще», стоимость росла бы в разы.",
+                "how_it_should_be": "Cost — first-class engineering concern; FinOps practice."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные антипаттерны и подводные камни нужно избегать при проектировании Dropbox-style sync?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главный антипаттерн — слишком много services; нужно делать monolith для простоты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Monolith на 700M users не масштабируется. Real антипаттерны — synchronous upload в UI thread, no chunking, no CAS, no erasure coding, polling DB и так далее.",
+                "source_of_confusion": "Anti-microservices bias применён к extreme scale.",
+                "if_it_were_true": "Monolith Dropbox развалился бы под нагрузкой.",
+                "how_it_should_be": "Микросервисы (Edge, Auth, Metadata, Block, Notification) обязательны на 700M scale; антипаттерны — конкретные технические ошибки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главные антипаттерны и их fix: (1) Synchronous upload в UI thread → fix async queue с UI update on completion; (2) No chunking — re-upload whole file → fix chunking + delta sync; (3) No CAS — same file N copies → fix SHA256 keys; (4) Single-tier storage (all SSD) → fix tiered hot/warm/cold; (5) Synchronous notification on every change → fix batched + long-polling/WebSocket; (6) Polling DB для changes → fix push notifications event-driven; (7) Client polls «anything new?» → fix long-polling/WebSocket; (8) Без conflict detection → fix revision_id + .conflict files; (9) Full sync on reconnect → fix diff-based via revision tokens; (10) No erasure coding → fix Reed-Solomon 10+4; (11) Single region → fix multi-region async; (12) No encryption → fix AES-256-GCM + TLS 1.3; (13) Compression перед chunking ломает dedup → fix chunk first, compress per chunk; (14) Hardcoded sync limits → fix dynamic limits; (15) No GC orphaned chunks → fix background GC с grace period.",
+              "correct": true,
+              "sections": {
+                "explanation": "15 ключевых антипаттернов покрывают основные провалы при проектировании cloud sync. Sync engine: sync upload в UI thread блокирует save, async queue mandatory; no chunking даёт full re-upload на edit; no CAS = N× storage cost. Storage: single-tier SSD непосилен на эксабайтах, нужен hot/warm/cold tiering; no erasure coding 3× replication overhead vs 1.4× Reed-Solomon. Notifications: polling DB не масштабируется (200M MAU × poll = 7M QPS), нужны push через long-polling/WebSocket. Conflict: без revision_id и .conflict files concurrent edits молча перезаписываются. Sync: full re-sync on reconnect — 1 GB folder за каждый offline minute (Q12). Encryption mandatory; compression перед chunking ломает dedup; hardcoded limits не учитывают tier; orphaned chunks без GC накапливаются вечно.",
+                "example": "Synchronous save 1 GB файла блокирует editor минуты → async fix; no CAS на 700 PB = 3.5 EB raw без savings; polling 30 сек = 7M QPS на 200M users; no erasure = 50% extra cost на storage.",
+                "when_to_apply": "Каждый антипаттерн — checkpoint в design review: явно проверь что fix применён.",
+                "edge_cases": "Некоторые антипаттерны conflict (например compression vs dedup), порядок применения важен; legacy системы могут иметь combinations.",
+                "related": "Q4 chunking; Q5 CAS; Q9 delta; Q10 sync; Q13 notification; Q15 conflict; Q20 erasure; Q24 encryption."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Единственный антипаттерн — недостаточный capacity planning; всё остальное второстепенно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Capacity planning важен, но не покрывает design-level ошибки (no CAS, no erasure, sync UI thread, polling DB). Эти ошибки не fixable увеличением мощности.",
+                "source_of_confusion": "Capacity = «throw more hardware» mentality.",
+                "if_it_were_true": "Достаточно было бы купить больше серверов; качественные design решения не нужны.",
+                "how_it_should_be": "Multiple anti-patterns на разных слоях: data model (CAS), sync (chunking + delta), storage (erasure), notification (push not poll), encryption."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Антипаттерны Dropbox такие же как у любой другой web app — нет специфичных для file sync.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cloud sync имеет уникальные challenges: insertion problem (Q4), dedup через CAS (Q5), delta sync (Q9), exabyte storage (Q7), conflict resolution на distributed devices (Q15). Антипаттерны специфичные.",
+                "source_of_confusion": "Generic web app perspective без учёта sync domain.",
+                "if_it_were_true": "Best practices web app покрывали бы Dropbox — но они не покрывают chunking, CAS, erasure coding.",
+                "how_it_should_be": "Sync-specific антипаттерны: no chunking, no CAS, sync UI thread, full re-sync, no conflict detection."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
