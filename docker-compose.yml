@@ -65,7 +65,13 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health/liveness"]
+      # readiness включает db + seedCoverage — если БД отвалилась или сидеры
+      # не загрузились, docker compose выведет контейнер из healthy и
+      # downstream depends_on/балансировщики увидят сигнал.
+      # Под не перезапускается (это бы делал liveness, тут он избыточен —
+      # docker compose не различает «убить» и «выключить из трафика»,
+      # но readiness — самый информативный сигнал для оператора).
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health/readiness"]
       interval: 10s
       timeout: 5s
       retries: 5
