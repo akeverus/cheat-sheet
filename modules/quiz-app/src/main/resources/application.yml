@@ -189,6 +189,11 @@ management:
         enabled: true
       show-details: never
       show-components: never
+      # Кэшируем агрегированный health на 5s. K8s liveness/readiness обычно
+      # 10s, docker compose healthcheck 10s — значит примерно каждый
+      # второй scrape отдаётся из памяти без удара по БД и seedCoverage SQL.
+      cache:
+        time-to-live: ${HEALTH_CACHE_SECONDS:5}s
       # liveness намеренно МИНИМАЛЕН: жив, если JVM не зависла. Не должен
       # упасть от деградации БД или сидеров — иначе K8s рестартанёт под
       # без шанса на самовосстановление.
