@@ -174,6 +174,10 @@ public class McqJsonLoader {
                 optionsInsertedCounter.increment(creates.size());
             }
         }
+        if (totalInserted > 0 || skipped > 0) {
+            log.info("MCQ seed loaded topic={} questions={} options={} skipped={}",
+                    topic, seed.questions().size(), totalInserted, skipped);
+        }
         return McqLoadResult.ok(totalInserted, skipped);
     }
 
