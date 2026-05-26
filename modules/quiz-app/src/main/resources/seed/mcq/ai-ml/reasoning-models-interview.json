@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "reasoning-models-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что главное отличает reasoning model (o1/R1) от обычной LLM (gpt-4o)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Использует другую архитектуру вместо decoder-only transformer",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reasoning models (o1, R1, Claude thinking) используют ту же decoder-only transformer архитектуру.",
+                "source_of_confusion": "Кажется, что радикальное улучшение качества требует новой архитектуры.",
+                "if_it_were_true": "Тогда reasoning capability нельзя было бы достичь fine-tuning существующих моделей.",
+                "how_it_should_be": "Отличие в training (RL на verifiable rewards) и inference protocol, не в архитектуре."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использует промпт 'Let's think step by step' автоматически",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reasoning models генерируют CoT благодаря RL training, не из-за внутренней подстановки промпта.",
+                "source_of_confusion": "CoT-prompting (Wei 2022) был prompt-трюком, но reasoning models его не используют — наоборот, добавление этой фразы может мешать.",
+                "if_it_were_true": "Тогда o1 был бы просто wrapper над gpt-4o с авто-prompt, что не объяснило бы +60% на AIME.",
+                "how_it_should_be": "RL обучил модель long-CoT стратегиям; явная prompt-инструкция не нужна и часто вредна."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Имеет встроенный web search и работает только онлайн",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reasoning models не требуют web search; thinking — это internal CoT, а не внешний lookup.",
+                "source_of_confusion": "Путают с research agents (Deep Research), которые комбинируют reasoning + retrieval.",
+                "if_it_were_true": "Тогда offline self-hosted R1 не работал бы — но R1 успешно запускается локально без интернета.",
+                "how_it_should_be": "Reasoning — self-contained свойство модели; tools/search опциональны и добавляются отдельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обучена через RL генерировать длинный internal CoT перед финальным ответом",
+              "correct": true,
+              "sections": {
+                "explanation": "Reasoning model — LLM, обученная через RL генерировать тысячи thinking tokens перед финальным ответом; CoT стал архитектурным свойством, а не prompt-трюком.",
+                "example": "o1 на сложной задаче генерирует 5-30k thinking tokens, затем 100-500 tokens финального ответа; reward в training — корректность ответа.",
+                "when_to_apply": "Когда задача требует многошагового рассуждения, self-verification, backtracking — math, code, planning.",
+                "edge_cases": "На простом factual recall (MMLU, TriviaQA) разница с обычной LLM минимальна — reasoning там не нужен.",
+                "related": "Q5 thinking tokens, Q6 training pipeline, Q17 когда полезно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда впервые появилась production reasoning model и кто её выпустил?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Январь 2025, DeepSeek-R1",
+              "correct": false,
+              "sections": {
+                "what_actually": "DeepSeek-R1 вышел в январе 2025, но это была первая open-weight reasoning model, а не первая production reasoning model вообще.",
+                "source_of_confusion": "R1 получил большой market shock и часто запоминается как точка отсчёта.",
+                "if_it_were_true": "Тогда не было бы o1-preview с сентября 2024, и Anthropic Claude 3.7 не позиционировался бы как ответ на o-series.",
+                "how_it_should_be": "Первая production reasoning model — OpenAI o1-preview, сентябрь 2024."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Февраль 2025, Anthropic Claude 3.7 thinking",
+              "correct": false,
+              "sections": {
+                "what_actually": "Claude 3.7 Sonnet extended thinking вышел в феврале 2025 — позже o1 и R1.",
+                "source_of_confusion": "Claude 3.7 был первым reasoning от Anthropic, но не первым в индустрии.",
+                "if_it_were_true": "Тогда AIME-результаты o1-preview с осени 2024 не существовали бы как публичные benchmarks.",
+                "how_it_should_be": "OpenAI o1-preview, сентябрь 2024 — первая production reasoning model."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сентябрь 2024, OpenAI o1-preview",
+              "correct": true,
+              "sections": {
+                "explanation": "OpenAI o1-preview и o1-mini вышли в сентябре 2024 и стали первой production reasoning model с RL-обученным long-CoT.",
+                "example": "o1-preview показал +60% на AIME 2024 vs gpt-4o (83% vs 13%), запустив новую парадигму test-time compute scaling.",
+                "when_to_apply": "Полезно знать timeline для cost/latency обсуждений и понимания эволюции market shock от DeepSeek-R1 в январе 2025.",
+                "edge_cases": "CoT prompting (Wei 2022) — это техника, не модель; o1 — первая модель, где CoT встроен через training.",
+                "related": "Q1 определение reasoning model, Q10 DeepSeek-R1 breakthrough, Q20 o3 ARC-AGI."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Декабрь 2024, OpenAI o3",
+              "correct": false,
+              "sections": {
+                "what_actually": "o3 был анонсирован в декабре 2024 и стал прорывом на ARC-AGI, но к тому моменту o1-preview уже работал ~3 месяца.",
+                "source_of_confusion": "o3 громко прозвучал из-за 87% на ARC-AGI, что породило ощущение, что это первая reasoning model.",
+                "if_it_were_true": "Тогда не было бы публичных бенчмарков o1 за осень 2024.",
+                "how_it_should_be": "o1-preview сентябрь 2024 — первая; o3 декабрь 2024 — frontier prowess."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое test-time compute scaling?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Увеличение количества GPU при training для ускорения сходимости",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это train-time scaling (больше compute при обучении), а не test-time.",
+                "source_of_confusion": "Термин 'scaling' раньше всегда означал больше data/params/training compute.",
+                "if_it_were_true": "Тогда test-time scaling не отличался бы от классических scaling laws Каплана/Хофмана.",
+                "how_it_should_be": "Test-time = inference-time: больше thinking tokens при ответе, не при обучении."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использование batch normalization во время inference",
+              "correct": false,
+              "sections": {
+                "what_actually": "Batch norm — техника регуляризации в CNN, не имеет отношения к reasoning models.",
+                "source_of_confusion": "Звучит технически правдоподобно для тех, кто не знаком с термином.",
+                "if_it_were_true": "Тогда GPT-архитектура (без BatchNorm) не могла бы scale на test-time, но o1 это делает.",
+                "how_it_should_be": "Test-time compute scaling — про количество reasoning tokens, не про нормализацию."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параллельный inference на нескольких instances модели",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параллельный inference — это data parallelism для throughput, не про качество ответа.",
+                "source_of_confusion": "Best-of-N действительно использует параллельный sampling, но это лишь одна из стратегий test-time scaling.",
+                "if_it_were_true": "Тогда увеличение thinking tokens у одной модели (long CoT) не давало бы прироста — но o1/R1 это опровергают.",
+                "how_it_should_be": "Test-time scaling — это рост качества от роста compute на inference (long CoT, Best-of-N, tree search)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Качество растёт логарифмически линейно с inference compute (thinking tokens)",
+              "correct": true,
+              "sections": {
+                "explanation": "Test-time compute scaling — наблюдение, что accuracy ≈ a + b·log(compute_at_inference); больше thinking tokens → лучше качество без переобучения.",
+                "example": "На AIME разница между 1k и 100k thinking tokens — десятки процентных пунктов; o3 high-compute mode на ARC-AGI = 87% за ~$3k/задача.",
+                "when_to_apply": "Когда нужно вытянуть качество на сложной задаче за счёт latency/cost — крутим reasoning_effort или budget_tokens.",
+                "edge_cases": "На простых задачах кривая плоская — extra thinking не помогает; trivia/recall task scaling не даёт.",
+                "related": "Q4 архитектура, Q20 o3 ARC-AGI brute-force, Q22 сколько тратится тоkenов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Архитектура reasoning model — это новый transformer или модификация существующего?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Стандартный decoder-only transformer; меняется training и inference protocol",
+              "correct": true,
+              "sections": {
+                "explanation": "Reasoning models используют ту же decoder-only transformer архитектуру; отличия — в post-training RL и inference (большой max_tokens, разделение thinking/answer блоков).",
+                "example": "DeepSeek-R1 базируется на DeepSeek-V3 (MoE 671B/37B), та же attention/FFN/positional embeddings — RL добавляет reasoning capability поверх.",
+                "when_to_apply": "Понимать при выборе self-host: можно взять существующую базу (Llama) и применить reasoning RL/distill без замены кода inference engine.",
+                "edge_cases": "В inference добавляются специальные токены (`<think>...</think>`, `<|thinking|>`) — это маркеры, а не архитектурные изменения.",
+                "related": "Q1 определение, Q5 thinking tokens, Q6 training pipeline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Encoder-decoder с дополнительным reasoning encoder",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reasoning models — decoder-only, без отдельного encoder для reasoning.",
+                "source_of_confusion": "Encoder-decoder архитектура (T5, BART) звучит подходящей для 'reasoning then answer'.",
+                "if_it_were_true": "Тогда нельзя было бы распределить thinking и answer в один autoregressive stream, что и происходит на практике.",
+                "how_it_should_be": "Standard decoder-only — thinking и answer генерируются последовательно как один token stream."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Новая sparse mixture-of-experts архитектура специально для reasoning",
+              "correct": false,
+              "sections": {
+                "what_actually": "MoE используется в R1, но это про efficiency параметров, а не про reasoning capability.",
+                "source_of_confusion": "R1 — MoE 671B/37B, что создаёт ощущение, что MoE — необходимое условие reasoning.",
+                "if_it_were_true": "Тогда dense models (Claude Opus, OpenAI o-series возможно dense) не могли бы быть reasoning models.",
+                "how_it_should_be": "Reasoning capability ортогональна архитектуре; MoE и dense оба могут быть reasoning."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Recurrent transformer с памятью между thinking steps",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reasoning models не используют recurrence; thinking — это просто длинный autoregressive output.",
+                "source_of_confusion": "Recurrence интуитивно подходит для 'размышления по шагам'.",
+                "if_it_were_true": "Тогда KV-cache был бы недостаточен и нужна была бы recurrent state — но обычный transformer inference работает.",
+                "how_it_should_be": "Standard transformer; reasoning достигается через autoregressive long CoT, не через recurrence."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое thinking tokens и учитываются ли они в billing?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Бесплатные служебные токены, не учитываемые в billing",
+              "correct": false,
+              "sections": {
+                "what_actually": "Thinking tokens полностью оплачиваются как обычные output tokens.",
+                "source_of_confusion": "Кажется логичным, что 'внутренние' токены должны быть бесплатны или дешевле.",
+                "if_it_were_true": "Тогда o1 не был бы радикально дороже gpt-4o на сложных задачах, но фактически billing достигает $9k/мес на 1k запросов/день.",
+                "how_it_should_be": "Thinking tokens оплачиваются как output; на сложных задачах могут быть >95% total output cost."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Кэшированные fragments предыдущих запросов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Thinking генерируется заново для каждого запроса (свежий reasoning).",
+                "source_of_confusion": "Путают с prompt caching, где input действительно кэшируется.",
+                "if_it_were_true": "Тогда повторный запрос на ту же задачу был бы мгновенным — но reasoning models всегда тратят thinking budget заново.",
+                "how_it_should_be": "Thinking — свежий output на каждый запрос; prompt caching работает только для input."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Input tokens, добавляемые системным промптом провайдера",
+              "correct": false,
+              "sections": {
+                "what_actually": "Thinking — это output модели, не input; они генерируются autoregressively, а не предзагружаются.",
+                "source_of_confusion": "Путают с system prompt или few-shot инструкциями.",
+                "if_it_were_true": "Тогда reasoning_tokens были бы в usage.prompt_tokens, но они в completion_tokens_details.",
+                "how_it_should_be": "Output tokens, отдельная категория в usage telemetry."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Output tokens internal reasoning перед финальным ответом, оплачиваются как обычные output",
+              "correct": true,
+              "sections": {
+                "explanation": "Thinking tokens — output tokens, представляющие internal reasoning перед финальным ответом; оплачиваются по output-цене и видны в usage (reasoning_tokens у OpenAI, thinking_tokens у Anthropic).",
+                "example": "На сложной задаче 8500 output tokens могут разделиться на 8200 thinking + 300 финального text — большая часть billing уходит в thinking.",
+                "when_to_apply": "При расчёте cost-моделей важно учитывать thinking — иначе budget недооценен в 5-50 раз на сложных задачах.",
+                "edge_cases": "OpenAI скрывает контент thinking, но всё равно биллит; Anthropic возвращает блоки thinking явно, billing аналогичен.",
+                "related": "Q14 Anthropic extended thinking, Q16 hidden vs visible, Q22 сколько тратится."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой основной этап в pipeline обучения reasoning model?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только supervised fine-tuning на reasoning examples",
+              "correct": false,
+              "sections": {
+                "what_actually": "SFT — лишь cold-start (для читаемости); основа — RL на verifiable rewards.",
+                "source_of_confusion": "SFT — стандартный подход к обучению LLM, привычно считать его достаточным.",
+                "if_it_were_true": "Тогда R1-Zero (pure RL без SFT) не показывал бы emergent reasoning, но он показал.",
+                "how_it_should_be": "Pipeline: pre-training → cold-start SFT → reasoning RL (PPO/GRPO) → RLHF → опционально distillation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "RLHF на human preferences без verifiable rewards",
+              "correct": false,
+              "sections": {
+                "what_actually": "RLHF — финальная полировка под helpfulness/safety, а не источник reasoning capability.",
+                "source_of_confusion": "RLHF стал стандартом для ChatGPT, привычно считать его центральным методом.",
+                "if_it_were_true": "Тогда обычные RLHF-обученные модели (gpt-4o, Claude Sonnet) показывали бы o1-уровень — но gap +60% на AIME.",
+                "how_it_should_be": "RLHF лишь финальный этап; основа — reasoning RL с verifiable rewards (rule-based)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Continual pre-training на больших корпусах кода",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pre-training — отдельный этап для base model; reasoning capability добавляется через RL после.",
+                "source_of_confusion": "Кажется, что больше кода в pre-training = лучше reasoning.",
+                "if_it_were_true": "Тогда code-pre-trained модели (Llama 3 Code) автоматически были бы reasoning models — но это не так.",
+                "how_it_should_be": "Reasoning capability возникает в post-training RL стадии, не в pre-training."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reasoning RL с reward на корректность финального ответа на verifiable tasks",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевой этап — RL на задачах с verifiable answers (math, code, logic); reward = +1 за верный ответ, -1 за неверный; модель сама обнаруживает, что длинное reasoning помогает.",
+                "example": "DeepSeek-R1 обучался GRPO на сотнях тысяч задач с проверяемыми ответами; CoT вырос от десятков до тысяч токенов автоматически.",
+                "when_to_apply": "При проектировании reasoning training: задачи должны иметь automatic verifier (численная проверка math, тесты для code).",
+                "edge_cases": "Emergent behaviors (self-verification 'Wait, let me check', backtracking) появляются без явных hints — следствие reward на correctness.",
+                "related": "Q7 GRPO vs PPO, Q9 reward model, Q11 R1-Zero pure RL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем GRPO принципиально отличается от PPO в reasoning training?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "GRPO не требует отдельной value model; нормализует reward относительно группы rollouts",
+              "correct": true,
+              "sections": {
+                "explanation": "GRPO (Group Relative Policy Optimization) сэмплирует G ответов на prompt и нормализует reward: advantage_i = (r_i - mean(r_group)) / std(r_group); не нужна value model размером с policy.",
+                "example": "DeepSeek сгенерировали G=16 ответов на math-задачу, посчитали advantage относительно среднего по группе — это и есть GRPO signal.",
+                "when_to_apply": "При reasoning RL с verifiable rewards (math/code) — GRPO даёт ~50% memory savings vs PPO и проще тюнится.",
+                "edge_cases": "Требует больше inference (G rollouts на prompt); на noisy reward может быть нестабильно — math/code более стабильны, чем human preferences.",
+                "related": "Q6 training pipeline, Q9 rule-based reward, Q10 R1 breakthrough."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GRPO использует transformer для критики, PPO — отдельный MLP",
+              "correct": false,
+              "sections": {
+                "what_actually": "PPO использует value model (как правило transformer ~такого же размера, как policy); GRPO вообще не использует value model.",
+                "source_of_confusion": "Звучит как техническая деталь архитектуры critic.",
+                "if_it_were_true": "Тогда GRPO не давал бы 50% memory savings, что является ключевым преимуществом.",
+                "how_it_should_be": "Принципиальная разница: GRPO избавляется от critic, а не меняет его архитектуру."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "GRPO применяется только к dense моделям, PPO — к MoE",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба алгоритма ортогональны архитектуре; GRPO успешно применяется к R1 (MoE 671B/37B).",
+                "source_of_confusion": "Путают algorithm-агностичность с архитектурными ограничениями.",
+                "if_it_were_true": "Тогда DeepSeek-R1 (MoE) не мог бы обучаться через GRPO.",
+                "how_it_should_be": "GRPO — это RL-алгоритм, работает с любой архитектурой модели."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "GRPO работает только с learned reward, PPO — с rule-based",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: GRPO отлично работает с rule-based rewards (math verification, code tests) — это одна из причин его успеха в R1.",
+                "source_of_confusion": "Перепутаны типы reward (learned vs rule-based) с типом алгоритма.",
+                "if_it_were_true": "Тогда DeepSeek не мог бы использовать GRPO с numeric verification.",
+                "how_it_should_be": "GRPO агностичен к типу reward; R1 использует GRPO + rule-based reward."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой способ генерации synthetic reasoning data использовался для R1-Distill моделей?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Human annotators писали ~1M chain-of-thought traces вручную",
+              "correct": false,
+              "sections": {
+                "what_actually": "R1-Distill использовал автоматически сгенерированные traces от R1, не ручной разметки.",
+                "source_of_confusion": "RLHF действительно использует human preferences, по аналогии кажется, что reasoning тоже.",
+                "if_it_were_true": "Стоимость 800k human-curated reasoning traces была бы запредельной — десятки миллионов долларов.",
+                "how_it_should_be": "Distillation from reasoning model: traces от R1 (671B) → SFT на Llama/Qwen base моделях."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Активный crowd-sourcing через платформу-маркетплейс",
+              "correct": false,
+              "sections": {
+                "what_actually": "DeepSeek не использовал crowd-sourcing для R1-Distill; данные сгенерированы R1.",
+                "source_of_confusion": "MTurk/Scale AI — известный подход для разметки, привычная ассоциация.",
+                "if_it_were_true": "Тогда paper упоминал бы датасет с human-annotated traces, но фактически описывает self-generated traces.",
+                "how_it_should_be": "Self-distillation: R1 (teacher) → 800k traces → SFT на меньших моделях."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Distillation: R1 (671B) сгенерировал ~800k reasoning traces, использованные для SFT меньших моделей",
+              "correct": true,
+              "sections": {
+                "explanation": "R1-Distill pipeline: взять R1 (671B teacher) → сгенерировать ~800k высококачественных reasoning traces (math, code, logic) → стандартный SFT на base моделях Llama-8B/70B, Qwen-1.5B/7B/14B/32B.",
+                "example": "R1-Distill-Qwen-32B превосходит o1-mini на math benchmarks; R1-Distill-Llama-8B запускается на 24GB VRAM в 4-bit quant.",
+                "when_to_apply": "Когда нужно reasoning capability на consumer GPU или edge — distill вместо полного RL training.",
+                "edge_cases": "Distilled модели хуже original R1 (нет RL), но сильно лучше base Llama — хорошее compute/quality.",
+                "related": "Q10 R1 open weights, Q12 R1-Distill подробно, Q29 open-weight reasoning."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Извлечение CoT из академических arxiv papers по math/CS",
+              "correct": false,
+              "sections": {
+                "what_actually": "Academic papers — это пояснительный текст, не пошаговые reasoning traces в нужном формате.",
+                "source_of_confusion": "Звучит как разумный научный источник.",
+                "if_it_were_true": "Качество и формат были бы неоднородными, а DeepSeek явно описывает self-generated traces.",
+                "how_it_should_be": "Self-generated traces от teacher (R1) — единый формат, контролируемое качество."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой тип reward использовал DeepSeek-R1 в RL training?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Learned reward model (PRM) на основе human preferences",
+              "correct": false,
+              "sections": {
+                "what_actually": "DeepSeek-R1 использовал rule-based reward (численная проверка math, запуск тестов для code), не learned reward.",
+                "source_of_confusion": "PRM — известный подход в reasoning literature, но R1 выбрал противоположный путь.",
+                "if_it_were_true": "Тогда R1 был бы подвержен reward hacking, но paper подчёркивает, что rule-based reward честный и не gameable.",
+                "how_it_should_be": "Rule-based / verifier-based: численная проверка math, запуск code tests, format check для <think> тегов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Rule-based reward: численная проверка ответа, code tests, format check",
+              "correct": true,
+              "sections": {
+                "explanation": "R1 использует rule-based / verifier-based reward: для math — численная проверка, для code — запуск тестов, для format — проверка <think>...</think> и финального answer. Дёшево, точно, не gameable.",
+                "example": "На задаче 'compute 17*23' verifier сверяет ответ с 391 — reward бинарный, никакого learned model не нужно.",
+                "when_to_apply": "Когда задачи имеют verifiable answers (math, code, formal logic) — rule-based честнее и проще.",
+                "edge_cases": "Не работает для creative writing / open-ended — там нужна learned reward (но R1 фокусировался на verifiable domains).",
+                "related": "Q6 training pipeline, Q7 GRPO, Q10 R1 прорывы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Combination of outcome reward model + process reward model",
+              "correct": false,
+              "sections": {
+                "what_actually": "ORM/PRM — учёные подходы, но R1 явно отказался от learned reward в пользу rule-based.",
+                "source_of_confusion": "Academic literature много обсуждает ORM+PRM, кажется, что SOTA должна их использовать.",
+                "if_it_were_true": "Тогда paper R1 описывал бы PRM, но фактически подчёркивает rule-based честность.",
+                "how_it_should_be": "Pure rule-based — одна из ключевых архитектурных решений R1."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Self-play reward с противником-копией модели",
+              "correct": false,
+              "sections": {
+                "what_actually": "Self-play — техника для games (AlphaGo), не для reasoning training в R1.",
+                "source_of_confusion": "AlphaGo и reasoning часто связывают концептуально (search + RL).",
+                "if_it_were_true": "Тогда reward был бы win/lose против копии, что не применимо к math/code задачам с единственным верным ответом.",
+                "how_it_should_be": "Rule-based reward на verifiable answers, не self-play."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что было главным прорывом DeepSeek-R1 в январе 2025?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Первая модель с >1T параметров",
+              "correct": false,
+              "sections": {
+                "what_actually": "R1 — MoE 671B/37B active, не первый >1T (тот же GPT-4 и др).",
+                "source_of_confusion": "Большое количество параметров кажется главным маркером прорыва.",
+                "if_it_were_true": "Тогда главной новостью был бы размер, но шок был о open weights + competitive с o1.",
+                "how_it_should_be": "Прорыв — первая open-weight reasoning model, competitive с OpenAI o1."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Первая open-weight reasoning model, competitive с o1, под MIT-like license",
+              "correct": true,
+              "sections": {
+                "explanation": "R1 (январь 2025) — первая open-weight reasoning model, competitive с OpenAI o1 на math/code, под MIT-like license; плюс GRPO, R1-Zero pure RL, distilled smaller models, API в ~30× дешевле o1.",
+                "example": "R1 671B MoE / 37B active, контекст 128k, visible reasoning через <think>...</think>, через 2 месяца десятки fine-tunes и distills.",
+                "when_to_apply": "При выборе reasoning model для self-host / privacy / стоимости — R1 и его distills открыли эту опцию.",
+                "edge_cases": "R1 хуже o3 на frontier benchmarks (ARC-AGI), но competitive с o1 на math/code за ~30× дешевле.",
+                "related": "Q11 R1-Zero, Q12 R1-Distill, Q15 DeepSeek API, Q21 cost сравнение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Первая модель с visible reasoning через <think> теги",
+              "correct": false,
+              "sections": {
+                "what_actually": "Visible thinking через теги — фича R1, но не главный прорыв; Anthropic вскоре сделал то же.",
+                "source_of_confusion": "Тэги <think> заметны технически и кажутся уникальными.",
+                "if_it_were_true": "Тогда не было бы упоминаний GRPO, R1-Zero, distillation и open weights в paper.",
+                "how_it_should_be": "Главное — open weights + competitive с o1; visible thinking лишь одна из фич."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Превзошёл o3 на ARC-AGI benchmark",
+              "correct": false,
+              "sections": {
+                "what_actually": "R1 на ARC-AGI показал ~15%, в разы хуже o3 (75-87%).",
+                "source_of_confusion": "Путают reasoning прорывы (R1 = open, o3 = ARC).",
+                "if_it_were_true": "Тогда R1 был бы frontier на abstract reasoning, но o3 явно опережает на ARC-AGI.",
+                "how_it_should_be": "R1 competitive с o1 на math/code; o3 — frontier на ARC-AGI."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевое отличие R1-Zero от production R1?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "R1-Zero меньше по параметрам (8B vs 671B)",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба R1-Zero и R1 базируются на той же 671B MoE архитектуре DeepSeek-V3.",
+                "source_of_confusion": "Распространены distilled версии разных размеров — кажется, что Zero = маленькая.",
+                "if_it_were_true": "Тогда сравнение Zero vs R1 было бы про размер, но paper подчёркивает training pipeline.",
+                "how_it_should_be": "Разница в pipeline: Zero = pure RL без SFT, R1 = с cold-start SFT + RL + RLHF."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "R1-Zero использует другую архитектуру transformer",
+              "correct": false,
+              "sections": {
+                "what_actually": "Архитектура одинакова — DeepSeek-V3 base; различается только post-training.",
+                "source_of_confusion": "Кажется, что 'Zero' означает что-то революционное в архитектуре.",
+                "if_it_were_true": "Тогда сравнение касалось бы architecture diff, а paper фокусируется на training methodology.",
+                "how_it_should_be": "Та же architecture; разница в RL pipeline (с/без SFT cold-start)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "R1-Zero — pure RL без SFT cold-start; emergent reasoning, но плохая читаемость",
+              "correct": true,
+              "sections": {
+                "explanation": "R1-Zero — pure RL на base DeepSeek-V3 без supervised fine-tuning; emergent reasoning (long CoT, self-verification, backtracking возникли сами), но читаемость плохая — смешение языков, странное форматирование.",
+                "example": "R1-Zero пишет 'Wait, let me check...' автоматически благодаря RL; но иногда переключается с английского на китайский посреди trace.",
+                "when_to_apply": "Главный вывод для индустрии: SFT cold-start не обязателен для reasoning capability — это эмерджентное свойство достаточно большой модели + правильного RL.",
+                "edge_cases": "R1 production добавляет SFT cold-start + rejection sampling SFT + RLHF поверх — фиксит UX, сохраняет качество.",
+                "related": "Q6 training pipeline, Q10 R1 прорывы, Q12 distillation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "R1-Zero обучен только на code, R1 — на math + code",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба обучались на разных verifiable domains (math, code, logic); различие не в датасете.",
+                "source_of_confusion": "Звучит как разумная dataset-разница, привычная в ML literature.",
+                "if_it_were_true": "Тогда сравнение касалось бы домена, а paper говорит о SFT presence/absence.",
+                "how_it_should_be": "Разница: Zero без SFT cold-start, R1 со всем pipeline; домены задач одинаковые."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает R1-Distill — уместить reasoning в 8B модель?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pure RL на base 8B модели с теми же rewards",
+              "correct": false,
+              "sections": {
+                "what_actually": "R1-Distill использует SFT на traces от R1 (671B), без отдельного RL для distill.",
+                "source_of_confusion": "Логично думать, что повторить успех нужно тем же RL.",
+                "if_it_were_true": "Тогда стоимость training каждой distilled модели была бы огромна.",
+                "how_it_should_be": "SFT (imitation learning) на reasoning traces от teacher R1 — дёшево и эффективно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SFT base моделей на ~800k reasoning traces, сгенерированных R1 (671B)",
+              "correct": true,
+              "sections": {
+                "explanation": "R1-Distill: берём R1 (671B teacher) → генерируем ~800k высококачественных traces (math, code, logic) → стандартный SFT на base моделях (Llama-3.1-8B → R1-Distill-Llama-8B, Qwen-2.5-32B → R1-Distill-Qwen-32B и т.д.). Без отдельного RL для distill.",
+                "example": "R1-Distill-Qwen-32B превосходит o1-mini на math benchmarks; R1-Distill-Llama-8B запускается на 24GB VRAM в 4-bit quant — sub-10B reasoning доступен на consumer GPU.",
+                "when_to_apply": "Когда нужен self-host reasoning на ограниченном GPU; sub-10B модели делают возможным edge deployment.",
+                "edge_cases": "Distilled хуже original R1 (нет RL signal), но СИЛЬНО лучше base Llama — хорошее compute/quality trade-off.",
+                "related": "Q10 R1 breakthroughs, Q11 R1-Zero, Q29 open-weight reasoning."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Quantization R1 до 4-bit с потерей качества",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quantization уменьшает size, но R1-Distill — это другие меньшие модели, обученные с нуля (SFT), не quantized R1.",
+                "source_of_confusion": "4-bit quantization — известный способ уместить большую модель в маленький GPU.",
+                "if_it_were_true": "Тогда R1-Distill-Llama-8B был бы R1 квантован, но это Llama-3.1-8B fine-tuned, совсем другая базовая модель.",
+                "how_it_should_be": "Distillation — обучение МЕНЬШЕЙ модели через traces ОТ большей; не quantization."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Knowledge distillation через soft labels (KL divergence на logits)",
+              "correct": false,
+              "sections": {
+                "what_actually": "Classical knowledge distillation использует logits/KL, но R1-Distill — это imitation на reasoning traces (token sequences).",
+                "source_of_confusion": "Hinton distillation — известная концепция, кажется, что R1-Distill — её применение.",
+                "if_it_were_true": "Тогда student должен был бы иметь доступ к teacher logits во время training — требует teacher inference на каждый step.",
+                "how_it_should_be": "R1-Distill — это SFT на готовых reasoning traces (hard labels), не distillation через soft labels."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая ключевая API-особенность OpenAI o-series?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Параметр max_completion_tokens вместо max_tokens; включает thinking + output",
+              "correct": true,
+              "sections": {
+                "explanation": "OpenAI o-series использует max_completion_tokens (НЕ max_tokens), что покрывает суммарно thinking + final output; reasoning_effort (low/medium/high) для o3-mini+ управляет thinking budget.",
+                "example": "client.chat.completions.create(model='o1', max_completion_tokens=10000, reasoning_effort='medium') — без max_completion_tokens сложная задача обрежется до завершения reasoning.",
+                "when_to_apply": "При интеграции o-series: всегда ставить max_completion_tokens большим (16k-64k), иначе reasoning не уместится → плохой ответ.",
+                "edge_cases": "temperature и top_p игнорируются (фиксированы для consistency); system message изначально не поддерживался в o1-preview, теперь добавлен.",
+                "related": "Q14 Anthropic API, Q15 DeepSeek API, Q22 token budget."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Параметр thinking_budget в JSON body для управления глубиной",
+              "correct": false,
+              "sections": {
+                "what_actually": "thinking_budget — это Anthropic параметр (budget_tokens внутри thinking={'type': 'enabled'}); OpenAI использует reasoning_effort.",
+                "source_of_confusion": "Anthropic и OpenAI имеют похожие концепции, легко перепутать.",
+                "if_it_were_true": "Тогда OpenAI SDK имел бы thinking_budget, но фактически — reasoning_effort: 'low'|'medium'|'high'.",
+                "how_it_should_be": "OpenAI: reasoning_effort (категориальный); Anthropic: budget_tokens (численный)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "temperature=2.0 для максимального reasoning разнообразия",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenAI o-series игнорирует temperature и top_p — они фиксированы для consistency reasoning.",
+                "source_of_confusion": "В обычных LLM temperature — главный knob, привычно его использовать.",
+                "if_it_were_true": "Тогда reasoning был бы случайным; OpenAI явно фиксирует, чтобы reasoning был более детерминированным.",
+                "how_it_should_be": "Не использовать temperature/top_p в o-series; управлять качеством через reasoning_effort."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Возврат полного thinking content в message.content",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenAI скрывает thinking content; в message.content только финальный ответ, в usage — только токены reasoning.",
+                "source_of_confusion": "Anthropic возвращает thinking блоки явно, путают подход OpenAI.",
+                "if_it_were_true": "Тогда anti-distillation и UX-аргументы OpenAI не работали бы.",
+                "how_it_should_be": "OpenAI: hidden thinking (только usage.reasoning_tokens + summary в traces); Anthropic: visible thinking blocks."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить thinking в Anthropic Claude 3.7 API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "thinking={'type': 'enabled', 'budget_tokens': N}; thinking блоки видны в response",
+              "correct": true,
+              "sections": {
+                "explanation": "Anthropic: messages.create(thinking={'type': 'enabled', 'budget_tokens': 10000}); ответ содержит блоки content[*] с type='thinking' и type='text', оба видны.",
+                "example": "for block in response.content: if block.type=='thinking': print(block.thinking) elif block.type=='text': print(block.text). Streaming работает через thinking_delta и text_delta.",
+                "when_to_apply": "Когда нужно audit reasoning (видно где модель ошиблась) или debugging quality issues; tools поддерживаются одновременно с thinking.",
+                "edge_cases": "Previous thinking в multi-turn НЕ отправляется обратно в context (модель будет думать заново); thinking tokens биллятся как output.",
+                "related": "Q13 OpenAI API, Q15 DeepSeek <think>, Q16 hidden vs visible."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "reasoning_effort='high' в параметрах запроса",
+              "correct": false,
+              "sections": {
+                "what_actually": "reasoning_effort — это OpenAI o3-mini+ параметр, не Anthropic.",
+                "source_of_confusion": "Похожие концепции у двух провайдеров путают.",
+                "if_it_were_true": "Тогда Anthropic SDK принимал бы reasoning_effort, но он использует thinking={'type', 'budget_tokens'}.",
+                "how_it_should_be": "Anthropic: thinking dict с type+budget_tokens; OpenAI: reasoning_effort string."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Установить system='You are reasoning model' и обычный max_tokens",
+              "correct": false,
+              "sections": {
+                "what_actually": "Thinking — это явный режим API, активируется через thinking={'type': 'enabled'}, не через system prompt.",
+                "source_of_confusion": "Привычно настраивать поведение через system message.",
+                "if_it_were_true": "Тогда любая модель Anthropic становилась бы reasoning от system prompt — но extended thinking — отдельная фича Claude 3.7.",
+                "how_it_should_be": "thinking={'type': 'enabled', 'budget_tokens': N} в API params, явный режим."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Передать messages с role='thinking' в начале conversation",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нет role='thinking'; есть только user/assistant/system; thinking — это режим API, не role.",
+                "source_of_confusion": "Кажется, что reasoning нужно 'инициировать' специальным сообщением.",
+                "if_it_were_true": "Тогда API возвращал бы ошибку валидации на роли, но фактически thinking — это поле messages.create.",
+                "how_it_should_be": "thinking={'type': 'enabled', 'budget_tokens': N} как параметр messages.create."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как DeepSeek-R1 API возвращает reasoning content?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Через отдельный endpoint /reasoning, не /chat/completions",
+              "correct": false,
+              "sections": {
+                "what_actually": "DeepSeek использует тот же /chat/completions endpoint, OpenAI-compatible.",
+                "source_of_confusion": "Кажется, что новая фича требует отдельного endpoint.",
+                "if_it_were_true": "Тогда OpenAI SDK не работал бы с DeepSeek, но он работает через base_url='https://api.deepseek.com'.",
+                "how_it_should_be": "Тот же /chat/completions; thinking через <think>...</think> теги в content."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Скрывается полностью, как у OpenAI o1",
+              "correct": false,
+              "sections": {
+                "what_actually": "DeepSeek visible thinking — главное отличие от OpenAI; полностью видно в <think>...</think>.",
+                "source_of_confusion": "Путают подход OpenAI (hidden) с DeepSeek (visible).",
+                "if_it_were_true": "Тогда нельзя было бы делать distillation на R1 traces — но R1-Distill именно так и обучался.",
+                "how_it_should_be": "Visible через <think> теги или reasoning_content поле."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только в headers HTTP response, не в JSON body",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reasoning content в JSON body (content или reasoning_content), не в headers.",
+                "source_of_confusion": "HTTP headers — место для метаданных, кажется логичным.",
+                "if_it_were_true": "Тогда streaming reasoning не работал бы корректно, и парсинг требовал бы доступа к headers SDK.",
+                "how_it_should_be": "В JSON body через <think> теги или reasoning_content поле."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "<think>...</think> теги в text response или поле reasoning_content в новых SDK",
+              "correct": true,
+              "sections": {
+                "explanation": "DeepSeek API совместим с OpenAI: model='deepseek-reasoner', <think>...</think> теги встроены в content; в новых SDK добавлено поле reasoning_content отдельно от content.",
+                "example": "response.choices[0].message.content = '<think>...</think>17*23 = 391'; в новых SDK: message.reasoning_content (thinking) + message.content (final).",
+                "when_to_apply": "При интеграции с DeepSeek через OpenAI SDK — нужно либо парсить <think> теги, либо использовать reasoning_content поле.",
+                "edge_cases": "Цена $0.55/$2.19 per 1M (in/out) — ~30× дешевле o1; можно self-host (MIT-like license).",
+                "related": "Q10 R1 прорывы, Q13 OpenAI API, Q14 Anthropic API."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему OpenAI скрывает CoT в o-series?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Технические ограничения: thinking генерируется на отдельном кластере",
+              "correct": false,
+              "sections": {
+                "what_actually": "Thinking генерируется autoregressively вместе с final output одним inference call; нет отдельного кластера.",
+                "source_of_confusion": "Звучит как architectural ограничение.",
+                "if_it_were_true": "Тогда thinking_tokens не были бы в usage той же completion, но они там есть.",
+                "how_it_should_be": "Причины — анти-distillation, safety/alignment, UX; не технические."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Регуляторные требования EU AI Act",
+              "correct": false,
+              "sections": {
+                "what_actually": "EU AI Act не запрещает показывать CoT; Anthropic и DeepSeek успешно его показывают в EU.",
+                "source_of_confusion": "Регуляции часто упоминают как объяснение product решений.",
+                "if_it_were_true": "Тогда Anthropic и DeepSeek нарушали бы регуляции, но они работают.",
+                "how_it_should_be": "OpenAI скрывает по собственным причинам (anti-distillation, safety, UX), не из-за регуляции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Anti-distillation (конкуренты не получат training data), safety и UX",
+              "correct": true,
+              "sections": {
+                "explanation": "OpenAI официально называет три причины: anti-distillation (публичный CoT = бесплатный training data для конкурентов), safety/alignment (raw CoT может содержать unaligned reasoning), UX (длинный CoT шумит).",
+                "example": "DeepSeek-R1 был distilled на traces от своего же R1; если бы OpenAI показывала CoT, R1-Distill мог бы использовать o1 traces как teacher.",
+                "when_to_apply": "Понимать competitive moat aspect при выборе провайдера для production — open visible thinking имеет другие trade-offs.",
+                "edge_cases": "Anthropic и DeepSeek выбрали противоположный подход — transparency over moat; разные стратегии.",
+                "related": "Q13 OpenAI API hidden, Q14 Anthropic visible, Q15 DeepSeek <think> visible."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Потому что thinking содержит copyright violations из training data",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нет публичных заявлений OpenAI про copyright в thinking; причины — anti-distillation/safety/UX.",
+                "source_of_confusion": "Copyright дискуссии часто связаны с AI, кажется правдоподобным.",
+                "if_it_were_true": "Тогда OpenAI имела бы юридические проблемы и для финального output, не только thinking.",
+                "how_it_should_be": "Заявленные причины: anti-distillation, safety, UX."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "На каких задачах reasoning model даёт реальное преимущество над обычной LLM?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Translation коротких текстов между языками",
+              "correct": false,
+              "sections": {
+                "what_actually": "Translation не требует многошагового рассуждения; обычная LLM справляется отлично.",
+                "source_of_confusion": "Translation иногда требует нюансов, но это не reasoning task.",
+                "if_it_were_true": "Тогда reasoning model давала бы +30% на translation benchmarks, но прирост минимален.",
+                "how_it_should_be": "Translation — pattern matching на больших корпусах, не reasoning."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Многошаговое рассуждение: math, competitive programming, SWE-Bench, planning",
+              "correct": true,
+              "sections": {
+                "explanation": "Reasoning model полезен на задачах, требующих многошагового рассуждения с самопроверкой и backtracking: math (AIME +60-80%), competitive programming, SWE-Bench (claude 3.7 thinking + o3 — SOTA), planning, ARC-AGI.",
+                "example": "AIME 2024: gpt-4o ~13% vs o1 ~83% vs o3 ~96% — 60-83% прирост; SWE-Bench Verified: gpt-4o ~33% vs o3 ~71%.",
+                "when_to_apply": "Когда задача — многошаговый синтез/вывод/планирование с проверяемым результатом; routing должен направлять такие задачи в reasoning model.",
+                "edge_cases": "На factual recall (TriviaQA, HellaSwag) reasoning не помогает или мешает — там обычная LLM не хуже.",
+                "related": "Q18 когда вреден, Q19 benchmarks, Q24 routing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Real-time autocomplete и suggestions",
+              "correct": false,
+              "sections": {
+                "what_actually": "Latency 5-60 сек у reasoning models несовместим с real-time UI.",
+                "source_of_confusion": "Кажется, что чем 'умнее' модель, тем лучше для всех задач.",
+                "if_it_were_true": "Тогда GitHub Copilot и Cursor использовали бы o1 для inline suggestions — но они используют быстрые модели.",
+                "how_it_should_be": "Reasoning для async/batch задач; для real-time — обычные fast LLM."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Простой Q&A типа 'Какая столица Франции?'",
+              "correct": false,
+              "sections": {
+                "what_actually": "Простой factual recall — overkill для reasoning model: 10× дороже за тот же ответ.",
+                "source_of_confusion": "Кажется, что 'лучшая' модель должна быть быстрее на простом.",
+                "if_it_were_true": "Тогда cost-aware routing не имел бы смысла, но это базовый production pattern.",
+                "how_it_should_be": "Простые задачи → gpt-4o-mini; reasoning → сложные multi-step задачи."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда reasoning model избыточна или вредна?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "На решении математической олимпиады AIME",
+              "correct": false,
+              "sections": {
+                "what_actually": "AIME — классический случай ПОЛЕЗНОСТИ reasoning model (gpt-4o ~13% vs o1 ~83%).",
+                "source_of_confusion": "Перепутать сценарии полезности и вреда.",
+                "if_it_were_true": "Тогда AIME benchmarks не использовались бы для рекламы reasoning models.",
+                "how_it_should_be": "AIME — где reasoning максимально помогает; вред — на простых/real-time задачах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "На SWE-Bench с реальными багами в production коде",
+              "correct": false,
+              "sections": {
+                "what_actually": "SWE-Bench — кейс полезности reasoning (claude 3.7 thinking + o3 — SOTA).",
+                "source_of_confusion": "Путают сценарии полезности и вреда.",
+                "if_it_were_true": "Тогда Cursor/Devin не использовали бы reasoning для code-задач, но именно используют.",
+                "how_it_should_be": "Code reasoning (анализ багов, edge cases) — где reasoning помогает; вред — на simple Q&A."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "На multi-step planning для autonomous agents",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-step planning — главное направление полезности reasoning (Q30).",
+                "source_of_confusion": "Путают полезность и вред.",
+                "if_it_were_true": "Тогда AI-агенты использовали бы только fast models, но reasoning — фундамент агентной парадигмы.",
+                "how_it_should_be": "Planning — где reasoning критичен; вред — на простых задачах с low latency требованиями."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Простой Q&A, краткие summaries, real-time UI, chat small-talk",
+              "correct": true,
+              "sections": {
+                "explanation": "Reasoning model избыточна на простых задачах (factual Q&A, summaries, classification, translation коротких) и вредна на real-time UI (latency 5-60 сек) и creative writing (может портить flow излишним анализом).",
+                "example": "Запрос 'Какая столица Франции?' в o1 = 10× дороже за тот же ответ; chat small-talk с 30+ сек latency убивает UX.",
+                "when_to_apply": "Правило: если задача решается обычной LLM за 1-2 секунды с приемлемой точностью — reasoning не нужна; routing должен это учитывать.",
+                "edge_cases": "Function calling (single tool routing) — overkill; complex multi-tool research — наоборот, reasoning помогает.",
+                "related": "Q17 когда полезен, Q21 cost/latency, Q24 routing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "На каких benchmarks reasoning models почти не дают прироста?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "AIME 2024 и Codeforces percentile",
+              "correct": false,
+              "sections": {
+                "what_actually": "На AIME и Codeforces reasoning даёт огромный gap (+60-80% на AIME, +80+ percentile на Codeforces).",
+                "source_of_confusion": "Перепутать категории benchmarks (reasoning-heavy vs recall-heavy).",
+                "if_it_were_true": "Тогда benchmark wars между o1/o3/R1 не имели бы смысла.",
+                "how_it_should_be": "Маленький gap на MMLU/TriviaQA/HellaSwag (knowledge recall); большой — на AIME/Codeforces (reasoning)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GPQA (PhD-level science) и FrontierMath",
+              "correct": false,
+              "sections": {
+                "what_actually": "GPQA и FrontierMath — где reasoning даёт огромный прирост (+20-40% на GPQA, +20+ на FrontierMath).",
+                "source_of_confusion": "Сложные benchmarks путают с recall-heavy.",
+                "if_it_were_true": "Тогда o3 не показывал бы ~25% на FrontierMath vs gpt-4o <2%.",
+                "how_it_should_be": "GPQA/FrontierMath — reasoning-heavy, большой gap; recall benchmarks — маленький gap."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MMLU (general knowledge), TriviaQA, HellaSwag — задачи на recall фактов",
+              "correct": true,
+              "sections": {
+                "explanation": "Reasoning не помогает на задачах recall фактов: MMLU gpt-4o ~88% vs o1 ~92% (+4%), TriviaQA ~92% vs ~93% (+1%), HellaSwag ~95% vs ~95% (0). Reasoning помогает где нужно СИНТЕЗИРОВАТЬ или ВЫВОДИТЬ, не вспоминать.",
+                "example": "На MMLU вопрос 'Какая столица Польши?' — это recall; thinking не помогает, потому что знание либо есть в pre-training, либо нет.",
+                "when_to_apply": "При выборе модели по benchmark: смотреть не на 'все benchmarks', а на reasoning-heavy (AIME, GPQA, FrontierMath, SWE-Bench).",
+                "edge_cases": "Иногда на recall reasoning model даже хуже — overthinking приводит к 'rationalization' неверного ответа.",
+                "related": "Q17 когда полезен, Q26 hallucination, Q22 cost overhead."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "SWE-Bench Verified и ARC-AGI",
+              "correct": false,
+              "sections": {
+                "what_actually": "SWE-Bench и ARC-AGI — где reasoning доминирует (SWE-Bench +10-40%, ARC-AGI +70%).",
+                "source_of_confusion": "Путают reasoning-heavy и recall-heavy benchmarks.",
+                "if_it_were_true": "Тогда o3 не был бы breakthrough на ARC-AGI.",
+                "how_it_should_be": "SWE-Bench/ARC-AGI — где reasoning максимально помогает; recall — где не помогает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему результат o3 на ARC-AGI (87% high-compute) считался важным прорывом?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ARC-AGI дизайнили резистентным к memorization; до o3 LLM едва выходили за 5%",
+              "correct": true,
+              "sections": {
+                "explanation": "ARC-AGI (Chollet 2019) — бенчмарк, специально резистентный к memorization (визуальные паттерны grid→grid, вывод правила из 2-3 примеров); до декабря 2024 gpt-4o ~5%, лучшие custom solutions ~55%, humans ~85%. o3 high-compute = 87% — впервые LLM на уровне человека.",
+                "example": "o3 low-compute = 75%, high-compute = 87% за ~$3000 compute на задачу; впервые reasoning + test-time scaling решил abstract reasoning задачи.",
+                "when_to_apply": "Понимать как доказательство, что test-time compute scaling + reasoning RL могут решать задачи, считавшиеся AGI litmus test.",
+                "edge_cases": "Стоимость 87% (~$3k/задача) — индикатор brute-force search, не 'дешёвого' reasoning; ARC-AGI-2 обновлён, модели снова в начале.",
+                "related": "Q3 test-time compute, Q21 cost сравнение, Q19 benchmarks."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это был первый benchmark, который OpenAI создал самостоятельно",
+              "correct": false,
+              "sections": {
+                "what_actually": "ARC-AGI создан François Chollet в 2019, не OpenAI; OpenAI лишь решал его моделью.",
+                "source_of_confusion": "OpenAI много benchmarks использует для PR, кажется, что и ARC-AGI их.",
+                "if_it_were_true": "Тогда benchmark был бы под сомнением как conflict of interest, но он независим.",
+                "how_it_should_be": "ARC-AGI — независимый бенчмарк Chollet; OpenAI лишь показал на нём прорыв через o3."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ARC-AGI оценивает многоязычность, и o3 первым показал >80%",
+              "correct": false,
+              "sections": {
+                "what_actually": "ARC-AGI — про abstract visual reasoning (grid patterns), не про многоязычность.",
+                "source_of_confusion": "Многоязычные benchmarks — отдельная категория (MMLU multilingual, Flores).",
+                "if_it_were_true": "Тогда не было бы упоминаний visual grids в paper Chollet.",
+                "how_it_should_be": "ARC-AGI — abstract reasoning на визуальных паттернах, не language."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ARC-AGI запускается на real-time hardware, и o3 первым уложился в latency",
+              "correct": false,
+              "sections": {
+                "what_actually": "o3 high-compute на ARC-AGI ~$3k и долгая latency — не про real-time; именно дорогой brute-force.",
+                "source_of_confusion": "Перепутать прорыв качества с прорывом latency.",
+                "if_it_were_true": "Тогда стоимость ~$3k за задачу не подсвечивалась бы как контраргумент.",
+                "how_it_should_be": "Прорыв — качество (87% человеческого уровня), но за высокую цену compute."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая модель даёт лучший cost/quality trade-off с visible thinking для production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "OpenAI o1 — $15/$60 per 1M, hidden thinking",
+              "correct": false,
+              "sections": {
+                "what_actually": "o1 дорогой ($15/$60) и hidden thinking; не лучший cost/quality для production с audit нуждами.",
+                "source_of_confusion": "o1 — флагман OpenAI, привычно считать его лучшим.",
+                "if_it_were_true": "Тогда R1 не получал бы market shock из-за ~30× дешевле цены.",
+                "how_it_should_be": "Для visible + cheap + fast — Claude 3.7 Sonnet thinking; для самой дешёвой — R1."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Claude 3.7 Sonnet thinking — $3/$15 + thinking, visible, 5-30 сек",
+              "correct": true,
+              "sections": {
+                "explanation": "Claude 3.7 Sonnet extended thinking — лучший баланс для production: $3/$15 + thinking tokens, visible reasoning (audit/debug), latency 5-30 сек, SWE-Bench SOTA, tools поддерживаются с thinking.",
+                "example": "Для code reasoning в Cursor: visible thinking даёт debug-возможность, latency приемлема для PR review, цена в 5× ниже o1 при сопоставимом качестве на SWE-Bench.",
+                "when_to_apply": "Production reasoning с требованиями audit/debug, разумной latency и tools — Claude 3.7 thinking sweet spot.",
+                "edge_cases": "Для frontier на ARC-AGI/FrontierMath — o3; для самой дешёвой self-host — R1; для massive throughput — o3-mini ($1.10/$4.40).",
+                "related": "Q14 Anthropic API, Q22 token budget, Q24 routing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "OpenAI o3 — $15/$60+, frontier на ARC-AGI",
+              "correct": false,
+              "sections": {
+                "what_actually": "o3 — frontier, но дорогой и hidden thinking; не баланс, а top quality за top price.",
+                "source_of_confusion": "Frontier benchmarks путают с production balance.",
+                "if_it_were_true": "Тогда все production deployments использовали бы o3, но cost-aware решения выбирают cheaper.",
+                "how_it_should_be": "o3 — для frontier задач; Claude 3.7 thinking — лучший баланс."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "GPT-4o — $2.50/$10, обычная LLM",
+              "correct": false,
+              "sections": {
+                "what_actually": "GPT-4o — обычная LLM, не reasoning model; не имеет thinking вообще.",
+                "source_of_confusion": "Самая дешёвая из премиум-моделей.",
+                "if_it_were_true": "Тогда вся reasoning-парадигма не нужна была бы.",
+                "how_it_should_be": "Для reasoning баланса — Claude 3.7 thinking; gpt-4o — для не-reasoning задач."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сколько thinking tokens типично уходит на ARC-AGI / FrontierMath задачу?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "100-500 тысяч tokens — основная стоимость",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для большинства frontier задач 30k-200k+; 500k — это уже исключительные случаи.",
+                "source_of_confusion": "Преувеличение реальной цифры.",
+                "if_it_were_true": "Тогда стоимость задачи была бы ~$30 даже на самой дешёвой R1, что несовместимо с обычным production.",
+                "how_it_should_be": "ARC-AGI / FrontierMath обычно 30k-200k+ thinking tokens."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "100-500 tokens — как обычный ответ",
+              "correct": false,
+              "sections": {
+                "what_actually": "100-500 tokens — это простой вопрос, не frontier reasoning task.",
+                "source_of_confusion": "Перепутать масштабы простых и сложных задач.",
+                "if_it_were_true": "Тогда reasoning model не имела бы смысла для frontier задач — extra cost vs обычная LLM.",
+                "how_it_should_be": "Простые: 100-500; средние: 1k-5k; сложные: 5k-30k; frontier (ARC/Frontier): 30k-200k+."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "1k-5k tokens, как у средней multi-step math задачи",
+              "correct": false,
+              "sections": {
+                "what_actually": "1k-5k — это средние задачи (multi-step math); ARC-AGI/FrontierMath требуют больше.",
+                "source_of_confusion": "Похожие порядки, но не frontier масштаб.",
+                "if_it_were_true": "Тогда o3 high-compute не стоил бы ~$3k за ARC-AGI задачу.",
+                "how_it_should_be": "Средние: 1k-5k; frontier: 30k-200k+."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "30k-200k+ thinking tokens — большая часть стоимости задачи",
+              "correct": true,
+              "sections": {
+                "explanation": "Frontier задачи (ARC-AGI, FrontierMath) типично потребляют 30k-200k+ thinking tokens; большая часть billing идёт в thinking; max_completion_tokens нужно ставить 16k-64k+.",
+                "example": "o3 high-compute на ARC-AGI = ~$3000 за задачу — почти всё это thinking tokens; на 1000 запросов/день с 5k thinking средних: ~$9000/мес на o1.",
+                "when_to_apply": "При cost-моделировании reasoning workload: считать thinking как основную статью; при max_completion_tokens=4000 сложная задача обрежется и даст плохой ответ.",
+                "edge_cases": "Anthropic budget_tokens позволяет контролировать; OpenAI reasoning_effort даёт low/medium/high knob.",
+                "related": "Q3 test-time scaling, Q13 max_completion_tokens, Q21 cost модели."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Заменяют ли inference-time техники (Best-of-N, ToT, Self-Consistency) dedicated reasoning model?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Да, полностью; reasoning models — маркетинг поверх Best-of-N",
+              "correct": false,
+              "sections": {
+                "what_actually": "Self-Consistency +10-15%, Best-of-N +15-25%, ToT +20-30% vs base LLM; dedicated reasoning model +40-80%.",
+                "source_of_confusion": "Inference-time техники похожи концептуально на reasoning, путают эффект.",
+                "if_it_were_true": "Тогда o1 vs gpt-4o + Self-Consistency не показывали бы разницу, но o1 даёт +60% на AIME.",
+                "how_it_should_be": "Reasoning models дают больше прироста; inference-time techniques полезны как complement."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нет; reasoning models дают +40-80%, inference-time techniques +10-35%; они комплементарны",
+              "correct": true,
+              "sections": {
+                "explanation": "Inference-time techniques дают меньший прирост: Self-Consistency +10-15%, Best-of-N +15-25%, ToT +20-30%, PRM-guided +25-35%; dedicated reasoning model +40-80%. Reasoning обучена strategies (self-verification, backtracking) эффективнее random sampling.",
+                "example": "На AIME gpt-4o + Self-Consistency может дать ~25%; o1 без техник — 83%. Можно комбинировать: o1 + verifier для critical apps.",
+                "when_to_apply": "Inference-time нужны если используешь обычную LLM или для self-hosting на старой архитектуре; на reasoning models они дополнение, не замена.",
+                "edge_cases": "В critical applications полезен verifier поверх reasoning model для double-check (math/code easy auto-verify).",
+                "related": "Q17 когда полезен, Q26 hallucination, Q24 routing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Заменяют для math, но не для code",
+              "correct": false,
+              "sections": {
+                "what_actually": "Гэп reasoning vs inference-time виден и в math, и в code; не зависит от домена.",
+                "source_of_confusion": "Domain-specific аргументы звучат разумно.",
+                "if_it_were_true": "Тогда benchmarks показывали бы разные паттерны по domains, но gap consistent.",
+                "how_it_should_be": "Reasoning лучше на reasoning-heavy задачах любого домена; не domain-specific."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reasoning models — частный случай Self-Consistency с N=1",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reasoning model — это RL-обученная long-CoT в одном sequential inference, не parallel sampling.",
+                "source_of_confusion": "Концепции связаны (оба про more inference compute), но механика разная.",
+                "if_it_were_true": "Тогда reasoning не требовал бы специального training, но именно RL training делает CoT эффективным.",
+                "how_it_should_be": "Это разные подходы: reasoning = long CoT в одном call; Self-Consistency = N параллельных calls + voting."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой паттерн используется для routing запросов в reasoning model?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Отправлять все запросы в reasoning, экономии нет",
+              "correct": false,
+              "sections": {
+                "what_actually": "Routing — основной паттерн оптимизации cost: только сложные задачи в reasoning, простые в fast LLM.",
+                "source_of_confusion": "Уровень настройки кажется лишним при достаточном budget.",
+                "if_it_were_true": "Тогда не было бы продуктов вроде Helicone/Portkey/LangChain routers.",
+                "how_it_should_be": "Routing через эвристики, маленький classifier, или escalation; даёт 5-10× cost reduction."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Случайный round-robin между fast и reasoning model",
+              "correct": false,
+              "sections": {
+                "what_actually": "Round-robin без context — это худший вариант: половина простых задач overpay, половина сложных underperform.",
+                "source_of_confusion": "Round-robin — известный pattern для load balancing.",
+                "if_it_were_true": "Тогда quality + cost оба пострадали бы — никаких преимуществ.",
+                "how_it_should_be": "Smart routing по содержимому query: эвристики, classifier, escalation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Эвристики (keywords, длина), маленький classifier, escalation при низкой confidence",
+              "correct": true,
+              "sections": {
+                "explanation": "Паттерны: (1) эвристики — длина query, keywords (prove/solve/calculate); (2) маленький classifier (haiku/gpt-4o-mini → easy/medium/hard); (3) escalation — попробовать fast, если confidence низкий → reasoning; (4) cost-aware с budget на пользователя.",
+                "example": "if len(query)<30 and is_simple_factual: return 'gpt-4o-mini'; elif keywords in query: return 'o1'; else: classifier(query).",
+                "when_to_apply": "В production с разнообразным workload: routing даёт 5-10× cost reduction при сохранении quality на 'hard' queries.",
+                "edge_cases": "Метрики: quality на 'hard' queries, avg cost per query, latency p95, false positive rate (отправили в reasoning, не надо было).",
+                "related": "Q17 когда полезен, Q18 когда вреден, Q21 cost модели."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Routing по user_id с consistent hashing",
+              "correct": false,
+              "sections": {
+                "what_actually": "Consistent hashing — для shard'ирования; не имеет отношения к выбору модели по сложности.",
+                "source_of_confusion": "Distributed systems паттерн, технически знакомый.",
+                "if_it_were_true": "Тогда сложность задачи игнорировалась бы, и quality/cost не оптимизировались.",
+                "how_it_should_be": "Routing по содержимому query (complexity), не по user identity."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что важно в prompt engineering для reasoning models?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Добавлять 'Let's think step by step' для активации reasoning",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эта фраза бесполезна в reasoning models — модель уже обучена думать; иногда даже мешает обученным стратегиям.",
+                "source_of_confusion": "CoT-prompting (Wei 2022) сделал эту фразу culture-famous для обычных LLM.",
+                "if_it_were_true": "Тогда RL training reasoning models не имел бы смысла.",
+                "how_it_should_be": "НЕ использовать; модель сама thinking запускает через RL training."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Few-shot examples с подробным reasoning для обучения формату",
+              "correct": false,
+              "sections": {
+                "what_actually": "Few-shot reasoning examples обычно не помогают, иногда делают хуже — модель уже умеет.",
+                "source_of_confusion": "Few-shot prompting — стандартная техника для обычных LLM.",
+                "if_it_were_true": "Тогда reasoning models требовали бы тех же приёмов, но они их перерастают.",
+                "how_it_should_be": "Чёткая постановка задачи + output format без CoT-инструкций."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подробные CoT instructions ('сначала проанализируй, затем напиши pseudocode')",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подробные CoT-инструкции мешают reasoning model — навязывают шаги, отличные от обученных стратегий.",
+                "source_of_confusion": "Кажется, что чем больше структуры в prompt, тем лучше.",
+                "if_it_were_true": "Тогда over-engineered prompts давали бы лучшее качество, но эмпирически — хуже.",
+                "how_it_should_be": "Минималистский prompt: задача + format; дать модели свободу в reasoning strategies."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чёткая постановка задачи и output format; НЕ подсказывать solution path",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное: чёткая постановка задачи (input, expected output format, constraints), role/system prompt всё ещё работает; НЕ использовать 'Let's think step by step', не few-shot reasoning, не подробные CoT-инструкции — мешают обученным strategies. Управлять качеством через reasoning_effort/budget_tokens.",
+                "example": "Хорошо: 'You are an expert competitive programmer. Task: Solve. Constraints: n up to 10^6. Problem: ...'. Плохо: 'Let's think step by step. First analyze. Then consider edge cases. Then pseudocode. Then Python...'.",
+                "when_to_apply": "При интеграции reasoning models — переписать существующие CoT-промпты в минималистский стиль; для управления глубиной — knobs reasoning_effort/budget_tokens.",
+                "edge_cases": "Output format в JSON работает (`Respond in JSON: {answer: number, confidence: float}`); role prompt работает; few-shot для format (не reasoning) допустим.",
+                "related": "Q5 thinking tokens, Q13 OpenAI API, Q14 Anthropic API."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое опасное failure mode характерно для reasoning models?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Rationalization — длинная правдоподобная цепочка, оправдывающая неверный ответ",
+              "correct": true,
+              "sections": {
+                "explanation": "Парадокс reasoning models: модель может рационализировать неверный ответ длинной убедительной цепочкой; иногда хуже, чем короткая ошибка обычной LLM — пользователь видит 'убедительные рассуждения' и верит.",
+                "example": "Confirmation bias: модель ранний guess затем 'подтверждает' дальнейшими шагами; hallucinated lemmas — придумывает теоремы, на которые опирается.",
+                "when_to_apply": "В critical applications не верить ответам без независимой проверки даже если thinking выглядит убедительно; использовать verifier model или external verification.",
+                "edge_cases": "Mitigations: verifier model, self-critique prompt, multiple samples + majority vote, для math/code — запуск вычисления/тестов.",
+                "related": "Q9 reward model, Q23 verifier complement, Q25 prompt engineering."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Reasoning models не делают hallucinations — это решённая проблема",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reasoning не устраняет hallucinations, иногда усиливает через rationalization.",
+                "source_of_confusion": "Кажется, что 'думающая' модель должна быть точнее.",
+                "if_it_were_true": "Тогда не было бы failure mode 'hallucinated lemmas' и paper о sycophancy в reasoning models.",
+                "how_it_should_be": "Hallucinations остаются; rationalization — новый failure mode."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Циклические зависания в thinking без выхода",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reasoning models имеют budget_tokens / max_completion_tokens лимит; они не зависают бесконечно.",
+                "source_of_confusion": "Кажется, что autoregressive long generation может циклиться.",
+                "if_it_were_true": "Тогда production deployments были бы невозможны; но они работают со стабильной latency.",
+                "how_it_should_be": "Token budget обрывает thinking; failure mode — rationalization, не зависания."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Слишком короткие ответы из-за конфликта thinking vs output",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reasoning models генерируют ДЛИННЫЙ thinking, часто 5-30k tokens; короткие ответы — не их проблема.",
+                "source_of_confusion": "Перепутать характеристики обычных LLM и reasoning.",
+                "if_it_were_true": "Тогда reasoning не имело бы смысла как тратить compute на short.",
+                "how_it_should_be": "Reasoning тратит много thinking; failure — rationalization, не короткие ответы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что улучшает streaming thinking в UX reasoning models?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Снижает total latency финального ответа",
+              "correct": false,
+              "sections": {
+                "what_actually": "Streaming НЕ снижает total latency — только perceived latency (видно, что процесс жив).",
+                "source_of_confusion": "Streaming у обычных LLM часто воспринимается как 'быстрее'.",
+                "if_it_were_true": "Тогда о3 high-compute на ARC-AGI работал бы в реальном времени, но total latency — минуты.",
+                "how_it_should_be": "Streaming не меняет total latency; снижает perceived latency и улучшает UX."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Снижает perceived latency: TTFT 1-2 сек vs ожидание 60 сек без обратной связи",
+              "correct": true,
+              "sections": {
+                "explanation": "Streaming thinking улучшает UX: total latency 60 сек неизменна, но TTFT (first thinking token) 1-2 сек vs 30-50 сек до final answer; пользователь видит, что модель работает, не зависла.",
+                "example": "Anthropic SDK: client.messages.stream(thinking={'type': 'enabled'}) даёт thinking_delta и text_delta events; UI показывает 'Claude is thinking...' с прогрессом.",
+                "when_to_apply": "В chat UI с reasoning models всегда включать streaming; без него пользователь думает, что сервис завис на 30-60 сек.",
+                "edge_cases": "OpenAI o-series добавил streaming, но thinking content НЕ отдаётся — только summary; для o1 пользователь видит индикатор без содержимого.",
+                "related": "Q14 Anthropic streaming, Q16 hidden vs visible, Q22 token budget."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Уменьшает количество thinking tokens (cost saving)",
+              "correct": false,
+              "sections": {
+                "what_actually": "Streaming не влияет на количество тоkenов — только на способ их доставки.",
+                "source_of_confusion": "Перепутать UX и cost оптимизации.",
+                "if_it_were_true": "Тогда streaming был бы cost-knob, но billing идентичен.",
+                "how_it_should_be": "Cost не меняется; меняется только perceived latency и debugging-удобство."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Позволяет cancel запрос до завершения thinking",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cancel доступен и без streaming (HTTP request cancel); streaming сам по себе про доставку, не про управление.",
+                "source_of_confusion": "Streaming и cancel — обе async-фичи, путают.",
+                "if_it_were_true": "Тогда streaming был бы единственным способом cancel, но это не так.",
+                "how_it_should_be": "Streaming — про progress visibility и perceived latency; cancel — отдельная capability."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает интеграция reasoning model с tools / function calling?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tools нельзя использовать с thinking — взаимоисключающие режимы",
+              "correct": false,
+              "sections": {
+                "what_actually": "Изначально o1 не поддерживал tools, но в 2025 поддержка добавлена; Anthropic Claude 3.7 thinking поддерживает tools одновременно.",
+                "source_of_confusion": "Ранние ограничения o1 запомнились как постоянные.",
+                "if_it_were_true": "Тогда reasoning agents (Devin, Cursor) не могли бы существовать.",
+                "how_it_should_be": "Tools работают с thinking; модель в thinking планирует chain of tool calls."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Модель в thinking планирует chain of tool calls, затем возвращает tool_use blocks; multi-turn loop",
+              "correct": true,
+              "sections": {
+                "explanation": "Reasoning + tools: модель в thinking разрабатывает план ('Мне нужно вызвать search_web, потом проанализировать...'), затем возвращает tool_use blocks; app выполняет, results идут обратно, model thinking again, либо finish, либо ещё calls.",
+                "example": "Claude 3.7 thinking + tools: response = client.messages.create(thinking={'type': 'enabled'}, tools=[{'name': 'search_web'...}]); thinking блоки и tool_use блоки в content.",
+                "when_to_apply": "Complex agent tasks (multi-step research, debugging) — reasoning глубже планирует chain of tool calls vs обычный function calling.",
+                "edge_cases": "Overkill для single tool call routing — обычный gpt-4o-mini справится дешевле; reasoning стоит для multi-step planning.",
+                "related": "Q14 Anthropic API, Q24 routing, Q30 agents future."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Tools вызываются только после полного завершения thinking",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возможны и thinking блоки между tool calls — модель может thinking → tool → thinking → tool.",
+                "source_of_confusion": "Линейный порядок 'думать потом делать' кажется логичным.",
+                "if_it_were_true": "Тогда multi-turn agent loops с reasoning не работали бы эффективно.",
+                "how_it_should_be": "Thinking и tools могут интерливить; модель thinking после каждого tool result."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reasoning model автоматически выполняет tools без согласия app",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модель только возвращает tool_use blocks; app выполняет tools и отдаёт results.",
+                "source_of_confusion": "Путают с автономными агентами, где есть execution sandbox.",
+                "if_it_were_true": "Тогда model имела бы прямой доступ к internet/filesystem, что нарушает security model API.",
+                "how_it_should_be": "Tool execution — на стороне app; reasoning model только планирует и parses results."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая модель открыто доступна (open weights) на consumer GPU для reasoning?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "OpenAI o1-mini, через специальный self-host endpoint",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenAI o1-mini закрыт; OpenAI не выпускает open weights своих моделей.",
+                "source_of_confusion": "o1-mini — самый маленький в о-серии, кажется доступным.",
+                "if_it_were_true": "Тогда self-host OpenAI был бы возможен, но это запрещено TOS и weights не публикуются.",
+                "how_it_should_be": "Для consumer GPU — R1-Distill-Llama-8B, R1-Distill-Qwen-1.5B/7B/14B/32B, QwQ-32B."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Claude 3.7 Sonnet thinking — Anthropic open-sourced",
+              "correct": false,
+              "sections": {
+                "what_actually": "Anthropic не публикует weights своих моделей; Claude доступен только через API.",
+                "source_of_confusion": "Open source движение делает кажущимся, что все провайдеры открывают weights.",
+                "if_it_were_true": "Тогда Claude weights были бы на HuggingFace, но это противоречит business model Anthropic.",
+                "how_it_should_be": "Для open weights reasoning — DeepSeek-R1, R1-Distill, QwQ, OpenThinker."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "R1-Distill-Llama-8B (24GB VRAM в 4-bit quant), QwQ-32B, R1-Distill-Qwen-1.5B",
+              "correct": true,
+              "sections": {
+                "explanation": "Open-weight reasoning доступные на consumer GPU: R1-Distill-Llama-8B (Llama license, 24GB VRAM в 4-bit), R1-Distill-Qwen-1.5B/7B/14B/32B (Apache 2.0), QwQ-32B (Apache 2.0, Alibaba), OpenThinker (Apache 2.0), DeepSeek-R1 671B сам — для дата-центра.",
+                "example": "R1-Distill-Qwen-32B превосходит o1-mini на math benchmarks; R1-Distill-Llama-8B в 4-bit quant работает на single 4090 (24GB).",
+                "when_to_apply": "Self-host для privacy, customization, no rate limits, экономии на больших объёмах; sub-10B модели для edge deployment.",
+                "edge_cases": "Хуже на frontier benchmarks vs o3; требует operational overhead (GPU, vLLM/SGLang/TGI, мониторинг).",
+                "related": "Q10 R1 open weights, Q12 R1-Distill, Q21 cost сравнение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Gemini 2.5 Pro Deep Think — Google opened weights",
+              "correct": false,
+              "sections": {
+                "what_actually": "Google не open-source Gemini Pro; Gemma — отдельная open линейка, не reasoning.",
+                "source_of_confusion": "Google имеет open Gemma, путают с Gemini Pro.",
+                "if_it_were_true": "Тогда Gemini Pro был бы на HuggingFace, но он доступен только через API/Vertex.",
+                "how_it_should_be": "Для open-weight reasoning — R1, R1-Distill, QwQ, не Gemini."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую роль играют reasoning models в будущем AI-агентов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Фундаментальный enabler агентной парадигмы: long-horizon planning, self-correction после ошибок",
+              "correct": true,
+              "sections": {
+                "explanation": "Reasoning models — фундамент для agents 2025-2026: long-horizon planning (10s-100s шагов), autonomous research (Deep Research), self-correcting agents (recovery после tool errors), multi-agent debate, reasoning+memory continuous learning. Без reasoning агенты ломаются на 3-5 шаге; с ним — 30-50 шагов осмысленно.",
+                "example": "SWE-agents (Devin, Cursor) — reasoning о коде + tools; computer-use agents (Claude computer use, Operator) — reasoning о UI + screenshot/click; research agents — multi-step web research.",
+                "when_to_apply": "При проектировании autonomous agent architecture — reasoning model в ядре loop; обычные LLM не справятся с long-horizon planning.",
+                "edge_cases": "Открытые вызовы: cost ($$$ за задачу), verification long-horizon plans, safety (reasoning + autonomous actions = риски), memory через 1M+ context expensive.",
+                "related": "Q23 inference-time complement, Q24 routing, Q28 tools integration."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Заменяются полностью на specialized fine-tuned mini-models",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тренд противоположный: reasoning capability считается необходимой для serious agents; specialized mini-models дополняют, не заменяют.",
+                "source_of_confusion": "Тренд small specialized models в обычных LLM иногда экстраполируют на агентов.",
+                "if_it_were_true": "Тогда не было бы инвестиций в reasoning для агентов (Cursor, Devin, OpenAI Operator).",
+                "how_it_should_be": "Reasoning — фундамент агентов; specialized models — для дешёвых subtasks через routing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только для visualization рассуждений в UI, не для логики",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reasoning — про capability (планирование, рассуждение), не про UI; visualization — побочный эффект visible thinking.",
+                "source_of_confusion": "Visible thinking — заметная UI-фича, путают её с основным назначением.",
+                "if_it_were_true": "Тогда hidden CoT в OpenAI o-series не имел бы смысла для агентов.",
+                "how_it_should_be": "Reasoning — capability агентов; visualization — отдельный UX вопрос."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Не нужны — function calling с обычной LLM достаточно",
+              "correct": false,
+              "sections": {
+                "what_actually": "Function calling работает для single-step routing; multi-step agent planning требует reasoning (10s-100s шагов).",
+                "source_of_confusion": "Простые tool-use агенты работают без reasoning, экстраполируют на сложные.",
+                "if_it_were_true": "Тогда Devin/Cursor/Operator не использовали бы reasoning, но они построены вокруг него.",
+                "how_it_should_be": "Function calling — для tool routing; reasoning — для long-horizon planning + self-correction."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

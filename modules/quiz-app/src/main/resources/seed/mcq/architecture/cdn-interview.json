@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "cdn-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое CDN и какую основную пользу он приносит для web-приложения с глобальной аудиторией?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CDN — это distributed database, реплицирующая записи приложения по регионам для ускорения write-операций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CDN — это сеть кэширующих edge-серверов (PoP), которые ускоряют READ-операции (отдачу контента ближайшему пользователю). Write-операции по-прежнему идут в origin, CDN их не реплицирует.",
+                "source_of_confusion": "Слова `distributed` и `replication` встречаются и в CDN, и в БД, но реплицируется там разное: CDN кеширует контент, БД реплицирует записи.",
+                "if_it_were_true": "Если бы CDN ускорял writes, то POST /api/order закрывался бы на ближайшем PoP — но тогда нужно было бы решать consistency между edge-репликами, чего CDN не делают.",
+                "how_it_should_be": "Запомнить: CDN — слой read-кэша между клиентом и origin. Writes всегда идут до origin."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CDN — географически распределённая сеть edge-кэшей, снижающая latency и разгружающая origin за счёт обслуживания контента из ближайшего PoP.",
+              "correct": true,
+              "sections": {
+                "explanation": "CDN ставит кэширующий узел в 5-50 мс от клиента вместо 100-300 мс до origin. 80-99% запросов закрываются на edge, origin платит меньше за egress и переживает DDoS. TLS-handshake также выполняется близко к клиенту — экономия 1-2 RTT.",
+                "example": "Cloudflare anycast: один и тот же IP `1.1.1.1` объявлен из 310+ PoP, клиент из Москвы попадает в MSK-IX за 5-10 мс, клиент из Сан-Паулу — в локальный PoP за 10-20 мс. Origin (например, AWS us-east-1) при этом обслуживает только cache MISS.",
+                "when_to_apply": "Любой продукт со статикой/медиа и географически распределённой аудиторией. E-commerce, streaming, SaaS-дашборды, mobile API.",
+                "edge_cases": "CDN не ускоряет writes и плохо помогает строго real-time данным (биржевые котировки, спортивный счёт). Для них используют micro-caching на 1-5 секунд или edge compute.",
+                "related": "[[cdn-interview#Q2]] архитектура слоёв (PoP/regional/origin shield); [[cdn-interview#Q24]] cost-модель CDN; [[caching-strategies-interview]] общие паттерны кэширования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CDN — это L4-балансировщик нагрузки, распределяющий TCP-соединения между серверами приложения внутри одного дата-центра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описание соответствует L4 LB (HAProxy/NLB) внутри одного DC. CDN же — глобальная сеть PoP, работающая на L7 (HTTP) с кэшированием. Это разные слои инфраструктуры: LB балансирует, CDN кеширует.",
+                "source_of_confusion": "И CDN, и LB стоят перед origin и обрабатывают входящий трафик, поэтому новички склонны их путать.",
+                "if_it_were_true": "Если бы CDN был L4 LB, то не имел бы понятия cache HIT/MISS, не оптимизировал бы по Cache-Control и не разгружал бы origin по bandwidth — только распределял бы соединения.",
+                "how_it_should_be": "Разделять: CDN — глобальный кэш (geo + HTTP layer), LB — локальное распределение трафика (L4/L7). Часто они используются вместе: CDN → LB → app."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CDN — это VPN-сервис, обеспечивающий зашифрованный туннель от пользователя до origin-сервера, минуя публичный интернет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VPN — отдельный класс продукта (туннелирование для приватности). CDN же — кэш и acceleration-слой, доступный публично. CDN терминирует TLS на edge, но не создаёт private туннель end-to-end.",
+                "source_of_confusion": "Cloudflare предлагает и CDN, и Zero Trust/WARP — пользователи смешивают эти линейки продуктов.",
+                "if_it_were_true": "Если бы CDN был VPN, у каждого пользователя был бы свой персональный кэш — но смысл shared cache как раз в том, чтобы один HIT покрывал тысячи клиентов.",
+                "how_it_should_be": "Различать: CDN — публичный shared cache; VPN — приватный туннель. Cloudflare WARP и Cloudflare CDN — разные сервисы одной компании."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем в архитектуре CDN между edge PoP и origin вводится дополнительный слой origin shield?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Origin shield заменяет TLS-сертификат origin своим, чтобы клиенты не знали реальный IP backend.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сокрытие origin IP и подмена сертификата происходят на edge PoP при TLS termination, а не на origin shield. Origin shield — это singleton-кэш для борьбы с thundering herd, а не security feature.",
+                "source_of_confusion": "Кандидаты смешивают `origin protection` (security) и `origin shield` (cache layer) — слова похожи, функции разные.",
+                "if_it_were_true": "Если бы shield отвечал за сертификаты, у него не было бы смысла как singleton-узла — каждый edge мог бы делать то же самое.",
+                "how_it_should_be": "Запомнить: origin shield — это анти-stampede кэш-слой. Скрытие origin IP — задача anycast/edge proxy."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Origin shield добавляет geo-локацию и страну клиента в HTTP-заголовки перед передачей запроса в origin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Geo-обогащение запросов (заголовки типа `CF-IPCountry`, `CloudFront-Viewer-Country`) делает edge PoP, который видит реальный IP клиента. Origin shield видит трафик уже от edge/regional и не имеет данных о клиенте напрямую.",
+                "source_of_confusion": "В документации CloudFront/Cloudflare много упоминаний `headers` и `origin` — легко смешать функции уровней.",
+                "if_it_were_true": "Если бы shield добавлял geo-заголовки, при cache HIT на edge их бы не было — клиент получал бы непоследовательные данные.",
+                "how_it_should_be": "Geo-обогащение — на edge PoP; origin shield — анти-stampede для cache MISS."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Origin shield — singleton-кэш перед origin, который коалесцирует cache MISS от десятков regional/edge кэшей и спасает origin от thundering herd.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без shield при cache MISS каждый regional кэш ходит в origin самостоятельно. Если 200 PoP одновременно запрашивают один новый объект — это 200 параллельных GET на origin. Shield делает один запрос в origin, остальные ждут — origin видит 1 RPS вместо 200.",
+                "example": "CloudFront Origin Shield: при release нового JS-бандла 600 edge PoP получают MISS и обращаются к regional caches; те идут в Origin Shield (один на регион), и только Origin Shield делает один fetch в S3. Cloudflare называет это Tiered Cache.",
+                "when_to_apply": "Большие каталоги с равномерной популярностью (e-commerce SKU, фото-storage), live-стриминг (один новый segment запрашивают тысячи плееров), любой high-traffic с frequent invalidation.",
+                "edge_cases": "Shield увеличивает latency на 1 RTT при cache MISS (дополнительный hop). Для малых сайтов с одним origin его польза минимальна. Выбирать shield-PoP географически близко к origin (минимизировать MISS-latency).",
+                "related": "[[cdn-interview#Q5]] cache hierarchy; [[cdn-interview#Q28]] cold start и pre-warming; [[caching-strategies-interview]] anti-stampede паттерны (single-flight, coalescing)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Origin shield — это WAF-слой, фильтрующий SQLi и XSS-атаки между edge и origin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фильтрация атак L7 — задача WAF (Cloudflare WAF, AWS WAF, Imperva), который работает на edge, до origin shield. Origin shield в фильтрации запросов не участвует, его роль — кэш-coalescing.",
+                "source_of_confusion": "Оба слова — `shield` и `WAF` — звучат как защита, поэтому смешиваются. AWS Shield (DDoS) тоже добавляет путаницу.",
+                "if_it_were_true": "Если бы shield был WAF, его настройки включали бы OWASP-правила и rate limiting, а не TTL и cache key.",
+                "how_it_should_be": "Различать: WAF — L7 firewall на edge; Origin Shield — singleton cache layer; AWS Shield — DDoS protection."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает anycast routing у CDN и почему пользователь попадает на ближайший PoP без явного выбора?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один и тот же IP-префикс анонсируется через BGP из множества PoP — провайдер клиента выбирает маршрут с наименьшей AS-path метрикой и попадает в географически близкий PoP.",
+              "correct": true,
+              "sections": {
+                "explanation": "Anycast использует свойство BGP: если один префикс объявляется из разных AS-локаций, маршрутизатор каждого ISP выбирает `лучший` маршрут по своим метрикам (обычно AS-path length, MED, local preference). Для клиента это выглядит как один IP, но физически он попадает в ближайший по BGP PoP. Failover при падении PoP — секундный (BGP withdraws префикс).",
+                "example": "Cloudflare DNS `1.1.1.1` — единый anycast IP, анонсируемый из AS13335 в 310+ PoP. Клиент из Москвы через Ростелеком попадает в MSK-IX за 5-10 мс, клиент из Берлина — в FRA PoP. Никаких DNS-трюков, маршрутизация на L3.",
+                "when_to_apply": "Глобальные сервисы с одним IP (DNS resolvers, CDN edges, DDoS scrubbing), где нужны быстрый failover и распределение DDoS по 300 точкам естественным образом.",
+                "edge_cases": "BGP-метрики не всегда отражают географию: из Москвы трафик может уехать через Франкфурт, если AS-path короче. Cloudflare использует consistent hashing для stateful connections, чтобы TCP-соединение не `прыгало` при BGP convergence.",
+                "related": "[[cdn-interview#Q4]] GeoDNS vs anycast; [[dns-interview]] DNS-резолвинг и GeoDNS; [[networking-interview]] BGP и AS-path."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CDN использует TCP `Initial Window Size`-handshake для определения RTT до клиента и направляет его на PoP с минимальной задержкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TCP IW и congestion control никак не выбирают PoP — они тюнят throughput уже после установки соединения. Выбор PoP делается на L3 через BGP/anycast или на L7 через DNS.",
+                "source_of_confusion": "TCP-параметры действительно влияют на CDN performance, но не на routing — путаются `performance tuning` и `traffic steering`.",
+                "if_it_were_true": "Если бы выбор PoP шёл по TCP-handshake, клиент сначала установил бы соединение со случайным PoP, затем пере-handshake в `правильный` — добавляя RTT, а не экономя их.",
+                "how_it_should_be": "Anycast — BGP-уровня; GeoDNS — DNS-уровня. TCP IW — параметр performance, не routing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CDN ставит JavaScript-агент на страницу, который замеряет RTT до всех PoP и перенаправляет следующие запросы на самый быстрый.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JS RUM-агенты для замера RTT существуют (NS1 Pulsar, Cedexis), но они применяются для multi-CDN steering, а не для базового anycast-routing. Anycast работает уже на самом первом запросе без JS.",
+                "source_of_confusion": "Real User Monitoring + traffic steering — реальная техника, но для multi-CDN, не для одного CDN.",
+                "if_it_were_true": "Если бы для попадания на ближайший PoP нужен был JS-агент, первый запрос всегда был бы медленный, и пользователи без JS (curl, mobile-app) не получали бы оптимизации.",
+                "how_it_should_be": "Anycast работает на L3 без участия клиента; JS-измерения — опциональный слой поверх для multi-CDN."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CDN использует HTTP/3 0-RTT для измерения connection latency и переключает клиента на ближайший PoP через QUIC connection migration.",
+              "correct": false,
+              "sections": {
+                "what_actually": "QUIC connection migration позволяет клиенту менять IP (Wi-Fi→LTE) без разрыва соединения, но не выбирает PoP. Маршрутизация в anycast делается до handshake — BGP-маршрутом.",
+                "source_of_confusion": "QUIC и 0-RTT — современные термины, легко связать с любой `latency optimization`.",
+                "if_it_were_true": "Тогда anycast не работал бы для HTTP/1.1 и TCP-only клиентов — а на практике он работает для любого протокола, включая UDP DNS.",
+                "how_it_should_be": "Anycast — на BGP-уровне, независим от HTTP-протокола. QUIC migration — для сохранения соединения, а не для выбора PoP."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевое отличие GeoDNS от anycast routing и когда какую технику выбирать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "GeoDNS работает на L4 (TCP), anycast — на L7 (HTTP). GeoDNS быстрее переключает трафик при падении PoP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GeoDNS работает на L7 в смысле DNS-протокола, но на сетевом уровне это про разные A-records (L3). Anycast — на L3 (BGP). Failover у anycast быстрее: секунды (BGP convergence) vs минуты (DNS TTL).",
+                "source_of_confusion": "Уровни OSI смешиваются, потому что DNS — это application protocol, который влияет на routing.",
+                "if_it_were_true": "Если бы GeoDNS был быстрее по failover, никто бы не покупал anycast — но реально anycast и быстрее, и не зависит от DNS resolver caching.",
+                "how_it_should_be": "Anycast — L3 BGP (секундный failover); GeoDNS — DNS-уровень (failover по TTL, минуты)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GeoDNS возвращает разный A-record по региону клиента, тогда как anycast объявляет один IP из многих PoP. GeoDNS дешевле, anycast быстрее по failover.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эта формулировка близка к истине, но в ней неточно `быстрее по failover`. Реально оба утверждения верны: anycast действительно быстрее (секунды vs минуты), но не из-за `failover` как такового, а из-за BGP convergence. Однако опция C даёт полную и точную картину гибридного использования.",
+                "source_of_confusion": "Это `почти правильный` ответ — содержит верные части, но не подсвечивает гибрид anycast+GeoDNS, который встречается в реальных multi-CDN системах.",
+                "if_it_were_true": "Если выбирать только из двух подходов как взаимоисключающих, потеряется реальная картина: большинство крупных CDN используют anycast как базу + GeoDNS как layer для multi-CDN.",
+                "how_it_should_be": "Знать оба механизма и понимать, что в production они комбинируются (anycast внутри одного CDN + GeoDNS между CDN)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "GeoDNS возвращает разные A-records по региону резолвера; anycast объявляет один IP через BGP из всех PoP. Часто их комбинируют: anycast как база, GeoDNS поверх для multi-CDN.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эта формулировка тоже верна и описывает реальный гибрид. Но более точное и контекстное описание выбора `когда что` даёт D — он чётко даёт критерий выбора по failover-времени и грануляции.",
+                "source_of_confusion": "Несколько вариантов содержат верные факты; нужно выбрать тот, который явно сравнивает по operational-критериям.",
+                "if_it_were_true": "Если бы это был основной выбор, ответ был бы полным; но интервьюер обычно ждёт сравнения по failover, контролю и стоимости.",
+                "how_it_should_be": "Использовать вариант D — он сравнивает на уровне operational trade-offs."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "GeoDNS даёт DNS-уровень control (per-country override, минутный failover по TTL); anycast — BGP-уровень (секундный failover, sticky-routing). Anycast — для собственно CDN edge, GeoDNS — для multi-CDN steering поверх.",
+              "correct": true,
+              "sections": {
+                "explanation": "Anycast надёжно держит TCP/QUIC соединения за счёт BGP-стабильности и BGP-уровня failover. GeoDNS даёт больше контроля (можно вручную направить страну на конкретный PoP), но привязан к DNS TTL — failover минутный, и resolver кэширует. В реальных архитектурах внутри одного CDN используется anycast, а между несколькими CDN (multi-CDN) — GeoDNS-steering через NS1/Cedexis.",
+                "example": "ozon.ru: Cloudflare anycast — базовая маршрутизация. NS1 GeoDNS поверх: 10% трафика из Уральского региона направлено на резервный CDN77 при сбое Cloudflare. Apple: Akamai + CloudFront + собственный CDN, steering через NS1 Pulsar.",
+                "when_to_apply": "Anycast — когда хочется sticky TCP-соединения и быстрый failover внутри одного CDN. GeoDNS — когда нужен явный контроль per-country или гибрид между несколькими CDN-провайдерами.",
+                "edge_cases": "GeoDNS зависит от резолвера: если клиент в РФ использует Google DNS (8.8.8.8), точность геолокации падает — нужен EDNS Client Subnet (ECS), который не все DNS-провайдеры поддерживают. Anycast тоже не идеален: BGP может направить через `длинный` AS-path.",
+                "related": "[[cdn-interview#Q3]] anycast в деталях; [[cdn-interview#Q26]] multi-CDN steering; [[dns-interview]] EDNS Client Subnet."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую роль играет regional cache в иерархии edge → regional → origin shield → origin?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Regional cache хранит TLS-сертификаты для группы PoP и распределяет их при обновлении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сертификаты хранятся на edge PoP (для SNI), их обновлением занимается отдельный control plane CDN. Regional cache — слой контентного кэша, не имеет отношения к certificate management.",
+                "source_of_confusion": "Regional как `региональный` ассоциируется с centralized management, но это про данные, не про сертификаты.",
+                "if_it_were_true": "Тогда rotation сертификата требовала бы инвалидации regional cache — но на практике certificate rotation и cache invalidation независимы.",
+                "how_it_should_be": "Regional cache — middle-tier контента; certificate management — отдельная control plane."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Regional cache — middle-tier между edge и origin shield: поглощает cache MISS от десятков PoP в регионе и даёт второй шанс на HIT, снижая нагрузку на shield/origin.",
+              "correct": true,
+              "sections": {
+                "explanation": "Regional cache (CloudFront Regional Edge Cache, Cloudflare Tier-2) располагается реже edge PoP, но имеет больше storage (10-100 TB). При MISS на edge запрос идёт в regional; если там HIT — origin не трогается. Эмпирически: edge HIT ratio 80-95%, из MISS-ов 50-80% закрываются regional, дальше только истинно холодные объекты доходят до shield.",
+                "example": "CloudFront в Москве: 5-10 edge PoP отдают hot working set (1-10 GB), при MISS идут в Регион EU (Дублин/Лондон) Regional Edge Cache (~100 TB). При MISS там — в Origin Shield. На 100k клиентских RPS origin видит 50-500 RPS.",
+                "when_to_apply": "По умолчанию у всех больших CDN. Особенно важен для каталогов с длинным хвостом (e-commerce SKU, фото-storage), где working set не помещается в edge PoP.",
+                "edge_cases": "Не путать с origin shield: regional — это горизонтальный слой (несколько в мире), shield — singleton перед origin. Не все CDN явно выделяют regional как отдельный слой (например, Bunny.net проще — edge → origin).",
+                "related": "[[cdn-interview#Q2]] полная архитектура слоёв; [[cdn-interview#Q28]] cold start; [[caching-strategies-interview]] hierarchical caching."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Regional cache — это копия origin в каждом регионе, доступная для writes от пользователей при низкой latency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Regional cache хранит только READ-копии контента. Writes по-прежнему идут в origin. Многомастер-репликация с writes на edge — отдельная техника (multi-region database), не CDN.",
+                "source_of_confusion": "Multi-region active-active базы пишут на ближайший регион, и термин `regional` напоминает это.",
+                "if_it_were_true": "Если бы regional принимал writes, CDN должен был бы решать consistency между регионами — но это вне scope CDN.",
+                "how_it_should_be": "Regional cache — только READ; writes всегда идут в origin."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Regional cache хранит логи доступа и аналитику trafficа для FOR-аналитики по регионам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Логи и аналитика собираются отдельной телеметрической pipeline (Logpush, CloudWatch Logs, Real-time Streaming). Regional cache — это контентный кэш, логи лишь сопутствующее.",
+                "source_of_confusion": "Cloudflare даёт аналитику по регионам, и кажется, что regional cache хранит для этого данные.",
+                "if_it_were_true": "Тогда отключение аналитики ломало бы кэш — на практике это независимые системы.",
+                "how_it_should_be": "Regional cache — контент. Аналитика и логи — отдельный pipeline (Q27)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевое отличие Pull CDN от Push CDN и для каких сценариев выбирают каждый?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pull CDN тянет файл из origin при первом запросе (lazy); Push CDN получает контент заранее через publish-pipeline. Pull — для больших каталогов с длинным хвостом, Push — для известного hot-set с критичным cold start.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pull CDN — default для большинства случаев: пользователь делает GET, edge при MISS тянет из origin, кэширует, повторные запросы — HIT. Не требует pre-population, работает с любым размером каталога. Push CDN — eager: контент загружается заранее (например, по CI/CD деплою или Steam-патчу), origin может быть оффлайн после публикации, cold start MISS отсутствует.",
+                "example": "Pull: e-commerce с миллионами SKU — большинство товаров запрашиваются редко, lazy fill идеален. Push: Steam/PSN game patches — Akamai заранее распределяет 50 GB патча на сотни PoP, в час H пользователи качают локально без MISS-latency. Apple Software Update — также push: к ProductLaunch контент уже на CDN.",
+                "when_to_apply": "Pull — default для динамически растущих каталогов (UGC, e-commerce, API). Push — для маленьких известных hot-set с критичной cold-start latency: game patches, software releases, лендинги перед маркетинговой кампанией.",
+                "edge_cases": "Гибрид: Pull + manual prewarm для known hot URLs (новый релиз, реклама). Netflix Open Connect — push популярного контента на OCA в ISP заранее. UGC viral на YouTube — push реплицирует viral видео в regional caches.",
+                "related": "[[cdn-interview#Q28]] cold start и pre-warming; [[cdn-interview#Q9]] cache invalidation; [[caching-strategies-interview]] lazy vs eager loading."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pull CDN использует HTTP/2 для multiplexing запросов; Push CDN — HTTP/2 Server Push для отправки ресурсов до запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP/2 Server Push (proactive push from server to client) — это вообще другая концепция, и в Chrome поддержка убрана с 2022. Push CDN в архитектурном смысле — про pre-population кэша на edge через publish-pipeline, а не про HTTP/2 Push.",
+                "source_of_confusion": "Слово `push` встречается и в HTTP/2 Server Push, и в Push CDN — омонимия.",
+                "if_it_were_true": "Тогда любой CDN на HTTP/2 был бы `Push CDN`, что не различает архитектурных моделей.",
+                "how_it_should_be": "Push CDN — про pre-warming кэша (deploy-time), HTTP/2 Server Push — про proactive отправку ресурсов в TCP-соединении."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pull CDN — для статики (изображения, JS), Push CDN — для динамики (HTML, API). Выбор определяется типом контента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pull vs Push — про модель доставки контента на edge, а не про статику vs динамику. Pull может обслуживать любой контент (включая dynamic с micro-cache), Push — тоже (хотя обычно static).",
+                "source_of_confusion": "Динамика чаще НЕ кэшируется или кэшируется коротко, и кажется, что её `пушат`.",
+                "if_it_were_true": "Тогда API responses всегда были бы Push CDN — но это абсурдно: API динамическое и контент непредсказуем.",
+                "how_it_should_be": "Pull vs Push — про timing fill кэша, не про тип контента."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Push CDN дороже Pull CDN, потому что хранит больше копий; Pull дешевле из-за lazy loading.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost-модель сложнее: Pull платит egress origin × MISS-ratio (для каждой первой выборки), Push — egress только при publish (фиксированный, известный). При большом MISS-ratio Pull может стать дороже Push.",
+                "source_of_confusion": "Кажется, что хранить меньше = дешевле, но cost CDN включает egress, requests, invalidation — а не только storage.",
+                "if_it_were_true": "Тогда крупные стриминги всегда выбирали бы Pull, но Netflix Open Connect использует Push.",
+                "how_it_should_be": "Cost зависит от MISS-ratio и frequency обновлений, а не от Pull/Push модели как таковой."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают директивы Cache-Control `max-age` и `s-maxage`, и в чём между ними разница для CDN?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`max-age` — для CDN, `s-maxage` — для браузера. Если хочется разделить TTL — браузеру выставляют s-maxage, CDN — max-age.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Точно наоборот. `max-age` распространяется на любой кэш (включая браузер). `s-maxage` — только для shared caches (CDN, прокси) и оверрайдит max-age для них. Это позволяет дать CDN 24h, а браузеру 5 минут.",
+                "source_of_confusion": "Префикс `s-` ассоциируется с `server`, но это `shared` (shared cache).",
+                "if_it_were_true": "Если бы s-maxage был для браузера, разделить TTL CDN и браузера было бы невозможно стандартными заголовками.",
+                "how_it_should_be": "`max-age` — для всех кэшей; `s-maxage` — только shared (CDN), оверрайдит max-age для них."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`max-age` и `s-maxage` — синонимы из разных RFC; современные CDN используют только `s-maxage`, `max-age` устарел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обе директивы активны и определены в RFC 9111 (бывший 7234). `max-age` — обязательная, `s-maxage` — опциональная shared-cache override. Никакая не устаревшая.",
+                "source_of_confusion": "В legacy-коде встречается путаница, но оба директива в актуальной HTTP-семантике.",
+                "if_it_were_true": "Тогда браузеры игнорировали бы `max-age`, что сломало бы половину интернета.",
+                "how_it_should_be": "`max-age` — для всех, `s-maxage` — override для shared. Используются вместе."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`max-age=N` задаёт TTL для любого кэша (включая браузер); `s-maxage=N` — только для shared cache (CDN/прокси) и оверрайдит max-age для него. Это даёт раздельный TTL: браузеру короткий, CDN длинный.",
+              "correct": true,
+              "sections": {
+                "explanation": "RFC 9111: `max-age` распространяется на любой кэш (private + shared). `s-maxage` — расширение только для shared caches, оверрайдит max-age в этом контексте. Пример: `Cache-Control: max-age=300, s-maxage=86400` — браузер кэширует 5 минут, CDN 24 часа. Это позволяет быстро инвалидировать клиентский кэш (через purge на CDN + короткий browser TTL), но при этом разгружать origin за счёт длинного CDN-TTL.",
+                "example": "News-сайт: `Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=600`. Браузер 60 сек — пользователь видит свежие новости. CDN 5 минут — origin видит 1 запрос в 5 минут на популярную статью. SWR ещё 10 минут — клиент не видит MISS-latency.",
+                "when_to_apply": "Когда CDN-TTL должен быть длиннее browser-TTL: критичные обновления через purge на CDN (быстро инвалидирует всех), но клиент быстро видит новое.",
+                "edge_cases": "Некоторые CDN (Cloudflare default) игнорируют s-maxage и используют свой Edge TTL из Page Rules. Проверять в documentation конкретного CDN. Если origin шлёт только `max-age` без `s-maxage`, CDN использует max-age и для shared cache.",
+                "related": "[[cdn-interview#Q11]] Surrogate-Control vs Cache-Control; [[cdn-interview#Q10]] stale-while-revalidate; [[caching-strategies-interview]] TTL-management."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`max-age` указывается в секундах, `s-maxage` — в миллисекундах. Из-за этого `s-maxage=300` — это 300 мс, а `max-age=300` — 300 секунд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обе директивы в RFC 9111 определены в секундах. Никаких миллисекунд в HTTP cache headers нет.",
+                "source_of_confusion": "JavaScript использует миллисекунды в setTimeout/Date, и иногда кандидаты переносят это на HTTP.",
+                "if_it_were_true": "Тогда `s-maxage=300` означало бы 0.3 сек — практически отсутствие кэша на CDN, что не соответствует поведению.",
+                "how_it_should_be": "Все TTL в Cache-Control — в секундах."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает заголовок `Vary` и почему `Vary: User-Agent` считается плохой практикой?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Vary` отключает кэширование на CDN, а `Vary: User-Agent` означает `не кэшировать для разных User-Agent` — что эквивалентно полному отключению кэша.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Vary` НЕ отключает кэш — он добавляет указанные headers в cache key. `Vary: *` — означает не кэшировать. `Vary: User-Agent` — создавать отдельную копию кэша для каждого уникального User-Agent.",
+                "source_of_confusion": "Vary действительно может фрагментировать кэш до near-zero, но это не то же самое, что `отключить`.",
+                "if_it_were_true": "Тогда `Vary: Accept-Encoding` тоже отключал бы кэш — но он, наоборот, корректное использование.",
+                "how_it_should_be": "Vary добавляет headers в cache key. Полное отключение — `Cache-Control: no-store` или `Vary: *`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Vary` управляет TTL по полям заголовков (Vary: Accept-Language=3600). Плох потому, что синтаксис не стандартизирован.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Vary` не управляет TTL — он указывает headers, влияющие на cache key. TTL задаётся через `Cache-Control: max-age/s-maxage`. Синтаксис `Vary: Header=N` не существует.",
+                "source_of_confusion": "Кандидаты путают `Vary` с rule-based TTL в CDN.",
+                "if_it_were_true": "Тогда Vary использовался бы вместо max-age, но он живёт параллельно как механизм cache key.",
+                "how_it_should_be": "Vary — про cache key (какие headers различать); Cache-Control — про TTL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Vary: A, B` добавляет значения headers A и B в cache key — CDN хранит отдельные копии для разных значений. `Vary: User-Agent` плох, потому что миллионы уникальных UA фрагментируют кэш до near-zero HIT.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cache key по default = URL (path+query). `Vary: Accept-Encoding` добавляет gzip/br/identity → CDN хранит 3 копии. `Vary: User-Agent` — каждая комбинация browser+version+OS — отдельная копия. В мире 100k+ уникальных User-Agent → 100k копий одного URL → HIT ratio падает к нулю, origin перегружен.",
+                "example": "Stack Overflow в 2013 включил `Vary: User-Agent` для A/B-тестов — cache HIT ratio упал с 95% до 30%, origin RPS вырос в 14 раз. Откатили через час. Cloudflare и CloudFront документируют это как antipattern.",
+                "when_to_apply": "`Vary: Accept-Encoding` — всегда корректно (gzip vs br). `Vary: Accept-Language` — если локализация на одном URL (но лучше разные URL: /ru/, /en/). `Vary: Cookie` — если кэш per-user (но обычно лучше bypass cache).",
+                "edge_cases": "`Vary: *` запрещает кэширование вовсе — используется когда контент зависит от параметров, не указанных в заголовках. Для tracking-параметров (utm_*, fbclid) использовать cache key normalization, а не Vary.",
+                "related": "[[cdn-interview#Q23]] cache-key smuggling; [[cdn-interview#Q9]] cache invalidation; [[cdn-interview#Q22]] cache poisoning через unkeyed headers."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Vary` — список headers, которые CDN не пересылает в origin. `Vary: User-Agent` плох, потому что origin не получает UA и не может логировать клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vary не контролирует forwarding headers в origin — это делается через cache policy (CloudFront Origin Request Policy). Vary влияет на cache key и client-facing behavior.",
+                "source_of_confusion": "И Vary, и forwarding headers связаны с заголовками — путаются.",
+                "if_it_were_true": "Тогда `Vary: Authorization` блокировал бы authentication в origin — но это не так.",
+                "how_it_should_be": "Vary → cache key. Forwarding → Origin Request Policy (CloudFront) / Cache Rules (Cloudflare)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой механизм инвалидации кэша даёт самую быструю propagation и подходит для e-commerce с тысячами SKU?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Purge by URL через CloudFront `create-invalidation` для каждого изменённого SKU — самый надёжный способ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Purge by URL работает, но дорог при тысячах invalidations ($0.005/path после 1000 free) и медленный — propagation 30 сек до 5 минут. При обновлении одного товара нужно инвалидировать листинг, search results, related products — десятки URL.",
+                "source_of_confusion": "Purge by URL — самый понятный механизм, кажется default-ным.",
+                "if_it_were_true": "Тогда e-commerce платили бы $5000+ за invalidations при каждом stock update — нерентабельно.",
+                "how_it_should_be": "Использовать purge by tag (Surrogate-Key / Cache Tags) — один тег `product-42` инвалидирует все URL с этим товаром."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Purge by tag (Surrogate-Key у Fastly, Cache Tags у Cloudflare): origin шлёт `Surrogate-Key: product-42 category-shoes`, purge by tag инвалидирует все URL с тегом за <1 сек глобально.",
+              "correct": true,
+              "sections": {
+                "explanation": "Origin при отдаче помечает response заголовком `Surrogate-Key: product-42 category-shoes brand-nike`. CDN хранит mapping tag → URLs. При изменении товара — `POST /purge {tags: [product-42]}` — все URL с этим тегом удаляются из кэша глобально. Fastly документирует <150 мс time-to-purge.",
+                "example": "Shopify использует Fastly Surrogate-Keys. При обновлении товара 42: одна команда инвалидирует /products/42, /collections/shoes, /search?q=nike, /api/products/42, /sitemap.xml — без необходимости знать все URL заранее. На 100k SKU + 50 listings = миллионы URL обслуживаются десятками тысяч тегов.",
+                "when_to_apply": "E-commerce, news (статья меняется → инвалидация статьи + author page + tag pages), CMS, любые системы с many-to-many между контентом и URL.",
+                "edge_cases": "Cache Tags — Cloudflare Enterprise only ($$$). Fastly Surrogate-Keys включены в base. CloudFront не имеет native tag-based purge — нужно делать через Lambda@Edge + DynamoDB. Лимиты: Cloudflare ~30 tags per response, Fastly без жёсткого лимита, но recommended <100.",
+                "related": "[[cdn-interview#Q22]] cache poisoning и WCD; [[cdn-interview#Q26]] multi-CDN purge coordination; [[caching-strategies-interview]] cache invalidation strategies."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "URL versioning (`/static/main.abc123.js`) — мгновенная `инвалидация` через смену хеша. Работает для любого контента, включая product pages.",
+              "correct": false,
+              "sections": {
+                "what_actually": "URL versioning идеален для JS/CSS assets (deploy-time hash), но не подходит для product pages: их URL должен быть стабильным для SEO и user-facing (`/products/42`, а не `/products/42-v789`).",
+                "source_of_confusion": "Versioning — мгновенный и бесплатный, и кажется универсальным.",
+                "if_it_were_true": "Тогда после каждого редактирования товара URL менялся бы — пользовательские bookmark`и ломались, SEO ranking пропадал.",
+                "how_it_should_be": "Versioning — для immutable assets (JS/CSS). Для product pages — purge by tag со стабильным URL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TTL refresh (просто подождать `s-maxage` истечения) — самый простой способ, экономит invalidation API calls.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL refresh подходит для некритичных данных, но не для e-commerce stock/price изменений: пользователь не должен видеть устаревшую цену 24 часа после смены.",
+                "source_of_confusion": "TTL refresh бесплатен и кажется привлекательным.",
+                "if_it_were_true": "Тогда price updates приходили бы с лагом в TTL — пользователь покупал бы по старой цене, бизнес теряет доверие.",
+                "how_it_should_be": "Для критичных обновлений — purge by tag (быстро); TTL refresh — для второстепенного контента."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает директива `stale-while-revalidate=N` и как она влияет на user-perceived latency?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "После истечения max-age/s-maxage CDN отдаёт устаревший ответ клиенту немедленно, параллельно фоном запрашивая свежую версию у origin. Клиент не видит MISS-latency.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без SWR: после истечения TTL клиент ждёт, пока CDN сходит в origin — это +100-500 мс. С SWR: CDN сразу отдаёт stale ответ (мгновенно), фоновая задача обновляет кэш. Следующие клиенты в течение SWR-окна тоже получают stale, потом — fresh. Чистый выигрыш для UX: latency p99 стабильна, никогда не вырастает в момент истечения TTL.",
+                "example": "News-сайт: `Cache-Control: max-age=60, stale-while-revalidate=600`. При 1000 RPS на статью в момент истечения 60 сек: без SWR — все 1000 клиентов ждут origin → spike в p99. С SWR — 999 получают stale за 5 мс, 1 фоновый запрос идёт в origin → p99 ровная.",
+                "when_to_apply": "News, blog posts, listings, любой контент, где допустима устаревшая версия на минуты. Cloudflare, CloudFront (с 2023), Fastly поддерживают.",
+                "edge_cases": "НЕ применять для financial data (баланс, цена) — пользователь увидит устаревшую цену. НЕ применять для personalized content без proper Vary. SWR на 24h означает что origin может быть down 24h, и клиент не узнает (это иногда нужно — см. stale-if-error).",
+                "related": "[[cdn-interview#Q7]] Cache-Control; [[cdn-interview#Q11]] Surrogate-Control; [[cdn-interview#Q28]] cold start mitigation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "stale-while-revalidate отключает revalidation через ETag — CDN всегда возвращает 200 без 304.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SWR работает поверх любого revalidation механизма. CDN может использовать ETag для проверки фоновой revalidation. Stale-versus-fresh — это про timing, не про код ответа.",
+                "source_of_confusion": "Revalidation как термин используется в разных контекстах.",
+                "if_it_were_true": "Тогда SWR ломал бы 304-семантику, ухудшая performance.",
+                "how_it_should_be": "SWR — про timing отдачи stale. 304 vs 200 — про body. Они ортогональны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SWR — это синоним `no-cache`: CDN всегда проверяет с origin перед отдачей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`no-cache` требует revalidation ПЕРЕД отдачей (синхронный round-trip). SWR — отдаёт stale СРАЗУ и revalidate асинхронно. Полностью противоположное поведение по латентности.",
+                "source_of_confusion": "Оба про revalidation, но timing разный.",
+                "if_it_were_true": "Тогда SWR не давал бы выигрыша в latency — но он именно для этого создан.",
+                "how_it_should_be": "no-cache — sync revalidation; SWR — async revalidation после stale-отдачи."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "SWR удлиняет max-age на N секунд — после истечения cache живёт ещё N секунд без revalidation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Простое удлинение TTL не делало бы async fetch — клиент по-прежнему получал бы stale без обновления. SWR именно про async fetch в фоне после истечения.",
+                "source_of_confusion": "Stale действительно отдаётся `дольше`, но ключевая часть — фоновый refresh, а не просто extension TTL.",
+                "if_it_were_true": "Тогда `max-age=60` + SWR=600` было бы эквивалентно `max-age=660` — но это игнорирует async revalidation.",
+                "how_it_should_be": "SWR = max-age + async background refresh window."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём отличие заголовка `Surrogate-Control` от `Cache-Control` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Surrogate-Control видит и origin, и клиент; Cache-Control — только origin. Используется для двустороннего управления кэшем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Точно наоборот. `Surrogate-Control` видят только CDN-edges (Akamai, Fastly), они удаляют его перед отдачей клиенту. `Cache-Control` видят все: и origin, и CDN, и клиент.",
+                "source_of_confusion": "`Surrogate` означает `замещающий` — звучит как `proxy`, но это про CDN-edge как замещающий cache.",
+                "if_it_were_true": "Тогда не было бы смысла иметь два заголовка — одного хватило бы.",
+                "how_it_should_be": "Surrogate-Control — приватный для CDN; Cache-Control — public для всех."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Surrogate-Control — расширение Akamai/Fastly, которое видят только CDN-edges (они удаляют его перед отдачей клиенту). Cache-Control — RFC-стандарт, видят все. Используется когда CDN-TTL не должен утечь к клиенту.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без Surrogate-Control одно поле `Cache-Control: s-maxage=86400, max-age=300` контролирует и CDN, и браузер. Surrogate-Control позволяет разделить: `Cache-Control: max-age=300` (видит клиент), `Surrogate-Control: max-age=86400` (видит только CDN). Клиент не знает, сколько CDN кэширует. Также позволяет использовать CDN-специфичные директивы без передачи их клиенту.",
+                "example": "Akamai: `Cache-Control: public, max-age=300` + `Surrogate-Control: max-age=86400, stale-while-revalidate=3600`. Браузер видит только 5-минутный TTL и нормальный Cache-Control. Akamai edge кэширует 24h. Полезно для compliance: client не видит infrastructure details.",
+                "when_to_apply": "Multi-CDN с разными TTL, когда client не должен знать CDN-internals, или когда используются проприетарные директивы (Akamai-specific, Fastly-specific).",
+                "edge_cases": "CloudFront не поддерживает Surrogate-Control — игнорирует, использует только Cache-Control. Cloudflare аналогично. Если deployment мульти-CDN, проверять поддержку у каждого. В 95% случаев достаточно `s-maxage` в Cache-Control.",
+                "related": "[[cdn-interview#Q7]] Cache-Control; [[cdn-interview#Q9]] purge by tag (Surrogate-Key); [[cdn-interview#Q26]] multi-CDN."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Surrogate-Control управляет TLS-сертификатами на edge; Cache-Control управляет cache TTL. Разные слои.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Surrogate-Control не имеет отношения к TLS. Это cache-control расширение для CDN-edge layer. TLS управляется отдельной control plane (ACM, Universal SSL).",
+                "source_of_confusion": "Surrogate как `замещающий` ассоциируется с certificate substitution.",
+                "if_it_were_true": "Тогда отключение Surrogate-Control ломало бы HTTPS — что не наблюдается.",
+                "how_it_should_be": "Surrogate-Control — про cache, не про TLS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Surrogate-Control — это устаревший заголовок из HTTP/1.0; в современных CDN он не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Surrogate-Control активно используется в Akamai и Fastly документации в 2024-2025. Не устаревший. CloudFront и Cloudflare его игнорируют, но это вопрос поддержки конкретного CDN, не устаревание.",
+                "source_of_confusion": "Не RFC-стандарт, и кандидаты думают `legacy`.",
+                "if_it_were_true": "Тогда Akamai/Fastly не документировали бы его как best practice — но они активно рекомендуют.",
+                "how_it_should_be": "Surrogate-Control — proprietary, но активный. Поддерживается Akamai, Fastly."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как CDN обрабатывает HTTP Range requests для больших файлов (видео, ISO-образы)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CDN не кэширует Range requests вообще — каждый range идёт в origin напрямую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современные CDN (CloudFront, Cloudflare, Fastly) кэшируют Range requests, но логика сложнее: обычно кэшируют целый объект при первом fetch, потом отдают ranges из кэша.",
+                "source_of_confusion": "Range — это `partial`, и кажется, что cachable только полные ответы.",
+                "if_it_were_true": "Тогда видео-стриминг положил бы origin под нагрузкой — каждый chunk ходил бы в origin.",
+                "how_it_should_be": "CDN кэширует объект целиком (background fetch full object); ranges отдаются из cached копии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CDN хранит отдельную копию для каждого range — `bytes=0-1023` и `bytes=1024-2047` — две разные cache entry.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это было бы катастрофически неэффективно: 1 GB файл с 1000 разных ranges = 1000 копий до 1 GB. CDN кэшируют объект целиком и отдают ranges по запросу.",
+                "source_of_confusion": "Cache key включает headers — кандидат думает, что Range header тоже в ключе.",
+                "if_it_were_true": "Storage CDN взорвался бы при первой кампании видео-стриминга.",
+                "how_it_should_be": "Cache key = URL, не URL+Range. Object cached целиком, ranges — частичные ответы из кэша."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CDN при первом fetch тянет ПОЛНЫЙ объект из origin (background), кэширует, затем отдаёт ranges из cached копии. Origin shield критичен — иначе при cold start все edge тянут полный файл одновременно.",
+              "correct": true,
+              "sections": {
+                "explanation": "CloudFront, Cloudflare, Fastly: при первом Range request fetch на edge тянется полный объект (через `Origin Response Timeout`), кэшируется, далее любой Range отдаётся из кэша. Это эффективно: один full fetch — миллион ranges. Но: при cold start без origin shield каждый из 300 PoP делает свой full fetch → thundering herd на origin.",
+                "example": "Steam game patch 50 GB: при release millions клиентов запрашивают ranges (resumable download). Без shield: 300 PoP × 50 GB = 15 TB egress origin за час. С shield: 1 × 50 GB → shield → 300 PoP за час. Akamai pre-positions через push для популярных игр.",
+                "when_to_apply": "Видео-стриминг (HLS/DASH сегменты лучше pre-segment), software downloads (.iso, .dmg, .exe), large file CDN. Для real video — лучше CMAF chunks как обычные GET, без Range.",
+                "edge_cases": "CloudFront `Origin Range Requests` (опц.) — пробрасывает Range в origin вместо кэширования full object. Полезно для очень больших файлов (>10 GB), но снижает HIT ratio. Range на CDN не поддерживается для PUT/POST.",
+                "related": "[[cdn-interview#Q2]] origin shield; [[cdn-interview#Q17]] video streaming с pre-segmentation; [[cdn-interview#Q28]] cold start mitigation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CDN использует HTTP/3 partial responses вместо Range requests — современный стандарт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP/3 не отменяет Range — это всё та же семантика. `partial responses` как термин не существует. Range requests — HTTP/1.1+ feature, работает на любой версии HTTP.",
+                "source_of_confusion": "HTTP/3 — новое, и кажется, что оно меняет всю семантику.",
+                "if_it_were_true": "Тогда HTTP/1.1 клиенты не могли бы качать большие файлы — что неверно.",
+                "how_it_should_be": "Range requests — стандарт HTTP, не зависит от версии. CDN обрабатывает одинаково."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что даёт TLS termination на edge PoP CDN и какие связаны риски с точки зрения compliance?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "TLS termination сокращает trust boundary — origin не нужно иметь сертификат, CDN всё подписывает сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Origin может (и должен) иметь свой TLS-сертификат для leg CDN→origin (если используется HTTPS). Edge TLS не отменяет необходимость TLS до origin — иначе трафик `idle` на public internet был бы plaintext.",
+                "source_of_confusion": "TLS termination как термин подразумевает `завершение` — кажется, что дальше TLS не нужен.",
+                "if_it_were_true": "Тогда трафик edge→origin шёл бы plaintext через интернет — MITM ловил бы всё.",
+                "how_it_should_be": "TLS на edge — для клиента; TLS edge→origin — отдельный slot (рекомендован)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "TLS termination на edge ускоряет handshake (RTT ниже до клиента), но требует mTLS edge→origin для безопасности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эта формулировка частично верна, но не покрывает основные операционные плюсы (SNI, OCSP stapling, connection reuse) и риски compliance (CDN видит plaintext).",
+                "source_of_confusion": "Близка к истине, но неполна.",
+                "if_it_were_true": "Тогда основной вопрос интервьюера про trade-offs не закрыт.",
+                "how_it_should_be": "Полный ответ — D: latency + connection reuse + OCSP + SNI vs PCI/compliance риск."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "TLS termination на edge снижает security — компрометация одного PoP даёт доступ ко всему трафику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эта формулировка слишком общая. Компрометация PoP даёт доступ к трафику этого PoP, не ко всему. CDN изолируют PoP друг от друга, ключи rotate автоматически. Compliance-риск — про доверие CDN-провайдеру, а не про PoP-compromise.",
+                "source_of_confusion": "Security/compliance смешиваются.",
+                "if_it_were_true": "Тогда CDN были бы катастрофическим anti-pattern, но они стандарт.",
+                "how_it_should_be": "Compliance-риск — CDN видит plaintext (юрисдикция, PCI-DSS). PoP-compromise — отдельный вопрос rotation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TLS terminates на edge — handshake близко к клиенту (5-50 мс vs 200 мс до origin), connection reuse edge→origin, OCSP stapling, SNI для millions доменов на одном IP. Риск: CDN видит plaintext — проблема для PCI-DSS и compliance в чужой юрисдикции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Edge TLS даёт latency (handshake 1-2 RTT экономия), connection pooling (100 клиентов через один HTTP/2 connection к origin), OCSP stapling (CDN запрашивает OCSP-response раз в 5-10 мин и прикладывает к ServerHello, клиенту не нужно ходить в CA), SNI (один anycast IP = миллионы доменов). Минус — CDN-провайдер видит plaintext: проблема для PCI-DSS (платёжные данные) и compliance в стране с другими законами.",
+                "example": "Cloudflare видит весь трафик клиента после TLS termination. Для PCI: либо `Keyless SSL` (приватный ключ в инфраструктуре клиента, CDN дергает Keyless server для подписи), либо end-to-end TLS passthrough (теряем edge оптимизации). AWS Certificate Manager Private CA + CloudFront — аналогичный подход.",
+                "when_to_apply": "TLS termination — default для большинства сценариев (web, API, mobile). Keyless SSL / end-to-end TLS — финансовые сервисы, медицинские, гос. в чужой юрисдикции.",
+                "edge_cases": "`Authenticated Origin Pulls` (Cloudflare) — origin принимает запросы только с client cert от CDN, защищает от bypass CDN. mTLS edge→origin — следующий уровень. Misissued certificates — если CDN скомпрометирован, может выпустить сертификат на ваш домен — CAA records ограничивают.",
+                "related": "[[cdn-interview#Q14]] HTTP/2/3; [[cdn-interview#Q15]] 0-RTT; [[networking-interview]] TLS handshake."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое ключевое преимущество HTTP/3 (QUIC) над HTTP/2 для CDN-трафика на mobile-сетях?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "QUIC работает поверх UDP и не страдает от head-of-line blocking на транспорте, плюс поддерживает connection migration — клиент меняет IP (Wi-Fi → LTE) без разрыва соединения.",
+              "correct": true,
+              "sections": {
+                "explanation": "HTTP/2 multiplexes streams в одном TCP-соединении, но при packet loss на TCP-уровне все streams ждут retransmission (head-of-line blocking). QUIC поверх UDP реализует независимые streams на уровне приложения — потерянный пакет в одном stream не блокирует другие. Connection migration: QUIC connection идентифицируется не (IP,port), а Connection ID — клиент может сменить IP, и connection продолжается.",
+                "example": "Mobile-пользователь в метро: Wi-Fi пропал, LTE подключился. С HTTP/2 — все TCP-соединения рвутся, нужно re-handshake (+200-500 мс). С HTTP/3 — connection migration, video stream продолжается без буферизации. Cloudflare измерял: HTTP/3 даёт 20-40% снижение p95 latency на mobile vs HTTP/2.",
+                "when_to_apply": "Mobile-traffic heavy (apps, video streaming), real-time (chat, gaming), lossy networks (3G, поезда, метро). По умолчанию включать на CDN — Cloudflare с 2019, CloudFront с 2022, Fastly с 2022.",
+                "edge_cases": "HTTP/3 = UDP/443. Некоторые corporate firewall блокируют UDP/443 — клиент fall back на HTTP/2. Linux kernels до 5.13 не имеют io_uring оптимизаций QUIC — performance суб-оптимален на старых server OS. Альт-Svc заголовок: `Alt-Svc: h3=:443` — клиент пробует HTTP/3 в следующий раз.",
+                "related": "[[cdn-interview#Q13]] TLS termination; [[cdn-interview#Q15]] 0-RTT; [[networking-interview]] QUIC и UDP."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "HTTP/3 использует обязательный compression body (Brotli), что сокращает размер ответов в 2-3 раза.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Brotli compression доступен в HTTP/1.1, HTTP/2 и HTTP/3 одинаково — это про Content-Encoding, не про версию HTTP. HTTP/3 не делает body compression обязательным.",
+                "source_of_confusion": "HTTP/2 ввёл HPACK для header compression, HTTP/3 — QPACK; кандидаты переносят это на body compression.",
+                "if_it_were_true": "Тогда любой HTTP/3 ответ занимал бы меньше — но мы видим, что разница не от версии HTTP, а от Content-Encoding.",
+                "how_it_should_be": "Brotli — content encoding, независим от HTTP version. HTTP/3 ускоряет за счёт QUIC, не compression."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "HTTP/3 поддерживает server push для preloading ресурсов до запроса клиента, в HTTP/2 это удалено.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Точно наоборот. HTTP/2 ввёл Server Push, но он не получил поддержки (Chrome убрал в 2022) — мало кто использовал. HTTP/3 не включает Server Push вовсе. Современный preload — через `<link rel=preload>` или 103 Early Hints.",
+                "source_of_confusion": "Server Push звучит как modern feature.",
+                "if_it_were_true": "Тогда HTTP/3 был бы шагом назад в этом аспекте.",
+                "how_it_should_be": "Server Push deprecated в обоих; preload — через HTML link или 103 Early Hints."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HTTP/3 устраняет необходимость в TLS — QUIC шифрует на транспортном уровне самостоятельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "QUIC интегрирует TLS 1.3 в свой handshake — TLS не отдельный слой, но он по-прежнему есть. Шифрование происходит, но через TLS 1.3 ключи.",
+                "source_of_confusion": "Интеграция TLS 1.3 в QUIC звучит как `замена TLS`.",
+                "if_it_were_true": "Тогда не было бы возможности использовать сертификаты — но они используются как раньше.",
+                "how_it_should_be": "QUIC = TCP+TLS 1.3 в одном слое, не замена. Сертификаты, OCSP — те же."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое 0-RTT в TLS 1.3 и почему его не применяют для POST/PUT-запросов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "0-RTT отключает шифрование при повторном handshake — следующий запрос идёт plaintext. Поэтому POST не используется (sensitive data).",
+              "correct": false,
+              "sections": {
+                "what_actually": "0-RTT данные ШИФРУЮТСЯ — PSK (Pre-Shared Key) из session ticket используется для шифрования. Plaintext данных нет. Проблема — replay risk, не лекейдж шифрования.",
+                "source_of_confusion": "`Zero` ассоциируется с `отсутствие шифрования`, но zero — это про round trips, не security.",
+                "if_it_were_true": "Тогда 0-RTT был бы катастрофой и его никто бы не включал — но он стандарт.",
+                "how_it_should_be": "0-RTT шифрует через PSK, проблема — replay, не plaintext."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "0-RTT означает 0 байт данных в первом пакете — handshake выполняется в фоне. Используется для GET, потому что POST требует full handshake.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Точно наоборот: 0-RTT означает что в первом пакете УЖЕ есть данные приложения. `Zero Round-Trip` — не про байты, а про round trips (0 RTT латентности).",
+                "source_of_confusion": "`0-RTT` буквально читается как `0 byte`.",
+                "if_it_were_true": "Тогда вся идея 0-RTT теряет смысл — отсутствие data не ускоряет.",
+                "how_it_should_be": "0-RTT = данные в первом пакете до завершения handshake. Используется через PSK."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "0-RTT — клиент шифрует данные через PSK из предыдущего session ticket и шлёт сразу с ClientHello. Атакующий не может расшифровать, но может перехватить и реплеить пакет — поэтому только для идемпотентных GET.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обычный TLS 1.3 handshake = 1 RTT (200 мс на mobile). 0-RTT использует PSK из предыдущей сессии — клиент уже шифрует данные приложения и шлёт с ClientHello, не дожидаясь ServerHello. Сервер расшифровывает, отвечает. RTT = 0 на handshake. Risk: 0-RTT данные не имеют forward secrecy в смысле replay protection — атакующий может перехватить пакет и реплеить N раз. Для GET (idempotent) это безопасно, для POST (`/api/transfer`) — нет.",
+                "example": "Cloudflare включает 0-RTT по умолчанию только для GET. Picture / JS resources — 50-200 мс выигрыш на первом запросе после повторного коннекта. Mobile app, переключающийся между Wi-Fi и LTE: каждое переподключение даёт 0-RTT выигрыш. CloudFront 0-RTT с 2023.",
+                "when_to_apply": "Static content, idempotent GET API endpoints, mobile apps с частыми переподключениями. Image/video CDN — идеально.",
+                "edge_cases": "Anti-replay cache на сервере (5-10 сек nonce window). Если у сервера есть state — записать nonce в Redis. Для строго anti-replay — отказаться от 0-RTT и использовать 1-RTT.",
+                "related": "[[cdn-interview#Q13]] TLS termination; [[cdn-interview#Q14]] HTTP/3 и QUIC; [[networking-interview]] TLS 1.3 handshake."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "0-RTT — клиент пропускает certificate validation для повторного подключения, что небезопасно для POST с auth tokens.",
+              "correct": false,
+              "sections": {
+                "what_actually": "0-RTT использует session ticket PSK, но это не отменяет certificate validation. Сертификат уже был проверен в предыдущей session, ticket — символ доверия. Атакующий без PSK не может выдать себя за сервер.",
+                "source_of_confusion": "PSK и certificate validation путаются в head.",
+                "if_it_were_true": "0-RTT был бы MITM-уязвим — но это не так.",
+                "how_it_should_be": "Cert validation OK; risk 0-RTT — replay, не impersonation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как CDN с image optimization (Cloudflare Images, Akamai Image Manager) сокращает bandwidth для responsive web?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CDN скачивает все возможные размеры изображения на edge при первом запросе, чтобы любой size был мгновенно доступен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CDN не делает eager pre-rendering всех размеров — это была бы катастрофа по storage. Resize выполняется on-demand при первом запросе конкретного варианта, потом кэшируется. Дальше тот же variant — HIT.",
+                "source_of_confusion": "`Pre-generation` звучит логично, но storage cost запрещает.",
+                "if_it_were_true": "Тогда на 100 размеров × 10 форматов = 1000 копий каждого изображения.",
+                "how_it_should_be": "Lazy: первый запрос на `w=400,format=avif` генерирует variant и кэширует; повторные — HIT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Origin хранит master image (lossless PNG/AVIF), CDN на лету ресайзит/перекодирует через URL-параметры (`w=400,format=auto`), отдаёт WebP/AVIF в зависимости от Accept header. Кэширует variants на edge.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pipeline: оригинал 5-20 MB → CDN с URL `imagedelivery.net/abc/w=400,format=auto` → CDN читает Accept header (если поддерживается AVIF — отдаёт AVIF, иначе WebP, иначе JPEG), делает resize до 400px, кэширует. Размер на клиенте — 30-100 KB вместо 5 MB. WebP -25-35% vs JPEG, AVIF -50%.",
+                "example": "Shopify, Cloudinary, Cloudflare Images: master image хранится в bucket, на странице — `<img srcset='img.webp?w=400 400w, img.webp?w=800 800w'>` + `sizes='(max-width: 600px) 400px, 800px'`. Browser выбирает size по viewport. На retina (DPR=2) выбирает 800w. CDN отдаёт AVIF если поддерживается. Result: 100 KB вместо 5 MB.",
+                "when_to_apply": "Любой product images, blog hero, user-uploaded photos, marketing landing. Mobile-first сайты — обязательно (LCP метрика напрямую страдает от больших изображений).",
+                "edge_cases": "Master image должен быть в lossless или high-quality формате — иначе re-compression artifacts накапливаются. URL-параметры должны быть в whitelist cache key (иначе атакующий генерирует millions variant и заполняет storage). DPR>2 (Retina) — отдавать 2x размер.",
+                "related": "[[cdn-interview#Q17]] video streaming; [[cdn-interview#Q19]] edge compute для custom transforms; [[network-performance-interview]] LCP оптимизация."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CDN использует HTTP/2 Server Push для отправки оптимизированных версий изображения до запроса клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP/2 Server Push deprecated (Chrome убрал в 2022). Image optimization — про resize/format conversion on the fly, не про push.",
+                "source_of_confusion": "Server Push звучит как `прокачивающий performance`.",
+                "if_it_were_true": "Server Push неактивен в современных браузерах.",
+                "how_it_should_be": "Image optimization — про on-demand transform, не push."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CDN заменяет image на placeholder text при slow networks, скачивая полную версию когда сеть улучшится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это про progressive loading / lazy loading на стороне браузера (`<img loading=lazy>`, Intersection Observer). CDN не подменяет content — он отдаёт то, что запросили.",
+                "source_of_confusion": "Smart browsers делают placeholder, и кажется, что это CDN.",
+                "if_it_were_true": "CDN не имеет права менять content без согласия origin.",
+                "how_it_should_be": "Lazy loading — browser-side, CDN отдаёт корректный variant."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём преимущество CMAF (Common Media Application Format) перед раздельными HLS-only или DASH-only сегментами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CMAF поддерживает encoding в реальном времени без encoder, упрощая live-streaming.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CMAF — про контейнерный формат, не про encoder. Real-time encoding делается через FFmpeg, AWS Elemental MediaConvert, GPU encoders.",
+                "source_of_confusion": "`Common` и `Application Format` звучат как `всё в одном`.",
+                "if_it_were_true": "Тогда CMAF замещал бы кодеки — но он только контейнер.",
+                "how_it_should_be": "CMAF — контейнер chunks. Encoding — отдельный pipeline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CMAF использует UDP вместо HTTP, что снижает latency для live-stream.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CMAF — это контейнер (CMAF media segments .cmfv/.cmfa), доставляется через HTTP как любой другой формат. UDP-based streaming — это WebRTC, SRT, RIST, не CMAF.",
+                "source_of_confusion": "Low-latency streaming ассоциируется с UDP.",
+                "if_it_were_true": "Тогда CDN не мог бы кэшировать CMAF (CDN — HTTP-only).",
+                "how_it_should_be": "CMAF over HTTP — стандарт. UDP — отдельные протоколы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CMAF позволяет использовать proprietary кодеки Apple Lossless без лицензирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CMAF — контейнерный формат, не про кодеки. Используются стандартные кодеки (H.264, H.265, AV1) с обычным лицензированием.",
+                "source_of_confusion": "Apple HLS history ассоциируется с proprietary.",
+                "if_it_were_true": "Тогда CMAF был бы Apple-only, но это open spec MPEG.",
+                "how_it_should_be": "CMAF — контейнер, кодеки — стандартные."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CMAF — общий контейнер `.cmfv`/`.cmfa`, поддерживающий и HLS, и DASH одновременно. Storage cost снижается в 2 раза: один файл — два playlist (`.m3u8` для HLS и `.mpd` для DASH).",
+              "correct": true,
+              "sections": {
+                "explanation": "До CMAF: HLS использовал `.ts` (MPEG-TS) сегменты, DASH — `.m4s` (fMP4) сегменты. Чтобы поддержать оба, origin кодировал контент дважды → 2x storage cost. CMAF унифицировал контейнер: один `.cmfv` файл (fMP4) работает и в HLS, и в DASH playlist. CDN кэширует один файл, плееры обоих форматов используют тот же chunk.",
+                "example": "Netflix перешёл на CMAF в 2018 — storage cost сократился вдвое (петабайты сэкономлено). Bitmovin, AWS MediaConvert поддерживают CMAF output. LL-HLS (Low-Latency HLS, Apple 2019) — построен на CMAF chunks с EXT-X-PART для частей сегментов.",
+                "when_to_apply": "Любая VOD/live стриминговая платформа, которая поддерживает и iOS (HLS native), и web/Android (DASH). Также — снижение CDN egress: один cached chunk → два formatа клиентов.",
+                "edge_cases": "Safari нативно поддерживает HLS, не DASH. Chrome поддерживает оба через MSE. iOS playback — только HLS (политика Apple). CMAF chunks с разной длиной (LL-HLS 0.2-2 сек vs обычный HLS 2-10 сек) — выбор compromise между latency и эффективностью.",
+                "related": "[[cdn-interview#Q12]] Range requests для видео; [[cdn-interview#Q2]] origin shield для live; [[edge-computing-interview]] edge compute для personalization."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое micro-caching и почему 1-секундный кэш на новостном сайте может снизить origin RPS в 100-1000 раз?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Micro-caching — короткий `s-maxage=1-5` сек на dynamic content. При 1000 RPS на статью origin видит 1 RPS вместо 1000, потому что в течение 1 сек все запросы получают HIT.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без cache: 1000 RPS = 1000 origin requests/сек. С `s-maxage=1`: каждую секунду первый запрос делает MISS, остальные 999 — HIT. Origin видит 1 RPS — снижение в 1000 раз. Пользователь получает данные с лагом ≤1 сек — терпимо для news, listings, search results. Часто комбинируется с stale-while-revalidate=60 для никогда не MISS-latency.",
+                "example": "Reddit главная страница: hot post получает 5000 RPS. Fastly с micro-cache `s-maxage=2`: origin видит 0.5 RPS, cache HIT 99.99%. Эффект масштабирования: можно держать главную страницу на одном маленьком backend без auto-scaling.",
+                "when_to_apply": "News feeds, social media feeds, search results, listings, любой dynamic content где user-perceived лаг 1-5 сек не критичен. Не подходит для transactional (banking, e-commerce checkout).",
+                "edge_cases": "При cold start (только что задеплоен или invalidate) — первый запрос ждёт origin. Origin coalescing (Cloudflare in-flight coalescing, CloudFront origin coalescing) — несколько одновременных MISS на один URL коалесцируются. Personalized content — micro-cache не работает без Vary: Cookie или edge compute.",
+                "related": "[[cdn-interview#Q10]] stale-while-revalidate; [[cdn-interview#Q19]] edge compute для personalization; [[caching-strategies-interview]] caching dynamic content."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Micro-caching — кэш только маленьких файлов (<1 KB), типа CSS-фрагментов и иконок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Micro-caching — про короткий TTL (`micro time`), не маленький объект. Применяется к любым размерам, особенно к dynamic HTML/API.",
+                "source_of_confusion": "`Micro` ассоциируется с размером.",
+                "if_it_were_true": "Тогда не было бы выигрыша по origin RPS для крупных страниц — но он наблюдается.",
+                "how_it_should_be": "Micro-caching = micro TTL (1-5 сек), любой размер контента."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Micro-caching хранит только response headers, не body — экономит storage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Headers-only caching не имеет смысла — клиенту нужен body. Micro-caching хранит полный response, но недолго.",
+                "source_of_confusion": "Memory-efficient sounds like a goal.",
+                "if_it_were_true": "Без body клиент получал бы 200 OK с пустым ответом — бесполезно.",
+                "how_it_should_be": "Micro-cache хранит полный response короткое время."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Micro-caching — это in-memory cache на каждом edge PoP, синхронизируемый через gossip protocol с другими PoP за миллисекунды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Edge cache живёт на каждом PoP независимо — нет sync gossip между PoP в реальном времени. Coordination через regional/origin shield. Micro-caching — про TTL, не sync.",
+                "source_of_confusion": "Distributed systems терминология (gossip) кажется применимой.",
+                "if_it_were_true": "Тогда CDN был бы distributed database, что не его модель.",
+                "how_it_should_be": "Каждый PoP независим; синхронизация — через cache hierarchy (Q5)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем V8 isolates (Cloudflare Workers) отличаются от Lambda@Edge по cold start и use case?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "V8 isolates и Lambda@Edge — одна и та же технология, различие только в облачном провайдере (Cloudflare vs AWS).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные технологии: V8 isolates (Cloudflare Workers, CF Functions) — sandboxed контексты внутри одного V8 process с zero-cold-start (35-50 мкс), но ограниченным API. Lambda@Edge — полноценный Node.js/Python runtime с container-like isolation, cold start 100-500 мс, но полный API.",
+                "source_of_confusion": "Обе платформы для edge compute — кажется, что одинаковые.",
+                "if_it_were_true": "Тогда выбор был бы только по цене.",
+                "how_it_should_be": "V8 isolates vs Lambda — разные runtimes с разными trade-offs (cold start vs API completeness)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "V8 isolates запускают каждый запрос в отдельной VM с full OS isolation, Lambda — наоборот, shared runtime для всех.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Точно наоборот. V8 isolates — sandboxed контексты внутри ОДНОГО V8 process (no VM, no OS isolation), что даёт 0 cold start. Lambda@Edge — каждый container с своим runtime instance, что даёт cold start.",
+                "source_of_confusion": "Isolation как термин — путается с VM-level isolation.",
+                "if_it_were_true": "Тогда V8 isolates были бы тяжелее Lambda, не легче.",
+                "how_it_should_be": "V8 isolates — process-level sandbox (lightweight); Lambda — container-level (heavy)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "V8 isolates — sandboxed контексты внутри одного V8 process: 0 ms cold start, но 50 ms CPU лимит и Web API only (нет fs, child_process). Lambda@Edge — полный Node.js, cold start 100-500 ms, но 5 сек CPU. Workers — для лёгких трансформаций, Lambda — для heavy logic.",
+              "correct": true,
+              "sections": {
+                "explanation": "V8 isolates: множество sandboxed контекстов в одном V8 process. Старт нового isolate — 35-50 мкс (фактически 0). Но: 50 мс CPU лимит, 128 MB memory, Web API only (fetch, crypto, не fs/exec/child_process). Lambda@Edge: каждый запрос — отдельный container с Node.js/Python runtime. Cold start первого invocation 100-500 мс (init), warm — 0. Лимиты: 5 сек CPU, 128 MB memory, полный Node.js API.",
+                "example": "Cloudflare Workers — auth/JWT validation, A/B testing, image resize via Cache API, header rewriting, bot detection. Lambda@Edge — heavy SSR с npm-зависимостями, ML inference (мало кто делает), DB queries (через RDS Proxy). CloudFront Functions — самые жёсткие ограничения (1 мс CPU, 2 MB) для тривиальных URL rewrites и редиректов.",
+                "when_to_apply": "Workers — все edge запросы, lightweight logic, low latency. Lambda@Edge — когда нужны npm-зависимости, heavy compute, integration с AWS services. CF Functions — простые URL rewrite (replaces Apache mod_rewrite).",
+                "edge_cases": "V8 isolates — нет полного Node.js API; некоторые npm-пакеты не работают (нужны polyfills). Lambda@Edge — cold start добавляет latency p99, не подходит для ВСЕХ запросов (только некоторых behaviors). Fastly Compute@Edge — WASM-based, Rust/Go/JS, средние характеристики (35 мкс cold start, как isolates).",
+                "related": "[[edge-computing-interview]] детально про V8 isolates; [[cdn-interview#Q24]] cost сравнение; [[serverless-interview]] serverless архитектура."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "V8 isolates работают только в браузере, Lambda@Edge — только на сервере. Это разные слои deployment.",
+              "correct": false,
+              "sections": {
+                "what_actually": "V8 isolates запускаются на CDN edge (server-side), как и Lambda@Edge. V8 — движок JavaScript (Chrome использует V8 в браузере и Node.js использует V8 на сервере; Cloudflare использует V8 на edge).",
+                "source_of_confusion": "V8 ассоциируется с Chrome → браузер.",
+                "if_it_were_true": "Тогда Cloudflare Workers были бы клиентским JS, не edge runtime.",
+                "how_it_should_be": "V8 — движок, может быть в браузере, Node.js или edge worker. Cloudflare Workers — server-side."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как CDN с anycast и DDoS-protection поглощает атаки на 1+ Tbps без падения origin?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CDN перенаправляет атакующий трафик в IPv6, который имеет больше bandwidth, чем IPv4.",
+              "correct": false,
+              "sections": {
+                "what_actually": "IPv6 не имеет больше bandwidth — protocol stack аналогичный. DDoS-protection работает через распределение по anycast + scrubbing + filtering, не через смену protocol.",
+                "source_of_confusion": "IPv6 ассоциируется с `modern, faster`.",
+                "if_it_were_true": "Тогда IPv4-only клиенты не получили бы protection.",
+                "how_it_should_be": "DDoS — anycast distribution + scrubbing + L7 filtering."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Anycast распределяет атаку по 300+ PoP естественным образом (5 Tbps / 300 PoP = 16 Gbps per PoP), затем edge применяет rate limiting + bot management + WAF + scrubbing. Origin получает только clean traffic.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cloudflare network capacity = 250+ Tbps. Атака на 5 Tbps распределяется по 300+ PoP — каждый получает 16 Gbps, что для PoP с 100+ Gbps capacity легко поглощается. Дальше: L3/L4 SYN floods фильтруются на edge через connection rate limits, L7 HTTP floods — через rate limiting per IP + bot scoring (TLS fingerprint JA3/JA4, behavioral). WAF блокирует exploit attempts. Origin видит 0 атакующего трафика — только пропущенные легитимные запросы.",
+                "example": "Cloudflare 2024 — поглотили 3.8 Tbps атаку (рекордная). AWS Shield 2020 — 2.3 Tbps. KrebsOnSecurity 2016: Mirai botnet 620 Gbps — Akamai отказался обслуживать pro-bono после $1M+ оценочных расходов, Project Shield (Google) приютил.",
+                "when_to_apply": "Любой публичный сервис под риском DDoS: gaming, e-commerce, banking, government, journalism. Cloudflare Pro/Business — included; AWS Shield Advanced $3000/мес; Akamai Prolexic — enterprise pricing.",
+                "edge_cases": "Application-layer attacks (slowloris, expensive endpoint targeting) тоже фильтруются, но требуют WAF + rate limiting + edge compute (Cloudflare Bot Management). Volumetric absorption — не помогает против spoofed SYN floods на специфические ports — нужен scrubbing center.",
+                "related": "[[cdn-interview#Q21]] WAF; [[cdn-interview#Q22]] cache poisoning; [[cdn-interview#Q29]] real incidents."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CDN блокирует все запросы без cookie от предыдущей session — атакующие боты не имеют сессий, защищая origin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это сломало бы legitimate first-time visitors. Современные DDoS protections — поведенческие (TLS fingerprint, behavioral scoring), не session-based. JS challenge для подозрительных — да, но не для всех.",
+                "source_of_confusion": "Session-based protection — простой эвристический подход, кажется работающим.",
+                "if_it_were_true": "First-time users не могли бы открыть сайт.",
+                "how_it_should_be": "Поведенческое scoring + selective challenge для подозрительных."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CDN при DDoS использует BGP blackholing — анонсирует null route для своего IP, отбрасывая весь трафик до окончания атаки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Blackholing — это `выключить сервис вообще`, не protection. Применяется как последнее средство, но это и есть успех атакующего (full downtime).",
+                "source_of_confusion": "Blackholing — реальный механизм, путается с DDoS mitigation.",
+                "if_it_were_true": "Каждый DDoS заканчивался бы downtime.",
+                "how_it_should_be": "Blackholing — failure mode; proper protection — absorption + scrubbing + filtering."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему перед включением WAF Managed Rules в Block mode рекомендуется сначала запустить их в Count mode на 1-2 недели?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Count mode дешевле Block mode по биллингу — экономит затраты на rules processing.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Count и Block mode имеют одинаковую цену — обработка правила выполняется одинаково, разный только action. Cost не аргумент.",
+                "source_of_confusion": "Мониторинг ассоциируется с меньшими затратами.",
+                "if_it_were_true": "Тогда все продакшен-конфиги работали бы в Count.",
+                "how_it_should_be": "Count = Block по цене. Цель Count — анализ, не cost saving."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Count mode тренирует ML-модель WAF на real traffic, после чего она автоматически генерирует правила.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Managed Rules — статические rules от вендора (OWASP, Cloudflare, AWS, Imperva), не ML-обучаемые. Bot Management — отдельный продукт с ML, но это другая категория.",
+                "source_of_confusion": "ML/AI везде — кажется применимо.",
+                "if_it_were_true": "Любой клиент имел бы свою натренированную модель — но это enterprise feature, не default.",
+                "how_it_should_be": "Managed Rules — статические; Bot Management — ML, separate product."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Count mode требуется для compliance reporting перед deploy в production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Compliance не требует pre-deploy mode. Count — это operational best practice для предотвращения false positives, не compliance requirement.",
+                "source_of_confusion": "Audit/compliance — частая тема в security.",
+                "if_it_were_true": "Audit реестры включали бы Count mode как обязательный шаг — но это не так.",
+                "how_it_should_be": "Count — operational caution, не compliance step."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Managed Rules часто блокируют легитимный трафик (false positives) — например, regex на `union select` блокирует посты на forum о SQL. Count mode даёт неделю-две для анализа matches без impact пользователей.",
+              "correct": true,
+              "sections": {
+                "explanation": "OWASP Managed Rules используют regex/signatures, которые часто ловят legitimate content. Пример: правило `SQL injection — UNION SELECT` сматчит любое сообщение на форуме где обсуждается SQL. Сразу в Block mode — массовые жалобы пользователей. Count mode логирует matches без блокировки → анализ logs → tuning (exceptions для конкретных paths/headers) → потом Block.",
+                "example": "AWS WAF Managed Rule AWSManagedRulesCommonRuleSet включает SQLi/XSS правила. Stack Overflow при включении сразу в Block потеряли бы все вопросы про SQL. Cloudflare аналогично — Managed Rules имеют sensitivity levels (Off, Low, Medium, High) — рекомендуют начинать с Low + Count.",
+                "when_to_apply": "Любая первая активация Managed Rules. Также при добавлении новых rule groups, обновлении rules от вендора. После каждого деплоя нового feature на origin — мониторинг WAF logs на новые false positives.",
+                "edge_cases": "Custom rules от security team тоже стоит запускать в Count первые пару дней. Production-ready audit logs (AWS WAF Logs → S3 → Athena query) для анализа matches. После Block — мониторить customer support tickets на `not loading`, `403 errors`.",
+                "related": "[[cdn-interview#Q20]] DDoS protection; [[cdn-interview#Q22]] cache poisoning; [[security-interview]] WAF best practices."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Web Cache Deception (Omer Gil 2017, повторение Akamai 2020) и как от него защититься на CDN?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Атакующий запрашивает URL вида `/account.json/non-existent.css`. Origin отдаёт `/account.json` (игнорируя расширение), но CDN видит `.css` и кэширует приватный JSON как публичный статический ресурс. Защита: origin возвращать 404 на non-existent suffix; CDN — не кэшировать по URL extension без content-type check.",
+              "correct": true,
+              "sections": {
+                "explanation": "Vulnerability: CDN кэширует по URL-pattern (`.css/.js/.png` всегда cachable), origin парсит URL до первого `/` (`/account.json`) и отдаёт user-specific JSON. Атакующий заставляет жертву открыть `/account.json/foo.css` → CDN кэширует JSON как .css → любой может прочитать через тот же URL. PayPal, Trello, десятки сайтов были уязвимы в 2020.",
+                "example": "Akamai 2020: PayPal endpoint `/api/account.json` отдавал balance, transactions. Атакующий шлёт жертве ссылку `/api/account.json/anything.css` → Akamai кэширует с `Cache-Control: public, max-age=300` → атакующий обращается тем же URL → читает PII. Cloudflare добавил protection в 2021: cache rules content-type aware.",
+                "when_to_apply": "Защита нужна везде, где origin использует URL prefix matching без strict trailing check. Особенно — APIs возвращающие user data по path-based routing. WCD protection rules в Cache Rules: `path matches *.json/*` → cache: bypass.",
+                "edge_cases": "Cloudflare WCD protection (2021+) автоматически отключает caching для path/file.extension если content-type не соответствует extension. CloudFront не имеет автоматической защиты — нужно WAF rule или Cache Behavior с явным bypass. Origin best practice: возвращать 404 на любой path где non-existent file suffix.",
+                "related": "[[cdn-interview#Q23]] cache key smuggling; [[cdn-interview#Q29]] WCD как real incident; [[security-interview]] OWASP cache vulnerabilities."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Атакующий заполняет CDN cache мусорными запросами с уникальными query string, вытесняя legitimate content.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это cache flooding / cache busting attack — отдельная атака. WCD — про маскировку private response под cacheable static.",
+                "source_of_confusion": "Обе атаки на CDN cache, кажутся похожими.",
+                "if_it_were_true": "Защита от cache flooding — rate limiting + cache key normalization, не URL/content-type check.",
+                "how_it_should_be": "WCD — content-type mismatch; cache flooding — query string spam."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Атакующий вставляет malicious JavaScript в URL parameter, который CDN включает в cached HTML response.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это reflected XSS, не WCD. WCD — про CDN cache poisoning через путаницу content-type vs URL extension.",
+                "source_of_confusion": "Cache poisoning и XSS оба про injection.",
+                "if_it_were_true": "Защита была бы CSP + output encoding, не CDN-specific.",
+                "how_it_should_be": "WCD — different vector. См. Q22 для XSS prevention отдельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Атакующий использует HTTP Request Smuggling (CL.TE/TE.CL) для протаскивания второго запроса через CDN parser.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP Request Smuggling — отдельная атака (James Kettle 2019), позволяет poison cache, но через parser desync между CDN и origin. WCD — через content-type mismatch, не parser desync.",
+                "source_of_confusion": "Обе атаки на CDN cache, через mismatch CDN vs origin.",
+                "if_it_were_true": "Защита от smuggling — strict HTTP parsing. От WCD — content-type aware caching. Разные fixes.",
+                "how_it_should_be": "WCD ≠ Request Smuggling. См. Q23 для smuggling."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cache-key smuggling и почему важна одинаковая нормализация URL/headers на CDN и origin?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cache-key smuggling — это encryption headers для cache key, чтобы атакующий не мог восстановить URL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cache keys в CDN не шифруются — это идентификаторы для lookup. Smuggling — это атака использующая parser mismatch, не shifrование.",
+                "source_of_confusion": "Smuggling звучит как `прячут что-то`.",
+                "if_it_were_true": "Тогда cache lookup был бы expensive (crypto на каждый запрос).",
+                "how_it_should_be": "Smuggling = parser desync attack. Cache keys — plain identifiers."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cache-key smuggling — техника CDN для оптимизации cache key размера, упаковывает headers в hash.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Не вектор атаки, а defensive feature? Нет, smuggling — это всегда об уязвимости. Cache key compression (hashing) — отдельная техника, не smuggling.",
+                "source_of_confusion": "`Smuggling` может звучать как `compact representation`.",
+                "if_it_were_true": "Все CDN использовали бы это для эффективности — но это атака.",
+                "how_it_should_be": "Cache-key smuggling = атака через parser mismatch."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cache-key smuggling использует различия в парсинге URL/headers между CDN и origin (path normalization, query ordering, X-Forwarded-For parsing) для манипуляции cache key. Включая HTTP Request Smuggling (CL.TE/TE.CL). Защита: strict normalization на обеих сторонах + whitelist cache key.",
+              "correct": true,
+              "sections": {
+                "explanation": "Examples: CDN нормализует `/api/user/../admin` → `/api/admin` (cache key), origin парсит как `/api/user/../admin` и роутит на user (но cache key уже admin) → poisoned cache. Или: CDN берёт первый `X-Forwarded-For`, origin — последний, mismatch в cache key. HTTP Request Smuggling (CL.TE/TE.CL, PortSwigger James Kettle 2019) — Content-Length vs Transfer-Encoding desync между CDN и origin позволяет inject второй запрос в первый, poison cache.",
+                "example": "James Kettle (PortSwigger 2019) Black Hat — продемонстрировал smuggling на CloudFront/Akamai. Cloudflare/CloudFront добавили strict rejection ambiguous requests (conflicting CL+TE) в 2020. Burp Suite + HTTP Request Smuggler — стандартный pentest tool. Cache key smuggling на CloudFront — `/path?b=2&a=1` vs `/path?a=1&b=2` создают разные cache entries (query ordering).",
+                "when_to_apply": "Любой публичный сервис: pentest HTTP request smuggling периодически. Strict cache key: whitelist headers/query params explicitly. Cache key normalization идентичная на CDN и origin (canonical URL, sorted query, lowercase headers).",
+                "edge_cases": "Some CDNs (Cloudflare with Tiered Cache) делают partial normalization; нужно тестировать. Custom WAF rules для блокировки conflicting CL+TE. Reject запросов с `X-Forwarded-For` от непроверенных источников (`X-Forwarded-For` принимать только от CDN, не от client).",
+                "related": "[[cdn-interview#Q22]] WCD; [[security-interview]] HTTP smuggling; [[networking-interview]] HTTP parsing."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cache-key smuggling — техника DDoS, когда атакующий генерирует уникальные cache keys через query string spamming.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cache busting через query string spam — отдельная атака. Smuggling — про parser mismatch, не volume attack.",
+                "source_of_confusion": "Оба про cache abuse.",
+                "if_it_were_true": "Защита была бы rate limiting + query normalization, не parser checks.",
+                "how_it_should_be": "Cache busting ≠ cache-key smuggling. Разные defenses."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Cloudflare с unlimited egress оказывается дешевле CloudFront для e-commerce с 100 TB/мес трафика?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CloudFront использует HTTP/3, что увеличивает bandwidth costs из-за UDP overhead.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP/3 over UDP не имеет существенного overhead vs HTTP/2 — наоборот, эффективнее на mobile. Cost разница — между моделями pricing, не protocol.",
+                "source_of_confusion": "UDP overhead — техническая деталь, кажется значимой.",
+                "if_it_were_true": "Тогда отключение HTTP/3 удешевило бы CloudFront — но это не так.",
+                "how_it_should_be": "Cost model — flat (Cloudflare) vs metered (CloudFront), не про protocol."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cloudflare — flat pricing plans (Pro/Business/Enterprise) с unlimited egress; CloudFront — metered $0.085/GB. На 100 TB Cloudflare Business ~$200/мес, CloudFront ~$8500/мес egress + $3750 requests.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cloudflare модель: flat monthly plan ($20 Pro, $200 Business, custom Enterprise) с включёнными bandwidth/requests. Без overage fees. CloudFront: usage-based, $0.085/GB (US/EU), $0.114 (APAC), $0.0075/10k HTTP requests. На 100 TB трафика: Cloudflare $200 (flat) vs CloudFront $8500 (egress) + $3750 (5B requests) + invalidations = ~$12300. Разница 60x.",
+                "example": "Discord на Cloudflare — unlimited egress для billions сообщений. Shopify — Fastly, но Cloudflare R2 (object storage) + Workers для статики (free egress). AWS Cloud Native компании (Amazon, Hulu) — CloudFront несмотря на цены, потому что integration. Bunny.net — самый дешёвый ($0.005/GB) — $500 на 100 TB.",
+                "when_to_apply": "Стартапы и media-heavy companies — Cloudflare flat. AWS-stack companies — CloudFront несмотря на цены (S3 → CloudFront free vs $0.09/GB to internet). Budget — Bunny. Enterprise SLA — Akamai.",
+                "edge_cases": "Cloudflare Enterprise SLA — limited (99.99%) vs Akamai (99.999% banking-grade). Cloudflare не подходит для всех — нет CompliantCloud, как у AWS GovCloud. CloudFront integration с Lambda@Edge, MediaPackage, S3 Transfer Acceleration — value beyond price.",
+                "related": "[[cdn-interview#Q25]] сравнение игроков; [[cdn-interview#Q26]] multi-CDN; [[infrastructure-cost-interview]] cost optimization."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cloudflare экономит на storage costs за счёт лучшей дедупликации между PoP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CDN storage cost обычно не billed клиенту напрямую (включён в plan). Deduplication между PoP — это всё ещё много копий (нужны для latency). Real разница — pricing model, не storage.",
+                "source_of_confusion": "Deduplication как термин в storage экономии.",
+                "if_it_were_true": "Тогда меньше storage у CDN — меньше cache hit ratio, что хуже.",
+                "how_it_should_be": "Storage cost — secondary; primary discriminator — egress pricing."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "AWS взимает дополнительный margin поверх CDN ради Bezos`а — поэтому CloudFront дороже даже при cost-equivalent инфраструктуре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cloud pricing — про business model и market positioning, не personality. CloudFront имеет 600+ PoP (больше чем Cloudflare's 310), и AWS integration value-добавляет — это не `margin`.",
+                "source_of_confusion": "Cloud cost разговоры часто превращаются в blame.",
+                "if_it_were_true": "Тогда AWS terminated бы CloudFront — но это один из самых прибыльных сервисов.",
+                "how_it_should_be": "Cost difference — business model (flat vs metered), не margin."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбирать Akamai вместо Cloudflare или CloudFront для крупного web-проекта?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Когда нужен 99.999% enterprise SLA, 4100+ PoP для global reach (включая ISP-level Open Connect-like deployment), специализация на video streaming/banking — Akamai лидер в enterprise compliance. Минус — самые высокие цены и сложность.",
+              "correct": true,
+              "sections": {
+                "explanation": "Akamai — old-school enterprise CDN с самой большой сетью (4100+ PoP, включая deployment внутри ISP networks для last-mile optimization). Используют банки (HSBC, Lloyds), госструктуры (US gov), video streaming (Netflix частично через Akamai). 99.999% SLA, compliance со всеми standards (PCI-DSS, FedRAMP). Минус — pricing enterprise-only (no flat plans), сложность ($10k+/мес минимум).",
+                "example": "Banking: HSBC использует Akamai для compliance + 99.999% SLA — финансовая транзакция критична. US Federal — Akamai Edge Compute для gov. Netflix — Akamai + own Open Connect + Level3/Limelight как multi-CDN. Adaptive Media Delivery — Akamai специализация на видео.",
+                "when_to_apply": "Banking, fintech, healthcare, gov, large-scale video streaming — где SLA и compliance важнее цены. Также — компании уже на enterprise contract Akamai (legacy adoption).",
+                "edge_cases": "Akamai Bot Manager — top-tier protection; Akamai Image Manager — мощный. Но dev experience сложнее чем у Cloudflare (нет self-service, нужны Account Manager`ы). Pricing непрозрачный — все через sales. Smaller companies — Cloudflare/Fastly предпочтительнее.",
+                "related": "[[cdn-interview#Q24]] cost модель; [[cdn-interview#Q26]] multi-CDN с Akamai; [[cdn-interview#Q20]] DDoS Akamai Prolexic."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Когда нужна интеграция с AWS S3 и Lambda — Akamai единственный CDN с native AWS integration.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AWS native integration — это CloudFront. Akamai не имеет привилегированной AWS integration; работает с S3 как external origin, как любой CDN.",
+                "source_of_confusion": "Enterprise vendor associations — путаются.",
+                "if_it_were_true": "AWS не имел бы своего CDN — но CloudFront существует.",
+                "how_it_should_be": "AWS integration — CloudFront. Akamai — vendor-neutral enterprise."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Когда бюджет ограничен — Akamai дешевле всех в startup-сегменте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Точно наоборот. Akamai — самый дорогой enterprise CDN. Startup-tier — Cloudflare (free/Pro $20), Bunny ($0.005/GB).",
+                "source_of_confusion": "Akamai pricing непрозрачен, кандидат может предположить разное.",
+                "if_it_were_true": "Akamai захватил бы startup-сегмент — но они на Cloudflare/Vercel.",
+                "how_it_should_be": "Startup — Cloudflare/Bunny/Fastly. Akamai — enterprise."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Когда нужно edge compute на V8 isolates с нулевым cold start — Akamai EdgeWorkers лидер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "V8 isolates leader — Cloudflare Workers (изобрели концепцию). Akamai EdgeWorkers — также V8, но меньше adoption и feature parity. Лидерство в edge compute — Cloudflare.",
+                "source_of_confusion": "Все крупные CDN имеют edge compute, но не все равны.",
+                "if_it_were_true": "Cloudflare позиционировался бы как followers, но они leaders.",
+                "how_it_should_be": "Edge compute leadership: Cloudflare Workers (V8 isolates); Fastly Compute@Edge (WASM); Akamai EdgeWorkers — middle."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём основные trade-offs multi-CDN setup (Cloudflare + CloudFront + Akamai) и для каких сценариев это оправдано?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Multi-CDN — это только про availability (failover) — один CDN падает, другой берёт трафик. Performance и cost не меняются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-CDN решает несколько целей одновременно: availability, performance (best CDN per region), cost (negotiation power), vendor lock-in mitigation. Не только failover.",
+                "source_of_confusion": "Простейшее объяснение — availability — кажется единственным.",
+                "if_it_were_true": "Все бы использовали single CDN с redundancy — но multi-CDN активно растёт.",
+                "how_it_should_be": "Multi-CDN — multi-goal: availability + performance + cost + lock-in."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Multi-CDN всегда улучшает latency, так как клиент попадает на ближайший PoP среди всех CDN.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-CDN может улучшить latency через RUM-based steering, но это не автоматически. DNS-based steering вносит overhead (DNS resolution + caching). Внутри одного CDN anycast уже выбирает ближайший PoP.",
+                "source_of_confusion": "`Multi` ассоциируется с `больше — лучше`.",
+                "if_it_were_true": "Любой setup был бы faster — но multi-CDN добавляет complexity, которая может regressить performance.",
+                "how_it_should_be": "Latency improves только при правильном RUM steering, не автоматически."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Multi-CDN — это deprecated подход с 2020-х, когда Cloudflare/AWS достигли 99.99% reliability.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-CDN растёт: Fastly 2021 outage (49 мин) и Akamai 2021 (1 час) показали — single CDN dependency опасен для critical services. Netflix, Apple, Hulu — все на multi-CDN.",
+                "source_of_confusion": "Major CDN reliability действительно улучшилась.",
+                "if_it_were_true": "Netflix не использовал бы multi-CDN, но они на 4+ провайдерах.",
+                "how_it_should_be": "Multi-CDN — критичный паттерн для high-availability services."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Trade-offs: cost увеличивается в 1.5-2x (overhead), complexity растёт (purge на N CDN, разные cache headers, отдельные WAF rules), но выигрывает availability (Fastly 2021 + Akamai 2021 показали SPOF риск) + performance (best-of-N regionally) + negotiation. Оправдано для критичных services: финансы, медиа, gov.",
+              "correct": true,
+              "sections": {
+                "explanation": "Multi-CDN: 2+ провайдера parallel. Архитектуры: (1) active-passive — DNS failover при padении primary; (2) active-active — DNS steering на основе RUM (NS1 Pulsar, Cedexis), трафик балансируется по health и latency; (3) hybrid geographic — РФ → local CDN, EU → Cloudflare, US → CloudFront. Costs: overhead 1.5-2x (duplicate egress, separate plans). Complexity: cache invalidation на N CDN (нужен purge coordinator), отдельные WAF rules, monitoring на N dashboards.",
+                "example": "Netflix — Akamai + Level3 + Limelight + own Open Connect, NS1 steering. Apple — Akamai + CloudFront + own. Hulu — Akamai + CloudFront + Fastly. Wikipedia — Cloudflare + Fastly. Российские: ozon.ru — Cloudflare + CDN77 (local CDN77 для PCI compliance в РФ). Banking: один из крупных банков — Akamai + CloudFront с DNS failover.",
+                "when_to_apply": "Critical services с downtime cost > $100k/час: financial, e-commerce, video streaming, gov. Также — компании с global aud reach, где разные CDN лидируют в разных регионах (Cloudflare in EU, Akamai в Asia Pacific).",
+                "edge_cases": "Cache invalidation — нужна purge coordinator (custom script, Mux Mile-High, Datacake). Surrogate-Key / Cache Tags облегчают: один tag в коде → purge на всех CDN сразу. RUM data для steering — нужно собирать (NS1 Pulsar SDK на странице). DNS TTL trade-off — короткий TTL (30 сек) для быстрого failover vs нагрузка на DNS.",
+                "related": "[[cdn-interview#Q4]] GeoDNS; [[cdn-interview#Q9]] purge by tag; [[cdn-interview#Q29]] real incidents (Fastly 2021)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую метрику CDN важно мониторить как первый индикатор проблем с конфигурацией кэша?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Edge PoP CPU utilization — если >80%, кэш не справляется и origin начинает получать больше трафика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Edge PoP CPU — internal метрика CDN-провайдера, клиент её обычно не видит. Cloudflare/CloudFront управляют capacity автоматически. Клиент должен смотреть business метрики.",
+                "source_of_confusion": "CPU — естественный health metric.",
+                "if_it_were_true": "CDN падал бы при peak load — но они масштабируются автоматически.",
+                "how_it_should_be": "Клиент смотрит cache HIT ratio, edge latency, origin RPS. CPU — забота CDN."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cache HIT ratio — целевая 85-95% для static, 60-80% для dynamic с micro-cache. Если падает с 90% до 60% — индикатор плохой настройки cache key, Vary header, или массовой invalidation.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cache HIT ratio — primary метрика effectiveness CDN. Падение указывает на: (1) cache key fragmentation (новый Vary header, query string не в whitelist); (2) увеличившийся MISS rate из-за TTL slишком короткий; (3) массовая invalidation (purge by URL slишком много); (4) cold start после deploy. Каждый процент drop ≈ N% увеличения origin RPS — прямая корреляция.",
+                "example": "Stack Overflow case: после деплоя `Vary: User-Agent` (для A/B test) cache HIT упал с 95% до 30%, origin RPS вырос в 14 раз. Откатили через час. Cloudflare Analytics показывает HIT ratio в real-time. AWS CloudFront — CloudWatch metric `CacheHitRate`.",
+                "when_to_apply": "Алерт на cache HIT ratio drop > 10% за 15 минут — расследование. Daily/weekly dashboards. Особенно — после каждого deploy на origin (новые headers могут поменять cache behavior).",
+                "edge_cases": "Targets зависят от контента: static (JS/CSS/images) — 95-99%; dynamic API с micro-cache — 60-90%; personalized — низко. Cold start после deploy — нормальный spike on MISS на час. Massive invalidation (purge all) — намеренный сценарий, mock`ay alert.",
+                "related": "[[cdn-interview#Q8]] Vary header impact; [[cdn-interview#Q9]] invalidation; [[cdn-interview#Q28]] cold start."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Edge response time p99 — должен быть <500 мс. Это главная метрика performance.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Edge p99 — важная метрика, но первый индикатор конфигурации cache — HIT ratio. P99 latency растёт как следствие падения HIT ratio (больше MISS, больше origin requests).",
+                "source_of_confusion": "Latency — самый понятный customer-facing metric.",
+                "if_it_were_true": "Тогда HIT ratio мониторить было бы не нужно.",
+                "how_it_should_be": "HIT ratio — leading indicator; latency — lagging indicator."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Number of requests per second — рост указывает на DDoS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RPS spike — может быть DDoS, viral content, marketing campaign. Само по себе не индикатор cache health. HIT ratio + RPS вместе дают полную картину.",
+                "source_of_confusion": "RPS — fundamental metric, но не специфичен для cache config.",
+                "if_it_were_true": "Тогда любой growth = DDoS, что absurd.",
+                "how_it_should_be": "RPS — общий volume; HIT ratio — cache effectiveness."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое thundering herd на cold start CDN edge и как origin shield + coalescing с этим борются?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Thundering herd — это DDoS-attack from bots, который CDN отражает через rate limiting.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Thundering herd — legitimate traffic pattern, не атака. Множество клиентов одновременно делают MISS на один URL → origin перегружен. От DDoS отличается тем, что трафик legitimate.",
+                "source_of_confusion": "Both — sudden traffic spikes на origin.",
+                "if_it_were_true": "Rate limiting блокировал бы legitimate users.",
+                "how_it_should_be": "Thundering herd — internal architecture problem, решается через coalescing и shield."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Thundering herd происходит когда auto-scaler CDN запускает много новых PoP одновременно, потребляя ресурсы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CDN auto-scaling — internal механизм провайдера, не вызывает herd. Thundering herd — про сходимость traffic от множества клиентов на origin при MISS на одном URL.",
+                "source_of_confusion": "Auto-scaling и herd — оба про много instance.",
+                "if_it_were_true": "Это была бы проблема CDN-провайдера, не клиента.",
+                "how_it_should_be": "Herd — про клиентский traffic к origin, не про CDN scaling."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "На cold start cache MISS все 300 edge PoP одновременно делают GET в origin → origin перегружен и падает. Origin shield (singleton перед origin) делает 1 запрос на cluster, в нём остальные ждут. Coalescing на CDN — одновременные MISS на один URL коалесцируются в 1 origin fetch.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сценарий: deploy нового бандла, или massive invalidation, или viral content. Cache пустой на N PoP. 1000 клиентов одновременно запрашивают `/new-feature.js`: без shield/coalescing — 1000 параллельных fetches к origin → origin overloaded. С origin shield — N PoP идут в shield, shield делает 1 fetch, остальные ждут. С coalescing на edge — на одном PoP 100 одновременных MISS коалесцируются в 1 fetch.",
+                "example": "Slack 2021 (январь): cache invalidation + autoscaling glitch → thundering herd на AWS backend. 5-часовой outage. Cloudflare in-flight coalescing — несколько одновременных MISS на один URL объединяются. CloudFront Origin Coalescing (с 2023) — аналогичный механизм. Fastly `vcl_recv → return(pass)` — опциональное coalescing.",
+                "when_to_apply": "Любой high-traffic CDN: после deploy, invalidation, viral content. Origin shield — must для large catalogs. Coalescing — default в современных CDN, но проверить и включить если выключено.",
+                "edge_cases": "Coalescing работает только для GET (idempotent). POST/PUT не коалесцируются. Cold start на edge PoP (не cluster-wide) — coalescing помогает на одном PoP, но 300 PoP всё равно идут в shield. Pre-warming через synthetic warm-up снимает herd ещё до того, как клиенты придут.",
+                "related": "[[cdn-interview#Q2]] origin shield; [[cdn-interview#Q5]] cache hierarchy; [[caching-strategies-interview]] single-flight, request coalescing."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Thundering herd — это термин для CDN trafficа от bot networks (Mirai), который атакует origin через legitimate-looking requests.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bot traffic / DDoS — отдельные паттерны. Thundering herd — legitimate concurrent traffic после cold cache, не bot-driven.",
+                "source_of_confusion": "Both — sudden origin load spikes.",
+                "if_it_were_true": "Решение было бы Bot Management, не shield.",
+                "how_it_should_be": "Thundering herd ≠ DDoS. Defenses different."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой урок выносится из инцидента Fastly 8 июня 2021 года (49-минутный global outage)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Single CDN dependency = SPOF для critical services. Fastly 2021 положил Amazon, Reddit, NYT, gov.uk, Twitch, eBay одновременно. Multi-CDN strategy критична для high-availability.",
+              "correct": true,
+              "sections": {
+                "explanation": "8 июня 2021, 11:58 UTC — Fastly software bug triggered by valid customer configuration change. 49 минут полного downtime многих критичных сервисов: Amazon.com, Reddit, NYT, Stack Overflow, Twitch, gov.uk (UK government), eBay, Shopify, PayPal partially. Все они полагались на Fastly как single CDN. Урок: даже top-tier CDN provider может упасть — для critical services нужен multi-CDN failover (Cloudflare/CloudFront/Akamai как backup).",
+                "example": "После Fastly 2021: NYT перешёл на multi-CDN (Fastly + CloudFront). Reddit добавил CloudFront как failover. gov.uk пересмотрел dependency на single provider. Cloudflare и AWS видели рост multi-CDN customers в Q3 2021. NS1, Cedexis (Citrix ITM) — продажи продуктов для DNS-based traffic steering между CDN выросли.",
+                "when_to_apply": "Любой service с downtime cost > $10k/час должен иметь multi-CDN. E-commerce, news, social, gov, banking, video streaming. Также — компании с regulated SLA (PCI-DSS требует обеспечить availability).",
+                "edge_cases": "Multi-CDN добавляет 1.5-2x cost overhead и complexity (cache invalidation на обоих, разные WAF rules, отдельные monitoring dashboards). Для small startup это часто не оправдано — single Cloudflare с good monitoring достаточно. Но для critical services — must.",
+                "related": "[[cdn-interview#Q26]] multi-CDN architecture; [[cdn-interview#Q29]] другие incidents (Akamai 2021, Cloudflare 2019); [[resilience-patterns-interview]] failover patterns."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Урок: использовать только AWS CloudFront, потому что AWS имеет лучший SLA, чем Fastly.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AWS CloudFront тоже имел outages (например, US-EAST-1 2021, 2022). Любой single provider — SPOF. Решение — multi-CDN, не switch to `better` single CDN.",
+                "source_of_confusion": "AWS — большой и кажется reliable.",
+                "if_it_were_true": "Тогда AWS никогда бы не падал, но мы знаем outages.",
+                "how_it_should_be": "Multi-CDN > single best CDN."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Урок: self-host CDN на собственных серверах — избегать commercial CDN провайдеров вообще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Self-hosted CDN — это огромный capex (PoP в каждом регионе), expertise. Cost-wise infeasible для большинства. Netflix Open Connect — exception, но они вкладывают billions. Большинство решений — multi-CDN.",
+                "source_of_confusion": "Self-hosting иногда позиционируется как ultimate reliability.",
+                "if_it_were_true": "Все бы self-host, но cost prohibitive.",
+                "how_it_should_be": "Self-host — only для Netflix-scale. Прагматично — multi-CDN."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Урок: отказаться от Fastly в пользу более молодых CDN типа Bunny.net, у них меньше технического долга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Молодые CDN тоже имеют outages, и обычно меньше capacity для DDoS absorption. Bunny.net хорош для cost, но не имеет SLA уровня Akamai. Решение — multi-CDN, не switch.",
+                "source_of_confusion": "Newer = better — частый bias.",
+                "if_it_were_true": "Bunny.net стал бы primary для всех, но они в budget tier.",
+                "how_it_should_be": "Multi-CDN. Choosing single CDN не решает SPOF."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой best practice при конфигурации CloudFront Cache Policy для product images с long TTL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Включать все query parameters в cache key (`QueryStringBehavior: all`), чтобы захватить все варианты запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`QueryStringBehavior: all` приводит к cache fragmentation: каждый tracking param (utm_*, fbclid, gclid) создаёт уникальный cache entry. HIT ratio падает к нулю.",
+                "source_of_confusion": "`All` звучит как `safest`.",
+                "if_it_were_true": "Любая рекламная campaign убивала бы CDN cache.",
+                "how_it_should_be": "Whitelist: только параметры, которые реально влияют на response (`w`, `h`, `format`)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать default CloudFront cache policy `Managed-CachingOptimized` без modification — она оптимальна для всех use cases.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Managed-CachingOptimized — generic policy. Для product images лучше custom policy с long TTL (`MinTTL: 86400, MaxTTL: 31536000`) и whitelist query params (`w, h, format`).",
+                "source_of_confusion": "`Managed` policies — default choice кажется оптимальной.",
+                "if_it_were_true": "Тогда custom policy не нужен был бы — но он необходим для tuning.",
+                "how_it_should_be": "Custom policy: explicit TTL + whitelist headers/query."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Отключить compression (`Compress: false`), чтобы CDN отдавал raw images без overhead.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Images (JPEG/PNG/WebP/AVIF) уже compressed — повторное gzip compression бесполезно, но и не вредно (Cache-Control: image/* обычно signals no further compression by CDN). `Compress: true` всё ещё рекомендуется как default, потому что некоторые мета-форматы (SVG как XML) выигрывают от gzip.",
+                "source_of_confusion": "Pre-compressed images — кажется, что compression overhead.",
+                "if_it_were_true": "Все CDN отключали бы compression для images by default — но они оставляют включённым.",
+                "how_it_should_be": "Compress: true как default, CDN сам решает по content-type."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Custom policy с `MinTTL: 86400, MaxTTL: 31536000`, whitelist query strings (`w, h, format`), whitelist headers (`Accept` для AVIF/WebP negotiation), Cookies: none, `Compress: true`. Дополнить `Cache-Control: immutable` на origin для версионированных URL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Best practice CloudFront для images: (1) `MinTTL: 86400` (1 day) — даже если origin шлёт `max-age=60`, CDN держит минимум сутки; (2) `MaxTTL: 31536000` (1 year) — максимум для immutable; (3) `DefaultTTL: 86400`; (4) `QueryStringBehavior: whitelist` с `[w, h, format]` — поддерживает resize, игнорирует tracking; (5) `HeaderBehavior: whitelist [Accept]` — для format auto-negotiation; (6) `CookieBehavior: none` — нет personalization; (7) `EnableAcceptEncodingGzip+Brotli: true`; (8) на origin — `Cache-Control: public, max-age=31536000, immutable` для версионированных URL (`/img.abc123.jpg`).",
+                "example": "AWS Solutions Architect best practice. Whitelist принцип: только то, что влияет на response. Например, для Cloudflare Images URL `imagedelivery.net/abc/w=400,format=auto`: w влияет (different size), format auto зависит от Accept header — оба в whitelist.",
+                "when_to_apply": "Любые images, immutable assets (JS/CSS с hash в URL), video segments (HLS chunks). Не подходит для HTML/API — там короткий TTL.",
+                "edge_cases": "Origin shield включить отдельно (`OriginShield` setting в Distribution) — для большого catalog images. Если URL содержит hash (versioning) — `Cache-Control: immutable` на origin → browser не делает revalidation даже после reload. Tracking params (utm_*) на images URL очень редко, но если есть — whitelist excludes их.",
+                "related": "[[cdn-interview#Q9]] versioning vs invalidation; [[cdn-interview#Q16]] image optimization; [[cdn-interview#Q24]] cost tuning."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

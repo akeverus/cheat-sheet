@@ -1,0 +1,1625 @@
+{
+  "topic_slug": "design-instagram-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое соотношение чтений к записям закладывают в non-functional требования Instagram?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Примерно 1:1 — фото и его просмотры сбалансированы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На 100M загрузок/день приходится ~50B feed-views, что даёт read:write около 100:1.",
+                "source_of_confusion": "Кажется, что каждый upload порождает один просмотр.",
+                "if_it_were_true": "Тогда не нужны были бы агрессивные read-кэши и precomputed feed.",
+                "how_it_should_be": "Считать, что read on order >> write — Instagram ярко read-heavy."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Примерно 100:1 в пользу чтений — feed views на порядки превышают uploads.",
+              "correct": true,
+              "sections": {
+                "explanation": "500M DAU × ~50 feed-photo-views/день = ~25B чтений против 100M записей/день, отсюда ~100:1.",
+                "example": "QPS-математика: ~290k reads/sec vs ~1.2k uploads/sec в среднем по дню.",
+                "when_to_apply": "Когда выбираешь архитектуру кэшей и precompute feed — это определяющий числовой ориентир.",
+                "edge_cases": "Просмотр одного фото несколько раз и stories поднимают read-ratio ещё выше.",
+                "related": "Q2 capacity estimation, Q11 feed generation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Примерно 10:1 — на каждое фото 10 просмотров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Слишком оптимистично — реальное соотношение в 10 раз выше.",
+                "source_of_confusion": "Грубая оценка «много просмотров, но не критично».",
+                "if_it_were_true": "Хватило бы простой read-replica без сложного feed cache.",
+                "how_it_should_be": "Использовать оценку 100:1 как ориентир."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Write-heavy: 1:100 в пользу записей из-за множества uploads.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Instagram строго read-heavy, не write-heavy.",
+                "source_of_confusion": "Путают с logging/IoT системами.",
+                "if_it_were_true": "Архитектура была бы похожа на time-series DB, не на CDN+feed cache.",
+                "how_it_should_be": "Закладывать чтения как доминирующий сценарий."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сколько примерно петабайт нового media-контента генерирует Instagram за год?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "~1 PB/year — фото компрессируются и занимают мало.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только фото-метаданные дают 35 TB/day, что ≈ 12.7 PB/год.",
+                "source_of_confusion": "Недооценка размера thumbnails (4 размера) и видео.",
+                "if_it_were_true": "Storage стоил бы копейки и не требовал lifecycle policies.",
+                "how_it_should_be": "Считать порядок 20+ PB/year только нового контента."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "~200 PB/year — сравнимо с YouTube.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На порядок больше реальности — YouTube хранит больше видео.",
+                "source_of_confusion": "Завышение объёма из-за репликации в multi-region.",
+                "if_it_were_true": "Понадобилось бы строить собственные дата-центры под exabyte-scale.",
+                "how_it_should_be": "Раздельно считать чистый контент (~20 PB) и с репликацией (~60-80 PB)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "~20 PB/year нового контента (с учётом видео и thumbnails).",
+              "correct": true,
+              "sections": {
+                "explanation": "Фото 350 KB × 100M/day = 35 TB/day + видео ~20 TB/day ≈ 55 TB/day = ~20 PB/year.",
+                "example": "Footprint с 3× S3 replication и multi-region: 60-80 PB/year.",
+                "when_to_apply": "Когда обсуждаешь storage tiering (hot S3 vs Glacier) и cost optimization.",
+                "edge_cases": "Reels и более длинные видео сдвигают цифру вверх.",
+                "related": "Q7 storage architecture, Q26 capacity planning."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "~500 GB/year — большая часть контента удаляется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только один день генерирует десятки TB.",
+                "source_of_confusion": "Иллюзия, что stories с TTL экономят основной storage.",
+                "if_it_were_true": "Хватило бы одного SSD сервера.",
+                "how_it_should_be": "Учитывать, что stories — лишь часть, а основная масса (фото в profile) хранится годами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему upload фото разбит на два endpoint-а: получение presigned URL и finalize?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы делить нагрузку поровну между двумя app-серверами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разделение не про load balancing, а про прямой upload в S3 минуя app-сервер.",
+                "source_of_confusion": "Кажется, что любое разделение нужно для распределения нагрузки.",
+                "if_it_were_true": "Тогда оба endpoint-а могли бы быть на одной машине без вреда.",
+                "how_it_should_be": "Цель — байты идут в S3, метаданные в API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы поддерживать OAuth2 двумя независимыми токенами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OAuth работает одним bearer-токеном на оба запроса.",
+                "source_of_confusion": "Путают с двойным фактором аутентификации.",
+                "if_it_were_true": "Большинство upload API имели бы два токена — этого нет в индустрии.",
+                "how_it_should_be": "Auth ортогонален разделению — он одинаков для обоих endpoint-ов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один endpoint нарушает REST principles.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дело не в REST-эстетике, а в bandwidth и CPU.",
+                "source_of_confusion": "Желание применить «правильный REST».",
+                "if_it_were_true": "Тогда любые SOAP/RPC были бы запрещены — это не так.",
+                "how_it_should_be": "Two-step — следствие архитектурных соображений, не догмы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Бинарные байты идут напрямую в S3 через presigned URL, а API-сервер получает только лёгкие метаданные через finalize.",
+              "correct": true,
+              "sections": {
+                "explanation": "Так app-сервер не пропускает терабайты медиа через себя — он лишь выдаёт подпись и сохраняет caption/tags после успешного PUT в S3.",
+                "example": "POST /upload-url → presigned URL; PUT в S3; POST /finalize с caption+tags.",
+                "when_to_apply": "Любой upload крупных файлов (фото, видео, документы) — паттерн универсальный.",
+                "edge_cases": "Для файлов >5MB используется S3 Multipart Upload; presigned URL имеет TTL 10 минут.",
+                "related": "Q4 upload flow, Q6 resumable upload."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что произойдёт, если медиа upload пустить через app-сервер вместо presigned URL в S3?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "App-сервер станет bottleneck на bandwidth, egress удвоится, CPU тратится на прокачку байт.",
+              "correct": true,
+              "sections": {
+                "explanation": "Терабайты бинарного трафика прокачиваются дважды (client→server + server→S3), уничтожая пропускную способность и пожирая CPU без бизнес-логики.",
+                "example": "100M фото × 1 MB = 100 TB/день только в одну сторону — никакая app-tier ферма это не вытянет дёшево.",
+                "when_to_apply": "Универсально для любого heavy-payload upload (фото, видео, бэкапы).",
+                "edge_cases": "Если нужна inline-валидация (например, антивирус до записи), используют streaming proxy, но это исключение.",
+                "related": "Q3 API design, Q19 CDN strategy."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Производительность будет идентичной — S3 и app-сервер в одном дата-центре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже в одном DC двойной egress удваивает internal traffic и нагружает NIC и CPU.",
+                "source_of_confusion": "Кажется, что внутри AWS трафик «бесплатный».",
+                "if_it_were_true": "Никто не использовал бы presigned URL — но это стандарт индустрии.",
+                "how_it_should_be": "Считать app-сервер дорогим ресурсом, не пускать через него bulk-данные."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это даст лучшую безопасность — все байты проверяются на сервере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Проверки делает async media worker уже после upload в S3, без блокировки клиента.",
+                "source_of_confusion": "Интуитивное «сервер защищает».",
+                "if_it_were_true": "Тогда антивирус-проверка была бы sync — но Instagram её делает async ML pipeline.",
+                "how_it_should_be": "Безопасность — на уровне presigned URL (TTL, content-type, size) + async moderation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "S3 не умеет принимать прямой PUT от клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "S3 поддерживает прямой PUT через presigned URL уже более 15 лет.",
+                "source_of_confusion": "Незнание возможностей S3 SDK.",
+                "if_it_were_true": "Не было бы AWS SDK методов presignPutObject.",
+                "how_it_should_be": "Помнить про presigned URL как стандартный паттерн."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему processing медиа (thumbnails, moderation, embeddings) запускается асинхронно после Kafka-события, а не sync в upload-handler?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sync processing блокирует клиента на секунды, не даёт retry и не масштабируется отдельно от API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Resize 4 размеров + NSFW ML + EXIF strip занимают сотни мс на фото, а на видео секунды-минуты — клиент не должен ждать, плюс worker-пул нужно масштабировать независимо от API.",
+                "example": "PhotoUploaded event → Kafka → 240 media-workers параллельно, 5 фото/sec каждый.",
+                "when_to_apply": "Любая CPU/GPU-heavy постобработка, которая не нужна для немедленного ответа.",
+                "edge_cases": "Для video transcoding — отдельный пул GPU-нод, идемпотентность по photoId.",
+                "related": "Q4 upload flow, Q18 content moderation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Kafka — это требование GDPR для media.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GDPR не требует конкретно Kafka — это про consent, retention, deletion.",
+                "source_of_confusion": "Смешение compliance и архитектурных решений.",
+                "if_it_were_true": "Любая GDPR-compliant система обязана была бы использовать Kafka — это не так.",
+                "how_it_should_be": "Kafka выбирают по техническим причинам (async, durability, replay), не по compliance."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sync дешевле — экономит брокеры Kafka.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sync дороже из-за idle-времени API-серверов в ожидании ML.",
+                "source_of_confusion": "Кажется, что брокер — лишний компонент.",
+                "if_it_were_true": "Высоконагруженные системы не использовали бы async event-bus, но все крупные используют.",
+                "how_it_should_be": "Считать Kafka инвестицией в масштабирование, не cost-overhead."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Async нужен только для видео, фото можно sync.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже фото-pipeline (4 resize + ML moderation + embedding) занимает 500ms-2s — клиента нельзя блокировать.",
+                "source_of_confusion": "Недооценка стоимости ML inference и resize.",
+                "if_it_were_true": "Можно было бы делать sync resize — но Instagram возвращает 202 Accepted и status=PROCESSING.",
+                "how_it_should_be": "Async для всего, что > 100ms или может ретраиться."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой механизм S3 используется для resumable upload больших видео, когда обрыв сети не должен заставить клиента качать всё с нуля?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "S3 Versioning — каждая часть как отдельная версия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Versioning хранит разные версии одного ключа, не части одного upload.",
+                "source_of_confusion": "Путаница multipart и versioning.",
+                "if_it_were_true": "Restart upload требовал бы roll-forward всех версий — это не работает.",
+                "how_it_should_be": "Versioning — про защиту от перезаписи, не про resume."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Записывать видео на временный диск app-сервера и потом одним PUT в S3.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это противоречит presigned-URL-подходу и не решает проблему resume.",
+                "source_of_confusion": "Старый паттерн «proxy upload».",
+                "if_it_were_true": "App-сервер опять стал бы bottleneck.",
+                "how_it_should_be": "Клиент работает прямо с S3 через multipart."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Stream через WebSocket напрямую в S3.",
+              "correct": false,
+              "sections": {
+                "what_actually": "S3 не принимает WebSocket — только HTTPS PUT/POST.",
+                "source_of_confusion": "Перенос паттерна chat-streaming на upload.",
+                "if_it_were_true": "AWS SDK имел бы WebSocket клиент к S3 — этого нет.",
+                "how_it_should_be": "Использовать Multipart или TUS поверх HTTP."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "S3 Multipart Upload — клиент разбивает файл на части ≥5MB, держит uploadId и ETag-и; при обрыве дозагружает оставшиеся.",
+              "correct": true,
+              "sections": {
+                "explanation": "createMultipartUpload выдаёт uploadId, каждый partNumber имеет свой ETag — клиент хранит локальное состояние и при reconnect uploadPart-ит только недостающее.",
+                "example": "TUS protocol строится поверх той же идеи — фундамент resumable transfer.",
+                "when_to_apply": "Файлы > 100 MB на нестабильной мобильной сети.",
+                "edge_cases": "Минимум 5MB на part (кроме последней); незавершённые uploads чистятся через S3 lifecycle rule (7 дней).",
+                "related": "Q24 failed uploads, Q4 upload flow."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "По какому принципу Instagram выбирает разные хранилища (Postgres / S3 / Redis / Cassandra / ES) для разных данных?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "По размеру команды, которая владеет таблицей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Команды формируются вокруг хранилища, но выбор хранилища — техническое решение.",
+                "source_of_confusion": "Conway's law перепутан с архитектурой данных.",
+                "if_it_were_true": "Реорганизация команд меняла бы storage — этого нет.",
+                "how_it_should_be": "Хранилище выбирают под access pattern."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "По лицензии: открытые сначала, потом enterprise.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лицензия — фактор cost, но не определяющий.",
+                "source_of_confusion": "Open-source vs commercial — отдельная ось решений.",
+                "if_it_were_true": "Все компании выбирали бы только Postgres и Cassandra.",
+                "how_it_should_be": "Лицензия — вторичный критерий после соответствия access pattern."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "По domain entity: user → одна БД, photo → другая, like → третья.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Связанные сущности могут лежать в разных storage именно из-за access pattern (photo metadata в PG, photo binary в S3).",
+                "source_of_confusion": "Микросервисный «database per service» перепутан с polyglot.",
+                "if_it_were_true": "Один user сидел бы в одной системе — но username в ES, profile в PG, sessions в Redis.",
+                "how_it_should_be": "Думать access pattern, не entity boundary."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "По access pattern: ACID-метаданные → Postgres, binary → S3+CDN, read-heavy timeline → Redis, write-heavy chat → Cassandra, full-text → Elasticsearch.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разные шаблоны доступа (random read, time-series append, ACID transactions, full-text search) требуют разных движков — попытка решить всё одной БД проигрывает по cost/performance.",
+                "example": "Likes counter — Redis INCR (write-behind в Postgres), не UPDATE одной строки.",
+                "when_to_apply": "При обсуждении polyglot persistence на System Design интервью.",
+                "edge_cases": "Сложность ETL между хранилищами и consistency между ними (Debezium CDC + Kafka).",
+                "related": "Q8 sharding, Q13 likes counter, Q14 DMs."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "По какому ключу шардируется таблица photos и почему?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "По photo_id (random UUID) — равномерное распределение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Равномерно, но запросы «все фото пользователя X» расходятся по всем шардам.",
+                "source_of_confusion": "Random — самое простое распределение.",
+                "if_it_were_true": "Профиль пользователя загружал бы N шардов вместо одного.",
+                "how_it_should_be": "Шардировать по user_id, локализуя профильные запросы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "По user_id (hash) — фото одного пользователя на одном шарде, запрос профиля локален.",
+              "correct": true,
+              "sections": {
+                "explanation": "hash(user_id) % NUM_SHARDS даёт colocation фото с автором — типичные запросы «фото пользователя» и «архив профиля» идут в один shard.",
+                "example": "1024 logical shards × 64 physical hosts → consistent hashing для rebalance.",
+                "when_to_apply": "Read-heavy профильные запросы доминируют (как в Instagram).",
+                "edge_cases": "Feed-запросы расходятся по followee shards — решается отдельным precompute (Redis ZSET feed:{follower}).",
+                "related": "Q11 feed generation (shard by follower_id), Q22 multi-region."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "По created_at (диапазоны дат).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Time-based sharding создаёт hot shard на текущей дате — все новые фото пишутся в один shard.",
+                "source_of_confusion": "Хорошо для лог-систем (time-series), плохо для социальных.",
+                "if_it_were_true": "Хронологические запросы были бы быстрее, но писать в активный shard стало бы bottleneck.",
+                "how_it_should_be": "Time-based — для analytics/logs, не для feed."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "По геолокации (location_id).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большинство запросов не по локации, а по пользователю.",
+                "source_of_confusion": "Гео-важность переоценена.",
+                "if_it_were_true": "Профиль популярного пользователя из одного города забил бы один shard.",
+                "how_it_should_be": "Locality по user_id, locations индексируются отдельно (PostGIS)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему таблица follows имеет составной первичный ключ (follower_id, followee_id) и дополнительный индекс на (followee_id, follower_id)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Так требует Postgres для любых many-to-many таблиц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Postgres не требует — выбор обусловлен двумя access pattern-ами (кто на меня подписан и на кого подписан я).",
+                "source_of_confusion": "Generalization синтаксиса.",
+                "if_it_were_true": "Все junction-таблицы должны были бы иметь dual-index — но это не так в общем случае.",
+                "how_it_should_be": "Решение — про два направления чтения social graph."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для предотвращения дубликатов в логах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дубликаты предотвращает PK, но второй индекс — про производительность чтения.",
+                "source_of_confusion": "Смешение constraint и индекса.",
+                "if_it_were_true": "Хватило бы только PK без второго индекса.",
+                "how_it_should_be": "PK уникален; второй индекс — для reverse lookup."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это auto-generated по convention в JPA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPA не диктует двойной индекс — он создаётся явно DBA по нагрузке.",
+                "source_of_confusion": "Опыт с auto-DDL фреймворками.",
+                "if_it_were_true": "ORM создавали бы лишние индексы — это antipattern.",
+                "how_it_should_be": "Индексы по pattern запросов, не по convention."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "PK покрывает запрос «на кого я подписан» (followee список), а дополнительный индекс — «кто подписан на меня» (followers); follow-граф асимметричен и оба обхода нужны быстро.",
+              "correct": true,
+              "sections": {
+                "explanation": "PK (follower_id, followee_id) даёт быстрый прогон followees; индекс (followee_id, follower_id) — быстрый fan-out по followers при публикации фото.",
+                "example": "Fan-out worker делает SELECT followers WHERE followee_id = author — отрабатывает по второму индексу.",
+                "when_to_apply": "Любой asymmetric social graph (Instagram, Twitter) — два индекса обязательны.",
+                "edge_cases": "Целебрити с миллионами follower-ов — fan-out не идёт по всем (Q11 hybrid).",
+                "related": "Q8 sharding, Q11 feed generation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую роль играет Kafka в high-level архитектуре Instagram?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Хранилище фото вместо S3.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka не предназначен для long-term storage бинарного контента.",
+                "source_of_confusion": "Tiered storage в Kafka 3.x путают со 'storage layer'.",
+                "if_it_were_true": "Latency чтения медиа была бы измерима секундами.",
+                "how_it_should_be": "Kafka — event bus, S3 — object store."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Replacement для Postgres — основное хранилище метаданных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka не индексируется как реляционная БД, нет JOIN/UPDATE.",
+                "source_of_confusion": "Идея event sourcing «вместо БД».",
+                "if_it_were_true": "Запрос «фото пользователя X» был бы O(N) по всему топику.",
+                "how_it_should_be": "Kafka — async bus, Postgres — source of truth для метаданных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Основной async event bus: PhotoUploaded → media workers, UserFollowed → fan-out workers, MessageSent → DM, и нотификации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Kafka соединяет все async-конвейеры (media processing, fan-out feed, notifications, search indexing) — durable, replay, decoupling.",
+                "example": "Photo finalize → PhotoPublished event → 4 разных consumer-группы параллельно (thumbnails, moderation, fan-out, search).",
+                "when_to_apply": "Любая cross-service async координация и event-driven workflow.",
+                "edge_cases": "Retention 7-30 дней, RF=3, exactly-once через transactional producer.",
+                "related": "Q5 media processing, Q11 fan-out, Q15 notifications."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Дублирование CDN — раздаёт фото пользователям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Раздачей занимается CloudFront, Kafka не доходит до клиента.",
+                "source_of_confusion": "Слово 'broker' иногда ассоциируется с CDN.",
+                "if_it_were_true": "Клиент держал бы Kafka consumer — экзотика, не делают.",
+                "how_it_should_be": "Kafka — internal bus, CDN — edge delivery."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Instagram использует hybrid fan-out (push для обычных пользователей, pull для celebrity)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Push для celebrity со 100M+ followers даёт 100M writes на одно фото — это убивает Redis-кластер; для них дешевле pull-on-read.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чистый push не масштабируется на celeb-публикацию: 100M ZADD за секунды; для top-1000 пользователей идём pull (celeb_inbox), для остальных push (feed:{F}).",
+                "example": "Cristiano с 600M followers — публикация триггерит запись в celeb_inbox:{C}, остальные пользователи pullят его при ZREVRANGE feed.",
+                "when_to_apply": "Asymmetric social graph с power-law распределением followers.",
+                "edge_cases": "Threshold (например 100k) подбирается эмпирически; pull добавляет latency на read.",
+                "related": "Q8 sharding hot shard, Q20 viral photo."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pull дешевле на write для всех, поэтому Instagram только pull.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чистый pull дорогой на read (JOIN по N followees), при 500M DAU неприемлемо.",
+                "source_of_confusion": "Кажется, что write-cost — главное.",
+                "if_it_were_true": "Feed-read latency была бы секунды, не миллисекунды.",
+                "how_it_should_be": "Push для обычных дают O(1) read, pull только для целебов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hybrid выбран для совместимости с MySQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hybrid — про trade-off write/read cost, не про конкретную БД.",
+                "source_of_confusion": "Привязка решения к технологии.",
+                "if_it_were_true": "С Postgres был бы другой алгоритм — но он тот же.",
+                "how_it_should_be": "Hybrid обусловлен распределением followers."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hybrid даёт strong consistency feed.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Feed остаётся eventually consistent — fan-out асинхронный.",
+                "source_of_confusion": "Сложность ≠ consistency.",
+                "if_it_were_true": "Read-your-own-write был бы автоматическим — но нужен дополнительный механизм.",
+                "how_it_should_be": "Consistency — независимая ось от fan-out стратегии."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему счётчик viewers для популярных stories (>100k просмотров) переключают на HyperLogLog?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "HyperLogLog даёт approximate count (~0.81% ошибка) при фиксированных ~12 KB вместо хранения миллионов отдельных userId в SET.",
+              "correct": true,
+              "sections": {
+                "explanation": "Точный SET story_viewers:{storyId} с 10M членов = сотни МБ; PFADD/PFCOUNT даёт ту же оценку при O(1) памяти, что критично для popular stories.",
+                "example": "Celeb story с 50M просмотров — PFCOUNT возвращает ~50.4M ± 400k, чего достаточно для UI.",
+                "when_to_apply": "Любые approximate-cardinality сценарии: viral counters, unique visitors, top hashtags.",
+                "edge_cases": "Если нужен список конкретных viewers (для UI 'кто смотрел') — HLL не подходит, нужен SET; компромисс: hybrid SET до 100k, потом HLL.",
+                "related": "Q13 likes counter, Q20 viral photo."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "HyperLogLog экспортируется в Postgres быстрее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HLL выбирают за память, не за экспорт.",
+                "source_of_confusion": "Путаница mechanism и benefit.",
+                "if_it_were_true": "Экспорт делал бы любую структуру выгодной — не правда.",
+                "how_it_should_be": "Главный win — фиксированная маленькая память при огромной cardinality."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "HLL — единственный способ задать TTL в Redis.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL задаётся EXPIRE на любой ключ независимо от типа.",
+                "source_of_confusion": "Смешение TTL и структуры.",
+                "if_it_were_true": "SET не могли бы expire — но могут.",
+                "how_it_should_be": "TTL — отдельная операция; HLL для cardinality."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HLL гарантирует точный count.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HLL принципиально approximate (~0.81% standard error).",
+                "source_of_confusion": "Желание получить «лучшее из обоих».",
+                "if_it_were_true": "HLL были бы точнее SET — но за это платят памятью.",
+                "how_it_should_be": "Чёткий trade-off: память vs точность."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему UPDATE photos SET like_count = like_count + 1 на viral фото — плохая идея, и как Instagram это обходит?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Виральное фото даёт 10k+ UPDATE/sec в одну строку — row lock contention, MVCC bloat, replication lag; решение: Redis INCR + write-behind batched UPDATE через Kafka каждые ~5 сек.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hot row становится bottleneck из-за блокировок и накапливающихся версий MVCC; write-behind смещает запись в Postgres на async-flush с aggregation последнего значения.",
+                "example": "Likes flusher: Kafka topic photo-likes → batch последнего count по photoId → batchUpdate в Postgres.",
+                "when_to_apply": "Любой write-amplified hot row (счётчики, лидерборды, viral content).",
+                "edge_cases": "Eventual consistency между Redis (свежий) и Postgres (lagged ~5s); при сбое Redis — recovery через replay Kafka.",
+                "related": "Q12 stories HLL, Q20 viral photo."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Postgres медленнее Redis в 1000 раз даже на одиночных UPDATE.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Одиночный UPDATE в Postgres быстрый — проблема именно в одну строку при высоком QPS.",
+                "source_of_confusion": "Грубая оценка latency между БД.",
+                "if_it_were_true": "Postgres был бы непригоден для OLTP в принципе — это не так.",
+                "how_it_should_be": "Проблема в contention, не absolute speed."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Postgres не поддерживает INCR.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Postgres поддерживает UPDATE ... + 1, проблема не в SQL-возможности.",
+                "source_of_confusion": "Сравнение синтаксиса Redis vs SQL.",
+                "if_it_were_true": "Postgres не подходил бы для counters в принципе.",
+                "how_it_should_be": "Поддержка есть, но contention делает её непригодной для viral row."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Каждый лайк должен немедленно реплицироваться во все 1024 шарда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лайк живёт в одном шарде photo_id, не во всех.",
+                "source_of_confusion": "Путают репликацию и шардирование.",
+                "if_it_were_true": "Так никто не делает — фундаментальная ошибка.",
+                "how_it_should_be": "Шардирование по photo_id; репликация внутри shard."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему для хранения сообщений DM Instagram выбирает Cassandra, а не Postgres?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cassandra бесплатна, а Postgres — нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обе open-source — Postgres особенно популярен в коммерции.",
+                "source_of_confusion": "Лицензионные мифы.",
+                "if_it_were_true": "Postgres был бы маргинальным — но он индустриальный стандарт.",
+                "how_it_should_be": "Выбор по техническим причинам (write QPS, partition, multi-DC), не лицензии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cassandra гарантирует strong consistency без trade-off.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra — AP по дизайну (tunable, но eventual по умолчанию).",
+                "source_of_confusion": "Reversal CAP.",
+                "if_it_were_true": "Cassandra не была бы AP-эталоном — но она такая.",
+                "how_it_should_be": "Cassandra выбирают за availability и partition tolerance, consistency настраиваемая."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cassandra умеет WebSocket out-of-the-box.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebSocket — на уровне gateway-сервиса, не БД.",
+                "source_of_confusion": "Смешение слоёв.",
+                "if_it_were_true": "Cassandra-клиент держал бы WS-соединение — нет.",
+                "how_it_should_be": "Cassandra — persistence, WS — transport."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Write-heavy миллионы msg/sec, partition по (conv_id, bucket) распределяет нагрузку, native multi-DC репликация, TTL для retention — Cassandra подходит, а sharded Postgres страдает от write amplification и операционной сложности.",
+              "correct": true,
+              "sections": {
+                "explanation": "DM — это append-mostly time-series с равномерным write-pattern; Cassandra с LSM-tree и tunable consistency дешевле scale-out, чем Postgres-cluster.",
+                "example": "Schema PRIMARY KEY ((conv_id, bucket), msg_id) WITH CLUSTERING ORDER BY msg_id DESC — оптимально для recent-messages query.",
+                "when_to_apply": "Любой high-write, time-ordered workload (chat, audit log, IoT telemetry).",
+                "edge_cases": "Нет JOIN, нужны денормализованные таблицы (user_conversations отдельно); ACID — eventual.",
+                "related": "Q15 notifications, Q7 storage architecture."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое batching в push-pipeline и зачем оно нужно для лайков?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сжатие нескольких push в один TCP-пакет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Batching — на уровне business logic (агрегация событий), не транспорта.",
+                "source_of_confusion": "Аналогия с network batching.",
+                "if_it_were_true": "Network-layer batching не уменьшил бы количество всплывающих окон у пользователя.",
+                "how_it_should_be": "Batching смотрит на UX: один push на N событий."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Отправка раз в час всех накопленных push.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Час слишком долго — likes теряют контекст, DM критически late.",
+                "source_of_confusion": "Грубое понимание batching.",
+                "if_it_were_true": "Пользователь получал бы устаревшие уведомления — bad UX.",
+                "how_it_should_be": "Окно секунды-минуты, разное для типов событий."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Объединение нескольких like-событий в одно уведомление 'N человек лайкнули ваше фото' вместо 1000 отдельных push — экономит APNs квоту, не спамит пользователя, снижает unsubscribe.",
+              "correct": true,
+              "sections": {
+                "explanation": "При viral-публикации tap-by-tap rate доходит до тысяч/мин; rolling-window aggregator группирует в один payload и отправляет с дебаунсом.",
+                "example": "LikeBatcher.add(event) → каждые 30 сек flush с агрегацией по photoId и top-N likers.",
+                "when_to_apply": "Любые high-frequency low-importance события (likes, новые followers, mentions).",
+                "edge_cases": "DM не батчатся (важная переписка); comment с @mention обычно один.",
+                "related": "Q14 DMs, Q13 likes counter."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только для Android, iOS не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "APNs (iOS) тоже работает с batching на уровне приложения.",
+                "source_of_confusion": "Платформенные мифы.",
+                "if_it_were_true": "iOS-приложения спамили бы пользователя — но они тоже агрегируют.",
+                "how_it_should_be": "Batching — кросс-платформенная стратегия."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой analyzer в Elasticsearch используется для auto-complete username-ов вроде 'crist' → 'cristiano'?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Standard analyzer с lowercase.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Standard разбивает на полные термы, не префиксы — 'crist' не найдёт 'cristiano' без wildcard.",
+                "source_of_confusion": "Default подсказывает «всегда подходит».",
+                "if_it_were_true": "Wildcard search с * на префиксе работал бы — но это O(N) скан.",
+                "how_it_should_be": "Edge n-gram индексирует префиксы заранее."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Edge n-gram tokenizer (min_gram=2, max_gram=20) — индексирует все префиксы 'cr', 'cri', 'cris', ..., 'cristiano'; query 'crist' матчится как обычный term.",
+              "correct": true,
+              "sections": {
+                "explanation": "Edge n-gram строит inverted index по префиксам, делая prefix search таким же быстрым, как exact match.",
+                "example": "function_score boost × log(followers) сдвигает популярных кандидатов наверх.",
+                "when_to_apply": "Auto-complete для usernames, hashtags, search-as-you-type.",
+                "edge_cases": "Индекс раздувается ~k× (k = max_gram - min_gram); search-time analyzer должен быть keyword/standard, не edge_ngram.",
+                "related": "Q17 explore page, Q3 API design."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Phonetic analyzer (soundex).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Soundex для созвучных имён, не для префиксов.",
+                "source_of_confusion": "Тоже 'нечёткий поиск', но другая задача.",
+                "if_it_were_true": "'crist' и 'krist' были бы эквивалентны — не цель.",
+                "how_it_should_be": "Phonetic — отдельная фича, не для auto-complete."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Synonym filter.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Synonym заменяет термы синонимами, не разбивает на префиксы.",
+                "source_of_confusion": "Любая 'умная' замена кажется подходящей.",
+                "if_it_were_true": "Нужен был бы словарь префиксов — но это и есть edge n-gram.",
+                "how_it_should_be": "Synonym — для запросов вроде 'NYC'='New York'."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что разделяет two-stage ML архитектура Explore page (offline candidates + online ranking) и зачем?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Offline (Spark, ночью) — генерация ~500 кандидатов на пользователя через collaborative filter + content embeddings; online (на каждый GET) — GBDT ranking 500→30 по свежим features (recency, time-of-day, device).",
+              "correct": true,
+              "sections": {
+                "explanation": "Тяжёлый ANN-поиск и матричная факторизация выполняются batch (sub-минута SLA смягчена); реалтайм-ранкинг на маленьком candidate set укладывается в latency budget feed-запроса.",
+                "example": "explore:{userId} в Redis хранит 500 candidates → XGBoost reranker сортирует под latency 50ms.",
+                "when_to_apply": "Любая ranking-система с большим pool кандидатов и низким read-latency budget.",
+                "edge_cases": "Cold start (новый user) — trending в регионе/языке; diversity reranker MMR против '20 кошек подряд'.",
+                "related": "Q11 feed, Q16 search."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Online модель та же, что offline — просто запускается чаще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Online — лёгкая модель (GBDT/DNN на 500 candidates), offline — тяжёлая (ANN на миллионы).",
+                "source_of_confusion": "Желание иметь одну модель.",
+                "if_it_were_true": "Latency feed выросла бы до секунд.",
+                "how_it_should_be": "Две разные модели для разных стадий — стандарт recsys."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Полностью offline — все 30 финальных постов precomputed.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полный offline не учитывает свежий контент и текущий контекст (время суток, девайс).",
+                "source_of_confusion": "Расширение batch-логики.",
+                "if_it_were_true": "Explore показывал бы вчерашний оптимум, без свежих viral.",
+                "how_it_should_be": "Online rerank даёт freshness и контекст."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Полностью online — без offline batch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ANN по миллионам кандидатов на каждый запрос не укладывается в latency.",
+                "source_of_confusion": "Желание 'всё real-time'.",
+                "if_it_were_true": "GPU-фермы для каждого GET — стоимость космос.",
+                "how_it_should_be": "Pre-compute candidates offline, rerank online."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда контент попадает в очередь human-reviewer-ов, а не блокируется/публикуется автоматически?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда — каждое фото просматривают модераторы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При 100M/день это невозможно даже с 50k модераторов.",
+                "source_of_confusion": "Желание «полной модерации».",
+                "if_it_were_true": "Latency публикации была бы часы.",
+                "how_it_should_be": "ML — первый фильтр, human — на серой зоне."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только если пользователь явно нажал «Report».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reports — отдельный канал; основная масса проходит ML триаж.",
+                "source_of_confusion": "Reactive vs proactive moderation.",
+                "if_it_were_true": "Нарушения жили бы до первого репорта — недопустимо.",
+                "how_it_should_be": "Proactive ML + reactive reports параллельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В серой зоне ML confidence ~0.5-0.9: контент уходит в shadow (виден только автору) + Kafka topic moderation-queue, где модераторы решают за SLA ~24h.",
+              "correct": true,
+              "sections": {
+                "explanation": "ML score > 0.95 — авто-block; score < 0.5 — публикация; промежуток требует человеческого решения и временного shadow-mode, чтобы не выпустить потенциальное нарушение.",
+                "example": "L1 hash-match (CSAM/terror), L2 ML classifier (NSFW/violence), L3 OCR text, L4 human review.",
+                "when_to_apply": "Любые UGC-платформы с risk-tier контентом.",
+                "edge_cases": "Appeals flow для false positives — второй reviewer; cultural context (что в одной стране OK, в другой нет).",
+                "related": "Q5 media processing, Q23 rate limiting (anti-spam)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Никогда — moderation полностью автоматическая.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Human-in-loop обязателен для серой зоны и appeals.",
+                "source_of_confusion": "Маркетинг 'AI решает всё'.",
+                "if_it_were_true": "False positives блокировали бы легитимный контент без recourse.",
+                "how_it_should_be": "Human-in-loop — компонент compliance и качества."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что даёт CloudFront Functions / Lambda@Edge для image delivery в Instagram?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Запускает ML-моделирование на edge.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lambda@Edge ограничен по runtime и не используется для ML.",
+                "source_of_confusion": "Слово 'edge ML' из других контекстов.",
+                "if_it_were_true": "Latency edge-функции была бы секунды — но она миллисекунды.",
+                "how_it_should_be": "ML inference на L2-уровне backend, edge — только routing/rewrite."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Перехватывает request на edge: переписывает URI на нужный размер (?w=320 → /p/abc_320.jpg) и формат (Accept: image/avif → .avif), кэширует результат — origin не получает варианты.",
+              "correct": true,
+              "sections": {
+                "explanation": "Edge function решает на 300+ POPs выбор размера/формата под клиент, переиспользуя precomputed варианты — origin shield и S3 нагружаются минимально.",
+                "example": "Cache key = Host+URI+Accept; cookies игнорируются (картинки не персонализированы).",
+                "when_to_apply": "Любое media delivery с множеством вариантов (size, format, density).",
+                "edge_cases": "TTL 30 дней для immutable URL с hash; cache HTML/JSON — секунды или no-cache.",
+                "related": "Q5 media processing, Q20 viral photo prewarm."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Заменяет S3 как origin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "S3 остаётся origin, edge — только cache layer.",
+                "source_of_confusion": "Объединение слоёв.",
+                "if_it_were_true": "Cache miss возвращал бы 404 — но он идёт в S3.",
+                "how_it_should_be": "CDN — кэш; origin — S3 (или origin shield)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Шифрует все ответы AES.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шифрование делает TLS (HTTPS), не Edge Function.",
+                "source_of_confusion": "Слой защиты путают с rewrite.",
+                "if_it_were_true": "Шифрование было бы инкрементальной фичей edge — но это про TLS.",
+                "how_it_should_be": "Encrypt — слой TLS, Edge Function — rewrite/routing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает Instagram, когда celeb-публикация ловит 1M views в минуту — как избежать throttling на S3 prefix и cold POPs?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто масштабировать app-tier — S3 справится сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "S3 имеет limit 5500 GET/sec per prefix — масштаб app-tier не помогает.",
+                "source_of_confusion": "Иллюзия 'облако бесконечно'.",
+                "if_it_were_true": "Throttling 503 не существовало бы — но S3 их выдаёт.",
+                "how_it_should_be": "Решать на уровне ключа (suffix) и CDN (prewarming)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Random suffix в S3 key для распределения по физическим shards, predictive prewarming POPs через background-worker при PhotoPublished от автора с >1M followers, adaptive caching с longer TTL для hot keys.",
+              "correct": true,
+              "sections": {
+                "explanation": "S3 limit ~5500 GET/sec per prefix — без распределения суффикса hot prefix получает 503; одновременно edge warming спасает cold POPs от каскада cache miss → origin overload.",
+                "example": "edgeWarmer.prewarmAllPops(photoId) — curl с разных регионов после PhotoPublishedEvent от celebrity.",
+                "when_to_apply": "Любые predictable hot events (viral, breaking news, scheduled drops).",
+                "edge_cases": "Random suffix усложняет lifecycle policies; prewarm стоит лишнего egress.",
+                "related": "Q19 CDN, Q21 cache invalidation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Отключить celebrity-аккаунтам uploads до улучшения инфраструктуры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это бизнес-смерть; решается инфраструктурно.",
+                "source_of_confusion": "Гипербола.",
+                "if_it_were_true": "Платформа потеряла бы основного контент-генератора.",
+                "how_it_should_be": "Дизайн обязан выдерживать celebrity-нагрузку — это базовый use-case."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Переключить весь трафик на один регион.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Concentration усугубит throttling и латентность.",
+                "source_of_confusion": "Иллюзия 'единая точка проще'.",
+                "if_it_were_true": "Multi-region архитектура не имела бы смысла.",
+                "how_it_should_be": "Distribute, не concentrate."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему CloudFront Invalidation API — не лучшее решение для масс-deletion (например при удалении аккаунта)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Invalidation работает мгновенно и бесплатно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Invalidation платная сверх квоты и занимает 10-15 минут.",
+                "source_of_confusion": "Маркетинговые обещания CDN.",
+                "if_it_were_true": "Никто не строил бы immutable URL — но все строят.",
+                "how_it_should_be": "Помнить про cost и latency invalidation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CloudFront не поддерживает удаление кэша.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддерживает — но дорого и медленно.",
+                "source_of_confusion": "Категоричное упрощение.",
+                "if_it_were_true": "Не было бы API create-invalidation.",
+                "how_it_should_be": "Поддержка есть, но используется редко."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно сменить S3 bucket, кэш сам очистится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэш не чистится при смене origin — он кэширует по URL.",
+                "source_of_confusion": "Magic thinking.",
+                "if_it_were_true": "Не нужно было бы invalidate.",
+                "how_it_should_be": "Использовать versioned URL или soft delete на app-уровне."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Дорого ($0.005 per path сверх 1000/month) и медленно (10-15 минут); лучше soft-delete в метаданных + immutable URL — CDN отдаёт что есть, profile/feed просто не показывают.",
+              "correct": true,
+              "sections": {
+                "explanation": "Invalidation годится для редких операаций — при массовых deletion нужен soft-delete (status=DELETED), GET через app возвращает 404, через 30 дней lifecycle policy чистит S3 (GDPR).",
+                "example": "UPDATE photos SET deleted_at=now(), pii_redacted=true; cascade на photos; через 30 дней hard delete с S3.",
+                "when_to_apply": "GDPR right-to-be-forgotten, account closure, bulk content removal.",
+                "edge_cases": "30-day window — баланс между ошибочным удалением и compliance; immutable URL означает старые ссылки протухают.",
+                "related": "Q19 CDN strategy, Q22 multi-region."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую consistency-модель использует Instagram для multi-region?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Strong consistency глобально — каждый write реплицируется синхронно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cross-region sync replication даёт latency 100ms+ на каждый write — недопустимо для feed.",
+                "source_of_confusion": "Желание простоты модели.",
+                "if_it_were_true": "Upload фото в Бразилии ждал бы commit в US-East.",
+                "how_it_should_be": "Eventual cross-region, strong локально в home region."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "AP (eventual): geo-partition по home region пользователя — все его writes идут в home, cross-region async replication (~100ms-1s lag); read-your-own-writes через session affinity.",
+              "correct": true,
+              "sections": {
+                "explanation": "Feed может отставать 1-2 сек между регионами — acceptable; для пароля/2FA/Shop включается CP single-region.",
+                "example": "User из EU пишет в eu-west primary, async реплицируется в us-east и apac; viewer из APAC видит eventually consistent state.",
+                "when_to_apply": "Global social-сети с geo-distribution и tolerant consistency.",
+                "edge_cases": "При падении us-east DNS переключает (Route53 health check); writes очередь в Kafka до возврата primary.",
+                "related": "Q25 AP vs CP, Q11 feed."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CP — sacrifice availability ради consistency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Instagram выбирает AP — availability важнее, чем 100% strict consistency.",
+                "source_of_confusion": "Аналогия с банковскими системами.",
+                "if_it_were_true": "При partition половина пользователей не могла бы лайкать — недопустимо.",
+                "how_it_should_be": "AP по умолчанию, CP для конкретных critical flows."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Single-region — без multi-region вообще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "500M DAU глобально требуют multi-region для latency и DR.",
+                "source_of_confusion": "Упрощение масштаба.",
+                "if_it_were_true": "Latency для APAC из us-east была бы 200ms+ RTT на каждый запрос.",
+                "how_it_should_be": "Multi-region обязателен для global products."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие уровни rate limiting Instagram применяет одновременно для защиты от abuse?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только per-IP — достаточно для всего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bot ферма с миллионами IP легко обходит per-IP; нужен per-user.",
+                "source_of_confusion": "Упрощение.",
+                "if_it_were_true": "Spam-аккаунты лайкали бы тысячи постов в минуту.",
+                "how_it_should_be": "Combinatorial defence: per-IP + per-user + behavior."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только per-user — IP бессмысленно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unauth requests (search anon) и DDoS требуют per-IP.",
+                "source_of_confusion": "Перекос в auth-flow.",
+                "if_it_were_true": "Любой DDoS пробивал бы edge.",
+                "how_it_should_be": "Per-IP — первый слой; per-user — второй."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только CAPTCHA на всех запросах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CAPTCHA на каждом запросе разрушает UX.",
+                "source_of_confusion": "Реактивный подход.",
+                "if_it_were_true": "Пользователи решали бы CAPTCHA на каждом GET feed.",
+                "how_it_should_be": "CAPTCHA — escalation при подозрительном поведении."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Per-IP (1000 req/min, edge на CloudFront), per-user upload (100 photos/day, 50 stories/day), per-user behavior (60 likes/min, 200 follows/day для anti-spam), плюс ML-классификатор поведения и CAPTCHA.",
+              "correct": true,
+              "sections": {
+                "explanation": "Многоуровневое limiting защищает от разных attack vectors: DDoS (per-IP), bot scraping (per-user behavior), content spam (per-action quotas).",
+                "example": "redis.incr с window-keyed ключом + EXPIRE — sliding window counter.",
+                "when_to_apply": "Любая публичная API с UGC и риском злоупотреблений.",
+                "edge_cases": "Soft limit (warning + 1s throttle) vs hard (429 + temporary shadow ban); IP reputation от GuardDuty/Cloudflare.",
+                "related": "Q24 idempotency, Q18 moderation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем клиент посылает Idempotency-Key на /photos/{photoId}/finalize, и что произойдёт при повторной отправке того же запроса?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сервер делает INSERT ... ON CONFLICT (photo_id) DO NOTHING — при повторе возвращает существующую запись, не создаёт дубликат; защищает от network retry клиента после нестабильного соединения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Idempotency-Key + natural key (photo_id) дают exactly-once семантику для критичной финализации — типовой паттерн REST API.",
+                "example": "Клиент таймаут на /finalize → retry с тем же Idempotency-Key → сервер возвращает 201 с уже созданным photoId.",
+                "when_to_apply": "Любые non-idempotent endpoint-ы (POST, PUT с side effects).",
+                "edge_cases": "Дубликат контента (другой photoId) ловится perceptual hash; cleanup orphaned uploads — S3 lifecycle 24h.",
+                "related": "Q6 multipart upload, Q5 async processing."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сервер создаёт два photo записи — дубликат это OK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дубликат — баг, который ломает feed и счётчики.",
+                "source_of_confusion": "Игнор идемпотентности.",
+                "if_it_were_true": "Каждый network retry порождал бы дубль.",
+                "how_it_should_be": "ON CONFLICT DO NOTHING обязателен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сервер возвращает 500 на любой retry.",
+              "correct": false,
+              "sections": {
+                "what_actually": "500 нарушает идемпотентность и forces клиента в петлю.",
+                "source_of_confusion": "Реактивный антипаттерн.",
+                "if_it_were_true": "Retry-логика клиента ломала бы сервер.",
+                "how_it_should_be": "Возвращать тот же 201 с уже созданной записью."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сервер удаляет первую запись и создаёт новую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Replace разрушает связи (likes, comments на старый photoId).",
+                "source_of_confusion": "Логика 'последний выигрывает'.",
+                "if_it_were_true": "Лайки терялись бы при каждом retry.",
+                "how_it_should_be": "Idempotent — preserve existing, don't replace."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Где Instagram всё-таки нужна strong consistency (CP), несмотря на общий AP-подход?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "На лайках вирального фото.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лайки виральных фото — самый AP-кейс (counter eventually consistent через Redis write-behind).",
+                "source_of_confusion": "Кажется, что виральное важное.",
+                "if_it_were_true": "Hot row contention убил бы Postgres.",
+                "how_it_should_be": "Counter — приближение, не точное число."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "На просмотре feed.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Feed — eventually consistent через precomputed Redis ZSET.",
+                "source_of_confusion": "Желание 'всё актуально'.",
+                "if_it_were_true": "Latency feed выросла бы на порядок.",
+                "how_it_should_be": "Feed AP, маленькое отставание OK."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "На уникальности username, изменении пароля/2FA, финансовых операциях Instagram Shop — single-region write или distributed lock.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти flow требуют точного инварианта (уникальность, безопасность, ACID money) — eventual consistency недопустим; цена — latency для дальних регионов, но операций мало.",
+                "example": "Username unique — single-region primary с distributed lock; password change — sync replication перед confirm.",
+                "when_to_apply": "Когда нарушение консистентности даёт корректность/security/finance bug.",
+                "edge_cases": "Practical mix: read-your-own-writes через sticky session, monotonic reads через last_write_ts, causal через vector clock.",
+                "related": "Q22 multi-region, Q11 feed."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "На stories feed.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stories AP — TTL-based, eventual replication между регионами OK.",
+                "source_of_confusion": "Ephemeral путают с consistent.",
+                "if_it_were_true": "Все stories реплицировались бы синхронно глобально.",
+                "how_it_should_be": "Stories — AP с lazy fetch from home region."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что значит «capacity headroom +50% от peak» и зачем закладывать такой запас?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Гарантия, что 50% серверов всегда выключены — экономия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Headroom не про экономию, а про устойчивость к нагрузочным всплескам.",
+                "source_of_confusion": "Путают idle и reserved capacity.",
+                "if_it_were_true": "Cost-management уничтожал бы headroom.",
+                "how_it_should_be": "Headroom — резерв под пики, не idle savings."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Total capacity на 50% больше observed peak — переживёт celeb-публикацию (10× обычной нагрузки) или внезапный trending hashtag без degradation.",
+              "correct": true,
+              "sections": {
+                "explanation": "Viral события и breaking news увеличивают нагрузку в разы; запас в 50% над peak (не average) даёт буфер на autoscale, который сам требует минут для прогрева.",
+                "example": "Reserved instances для baseline + spot для async workers + autoscale для бурстов; tiered storage (S3 hot 90d → Glacier).",
+                "when_to_apply": "Любые user-facing системы с unpredictable traffic spikes.",
+                "edge_cases": "Multi-region — headroom в каждом регионе; cost optimization через reserved/spot mix; рост 25-30% YoY.",
+                "related": "Q20 viral photo, Q22 multi-region."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Headroom только на app-tier, БД масштабировать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "БД часто bottleneck — sharding и replicas тоже планируют с запасом.",
+                "source_of_confusion": "Stateless-only thinking.",
+                "if_it_were_true": "Postgres падал бы при каждом viral.",
+                "how_it_should_be": "Headroom на всех слоях, особенно на stateful."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "50% означает downtime 50% времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Headroom — про capacity buffer, не availability.",
+                "source_of_confusion": "Путаница терминологии.",
+                "if_it_were_true": "SLA не имела бы смысла.",
+                "how_it_should_be": "Headroom повышает availability, не понижает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой из перечисленных подходов — антипаттерн при дизайне Instagram-подобной системы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Async по умолчанию для тяжёлых операций (thumbnails, moderation, fan-out).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это правильный подход — sync блокирует API и не масштабируется.",
+                "source_of_confusion": "Async кажется усложнением.",
+                "if_it_were_true": "Sync был бы паттерном — но реальные системы наоборот.",
+                "how_it_should_be": "Async — это lesson, не pitfall."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Идемпотентность на каждом entry point (Idempotency-Key или natural key).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Идемпотентность — обязательная практика для устойчивости к retry.",
+                "source_of_confusion": "Сложность кажется лишней.",
+                "if_it_were_true": "Network retries порождали бы дубликаты.",
+                "how_it_should_be": "Идемпотентность — это lesson."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Складывать media-файлы в Postgres BLOB и использовать одно хранилище для всего workload-а (read-heavy + write-heavy + search).",
+              "correct": true,
+              "sections": {
+                "explanation": "BLOB в РСУБД — I/O killer, нарушает кэширование и backup window; polyglot persistence обязателен потому, что один engine не покрывает разные access pattern-ы дёшево.",
+                "example": "Photos в S3 + CDN, metadata в Postgres, feed в Redis, DMs в Cassandra, search в ES — каждое под свой workload.",
+                "when_to_apply": "Не складывать BLOB в OLTP БД; разделять storage по access pattern, не по domain entity.",
+                "edge_cases": "Малые проекты могут начинать с BLOB в Postgres, но при росте обязательно мигрировать в object storage.",
+                "related": "Q7 storage architecture, Q14 DMs Cassandra."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hybrid fan-out для feed (push обычным, pull celeb).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hybrid — стандартное решение, не антипаттерн.",
+                "source_of_confusion": "Сложность hybrid кажется минусом.",
+                "if_it_were_true": "Чистый push был бы достаточен — но он не вытягивает celeb.",
+                "how_it_should_be": "Hybrid — lesson, обязательный для asymmetric social graph."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

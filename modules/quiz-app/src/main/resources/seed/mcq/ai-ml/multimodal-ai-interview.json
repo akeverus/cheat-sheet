@@ -1,0 +1,1865 @@
+{
+  "topic_slug": "multimodal-ai-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевой архитектурный сдвиг от CLIP (2021) к GPT-4o (2024)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Переход от связки vision-encoder + LLM к native multimodal трансформеру, где картинка/аудио — это просто другие токены в едином потоке",
+              "correct": true,
+              "sections": {
+                "explanation": "CLIP/BLIP-2 склеивали отдельный vision-encoder с замороженной LLM через projection; GPT-4o с самого pre-training обучается на смешанном потоке text+image+audio токенов в одном трансформере.",
+                "example": "GPT-4o (май 2024) принимает речь напрямую и отвечает голосом за ~320 ms — потому что аудио-токены идут через тот же decoder, без STT/TTS внутри.",
+                "when_to_apply": "Когда обсуждаем, почему native-модели понимают интонацию и эмоции, а pipeline-подход — нет; и почему vision-токены в GPT-4o дешевле, чем казалось у BLIP-2.",
+                "edge_cases": "Native multimodality не отменяет vision-encoder полностью — внутри GPT-4o всё равно есть patch-embedding слой, просто он обучен совместно с LLM, а не отдельно.",
+                "related": "Q2 архитектура VLM, Q3 image tokens, Q16 pipeline vs Realtime."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Отказ от трансформера в пользу диффузионных моделей для понимания изображений",
+              "correct": false,
+              "sections": {
+                "what_actually": "GPT-4o, Gemini 2.5 и Claude 4 остаются decoder-only трансформерами; диффузия используется только для генерации изображений (DALL-E, Imagen), а не для understanding.",
+                "source_of_confusion": "Диффузионные модели часто упоминаются в multimodal-контексте, но они отвечают за text-to-image, а не за vision-input.",
+                "if_it_were_true": "Тогда у GPT-4o был бы denoising-loop на входе и невозможно было бы получить text-out быстрее 1-2 секунд.",
+                "how_it_should_be": "Vision-вход — это патч-эмбеддинги в трансформере; диффузия живёт в отдельной модели генерации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное изменение — рост размера image encoder с ViT-B до ViT-22B",
+              "correct": false,
+              "sections": {
+                "what_actually": "Encoder вырос умеренно (ViT-L→ViT-H), а главный сдвиг — в способе обучения: совместный pre-training вместо проекции на frozen LLM.",
+                "source_of_confusion": "Scaling действительно был, но не он отделяет native multimodal от CLIP-эпохи.",
+                "if_it_were_true": "Тогда достаточно было бы взять CLIP с гигантским encoder и получить GPT-4o, но это не так — нужно совместное обучение.",
+                "how_it_should_be": "Ключ — joint pre-training на mixed-modality потоке, не размер vision-tower."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CLIP и GPT-4o используют одну и ту же contrastive-loss архитектуру, разница только в данных",
+              "correct": false,
+              "sections": {
+                "what_actually": "CLIP — двойной энкодер с contrastive loss; GPT-4o — decoder-only generative с next-token loss. Это разные обучающие парадигмы.",
+                "source_of_confusion": "Оба называют 'multimodal', но CLIP только matches, а GPT-4o generates.",
+                "if_it_were_true": "Тогда CLIP мог бы отвечать текстом на вопросы о картинке, чего он принципиально не умеет.",
+                "how_it_should_be": "CLIP — embedding-модель для retrieval/classification; GPT-4o — generative VLM."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем в архитектуре VLM нужен projection layer (MLP или Q-Former) между vision encoder и LLM?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы сжимать картинку до 4 байт перед отправкой в LLM",
+              "correct": false,
+              "sections": {
+                "what_actually": "Projection не сжимает данные до байт; он переводит vision-embedding (например, 1024-D от ViT) в размерность input-эмбеддингов LLM (например, 4096-D).",
+                "source_of_confusion": "Слово 'projection' звучит как 'компрессия', но это линейное/нелинейное преобразование пространства, а не quantization.",
+                "if_it_were_true": "4 байт не хватило бы даже на один эмбеддинг — обычный float32 эмбеддинг это килобайты.",
+                "how_it_should_be": "Projection приводит embedding к размерности LLM, сохраняя информационное содержимое."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Эмбеддинги ViT и input-эмбеддинги LLM живут в разных пространствах (разные размерности и распределение); projection приводит vision-токены к формату, который LLM может обработать как обычные токены",
+              "correct": true,
+              "sections": {
+                "explanation": "ViT и LLM обучались независимо и имеют свои dimension (1024 vs 4096), свою норму и распределение; projection (MLP в LLaVA, Q-Former в BLIP-2) выравнивает оба пространства.",
+                "example": "В LLaVA — простая двухслойная MLP: 1024→4096; в BLIP-2 — Q-Former с 32 learnable queries, который сжимает 256 patch-эмбеддингов до 32 'image-tokens' для LLM.",
+                "when_to_apply": "Когда подключаешь свою vision-модель к чужой LLM (open-source pipeline) — projection обычно единственный обучаемый компонент в первой стадии.",
+                "edge_cases": "В native multimodal (GPT-4o) явного projection как отдельного модуля нет — патч-эмбеддинги изначально совместимы с LLM, потому что обучались вместе.",
+                "related": "Q1 эволюция, Q3 image tokens, Q11 CLIP encoder."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы зашифровать содержимое картинки от утечек через prompt injection",
+              "correct": false,
+              "sections": {
+                "what_actually": "Projection не имеет отношения к security; это сугубо математическое преобразование пространств.",
+                "source_of_confusion": "Prompt injection через картинки — реальная угроза, но защита делается на уровне moderation, не projection.",
+                "if_it_were_true": "Тогда LLM не смогла бы 'понять' картинку, потому что любая семантика была бы стёрта.",
+                "how_it_should_be": "Защита от image prompt injection — отдельный classifier и instructions, не projection."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Projection нужен только для генерации изображений на выходе LLM",
+              "correct": false,
+              "sections": {
+                "what_actually": "Projection работает на ВХОДЕ, переводя vision-токены в LLM-пространство; для генерации картинок используются совсем другие модули (диффузия, autoregressive image tokens).",
+                "source_of_confusion": "Путаница между projection в LLaVA (вход) и output-проекциями в моделях типа Chameleon/GPT-Image.",
+                "if_it_were_true": "Тогда LLaVA, у которой только text-out, не нуждалась бы в projection вовсе.",
+                "how_it_should_be": "Projection — это input-bridge; для image-out нужен отдельный decoder (diffusion или image token head)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сколько токенов стоит одно изображение 2048×1024 в режиме detail=\"high\" у OpenAI GPT-4o?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "85 токенов независимо от размера",
+              "correct": false,
+              "sections": {
+                "what_actually": "85 токенов — это режим detail=\"low\" с ресайзом до 512×512; для high-res формула другая.",
+                "source_of_confusion": "85 — фиксированная low-res стоимость, легко запоминается и переносится не туда.",
+                "if_it_were_true": "Тогда OCR на 4K-документах работал бы за копейки и не было бы смысла в low/high различии.",
+                "how_it_should_be": "Low: 85 фиксировано. High: 85 base + 170×N_tiles, где N_tiles зависит от размера."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Около 1568 токенов по формуле (width × height) / 750",
+              "correct": false,
+              "sections": {
+                "what_actually": "Формула (width × height)/750 — это Anthropic Claude, а не OpenAI; на 2048×1024 у Anthropic выйдет ~2730 токенов.",
+                "source_of_confusion": "Anthropic и OpenAI считают image-tokens по принципиально разным правилам.",
+                "if_it_were_true": "Тогда у OpenAI не имело бы значения, low или high res, потому что формула была бы только от площади.",
+                "how_it_should_be": "OpenAI: tile-based (85 base + 170×N tiles); Anthropic: area-based ((w×h)/750)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Примерно 765 токенов: 85 base + 170 × 4 тайла (2048×1024 разбивается на 4 тайла 512×512)",
+              "correct": true,
+              "sections": {
+                "explanation": "В high-res OpenAI ресайзит картинку до укладывания в тайлы 512×512; 2048×1024 даёт ровно 4 тайла, итого 85 + 4·170 = 765 токенов.",
+                "example": "Для фото 4032×3024 после ресайза до 2048×1536 — 4×3 = 12 тайлов → 85 + 12·170 = 2125 токенов. Это уже сравнимо с целой статьёй текста.",
+                "when_to_apply": "Считай бюджет: 10 000 high-res страниц в день ≈ 7.65M input-токенов только на vision — это серьёзные деньги.",
+                "edge_cases": "Если картинка непропорциональная (16:1), OpenAI всё равно нарежет её на полные тайлы 512×512 с паддингом — часть тайлов будет почти пустой, но вы за них заплатите.",
+                "related": "Q4 low vs high, Q9 PDF, Q28 cost optimization."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Ровно 258 токенов как в Gemini",
+              "correct": false,
+              "sections": {
+                "what_actually": "258 токенов на картинку ≤384×384 — это правило Google Gemini, не OpenAI.",
+                "source_of_confusion": "У каждого вендора своя формула; легко перепутать Gemini fixed 258 с OpenAI 85+170*N.",
+                "if_it_were_true": "Тогда OpenAI не различал бы low/high и не было бы тайл-разбиения.",
+                "how_it_should_be": "Gemini: 258 на ≤384px + 258 на каждый 768×768 тайл; OpenAI совсем другая модель."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каком сценарии включение detail=\"high\" — типичный антипаттерн (пустая трата токенов)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтение мелких цифр на бумажном чеке",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чек — классический случай для high-res: цифры мелкие, low-res 512×512 их размывает и модель додумывает.",
+                "source_of_confusion": "Кажется, что чек — простой документ; но мелкий шрифт требует разрешения.",
+                "if_it_were_true": "Тогда low-res давал бы такую же точность OCR, но на практике WER падает в 2-3 раза.",
+                "how_it_should_be": "Для OCR мелкого текста (чеки, паспорта, формы) — обязательно high-res."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "PDF договора с многоколоночным макетом и сносками",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-column layout и мелкие сноски — это классика для high-res; в low-res колонки слипаются и сноски нечитаемы.",
+                "source_of_confusion": "Договор — это 'просто текст', и кажется, что разрешение неважно. Но макет и detail-of-text критичны.",
+                "if_it_were_true": "Тогда OCR договоров был бы тривиален на любых параметрах.",
+                "how_it_should_be": "Для PDF с layout — high-res; ещё лучше — Docling/LlamaParse → текст в LLM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Извлечение таблицы позиций со счёта",
+              "correct": false,
+              "sections": {
+                "what_actually": "Таблицы со счёта — типичный кейс для high-res: цифры в ячейках, тонкие границы, мелкий шрифт.",
+                "source_of_confusion": "Если счёт визуально крупный, кажется, что low-res справится — но на практике ошибки в суммах появляются регулярно.",
+                "if_it_were_true": "Тогда extraction работала бы корректно на low-res; на деле WER на числах резко растёт.",
+                "how_it_should_be": "Schema-first extract таблиц всегда с detail=\"high\"."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Массовый триаж 10 000 фото на наличие кошки vs собаки",
+              "correct": true,
+              "sections": {
+                "explanation": "Для дешёвой бинарной классификации общего смысла картинки достаточно low-res 512×512 — high-res даёт ×10 стоимости без выигрыша в качестве на такой задаче.",
+                "example": "10 000 картинок low-res = 850k токенов ≈ $2; high-res с 4 тайлами = 7.65M токенов ≈ $19. Разница в 10× при одинаковом результате на бинарной классификации.",
+                "when_to_apply": "Большие батчи, простая задача, чёткие крупные объекты — low-res по умолчанию. High-res — точечно, по триггеру low-res-классификатора.",
+                "edge_cases": "Если кошки/собаки могут быть крошечными на фоне ландшафта — может понадобиться high-res; всегда мерь на golden set, прежде чем выбирать default.",
+                "related": "Q28 cost optimization, Q31 антипаттерны."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой паттерн multi-image prompting работает лучше всего, когда нужно показать LLM 30 страниц одного PDF?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Передать каждую страницу как отдельное image-content c подписями \"Page 1:\", \"Page 2:\" и включить cache_control на повторяющиеся элементы (шапка, футер)",
+              "correct": true,
+              "sections": {
+                "explanation": "Anthropic поддерживает до 100 изображений в одном запросе; подписи помогают модели связывать инструкции со страницами, а prompt caching кеширует одинаковые vision-токены — до 90% экономии на повторяющихся шаблонах.",
+                "example": "30-страничный отчёт с одинаковой шапкой: первый запрос платит за все 30 страниц, последующие — только за дельту, потому что шапка-vision-токены попадают в cache hit.",
+                "when_to_apply": "Многостраничные документы одного шаблона (отчёты, формы), мульти-страничные сравнения, raster-PDF без OCR-парсера.",
+                "edge_cases": "Cache работает только при стабильном префиксе; если меняешь порядок страниц или инструкции — cache промахивается.",
+                "related": "Q9 PDF processing, Q12 multimodal RAG, Q28 cost optimization."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Склеить все 30 страниц в одну гигантскую вертикальную картинку (тянущуюся вниз)",
+              "correct": false,
+              "sections": {
+                "what_actually": "Огромные вертикальные склейки бьются на тайлы (или принудительно ресайзятся), часть деталей теряется, aspect-ratio наказывается паддингом или потерей пикселей.",
+                "source_of_confusion": "Кажется, что 1 файл < 30 файлов — но vision-биллинг считается по тайлам, не по 'image count'.",
+                "if_it_were_true": "Тогда длинные скриншоты работали бы идеально, но на практике именно они дают самые плохие OCR-результаты.",
+                "how_it_should_be": "Передавай каждую страницу отдельно, в её родном разрешении."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Прогнать каждую страницу отдельным API-запросом и сшить ответы клиентом",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это работает, но теряется cross-page контекст: модель не сможет ответить 'в каком разделе упомянут штраф' — только на один лист за запрос.",
+                "source_of_confusion": "Подход безопаснее с точки зрения context-limit, но медленнее и беднее по семантике.",
+                "if_it_were_true": "Тогда multimodal RAG был бы единственно правильным способом — но для коротких документов <100 страниц multi-image в одном запросе лучше.",
+                "how_it_should_be": "Multi-image в одном запросе для целостного контекста; отдельные запросы — только когда документ не влезает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Конвертировать страницы в ASCII-art и вставить в text-prompt",
+              "correct": false,
+              "sections": {
+                "what_actually": "ASCII-art теряет почти всю информацию (цвет, шрифт, layout) и неэффективен по токенам.",
+                "source_of_confusion": "Звучит креативно, но это не оптимизация, а деградация.",
+                "if_it_were_true": "Тогда модель могла бы 'читать' картинки через ASCII лучше vision-encoder — это не так.",
+                "how_it_should_be": "Если хочется текста — используй OCR/Docling; vision-токены всё равно дешевле ASCII-плоскости."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каком случае dedicated OCR (Tesseract, Azure Form Recognizer) предпочтительнее VLM (GPT-4o/Claude)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Когда нужно понять смысловое значение текста ('какова сумма НДС?')",
+              "correct": false,
+              "sections": {
+                "what_actually": "Понимание семантики — сильная сторона VLM; Tesseract вернёт только raw text, без понимания, какая цифра — это НДС.",
+                "source_of_confusion": "Кажется, что 'сначала OCR, потом LLM на тексте' тоже сработает — да, но это уже гибрид, а не чистый dedicated OCR.",
+                "if_it_were_true": "Тогда Tesseract заменил бы 90% случаев VLM, что не так.",
+                "how_it_should_be": "Семантика → VLM (или OCR+LLM); чистый Tesseract — только когда нужен plain text."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Когда нужно обрабатывать миллионы однотипных документов с жёсткими требованиями к latency (<500 ms) и детерминированности результата",
+              "correct": true,
+              "sections": {
+                "explanation": "Tesseract/Azure FR дают 100-500 ms latency и стоят $0.001-0.005 за страницу против $0.005-0.02 у VLM; для массовой однотипной обработки экономия огромная, плюс регуляторы любят детерминированный output.",
+                "example": "Банк сканирует 10M платёжных поручений в день — Tesseract + правила за $5k/мес vs VLM за $100k+/мес, плюс детерминированность для аудита.",
+                "when_to_apply": "High-volume + однотипные документы + latency-критика + регуляторные требования к воспроизводимости.",
+                "edge_cases": "Если документы вариативны (рукопись, разные форматы) — даже high-volume лучше VLM или гибрид.",
+                "related": "Q9 PDF processing, Q28 cost optimization, Q31 антипаттерны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Когда документ — рукописная пометка на медицинском бланке",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рукописный текст — типичная слабость Tesseract (60-80% точность) и сильная сторона VLM (90-97%).",
+                "source_of_confusion": "Tesseract традиционно ассоциируется с любым OCR, включая рукопись, но он плохо с ней справляется.",
+                "if_it_were_true": "Тогда Tesseract заменил бы human transcribers в медицине — но в реальности рукописи дают VLM или специализированные модели.",
+                "how_it_should_be": "Рукопись — VLM (Claude 3.5+, GPT-4o)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Когда нужна Layout-aware обработка многоколоночного PDF",
+              "correct": false,
+              "sections": {
+                "what_actually": "Базовый Tesseract плохо понимает многоколоночный layout — он читает построчно слева-направо, ломая колонки.",
+                "source_of_confusion": "Layout-aware есть у специализированных систем (Azure FR, Docling), но не у чистого Tesseract.",
+                "if_it_were_true": "Тогда любая газета корректно бы парсилась Tesseract из коробки.",
+                "how_it_should_be": "Multi-column layout — VLM или layout-aware parser (Docling, Azure FR, LlamaParse)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой подход к извлечению таблицы с инвойса наиболее устойчив к 'кривым' ответам модели?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сказать в prompt 'верни Markdown-таблицу' и распарсить её регуляркой",
+              "correct": false,
+              "sections": {
+                "what_actually": "Markdown-таблица от запроса к запросу разной формы: разное число колонок, разные разделители, иногда модель добавляет лишний preamble.",
+                "source_of_confusion": "Markdown кажется 'структурированным', но это лишь форматирование текста, не контракт.",
+                "if_it_were_true": "Тогда regex-парсер был бы стабилен — на практике он ломается на каждом 20-м инвойсе.",
+                "how_it_should_be": "JSON Schema (Structured Outputs) — контракт на уровне API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Просить модель сгенерировать Python-скрипт извлечения и его выполнять",
+              "correct": false,
+              "sections": {
+                "what_actually": "Генерация кода вместо данных усложняет pipeline (нужна sandbox) и не делает результат стабильнее.",
+                "source_of_confusion": "Code Interpreter полезен для вычислений по уже извлечённым данным, но не для самого extraction.",
+                "if_it_were_true": "Тогда каждый инвойс требовал бы отдельного скрипта — это не масштабируется.",
+                "how_it_should_be": "Extraction через JSON Schema, опционально Code Interpreter для post-validation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать Structured Outputs (JSON Schema, strict:true) с полями items[], subtotal, vat, total и валидировать пост-обработкой (sum(items.total) ≈ subtotal)",
+              "correct": true,
+              "sections": {
+                "explanation": "Schema-first вынуждает модель вернуть JSON под заданный контракт; добавочный validator (математика чисел) ловит OCR-ошибки даже если JSON формально валиден.",
+                "example": "Если extracted items.total суммируются в 1230, а subtotal=1200 — re-extract с подсказкой 'ты ошибся в одной строке, перепроверь'. Это поднимает финальную точность с ~88% до ~98%.",
+                "when_to_apply": "Любые табличные данные с математикой; формы; всё, где есть проверяемые инварианты.",
+                "edge_cases": "Если subtotal сам нечитаем — fallback на полную сумму items; всегда отмечай 'unverified' поля в выходе.",
+                "related": "Q26 hallucinations, Q31 антипаттерны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Включить temperature=2.0 для большего разнообразия и выбрать лучший ответ",
+              "correct": false,
+              "sections": {
+                "what_actually": "Высокая температура УХУДШАЕТ extraction-точность; для структурированного output используется temperature 0-0.2.",
+                "source_of_confusion": "В креативных задачах высокая температура помогает, но для facts/numbers — нет.",
+                "if_it_were_true": "Тогда максимально точный OCR был бы при random sampling — обратное верно.",
+                "how_it_should_be": "Низкая температура + Schema + validator + при необходимости re-extract."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что меряет benchmark ChartQA и какой типичный антипаттерн при работе с графиками?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Меряет качество text-to-image для столбчатых диаграмм; антипаттерн — использовать SD3.5 вместо FLUX",
+              "correct": false,
+              "sections": {
+                "what_actually": "ChartQA — это understanding-бенчмарк (вопросы по графикам), а не генерация.",
+                "source_of_confusion": "В названии есть 'Chart', что путают с image generation.",
+                "if_it_were_true": "Тогда лидерами были бы диффузионные модели — на деле это GPT-4o, Claude, Gemini.",
+                "how_it_should_be": "ChartQA — VQA по графикам; SOTA 2026 ≈ 85-90% у frontier VLM."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Меряет точность распознавания шрифтов на графиках; антипаттерн — игнорировать legend",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шрифты — побочный фактор; ChartQA меряет понимание данных и вычисления ('какой год показал максимум?', 'во сколько раз A больше B?').",
+                "source_of_confusion": "На графиках есть текст, но задача — answer, а не OCR.",
+                "if_it_were_true": "Тогда метрика была бы похожа на TextVQA — это разные бенчмарки.",
+                "how_it_should_be": "ChartQA = chart understanding + reasoning, не OCR подписей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Меряет latency инференса на графиках; антипаттерн — использовать high-res",
+              "correct": false,
+              "sections": {
+                "what_actually": "ChartQA — quality benchmark (accuracy), не latency.",
+                "source_of_confusion": "Latency и quality — независимые оси; путают metric tracking.",
+                "if_it_were_true": "Тогда самой быстрой моделью был бы лидер ChartQA, что не соответствует реальности.",
+                "how_it_should_be": "Quality на ChartQA + latency мерь отдельно; для charts обычно НУЖЕН high-res."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Меряет понимание графиков (bar/line/pie) с ответами на вычислительные вопросы по визуальным данным; антипаттерн — спрашивать максимум напрямую без предварительного structured-extract точек",
+              "correct": true,
+              "sections": {
+                "explanation": "ChartQA — VQA-бенчмарк с вычислениями по графику ('максимум? сравнение значений?'). Производственный подход: VLM → JSON точек → tool (Python) считает ответ; прямой вопрос приводит к угадыванию.",
+                "example": "Структурированный prompt: '1) тип графика, 2) оси с единицами, 3) серии данных, 4) точки в JSON, 5) точные vs приблизительные, 6) только потом ответ' — поднимает точность с 70% до 85%+.",
+                "when_to_apply": "Любая аналитика по визуальным графикам/диаграммам; финотчёты; отчёты по продажам.",
+                "edge_cases": "На log-scale моделях часто не учитывают масштаб; явно проси указать тип шкалы.",
+                "related": "Q25 benchmarks, Q26 hallucinations."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каком случае правильнее не использовать native VLM на PDF, а сначала прогнать через layout-парсер (Docling, LlamaParse)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Многостраничный текстовый договор (digital PDF) с таблицами и сносками, где главное — точно достать текст и его иерархию",
+              "correct": true,
+              "sections": {
+                "explanation": "Для digital text-PDF layout-парсер даёт markdown с сохранением структуры за копейки; vision-LLM на 500 страниц договора стоил бы 800k токенов и был бы избыточен.",
+                "example": "500-страничный отчёт через Docling → ~2 минуты CPU + бесплатно; через VLM high-res — $5-10 за один запрос и не всегда влезает в контекст.",
+                "when_to_apply": "Digital PDF, договоры, отчёты, многостраничная аналитика, любые большие документы с богатой структурой.",
+                "edge_cases": "Если PDF — скан или содержит важные диаграммы — гибрид: layout-парсер + vision на страницы с диаграммами.",
+                "related": "Q6 OCR vs VLM, Q12 multimodal RAG, Q30 RAG flow."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Скан старого рукописного письма с пятнами",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сканы старых рукописей — главный случай для vision-VLM в high-res; layout-парсеры на таком ломаются.",
+                "source_of_confusion": "Кажется, что 'это PDF, значит layout-парсер' — но скан — это просто картинка в обёртке PDF.",
+                "if_it_were_true": "Тогда Docling справился бы со средневековыми манускриптами — не справится.",
+                "how_it_should_be": "Scanned/handwritten PDF — vision-VLM, желательно high-res."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "PDF с большим количеством инфографики и сложных диаграмм",
+              "correct": false,
+              "sections": {
+                "what_actually": "Layout-парсер не понимает диаграммы — он либо пропустит их, либо вернёт raw текст подписей; для диаграмм нужен VLM.",
+                "source_of_confusion": "Layout-aware звучит как 'понимает картинки', но это только структура текста.",
+                "if_it_were_true": "Тогда любая infographic корректно превращалась бы в Markdown — это не так.",
+                "how_it_should_be": "PDF с диаграммами — гибрид: layout для текста + vision для диаграмм."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "PDF, где главное — посчитать число лиц на фотографиях внутри документа",
+              "correct": false,
+              "sections": {
+                "what_actually": "Counting лиц на фото — задача computer vision; layout-парсер вообще не работает с пиксельным содержанием.",
+                "source_of_confusion": "PDF может содержать фото, но layout-парсер видит их как 'image-блок' без анализа.",
+                "if_it_were_true": "Тогда Docling возвращал бы 'на странице 3 лица' — нет, он вернёт <image src=...>.",
+                "how_it_should_be": "Object counting на фото — vision-модель (VLM или dedicated detector)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую задачу современные VLM (Claude 3.5+, Gemini 2.5) умеют делать через выдачу нормализованных координат (0-1000)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Тренировать свой собственный YOLOv11 для production CV",
+              "correct": false,
+              "sections": {
+                "what_actually": "VLM не обучают сторонние детекторы; они только выводят bbox-координаты в своих ответах.",
+                "source_of_confusion": "Путаница между inference (VLM bbox) и training (YOLO).",
+                "if_it_were_true": "Тогда отдельные CV-команды были бы не нужны, что неверно.",
+                "how_it_should_be": "VLM bbox — для семантической локализации; production-детекторы тренируются отдельно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Грубая локализация объектов через bbox с координатами в нормализованном диапазоне 0-1000, полезна для open-vocabulary detection ('найди все логотипы конкурентов'), но точность ниже специализированных детекторов (YOLO, Grounding DINO)",
+              "correct": true,
+              "sections": {
+                "explanation": "VLM умеют отдать JSON вида [{label, bbox_2d:[x1,y1,x2,y2]}] в диапазоне 0-1000; это сильно зависит от модели и обычно хуже YOLO по mAP, но работает без обучения детектора.",
+                "example": "Claude 3.5: 'Верни JSON: [{label,bbox_2d:[x1,y1,x2,y2]}], координаты 0-1000.' Хорошо работает для редких/новых классов, где нет dataset для YOLO.",
+                "when_to_apply": "Open-vocabulary detection, прототипы, малые объёмы данных, где обучать детектор дороже инференса VLM.",
+                "edge_cases": "Точные bbox для tracking / safety — VLM плохо; используй Grounding DINO + SAM2 для high-precision сегментации.",
+                "related": "Q22 image generation, Q27 image safety."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Распознавание лиц по имени для security",
+              "correct": false,
+              "sections": {
+                "what_actually": "Frontier VLM отказываются распознавать лица по имени по safety/policy reasons (так настроены в RLHF).",
+                "source_of_confusion": "Кажется, что 'если модель видит, она знает кто это' — но политика провайдеров блокирует face-recognition.",
+                "if_it_were_true": "Тогда GPT-4o был бы готовым face-recognition сервисом, чего нет.",
+                "how_it_should_be": "Face recognition — отдельный стэк (с consent и compliance), не VLM."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сегментация пикселей с точностью до 1 px",
+              "correct": false,
+              "sections": {
+                "what_actually": "VLM не отдают пиксельные маски; для сегментации используют SAM2 (Meta) или специализированные модели.",
+                "source_of_confusion": "Bbox с 0-1000 — это не пиксели и не маски.",
+                "if_it_were_true": "Тогда VLM заменяли бы Photoshop с точной обводкой — нет.",
+                "how_it_should_be": "Pixel-level mask — SAM2 / Mask2Former; VLM — только грубые координаты."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что главное даёт CLIP-обучение (contrastive image-text) с точки зрения downstream-задач?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CLIP создаёт изображения по тексту (text-to-image generation)",
+              "correct": false,
+              "sections": {
+                "what_actually": "CLIP не создаёт изображения; он только эмбеддит. Диффузионные модели (Stable Diffusion) ИСПОЛЬЗУЮТ CLIP text-encoder для conditioning, но генерация — это диффузия.",
+                "source_of_confusion": "В Stable Diffusion CLIP стоит в начале pipeline, что порождает иллюзию, что 'CLIP генерирует'.",
+                "if_it_were_true": "Тогда CLIP мог бы заменить Stable Diffusion целиком.",
+                "how_it_should_be": "CLIP — conditioning encoder; image-generation — диффузионный декодер."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CLIP может генерировать caption для изображения автрорегрессивно",
+              "correct": false,
+              "sections": {
+                "what_actually": "CLIP — это два encoder + contrastive loss, БЕЗ decoder; он не генерирует текст.",
+                "source_of_confusion": "Путают с BLIP/BLIP-2/LLaVA, которые умеют captioning.",
+                "if_it_were_true": "Тогда BLIP-2 не понадобилась бы как отдельная модель с Q-Former.",
+                "how_it_should_be": "CLIP — embedding-модель; captioning делают BLIP, GPT-4o и другие generative VLM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Image и text оказываются в едином embedding-пространстве, что позволяет zero-shot classification и cross-modal search (text→image, image→image) без отдельного обучения классификатора",
+              "correct": true,
+              "sections": {
+                "explanation": "Два encoder (text Transformer + ViT) тренируются так, чтобы matched пары давали высокий cosine, а не-matched — низкий; в результате 'фото кошки' и 'a cat' близки в пространстве.",
+                "example": "Zero-shot: для каждого класса возьми его текст ('a photo of a cat'), embed, считай cosine с embedding картинки; argmax → класс. Никакого fine-tune не нужно.",
+                "when_to_apply": "Каталоги товаров (text→image search), модерация по текстовым запретам ('hate symbol'), фильтрация фото-датасетов, retrieval в multimodal RAG.",
+                "edge_cases": "CLIP плохо работает с длинными запросами (>77 токенов в text-encoder), с тонкими деталями и с composition ('cat to the LEFT of dog'); SigLIP/EVA-CLIP лучше масштабируются.",
+                "related": "Q12 multimodal RAG, Q13 ColPali vs CLIP."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CLIP даёт детальные пиксельные маски сегментации",
+              "correct": false,
+              "sections": {
+                "what_actually": "CLIP отдаёт single-vector embedding всей картинки или текста; о масках вообще нет речи.",
+                "source_of_confusion": "Open-vocabulary segmentation (OpenSeg) ИСПОЛЬЗУЕТ CLIP, но сама CLIP масок не делает.",
+                "if_it_were_true": "Тогда SAM/Mask2Former не нужны были бы как отдельные модели.",
+                "how_it_should_be": "Сегментация — отдельный head поверх vision-backbone; CLIP-эмбеддинги могут быть guidance."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой паттерн multimodal RAG лучше всего подходит для индексации сложных PDF (научные статьи, отчёты) без OCR?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Caption-then-text: прогон каждой картинки через GPT-4o → индексация текстовых описаний",
+              "correct": false,
+              "sections": {
+                "what_actually": "Caption-then-text работает для простых картинок-каталогов, но на сложных PDF теряет layout и формулы (caption-модель видит лишь общую сцену).",
+                "source_of_confusion": "Это самый простой пайплайн, поэтому первым приходит в голову.",
+                "if_it_were_true": "Тогда не появились бы ColPali и similar — они существуют именно из-за провалов caption-then-text на научных PDF.",
+                "how_it_should_be": "Для сложных PDF — ColPali; caption-then-text — для просто иллюстраций."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Joint embedding CLIP-style: индексировать image-эмбеддинги, на запросе делать cosine search",
+              "correct": false,
+              "sections": {
+                "what_actually": "CLIP single-vector retrieval плох на text-heavy PDF: 512-D вектор не может закодировать содержимое всей страницы с таблицами и формулами.",
+                "source_of_confusion": "Хорошо работает на каталогах товаров и переносится не туда.",
+                "if_it_were_true": "Тогда CLIP заменял бы ColPali на DocVQA — нет, разница в качестве 2-3×.",
+                "how_it_should_be": "CLIP — для image-каталогов; для PDF-страниц — ColPali / multi-vector."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сохранять PDF целиком как text-blob в Elasticsearch и делать BM25",
+              "correct": false,
+              "sections": {
+                "what_actually": "BM25 по тексту работает для уже извлечённого текста, но не справляется с layout/формулами/диаграммами.",
+                "source_of_confusion": "Классический IR — самый знакомый подход.",
+                "if_it_were_true": "Тогда multimodal RAG не появился бы как направление вовсе.",
+                "how_it_should_be": "BM25 — fallback или гибрид; primary — векторный (text+visual)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ColPali: каждая страница рендерится в картинку, считаются multi-vector эмбеддинги на каждый патч; retrieval через late-interaction MaxSim (ColBERT-style), не нужен OCR, layout сохраняется",
+              "correct": true,
+              "sections": {
+                "explanation": "ColPali (2024) применяет ColBERT-подход к страницам PDF: каждая страница = N patch-эмбеддингов; запрос разбивается на токены и считается MaxSim. Не требует OCR и работает с layout.",
+                "example": "Корпоративный архив 100k научных PDF → ColPali в Qdrant (multi-vector collection) → запрос 'формула Бернулли' возвращает страницы, где формула физически нарисована, даже без текстового OCR.",
+                "when_to_apply": "Сложные PDF: научные статьи, мануалы, отчёты с диаграммами; всё, где OCR ломается на формулах/macro-layout.",
+                "edge_cases": "Storage растёт ×100 (multi-vector ≈ 100-500 KB на страницу) — нужен Qdrant/Vespa с поддержкой multi-vector retrieval.",
+                "related": "Q13 ColPali vs CLIP, Q30 RAG flow."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда обычный CLIP-retrieval предпочтительнее ColPali?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Когда нужен low-latency single-vector retrieval по большому image-каталогу (товары, фото, медиа), и текст внутри картинок не критичен",
+              "correct": true,
+              "sections": {
+                "explanation": "CLIP отдаёт один 512/1024-D вектор на картинку — это в 100-500× меньше storage и проще в любом vector DB; для каталогов товаров cross-modal поиск 'красное платье в горошек' отлично работает.",
+                "example": "10M товаров e-commerce: CLIP-embedding 1024-D → Qdrant HNSW, поиск 'mid-century lamp' возвращает релевантные SKU за миллисекунды; ColPali на таком объёме был бы экономически нецелесообразен.",
+                "when_to_apply": "Большие image-каталоги, low-latency поиск, cross-modal text↔image без сильной зависимости от текста на картинке.",
+                "edge_cases": "Если в каталоге много текста на изображении (mockup-плакатов, скриншотов), CLIP проигрывает — там полезен ColPali или hybrid.",
+                "related": "Q11 CLIP, Q12 multimodal RAG."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Когда нужно искать по формулам в научных PDF",
+              "correct": false,
+              "sections": {
+                "what_actually": "Формулы и сложный layout — главная зона ColPali; обычный CLIP их теряет.",
+                "source_of_confusion": "Кажется, что 'CLIP знает картинки' и формула — это картинка.",
+                "if_it_were_true": "Тогда ColPali не появился бы как направление.",
+                "how_it_should_be": "Формулы — ColPali."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Когда главное — late-interaction MaxSim ранжирование",
+              "correct": false,
+              "sections": {
+                "what_actually": "MaxSim — это фишка именно ColBERT/ColPali; обычный CLIP делает cosine на single-vector.",
+                "source_of_confusion": "Терминология IR-моделей пересекается, легко перепутать.",
+                "if_it_were_true": "Тогда CLIP-retrieval ничем бы не отличался от ColPali.",
+                "how_it_should_be": "Single-vector cosine — CLIP; multi-vector MaxSim — ColPali."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Когда нужно индексировать страницы PDF с таблицами и multi-column текстом",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это типичный кейс для ColPali, а не CLIP.",
+                "source_of_confusion": "Любая страница — это 'картинка', но не всякий image-retriever её корректно эмбеддит.",
+                "if_it_were_true": "Тогда DocVQA-метрики были бы одинаковы — но ColPali существенно опережает.",
+                "how_it_should_be": "PDF-страницы — ColPali."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой известный production-баг Whisper особенно заметен на видео с длинными паузами тишины?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Whisper не поддерживает русский язык",
+              "correct": false,
+              "sections": {
+                "what_actually": "Whisper поддерживает 99 языков, включая русский.",
+                "source_of_confusion": "Старые open-source STT действительно были English-only, отсюда инерция.",
+                "if_it_were_true": "Тогда YouTube не использовал бы Whisper для авто-сабтитров на русских видео.",
+                "how_it_should_be": "Whisper large-v3 — multilingual; WER зависит от языка."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Whisper на участках тишины склонен галлюцинировать повторяющиеся фразы ('Подписывайтесь на канал', 'Спасибо за просмотр') — это известный bug на silence, поэтому в production обязательно ставят VAD перед STT",
+              "correct": true,
+              "sections": {
+                "explanation": "Whisper при отсутствии аудио-сигнала может выдать заученные из training-каптчей повторяющиеся фразы — это known repetition bug на silence. VAD (например, Silero) фильтрует тишину до STT и снижает hallucination rate и стоимость.",
+                "example": "Видео YouTube-туториала с 30 секундами тишины в конце: Whisper без VAD добавит несколько повторов 'Подписывайтесь и ставьте лайк'; с VAD — пустой сегмент.",
+                "when_to_apply": "Всегда добавляй VAD перед STT в продакшене: экономия 30-50% стоимости + защита от silence-hallucination.",
+                "edge_cases": "Slience-hallucination бывает и на очень тихой речи (low SNR) — настраивай VAD threshold по profile.",
+                "related": "Q15 TTS, Q19 barge-in, Q26 hallucinations."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Whisper API стримит токены, но не поддерживает batch",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenAI Whisper API ровно наоборот — поддерживает только batch, не stream; для streaming берут Deepgram / Cartesia.",
+                "source_of_confusion": "GPT API стримит, и пользователи переносят это на Whisper.",
+                "if_it_were_true": "Тогда не было бы нужды в Deepgram Nova-3 для voice-агентов.",
+                "how_it_should_be": "Whisper API = batch; для streaming — другие провайдеры."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Whisper не определяет акценты",
+              "correct": false,
+              "sections": {
+                "what_actually": "Whisper показывает один из лучших WER на акцентах среди open-моделей; именно noise robustness и acoustic diversity — её сильные стороны.",
+                "source_of_confusion": "На редких диалектах есть просадки, но это не bug, а edge case.",
+                "if_it_were_true": "Тогда Whisper не была бы дефакто бейзлайном для STT.",
+                "how_it_should_be": "Whisper устойчива к акцентам; известный bug — repetition на silence."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой TTS-провайдер 2026 даёт ~40 ms time-to-first-byte и предназначен в первую очередь для realtime voice-агентов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ElevenLabs — стабильно ниже 50 ms TTFB",
+              "correct": false,
+              "sections": {
+                "what_actually": "ElevenLabs SOTA по качеству и voice cloning, но TTFB обычно 300-800 ms — это сделано в пользу качества, не latency.",
+                "source_of_confusion": "ElevenLabs — самый известный TTS-бренд, поэтому ассоциируется с 'лучшим во всём'.",
+                "if_it_were_true": "Тогда не было бы рыночной ниши для Cartesia.",
+                "how_it_should_be": "ElevenLabs — лучшее качество и cloning; Cartesia — лучшая latency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "OpenAI tts-1-hd — даёт TTFB около 30 ms",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenAI tts-1/tts-1-hd имеют TTFB порядка 500 ms — это batch-ориентированный TTS, не для строгого realtime.",
+                "source_of_confusion": "OpenAI быстры на text, поэтому переносят это ожидание на TTS.",
+                "if_it_were_true": "Тогда Cartesia не появилась бы как отдельный продукт.",
+                "how_it_should_be": "OpenAI TTS ~500 ms TTFB; Cartesia ~40 ms."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cartesia Sonic — streaming-first TTS с TTFB ~40 ms, выдаёт первое слово, пока модель ещё дописывает остаток ответа",
+              "correct": true,
+              "sections": {
+                "explanation": "Cartesia Sonic построена как streaming-first и держит TTFB ~40 ms, что критично для voice-агента с round-trip ≤ 500 ms; OpenAI TTS ~500 ms, ElevenLabs 300-800 ms — слишком медленно для realtime.",
+                "example": "В LiveKit Agent с Cartesia пользователь слышит начало ответа агента уже через ~150-200 ms после конца своей фразы — субъективно ощущается как человеческий разговор.",
+                "when_to_apply": "Любой voice-agent с целевым round-trip ≤ 1 sec; intent-based IVR; companion-агенты.",
+                "edge_cases": "Cartesia ещё не покрывает все языки и эмоциональные стили, как ElevenLabs; для voice cloning лучше ElevenLabs (с consent).",
+                "related": "Q16 voice pipeline, Q18 frameworks."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Google Cloud TTS WaveNet — около 20 ms TTFB",
+              "correct": false,
+              "sections": {
+                "what_actually": "Google Cloud TTS — порядка 300 ms TTFB; WaveNet — модель синтеза, не latency-рекордсмен.",
+                "source_of_confusion": "WaveNet ассоциируется с 'передовым', но не равно 'самым быстрым'.",
+                "if_it_were_true": "Тогда LiveKit-плагины по умолчанию ставили бы GCP TTS, чего нет.",
+                "how_it_should_be": "GCP TTS — около 300 ms; Cartesia ~40 ms."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем end-to-end voice через OpenAI Realtime API принципиально отличается от pipeline STT → LLM → TTS?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Realtime API — это просто wrapper над Whisper + GPT-4o + OpenAI TTS",
+              "correct": false,
+              "sections": {
+                "what_actually": "Realtime API не оборачивает STT/TTS — модель принимает сырое аудио и отвечает аудио без промежуточной транскрипции.",
+                "source_of_confusion": "Снаружи поведение похоже, поэтому считают, что под капотом тот же pipeline.",
+                "if_it_were_true": "Тогда не было бы выигрыша по latency (200-500 ms vs 1-3 sec) и понимания интонации.",
+                "how_it_should_be": "Realtime — speech-to-speech native; pipeline — три отдельные модели."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Realtime API использует только локальные модели и не ходит в облако",
+              "correct": false,
+              "sections": {
+                "what_actually": "Realtime API — это облачный WebSocket к OpenAI; локальный inference не предусмотрен.",
+                "source_of_confusion": "Слово 'realtime' иногда ассоциируют с on-device.",
+                "if_it_were_true": "Тогда не было бы привязки к вендору.",
+                "how_it_should_be": "Realtime — cloud WebSocket; on-device — отдельный класс моделей (Moshi, Kyutai)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Realtime API не поддерживает function calling",
+              "correct": false,
+              "sections": {
+                "what_actually": "Realtime API поддерживает function calling прямо в voice-сессии (событие response.function_call_arguments.done).",
+                "source_of_confusion": "Function calling ассоциируется с text-API.",
+                "if_it_were_true": "Тогда voice-агент не мог бы вызывать tools без обхода — но он может.",
+                "how_it_should_be": "Tools/function calling работают в Realtime."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Модель 'слышит сырое аудио' и 'отвечает аудио' напрямую (понимает интонации, паузы, эмоции), latency 200-500 ms, нативный barge-in; компоненты неразделимы (привязка к одному вендору), дороже на минуту",
+              "correct": true,
+              "sections": {
+                "explanation": "GPT-4o Realtime и Gemini Live обучены работать со звуком как с native-модальностью: вход и выход — аудио-токены в одном трансформере. Это даёт low-latency и понимание просодии, но привязывает к вендору.",
+                "example": "В Realtime API можно ответить шёпотом или с эмоцией; в pipeline STT→LLM→TTS интонация и эмоции пользователя теряются на этапе STT.",
+                "when_to_apply": "Companion-агенты, эмоциональные диалоги, минимальная latency, когда привязка к OpenAI/Google приемлема.",
+                "edge_cases": "Для редких языков pipeline пока гибче (можно подобрать STT); цена за минуту Realtime API заметно выше дешёвых STT/TTS.",
+                "related": "Q17 Realtime API, Q18 frameworks, Q19 barge-in."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой транспорт и формат аудио использует OpenAI Realtime API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "WebSocket с двусторонним streaming аудио в формате pcm16 (или g711), события input_audio_buffer.append / response.audio.delta для inbound/outbound чанков",
+              "correct": true,
+              "sections": {
+                "explanation": "Realtime API — это WebSocket по URL wss://api.openai.com/v1/realtime; клиент шлёт чанки 20-100 ms через input_audio_buffer.append (base64 pcm16), получает аудио в response.audio.delta и параллельный транскрипт в response.audio_transcript.delta.",
+                "example": "В session.update задаёшь voice='alloy', turn_detection={'type':'server_vad'}, input_audio_format='pcm16'; сервер сам определяет конец фразы и отвечает потоком аудио-дельт.",
+                "when_to_apply": "Voice-агенты с native low-latency; всё, где нужен push-to-talk или auto-VAD.",
+                "edge_cases": "server_vad — сервер режет фразы; для push-to-talk используешь turn_detection: 'none' и шлёшь commit вручную.",
+                "related": "Q16 pipeline vs Realtime, Q18 frameworks."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "REST POST с MP3-файлами по 5 минут",
+              "correct": false,
+              "sections": {
+                "what_actually": "REST POST с файлами — это batch Whisper / Audio API; Realtime использует именно WebSocket с pcm16/g711 чанками.",
+                "source_of_confusion": "Все ранние OpenAI audio API были HTTP-based, поэтому переносят это знание.",
+                "if_it_were_true": "Тогда latency 200-500 ms был бы невозможен.",
+                "how_it_should_be": "Realtime — WebSocket с маленькими аудио-чанками."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "WebRTC P2P без серверного посредника",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebRTC используется в LiveKit Agents (для клиент↔SFU), но сам Realtime API — это серверный WebSocket; LiveKit оборачивает оба.",
+                "source_of_confusion": "В voice-стэке часто упоминают и WebRTC, и Realtime — путаются уровни.",
+                "if_it_were_true": "Тогда OpenAI давал бы STUN/TURN, чего нет.",
+                "how_it_should_be": "OpenAI Realtime API — WebSocket; WebRTC — отдельный транспорт для медиа."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Server-Sent Events (SSE) с base64 OGG-аудио",
+              "correct": false,
+              "sections": {
+                "what_actually": "SSE — однонаправленный (server→client); для двустороннего аудио в Realtime используется WebSocket.",
+                "source_of_confusion": "Streaming chat у OpenAI идёт через SSE — путают.",
+                "if_it_were_true": "Тогда клиент не смог бы потоково отправлять mic-чанки.",
+                "how_it_should_be": "Двусторонний streaming → WebSocket."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каком случае LiveKit Agents предпочтительнее managed-решения вроде Vapi или Retell?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Когда нужен максимально быстрый прототип callcenter без своей инфраструктуры",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для быстрых прототипов и MVP лучше Vapi/Retell — managed-решения с telephony и UI из коробки.",
+                "source_of_confusion": "LiveKit известна как 'мощная', и кажется, что 'мощная = лучшая для прототипа'.",
+                "if_it_were_true": "Тогда Vapi/Retell не нашли бы свою нишу.",
+                "how_it_should_be": "MVP/прототип callcenter — Vapi/Retell; LiveKit — для custom-сценариев."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нужен low-level контроль качества аудио и сменяемые компоненты (свой STT, свой TTS, switch на Realtime), self-host, кастомные WebRTC-сценарии",
+              "correct": true,
+              "sections": {
+                "explanation": "LiveKit Agents — open-source фреймворк поверх WebRTC с plugins для всех STT/TTS/LLM и поддержкой Realtime API; даёт полный контроль над звуковым стэком и архитектурой, в отличие от managed-Vapi/Retell.",
+                "example": "session = AgentSession(vad=silero.VAD.load(), stt=deepgram.STT(...), llm=openai.LLM(...), tts=cartesia.TTS(...)); switch на Realtime — заменить llm на openai.realtime.RealtimeModel(), STT/TTS отпадают.",
+                "when_to_apply": "Production voice-агенты с уникальными требованиями (custom-сценарии, особые языки, self-host), enterprise с infosec-ограничениями на managed-провайдеров.",
+                "edge_cases": "Self-host = операционная нагрузка; для small-team SaaS часто оправдано пойти на Vapi/Retell и принять vendor-lock.",
+                "related": "Q16 pipeline, Q17 Realtime API, Q19 barge-in."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Нужно обзванивать клиентов outbound с готовыми скриптами",
+              "correct": false,
+              "sections": {
+                "what_actually": "Outbound sales-обзвон — основная ниша Bland AI (managed); LiveKit тоже умеет, но требует больше кода.",
+                "source_of_confusion": "Кажется, что 'voice = LiveKit', но specialized providers есть в каждой нише.",
+                "if_it_were_true": "Тогда Bland AI не имел бы рыночной ниши.",
+                "how_it_should_be": "Outbound — Bland AI / Retell; LiveKit — для custom."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Нужна готовая интеграция с Twilio и hot transfer на оператора",
+              "correct": false,
+              "sections": {
+                "what_actually": "Twilio integration + hot transfer to human — целевая ниша Retell AI как managed-решения.",
+                "source_of_confusion": "LiveKit умеет много, но 'умеет' и 'из коробки' — разные вещи.",
+                "if_it_were_true": "Тогда Retell не появился бы как отдельный продукт.",
+                "how_it_should_be": "Hot transfer + Twilio из коробки — Retell; LiveKit можно собрать, но дольше."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой главный технический шаг при корректной обработке barge-in в pipeline voice-агенте?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Дать агенту договорить и обработать перебивание в следующем turn",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это явный антипаттерн — UX рушится, агент звучит как старая IVR.",
+                "source_of_confusion": "Технически проще не отменять inflight процесс.",
+                "if_it_were_true": "Тогда не было бы рекомендации 'echo cancellation + немедленный stop TTS' во всех гайдах.",
+                "how_it_should_be": "Stop TTS немедленно при детекции речи пользователя."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Отключить VAD на microphone, пока играет TTS",
+              "correct": false,
+              "sections": {
+                "what_actually": "VAD должен оставаться активным — иначе barge-in вообще не задетектится.",
+                "source_of_confusion": "Кажется, что VAD-ложные срабатывания на TTS-эхо проще убрать отключением.",
+                "if_it_were_true": "Тогда перебивание физически нельзя было бы услышать.",
+                "how_it_should_be": "VAD активен всегда + echo cancellation (AEC) убирает голос самого агента."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Echo cancellation (AEC из WebRTC) + VAD активен всегда; при детекте речи (~150 ms активности) — немедленно остановить TTS playback, отменить inflight LLM-запрос, очистить TTS-буфер, начать новый цикл STT→LLM→TTS",
+              "correct": true,
+              "sections": {
+                "explanation": "Корректный barge-in требует трёх вещей: (1) AEC убирает звук агента из mic, (2) VAD ловит реальную речь, (3) при детекции немедленно отменяется inflight pipeline и стартует новый. LiveKit/Vapi делают это автоматически.",
+                "example": "Пользователь начинает говорить через 0.3 sec после старта TTS; AEC отфильтровал голос агента, VAD сработал на новой речи через 150 ms активности → AbortController на LLM HTTP-запросе + TTS буфер очищается.",
+                "when_to_apply": "Любой production voice-агент в pipeline-режиме; в Realtime API barge-in нативный (событие input_audio_buffer.speech_started).",
+                "edge_cases": "VAD threshold слишком чувствителен → ложный barge-in на кашле; слишком строгий → пропуски. 100-200 ms min speech duration — типовой компромисс.",
+                "related": "Q14 VAD, Q16 pipeline vs Realtime, Q17 Realtime API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Увеличить latency TTS, чтобы было время отменить запрос",
+              "correct": false,
+              "sections": {
+                "what_actually": "Увеличение latency — это деградация UX, а не решение проблемы barge-in.",
+                "source_of_confusion": "Кажется, что 'больше времени = больше шанс отреагировать', но пользователь страдает.",
+                "if_it_were_true": "Тогда самые медленные TTS были бы лучшими по UX.",
+                "how_it_should_be": "Stop по событию (AEC+VAD), не увеличение latency."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Gemini 1.5/2.5 Pro обрабатывает видео нативно и какой известный риск нужно учитывать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Gemini рендерит видео в 60 fps кадров и анализирует каждый",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gemini сэмплирует ~1 fps (около 250 кадров на 4-минутный клип), а не 60 fps; полная развёртка была бы экономически нецелесообразна.",
+                "source_of_confusion": "60 fps — стандарт для геймдева, переносится на VLM.",
+                "if_it_were_true": "Тогда 1 час видео стоил бы как тысячи долларов.",
+                "how_it_should_be": "Gemini: ~1 fps + аудио-дорожка параллельно (263 tokens/sec)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Gemini читает видео только с YouTube по URL",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gemini принимает локальные/uploaded видеофайлы; YouTube URL не обязательны.",
+                "source_of_confusion": "Google ассоциируется с YouTube, отсюда путаница.",
+                "if_it_were_true": "Тогда нельзя было бы обрабатывать корпоративные видео.",
+                "how_it_should_be": "genai.upload_file(local_path) → передача в model.generate_content."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Gemini сам конвертирует видео в текст через Whisper",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gemini обрабатывает аудио native, без вызова Whisper; модель — единая.",
+                "source_of_confusion": "Все знакомы с Whisper, и переносят это на любую STT.",
+                "if_it_were_true": "Тогда Gemini не различал бы интонации.",
+                "how_it_should_be": "Native audio-токены 263/sec в самой Gemini."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Gemini принимает видеофайл целиком (до 1 часа), сэмплирует ~1 fps и параллельно обрабатывает аудио (263 tokens/sec); 1 минута 1080p ≈ 17 000 токенов; известный риск — галлюцинации событий, особенно на длинных видео, и пропуск короткой динамики (<1 сек) между сэмплами",
+              "correct": true,
+              "sections": {
+                "explanation": "Native video в Gemini: модель сэмплирует ~1 fps + кодирует аудио-токенами 263/sec. Это даёт временные отношения и audio-понимание, но короткие события (<1 сек) могут попасть между кадрами, а на длинных видео модель путает события.",
+                "example": "4-минутное видео ≈ 250 кадров + ~63k аудио-токенов ≈ 80-100k токенов всего; известны кейсы Gemini 1.5, когда модель уверенно описывала действия, которых на видео нет.",
+                "when_to_apply": "Длинные видео, аудио-важные сцены (лекции, диалоги), summarization митингов и compliance review.",
+                "edge_cases": "Точный counting и события <1 сек требуют либо frame extraction с шагом меньше 1 сек, либо отдельной CV-модели; long context (>30 мин) — chunking и map-reduce.",
+                "related": "Q21 video tasks, Q26 hallucinations."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая задача на видео считается сильной стороной современных VLM, а какая — слабым местом?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сильная сторона: описание содержания, поиск моментов по описанию, action recognition, транскрипция с тайм-кодами, summarization лекций. Слабая сторона: точный counting, очень короткие события (<1 сек), распознавание лиц по имени, долгосрочные временные зависимости (>30 мин)",
+              "correct": true,
+              "sections": {
+                "explanation": "VLM в 2025-2026 хорошо отвечают на 'что происходит' и 'когда что произошло', умеют action recognition и summarization, но проседают на точном counting, коротких событиях, face-by-name и удержании смысла на длинных видео.",
+                "example": "Лекция 1 час: VLM хорошо сделает summary и таймкоды разделов; видео тренировки: плохо посчитает точное число повторений упражнения.",
+                "when_to_apply": "Summarization митингов, поиск моментов в видеоархиве, compliance review, transcription с временными метками.",
+                "edge_cases": "Long video (>30 мин) — chunking на 5-10 мин куски, map-reduce поверх summaries; counting/short events — отдельные CV-детекторы (YOLO, action recognition models).",
+                "related": "Q20 video understanding, Q25 benchmarks."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сильная сторона: распознавание лиц по имени; слабая: action recognition",
+              "correct": false,
+              "sections": {
+                "what_actually": "Face-by-name отключено в frontier VLM по safety-policy; action recognition — наоборот, хорошо работает.",
+                "source_of_confusion": "Кажется, что 'модель видит, значит знает имя'.",
+                "if_it_were_true": "Тогда VLM нужно было бы рассматривать как face-recognition сервис, чего нет.",
+                "how_it_should_be": "Лица по имени — нет; action recognition — да."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сильная сторона: точный counting (сколько раз мяч ударился об пол); слабая: описание событий",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: описание событий — сильная сторона VLM; точный counting — слабое место (короткие события могут попасть между сэмплированными кадрами).",
+                "source_of_confusion": "Counting кажется 'простой' задачей и переоценивается.",
+                "if_it_were_true": "Тогда VLM не нужны были бы специализированные CV-модели.",
+                "how_it_should_be": "Описание — сильно; counting/short events — слабо."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сильная сторона: pixel-perfect сегментация; слабая: action recognition",
+              "correct": false,
+              "sections": {
+                "what_actually": "VLM не делают pixel-perfect сегментацию (это SAM2); action recognition — наоборот, сильная сторона.",
+                "source_of_confusion": "Sec/grade tasks смешивают в одну категорию 'CV'.",
+                "if_it_were_true": "Тогда SAM2 не была бы нужна как отдельная модель.",
+                "how_it_should_be": "Сегментация — отдельные модели; action recognition — VLM."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой image-генератор 2026 года выделяется как лидер по фотореализму и text-rendering, но доступен только через GCP?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Midjourney v7 — фотореализм и доступ через GCP",
+              "correct": false,
+              "sections": {
+                "what_actually": "Midjourney v7 — лидер по эстетике/художественному стилю, не по фотореализму; доступ — Discord/Web, не GCP.",
+                "source_of_confusion": "Midjourney у всех на слуху, но позиционируется в нише.",
+                "if_it_were_true": "Тогда у GCP был бы Midjourney endpoint, чего нет.",
+                "how_it_should_be": "Imagen 3 — фотореализм через GCP; Midjourney — эстетика через Discord."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Imagen 3 (Google) — лидер на photorealism benchmarks и text-rendering, доступен только через GCP",
+              "correct": true,
+              "sections": {
+                "explanation": "Imagen 3 — текущий лидер на фотореализм-бенчмарках и хорошо рендерит текст внутри изображений; деплоится только через Google Cloud, не open-weights.",
+                "example": "Рекламные баннеры с короткими надписями и фотореалистичный продакт-фото — типичный кейс для Imagen 3; FLUX и SD3.5 уступают в text-rendering и иногда в фоторрализме.",
+                "when_to_apply": "Brand-safety критична, доступ через GCP приемлем, нужны фото-уровневые иллюстрации с текстом.",
+                "edge_cases": "Vendor lock-in на GCP; для open-weights / on-prem — FLUX dev/schnell.",
+                "related": "Q23 image editing, Q24 closed vs self-hosted."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Stable Diffusion 3.5 — лидер по фотореализму, доступ через GCP",
+              "correct": false,
+              "sections": {
+                "what_actually": "SD3.5 — open-weights с полным контролем, но качество немного ниже FLUX/Imagen; доступ — self-host или Stability API, не GCP.",
+                "source_of_confusion": "SD — самое известное имя в open-source, переносится не туда.",
+                "if_it_were_true": "Тогда у Stability был бы официальный GCP-endpoint.",
+                "how_it_should_be": "SD3.5 — open-weights/Stability API; не GCP-only."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DALL-E 3 — фотореализм через GCP",
+              "correct": false,
+              "sections": {
+                "what_actually": "DALL-E 3 — OpenAI, не GCP; средний фотореализм, сильно понимает длинный prompt.",
+                "source_of_confusion": "DALL-E 3 — известное имя, ассоциируется с image generation.",
+                "if_it_were_true": "Тогда у OpenAI был бы партнёрский deploy в GCP, чего нет.",
+                "how_it_should_be": "DALL-E 3 — OpenAI API; Imagen 3 — GCP."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ControlNet в контексте image generation?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сервис модерации NSFW-контента от Anthropic",
+              "correct": false,
+              "sections": {
+                "what_actually": "ControlNet — это архитектурный модуль к Stable Diffusion/FLUX для conditional generation, не сервис модерации.",
+                "source_of_confusion": "Слово 'Control' звучит как 'модерация'.",
+                "if_it_were_true": "Тогда ControlNet был бы коммерческим API, а не open-source модулем.",
+                "how_it_should_be": "Модерация — Anthropic Constitutional, OpenAI Moderation; ControlNet — это про conditioning."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Прогрессивный downsampling в Vision Transformer",
+              "correct": false,
+              "sections": {
+                "what_actually": "Downsampling в ViT — это внутренний механизм энкодера, не ControlNet.",
+                "source_of_confusion": "Терминология DL богатая, легко перепутать.",
+                "if_it_were_true": "Тогда ControlNet был бы частью CLIP, а не отдельным репозиторием.",
+                "how_it_should_be": "ControlNet — модуль conditional control над generative моделью."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Добавочный модуль к Stable Diffusion/FLUX, принимающий дополнительный сигнал (Canny edges, OpenPose, depth map, segmentation mask) для управления композицией генерируемой картинки",
+              "correct": true,
+              "sections": {
+                "explanation": "ControlNet (paper 2023) — это вспомогательная сеть, которая параллельно с основным U-Net принимает control image (рёбра, поза, глубина) и заставляет генерацию следовать заданной структуре.",
+                "example": "Хочешь портрет в конкретной позе → подаёшь OpenPose-скелет в ControlNet → SD генерирует человека ровно в этой позе. Хочешь сохранить композицию здания → Canny edges + новый prompt → меняешь стиль, оставляешь форму.",
+                "when_to_apply": "Brand consistency, exact composition, product render, иллюстрации к существующим макетам, fashion с заданными позами.",
+                "edge_cases": "Можно комбинировать несколько ControlNet (pose + depth), но качество не всегда складывается; настраивай вес каждого.",
+                "related": "Q22 image generation, Q24 closed vs self-hosted."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Аналог LoRA для голосовых моделей",
+              "correct": false,
+              "sections": {
+                "what_actually": "ControlNet — для image generation; LoRA — отдельный механизм; для voice есть свой fine-tune (XTTS, ElevenLabs voice cloning).",
+                "source_of_confusion": "Все 'tuning'-механизмы смешиваются.",
+                "if_it_were_true": "Тогда ControlNet применялся бы к TTS, чего нет.",
+                "how_it_should_be": "ControlNet — image-control; LoRA — параметрический fine-tune; voice cloning — отдельная техника."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каком сценарии closed image-API (DALL-E 3 / Imagen 3) предпочтительнее self-hosted FLUX / SD3.5?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Когда нужно генерить 1 миллион изображений товарного каталога с уникальными стилями бренда",
+              "correct": false,
+              "sections": {
+                "what_actually": "Million-scale + custom-style — это территория self-hosted FLUX/SD с LoRA: $20-50 за 10k на GPU rental vs $400-800 у API. Brand-style требует fine-tune.",
+                "source_of_confusion": "Кажется, что API 'надёжнее' — но цена на масштабе разрушительная.",
+                "if_it_were_true": "Тогда никто не выбирал бы self-host.",
+                "how_it_should_be": "High volume + custom стиль → self-hosted FLUX/SD."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Когда p99 latency должен быть строго ≤1 sec",
+              "correct": false,
+              "sections": {
+                "what_actually": "Closed API дают 5-15 sec latency, self-hosted на A100 — 1-5 sec; для строгого p99 ≤1 sec — self-host или специальные fast-модели (FLUX schnell, SDXL Turbo).",
+                "source_of_confusion": "Кажется, что 'managed = быстрее', но на per-image это не так.",
+                "if_it_were_true": "Тогда self-hosted не имело бы latency-преимущества.",
+                "how_it_should_be": "Latency ≤1 sec → self-hosted FLUX schnell / SDXL Turbo."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Когда нужна полная свобода NSFW-контента в legal jurisdiction",
+              "correct": false,
+              "sections": {
+                "what_actually": "Closed API блокируют NSFW по policy; для legal NSFW (adult industry) выбирают self-hosted FLUX/SD.",
+                "source_of_confusion": "'Свобода' звучит как 'API даёт всё', но именно API строже всех.",
+                "if_it_were_true": "Тогда не было бы рынка self-hosted models.",
+                "how_it_should_be": "NSFW — self-hosted; API — компании с brand safety."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Маркетинговые баннеры с low volume, где критичны brand safety, отсутствие копирайт-нарушений и compliance из коробки",
+              "correct": true,
+              "sections": {
+                "explanation": "Closed API дают встроенный NSFW/copyright-фильтр, моментальный старт без setup, гарантированную brand-safety и compliance. На low volume цена незаметна, но снижение юридических рисков критично.",
+                "example": "10 баннеров в неделю для рекламы новой линейки → DALL-E 3 / Imagen 3 за $5-20/мес vs setup self-hosted FLUX за дни + риск NSFW-leak.",
+                "when_to_apply": "Маркетинг, корпоративные иллюстрации, банковские/медицинские стоки, low volume + high stakes на compliance.",
+                "edge_cases": "Если бренд требует уникального стиля, который API не воспроизводит — гибрид: API + post-edit или self-host с LoRA.",
+                "related": "Q22 image generation, Q27 image safety."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что меряет benchmark MMMU и почему его недостаточно для production-eval?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MMMU меряет multimodal university-level reasoning across disciplines (наука, гуманитарные, искусство) и достигает 75-80% у frontier-моделей; но он academic, и для production нужны golden dataset под свою задачу + LLM-as-judge + цена/качество кривая, иначе высокий MMMU ≠ хорошая работа на ваших данных",
+              "correct": true,
+              "sections": {
+                "explanation": "MMMU — это широкий академический бенчмарк (тысячи задач из college-курсов); SOTA 2026 — около 75-80% (Gemini 2.5, Claude 4). Но он не отражает специфику ваших данных (счета, медицинские снимки, скриншоты); production требует своих eval.",
+                "example": "Модель А — 78% MMMU, модель B — 74%. На вашем golden set из 200 ваших инвойсов A может дать 88%, B — 92%; benchmark вводит в заблуждение без своей валидации.",
+                "when_to_apply": "Используй MMMU как фильтр кандидатов, потом мерь на собственных golden датасетах с human eval и LLM-as-judge.",
+                "edge_cases": "На узких доменах (медицина, юриспруденция) общие бенчмарки слабо предсказывают качество — обязательно human eval.",
+                "related": "Q26 hallucinations, Q31 антипаттерны."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MMMU меряет latency инференса VLM",
+              "correct": false,
+              "sections": {
+                "what_actually": "MMMU — accuracy benchmark, не latency.",
+                "source_of_confusion": "Бенчмарки бывают разные, легко перепутать оси.",
+                "if_it_were_true": "Тогда инженеры использовали бы MMMU для capacity planning.",
+                "how_it_should_be": "Latency мерь отдельно (TTFT, p50/p95/p99); MMMU — про quality."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MMMU меряет качество text-to-image generation",
+              "correct": false,
+              "sections": {
+                "what_actually": "MMMU — это VLM understanding-бенчмарк, не генерация. Для генерации используют GenAI-Bench, T2I-CompBench.",
+                "source_of_confusion": "Слово 'Multimodal' в названии заводит в заблуждение.",
+                "if_it_were_true": "Тогда лидерами MMMU были бы DALL-E/FLUX, а не Claude/Gemini.",
+                "how_it_should_be": "MMMU — VLM understanding; для image generation — другие бенчмарки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MMMU — это benchmark на text-only college-level math",
+              "correct": false,
+              "sections": {
+                "what_actually": "Text-only college math — это MMLU (без второй M); MMMU — Multimodal с картинками и диаграммами.",
+                "source_of_confusion": "MMMU и MMLU отличаются одной буквой и легко путаются.",
+                "if_it_were_true": "Тогда не было бы смысла прогонять VLM на MMMU.",
+                "how_it_should_be": "MMMU = Massive Multimodal Multidiscipline Understanding (с image-inputs)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой паттерн смягчения multimodal hallucinations (когда модель 'видит' несуществующие объекты или додумывает текст в OCR) даёт наибольший эффект на низких разрешениях?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Поднять temperature до 1.5 для большего разнообразия выводов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Высокая температура УВЕЛИЧИВАЕТ hallucination rate; для extraction/VQA используется temperature 0-0.2.",
+                "source_of_confusion": "В креативных задачах высокая температура помогает.",
+                "if_it_were_true": "Тогда temperature 2.0 давала бы идеальный OCR.",
+                "how_it_should_be": "Temperature 0-0.2 + chain-of-thought + verifier."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Комбо: low temperature (0-0.2) + chain-of-thought ('перечисли видимые объекты, потом отвечай') + structured output с required field 'confidence' + при возможности high-res для деталей и verifier-pass второй моделью",
+              "correct": true,
+              "sections": {
+                "explanation": "Главные причины hallucination — prior bias + low-res + caption bias; против них работают: снижение temperature, явный CoT с перечислением, маркеры неуверенности в structured output, и при необходимости high-res / OCR pre-pass / verifier.",
+                "example": "Prompt 'если объекта не видно, ответь null; для каждого факта укажи confidence 0-1' + temperature 0 → процент 'выдуманных' объектов падает с 12% до 2-3%.",
+                "when_to_apply": "Любые extraction/VQA-задачи с reputational/financial риском: медицина, юриспруденция, OCR счетов.",
+                "edge_cases": "Verifier pass второй моделью увеличивает стоимость ×2; используй только на спорных случаях (low confidence → verifier).",
+                "related": "Q7 structured extract, Q27 image safety, Q31 антипаттерны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Включить full-bleed high-res и считать, что детали важнее prompt",
+              "correct": false,
+              "sections": {
+                "what_actually": "High-res помогает, но не решает hallucination — модель всё равно может додумать там, где не видит. Нужны prompt-техники + verifier.",
+                "source_of_confusion": "High-res ассоциируется с 'максимально точно'.",
+                "if_it_were_true": "Тогда hallucination была бы решена раз и навсегда после релиза high-res.",
+                "how_it_should_be": "Hi-res + CoT + structured + verifier — комбо, не одно из."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Удалить все примеры из prompt — модель должна работать чисто",
+              "correct": false,
+              "sections": {
+                "what_actually": "Удаление примеров часто УХУДШАЕТ качество; примеры схемы помогают модели не отклоняться.",
+                "source_of_confusion": "'Чистый prompt' звучит лучше с виду.",
+                "if_it_were_true": "Тогда few-shot не существовал бы как полезная техника.",
+                "how_it_should_be": "Дать пример уже извлечённой структуры; модель копирует формат."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему нельзя полагаться только на 'VLM откажет на NSFW/CSAM' и какой набор слоёв безопасности корректен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно один раз в system prompt написать 'не отвечай на NSFW'",
+              "correct": false,
+              "sections": {
+                "what_actually": "System prompt легко обходится jailbreak'ами; для CSAM/NSFW это явный антипаттерн.",
+                "source_of_confusion": "Кажется, что 'инструкция выше всех' — но prompt injection через изображения существует.",
+                "if_it_were_true": "Тогда отдельные NSFW-классификаторы и PhotoDNA не были бы нужны.",
+                "how_it_should_be": "Многослойная защита: hash check, NSFW classifier, PII detection, VLM, post-filter."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно одного NSFW-classifier на входе, всё остальное лишнее",
+              "correct": false,
+              "sections": {
+                "what_actually": "NSFW и CSAM — разные классы (PhotoDNA отдельно); PII (лица/документы) — третий класс; output модерация — четвёртый. Один classifier не покрывает всё.",
+                "source_of_confusion": "Хочется простоты, но регуляторика и UX требуют слоёв.",
+                "if_it_were_true": "Тогда крупные платформы (Meta, Google) не строили бы сложные moderation pipelines.",
+                "how_it_should_be": "PhotoDNA + NSFW + PII + output moderation + audit."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "VLM можно обмануть jailbreak-ами и prompt injection через изображения; правильный подход — многоуровневая защита: pre-filter (PhotoDNA hash для CSAM, NSFW-classifier как NudeNet/AWS Rekognition, PII-detection для лиц и документов) → VLM inference → post-filter ответа; плюс C2PA-watermarking для AI-сгенерированных и audit logs (hash картинки + classifier scores + user_id)",
+              "correct": true,
+              "sections": {
+                "explanation": "Только независимые classifier на входе и выходе дают защиту от jailbreak'ов; PhotoDNA — обязателен для CSAM на UGC-платформах; C2PA — стандарт криптографического provenance для AI-картинок.",
+                "example": "User upload → PhotoDNA hash check → NudeNet score → face/document blur при необходимости → VLM → post-filter ответа на токсичность → audit log с hash и scores.",
+                "when_to_apply": "Любая UGC-платформа, особенно с детским трафиком; маркетплейсы; финтех с фото-документами.",
+                "edge_cases": "Watermark C2PA технически крепко, но злонамеренные скрипты могут его stripped; нужен и watermark, и audit-trail, и moderation.",
+                "related": "Q26 hallucinations, Q31 антипаттерны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Полагаться на 'модель сама знает, что нельзя' и логировать только ошибки",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модель можно обмануть; отсутствие proactive логирования + classifier scores делает расследование инцидентов невозможным.",
+                "source_of_confusion": "Удобство для разработчика конфликтует с безопасностью.",
+                "if_it_were_true": "Тогда платформы не имели бы аудита по запросу регулятора.",
+                "how_it_should_be": "Логировать всегда: hash + scores + user_id."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая стратегия оптимизации стоимости vision-обработки даёт наибольший эффект на повторяющихся изображениях (корпоративный шаблон в углу страницы, неизменный header документов)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ресайз всех картинок до 4K для максимального качества",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ресайз ВВЕРХ до 4K раздувает токены и стоимость; обычно ресайз делают ВНИЗ (1024 px по большей стороне).",
+                "source_of_confusion": "Кажется, что больше пикселей = лучше качество.",
+                "if_it_were_true": "Тогда oversample был бы стандартом в production.",
+                "how_it_should_be": "Resize ВНИЗ до достаточного разрешения (часто 1024 px) — экономит токены."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать batch API всегда, даже для real-time запросов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Batch API даёт 50% скидку, но SLA — 24 часа; для real-time не подходит.",
+                "source_of_confusion": "Batch — мощный инструмент экономии, но не универсальный.",
+                "if_it_were_true": "Тогда real-time API не существовал бы как продукт.",
+                "how_it_should_be": "Batch — для offline/async; real-time — обычный API."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Заменить vision-LLM на ChatGPT plus подписку",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подписка — это UI/UX, а не infrastructure для бизнес-обработки; production использует API с per-token billing.",
+                "source_of_confusion": "Mixing consumer и enterprise plans.",
+                "if_it_were_true": "Тогда compliance/SLA были бы соблюдены через подписку.",
+                "how_it_should_be": "Production = API + caching + batch."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Включить Anthropic prompt caching с cache_control на повторяющиеся vision-токены — экономия до 90% на повторяющихся изображениях",
+              "correct": true,
+              "sections": {
+                "explanation": "Anthropic prompt caching кеширует input-токены (включая vision) при стабильном префиксе; повторяющиеся header/footer/templates считаются один раз и переиспользуются для всех последующих документов.",
+                "example": "30-страничный отчёт с одинаковым корпоративным header: первый запрос платит за все vision-токены, последующие документы той же серии — только за уникальные страницы. Экономия 80-90% на крупных сериях.",
+                "when_to_apply": "Серии документов одного шаблона (формы, отчёты, инвойсы), мульти-страничные сравнения, систематические OCR-пайплайны.",
+                "edge_cases": "Cache promotes только при стабильном префиксе — если меняешь порядок или инструкции, cache промахивается; cache TTL ограничен (5 мин у Anthropic базовый, можно extended).",
+                "related": "Q5 multi-image, Q29 latency, Q31 антипаттерны."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему vision-inference в 2-5× медленнее text-only на тех же моделях и какой главный UX-приём это компенсирует?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Vision добавляет 100-2000+ image-токенов к input context (раздувает prefill) + дополнительные операции на encoder/projection; компенсация — streaming ответа с прогрессивным rendering и skeleton 'Анализирую изображение…' до первого токена",
+              "correct": true,
+              "sections": {
+                "explanation": "TTFT на flagship-моделях с high-res картинкой — 1-3 sec; стриминг даёт визуальное движение мгновенно, а prefetch при upload (caption + OCR) уменьшает воспринимаемое время.",
+                "example": "Пользователь загрузил инвойс → сразу запускается pre-pass (caption и OCR), к моменту, как он формулирует вопрос, частичный результат уже в кеше; финальный ответ стримится с 200-300 ms задержкой первого токена.",
+                "when_to_apply": "Любой UI с vision-input (чат-боты, document portals, mobile apps), особенно мобильный, где задержка ощущается сильнее.",
+                "edge_cases": "Streaming не работает с Structured Outputs strict mode для всех провайдеров одинаково — проверь policy конкретного API.",
+                "related": "Q28 cost optimization, Q3 image tokens."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Vision-модели работают на CPU вместо GPU — компенсация увеличением batch size",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vision-LLM работают на GPU/TPU как и text-only; разница в latency — от объёма input-токенов и encoder pass.",
+                "source_of_confusion": "Кажется, что 'картинки тяжелее текста' = 'требуют CPU'.",
+                "if_it_were_true": "Тогда vision-API было бы дешевле на больших batch, но per-request latency не страдала бы.",
+                "how_it_should_be": "GPU, увеличенный context + encoder; streaming UX."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Vision требует двух round-trip к API; компенсация — параллельные запросы",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vision-API — это один HTTP-запрос с image + text; никаких двух round-trip.",
+                "source_of_confusion": "Пользовательский pipeline может содержать pre-pass, но это уже архитектура клиента.",
+                "if_it_were_true": "Тогда стоимость удваивалась бы автоматически.",
+                "how_it_should_be": "Один request; latency обусловлена prefill, не количеством round-trip."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Vision-модели не поддерживают streaming, поэтому UX строится на полном ответе",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vision-API поддерживают streaming (stream=True у OpenAI, server-sent events у Anthropic).",
+                "source_of_confusion": "Старые API не поддерживали — инерция знаний.",
+                "if_it_were_true": "Тогда не было бы рекомендации UX 'show partial answer'.",
+                "how_it_should_be": "Streaming обязателен для UX vision."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой архитектурный принцип лежит в основе production multimodal RAG над PDF, описанного в шпаргалке?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Одна универсальная VLM-модель обрабатывает все страницы и возвращает финальный ответ",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один пайплайн на всё — дорого и неточно: text-pages эффективнее парсить layout-парсером, charts — vision-extract, сканы — vision-full.",
+                "source_of_confusion": "Хочется простоты, но цена и качество страдают.",
+                "if_it_were_true": "Тогда не было бы routing-роутера в production-схемах.",
+                "how_it_should_be": "Routing по типу страницы + гибридный индекс + rerank."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Routing по типу страницы: text-heavy → layout-парсер (Docling/LlamaParse), chart-heavy → VLM extract в JSON, scan/handwriting → VLM full vision; гибридный индекс (text embeddings + ColPali multi-vector для visual); query router + Cohere Rerank 3 + VLM-answer с цитатами и координатами",
+              "correct": true,
+              "sections": {
+                "explanation": "Routing экономит и повышает качество: каждый тип страницы идёт в подходящий extractor, индекс гибридный (text+visual), rerank обязателен (multimodal retrieval шумнее text-only), цитаты с page+bbox дают пользователю проверяемый источник.",
+                "example": "100-страничный отчёт: 80 страниц через Docling → Qdrant text-collection; 15 страниц с графиками → VLM-extract в JSON → тоже в text-collection; 5 страниц сканов → ColPali → visual-collection. Query router смотрит и текст, и visual, rerank сводит.",
+                "when_to_apply": "Корпоративные knowledge bases на смешанных PDF, юридические архивы, научные репозитории, healthcare-документы.",
+                "edge_cases": "Routing-классификатор сам может ошибиться (chart-страницу принять за text); добавь fallback и регулярный audit на golden set.",
+                "related": "Q9 PDF processing, Q12 multimodal RAG, Q13 ColPali."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Хранить картинки в исходном 4K-разрешении в RAG-индексе для retrieval",
+              "correct": false,
+              "sections": {
+                "what_actually": "Storage и retrieval становятся очень дорогими; для retrieval достаточно thumbnails 256-512 px, полный размер — lazy load для финального VLM-answer.",
+                "source_of_confusion": "Кажется, что 'высокое разрешение всегда лучше'.",
+                "if_it_were_true": "Тогда disk/cloud bill съел бы любые savings от RAG.",
+                "how_it_should_be": "Thumbnails в индекс + lazy-load full-res по запросу."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Не использовать rerank — VLM сам отсортирует top-K",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multimodal retrieval даёт более шумные top-K, чем text-only; Cohere Rerank 3 или аналог критичен для качества.",
+                "source_of_confusion": "В text-only RAG некоторые системы обходятся без rerank на маленьких корпусах.",
+                "if_it_were_true": "Тогда рекомендация rerank в multimodal-pipelines не появилась бы.",
+                "how_it_should_be": "Rerank обязателен в multimodal RAG."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор пунктов — типичные multimodal antipatterns, на которые обращают внимание ревьюеры архитектуры?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Использовать только OpenAI и игнорировать Anthropic + Google",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vendor diversity — отдельная тема (fallback, ценовая стратегия), но это не главные multimodal-антипаттерны.",
+                "source_of_confusion": "Vendor lock-in — общеизвестная проблема, переносится не туда.",
+                "if_it_were_true": "Тогда главным фокусом ревью был бы вендорский выбор.",
+                "how_it_should_be": "Vendor strategy важна, но multimodal-антипаттерны — про дизайн pipeline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Не использовать Spring Boot для voice-агентов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбор стека/языка — отдельный вопрос, не топовый антипаттерн multimodal.",
+                "source_of_confusion": "Кажется, что любая 'нестандартная' технология — антипаттерн.",
+                "if_it_were_true": "Тогда LiveKit/Vapi не существовали бы как продукты на разных стеках.",
+                "how_it_should_be": "Стек — инструмент; антипаттерны — про архитектурные решения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сложить весь PDF в один prompt без триажа; detail='high' для всех картинок; использовать VLM как OCR для миллионов однотипных документов; не учитывать aspect ratio (длинные скриншоты); voice-агент без barge-in; pipeline voice без VAD; cloning голос без согласия; полагаться только на VLM safety без независимых classifier; игнорировать hallucinations в OCR; не сохранять prompts+изображения в трейсах",
+              "correct": true,
+              "sections": {
+                "explanation": "Это собирательный список из шпаргалки: дорого (PDF без триажа, high-res по умолчанию, VLM вместо OCR), плохо по UX (без barge-in, без VAD), небезопасно (voice cloning без consent, VLM-only safety, no audit trail), нестабильно (hallucinations без cross-check, aspect-ratio).",
+                "example": "Ревью увидит, что 500-страничный PDF улетает целиком в Claude за $10 за запрос + voice-agent без barge-in звучит как IVR из 2010-х + cloning голос без письменного consent создаёт юридические риски — все эти красные флаги одновременно.",
+                "when_to_apply": "Архитектурные ревью, продакшен-readiness checklist, sec-review voice/vision систем.",
+                "edge_cases": "Некоторые антипаттерны контекстуальные — high-res может быть оправдан, если задача OCR мелкого текста; ревью смотрит на default behavior, а не на explicit override.",
+                "related": "Q4 low/high res, Q9 PDF, Q19 barge-in, Q26 hallucinations, Q27 image safety, Q28 cost optimization."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать Python вместо Rust для серверной части",
+              "correct": false,
+              "sections": {
+                "what_actually": "Язык — это инструмент, не multimodal-антипаттерн. Большинство voice/vision стеков — Python (LiveKit, LangChain).",
+                "source_of_confusion": "Производительность важна, но это не главное в multimodal-ревью.",
+                "if_it_were_true": "Тогда AI-индустрия не работала бы преимущественно на Python.",
+                "how_it_should_be": "Производительность — отдельная тема; multimodal-антипаттерны — про pipeline-дизайн."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

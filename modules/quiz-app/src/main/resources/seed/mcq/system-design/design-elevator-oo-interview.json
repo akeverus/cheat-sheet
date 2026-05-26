@@ -1,0 +1,1565 @@
+{
+  "topic_slug": "design-elevator-oo-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие functional requirements критично зафиксировать в первые минуты LLD-интервью по системе лифтов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Multi-elevator bank, multiple floors с диапазоном min/max, external и internal requests, capacity/weight, doors с sensors, emergency stop, maintenance mode и display на каждом этаже.",
+              "correct": true,
+              "sections": {
+                "explanation": "Functional list фиксирует scope: что обязан уметь лифт как продукт, до проектирования классов.",
+                "example": "Banks, floors -2..40, UP/DOWN external buttons, capacity 1000 kg, emergency, maintenance, display.",
+                "when_to_apply": "Первые 5 минут LLD — проговорить вслух, чтобы интервьюер скорректировал scope.",
+                "edge_cases": "External request указывает только направление, destination добавляется после посадки internal-кнопкой.",
+                "related": "Q2 (non-functional), Q3 (actors), Q15 (destination dispatching меняет схему external)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно одного: лифт ездит между этажами; capacity, doors, emergency — это детали реализации, не функциональные требования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Capacity, doors, emergency — это явные функции системы, не детали; их пропуск приводит к дырявому дизайну.",
+                "source_of_confusion": "Путают MVP с функциональными требованиями.",
+                "if_it_were_true": "Получили бы дизайн, в котором нет места для overload или fire mode.",
+                "how_it_should_be": "Список фич: bank, external/internal, capacity, doors, emergency, maintenance, display — все обязательны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только non-functional: latency assignment, average waiting time, throughput — functional всегда стандартные для лифта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без functional неясен domain — разные здания имеют разные правила (express, banks, maintenance).",
+                "source_of_confusion": "Кажется, что лифт — типовая задача и функции можно не уточнять.",
+                "if_it_were_true": "Дизайн получился бы для абстрактной системы, а не конкретного use case.",
+                "how_it_should_be": "Сначала functional (scope), затем non-functional (качество); оба обязательны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Functional == non-functional, это просто список требований без классификации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это две разные категории с разной природой и метриками.",
+                "source_of_confusion": "Junior-уровень — смешивают всё в один bullet list.",
+                "if_it_were_true": "Не получилось бы приоритизировать: что критично, что nice-to-have.",
+                "how_it_should_be": "Functional (что делает) и non-functional (как хорошо) — две отдельные секции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие non-functional requirements (NFR) фиксируем для системы лифтов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно одного — latency assignment; остальное (energy, availability, safety) — это бизнес-вопросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Safety (doors не давят) и availability (один лифт offline — bank работает) — это техтребования, не бизнес.",
+                "source_of_confusion": "Фокус на одной метрике в ущерб системному взгляду.",
+                "if_it_were_true": "Лифт быстро назначался бы, но мог бы убить пассажира или подвисать целиком.",
+                "how_it_should_be": "Минимум: latency < 200ms, avg wait P95 < 30s, throughput, energy, availability, safety, observability."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Latency assignment < 200 мс, avg waiting time P95 < 30 c, throughput, energy efficiency (idle-park + LOOK), availability (lift offline — bank живёт), safety (door/weight interlocks), observability (metrics через Observer).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый NFR влияет на конкретные классы: scheduler in-memory, LOOK для energy, observers для metrics.",
+                "example": "P95 wait time оптимизируем через LOOK + group dispatching, observability — через Observer на state changes.",
+                "when_to_apply": "После functional — задают качественные рамки и подсказывают паттерны (Observer, Strategy).",
+                "edge_cases": "Energy: idle-park strategy паркует лифт на прогнозном этаже, не гоняет пустым.",
+                "related": "Q13 (LOOK для energy), Q19 (thread safety как safety NFR), Q22 (predictive scheduling для wait time)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное — throughput; latency и energy efficiency для лифта не важны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Latency назначения и energy efficiency — обязательные метрики, а не roof-level.",
+                "source_of_confusion": "Throughput кажется единственной 'честной' метрикой пропускной способности.",
+                "if_it_were_true": "Лифт назначался бы за 5 секунд, а в простое жёг электричество впустую.",
+                "how_it_should_be": "Latency и energy — отдельные первоклассные NFR, наряду с throughput."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "NFR пропускаем — для LLD достаточно класс-диаграммы; SLA это уровень HLD.",
+              "correct": false,
+              "sections": {
+                "what_actually": "NFR на LLD задают реализацию: какие коллекции, какой scheduler, нужен ли concurrent access.",
+                "source_of_confusion": "Кажется, что NFR — только про инфру и k8s.",
+                "if_it_were_true": "Пропустили бы thread-safe-коллекции и schedule-стратегию.",
+                "how_it_should_be": "NFR обсуждаются и на LLD — они формируют выбор структур данных и интерфейсов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие actors и use cases стоит выделить для системы лифтов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только Passenger — Maintenance и Admin не нужны для LLD.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Maintenance переводит лифт в спецрежим, Admin меняет scheduling strategy — отдельные use cases.",
+                "source_of_confusion": "Фокус только на пассажире-герое.",
+                "if_it_were_true": "Пропустили бы maintenance mode и admin API для смены strategy.",
+                "how_it_should_be": "Passenger, Maintenance, Admin/Building monitoring — три actors с разными use cases."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только System actor — все события автоматические, ролей людей нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Passenger нажимает кнопки, Maintenance вручную переводит в режим — без людей дизайн нерабочий.",
+                "source_of_confusion": "Технический фокус без понимания, кто инициирует actions.",
+                "if_it_were_true": "Не было бы внешнего API для нажатий кнопок и maintenance-команд.",
+                "how_it_should_be": "Минимум три actors-людей плюс System для алёртов/мониторинга."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Passenger (external/internal request, emergency), Maintenance (вход в maintenance mode), Admin/Building monitoring (метрики, смена strategy); fire mode инициирует System по сигналу alarm.",
+              "correct": true,
+              "sections": {
+                "explanation": "Несколько actors раскрывают разные use cases и API системы — это формирует controller-методы.",
+                "example": "Passenger.pressUp(), Maintenance.enterMode(), Admin.setStrategy(), System.onFireAlarm().",
+                "when_to_apply": "Сразу после requirements — actors помогают раскрыть REST/gRPC API.",
+                "edge_cases": "Fire mode — special use case: внешний alarm триггерит, все лифты едут на ground.",
+                "related": "Q21 (edge cases), Q24 (REST API), Q1 (functional requirements)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Passenger + Building, без выделения Maintenance и Admin как ролей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Maintenance имеет уникальный use case — drain stops и блокировка приёма новых; нельзя сливать с passenger.",
+                "source_of_confusion": "Кажется, что Building покрывает Admin.",
+                "if_it_were_true": "Maintenance mode не получил бы корректного API и проверок прав.",
+                "how_it_should_be": "Выделить Maintenance и Admin как отдельные actors с собственными use cases."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие сущности (классы) выделяем при дизайне лифта и по какому принципу?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один класс Elevator с полями floors, requests, doors, display, controller — всё в одном, чтобы было проще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это god object: меняется по разным причинам (UI display, scheduling, физика дверей).",
+                "source_of_confusion": "Минимализм ради меньшего числа классов.",
+                "if_it_were_true": "Каждое изменение (новый сенсор, новая стратегия) ломало бы единый класс.",
+                "how_it_should_be": "Раздельно: Elevator, Floor, Door, Display, Request, Scheduler, Controller, MaintenanceMode."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только Elevator и Floor — остальные сущности (Door, Display, Request) не нужны как отдельные классы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Door имеет own state machine, Request immutable command, Display — observer; их вынесение даёт SRP и OCP.",
+                "source_of_confusion": "Кажется, что Door и Display — атрибуты, а не классы.",
+                "if_it_were_true": "Невозможно добавить сенсор веса без правок Elevator.",
+                "how_it_should_be": "Каждая сущность с собственной зоной ответственности — отдельный класс."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сущности по технологии: ElevatorEntity (JPA), ElevatorRepository, ElevatorService, ElevatorRestController.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LLD — про domain, не про CRUD-слои Spring; технические слои не отвечают на вопрос дизайна.",
+                "source_of_confusion": "Подмена domain-моделирования техническими слоями.",
+                "if_it_were_true": "Дизайн стал бы про БД, а не про state machine лифта.",
+                "how_it_should_be": "Domain-классы: Elevator, Door, Floor, Request, Scheduler, Controller — без JPA/Spring."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Elevator (state кабины), Floor (UI узел), Request (Command), ElevatorController (оркестратор), Scheduler (interface стратегии), Door (state дверей), Display (Observer), MaintenanceMode, Building (агрегатор) — по принципу SRP, одна причина для изменения на класс.",
+              "correct": true,
+              "sections": {
+                "explanation": "Глагольно-существительный анализ требований выделяет domain-сущности; каждая отвечает за свою зону.",
+                "example": "Doors меняются независимо: добавили сенсор веса — правим только Door, не Elevator.",
+                "when_to_apply": "После functional requirements — переходим к моделированию сущностей.",
+                "edge_cases": "MaintenanceMode часто забывают — но это отдельный invariant: не принимать новые запросы.",
+                "related": "Q5 (Elevator), Q6 (Door/Display/Request), Q17 (паттерны), Q18 (SOLID)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие атрибуты и инварианты должен иметь класс Elevator?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Атрибуты: id, minFloor, maxFloor, maxCapacityKg, currentFloor (volatile), AtomicReference на Direction и ElevatorState, currentLoadKg, Door, Display, два NavigableSet (upStops/downStops); инварианты: floor в диапазоне, при MAINTENANCE addStop падает, при UP все upStops >= currentFloor, load <= capacity, door OPEN только в STOPPED.",
+              "correct": true,
+              "sections": {
+                "explanation": "AtomicReference обеспечивает thread-safe переходы, NavigableSet даёт O(log n) для ceiling/floor.",
+                "example": "ConcurrentSkipListSet<Integer> upStops для O(log n) ceiling при SCAN/LOOK поиске следующей цели.",
+                "when_to_apply": "Сразу при моделировании лифта — определяет, как будут работать step() и canAccept().",
+                "edge_cases": "Door open только в STOPPED — interlock против движения с открытыми дверьми (безопасность).",
+                "related": "Q11 (state machine), Q12 (door interlock), Q19 (thread safety)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все поля int/enum без volatile/Atomic; синхронизация на уровне Controller, лифт сам по себе single-threaded.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Симуляция step() и addStop() выполняются из разных потоков (dispatch loop + simulation tick).",
+                "source_of_confusion": "Кажется, что один лифт — один поток.",
+                "if_it_were_true": "Видимость изменений между потоками была бы сломана (happens-before нарушен).",
+                "how_it_should_be": "volatile для простых полей, AtomicReference для state/direction, synchronized для мутаций stop-sets."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Stop-sets как HashMap<Integer, Boolean> — этого достаточно для отслеживания этажей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужен NavigableSet/TreeSet — ceiling/floor для поиска следующей цели в направлении.",
+                "source_of_confusion": "HashMap кажется универсальным, но не даёт sorted-операций.",
+                "if_it_were_true": "Каждый step() требовал бы линейного скана stops.",
+                "how_it_should_be": "ConcurrentSkipListSet<Integer> — sorted + concurrent, O(log n) на ceiling/floor."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Никаких инвариантов — корректность обеспечивает только Controller; Elevator пассивен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инварианты (range, capacity, door-move interlock) — это safety, отвечает Elevator.",
+                "source_of_confusion": "Желание сделать domain-объект 'тонким'.",
+                "if_it_were_true": "Любая ошибка в Controller привела бы к физически невозможному состоянию (движение с открытыми дверьми).",
+                "how_it_should_be": "Инварианты валидируются в Elevator (addStop, canAccept) — fail-fast при нарушении."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно спроектировать Floor, Display, Door и Request?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Request mutable — позволяет менять destinationFloor по ходу обслуживания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Request — immutable value-object (Command). Mutability ломает thread-safety и идемпотентность.",
+                "source_of_confusion": "Кажется удобным переиспользовать Request.",
+                "if_it_were_true": "Логирование и retry стали бы небезопасны: данные могли бы поменяться между retry-попытками.",
+                "how_it_should_be": "Все поля final, equals/hashCode на requestId, без сеттеров."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Floor (number, hasUpButton/hasDownButton, Display, pressUp/pressDown), Display (ElevatorListener, render на state change), Door (AtomicReference<DoorState>, ObstructionSensor, open/close с re-open при сработке сенсора), Request (UUID, sourceFloor, destinationFloor для INTERNAL, direction, type, createdAt — immutable).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый класс — свой aspect: Floor про UI этажа, Display про render, Door про state дверей, Request immutable Command.",
+                "example": "Door.close() в цикле опрашивает sensor — если obstructed, переключается обратно в OPENING.",
+                "when_to_apply": "После выделения сущностей — детальная проработка ответственностей.",
+                "edge_cases": "Верхний этаж — hasUpButton=false; нижний — hasDownButton=false; обработка через конструктор.",
+                "related": "Q4 (сущности), Q12 (door state machine), Q17 (Command/Observer паттерны)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Display напрямую вызывает Elevator.getCurrentFloor() в цикле каждые 100 мс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это polling и tight coupling; правильно — Display подписан на Elevator (Observer pattern).",
+                "source_of_confusion": "Кажется, что регулярный polling проще.",
+                "if_it_were_true": "Лишняя нагрузка и устаревший UI между опросами.",
+                "how_it_should_be": "Display implements ElevatorListener — push на state change."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Door как поле boolean isOpen в Elevator — отдельный класс не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Door имеет own state machine (CLOSED/OPENING/OPEN/CLOSING) и обработку obstruction.",
+                "source_of_confusion": "Минималистичный подход 'один флаг достаточно'.",
+                "if_it_were_true": "Не было бы переходных состояний (OPENING/CLOSING) и re-open при obstruction.",
+                "how_it_should_be": "Отдельный класс Door с DoorState enum + ObstructionSensor."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем разделять ElevatorController и Scheduler как отдельные классы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы добавить лишний слой абстракции и усложнить тестирование.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: разделение упрощает тестирование Scheduler изолированно от Controller.",
+                "source_of_confusion": "Junior-инверсия: больше классов = сложнее.",
+                "if_it_were_true": "Любая стратегия требовала бы стенда с Controller и реальными лифтами.",
+                "how_it_should_be": "Scheduler — pure-function стратегии, тестируется unit-тестами без Spring/моков Controller."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы Controller знал про SCAN/LOOK/ML напрямую — это явно и просто.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если Controller знает про конкретный алгоритм, его нельзя поменять без правки.",
+                "source_of_confusion": "Кажется, что прямые зависимости 'понятнее'.",
+                "if_it_were_true": "A/B тестирование стратегий на проде требовало бы передеплоя.",
+                "how_it_should_be": "Controller зависит только от интерфейса Scheduler (DIP), стратегия инжектируется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Controller — оркестратор (Singleton с банком, BlockingQueue, dispatch loop), Scheduler — интерфейс стратегии выбора (DIP); это даёт OCP (новая стратегия — новый класс), независимое тестирование и A/B на проде.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение по SRP и Strategy-паттерну: Controller координирует, Scheduler выбирает.",
+                "example": "interface Scheduler { Elevator dispatch(Request, List<Elevator>); } — четыре реализации SCAN/LOOK/Nearest/Group без правок Controller.",
+                "when_to_apply": "Когда есть >1 алгоритма выбора или ожидается их добавление в будущем.",
+                "edge_cases": "Dispatch loop — sequential single-thread (Executors.newSingleThreadExecutor), чтобы избежать race при назначении.",
+                "related": "Q14 (Nearest-Car), Q15 (Group dispatch), Q17 (Strategy паттерн), Q18 (DIP/OCP)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Scheduler должен лежать внутри Elevator — каждый лифт сам выбирает, брать request или нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбор лифта — глобальная задача bank; Elevator знает только про себя (canAccept).",
+                "source_of_confusion": "Путают canAccept (фильтр) и dispatch (выбор из multiple).",
+                "if_it_were_true": "Невозможно было бы делать group dispatching и оптимизацию по всему банку.",
+                "how_it_should_be": "Scheduler.dispatch видит всех; Elevator.canAccept — локальный фильтр для одного лифта."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно отразить ключевые отношения классов в UML class diagram?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все связи как ассоциации — composition/aggregation не нужны для LLD-уровня.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Composition (Building→Floor, Elevator→Door) показывает жизненный цикл и ownership.",
+                "source_of_confusion": "Думают, что разница ассоциаций — академическая.",
+                "if_it_were_true": "Непонятно, что Door исчезает с Elevator, а Floor — с Building.",
+                "how_it_should_be": "Композиция (заполненный ромб) для own-by-life-cycle, агрегация (пустой ромб) для injected зависимостей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Building только показывает Floor и Elevator списком, без участия Controller на диаграмме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Controller — центральный класс координации; обязательно на class diagram.",
+                "source_of_confusion": "Желание упростить картинку.",
+                "if_it_were_true": "Непонятно, кто обрабатывает submit(Request) и держит scheduler.",
+                "how_it_should_be": "Building 1—1 ElevatorController; Controller 1—* Elevator; Controller 1—1 Scheduler."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Display не нужно показывать на class diagram — он реализационная деталь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Display — Observer на Elevator, ключевой элемент архитектуры.",
+                "source_of_confusion": "UI-элементы кажутся 'не доменными'.",
+                "if_it_were_true": "Observer-паттерн остался бы скрытым.",
+                "how_it_should_be": "Display ..|> ElevatorListener; Elevator 1—* ElevatorListener (Observer)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Building композиционно владеет Floor и ElevatorController; ElevatorController агрегирует Elevator и зависит от интерфейса Scheduler (DIP); Elevator композиционно владеет Door и аггрегирует ElevatorListener (Observer); Display реализует ElevatorListener; конкретные ScanScheduler/LookScheduler/NearestCarScheduler/GroupDispatchScheduler реализуют Scheduler; Request — value-object, consumes by Controller.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чёткие отношения показывают ownership и направление зависимостей.",
+                "example": "Controller→Scheduler (interface) с четырьмя реализациями = OCP; Display ..|> Listener = Observer.",
+                "when_to_apply": "После выделения сущностей — фиксация структурных связей.",
+                "edge_cases": "Multi-bank: один Controller на bank, общий BuildingDispatcher (Q23).",
+                "related": "Q4 (сущности), Q7 (Controller/Scheduler), Q17 (паттерны), Q23 (multi-bank)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно реализовать Elevator.step() и Door.close() в коде?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "step() выбирает следующую цель через nextStopInCurrentDir (NavigableSet.ceiling/floor по направлению), при currentFloor==next вызывает arriveAt (state=STOPPED, remove из stop-set, door.open/close, reverseOrIdle); Door.close() в цикле проверяет ObstructionSensor — если obstructed, переключается обратно в OPENING/OPEN до тех пор, пока не свободно.",
+              "correct": true,
+              "sections": {
+                "explanation": "step() — один тик симуляции; arriveAt инкапсулирует логику остановки. Door.close() гарантирует, что двери не зажмут пассажира.",
+                "example": "if (direction==UP) upStops.ceiling(currentFloor) → следующая цель O(log n).",
+                "when_to_apply": "Имплементация после моделирования state machine.",
+                "edge_cases": "Если в текущем направлении пусто — reverseOrIdle: попробовать противоположное, иначе IDLE.",
+                "related": "Q11 (state machine), Q12 (door obstruction), Q5 (инварианты Elevator)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "step() двигается всегда вверх до maxFloor, потом всегда вниз до minFloor; промежуточные стопы игнорируются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это базовое SCAN до края; в реальной системе используется LOOK (разворот на последнем стопе).",
+                "source_of_confusion": "Путают SCAN-описание с реальной имплементацией.",
+                "if_it_were_true": "Лифт каждый раз дотягивался бы до 40 этажа даже при последнем запросе на 30.",
+                "how_it_should_be": "step() использует ceiling/floor по направлению — это LOOK, не SCAN."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Door.close() выставляет state=CLOSED без проверки sensor — потом сенсор сам остановит, если что.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Door.close() сам должен опрашивать sensor и re-open до закрытия — это safety invariant.",
+                "source_of_confusion": "Желание не делать polling в close().",
+                "if_it_were_true": "Двери могли бы зажать руку/ребёнка в момент закрытия.",
+                "how_it_should_be": "В цикле CLOSING: если sensor.isObstructed → переход в OPENING; иначе через таймер → CLOSED."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "step() не нужен — Elevator должен реагировать на каждый Request synchronously через Controller.",
+              "correct": false,
+              "sections": {
+                "what_actually": "step() — единица симуляции движения; без неё нельзя моделировать LOOK/SCAN.",
+                "source_of_confusion": "Путают request-handling с движением.",
+                "if_it_were_true": "Лифт мгновенно телепортировался бы — невозможно посчитать AWT/AJT.",
+                "how_it_should_be": "step() вызывается по таймеру (simulation tick) и продвигает currentFloor на ±1."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно реализовать ElevatorController как Singleton и обработать поток запросов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Eager Singleton — public static final ElevatorController INSTANCE = new ElevatorController(); зависимости (elevators, scheduler) — через сеттеры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eager singleton не поддерживает параметризацию через init(es, scheduler).",
+                "source_of_confusion": "Eager singleton проще, но негибкий для зависимостей.",
+                "if_it_were_true": "Контроллер инициализировался бы до того, как стали известны banks и стратегия.",
+                "how_it_should_be": "Lazy double-checked locking с init(es, scheduler) или Spring-bean."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ElevatorController как Singleton с double-checked locking (volatile INSTANCE + synchronized в init), BlockingQueue<Request> incoming, single-thread dispatcherPool, который в цикле take() из queue → scheduler.dispatch(r, elevators) → addStop в выбранный лифт; submit(r) просто offer в queue.",
+              "correct": true,
+              "sections": {
+                "explanation": "Single-thread dispatch loop сериализует выбор лифта и устраняет race conditions.",
+                "example": "Executors.newSingleThreadExecutor для dispatchLoop, BlockingQueue.take() блокирует до запроса.",
+                "when_to_apply": "Когда нужна одна точка координации и FIFO-обработка с возможностью приоритета.",
+                "edge_cases": "InterruptedException в dispatchLoop — выставить interrupted-flag и выйти из цикла.",
+                "related": "Q7 (Controller/Scheduler), Q17 (Singleton/Command), Q19 (thread safety)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Без queue — Controller.submit() сразу синхронно вызывает scheduler.dispatch и addStop.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без queue нельзя демпфировать всплески (morning peak) и нет порядка обработки.",
+                "source_of_confusion": "Синхронность кажется простой.",
+                "if_it_were_true": "При всплеске нескольких одновременных нажатий — гонка за лифт.",
+                "how_it_should_be": "BlockingQueue + single-thread consumer для сериализации dispatch."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Multi-thread dispatch pool — несколько потоков параллельно делают scheduler.dispatch для разных Request.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параллельный dispatch создаёт гонку: два потока могут назначить один и тот же лифт.",
+                "source_of_confusion": "Кажется, что параллельность ускоряет.",
+                "if_it_were_true": "Два пассажира получили бы один лифт, второй застрял бы в ожидании.",
+                "how_it_should_be": "Один поток на dispatch loop; симуляция движения лифтов — отдельный пул."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие состояния и переходы должна содержать state machine Elevator?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Два состояния: ON и OFF; всё остальное — поля, а не состояния.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лифт имеет минимум 5-6 состояний: IDLE, MOVING_UP/DOWN, STOPPED, MAINTENANCE, плюс door-substates и EMERGENCY.",
+                "source_of_confusion": "Минимализм без учёта переходных состояний.",
+                "if_it_were_true": "Нельзя описать переход 'двери открываются перед движением' — interlock невозможен.",
+                "how_it_should_be": "IDLE → MOVING_UP/DOWN → STOPPED → DOOR_OPENING/OPEN/CLOSING → IDLE, плюс MAINTENANCE и EMERGENCY."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только IDLE и MOVING — STOPPED и DOOR_* не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "STOPPED отдельно от MOVING — потому что двери открываются именно в STOPPED, а не в IDLE.",
+                "source_of_confusion": "Не различают 'остановился на этаже' и 'свободен после всех стопов'.",
+                "if_it_were_true": "Не было бы interlock 'двери открыты ⇒ движение запрещено'.",
+                "how_it_should_be": "STOPPED — терминал движения с возможностью DOOR_OPENING; IDLE — после reverseOrIdle без целей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "IDLE → MOVING_UP/DOWN (по addStop), → STOPPED (arriveAt), → DOOR_OPENING/OPEN/CLOSING → STOPPED → MOVING либо IDLE, MAINTENANCE — sink-state с возвратом по exitMaintenance, EMERGENCY доступен из MOVING/STOPPED с SAFE_STOP; ключевое правило: DOOR_OPEN ↔ MOVING запрещён (interlock).",
+              "correct": true,
+              "sections": {
+                "explanation": "State machine инкапсулирует все валидные переходы и блокирует невозможные (движение с открытыми дверьми).",
+                "example": "MOVING_UP --arriveAt(target)--> STOPPED --door.open()--> DOOR_OPENING --> DOOR_OPEN --timeout--> DOOR_CLOSING --> STOPPED.",
+                "when_to_apply": "Сразу при моделировании Elevator — определяет валидные методы и инварианты.",
+                "edge_cases": "EMERGENCY — отдельная ветка с SAFE_STOP, выход — только operator manual.",
+                "related": "Q12 (Door state machine), Q5 (инварианты), Q21 (emergency/fire)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MAINTENANCE — обычное состояние, лифт продолжает принимать запросы, просто помечается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MAINTENANCE — sink-state: новые запросы отклоняются (addStop падает), drain существующих стопов.",
+                "source_of_confusion": "Mark-only без логики переходов.",
+                "if_it_were_true": "Лифт принимал бы запросы пока сотрудник работает на крыше — небезопасно.",
+                "how_it_should_be": "MAINTENANCE отключает приём; выход — только enterMaintenance(false) / exitMaintenance() оператором."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как должна обрабатывать сработку obstruction-сенсора state machine Door?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Если obstruction в CLOSING — продолжать закрытие, потом проверить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Безопасность требует немедленного re-open при сработке во время CLOSING.",
+                "source_of_confusion": "Желание не прерывать процесс.",
+                "if_it_were_true": "Двери зажали бы пассажира или сумку.",
+                "how_it_should_be": "CLOSING + obstructed → немедленный переход в OPENING → OPEN."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "OPEN при срабатывании сенсора закрывается силой — пассажир должен убрать препятствие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OPEN остаётся OPEN, таймер re-старт; принудительное закрытие — нарушение safety.",
+                "source_of_confusion": "Логика 'таймер главнее'.",
+                "if_it_were_true": "Получили бы серьёзную травму при попытке выйти.",
+                "how_it_should_be": "OPEN + obstructed — hold OPEN, restart timer."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sensor failure — игнорировать, считать что препятствий нет; иначе двери никогда не закроются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sensor failure → fail-open: не закрывать без подтверждения; вызвать сервис, не движение.",
+                "source_of_confusion": "Аргумент 'иначе сервис встанет' без учёта safety.",
+                "if_it_were_true": "Двери закрывались бы вслепую — риск травмы.",
+                "how_it_should_be": "При sensor failure лифт стопится, открывает двери и вызывает maintenance."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CLOSED → OPENING (open) → OPEN; OPEN → CLOSING (по timeout); CLOSING → CLOSED, но если sensor.obstruction == true во время CLOSING — немедленный переход обратно в OPENING → OPEN; OPEN + obstruction — hold (таймер пере-старт). Это инвариант безопасности: двери никогда не зажмут пассажира.",
+              "correct": true,
+              "sections": {
+                "explanation": "Re-open при obstruction — обязательная safety-функция; нарушение приведёт к травмам.",
+                "example": "while (state == CLOSING && sensor.isObstructed) { state.set(OPENING); state.set(OPEN); }",
+                "when_to_apply": "В любой реализации Door — fail-safe всегда в сторону OPEN.",
+                "edge_cases": "Sensor failure — fail-open: не закрывать без подтверждения отсутствия препятствий.",
+                "related": "Q9 (Door.close() цикл), Q11 (door interlock с MOVING), Q21 (sensor failure)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевое различие между SCAN и LOOK как алгоритмами движения лифта?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "SCAN двигается до края (MAX/MIN floor) перед реверсом, обслуживая все стопы по пути; LOOK разворачивается на последнем запросе в текущем направлении, не доезжая до края. LOOK даёт меньше пустого пробега, ниже энергозатраты и ниже средний wait time.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оба пришли из disk scheduling; LOOK — оптимизация SCAN, не тратит время на пустые края.",
+                "example": "Лифт на 30 этаже с последним стопом на 35: SCAN едет до 40, LOOK разворачивается на 35.",
+                "when_to_apply": "LOOK почти всегда — в реальных коммерческих лифтах (Otis, KONE, Schindler).",
+                "edge_cases": "LOOK с одинаковым floor-range и одинаковыми запросами всегда не хуже SCAN.",
+                "related": "Q14 (Nearest-Car), Q16 (сравнение), Q22 (predictive parking)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SCAN и LOOK — синонимы, разница только в названии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SCAN всегда доходит до края; LOOK — нет. Это измеримое различие в energy и wait time.",
+                "source_of_confusion": "Поверхностное чтение wiki по disk scheduling.",
+                "if_it_were_true": "Не было бы стимула использовать LOOK как оптимизацию.",
+                "how_it_should_be": "SCAN: реверс на краю. LOOK: реверс на последнем стопе в направлении."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "LOOK всегда обслуживает запросы в порядке FIFO, не зависит от направления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LOOK — direction-aware: обслуживает все стопы в текущем направлении, затем разворот.",
+                "source_of_confusion": "Путают LOOK с FCFS.",
+                "if_it_were_true": "LOOK не имел бы преимуществ перед FCFS.",
+                "how_it_should_be": "LOOK = directional sweep до последнего стопа в направлении, затем разворот."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "SCAN лучше LOOK — он гарантирует обслуживание стопа даже на крайнем этаже.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба обслуживают все стопы; разница — нужно ли доходить до пустого края.",
+                "source_of_confusion": "Кажется, что 'до края' — гарантия.",
+                "if_it_were_true": "Реальные лифты использовали бы SCAN, а не LOOK.",
+                "how_it_should_be": "LOOK обслуживает все стопы и экономит energy/wait time."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно реализовать NearestCarScheduler для выбора лифта из банка?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто elevators.get(0) — первый из списка; equal distribution через round-robin потом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Nearest-Car учитывает расстояние до sourceFloor и направление.",
+                "source_of_confusion": "Round-robin прост, но игнорирует географию.",
+                "if_it_were_true": "Пассажир на 5 этаже ждал бы лифт с 35 этажа, хотя есть свободный на 4.",
+                "how_it_should_be": "min по score(e, r) = |currentFloor - sourceFloor| + штраф за противоположное направление."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Отфильтровать elevators по canAccept(r); выбрать min по score = |currentFloor - sourceFloor| + штраф 1000 за движение в противоположном направлении к request.direction; orElseThrow если ни один не подходит.",
+              "correct": true,
+              "sections": {
+                "explanation": "Локальная оптимизация: ближайший подходящий лифт по направлению. O(N) на запрос.",
+                "example": "elevator на 4 этаже IDLE, request на 5 UP: score=1; elevator на 5 идёт DOWN: score=1001 (исключаем).",
+                "when_to_apply": "Малые банки (2-4 лифта); простая логика без ML.",
+                "edge_cases": "Все лифты в maintenance/overloaded → orElseThrow с понятным сообщением.",
+                "related": "Q15 (group dispatch — глобальная оптимизация), Q16 (сравнение), Q7 (Scheduler interface)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Перебрать все лифты, выбрать тот, у которого больше всего стопов — он быстрее освободится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Больше стопов = больше задержка, не меньше.",
+                "source_of_confusion": "Перепутанная логика 'занятый = эффективный'.",
+                "if_it_were_true": "Пассажир ждал бы дольше всех; nearly perfect inversion.",
+                "how_it_should_be": "Минимум по score (distance + direction penalty)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Случайный выбор — для honest распределения нагрузки между лифтами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Random — игнорирует географию и направление; высокий avg wait.",
+                "source_of_confusion": "Идея 'fairness через random'.",
+                "if_it_were_true": "Пассажир мог бы ждать лифт с противоположного конца здания.",
+                "how_it_should_be": "Nearest-Car (distance-based) с tie-breaker по утилизации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем destination dispatching (Schindler PORT, KONE Polaris, Otis Compass) отличается от классической схемы UP/DOWN на этаже?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Destination dispatching — это просто переименование UP/DOWN кнопок; работает так же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В destination dispatching пассажир вводит floor ДО посадки; система группирует.",
+                "source_of_confusion": "Терминологическая путаница.",
+                "if_it_were_true": "Не было бы 20-30% выигрыша в throughput.",
+                "how_it_should_be": "Пассажир набирает destination на этаже; система выдаёт назначенный лифт."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Destination dispatching работает только в residential зданиях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используется в крупных бизнес-центрах с peak-load (Schindler PORT, Otis Compass).",
+                "source_of_confusion": "Стереотип 'современные технологии в жилых домах'.",
+                "if_it_were_true": "Премиум-вендоры не продавали бы это в коммерческие здания.",
+                "how_it_should_be": "Целевая аудитория — небоскрёбы и крупные бизнес-центры."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Passenger указывает destination floor на этаже до входа в кабину; система группирует пассажиров с близкими destinations в один лифт; даёт 20-30% выигрыш в throughput; реализация — globl оптимизация / ML (jobshop scheduling, RL, MIP); в коде — просто другая реализация Scheduler.",
+              "correct": true,
+              "sections": {
+                "explanation": "Группировка по destination минимизирует число остановок per trip — главный source эффективности.",
+                "example": "10 человек на ground, 5 на 20, 5 на 30 — система отправляет два лифта, каждый со своей группой.",
+                "when_to_apply": "Крупные здания с peak-load (morning rush в офисах).",
+                "edge_cases": "Учёт времени суток через TrafficPredictor; reinforcement learning на исторических данных.",
+                "related": "Q14 (Nearest-Car как простая стратегия), Q22 (predictive scheduling), Q16 (сравнение)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Destination dispatching требует переписать Controller и Elevator — это не Strategy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это новая реализация Scheduler; Controller и Elevator остаются.",
+                "source_of_confusion": "Кажется, что новый алгоритм = новый класс лифта.",
+                "if_it_were_true": "OCP был бы нарушен.",
+                "how_it_should_be": "class GroupDispatchScheduler implements Scheduler — без правок Controller/Elevator."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие trade-off важно проговорить при сравнении scheduling-алгоритмов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "FCFS — лучший выбор, потому что fair: первый пришёл — первого обслужили.",
+              "correct": false,
+              "sections": {
+                "what_actually": "FCFS даёт худший avg wait и energy, потому что лифт мечется без учёта направления.",
+                "source_of_confusion": "Подмена fairness реальной эффективностью.",
+                "if_it_were_true": "Все коммерческие лифты использовали бы FCFS — но не используют.",
+                "how_it_should_be": "FCFS только как baseline для сравнения, не в реальных системах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Group dispatching — всегда лучший выбор для любого здания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Group dispatching сложен в реализации и оверкилл для небольших зданий (2-4 лифта).",
+                "source_of_confusion": "Жадность 'возьмём самое лучшее'.",
+                "if_it_were_true": "Все 5-этажные дома стоили бы как премиум-небоскрёб.",
+                "how_it_should_be": "Trade-off: для small banks Nearest-Car; для больших — group/destination."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все алгоритмы дают одинаковый AWT — выбирай по сложности кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разница в AWT между FCFS и LOOK измеримая (десятки %); group ещё лучше.",
+                "source_of_confusion": "Незнание реальных бенчмарков.",
+                "if_it_were_true": "Не было бы экономической причины разрабатывать destination dispatching.",
+                "how_it_should_be": "AWT и energy различаются в разы; сложность — это второй фактор."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "FCFS — самый плохой AWT и energy, O(1). SCAN — средний AWT, средняя energy (до края), O(log n). LOOK — лучше SCAN, та же сложность, базовый выбор для реальных лифтов. Nearest-Car — хорош при низкой нагрузке для small banks (2-4), O(N) на запрос. Group dispatching и destination dispatching — лучшие AWT/energy, но сложность O(N·M) или ML inference; используются в premium-системах (Schindler/KONE/Otis).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый алгоритм имеет свою нишу: от учебного FCFS до премиум destination dispatching.",
+                "example": "На interview достаточно объяснить LOOK + Nearest-Car и упомянуть group/destination как дальнейшее улучшение.",
+                "when_to_apply": "При вопросе 'почему именно этот алгоритм' — апеллируйте к trade-off.",
+                "edge_cases": "Малые банки + low load → Nearest-Car; крупные офисы → group/destination.",
+                "related": "Q13 (SCAN vs LOOK), Q14 (Nearest-Car), Q15 (group/destination)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие паттерны GoF применимы в дизайне лифта и где именно?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "State — ElevatorState/DoorState (избавиться от if/else цепочек и обеспечить инварианты переходов); Strategy — Scheduler (SCAN/LOOK/Nearest/Group, менять алгоритм без правок Controller); Observer — Display и metrics-collector подписаны на Elevator (разделить state-mutation и UI/мониторинг); Command — Request как value-object для queue/log/retry; Singleton — ElevatorController как одна точка координации; опционально Factory для SchedulerFactory.create(strategyName).",
+              "correct": true,
+              "sections": {
+                "explanation": "Паттерны дают структурный язык: каждый решает свою задачу (state, alg-выбор, нотификация, очередь команд).",
+                "example": "State избавляет от 'if (state == MOVING && doorOpen) throw'; Strategy позволяет A/B тестировать алгоритмы.",
+                "when_to_apply": "На interview достаточно State + Strategy + Observer; Command + Singleton — приятный бонус.",
+                "edge_cases": "Factory — опциональный, нужен только если стратегия выбирается по config.",
+                "related": "Q11 (State), Q14 (Strategy в Nearest-Car), Q18 (SOLID, особенно OCP/DIP)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только Singleton — лифт один на здание, всё через него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Singleton — только для Controller; остальные паттерны решают свои задачи.",
+                "source_of_confusion": "Singleton — знакомый паттерн, остальные кажутся overkill.",
+                "if_it_were_true": "if/else цепочки расползлись бы по коду, любая стратегия требовала бы правок.",
+                "how_it_should_be": "Минимум: State + Strategy + Observer; Singleton дополняет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Visitor — для обхода всех Elevator в банке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Visitor актуален при гетерогенной иерархии классов; у лифтов нет такой структуры.",
+                "source_of_confusion": "Желание показать знание Visitor.",
+                "if_it_were_true": "Появился бы лишний паттерн, не решающий ни одной реальной задачи.",
+                "how_it_should_be": "Stream/foreach по списку Elevator — простая итерация без Visitor."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Prototype — для клонирования лифтов между банками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лифты не клонируются — каждый имеет уникальный id и shaft в здании.",
+                "source_of_confusion": "Желание упомянуть редкий паттерн.",
+                "if_it_were_true": "Появилось бы клонирование физических объектов, что не имеет смысла.",
+                "how_it_should_be": "Создание через Builder/конструктор с конфигурацией."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как принципы SOLID применяются к дизайну лифта?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "SOLID — теория, в реальном коде лифта применить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый принцип имеет конкретное место: SRP — Door/Display, OCP — Scheduler, DIP — Controller→interface.",
+                "source_of_confusion": "Скептицизм про 'теоретичность' SOLID.",
+                "if_it_were_true": "Любые правки требовали бы переписывания связанных классов.",
+                "how_it_should_be": "Применяем все пять принципов в конкретных классах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SRP — Door/Elevator/Display каждый отвечает за свой aspect, Scheduler отделён от Controller; OCP — новый алгоритм = новый Scheduler без правок Controller; LSP — любая реализация Scheduler подставима через интерфейс dispatch; ISP — ElevatorListener узкий (только onStateChange), Display не зависит от методов движения; DIP — Controller зависит от интерфейса Scheduler, конкретный класс инжектируется.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый принцип имеет конкретное место в архитектуре лифта.",
+                "example": "OCP в действии: добавили GroupDispatchScheduler — Controller не меняется.",
+                "when_to_apply": "При архитектурных решениях — проговорить, какой принцип решает задачу.",
+                "edge_cases": "ISP важен — fat interface ElevatorListener с move/stop сломал бы Display, который про render.",
+                "related": "Q7 (Controller/Scheduler), Q17 (паттерны), Q4 (SRP в сущностях)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SRP нарушать можно — пусть один класс делает многое, лишь бы код был покороче.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нарушение SRP даёт god object с разными причинами изменений.",
+                "source_of_confusion": "Краткосрочное удобство vs долгосрочная поддержка.",
+                "if_it_were_true": "Каждый рефакторинг требовал бы трогать кучу несвязанных вещей.",
+                "how_it_should_be": "Каждый класс — одна причина для изменения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DIP — это про deps в Maven/Gradle, не про код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DIP — Dependency Inversion Principle: high-level зависит от абстракций, не от конкретики.",
+                "source_of_confusion": "Путают DIP с управлением артефактами.",
+                "if_it_were_true": "DIP не применялся бы в коде вовсе.",
+                "how_it_should_be": "Controller зависит от интерфейса Scheduler — это DIP в коде."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить потокобезопасность при множественных одновременных запросах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Поставить synchronized на все методы ElevatorController.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Глобальная блокировка убивает throughput; используем lock-free структуры.",
+                "source_of_confusion": "Простота 'добавим synchronized — заработает'.",
+                "if_it_were_true": "Bottleneck на одном lock, лифты простаивают.",
+                "how_it_should_be": "BlockingQueue для requests, AtomicReference для state, ConcurrentSkipListSet для stops."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Не использовать AtomicReference — volatile достаточно для всего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "volatile не даёт CAS-операций; для безопасного изменения state нужен AtomicReference.compareAndSet.",
+                "source_of_confusion": "Путают видимость (volatile) и атомарность (Atomic).",
+                "if_it_were_true": "Two threads могли бы перевести state в несогласованное значение.",
+                "how_it_should_be": "AtomicReference для state-полей с CAS-проверкой инвариантов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "BlockingQueue<Request> для requests (потокобезопасна по контракту JDK); AtomicReference<ElevatorState> и <Direction> с CAS; ConcurrentSkipListSet для stops (sorted + concurrent); CopyOnWriteArrayList для listeners (чтение чаще записи); dispatch loop — Executors.newSingleThreadExecutor (сериализует выбор лифта); Elevator.addStop и step — synchronized на инстансе.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая структура выбрана под свой паттерн доступа: queue для FIFO, Atomic для state, COW для read-heavy listeners.",
+                "example": "Two одновременных нажатия UP на 5 этаже — оба попадают в queue, один dispatchLoop сериализует выбор лифта.",
+                "when_to_apply": "На любом многопоточном дизайне — выбирать concurrent-структуры под use case.",
+                "edge_cases": "Антипаттерн: HashMap<elevatorId, Elevator> без Concurrent-обёртки → ConcurrentModificationException.",
+                "related": "Q5 (инварианты Elevator), Q10 (single-thread dispatchLoop), Q17 (Singleton Controller)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ArrayList<Integer> для stop-set — sorting делаем sort() при каждой операции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ConcurrentModificationException при итерации во время изменений; O(n log n) на каждую вставку.",
+                "source_of_confusion": "Привычка к ArrayList по умолчанию.",
+                "if_it_were_true": "Случайные exception при concurrent доступе.",
+                "how_it_should_be": "ConcurrentSkipListSet — sorted + concurrent + O(log n) на вставку/поиск."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выглядит корректная sequence diagram для external request flow?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Passenger → Elevator (минуя Floor и Controller) — лифт сам обработает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Floor публикует Request, Controller выбирает лифт через Scheduler.",
+                "source_of_confusion": "Желание минимизировать число участников.",
+                "if_it_were_true": "Не было бы группового dispatching и scheduler-стратегии.",
+                "how_it_should_be": "Passenger → Floor → Controller → Scheduler → Elevator → Door."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Passenger → Scheduler напрямую, минуя Floor и Controller.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Floor — UI узел этажа, Controller — оркестратор; их пропуск нарушает архитектуру.",
+                "source_of_confusion": "Желание срезать слои.",
+                "if_it_were_true": "Floor бесполезен как класс, кнопки 'висят в воздухе'.",
+                "how_it_should_be": "Floor публикует Request, Controller через Scheduler выбирает лифт."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sequence diagram не нужна для LLD — достаточно class diagram.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sequence diagram показывает временной flow, которого нет на class diagram.",
+                "source_of_confusion": "Думают, что class diagram покрывает всё.",
+                "if_it_were_true": "Не было бы способа описать async-flow и порядок вызовов.",
+                "how_it_should_be": "Class diagram (структура) + sequence diagram (поведение) — оба нужны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Passenger → Floor.pressUp() → ElevatorController.submit(Request{src=F, dir=UP, type=EXTERNAL}) → Scheduler.dispatch(r, elevators) → Elevator.addStop(F, UP) → loop step() пока currentFloor==F → Door.open() → boarding → Door.close().",
+              "correct": true,
+              "sections": {
+                "explanation": "Полный flow: passenger жмёт кнопку, controller через scheduler выбирает лифт, лифт едет и открывает двери.",
+                "example": "Passenger жмёт UP на 5 этаже → Floor.pressUp() → Controller.submit() → ScanScheduler.dispatch → Elevator.addStop(5,UP) → step() x N → Door.open().",
+                "when_to_apply": "При формализации use case или sequence diagram.",
+                "edge_cases": "Internal request — без Floor: Panel напрямую вызывает Elevator.addStop(7, INTERNAL).",
+                "related": "Q3 (use cases), Q7 (Controller/Scheduler), Q9 (Elevator.step)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно обрабатывать edge cases (emergency, overload, fire, power outage)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Emergency button — плавный SAFE_STOP на ближайшем этаже + doors open + сигнал на пульт, все pending stops отменяются. Overload (weight > max) — doors не закрываются, warning на дисплее, лифт не движется. Fire mode — Controller переводит весь bank в FIRE_MODE: все лифты на ground floor, doors open, блокировка; internal requests игнорируются. Power outage — UPS/battery держит control logic, controlled descent до ближайшего этажа + opens doors + freezes. Sensor failure — fail-open. Stuck between floors — watchdog (state==MOVING > T) → STUCK → alert maintenance.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все ветки кодируются как переходы в state machine, а не разбросанные if-ы в бизнес-коде.",
+                "example": "Fire alarm → ElevatorController.onFireAlarm() → каждый лифт enterFireMode() → state переход в FIRE_MODE → goto ground.",
+                "when_to_apply": "Сразу при проектировании state machine — закладываем все edge cases как валидные переходы.",
+                "edge_cases": "Sensor failure всегда в сторону fail-open: никогда не закрывать двери без подтверждения от sensor.",
+                "related": "Q11 (state machine), Q12 (sensor failure), Q19 (thread safety при concurrent emergency)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Emergency — лифт продолжает двигаться, потом разберёмся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Emergency requires немедленный safe stop на ближайшем этаже.",
+                "source_of_confusion": "Желание 'довезти куда направлялись'.",
+                "if_it_were_true": "Пассажир в красной кнопке оказался бы заложником системы.",
+                "how_it_should_be": "Plавный SAFE_STOP + doors open + signal."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Overload — игнорировать (всё равно поедем), потом разберёмся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Overload — физически опасен (троссы, тормоза); doors не закрываются.",
+                "source_of_confusion": "Желание 'не задерживать пассажиров'.",
+                "if_it_were_true": "Реальные аварии с обрывом тросса.",
+                "how_it_should_be": "Doors не закрываются, warning, лифт не движется до выхода пассажиров."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Fire mode — игнорируем, пожарные сами решат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fire mode — стандарт безопасности (NFPA): лифты на ground, блокировка.",
+                "source_of_confusion": "Незнание safety-стандартов.",
+                "if_it_were_true": "Лифт мог бы попасть на горящий этаж с пассажирами.",
+                "how_it_should_be": "Все лифты → ground floor → doors open → блокировка по сигналу building alarm."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать historical traffic patterns для optimization scheduling?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Historical patterns не нужны — текущий request содержит всю информацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Predictive scheduling использует morning/evening peak для idle-parking.",
+                "source_of_confusion": "Реактивный подход без прогноза.",
+                "if_it_were_true": "В morning peak все лифты были бы на верхних этажах, ground ждал бы долго.",
+                "how_it_should_be": "Idle elevator паркуется на прогнозном этаже на основе исторических данных."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Morning peak (08:00-10:00) → большинство лифтов parked на ground, едут up; evening peak (17:00-19:00) → parked на верхних, едут down; lunch (12:00-14:00) → inter-floor two-way; off-peak ночь → один лифт активен, остальные idle. Реализация через IdleParkingPolicy + ML (gradient boosting на time-of-day, day-of-week, building events). KPI — AWT и AJT.",
+              "correct": true,
+              "sections": {
+                "explanation": "Predictive scheduling экономит wait time, перемещая лифты до того, как поступит запрос.",
+                "example": "В 08:30 idle elevator переезжает на 1 этаж не дожидаясь нажатия — пассажиры с парковки не ждут.",
+                "when_to_apply": "Высоконагруженные офисные здания с предсказуемыми peak hours.",
+                "edge_cases": "Holidays/special events — модель должна учитывать calendar features.",
+                "related": "Q15 (group dispatching), Q16 (сравнение), Q21 (fire mode override predictive)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ML overkill — просто round-robin по этажам в idle.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Round-robin без учёта времени суток теряет 20-30% эффективности vs predictive.",
+                "source_of_confusion": "Скептицизм 'ML это маркетинг'.",
+                "if_it_were_true": "Премиум-вендоры не вкладывали бы в ML-модели.",
+                "how_it_should_be": "Простой gradient boosting на исторических данных даёт измеримый выигрыш."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "AWT и AJT — те же метрики; KPI можно мерить любой из них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AWT — waiting на этаже; AJT — journey time после посадки; разные KPI.",
+                "source_of_confusion": "Поверхностное знание метрик.",
+                "if_it_were_true": "Не было бы способа отдельно оптимизировать ожидание vs время поездки.",
+                "how_it_should_be": "AWT (wait) + AJT (journey) — две отдельные метрики, обе важны."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно дизайнить multi-bank architecture в небоскрёбе?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все лифты в одном bank — пусть scheduler сам решает, какой подходит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В небоскрёбах раздельные банки даёт меньше остановок per trip и выше throughput.",
+                "source_of_confusion": "Желание упростить через один controller.",
+                "if_it_were_true": "Лифт мог бы остановиться на каждом этаже 1-40 — медленно для высоких.",
+                "how_it_should_be": "LOW_BANK (1-20), HIGH_BANK (1, 20-40), опционально SHUTTLE (1↔20)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Каждый лифт — свой controller; над ними нет координации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужен BuildingDispatcher над банками — решает, куда отправить request.",
+                "source_of_confusion": "Полная децентрализация без координации.",
+                "if_it_were_true": "Невозможно было бы маршрутизировать request на правильный bank.",
+                "how_it_should_be": "Bank → ElevatorController, building → BuildingDispatcher (роутинг по destination)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "LOW_BANK (этажи 1-20), HIGH_BANK (1, 20-40 — express до 20, потом stops), опционально SHUTTLE (1↔20 skylobby). Преимущества: меньше остановок per trip → выше throughput, меньше shaft footprint. В дизайне — отдельные ElevatorController на каждый bank, над ними BuildingDispatcher: r.destinationFloor >= 20 → highBank.submit(r), иначе lowBank.submit(r).",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение по высоте — стандартная архитектура для небоскрёбов; даёт измеримый выигрыш в throughput.",
+                "example": "Empire State Building, Burj Khalifa — все используют multi-bank с sky lobbies.",
+                "when_to_apply": "Здания > 20 этажей с высоким traffic.",
+                "edge_cases": "Express elevator на skylobby (1→20 без остановок) — отдельный bank.",
+                "related": "Q7 (Controller на каждый bank), Q24 (REST API), Q8 (class diagram)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Multi-bank — только для residential зданий, не для офисов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Многобанковая архитектура в первую очередь для бизнес-центров и небоскрёбов.",
+                "source_of_confusion": "Перепутанная аудитория multi-bank архитектуры.",
+                "if_it_were_true": "Burj Khalifa и Empire State не использовали бы multi-bank.",
+                "how_it_should_be": "Multi-bank — высокие коммерческие здания с peak load."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор endpoints должен иметь ElevatorController для интеграции с building monitoring?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один endpoint POST /requests — этого достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужны read-методы (snapshot, stream), admin (maintenance, scheduler swap) и metrics.",
+                "source_of_confusion": "Минимализм без учёта мониторинга.",
+                "if_it_were_true": "Невозможно было бы отслеживать состояние лифтов в real-time.",
+                "how_it_should_be": "Полный набор: POST /requests, GET /elevators, SSE /events, PUT /maintenance, PUT /scheduler, GET /metrics."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "REST API всем доступно — auth не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Admin routes (PUT /scheduler, /maintenance) требуют JWT с ролями.",
+                "source_of_confusion": "Желание упростить.",
+                "if_it_were_true": "Любой пассажир мог бы поменять scheduling strategy всего здания.",
+                "how_it_should_be": "Admin/maintenance — JWT с ролями; passenger POST /requests — public или NFC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только GraphQL — REST не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подавляющее большинство building monitoring систем использует REST/gRPC.",
+                "source_of_confusion": "Догматический выбор технологии.",
+                "if_it_were_true": "Многие existing monitoring tools не смогли бы интегрироваться.",
+                "how_it_should_be": "REST/gRPC стандартен; GraphQL опционально как дополнение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "POST /requests (submit), GET /elevators (snapshot всех лифтов: floor, direction, state, load), GET /elevators/{id}/events (SSE/WebSocket stream state changes), PUT /elevators/{id}/maintenance (вход/выход из режима), PUT /scheduler (смена стратегии, admin only), GET /metrics (Prometheus: avg_wait_seconds, utilization, requests_total); admin/maintenance — JWT с ролями, passenger — public или NFC.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полный API для passenger, admin, maintenance и monitoring; разделение ролей через JWT.",
+                "example": "Building monitoring подписан на GET /events через SSE, аггрегирует metrics в Prometheus.",
+                "when_to_apply": "При проектировании integration слоя лифтовой системы.",
+                "edge_cases": "PUT /scheduler — A/B тестирование стратегий без передеплоя.",
+                "related": "Q3 (actors), Q23 (multi-bank — BuildingDispatcher тоже expose API), Q25 (testing simulator)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно построить simulation framework для тестирования elevator system?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ElevatorSimulator с deterministic Clock (Java Clock/InstantSource), runScenario(List<TimedRequest>) который для каждого tr.atOffset продвигает clock и вызывает controller.submit; затем drain (advance на 5 минут) и tick loop по всем elevator.step(); измерения через measure() возвращает AWT, AJT, energy. Тестовые сценарии: morning peak (100 requests на 5 минут), single passenger в IDLE bank, concurrent requests на одном этаже (no race), door obstruction, maintenance mid-flight.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реальное железо тестить дорого — симулятор с deterministic clock даёт воспроизводимые тесты.",
+                "example": "Clock.fixed(Instant.parse('2025-01-01T08:00:00Z')) + advance(Duration.ofSeconds(30)) — точное моделирование времени.",
+                "when_to_apply": "На любом уровне тестирования: unit (scheduler), integration (controller+bank), scenario (peak load).",
+                "edge_cases": "Maintenance mid-flight — лифт должен доехать до ближайшей цели, потом stop.",
+                "related": "Q19 (concurrent тесты), Q21 (edge cases в сценариях), Q24 (REST API simulation)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Тестировать только на реальном железе — симулятор не отражает физику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальное железо дорого; симулятор покрывает 95% логики (state machine, scheduler).",
+                "source_of_confusion": "Перфекционизм 'только реальные тесты'.",
+                "if_it_were_true": "Невозможно было бы CI-тестировать любое изменение.",
+                "how_it_should_be": "Симулятор для unit/integration, hardware-in-the-loop только для финальной приёмки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "System.currentTimeMillis() в симуляторе — деterministic не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Wall clock делает тесты flaky — порядок событий зависит от реального времени.",
+                "source_of_confusion": "Использование System.currentTimeMillis по привычке.",
+                "if_it_were_true": "CI ломался бы на slow machines.",
+                "how_it_should_be": "java.time.Clock с advance() для контролируемого продвижения времени."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Симулятор не должен мерить metrics — это задача production-системы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Симулятор как раз нужен для измерений AWT/AJT/energy в разных сценариях.",
+                "source_of_confusion": "Сужение задачи симулятора.",
+                "if_it_were_true": "Невозможно было бы сравнить scheduling-алгоритмы между собой.",
+                "how_it_should_be": "Simulator.measure() возвращает Metrics — основа сравнения стратегий."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие anti-patterns стоит избегать в дизайне лифта?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Mutable Request с сеттерами — позволяет переиспользовать объект.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Request — immutable value-object; shared mutability через потоки даёт баги.",
+                "source_of_confusion": "Желание сэкономить аллокации.",
+                "if_it_were_true": "Логирование и retry стали бы небезопасны.",
+                "how_it_should_be": "final fields, immutable Request с equals/hashCode на requestId."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Door как boolean в Elevator (нет инвариантов), if/else цепочки вместо state machine (пропущенные переходы), жёсткая привязка Controller к SCAN (нельзя поменять без правки), глобальные мутации без synchronized/Atomic (гонки, дубли назначений), Display polling Elevator каждые 100 мс (tight coupling, лишняя нагрузка), один Singleton-mega-class на здание (god object), hard-coded floor range (chase changes при изменении высоты), lazy Singleton без DCL (гонка на старте), игнорирование sensor.obstructed в close (safety risk), mutable Request (shared mutability bugs).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый anti-pattern — нарушение конкретного принципа (SRP, OCP, thread-safety, immutability).",
+                "example": "Door как boolean — нет инвариантов 'двери открыты ⇒ движение запрещено'; правильно — отдельный класс с DoorState.",
+                "when_to_apply": "На code review и при первичном дизайне — проговорить, чего избегаем.",
+                "edge_cases": "Singleton с lazy init без DCL — реальный production-баг на старте.",
+                "related": "Q11 (state machine), Q12 (sensor), Q17 (Strategy), Q19 (thread safety)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использование ConcurrentSkipListSet для stops — это анти-паттерн, должен быть HashMap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ConcurrentSkipListSet — правильный выбор: sorted + concurrent.",
+                "source_of_confusion": "Перевернутая логика.",
+                "if_it_were_true": "Невозможно было бы делать ceiling/floor для LOOK.",
+                "how_it_should_be": "ConcurrentSkipListSet — правильно, HashMap — anti-pattern."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использование Observer для Display — это over-engineering.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Observer — стандартный паттерн для разделения state-mutation и UI; не over-engineering.",
+                "source_of_confusion": "Скептицизм 'паттерны overkill'.",
+                "if_it_were_true": "Display делал бы tight coupling или polling.",
+                "how_it_should_be": "Observer — корректное решение, не anti-pattern."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2045 @@
+{
+  "topic_slug": "database-sharding-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем sharding принципиально отличается от репликации, и в чём смысл их комбинирования (8 shards x 3 replicas)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sharding и репликация — это синонимы для горизонтального масштабирования; разница только в терминологии вендоров (MongoDB vs PostgreSQL).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sharding делит данные (каждый shard хранит свою часть), репликация копирует одни и те же данные. Это ортогональные техники, которые решают разные задачи: write-scaling vs HA/read-scaling.",
+                "source_of_confusion": "Оба термина связаны со словом `distributed`, и в production-кластерах часто используются вместе (Cassandra RF=3, MongoDB replica set per shard).",
+                "if_it_were_true": "Не существовало бы конфигурации `N shards x R replicas`, и Cassandra не имела бы отдельных параметров num_tokens и replication_factor.",
+                "how_it_should_be": "Запомнить: sharding = разделение данных (write throughput, storage), replication = копии данных (HA, read scaling)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Sharding режет данные по shard key (каждая строка живёт на одном shard), replication копирует один и тот же набор данных; комбинируются для одновременного write-scaling и HA.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sharding масштабирует writes и storage (N параллельных primaries), но падение shard без реплик = недоступность части данных. Replication внутри shard даёт failover. Конфигурация `8 shards x 3 replicas = 24 узла` — это write-throughput 8x плюс HA на уровне каждого shard.",
+                "example": "MongoDB sharded cluster: каждый shard это replica set из 3 узлов (primary + 2 secondaries). Cassandra с 8 узлами и RF=3 — данные размазаны consistent hashing'ом, каждая партиция реплицируется на 3 соседних узла кольца.",
+                "when_to_apply": "Любая production-система масштаба, требующая и write throughput выше одного master, и доступности > 99.9%. Без replication внутри shard любой отказ узла = частичная недоступность.",
+                "edge_cases": "RF=1 на шардированном кластере = катастрофа при любом отказе. Cross-shard транзакции остаются сложными даже при наличии репликации. Backup и restore масштабируются x N shards.",
+                "related": "[[database-sharding-interview#Q23]] sharding + replication детали; [[database-replication-interview]] модели репликации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sharding автоматически даёт HA: при падении одного shard остальные продолжают обслуживать запросы по своим ключам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При падении shard без реплик его данные становятся НЕДОСТУПНЫМИ — любой запрос по ключу, попадающему на этот shard, упадёт. Sharding сам по себе не даёт HA; только sharding + replication даёт.",
+                "source_of_confusion": "Кажется, что 'остальные shards работают' = система доступна, но availability считается per row, не per cluster.",
+                "if_it_were_true": "MongoDB не требовала бы replica set per shard, и Cassandra обходилась бы RF=1.",
+                "how_it_should_be": "Помнить: shard без реплик = SPOF для своих данных. Production обязательно RF >= 3 внутри каждого shard."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Репликация масштабирует writes, потому что каждая реплика принимает свою долю записей; sharding нужен только для distributed reads.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В single-leader репликации все writes идут в один primary, replicas получают их асинхронно — writes не масштабируются. Sharding нужен именно для write-scaling: N независимых primaries, каждый принимает свою часть нагрузки.",
+                "source_of_confusion": "Multi-leader replication действительно позволяет писать в несколько узлов, но это редкая и сложная конфигурация с конфликтами.",
+                "if_it_were_true": "Не нужны были бы Vitess, Citus, MongoDB sharding — хватало бы read replicas для всего.",
+                "how_it_should_be": "Read replicas = scale reads. Sharding = scale writes. Multi-leader replication ≠ sharding."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между horizontal и vertical partitioning, и почему в production sharding почти всегда горизонтальный?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Horizontal partitioning режет таблицу по колонкам, vertical — по строкам; обе техники полностью эквивалентны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: horizontal режет по строкам (rows), vertical — по колонкам (columns). Это базовая терминология data engineering.",
+                "source_of_confusion": "Слова `horizontal` и `vertical` интуитивно ассоциируются с осью таблицы, и легко перепутать направление.",
+                "if_it_were_true": "Vertical partitioning не имел бы смысла, потому что в одной таблице обычно мало уникальных колонок, и распределять их между узлами было бы нечего.",
+                "how_it_should_be": "Запомнить через picture: таблица как сетка — horizontal line режет между строками, vertical line между колонками."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Vertical — это партиционирование внутри одной БД через PARTITION BY RANGE, horizontal — это разные физические БД с одинаковой схемой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PARTITION BY RANGE в PG — это horizontal partitioning внутри одной БД (разделение строк по диапазонам), не vertical. Vertical — это разделение по колонкам в разные таблицы/узлы.",
+                "source_of_confusion": "PostgreSQL декларативное partitioning часто называют просто `partitioning`, и кандидаты путают его с vertical.",
+                "if_it_were_true": "Vertical partitioning не имел бы реальной реализации в PG (а он есть — просто руками: users_hot + users_profile).",
+                "how_it_should_be": "PARTITION BY RANGE = horizontal partitioning внутри одной БД. Sharding = horizontal partitioning между разными БД/узлами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Horizontal — разделение строк по узлам (одинаковая схема, разные данные); vertical — разделение колонок по таблицам/узлам (разные схемы, joins по PK). Sharding ≡ horizontal в production.",
+              "correct": true,
+              "sections": {
+                "explanation": "Horizontal partitioning: shard A хранит user_id 1..1M, shard B хранит 1M..2M; схема одинаковая. Vertical partitioning: таблица users_hot (id, email, login) и users_profile (id, bio, avatar) — разные колонки в разных таблицах. Vertical обычно делается ДО sharding, чтобы сжать hot dataset.",
+                "example": "Twitter в ранние годы: tweets_text (id, user_id, body) и tweets_meta (id, retweet_count, like_count) были разделены вертикально, потому что counters обновляются на порядки чаще, чем body. После этого tweets_text шардировали горизонтально по user_id.",
+                "when_to_apply": "Vertical — когда несколько hot колонок дёргают всю таблицу в RAM (часто обновляемые counters рядом с большими TEXT/BLOB). Horizontal — когда вся таблица превышает разумный размер одного узла.",
+                "edge_cases": "Vertical partitioning ломает атомарность UPDATE по нескольким колонкам — теперь это две транзакции или distributed transaction. Joins по PK добавляют latency.",
+                "related": "[[database-sharding-interview#Q3]] зачем шардировать; [[database-architecture-interview]] OLTP vs OLAP разделение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Vertical partitioning — это разделение БД на read replicas и write master; horizontal — на shards.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Read replicas и write master — это репликация, не partitioning. Vertical partitioning делит колонки по таблицам, и не имеет отношения к ролям узлов.",
+                "source_of_confusion": "Vertical scaling (более мощное железо) и vertical partitioning — два разных понятия с похожим словом.",
+                "if_it_were_true": "Не существовало бы PostgreSQL примеров с разделением users_hot и users_profile, и vertical partitioning не упоминался бы в Designing Data-Intensive Applications.",
+                "how_it_should_be": "Vertical scaling = больше CPU/RAM/диск. Vertical partitioning = разделение колонок. Replication = копии. Sharding = разделение строк."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Назовите три независимых драйвера, заставляющих команду переходить на sharding, и приведите пример каждого.",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Storage (таблица >1-2 TB, vacuum болезнен), write throughput (single-leader не справляется с RPS), latency через локальность (geo-sharding по регионам).",
+              "correct": true,
+              "sections": {
+                "explanation": "Три независимых драйвера: (1) storage — таблица не помещается на один диск, vacuum/index rebuild на терабайтной таблице деградируют; (2) write throughput — read replicas не помогают, шардируя по tenant_id получаем N параллельных мастеров; (3) latency — EU-данные в EU-DC, US — в US, локальные пользователи получают < 10ms вместо 150ms.",
+                "example": "Instagram шардировал PostgreSQL в 2012 году по user_id (с pre-split на 4096 logical shards) когда таблица photos уверенно перевалила за 1TB. Notion в 2021 разрезал монолитный PG на 480 logical shards именно из-за write throughput. Netflix региональный geo-sharding — пример latency-driven.",
+                "when_to_apply": "Перед sharding оценить, какой именно драйвер у вас. Если только storage — может, хватит archival old data. Если только writes — может, спасёт vertical partitioning на hot vs cold таблицы. Если только latency — geo-replication без полного sharding.",
+                "edge_cases": "Часто кажется, что нужен sharding из-за `тормозов`, а реально это missing index или N+1 в коде. Профилирование перед sharding обязательно.",
+                "related": "[[database-sharding-interview#Q5]] когда НЕ шардировать; [[database-sharding-interview#Q11]] geo-sharding детали."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ACID compliance, schema flexibility и cost reduction — три классических драйвера sharding в OLTP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sharding УХУДШАЕТ ACID (распределённые транзакции сложны), schema flexibility (миграции x N shards) и часто увеличивает стоимость (больше узлов, больше операционных накладных). Это НЕ драйверы для sharding.",
+                "source_of_confusion": "Маркетинговые материалы NoSQL вендоров иногда продают `шардинг как способ снизить стоимость` — но это про commodity hardware vs single mainframe, а не про сам факт sharding.",
+                "if_it_were_true": "Все компании шардировались бы с первого дня — но реально sharding откладывают до последнего.",
+                "how_it_should_be": "Sharding — это инженерный долг, который окупается только при реальных ограничениях масштаба."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Compliance (GDPR), backup speed и monitoring simplicity — три главных причины переходить на sharding.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Compliance (GDPR data residency) действительно может быть драйвером (geo-sharding), но backup speed и monitoring simplicity sharding только ухудшает: backup x N, dashboards x N, alerting x N. Это операционная цена шардирования, а не выгода.",
+                "source_of_confusion": "GDPR data residency реально упоминается в обосновании geo-sharding, и кандидаты экстраполируют это на backup/monitoring.",
+                "if_it_were_true": "Команды бы шардились ради удобства мониторинга, но в реальности это аргумент ПРОТИВ sharding на ранних этапах.",
+                "how_it_should_be": "Storage / write throughput / latency — это драйверы. Backup, monitoring, schema migrations — это операционная цена, которую платят за драйверы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главный и единственный драйвер sharding — превышение порога 1000 RPS на запись; ниже этого порога sharding не имеет смысла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "1000 RPS — не порог для sharding. Современный PostgreSQL/MySQL на NVMe-сервере выдерживает 10-50K RPS на запись. Эмпирический порог — около 10K RPS И/ИЛИ > 1-2 TB. И эти драйверы независимы: можно иметь 50K RPS на 100GB БД (in-memory workload) и не шардироваться.",
+                "source_of_confusion": "Цифры RPS часто упоминаются без контекста, и кандидаты запоминают первую попавшуюся.",
+                "if_it_were_true": "Все приложения с > 1K RPS были бы sharded, что не соответствует реальности (большинство SaaS работают на single-master PG).",
+                "how_it_should_be": "Помнить три независимых драйвера и оценивать каждый отдельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что 'ломается' после внедрения sharding и требует переработки приложения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ломается только производительность range queries; остальное (joins, FK, транзакции, auto-increment ID) работает как раньше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Range queries — лишь одна из проблем (и только для hash-sharding). Реально ломается всё: joins across shards становятся scatter-gather; FK работают только внутри shard; multi-shard транзакции требуют 2PC/Saga; auto-increment ID теряет глобальную уникальность.",
+                "source_of_confusion": "В презентациях часто акцентируют только одну проблему (например, hot spots), и кандидаты недооценивают остальные.",
+                "if_it_were_true": "Не были бы нужны Snowflake/UUID для distributed IDs, и outbox pattern не приходилось бы внедрять для каждой межсервисной операции.",
+                "how_it_should_be": "Перечислить минимум 5 поломок: joins, FK, transactions, IDs, global aggregations, operational complexity."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Sharding ломает только write-throughput одного узла; всё остальное автоматически решается ORM или JDBC-драйвером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Write throughput sharding РЕШАЕТ (это цель), а не ломает. И ни один ORM/драйвер не решает cross-shard joins, distributed transactions или global secondary indexes автоматически — это всё ручная работа.",
+                "source_of_confusion": "Hibernate/JPA с DataSource routing создают иллюзию, что sharding прозрачен, но они только маршрутизируют запросы.",
+                "if_it_were_true": "Не нужны были бы Vitess vindexes, Citus reference tables, и DynamoDB GSI.",
+                "how_it_should_be": "ORM маршрутизирует запрос в нужный shard, но логику разделения данных должен спроектировать инженер."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sharding автоматически добавляет HA через replication; других последствий для приложения нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sharding и replication — ортогональны. Sharding не добавляет HA автоматически (только если внутри каждого shard есть replicas). И последствий для приложения масса: joins, FK, transactions, IDs.",
+                "source_of_confusion": "В реальном production sharding обычно идёт вместе с replication, и кандидаты считают это одним пакетом.",
+                "if_it_were_true": "MongoDB не требовала бы отдельно настраивать replica set per shard.",
+                "how_it_should_be": "Внедрение sharding = переработка слоя данных приложения, не операционная косметика."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Joins across shards становятся scatter-gather, DB-уровневые FK работают только внутри shard, multi-shard транзакции требуют 2PC/Saga, auto-increment ID нужно заменить на UUID/Snowflake, global aggregations медленные, operational complexity x N.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это canonical список того, что ломается при переходе на sharding. Каждый пункт требует отдельной инженерной работы: денормализация для joins, app-level FK validation, Saga для cross-shard транзакций, distributed ID generator (Twitter Snowflake, ULID), CDC в OLAP-системы для аналитики, backup/migration runbooks для N shards.",
+                "example": "Notion при миграции на 480 shards переписал все JOIN'ы между tables (pages/blocks) с использованием co-located sharding по workspace_id. Twitter в начале 2010-х внедрил Snowflake именно из-за невозможности использовать auto-increment в шардированных таблицах.",
+                "when_to_apply": "Перед началом sharding-проекта составить inventory того, что сломается, и план переработки. Без этого sharding превращается в долгие квартальные миграции с регрессиями.",
+                "edge_cases": "Самое неочевидное — global aggregations (COUNT/GROUP BY по всей БД). Они становятся либо очень медленными (scatter-gather), либо требуют отдельный OLAP-стэк (ClickHouse, Snowflake).",
+                "related": "[[database-sharding-interview#Q17]] scatter-gather стоимость; [[database-sharding-interview#Q19]] distributed transactions."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие шаги нужно пройти ДО sharding, и при каком пороге sharding ещё преждевременен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Если RPS превышает 100 — сразу шардиться; шаги vertical scaling и read replicas — это устаревший подход 2000-х годов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100 RPS — это нагрузка, которую обработает любой современный PG на ноутбуке. Vertical scaling до 64-128 cores + 1TB RAM + NVMe — актуальный first step. Read replicas работают и в 2025 году.",
+                "source_of_confusion": "Hyperscale-компании (Google, Meta) шардируются с первого дня, и кандидаты экстраполируют это на любой проект.",
+                "if_it_were_true": "Все стартапы шардились бы с MVP, что в реальности не происходит (Notion работал на single-PG до 480 logical shards только в 2021).",
+                "how_it_should_be": "Порог sharding — < 1-2 TB и < 10K RPS на запись. Ниже — дешёвые шаги."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Vertical scaling (больше CPU/RAM/NVMe), read replicas для read-heavy, кэш (Redis) для горячих ключей, архивирование старых данных (cold storage, PARTITION BY RANGE внутри одной БД), vertical partitioning; sharding откладывать пока < 1-2 TB и < 10K RPS на запись.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sharding — необратимая операция с высокой инженерной ценой. Сначала пройти все дешёвые шаги: (1) vertical scaling до пределов современного железа (NVMe + 1TB RAM + 96 cores); (2) read replicas снимают read-heavy workload; (3) Redis перед БД для hot keys; (4) архивирование cold data в S3/Glacier и PARTITION BY RANGE для time-series внутри одной БД; (5) vertical partitioning hot vs cold колонок.",
+                "example": "Stack Overflow всю жизнь работает на одном SQL Server (с replicas) — никогда не шардились, дешевле scale up. Figma до Vitess (2023) держала весь PG на одном инстансе с aggressive vertical scaling.",
+                "when_to_apply": "Если БД < 1-2 TB И write RPS < 10K И нет geo-требований — sharding преждевременен. Пройти 5 шагов выше, и только если упёрлись в реальные пределы — шардиться.",
+                "edge_cases": "Архивирование старых данных часто отодвигает sharding на годы. PARTITION BY RANGE в PG позволяет dropping старых партиций атомарно — это бесплатное масштабирование для time-series.",
+                "related": "[[database-sharding-interview#Q3]] драйверы sharding; [[database-sharding-interview#Q34]] чек-лист."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главный шаг перед sharding — переход на NoSQL (MongoDB/Cassandra); реляционные БД масштабировать бессмысленно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vitess (MySQL), Citus (PG), CockroachDB доказывают, что реляционные БД отлично масштабируются. NoSQL — не обязательный шаг. Cassandra/MongoDB подходят для конкретных workload'ов, но не как 'единственный путь масштабирования'.",
+                "source_of_confusion": "В начале 2010-х NoSQL продавался как решение от scaling-проблем; multiple компании (Foursquare 2010 MongoDB outage, healthcare.gov Oracle->Mongo fiasco) показали, что миграция на NoSQL не решает архитектурных проблем.",
+                "if_it_were_true": "Не было бы Notion (480 PG shards), GitHub (sharded MySQL), Slack (Vitess) — все работали бы на Mongo.",
+                "how_it_should_be": "Выбор БД и факт sharding — независимые решения. Шардиться можно на любом движке."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sharding не требует никаких подготовительных шагов: достаточно поставить ProxySQL и направить часть трафика на новые узлы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ProxySQL роутит запросы, но не делит данные. Нужно: выбрать shard key, мигрировать существующие данные (dual-write + backfill), переписать joins, заменить auto-increment ID на UUID/Snowflake, спроектировать distributed transactions.",
+                "source_of_confusion": "Туториалы по ProxySQL действительно показывают простой routing-pattern, но это часть решения, не само решение.",
+                "if_it_were_true": "Foursquare 2010 года не имел бы 16-часового outage от MongoDB shard hot spot — миграция была бы тривиальной.",
+                "how_it_should_be": "Sharding — это многоквартальный инженерный проект, требующий план миграции, переработку кода и тестирование."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает range-based sharding, и почему он создаёт hot spots на monotonic shard keys?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Range-based sharding использует hash от shard key и распределяет ключи равномерно; hot spots возможны только в hash-based.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: range-based использует НЕПРЕРЫВНЫЕ диапазоны без hash, и именно поэтому страдает от hot spots на monotonic keys. Hash-based как раз размазывает ключи равномерно.",
+                "source_of_confusion": "В MongoDB ranged sharding можно использовать `_id: 'hashed'` — это уже не range, а hash-based стратегия с тем же синтаксисом.",
+                "if_it_were_true": "Не было бы HBase row key design рекомендаций (salting/reversing) — они существуют именно из-за hot spots на monotonic keys в range-based системах.",
+                "how_it_should_be": "Range = непрерывные диапазоны, отличные для range queries, но уязвимые к monotonic keys. Hash = равномерное распределение, но ломает range queries."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Range-based sharding копирует диапазоны на несколько узлов, как репликация; hot spots невозможны, потому что каждый ключ есть на нескольких узлах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Range-based sharding не дублирует данные — это sharding, не replication. Hot spots очень даже возможны: monotonic key (timestamp) → все INSERT идут в последний shard.",
+                "source_of_confusion": "Можно комбинировать range-sharding с replication (каждый shard = replica set), но это два разных слоя.",
+                "if_it_were_true": "Bigtable/HBase не предупреждали бы в документации про hot spots от sequential keys.",
+                "how_it_should_be": "Sharding = разделение, replication = копирование. Range-based — это про sharding, и hot spots реальны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Каждый shard отвечает за непрерывный диапазон значений shard key (shard A: 0..1M, shard B: 1M..2M); range queries эффективны, но monotonic key (timestamp, auto-increment) направляет все новые INSERT в последний shard, остальные простаивают.",
+              "correct": true,
+              "sections": {
+                "explanation": "Range-based sharding отлично подходит для range queries (`WHERE user_id BETWEEN 500K AND 700K` → один shard). Но если shard key = monotonic (created_at, sequence), все новые записи попадают в shard с максимальным диапазоном, остальные shards неактивны. Это и есть hot spot. Распределение skew'ed по топовым tenants — вторая причина hot spots.",
+                "example": "HBase classic anti-pattern: row key = timestamp → весь write-трафик в один region. Решение — добавить salt (`hash(other_col) || timestamp`) или reverse byte order. Foursquare 2010: MongoDB shard hot spot вызвал 16-часовой outage.",
+                "when_to_apply": "Range-based выбирать когда: (1) запросы массово используют range scan по shard key; (2) shard key неравномерный по значениям, но равномерный по нагрузке; (3) нужна предсказуемая локальность.",
+                "edge_cases": "MongoDB ranged sharding имеет автоматический balancer, который разрезает hot chunk на меньшие — но это реактивная мера, она следует за проблемой, а не предотвращает её.",
+                "related": "[[database-sharding-interview#Q14]] anti-patterns; [[database-sharding-interview#Q15]] hot shard диагностика."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Range-based sharding всегда использует UUID v4 в качестве shard key, поэтому hot spots невозможны по определению.",
+              "correct": false,
+              "sections": {
+                "what_actually": "UUID v4 — рандомный, идеально подходит для hash-based, но в range-based он бесполезен: range query по UUID v4 не имеет смысла (нет порядка). Range-based выбирают именно тогда, когда есть осмысленный порядок (timestamp, ID).",
+                "source_of_confusion": "UUID v7 (timestamp-based) — компромиссный вариант, но он как раз monotonic и создаёт hot spots в range-based.",
+                "if_it_were_true": "Не было бы рекомендаций использовать hash-based стратегию для monotonic IDs.",
+                "how_it_should_be": "Range-based для упорядоченных доменных ключей. UUID v4 — это про hash-based."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает hash-based sharding и в чём катастрофичность изменения числа shards (N -> N+1)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "shard_id = hash(shard_key) mod N даёт равномерное распределение, но при изменении N меняется hash mod N для почти всех ключей — нужно перемещать ~(N-1)/N данных; решается consistent hashing.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hash-based sharding использует hash function (MurmurHash, xxHash, MD5) и mod N для равномерного распределения. Плюс — нет hot spots от monotonic IDs. Минус — при добавлении shard (N=4 → N=5) старая формула hash mod 4 уже не работает, и почти все ключи (точно ~(N-1)/N = 4/5 = 80%) должны переехать. Это resharding-катастрофа. Consistent hashing (Q8) решает: перемещается только ~K/N ключей.",
+                "example": "Memcached client libraries в 2000-х использовали naive hash mod N. Добавление одного узла приводило к cache miss на 80% ключей и thundering herd на бэкенд. Ketama (consistent hashing для memcached) решил эту проблему.",
+                "when_to_apply": "Hash-based выбирать когда: (1) range queries по shard key не критичны; (2) shard key монотонный/skew'ed по значениям, и нужно размазать равномерно; (3) число shards планируется фиксированным или используется consistent hashing.",
+                "edge_cases": "Hash mod N с фиксированным N годится только если N задано на старте и не меняется. Pre-split на много логических shards (Vitess keyranges, MongoDB chunks) обходит эту проблему — физически узлов меньше, но логических shards уже 1024.",
+                "related": "[[database-sharding-interview#Q8]] consistent hashing; [[database-sharding-interview#Q21]] resharding."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "shard_id = floor(shard_key / 1000); проблема изменения N не существует, потому что hash-функция не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описанная формула — это range-based sharding (диапазоны по 1000), не hash-based. И при изменении границ диапазонов придётся передвигать данные так же, как при изменении N.",
+                "source_of_confusion": "Кандидаты иногда смешивают hash-based и range-based, особенно если видят арифметику с shard_key.",
+                "if_it_were_true": "Не существовало бы консистентного хеширования и pre-split стратегий.",
+                "how_it_should_be": "Hash-based использует hash function (MurmurHash) и mod N. Range-based — непрерывные диапазоны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "hash-based — это режим репликации, при котором каждый shard хранит hash таблицы; изменение N приводит к копированию метаданных, но не данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hash-based — стратегия sharding (распределения), не репликация. Изменение N требует перемещения реальных данных, не только метаданных.",
+                "source_of_confusion": "Hash-индекс в БД (PostgreSQL HASH INDEX) — это совсем другое: индекс внутри одной таблицы для equality lookup.",
+                "if_it_were_true": "Resharding не считался бы катастрофической операцией, и Vitess vReplication не был бы нужен.",
+                "how_it_should_be": "Sharding = распределение данных. Hash-индекс = ускорение equality-запросов внутри таблицы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hash-based sharding идеально подходит для range queries, потому что hash function сохраняет порядок ключей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cryptographic/non-crypto hash функции (MurmurHash, MD5, xxHash) НЕ сохраняют порядок — это их главное свойство для равномерного распределения. Range queries по shard key в hash-based ломаются и становятся scatter-gather.",
+                "source_of_confusion": "Существуют order-preserving hash functions (OPHF), но они редкие и не используются в стандартных sharding-системах.",
+                "if_it_were_true": "Не было бы дилеммы 'range vs hash sharding' — все использовали бы только hash.",
+                "how_it_should_be": "Hash = равномерное распределение, ломает range queries. Range = локальность для range, уязвим к hot spots."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём идея consistent hashing (Karger 1997) и почему добавление узла перемещает только ~K/N ключей?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Consistent hashing хранит таблицу маппинга key → shard в Redis, и при добавлении узла обновляется только эта таблица; данные физически не двигаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описанное — это directory-based sharding (Q10), не consistent hashing. Consistent hashing — алгоритмический подход без отдельной lookup-таблицы: позиция ключа на кольце вычисляется hash-функцией.",
+                "source_of_confusion": "Directory-based тоже минимизирует data movement, и кандидаты путают два разных подхода.",
+                "if_it_were_true": "Не нужно было бы изобретать consistent hashing — directory покрывал бы все случаи.",
+                "how_it_should_be": "Consistent hashing — hash на круге без directory. Directory-based — отдельный сервис маппинга."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Consistent hashing — это техника локального кэширования: каждый узел хранит наиболее часто используемые ключи; rebalancing происходит автоматически по LRU.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Consistent hashing — это техника РАСПРЕДЕЛЕНИЯ ключей по узлам, не кэширования. К LRU не имеет отношения. Каждый ключ принадлежит конкретному узлу детерминированно.",
+                "source_of_confusion": "Consistent hashing впервые применялся в распределённых кэшах (memcached ketama), и это создаёт иллюзию, что он про кэш.",
+                "if_it_were_true": "Cassandra и DynamoDB были бы не БД, а кэшами.",
+                "how_it_should_be": "Consistent hashing = алгоритм размещения ключей. LRU = политика вытеснения в кэше. Это разные слои."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Consistent hashing использует sha256 от shard_key и берёт первые 8 байт как shard_id; перемещение данных при resharding не требуется вообще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описано простое hash-based (с SHA256). Главное в consistent hashing — это КОЛЬЦО и позиции узлов на нём. Без кольца невозможно достичь свойства 'перемещается ~K/N ключей'.",
+                "source_of_confusion": "SHA256 действительно может быть hash function для consistent hashing, но это деталь — главное концепция кольца.",
+                "if_it_were_true": "Resharding в Cassandra/DynamoDB не имел бы смысла как операция.",
+                "how_it_should_be": "Consistent hashing = hash + кольцо + 'по часовой стрелке'. Без кольца это просто hash-based с другим hash."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hash space — кольцо (например [0, 2^32)); каждый узел получает позицию через hash(node_id); каждый ключ принадлежит первому узлу по часовой стрелке. При добавлении узла перемещаются только ключи в диапазоне между новым узлом и его предшественником на кольце.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея Karger (1997): представить hash space как кольцо. Узлы и ключи имеют позиции на кольце (через hash). Ключ принадлежит первому узлу по часовой стрелке от своей позиции. При добавлении узла N+1: появляется новая точка, и она забирает ключи только из диапазона между собой и предшественником (~K/N ключей). Остальные ~(N-1)K/N остаются нетронутыми. Это и есть то, что hash mod N не давал.",
+                "example": "Cassandra использует Murmur3Partitioner на кольце [-2^63, 2^63). DynamoDB (внутренне) — Dynamo paper. Riak, ScyllaDB, memcached client ketama. Discord в 2023 мигрировал с Cassandra на ScyllaDB именно ради consistent hashing с лучшим performance.",
+                "when_to_apply": "Consistent hashing — дефолтный выбор для динамического кластера, где узлы добавляются/удаляются часто. Если число узлов фиксировано на годы — можно обходиться hash mod N.",
+                "edge_cases": "Голый consistent hashing страдает от skew при малом числе узлов: один узел может получить 40% арки, другой 10%. Решение — vnodes (Q9).",
+                "related": "[[database-sharding-interview#Q9]] vnodes; [[cassandra-interview]] token ranges; [[dynamodb-interview]] partitioning."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем в consistent hashing используются virtual nodes (vnodes), и почему Cassandra по умолчанию ставит num_tokens=256?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "vnodes — это резервные копии данных на других узлах; num_tokens=256 означает 256 копий каждой партиции, что обеспечивает HA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "vnodes — это позиции одного физического узла на кольце, не копии. Реплики данных управляются параметром replication_factor (RF), не num_tokens. RF=3 — стандарт.",
+                "source_of_confusion": "Cassandra имеет много `tokens` и `factors`, и кандидаты путают их назначение.",
+                "if_it_were_true": "RF был бы избыточен — но реально num_tokens и replication_factor управляют разными аспектами.",
+                "how_it_should_be": "num_tokens = число позиций одного узла на кольце. replication_factor = число копий каждой партиции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Голый consistent hashing страдает от skew при малом числе узлов; каждый физический узел получает много токенов (256 у Cassandra), распределение становится почти равномерным, а при failover vnodes уходят равномерно ко всем оставшимся, а не сваливаются на одного соседа.",
+              "correct": true,
+              "sections": {
+                "explanation": "Проблема голого consistent hashing: при 10 случайных позициях узлов на кольце один может получить 40% арки, другой 10%. Решение — каждый узел получает много токенов (vnodes). При num_tokens=256 и 10 узлах на кольце 2560 точек → распределение почти равномерное. Бонус при failover: 256 vnodes упавшего узла распределяются по всем оставшимся (а не сваливаются на одного соседа, как было бы без vnodes).",
+                "example": "Cassandra default num_tokens=256 (раньше). С Cassandra 4.0 рекомендация снизить до 16 (с allocate_tokens_for_keyspace для лучшего балансирования) — 256 создавал слишком много мелких ранжей и замедлял repair. ScyllaDB по умолчанию использует 256 и оптимизировал repair-логику.",
+                "when_to_apply": "Любая система на consistent hashing с динамическим кластером. Без vnodes hot spots и неравномерный failover load.",
+                "edge_cases": "Слишком много vnodes (1024+) замедляет gossip и repair operations. Слишком мало (8) даёт неравномерное распределение. 16-256 — практический диапазон.",
+                "related": "[[database-sharding-interview#Q8]] consistent hashing; [[cassandra-interview]] num_tokens tuning."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "vnodes ускоряют запросы за счёт кэширования; num_tokens=256 означает, что узел кэширует 256 наиболее частых ключей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "vnodes не имеют отношения к кэшированию запросов. Это виртуальные позиции на кольце для равномерного распределения данных. Кэширование в Cassandra управляется row cache / key cache / chunk cache — отдельные механизмы.",
+                "source_of_confusion": "Слово `virtual` в IT часто ассоциируется с кэшированием или абстракцией, но здесь оно про виртуальные позиции.",
+                "if_it_were_true": "Cassandra документация не объясняла бы vnodes через картинки кольца.",
+                "how_it_should_be": "vnodes = виртуальные позиции для распределения. Кэширование = отдельный механизм."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "vnodes нужны для шифрования данных: каждая партиция разрезается на 256 виртуальных частей и шифруется отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "vnodes не имеют отношения к шифрованию. Они решают проблему неравномерного распределения данных по физическим узлам.",
+                "source_of_confusion": "Понятие 'virtualization' в IT широкое, и кандидаты могут привязать его к шифрованию.",
+                "if_it_were_true": "vnodes были бы аспектом security, а не data distribution.",
+                "how_it_should_be": "vnodes = data distribution на кольце. Encryption — отдельный аспект (transparent data encryption, TLS)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое directory-based sharding, в чём его гибкость и каковы операционные риски?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Directory-based sharding — это range-based стратегия, в которой shard границы хранятся в отдельной таблице; гибкости нет, риск катастрофического resharding при изменении границ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Directory-based — это per-key маппинг shard_key → shard_id, а не диапазоны. Главная гибкость — можно положить КОНКРЕТНОГО tenant'а на dedicated shard без изменения остальных.",
+                "source_of_confusion": "Range-based тоже хранит границы где-то (в metadata catalog), и можно подумать, что это и есть directory.",
+                "if_it_were_true": "Slack и Figma не выбирали бы directory-based для своих SaaS-моделей.",
+                "how_it_should_be": "Directory-based = per-key explicit маппинг. Range-based = непрерывные диапазоны."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Directory-based — это специальная форма consistent hashing, в которой каждый узел получает позицию на кольце через directory; работает идентично vnodes.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Directory-based не использует кольцо или hash. Это explicit таблица маппинга `shard_key → shard_id`. Гибче consistent hashing, но создаёт SPOF на directory-сервисе.",
+                "source_of_confusion": "Vitess vindex 'lookup' выглядит похоже на directory, и кандидаты могут смешать.",
+                "if_it_were_true": "Не нужно было бы кэшировать directory в Redis или in-process LRU — consistent hashing не требует кэша.",
+                "how_it_should_be": "Consistent hashing = алгоритмический, без таблицы. Directory = explicit таблица маппинга."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Отдельный сервис/таблица хранит маппинг shard_key -> shard_id; максимальная гибкость (крупного tenant можно на dedicated shard, миграция = UPDATE строки + копирование данных), но directory становится bottleneck (кэшируется в Redis/in-process LRU) и SPOF.",
+              "correct": true,
+              "sections": {
+                "explanation": "Directory-based: отдельная таблица `shard_directory (tenant_id PK, shard_id)`. Клиент сначала идёт в directory, потом в нужный shard. Гибкость: (1) крупный tenant — на dedicated shard; (2) онлайн миграция tenant между shards = UPDATE + copy + cutover; (3) можно балансировать по бизнес-метрикам, не по hash. Риски: directory = bottleneck (кэшируем агрессивно в Redis/local LRU); если directory упал — весь кластер недоступен; дополнительный hop = +latency.",
+                "example": "Slack использует directory-based для tenant routing (`team_id → shard`). Figma тоже, до миграции на Vitess в 2023. Многие SaaS с heterogeneous tenants (один enterprise клиент = 30% объёма) используют directory именно для возможности изолировать топ-tenants.",
+                "when_to_apply": "Multi-tenant SaaS с неоднородными tenants (несколько крупных клиентов + много мелких). Когда нужна возможность изолировать крупного tenant'а на dedicated shard.",
+                "edge_cases": "Directory можно реплицировать как обычную БД (PG с replicas). In-process кэш с TTL=30s+ снижает нагрузку на directory. Stale-entries — terпimo, если клиент готов сделать retry при miss.",
+                "related": "[[database-sharding-interview#Q31]] tenancy patterns; [[database-sharding-interview#Q26]] Vitess lookup vindex."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Directory-based sharding не используется в production — это академическая концепция из учебников.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Directory-based активно используется в production: Slack (team_id routing), Figma (до Vitess), Vitess lookup vindex — это directory-based. Многие SaaS строят custom directory.",
+                "source_of_confusion": "Hash-based и consistent hashing более известны, и directory может казаться маргинальной.",
+                "if_it_were_true": "Не было бы Vitess `consistent_lookup` vindex и Citus `reference_tables` (хотя они не directory, но близки концептуально).",
+                "how_it_should_be": "Directory-based — рабочая и популярная стратегия для multi-tenant SaaS."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём суть geo-based sharding и какие конкретные требования (latency/compliance) оно закрывает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "shard_key = region (EU/US/APAC), каждый shard живёт в дата-центре своего региона; latency для local-юзеров падает с 150ms до 5ms, GDPR data residency выполняется (данные EU не покидают EU), сбой US не трогает EU; цена — global queries через WAN, миграция юзера между регионами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Geo-sharding решает два конкретных требования: (1) Latency — round-trip US-EU через океан 100-150ms, локальный shard 1-5ms; (2) GDPR / data residency — регуляторное требование, чтобы данные EU-резидентов физически не покидали EU. Также bonus: изолированные сбои (US-shard down ≠ EU down).",
+                "example": "Netflix регионально шардирует pre-fetch и user preferences. Google Spanner поддерживает per-row leader-region. Apple iCloud geo-разделяет user data. Российский 152-ФЗ требует хранения PII россиян на территории РФ — geo-sharding единственное решение для глобального SaaS.",
+                "when_to_apply": "Global product с пользователями в нескольких юрисдикциях и требованиями residency. Или когда latency критична (gaming, real-time collab).",
+                "edge_cases": "Global queries (search across all regions) становятся scatter-gather через WAN — медленно. Миграция юзера между регионами (переехал из EU в US) — отдельная операция с dual-write. Reference data (currencies, countries) дублируется по регионам.",
+                "related": "[[database-sharding-interview#Q18]] broadcast tables; [[database-sharding-interview#Q33]] reference tables anti-pattern."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Geo-sharding — это про репликацию данных во все регионы; каждый shard содержит копию всей БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Geo-sharding это РАЗДЕЛЕНИЕ данных по регионам (EU-юзеры в EU-shard, US — в US), не копирование. Тогда GDPR требование data residency выполняется автоматически.",
+                "source_of_confusion": "Geo-replication (cross-region replicas) и geo-sharding — разные техники, но обе про географию.",
+                "if_it_were_true": "GDPR не было бы решено: данные EU-юзеров копировались бы в US-shard, что и нарушает residency.",
+                "how_it_should_be": "Geo-sharding = данные конкретного региона хранятся ТОЛЬКО в этом регионе. Geo-replication = копии есть везде."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Geo-sharding нужен только для CDN; в OLTP БД он не применяется из-за сложности cross-region транзакций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Geo-sharding в OLTP применяется широко: Netflix, Apple, Google Spanner, любой SaaS с GDPR-юзерами. Cross-region транзакции действительно сложны, но это решается дизайном (single-region operations, eventual consistency для global views).",
+                "source_of_confusion": "CDN — классический пример geo-distribution, и кандидаты могут считать его единственным применением географии.",
+                "if_it_were_true": "152-ФЗ и GDPR не имели бы технического решения для глобальных SaaS.",
+                "how_it_should_be": "Geo-sharding применим к OLTP БД, главное — дизайн без частых cross-region транзакций."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Geo-sharding автоматически решает все cross-shard joins, потому что данные одного пользователя всегда в одном регионе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Geo-sharding решает joins ТОЛЬКО для запросов в пределах одного региона (EU-юзер делает запрос — все его данные в EU-shard). Global queries (search by username globally, analytics across regions) остаются scatter-gather.",
+                "source_of_confusion": "Кажется, что 'данные юзера в одном регионе' = 'все joins работают', но global views требуют пересечения регионов.",
+                "if_it_were_true": "Не нужны были бы broadcast tables и CDC в централизованную OLAP-систему.",
+                "how_it_should_be": "Geo-sharding оптимизирует local queries, global queries по-прежнему требуют отдельной стратегии."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сравните пять стратегий sharding (range / hash / consistent hashing / directory / geo) по поведению range queries и стоимости rebalancing.",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все пять стратегий ведут себя одинаково: range queries работают везде, rebalancing требует полной миграции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стратегии радикально различаются: range queries отлично работают только в range и в пределах региона geo; rebalancing варьируется от 'катастрофического' (hash mod N) до 'минимального' (consistent hashing) до 'онлайн' (directory).",
+                "source_of_confusion": "Все стратегии — это про распределение данных, и поверхностно могут казаться эквивалентными.",
+                "if_it_were_true": "Не нужно было бы изучать различия, и любой выбор был бы одинаково хорош.",
+                "how_it_should_be": "Помнить ось 'range queries' и ось 'rebalancing cost' для каждой стратегии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Range-based не имеет проблем с hot spots, если использовать достаточно большие диапазоны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер диапазона не решает проблему monotonic keys: все новые INSERT всё равно идут в shard с максимальным диапазоном, независимо от его размера.",
+                "source_of_confusion": "Кажется, что 'больше диапазон' = 'больше места для INSERT', но проблема в том, что трафик идёт только в один shard, а не в проценте от его ёмкости.",
+                "if_it_were_true": "HBase row key design рекомендации не существовали бы.",
+                "how_it_should_be": "Hot spots от monotonic keys лечатся изменением стратегии (hash) или salting, не увеличением диапазонов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Consistent hashing — самая медленная стратегия; range и directory работают быстрее за счёт отсутствия hash вычислений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hash вычисление — это микросекунды. Скорость стратегии определяется не hash latency, а попаданием запроса в один shard (best case) или scatter-gather (worst case). Range и directory могут быть быстрее для конкретных queries, но не из-за отсутствия hash.",
+                "source_of_confusion": "Hash звучит как 'дорогая операция', но MurmurHash на современном CPU — наносекунды.",
+                "if_it_were_true": "Cassandra и DynamoDB были бы медленнее MongoDB ranged, но это не так — они часто быстрее именно из-за consistent hashing.",
+                "how_it_should_be": "Стоимость стратегии — это не hash compute, а network hops и scatter-gather."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Range: отлично для range queries, дорогой rebalancing, hot spots на monotonic; Hash mod N: scatter-gather для range, катастрофический rebalancing; Consistent hashing: scatter-gather, минимальный rebalancing; Directory: онлайн миграция per-key; Geo: range внутри региона ок, global queries через WAN.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полная матрица: (1) Range — best for range queries, expensive rebalancing, hot spots; (2) Hash mod N — broken range queries, catastrophic rebalancing (~80% data moves); (3) Consistent hashing — broken range, minimal rebalancing ~K/N; (4) Directory — per-key flexibility, online migration; (5) Geo — local range ok, global via WAN. Выбор зависит от workload: range queries vs uniform distribution vs heterogeneous tenants.",
+                "example": "MongoDB поддерживает range и hashed shard keys (выбор в DDL). Cassandra — только consistent hashing с vnodes. Vitess — hash и lookup (directory). Geo обычно реализуется поверх directory (tenant.region → shard).",
+                "when_to_apply": "В реальных системах часто комбинируют: directory на верхнем уровне (per-tenant), внутри shard — range-partitioning для time-series. Geo-shard может внутри использовать consistent hashing.",
+                "edge_cases": "Pre-split на много логических shards (1024) + физическое распределение через consistent hashing — стандарт Vitess. Это даёт минимальный rebalancing + равномерное распределение.",
+                "related": "[[database-sharding-interview#Q6]] range; [[database-sharding-interview#Q7]] hash; [[database-sharding-interview#Q8]] consistent hashing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие три критерия определяют 'хороший' shard key, и почему tenant_id для B2B SaaS обычно лучше user_id?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главный критерий — короткая длина ключа (4-8 байт), чтобы влезал в индекс; cardinality и distribution вторичны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Длина ключа — операционная деталь, не главный критерий. Три ключевых критерия: high cardinality (миллионы уникальных), even distribution (равномерное распределение), match access pattern (присутствует в 90%+ запросов).",
+                "source_of_confusion": "Index size действительно важен для производительности, но это не определяет, ХОРОШИЙ ли ключ для шардирования.",
+                "if_it_were_true": "Все шардились бы по int4 ключам, а UUID не использовался бы — но UUID активно используется как shard key (Snowflake, ULID).",
+                "how_it_should_be": "Cardinality + distribution + access pattern — три критерия. Длина ключа — детали."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "(1) High cardinality (миллионы уникальных значений), (2) even distribution (равномерное), (3) match access pattern (в 90%+ запросов). tenant_id в B2B SaaS присутствует во всех запросах + миллионы tenants; user_id может быть пустым в запросах админки и иметь skew (5 топ-юзеров = 50% трафика).",
+              "correct": true,
+              "sections": {
+                "explanation": "Три критерия универсальны: (1) Cardinality — country (200) мало, user_id/tenant_id (миллионы) ок; (2) Distribution — если 80% запросов на 1% значений = hot shard; (3) Access pattern — ключ должен быть в WHERE 90%+ запросов, иначе scatter-gather. tenant_id для B2B: присутствует везде (multi-tenancy), миллионы tenants, разумно равномерно (плюс отдельная стратегия для топ-tenants через directory).",
+                "example": "Slack шардирует по team_id (=tenant_id). Notion по workspace_id. Figma по file_id (но с co-location по team). Stripe по account_id. Хотя топ-tenants создают перекос, его лечат directory-based перемещением крупных tenants на dedicated shards.",
+                "when_to_apply": "В multi-tenant SaaS — tenant_id/workspace_id/account_id почти всегда лучший shard key. В consumer apps — user_id. В time-series — composite (device_id + time_bucket).",
+                "edge_cases": "Если у вас 80% B2C клиентов и 20% B2B, mixed model: B2B по tenant_id, B2C по user_id, но в одной БД — сложно. Лучше разделить на два keyspaces.",
+                "related": "[[database-sharding-interview#Q14]] anti-patterns; [[database-sharding-interview#Q31]] tenancy patterns."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Лучший shard key — это всегда auto-increment ID (sequence), потому что он гарантирует уникальность и порядок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Auto-increment ID — monotonic key, что приводит к hot spots в range-based и теряет глобальную уникальность в sharded системах (sequences локальны для каждого shard). Это ХУДШИЙ выбор shard key.",
+                "source_of_confusion": "В single-server БД auto-increment удобен, и кандидаты экстраполируют это на sharded.",
+                "if_it_were_true": "Не нужны были бы Snowflake и ULID — sequences хватало бы.",
+                "how_it_should_be": "Auto-increment ID — anti-pattern для shard key. Используют tenant_id/user_id/UUID."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главный критерий — короткое название колонки (для удобства SQL); cardinality и distribution не важны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Название колонки — это про читаемость кода, не про производительность sharding. Cardinality (число уникальных) и distribution (равномерность) — это фундамент.",
+                "source_of_confusion": "Шутка про bikeshedding над названиями колонок имеет место, но не про shard key.",
+                "if_it_were_true": "Sharding выбор делался бы по эстетике SQL, что абсурдно.",
+                "how_it_should_be": "Три критерия: cardinality, distribution, access pattern."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Перечислите пять anti-patterns shard key и приведите пример catastrophe для каждого.",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Anti-patterns: использование UUID, отсутствие индекса на shard key, использование bigint вместо int, использование compound key, отсутствие partitioning.",
+              "correct": false,
+              "sections": {
+                "what_actually": "UUID — нормальный shard key (равномерное распределение). Отсутствие индекса — это про производительность одного shard, не про anti-pattern shard key. bigint vs int — деталь типа. Compound key — НЕ anti-pattern, часто рекомендация.",
+                "source_of_confusion": "Кандидаты иногда мешают принципы хорошего схема-дизайна с anti-patterns shard key.",
+                "if_it_were_true": "MongoDB compound hashed shard key не существовал бы как feature.",
+                "how_it_should_be": "Anti-patterns shard key: monotonic, low cardinality, skewed, mutable, composite-but-queried-by-part."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главный anti-pattern — использование hash вместо range; всё остальное несущественно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hash vs range — выбор стратегии, не anti-pattern. Anti-pattern — это конкретные проблемы с конкретным shard key, независимо от стратегии.",
+                "source_of_confusion": "Некоторые источники подчёркивают преимущества range, но это не делает hash anti-pattern'ом.",
+                "if_it_were_true": "Cassandra и DynamoDB были бы anti-pattern by design, что абсурдно.",
+                "how_it_should_be": "Anti-patterns — это про monotonic/low-cardinality/skewed/mutable/composite, не про выбор hash vs range."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "(1) Monotonic key (timestamp/auto-id) с range → hot последний shard; (2) Low cardinality (status, country) → hot shards; (3) Skewed (5 топ-юзеров = 50% трафика) → горящий shard; (4) Mutable key (значение меняется) → physical move row; (5) Composite, но запросы по части → scatter-gather.",
+              "correct": true,
+              "sections": {
+                "explanation": "Canonical список anti-patterns: (1) Monotonic — Foursquare 2010 MongoDB outage именно из-за этого; (2) Low cardinality — шардирование по `country` (200 значений) при 100 shards = 99 пустых; (3) Skewed — Instagram пришлось ввести special handling для celebrity accounts с 100M followers; (4) Mutable — MongoDB до 4.2 ВООБЩЕ запрещала менять shard key, потому что это physical migration; (5) Composite-by-part — если shard key (tenant_id, user_id), а запрос WHERE user_id=? — scatter-gather по всем shards.",
+                "example": "Foursquare 2010 — 16-часовой outage от MongoDB shard hot spot на monotonic key. Discord ScyllaDB migration 2023 — частично из-за hot partitions от celebrity users. Pinterest shard sharding evolution — переход с monotonic ID на consistent hashing по hash(user_id).",
+                "when_to_apply": "Code review любого нового sharded design — проверять, не попадает ли shard key в один из пяти anti-patterns. Аналитика top-N tenants/users по traffic перед выбором ключа.",
+                "edge_cases": "Mutable key иногда необходим (email как ключ, юзер меняет email) — тогда нужен specialized re-routing protocol с двойной записью на время перехода.",
+                "related": "[[database-sharding-interview#Q15]] hot shard лечение; [[database-sharding-interview#Q16]] salting."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Anti-patterns shard key — это академическая концепция; в production все anti-patterns можно компенсировать caching.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cache помогает при hot reads, но не при hot writes на анти-pattern ключе. Foursquare 2010 — это production catastrophe от monotonic key, и cache не спас бы. Discord ScyllaDB migration — production, и proper key design был нужен, не cache.",
+                "source_of_confusion": "Redis перед БД часто решает производительность, и кандидаты могут считать это универсальным фиксом.",
+                "if_it_were_true": "Никто не переписывал бы shard key — все ставили бы Redis.",
+                "how_it_should_be": "Anti-patterns shard key — это структурная проблема, требующая правильного выбора ключа."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как диагностировать hot shard и какие пять подходов используются для его лечения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Диагностика: per-shard метрики (CPU, write IOPS, p99 latency, queue depth) + топ shard keys по запросам; лечение: (1) salt shard key, (2) compound key с дополнительной размерностью, (3) manual rebalancing через directory, (4) cache перед DB (Redis), (5) split chunk/range через balancer/reshard.",
+              "correct": true,
+              "sections": {
+                "explanation": "Диагностика hot shard: смотрят неравномерность метрик per-shard (если CPU shard-3 = 90%, а остальных = 20% — это hot). Доп. tooling: MongoDB `db.collection.getShardDistribution()`, Cassandra `nodetool status` + `tablestats`, Vitess `vtctl ShowResharding`. Лечение 5 способов: (1) Salting (`user_id + req_time%16`) — размазывает hot user, но чтение 16x; (2) Compound key (user_id, day) — добавляет dimension; (3) Manual rebalancing через directory — hot tenant → dedicated shard; (4) Redis caching — read hot не доходит до shard; (5) Split chunk (MongoDB balancer, Vitess reshard) — разрезать hot range на меньшие.",
+                "example": "Foursquare 2010 нашли hot shard через slow query alerts и iowait метрики. Instagram celebrity accounts handling: special routing для топ-1000 юзеров через dedicated shards. Discord ScyllaDB migration 2023 — пример radical fix через смену движка для лучшего handling hot partitions.",
+                "when_to_apply": "Постоянный мониторинг распределения per-shard. Алерт при std deviation > 30% по CPU/IOPS. Reactive fix при появлении hot shard.",
+                "edge_cases": "Salting усложняет чтения — теперь нужно опросить все 16 'виртуальных' юзеров для full data. Compound key требует переписывать queries. Manual rebalancing через directory — единственное без операционных compromises.",
+                "related": "[[database-sharding-interview#Q14]] anti-patterns shard key; [[database-sharding-interview#Q16]] salting детали."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hot shard определяется по объёму данных (если на одном shard >50% — это hot); единственное лечение — добавить replicas.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hot shard определяется по нагрузке (CPU, write IOPS, latency), не по объёму. Shard может иметь 60% данных, но если они холодные — он не hot. Добавление replicas НЕ ЛЕЧИТ hot writes — все writes всё равно идут в primary этого shard.",
+                "source_of_confusion": "Объём данных — видимая метрика в админке, и её путают с нагрузкой.",
+                "if_it_were_true": "Foursquare добавил бы replicas и избежал 16-часовой outage, но реальное решение было — split chunks.",
+                "how_it_should_be": "Hot shard = неравномерная нагрузка. Replicas лечат read-heavy, не write-heavy hot."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hot shard невозможен в современных системах (MongoDB, Cassandra), потому что они автоматически перераспределяют данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB balancer и Cassandra repair действительно перераспределяют, но это реактивно (после появления hot). И они не помогают, если shard key выбран плохо: при monotonic key все новые writes всё равно идут в последний chunk.",
+                "source_of_confusion": "Маркетинг distributed DBs обещает 'auto-balancing', и кандидаты верят.",
+                "if_it_were_true": "Foursquare 2010 outage не случился бы — MongoDB balancer спас бы.",
+                "how_it_should_be": "Auto-balancing работает для уже произошедших перекосов; правильный shard key предотвращает их с самого начала."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hot shard лечится только полным перешардированием (resharding); никаких менее радикальных подходов не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полный resharding — крайняя мера и месяцы работы. Реально hot shard сначала пробуют лечить менее радикально: salting, compound key, caching, manual move через directory, split chunk. Только если ничего не помогает — resharding.",
+                "source_of_confusion": "Resharding — известная операция, и кандидаты считают её универсальным фиксом.",
+                "if_it_were_true": "Каждый hot shard приводил бы к multi-month проекту, что нерентабельно.",
+                "how_it_should_be": "Tiered подход: сначала лёгкие фиксы, потом более тяжёлые. Resharding — последняя опция."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое compound shard key и salting, и в чём trade-off между write-balancing и read-cost?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Compound shard key — это копия shard key в нескольких таблицах; salting — это добавление соли к паролю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Compound shard key — составной ключ из нескольких колонок (tenant_id, item_id). Salting в sharding — добавление случайной величины к shard key для размазывания hot keys, не имеет отношения к пасс-хешированию.",
+                "source_of_confusion": "Salting в crypto (PBKDF2, bcrypt) — другое понятие; кандидаты путают.",
+                "if_it_were_true": "Не было бы рекомендаций MongoDB compound hashed shard key и Cassandra compound partition key.",
+                "how_it_should_be": "Compound = составной ключ. Salting в sharding = добавление random/derived колонки к ключу для размазывания."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Compound shard key — это NoSQL термин; в реляционных БД (MySQL, PostgreSQL) compound shard keys не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Compound shard key полностью поддерживается в SQL: Vitess (MySQL) — multi-column vindex, Citus (PostgreSQL) — distribution column может быть составным через function, MongoDB — compound hashed shard key.",
+                "source_of_confusion": "В Cassandra compound partition key — central concept, и кандидаты могут считать это NoSQL-only.",
+                "if_it_were_true": "Vitess и Citus не имели бы поддержки compound distribution.",
+                "how_it_should_be": "Compound shard keys работают везде, где есть sharding-слой."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Salting удешевляет операции, потому что данные кэшируются в N местах одновременно; trade-off отсутствует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Salting размазывает данные по N виртуальным buckets, но reads теперь должны опросить ВСЕ N — это X N latency и нагрузка. Кэширование тут ни при чём.",
+                "source_of_confusion": "Salting звучит как 'распределение' = 'параллелизм', но read-параллелизм бесплатным не бывает.",
+                "if_it_were_true": "Salting применяли бы повсеместно, но реально его используют только когда write-heavy hot key — реальная проблема.",
+                "how_it_should_be": "Salting = trade-off write-balancing vs read-cost. Не free lunch."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Compound shard key — составной ключ из нескольких колонок (tenant_id, item_id); локальные операции по tenant_id попадают в один shard, hot tenant дополнительно размазан внутри shard. Salting — добавление производной/случайной колонки (salt = user_id_hash % 16): пишем в 16 'корзин', разгружаем write; но read должен опросить все 16 корзин.",
+              "correct": true,
+              "sections": {
+                "explanation": "Compound shard key (tenant_id, item_id): запросы по tenant_id попадают в один shard (хорошо для list ops тенанта), но данные одного hot tenant размазаны внутри shard по item_id (хорошо для perf инсайд). Salting (user_id, salt): hot user 'user_42' получает salt=0..15, и его данные оказываются в 16 разных 'виртуальных' юзерах. Trade-off: write разгружен, но READ должен опросить все 16 (или знать formula salt'а заранее).",
+                "example": "Cassandra compound partition key — `PRIMARY KEY ((user_id, day), event_time)` разрезает hot user на дни. DynamoDB write sharding pattern — `partition_key = base_key + (request_id % 10)`. Time-series в Cassandra/DynamoDB обычно с salting для write-heavy.",
+                "when_to_apply": "Compound — когда естественная иерархия (tenant -> items). Salting — когда workload write-heavy на конкретный hot key и точные reads (по PK) известны через formula.",
+                "edge_cases": "Salting не подходит для range queries — данные раскиданы. Compound с salt дополнительным компонентом усложняет схему. Reads увеличиваются x N salt buckets — нужно профилировать.",
+                "related": "[[database-sharding-interview#Q15]] hot shard fix; [[cassandra-interview]] compound partition key."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему scatter-gather queries (запрос без shard_key в WHERE) дорогие, и какие подходы помогают их избежать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Scatter-gather дешёвый, потому что shards обрабатывают запрос параллельно; стоимость = O(1) от числа shards.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параллелизм есть, но latency = max(latency всех shards) — медленный shard замедляет весь запрос (tail latency amplification). N запросов на сеть, coordinator memory для буферизации, aggregations требуют partial + final reduction. Это НЕ O(1).",
+                "source_of_confusion": "MapReduce звучит как 'параллелизм бесплатный', но reality другая.",
+                "if_it_were_true": "Не было бы рекомендаций включать shard_key в каждый query.",
+                "how_it_should_be": "Scatter-gather дорогой: tail latency, N network calls, coordinator buffering, aggregation overhead."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Router рассылает на все shards, ждёт ответы, мерджит; latency = max(latency shards) (tail amplification), N network calls, coordinator memory для буферизации, partial aggregates + final reduction. Решения: (a) global secondary index, (b) дополнительная таблица-маппинг, (c) composite encoding (включить shard_key в order_id).",
+              "correct": true,
+              "sections": {
+                "explanation": "Стоимость scatter-gather: (1) Tail latency — самый медленный shard определяет latency всего запроса; если 100 shards и p99 каждого = 50ms, p99 общий ~150-200ms из-за amplification; (2) Network — N queries вместо 1; (3) Coordinator memory — буферизация ответов для merge/sort/limit; (4) Aggregations (SUM, COUNT, AVG) требуют partial aggregates от shards + final reduction; (5) cross-shard pagination кошмар. Решения: GSI (Q20), доп таблица `order_id → user_id` для роутинга, encode shard_key в business ID (Twitter snowflake включает datacenter_id).",
+                "example": "MongoDB `db.orders.find({order_id: 'X'})` без user_id (shard key) — scatter-gather по всем shards. Решение: либо включить user_id в query (если known), либо завести unique index global или создать reverse lookup table. Vitess vindex `lookup` — это и есть централизованная reverse lookup.",
+                "when_to_apply": "При дизайне schema сразу определить, какие 90%+ запросов имеют shard_key. Для оставшихся 10% — заводить GSI или lookup table.",
+                "edge_cases": "Pagination через cursor cross-shard — отдельная боль (offset/limit ломаются). Решение — keyset pagination + знание границ. Sorting by non-shard-key field — требует buffering всех результатов на coordinator, риск OOM.",
+                "related": "[[database-sharding-interview#Q20]] GSI; [[database-sharding-interview#Q18]] joins."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Scatter-gather — это название для batch операций (bulk insert), не для запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scatter-gather — это паттерн RPC/distributed query: разослать на все узлы (scatter), собрать ответы (gather). Применяется к queries без shard_key в WHERE.",
+                "source_of_confusion": "Bulk inserts тоже разлетаются по shards, и кандидаты могут смешать.",
+                "if_it_were_true": "Documentation MongoDB/Vitess/Cassandra не использовала бы термин scatter-gather для queries.",
+                "how_it_should_be": "Scatter-gather = распределённый query pattern. Bulk insert — другое."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Scatter-gather queries в шардированных системах автоматически кэшируются на coordinator, поэтому повторные запросы дешёвые.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартные шардинг-роутеры (mongos, VTGate, Citus coordinator) не кэшируют результаты queries. Кэширование — отдельный слой (Redis, application cache). И кэш помогает только при идемпотентных запросах с тем же result set.",
+                "source_of_confusion": "Query plan caching существует, но это про планы, не про данные.",
+                "if_it_were_true": "Не нужно было бы избегать scatter-gather — кэш решал бы всё.",
+                "how_it_should_be": "Кэширование — отдельный слой. Scatter-gather всё равно дорогой при cache miss или unique queries."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие четыре подхода решают проблему JOIN'ов across shards, и какой даёт реляционную семантику без app-side merge?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Единственное решение — переписать все JOINы на NoSQL и денормализацию; альтернатив нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Денормализация — один из подходов, но есть и другие: co-located sharding (JOIN работает локально), broadcast/reference tables, app-level join. Все четыре подхода имеют свои use cases.",
+                "source_of_confusion": "MongoDB и DynamoDB популяризовали 'no joins, denormalize everything', и кандидаты считают это единственным путём.",
+                "if_it_were_true": "Citus reference tables и Vitess `reference` не существовали бы как feature.",
+                "how_it_should_be": "Четыре подхода: co-located, denormalization, broadcast/reference tables, app-level join."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только distributed transactions (2PC) позволяют делать JOINы across shards; другие подходы дают неконсистентные результаты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "2PC — это про consistency UPDATE'ов across shards, не про JOIN. JOIN — read operation. Co-located JOINs дают полную консистентность READ без 2PC.",
+                "source_of_confusion": "2PC — известная техника, и кандидаты экстраполируют её на все cross-shard операции.",
+                "if_it_were_true": "Citus не работал бы без 2PC, но он отлично делает co-located joins на standard PG read isolation.",
+                "how_it_should_be": "JOIN ≠ transaction. 2PC решает атомарность UPDATE/INSERT, не JOIN."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "(1) Co-located sharding — обе таблицы шардированы по одному ключу (tenant_id), JOIN локальный на каждом shard; (2) денормализация — копируем колонки B в A; (3) broadcast/reference tables — реплицируем справочники (countries, currencies) на ВСЕ shards; (4) app-level join — два запроса в код, мерж в приложении. Co-located даёт реляционную семантику без app-side merge.",
+              "correct": true,
+              "sections": {
+                "explanation": "Четыре подхода: (1) Co-located — Citus умеет автоматически (`colocate_with => 'orders'`), JOIN работает на каждом shard локально, реляционная семантика сохранена; (2) Денормализация — копируем denormalized колонки, цена — duplication и sync; (3) Broadcast tables (Vitess `reference`, Citus `create_reference_table`) — реплицируется целиком на каждый shard, JOIN с маленькими справочниками локальный; (4) App-level join — два запроса в коде + merge, годится для небольших результатов.",
+                "example": "Citus: `create_distributed_table('orders', 'tenant_id')` + `create_distributed_table('order_items', 'tenant_id', colocate_with => 'orders')` → JOIN orders+order_items по tenant_id локальный на каждом worker. Vitess reference table для currencies — реплицируется на все shards. Notion использует co-located по workspace_id для всех связанных таблиц.",
+                "when_to_apply": "Co-located — best, если есть единый shard key для group of related tables. Denormalization — если schema стабильна и updates редкие. Reference tables — только для маленьких справочников (< 100K rows).",
+                "edge_cases": "Co-located не работает, если две таблицы шардированы по РАЗНЫМ ключам — например, orders по user_id и products по product_id. Тогда JOIN ломается. Reference table при частых UPDATEах превращается в распределённую запись.",
+                "related": "[[database-sharding-interview#Q27]] Citus co-located; [[database-sharding-interview#Q33]] забытая reference table anti-pattern."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JOINы across shards автоматически работают в любой шардированной БД (MongoDB, Cassandra) с минимальным overhead.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB вообще не поддерживает JOIN в классическом смысле (есть `$lookup`, но он scatter-gather). Cassandra не поддерживает JOIN вообще — там только nested writes / denormalization.",
+                "source_of_confusion": "Современные БД позиционируются как 'удобные для шардирования', и кандидаты ожидают transparent JOINs.",
+                "if_it_were_true": "Не нужно было бы изобретать co-located sharding и broadcast tables.",
+                "how_it_should_be": "Cross-shard JOIN — всегда явная стратегия (co-located, denorm, reference, app-level)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сравните три подхода к distributed transactions across shards (2PC, Saga, outbox) по блокировкам, eventual consistency и сложности написания.",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "2PC: coordinator делает prepare → all yes? → commit; блокирующий (если coordinator упал — участники залочены), 2 round-trips + локи на всё время; Saga: N локальных шагов с compensating transactions на откат, eventually consistent, требует идемпотентности; outbox: каждый shard коммитит локально + пишет в outbox table, worker публикует в Kafka, другие сервисы консьюмят — eventually consistent без 2PC.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три canonical подхода: (1) 2PC — атомарность гарантирована, но блокирующий (если coordinator падает между prepare и commit, участники зависают с locks), производительность плохая (2 round trips + локи всё время), используется в XA, Spanner (с TrueTime). (2) Saga — Last successful step rolled back через compensating transactions (refund если CancelOrder), eventually consistent, не атомарно, сложно писать compensations + требует идемпотентности. (3) Outbox + local transactions — каждый shard коммитит локально + пишет event в outbox table в той же транзакции, worker читает outbox и публикует в Kafka, consumers применяют. Eventually consistent, нет distributed transaction overhead.",
+                "example": "Booking flight + hotel + car — классическая Saga: если car booking failed, compensating transactions cancel hotel и flight. Stripe payment processing использует outbox для асинхронной нотификации downstream services. Spanner внутри использует 2PC с TrueTime для линеаризуемости.",
+                "when_to_apply": "2PC — только в системах с встроенной поддержкой (Spanner) и низкими требованиями к throughput. Saga — для бизнес-процессов с понятной последовательностью и компенсациями. Outbox — для асинхронной communication между сервисами/shards.",
+                "edge_cases": "В реальных production sharded системах 2PC ИЗБЕГАЮТ. Saga работает, но compensations сложны (refund != negate). Outbox требует worker'а с at-least-once delivery + dedup на consumer side.",
+                "related": "[[database-transactions-interview]] ACID; [[database-sharding-interview#Q23]] sharding+replication."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "2PC — самый быстрый подход (один round-trip), Saga — медленный, outbox — устаревший паттерн 2015 года.",
+              "correct": false,
+              "sections": {
+                "what_actually": "2PC — самый МЕДЛЕННЫЙ (2 round-trips + локи на всё время), Saga зачастую быстрее (локальные транзакции без распределённых locks), outbox — современный и широко используется (Microservices Patterns by Chris Richardson, 2018).",
+                "source_of_confusion": "2PC ассоциируется с 'атомарностью' = 'хорошо', и кандидаты могут считать это перформантным.",
+                "if_it_were_true": "Все системы использовали бы 2PC, но реально его избегают.",
+                "how_it_should_be": "2PC — медленный и блокирующий. Saga и outbox — более масштабируемые."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Saga даёт strong consistency, outbox даёт ACID, 2PC даёт eventual consistency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: 2PC даёт strong consistency (атомарность across shards), Saga и outbox дают eventual consistency. Saga не атомарна — есть промежуточные состояния между шагами.",
+                "source_of_confusion": "Все три термина связаны с distributed transactions, и кандидаты могут перепутать свойства.",
+                "if_it_were_true": "Saga не нуждалась бы в compensating transactions, если она strong consistent.",
+                "how_it_should_be": "2PC = strong, Saga/outbox = eventual."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все три подхода эквивалентны и взаимозаменяемы; выбор зависит от языка программирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подходы имеют разные семантики (atomic vs eventually consistent), разный operational cost (locks vs no locks), разные кейсы применения. Они НЕ взаимозаменяемы.",
+                "source_of_confusion": "Все три про distributed coordination, и кандидат может считать выбор тривиальным.",
+                "if_it_were_true": "Не было бы Saga vs Outbox debate в Microservices community.",
+                "how_it_should_be": "Каждый подход — своя ниша."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужны Global Secondary Indexes (GSI) в шардированных системах и какие четыре подхода их реализации существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "GSI не нужны в современных sharded системах — все запросы должны быть по shard_key.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В реальных приложениях ~10% запросов идут не по shard_key (login by email при шардировании по user_id). Без GSI они становятся scatter-gather. GSI — стандартный механизм для этого.",
+                "source_of_confusion": "В идеальном дизайне 90%+ запросов через shard_key, и кандидаты могут считать GSI избыточным.",
+                "if_it_were_true": "DynamoDB GSI не существовал бы как feature.",
+                "how_it_should_be": "GSI нужны для 10% запросов вне shard_key."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GSI решают только проблему производительности уникальных constraints, не лукапов по non-shard-key.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GSI решают именно lookup по non-shard-key (email → user_id, order_id → user_id). Unique constraints across shards — отдельная проблема (часто решается через lookup table или distributed lock).",
+                "source_of_confusion": "Unique index и secondary index — близкие концепции, и кандидаты могут перепутать роли.",
+                "if_it_were_true": "DynamoDB GSI ограничивались бы только уникальностью, но реально они для arbitrary queries.",
+                "how_it_should_be": "GSI = lookup по non-shard-key. Uniqueness — отдельный механизм."
+              }
+            },
+            {
+              "order": 2,
+              "label": "D",
+              "text": "Локальный индекс на каждом shard — только если запрос идёт в этот shard. Для запроса по non-shard-key нужен GSI. Четыре подхода: (1) async-индекс в отдельной таблице/Redis (email→user_id), eventually consistent; (2) DynamoDB GSI — встроенный, шардирован по своему ключу, async-реплицируется; (3) Elasticsearch как внешний поиск, CDC из основной БД; (4) Vitess vindex `lookup` — таблица-маппинг в отдельном keyspace.",
+              "correct": true,
+              "sections": {
+                "explanation": "GSI нужен для запросов вне shard_key. Локальный индекс работает только если запрос уже попал в нужный shard. Четыре реализации: (1) Кастомный async-индекс — `email_to_user (email PK, user_id)` хранится в Redis или отдельной таблице, обновляется в outbox-стиле; (2) DynamoDB GSI — built-in, GSI имеет свой partition_key/sort_key, async-репликация (eventually consistent); (3) Elasticsearch — основная БД пишет CDC в ES (Debezium → Kafka → ES), поисковые запросы идут в ES; (4) Vitess `lookup` vindex — отдельный keyspace с таблицей маппинга `lookup_key → keyspace_id`, поддерживается транзакционно с основной таблицей (Vitess умеет включать update lookup в ту же транзакцию).",
+                "example": "Login by email при sharding по user_id: Slack использует custom lookup table user_email → user_id; DynamoDB-based приложения используют GSI на email; Vitess users + user_email_lookup keyspace; Pinterest/Twitter с Elasticsearch для search.",
+                "when_to_apply": "GSI заводить для конкретных known queries вне shard_key, не на все колонки. Каждый GSI = дополнительная запись + storage.",
+                "edge_cases": "Strong-consistent GSI (Vitess `consistent_lookup`, DynamoDB transactions) дорогой — distributed transaction при каждой записи. Eventually consistent GSI — стандарт, но требует UI/UX, толерантного к stale reads на short time.",
+                "related": "[[database-sharding-interview#Q26]] Vitess vindex; [[dynamodb-interview]] GSI; [[database-sharding-interview#Q17]] scatter-gather."
+              }
+            },
+            {
+              "order": 3,
+              "label": "C",
+              "text": "GSI всегда strong consistent и не имеют trade-offs.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GSI почти всегда eventually consistent: запись в основную таблицу + асинхронное обновление индекса. Strong consistent GSI требует distributed transaction при каждой записи = дорого.",
+                "source_of_confusion": "Local indexes в single-shard БД strong consistent, и кандидаты экстраполируют.",
+                "if_it_were_true": "DynamoDB GSI документация не предупреждала бы про eventual consistency.",
+                "how_it_should_be": "GSI = eventually consistent почти всегда. Strong consistent GSI = expensive."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "По каким причинам требуется resharding и какие четыре стратегии его проведения существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Resharding не требуется в production: правильно выбранный shard key исключает необходимость когда-либо менять структуру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже идеальный shard key может потребовать resharding из-за роста объёма, появления skew (новый enterprise клиент), изменения access pattern (новые типы запросов). Resharding — нормальная операция в долгоживущих системах.",
+                "source_of_confusion": "Хороший дизайн откладывает resharding, и кандидаты могут считать его признаком плохого дизайна.",
+                "if_it_were_true": "Vitess vReplication и MongoDB reshardCollection не существовали бы.",
+                "how_it_should_be": "Resharding неизбежен в эволюционирующих системах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Причины: рост объёма, перекос (hot shard), смена shard key, изменение архитектуры. Стратегии: (1) pre-split с самого начала (1024 logical shards), (2) consistent hashing (минимум K/N data movement), (3) live migration dual-write + backfill + cutover, (4) Vitess vReplication через MySQL binlog.",
+              "correct": true,
+              "sections": {
+                "explanation": "Причины resharding: (1) Объём данных вырос, shards переполнены; (2) Перекос (hot shard), нужно split; (3) Меняется shard key (выбор оказался неудачным); (4) Архитектура меняется (Range → Hash или наоборот). Стратегии: (a) Pre-split — создать 1024 логических shards с самого начала, физических узлов изначально 16, по мере роста перевозим logical на новые физические узлы (Vitess keyranges, MongoDB chunks); (b) Consistent hashing — добавление узла перемещает только K/N ключей (Cassandra, DynamoDB); (c) Live migration dual-write + backfill + cutover (Q22); (d) Vitess vReplication — встроенный механизм MySQL binlog миграции, новые shards подписываются на binlog старых, догоняют, потом cutover.",
+                "example": "Notion в 2021 перешёл с 1 PG на 480 logical shards (32 физических узла) с использованием стратегии pre-split. Slack использует Vitess vReplication для онлайн-resharding. Cassandra rebalances через consistent hashing при scale-up автоматически.",
+                "when_to_apply": "Pre-split — если ожидается значительный рост в будущем (>10x); планировать с самого начала. Consistent hashing — если используется уже (Cassandra). Live migration — для greenfield rearchitecture. vReplication — Vitess-specific.",
+                "edge_cases": "Resharding обычно multi-month проект. Откат должен быть возможен на любой стадии до cutover. Schema drift между старой и новой системой — risk.",
+                "related": "[[database-sharding-interview#Q22]] live migration; [[database-sharding-interview#Q26]] Vitess vReplication."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Resharding — это просто увеличение N в формуле hash mod N; никаких специальных стратегий не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Изменение N в hash mod N — это и есть катастрофическая ситуация: 80% данных должны переместиться. Именно для этого изобрели consistent hashing, pre-split, dual-write.",
+                "source_of_confusion": "Звучит просто, но реальная миграция данных = challenge.",
+                "if_it_were_true": "Resharding был бы тривиальной операцией.",
+                "how_it_should_be": "Resharding — multi-phase инженерный проект."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Resharding всегда требует downtime минимум 24 часа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Online resharding без downtime — стандарт современных систем: MongoDB 5.0 reshardCollection (online), Vitess vReplication (online), live migration dual-write + cutover (downtime секунды для cutover, опционально 0 через atomic swap).",
+                "source_of_confusion": "В 2000-е resharding часто требовал maintenance window, и эта ассоциация осталась.",
+                "if_it_were_true": "Google/Meta не могли бы делать ресхардинг в продакшене.",
+                "how_it_should_be": "Online resharding — норма в современных системах."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Опишите четыре фазы live migration (dual-write + backfill + cutover) и ключевые риски.",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Live migration — это просто COPY данных одной командой; никаких фаз нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Live migration в production требует 4 фазы (dual-write, backfill, verification, cutover) именно потому, что данные меняются во время миграции. Просто COPY работает только для immutable cold data.",
+                "source_of_confusion": "Mongoexport/Mongodump звучат как `просто copy`, но они для offline миграций.",
+                "if_it_were_true": "Slack/Figma/Notion не описывали бы свои миграции как multi-month проекты.",
+                "how_it_should_be": "Live migration = 4 фазы с верификацией."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно сделать dual-write и сразу переключить reads — backfill и verification не требуются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без backfill в новой системе нет исторических данных — reads вернут пустоту. Без verification не убедимся, что dual-write работает идемпотентно и схемы эквивалентны.",
+                "source_of_confusion": "Dual-write — основной механизм, и кандидаты могут считать его достаточным.",
+                "if_it_were_true": "Notion миграция была бы за неделю, а не за месяцы.",
+                "how_it_should_be": "Все 4 фазы нужны: dual-write, backfill, verification, cutover."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "(1) Dual-write: app пишет одновременно в старую и новую систему, чтения из старой; (2) Backfill: фоновый job копирует исторические данные, идемпотентно с чек-поинтами; (3) Verification: shadow reads из обеих, сравнение, лог расхождений; (4) Cutover: переключаем reads на новую, какое-то время старая принимает dual-writes для отката. Риски: race conditions backfill vs dual-write (нужен version/timestamp per row), schema drift, откат.",
+              "correct": true,
+              "sections": {
+                "explanation": "Canonical 4-phase live migration: (1) Dual-write — приложение пишет в обе системы (через transactional outbox или CDC); reads ещё из старой; ловим bugs параллельной записи. (2) Backfill — background job копирует историю из старой в новую, идемпотентно с checkpoint'ами; может занять дни-недели для больших таблиц. (3) Verification — shadow reads из обеих систем, сравнение результатов, логирование расхождений; чиним bugs. (4) Cutover — переключаем reads на новую; старая ещё какое-то время принимает dual-writes для отката (rollback option); потом старую отключаем. Ключевые риски: race condition между backfill и dual-write (новый INSERT через dual-write записывается в новую, затем backfill 'перезаписывает' старой версией) — лечится timestamp/version per row; schema drift между системами; откат должен быть возможен на любой фазе.",
+                "example": "Notion миграция Postgres→480 logical shards 2021: full 4-phase. Slack shardification 2022: тот же подход. Figma миграция на Vitess 2023: Vitess vReplication, но логически те же 4 фазы. Pinterest MySQL sharding migration ~2014: classic dual-write + backfill.",
+                "when_to_apply": "Любая миграция архитектуры данных в production-системе с активным трафиком и downtime budget ~0.",
+                "edge_cases": "Verification phase часто занимает дольше, чем backfill — потому что находятся edge cases в semantic equivalence. Cutover должен быть быстрым (DNS switch, feature flag) и atomic per-user.",
+                "related": "[[database-sharding-interview#Q21]] resharding стратегии; [[database-architecture-interview]] CDC patterns."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Live migration не используется в реальных системах — все мигрируют через offline maintenance.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Offline maintenance с downtime для миграции терабайтов данных — это часы-дни недоступности, что неприемлемо для большинства продакшн-систем. Live migration — стандарт.",
+                "source_of_confusion": "Small-scale системы действительно могут мигрировать offline, и кандидаты экстраполируют.",
+                "if_it_were_true": "Slack/Figma/Notion недоступны были бы по несколько суток.",
+                "how_it_should_be": "Live migration — норма для больших систем."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как комбинируются sharding и replication, как происходит failover на уровне shard и какие чтения допустимы с replicas?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cluster = N shards x R replicas (например 8x3 = 24 узла); failover на shard: primary упал → одна из replicas промоутится (Raft/Paxos или внешний orchestrator MHA/Orchestrator/sentinel), router (mongos, VTGate) видит нового primary и направляет writes туда; чтения с replicas допустимы для read-heavy workload с tolerable stale reads (репликационный lag).",
+              "correct": true,
+              "sections": {
+                "explanation": "Sharding и replication ортогональны и комбинируются: N shards x R replicas. Failover внутри shard: primary падает, replicas через consensus (Raft в MongoDB 4.0+, Patroni для PG, Orchestrator/MHA для MySQL) выбирают новый primary; router (mongos, VTGate, ProxySQL) автоматически обнаруживает нового primary через config server / topology service и направляет writes туда. Время failover: секунды (Raft) до десятков секунд (внешний orchestrator). Чтения с replicas допустимы для workload с tolerable stale reads (timeline в соцсети с lag 100ms — ок; банковский баланс — нет).",
+                "example": "MongoDB shard = replica set (3 узла обычно), failover < 10s. Cassandra с RF=3 — любой узел кольца принимает чтения, consistency level (ONE/QUORUM/ALL) контролирует freshness. Vitess: VTTablet проксирует к MySQL replicas (primary + 2 replicas стандартно).",
+                "when_to_apply": "Production sharding ВСЕГДА с replication (RF≥3 в shard или min 2 replicas в MongoDB shard). Без replication shard = SPOF для своих данных.",
+                "edge_cases": "Read from replica = eventual consistency by default из-за lag. Если приложение требует read-your-writes — либо все reads с primary, либо session token / causal consistency. Cross-DC replicas — async замедляет writes (waiting на ack), но повышает DR.",
+                "related": "[[database-replication-interview]] failover механизмы; [[database-sharding-interview#Q1]] sharding vs replication."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Sharding и replication — это одна и та же техника; никаких N x R конфигураций не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sharding и replication ортогональны (Q1). Cluster 8x3 = 8 shards × 3 replicas = 24 узла — стандартная конфигурация production. Combining — обязательная practice.",
+                "source_of_confusion": "Оба связаны с distributed, и кандидаты могут считать их одним.",
+                "if_it_were_true": "MongoDB documentation не описывала бы 'sharded replica sets'.",
+                "how_it_should_be": "Sharding (write scale) + replication (HA + read scale) = production."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При failover в шардированном кластере весь кластер недоступен на время выборов нового primary.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Failover в одном shard не трогает другие shards. Если падает primary в shard 3 из 8, остальные 7 shards продолжают принимать reads/writes. Запросы по ключам этого shard блокируются на время failover (~10s).",
+                "source_of_confusion": "В single-server БД failover = whole DB unavailable, и кандидаты экстраполируют.",
+                "if_it_were_true": "Sharding не давал бы reliability benefit.",
+                "how_it_should_be": "Failover локален в shard — это и есть один из benefits sharding."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтения с replicas всегда strong consistent в современных шардированных системах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reads с replicas almost always eventually consistent из-за async replication lag (миллисекунды-секунды). Strong consistent reads с replica требуют либо sync replication (медленно), либо version tokens (read-your-writes), либо forwarding read to primary.",
+                "source_of_confusion": "Distributed DBs продают consistency, и кандидаты могут предполагать default strong.",
+                "if_it_were_true": "MongoDB read preference 'secondary' давал бы strong consistency, но он намеренно eventually consistent для performance.",
+                "how_it_should_be": "Reads с replicas = eventually consistent by default."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие пять компонентов составляют MongoDB sharding architecture и за что каждый отвечает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MongoDB sharding состоит только из mongod (data node) и mongos (router); config servers и chunks — это устаревшие концепции из MongoDB 2.x.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Config servers и chunks — актуальные компоненты MongoDB sharding в текущих версиях (6.x, 7.x). Config servers хранят метаданные кластера. Chunks — единица перемещения данных balancer'ом.",
+                "source_of_confusion": "MongoDB архитектура эволюционировала, и кандидаты могут не отслеживать актуальное состояние.",
+                "if_it_were_true": "MongoDB documentation не описывала бы текущую архитектуру через chunks.",
+                "how_it_should_be": "Config servers и chunks — актуальная архитектура."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все пять компонентов — это разные имена для одного и того же процесса mongod.",
+              "correct": false,
+              "sections": {
+                "what_actually": "mongod (data node), mongos (router), config server (специальный mongod с config DB) — разные роли. Chunk — это logical unit (диапазон значений shard key), не отдельный процесс. Balancer — фоновый процесс на config server.",
+                "source_of_confusion": "MongoDB использует один binary mongod для разных ролей, и кандидаты могут считать их одинаковыми.",
+                "if_it_were_true": "Не было бы разных конфигураций deployment.",
+                "how_it_should_be": "5 разных ролей, даже если binary один."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MongoDB не использует chunks — данные распределяются через consistent hashing как в Cassandra.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB использует chunk-based partitioning, не consistent hashing. Каждый chunk — диапазон shard key, balancer перемещает chunks между shards. С `hashed` shard key chunks разделены по hash space, но всё равно chunk-based.",
+                "source_of_confusion": "Cassandra популярен в discussions о consistent hashing, и кандидаты могут экстраполировать на MongoDB.",
+                "if_it_were_true": "MongoDB balancer не нужен был бы (Cassandra'е нет balancer'а в таком виде).",
+                "how_it_should_be": "MongoDB = chunk-based + balancer. Cassandra = consistent hashing + vnodes."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "(1) mongos — stateless router, клиент подключается к нему; (2) Config servers — replica set из 3, хранят метаданные кластера (диапазоны chunks → shards); (3) Shard — replica set, хранит часть данных; (4) Chunk — диапазон значений shard key, default 128MB, единица перемещения; (5) Balancer — фоновый процесс на config servers, следит за распределением и перемещает chunks (split + migrate) при перекосе.",
+              "correct": true,
+              "sections": {
+                "explanation": "MongoDB sharding architecture: (1) mongos — stateless router, к нему подключается клиент; принимает запрос, смотрит метаданные с config server, отправляет на нужный shard. Можно ставить N штук. (2) Config servers — replica set из 3 узлов с config DB; хранят shard key ranges → shards маппинг. (3) Shard — replica set обычно из 3 узлов, хранит часть данных. (4) Chunk — диапазон значений shard key, default размер 128MB, единица миграции через balancer. (5) Balancer — фоновый процесс на config servers, следит за равномерностью chunks по shards и перемещает их (split + migrate).",
+                "example": "Production cluster: 3 mongos (за load balancer), 3 config servers (replica set), 8 shards × 3 mongod = 24 + 6 = 30 узлов. Healthcare.gov 2013: MongoDB sharding catastrophe from incorrect shard key.",
+                "when_to_apply": "MongoDB sharded cluster — стандарт для большого MongoDB deployment'а. Single replica set достаточно до ~100GB и ~10K RPS.",
+                "edge_cases": "MongoDB 5.0+ поддерживает online resharding через `reshardCollection`. До этого resharding требовал dump + restore. Compound hashed shard key — с 4.4. Refinable shard key — с 4.4 (добавить колонку без миграции).",
+                "related": "[[mongodb-interview]] детали sharding; [[database-sharding-interview#Q21]] resharding."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Cassandra использует consistent hashing с vnodes, и в чём разница между partition key и clustering key?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Cassandra нет понятия partition key и clustering key; все колонки PRIMARY KEY эквивалентны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Cassandra PRIMARY KEY делится на partition key (определяет узел) и clustering key (порядок внутри партиции). Это фундаментальное разделение, и оно влияет на performance запросов.",
+                "source_of_confusion": "В реляционных БД все колонки PK эквивалентны (просто составной ключ), и кандидаты экстраполируют.",
+                "if_it_were_true": "CREATE TABLE синтаксис Cassandra не имел бы `PRIMARY KEY ((pk), ck)`.",
+                "how_it_should_be": "Partition key (на каком узле) + clustering key (порядок внутри партиции)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cassandra: кольцо токенов [-2^63, 2^63) (Murmur3 partitioner), каждый узел владеет num_tokens (default 256) диапазонами; replication_factor=3 → row реплицируется на 3 соседних узла; нет master/router — координатор любой узел. Partition key определяет узел (hash → token → node), clustering key упорядочивает строки ВНУТРИ одной партиции. Compound partition key: PRIMARY KEY ((user_id, day), event_time) разрезает hot user на дни.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cassandra использует consistent hashing с Murmur3 partitioner на кольце [-2^63, 2^63). num_tokens default 256 — узел получает 256 виртуальных позиций на кольце. replication_factor=3 = строка хранится на 3 соседних узлах по кольцу. Нет специального router — координатор любой узел, token-aware client идёт сразу на нужный. PRIMARY KEY синтаксис: `PRIMARY KEY ((user_id), event_time)` — partition key в двойных скобках (определяет shard через hash → token), clustering key (event_time) сортирует строки внутри партиции. Compound partition key: `PRIMARY KEY ((user_id, day), event_time)` — partition key теперь (user_id, day), что разрезает hot user на отдельные партиции по дням.",
+                "example": "Discord Cassandra → ScyllaDB 2023 — оба используют consistent hashing + vnodes. Discord использовал compound partition key для messages: `PRIMARY KEY ((channel_id, bucket), message_id)` где bucket = day, чтобы избежать unbounded partition для активных каналов.",
+                "when_to_apply": "Cassandra/ScyllaDB для write-heavy time-series, IoT, messaging — workloads, где consistent hashing + vnodes + leaderless writes выигрывают. Partition key — основное решение по локальности.",
+                "edge_cases": "Anti-pattern unbounded partition: `PRIMARY KEY ((user_id), event_time)` для активного юзера на 10 лет → партиция в гигабайтах, чтения деградируют. Лечится compound partition с time bucket.",
+                "related": "[[cassandra-interview]] детали partition design; [[database-sharding-interview#Q9]] vnodes."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cassandra использует range-based sharding по primary key; vnodes — это разновидность chunks из MongoDB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra использует consistent hashing с vnodes, не range-based. vnodes — это виртуальные позиции узла на hash-кольце, не аналог MongoDB chunks (которые range-based).",
+                "source_of_confusion": "Все 'partitioning' концепции звучат похоже, и кандидаты могут смешать.",
+                "if_it_were_true": "Cassandra данные распределялись бы как в HBase, но реально равномерно через hash.",
+                "how_it_should_be": "Cassandra = consistent hashing + vnodes. MongoDB = chunks (range/hash)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cassandra использует mongos-like routing layer; клиент должен подключаться к специальному узлу-роутеру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra leaderless — любой узел кольца может быть координатором. Token-aware client идёт сразу на нужный узел (по hash от partition key), минуя hop. Это специально дизайн без отдельного router slot.",
+                "source_of_confusion": "MongoDB популярен и mongos pattern может казаться универсальным.",
+                "if_it_were_true": "Cassandra имела бы single point of routing failure, что противоречит её leaderless дизайну.",
+                "how_it_should_be": "Cassandra — leaderless, нет dedicated router."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Vitess и какова роль VTGate, VTTablet и vindex в его архитектуре?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Vitess — это форк MongoDB, использует mongos и chunks; vindex — аналог MongoDB chunks.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vitess — sharding layer над MySQL, разработан в YouTube (2010+), не имеет отношения к MongoDB. VTGate, VTTablet, vindex — Vitess-specific компоненты.",
+                "source_of_confusion": "MongoDB sharding популярен, и кандидаты могут экстраполировать его архитектуру.",
+                "if_it_were_true": "Vitess не работал бы с MySQL.",
+                "how_it_should_be": "Vitess = MySQL + sharding layer. mongos = MongoDB router. Это разные системы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Vitess — это replacement для PostgreSQL; работает только с PG и не поддерживает MySQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vitess работает ТОЛЬКО с MySQL. Для PostgreSQL аналог — Citus (extension, не proxy).",
+                "source_of_confusion": "Vitess и Citus — sharding-слои, и кандидаты могут перепутать целевую БД.",
+                "if_it_were_true": "Slack/GitHub/YouTube использовали бы PG, но они на MySQL.",
+                "how_it_should_be": "Vitess = MySQL. Citus = PostgreSQL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Vitess — sharding-слой над MySQL, разработан в YouTube, используется Slack, GitHub, Square. VTGate — stateless router (как mongos), клиент подключается обычным MySQL протоколом. VTTablet — sidecar к каждому MySQL-инстансу (pooling/throttling/streaming). Vindex — маппинг колонки → keyspace_id (hash, lookup, numeric, consistent_lookup, xxhash).",
+              "correct": true,
+              "sections": {
+                "explanation": "Vitess архитектура: (1) VTGate — stateless router, клиент подключается обычным MySQL wire protocol (это огромное преимущество — minimal app changes), VTGate знает VSchema и routes queries; (2) VTTablet — sidecar процесс рядом с каждым mysqld; делает pooling, throttling, query streaming, schema management; (3) Topology service (etcd/Zookeeper) — хранит метаданные о shards; (4) Keyspace — логическая БД, может быть `sharded: true` или `unsharded`; (5) Shard — `-80`, `80-` (range of keyspace IDs) или тоньше `-40`, `40-80`, ...; (6) Vindex — маппинг колонки → keyspace_id; типы: `hash` (hash(value) → keyspace_id), `lookup` (отдельная таблица value → keyspace_id, как directory), `numeric` (identity для int), `consistent_lookup` (transactional lookup), `xxhash`. vReplication — MySQL binlog-based миграции для resharding.",
+                "example": "Slack использует Vitess с 2018+, GitHub — с 2019. YouTube — original use case. Figma мигрировал на Vitess в 2023. Square (Block) использует для платежей. Slack команда написала vReplication для live miграций без downtime.",
+                "when_to_apply": "Vitess — best choice для MySQL-based sharding. Использует существующий MySQL knowledge, добавляет lookup vindex для GSI, vReplication для live migration. Альтернативы (ProxySQL) — менее зрелые.",
+                "edge_cases": "Vitess добавляет complexity ops: топология, keyspace management, schema migrations через vtctl. Для маленьких/средних команд может быть overkill. Citus в PG-мире — аналогичная роль.",
+                "related": "[[database-sharding-interview#Q10]] directory-based ≈ lookup vindex; [[database-sharding-interview#Q22]] live migration."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "VTGate и VTTablet — это разные названия одного процесса; vindex — встроенный MySQL индекс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VTGate (router) и VTTablet (sidecar к MySQL) — разные процессы с разными ролями. Vindex — Vitess абстракция маппинга колонки → keyspace_id, не MySQL индекс.",
+                "source_of_confusion": "Все три слова с 'V', и кандидат может смешать.",
+                "if_it_were_true": "Не было бы детального Vitess architecture diagram.",
+                "how_it_should_be": "VTGate ≠ VTTablet ≠ vindex — три разные сущности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Citus и в чём его типы таблиц (distributed/reference/local) + co-located joins?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Citus — extension для PostgreSQL, превращает PG в distributed DB. Типы таблиц: (1) Distributed — горизонтально шардирована по distribution column через create_distributed_table; (2) Reference — реплицируется целиком на каждый worker (broadcast), для маленьких справочников; (3) Local — обычная PG-таблица только на coordinator. Co-located joins: если две distributed таблицы шардированы по одному столбцу, JOIN работает локально на каждом worker.",
+              "correct": true,
+              "sections": {
+                "explanation": "Citus — PG extension, был отдельной компанией, куплен Microsoft в 2019. Архитектура: Coordinator (планирует и распределяет queries) + Workers (хранят shards). Три типа таблиц: (1) Distributed — `SELECT create_distributed_table('orders', 'tenant_id')`, горизонтально шардирована по distribution column; (2) Reference — `SELECT create_reference_table('countries')`, реплицируется целиком на каждый worker (broadcast), для маленьких справочников и lookup tables; (3) Local — обычная PG-таблица только на coordinator, для admin/config данных. Co-located joins: если две distributed таблицы шардированы по одной колонке (`create_distributed_table('order_items', 'tenant_id', colocate_with => 'orders')`), JOIN работает локально на каждом worker — нет cross-shard трафика.",
+                "example": "`CREATE TABLE orders (id, tenant_id, ...)` + `CREATE TABLE order_items (id, tenant_id, order_id, ...)` оба co-located по tenant_id. `SELECT o.id, oi.product_id FROM orders o JOIN order_items oi ON o.id = oi.order_id WHERE o.tenant_id = 42` — работает локально на worker, который хранит tenant_id=42. Microsoft Azure Cosmos DB for PG = Citus в облаке.",
+                "when_to_apply": "Multi-tenant SaaS на PostgreSQL — Citus отлично подходит, особенно если есть единый tenant_id во всех таблицах (полная co-location). Аналитические workloads (Citus умеет distributed COUNT/SUM с partial aggregates).",
+                "edge_cases": "Reference tables не для частых UPDATE'ов — каждая запись идёт на ВСЕ workers (broadcast write). UPDATE на 100 workers = N writes. Использовать только для read-mostly справочников. Distributed JOINs без co-location → re-partitioning queries (workers пересылают данные между собой) — медленно.",
+                "related": "[[database-sharding-interview#Q18]] joins; [[postgresql-interview]] Citus."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Citus — это форк PostgreSQL с встроенным sharding; не extension, а отдельная СУБД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Citus — это PostgreSQL EXTENSION, не форк. Работает поверх standard PG (`CREATE EXTENSION citus`), использует PG как backend для хранения shards.",
+                "source_of_confusion": "Crunchy Data, EDB также делают PG distributions, и кандидаты могут смешать с forks.",
+                "if_it_were_true": "Citus был бы несовместим со стандартным PG SQL, но он maximally совместим.",
+                "how_it_should_be": "Citus = PostgreSQL extension."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Citus поддерживает только один тип таблиц — distributed; reference и local — это маркетинговые термины.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reference table и local table — реальные функции Citus с разной семантикой репликации. Reference реплицируется на всех workers, local только на coordinator.",
+                "source_of_confusion": "Distributed table — основной use case, и кандидаты могут считать его единственным.",
+                "if_it_were_true": "Citus не смог бы делать локальные JOIN с справочниками.",
+                "how_it_should_be": "Три типа таблиц: distributed, reference, local."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Co-located joins в Citus всегда требуют distributed transactions 2PC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Co-located JOIN — это READ операция на одном worker, не требует 2PC. 2PC в Citus используется только для cross-shard WRITE операций.",
+                "source_of_confusion": "Citus поддерживает 2PC, и кандидаты могут считать его всегда активным.",
+                "if_it_were_true": "Co-located joins были бы медленнее single-shard queries.",
+                "how_it_should_be": "Co-located JOIN = local read, без 2PC. 2PC для cross-shard writes."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как CockroachDB делает range-based auto-sharding без явного shard key, и какова основная hot spot проблема?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CockroachDB требует явного объявления shard key через CREATE TABLE ... SHARD BY; hot spots невозможны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CockroachDB шардирует автоматически — нет явного shard key. Hot spots возможны на monotonic PK (sequence/timestamp) — стандартная проблема range-based.",
+                "source_of_confusion": "Manual sharding (MongoDB, Vitess) требует явного key, и кандидаты экстраполируют.",
+                "if_it_were_true": "CockroachDB документация не предупреждала бы про hot spots от monotonic PK.",
+                "how_it_should_be": "CockroachDB = auto-sharding. Hot spots от monotonic PK возможны."
+              }
+            },
+            {
+              "order": 1,
+              "label": "D",
+              "text": "Все данные хранятся как KV-пары (key = tablePrefix + PK + columnFamily); keyspace разбит на ranges ~64-512MB, каждый range — Raft group реплицированная на 3+ узла; при росте range — auto-split. Hot spot: INSERT в таблицу с monotonic PK → весь трафик в последний range. Решение: UUID PK или USING HASH WITH bucket_count.",
+              "correct": true,
+              "sections": {
+                "explanation": "CockroachDB архитектура: данные хранятся как KV-пары (encoded key = tablePrefix + PK + columnFamily), keyspace разбит на ranges размером 64-512MB. Каждый range — отдельная Raft group, реплицируется на 3+ узла. Когда range вырастает за порог — auto-split на два меньших. Auto-rebalance: если узел перегружен, ranges переезжают на менее загруженных. Hot spot проблема: monotonic PK (auto-increment, timestamp) → все INSERT идут в один range (последний). Решение: (1) `UUID` PK через `gen_random_uuid()`; (2) `unique_rowid()` функция CRDB — snowflake-like, бьёт по узлам; (3) Hash sharded indexes: `CREATE TABLE events (ts TIMESTAMP, payload STRING, PRIMARY KEY (ts, payload)) USING HASH WITH (bucket_count = 16)` — добавляет hidden hash column.",
+                "example": "Похожая архитектура: TiDB (ranges + Raft), Spanner (splits + Paxos), YugabyteDB (tablets + Raft). CockroachDB Labs официальный пример: monotonic key с hash sharded index для time-series.",
+                "when_to_apply": "CockroachDB — NewSQL для приложений, требующих strong consistency (Raft) и distributed SQL. Хороший выбор когда нужен Spanner-like без vendor lock-in.",
+                "edge_cases": "Auto-rebalance не мгновенный — есть период hot range при traffic burst. Hash sharded indexes делают range scan невозможным (теряем locality по timestamp). CRDB performance ниже single-master PG для simple OLTP — цена distributed Raft consensus на каждой записи.",
+                "related": "[[database-sharding-interview#Q6]] range-based hot spots; [[database-architecture-interview]] NewSQL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "B",
+              "text": "CockroachDB использует consistent hashing вместо ranges, аналогично Cassandra.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CockroachDB использует range-based sharding (ranges + Raft), не consistent hashing. Это фундаментальное архитектурное решение CRDB / Spanner / TiDB линии.",
+                "source_of_confusion": "Cassandra популярна, и кандидаты могут считать consistent hashing универсальным для distributed.",
+                "if_it_were_true": "CRDB не имела бы Hot spot проблем от monotonic keys — consistent hashing их избегает.",
+                "how_it_should_be": "CRDB = range-based + Raft. Cassandra = consistent hashing + leaderless."
+              }
+            },
+            {
+              "order": 3,
+              "label": "C",
+              "text": "В CockroachDB нет понятия replication; данные хранятся на одном узле, как в SQLite.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CockroachDB по дизайну — distributed SQL с Raft replication. Каждый range реплицируется на 3+ узла через Raft consensus. Это central feature.",
+                "source_of_confusion": "Single-node CRDB можно запустить локально, но это не production mode.",
+                "if_it_were_true": "CRDB не была бы distributed DB и не сравнивалась бы со Spanner.",
+                "how_it_should_be": "CRDB = distributed + Raft. SQLite = single-node embedded."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова структура primary key в DynamoDB (partition key vs sort key), как происходит partition splitting, и как решать hot partition problem?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Primary key в DynamoDB — это всегда auto-increment integer; sort key и partitions — устаревшие концепции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DynamoDB primary key — это `partition key` (hash) или `(partition key, sort key)`. Auto-increment вообще не поддерживается в DynamoDB. Partitions — central concept, не устаревший.",
+                "source_of_confusion": "Реляционные БД с auto-increment могут влиять на ассоциации.",
+                "if_it_were_true": "DynamoDB API не имел бы PartitionKey/SortKey в DDL.",
+                "how_it_should_be": "DynamoDB = (partition key, [sort key]). Auto-increment — не поддерживается."
+              }
+            },
+            {
+              "order": 1,
+              "label": "C",
+              "text": "DynamoDB не использует sharding — это standalone NoSQL базы данных без распределения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DynamoDB — fully managed distributed NoSQL с автоматическим sharding через partitions. Это central feature, AWS позиционирует DynamoDB как 'unlimited scale'.",
+                "source_of_confusion": "AWS прячет partitions от пользователя, и можно подумать, что это single-instance DB.",
+                "if_it_were_true": "DynamoDB не имела бы limit'ов на partition (3000 RCU / 1000 WCU per partition).",
+                "how_it_should_be": "DynamoDB = distributed с автоматическим sharding через partitions."
+              }
+            },
+            {
+              "order": 2,
+              "label": "D",
+              "text": "Sort key в DynamoDB определяет shard (на каком узле живёт item); partition key — это просто метаданные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: partition key определяет partition/shard (hash → partition). Sort key упорядочивает items ВНУТРИ одной партиции (как clustering key в Cassandra).",
+                "source_of_confusion": "Слово `sort` может ассоциироваться с distribution by alphabetical order, но здесь оно про order внутри партиции.",
+                "if_it_were_true": "Hot partition problem не имел бы смысла — distribution через sort key.",
+                "how_it_should_be": "Partition key = shard. Sort key = order внутри partition."
+              }
+            },
+            {
+              "order": 3,
+              "label": "B",
+              "text": "Primary key = partition key (hash → определяет partition) или (partition key, sort key). Sort key упорядочивает items внутри партиции (аналог clustering key Cassandra). Partitions внутренние, AWS не показывает явно. Стартует с 1 partition, при росте storage (>10GB) или throughput (>3000 RCU/1000 WCU per partition) — split. Hot partition (70% трафика на один key) → throttle. Решение: salting (partition_key = user_id + (request_id % 10)), adaptive capacity (AWS перераспределяет), DAX caching.",
+              "correct": true,
+              "sections": {
+                "explanation": "DynamoDB primary key structure: либо просто `partition key` (hash table), либо `(partition key, sort key)` (composite — каждая партиция содержит несколько items, упорядоченных по sort key). Partition key hash → определяет внутренний partition (которые AWS прячет). Стартует с 1 partition, splits при достижении storage threshold (~10GB) или throughput threshold (3000 RCU = 3000 reads/sec eventually consistent, или 1000 WCU = 1000 writes/sec, per partition). Hot partition problem: 70% трафика на один partition key → other partitions idle, hot one throttle'ит. Решения: (1) Salting — `partition_key = user_id + (request_id % 10)` размазывает hot user на 10 'виртуальных'; (2) Adaptive capacity — AWS внутренне перераспределяет throughput между partitions; (3) DAX (DynamoDB Accelerator) — managed cache перед DynamoDB; (4) GSI с другим partition key для re-distribution.",
+                "example": "Time-series в DynamoDB: вместо `partition_key = sensor_id` (один датчик = hot), использовать `(sensor_id, year-month)` — данные одного сенсора размазаны по месяцам. Lyft использовал DynamoDB для ride state с salting по region. AWS Reddit AMA explained adaptive capacity in 2018.",
+                "when_to_apply": "DynamoDB — отличный выбор для известных access patterns (key-value lookup, простые range queries по sort key). Плохой выбор для ad-hoc analytics и complex joins.",
+                "edge_cases": "GSI в DynamoDB — отдельная 'таблица' с другим partition/sort key, async-реплицируется (eventually consistent). Adaptive capacity помогает, но не магия — sustained 100x skew не вылечит.",
+                "related": "[[dynamodb-interview]] partition design; [[database-sharding-interview#Q15]] hot shard."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие варианты app-layer sharding существовали до Vitess/Citus, и почему сейчас рекомендуют использовать managed решения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "App-layer sharding всегда лучше Vitess/Citus, потому что не требует дополнительных компонентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "App-layer sharding (ручная логика в коде) проще на старте, но не покрывает: cross-shard queries, distributed transactions, live resharding, automatic failover, schema migrations across shards. Vitess/Citus решают эти проблемы.",
+                "source_of_confusion": "Меньше компонентов = проще ассоциации.",
+                "if_it_were_true": "Slack и YouTube не строили бы Vitess, обходясь app-layer.",
+                "how_it_should_be": "App-layer достаточен для simple случаев; managed решения для production scale."
+              }
+            },
+            {
+              "order": 1,
+              "label": "C",
+              "text": "До Vitess/Citus sharding делали вручную: (1) App-level routing (int shardId = userId % SHARD_COUNT) — просто, но shards захардкожены, resharding = переписывать код; (2) ProxySQL — MySQL proxy, роутит по правилам, не умеет split queries; (3) Mycat — китайский MySQL middleware (sharding + read replicas + simple aggregations), Alibaba/Tencent early; (4) ShardingSphere (Apache) — JDBC-level + proxy, sharding rules, distributed transactions. Современная рекомендация: Vitess (MySQL) или Citus (PostgreSQL).",
+              "correct": true,
+              "sections": {
+                "explanation": "Эволюция app-layer sharding: (1) App-level routing — `int shardId = userId % SHARD_COUNT; DataSource ds = shardPool.get(shardId);` — простой код, но shards захардкожены, resharding ломает приложение, нет cross-shard joins, нет distributed transactions; (2) ProxySQL — MySQL proxy, может роутить по правилам (hash от user_id → backend), но не split/scatter-gather queries — базовое sharding ок, аналитика нет; (3) Mycat — китайский MySQL middleware (sharding + read replicas + simple aggregations), Alibaba/Tencent на ранних этапах; (4) ShardingSphere (Apache) — JDBC-level + proxy, поддерживает sharding rules, distributed transactions (Saga/XA), data masking. Современная рекомендация — Vitess (MySQL) или Citus (PostgreSQL) — managed решения с full feature set: vReplication, online resharding, cross-shard queries, schema migrations.",
+                "example": "Instagram (2010) — app-level routing по user_id, переписали в 2015 для resharding. Pinterest — custom MySQL sharding library. Alibaba Cobar (предшественник Mycat) — 2010s. Современный Slack/GitHub/Square — Vitess.",
+                "when_to_apply": "App-level routing — простые случаи, фиксированное число shards, контролируемое количество queries. Vitess/Citus — production at scale, evolving requirements.",
+                "edge_cases": "Smooth миграция с app-level на Vitess возможна — Vitess поддерживает unsharded keyspaces для постепенной адаптации. ProxySQL остаётся useful для read replica routing даже с Vitess.",
+                "related": "[[database-sharding-interview#Q26]] Vitess; [[database-sharding-interview#Q27]] Citus."
+              }
+            },
+            {
+              "order": 2,
+              "label": "B",
+              "text": "App-layer sharding не существует — это маркетинговый термин, который ничего не означает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "App-layer sharding — это реальная техника, активно использовавшаяся (и используемая) до зрелости Vitess/Citus. Code-based routing — самый базовый и понятный подход.",
+                "source_of_confusion": "Термины 'app-layer' и 'database-layer' иногда смешивают.",
+                "if_it_were_true": "Pinterest и ранний Instagram не существовали бы без sharding.",
+                "how_it_should_be": "App-layer sharding — реальный подход, особенно популярный в 2010-х."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ProxySQL — это полноценная replacement для Vitess; никаких преимуществ Vitess не даёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ProxySQL делает базовый routing, но не поддерживает: split/scatter-gather queries, online resharding (vReplication), cross-shard schema migrations, distributed transactions, lookup vindexes. Vitess значительно богаче по фичам.",
+                "source_of_confusion": "ProxySQL популярен и достаточен для простых случаев.",
+                "if_it_were_true": "Slack/GitHub использовали бы ProxySQL вместо разработки Vitess.",
+                "how_it_should_be": "ProxySQL = простой proxy. Vitess = полноценный sharding layer."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие три tenancy patterns существуют для multi-tenant SaaS и какой гибридный подход используют большие SaaS на практике?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "(1) Pool model (shared schema) — все tenants в одной таблице с tenant_id + RLS / WHERE-фильтр, шардируется по tenant_id; для мелких B2C SaaS; (2) Bridge model (schema-per-tenant) — одна БД, разные PG schemas; для средних tenants, нужна изоляция миграций; (3) Silo model (DB-per-tenant) — каждый tenant своя БД или своя группа shards; для enterprise, compliance, очень больших tenants. Гибрид: топ-10 enterprise → silo (dedicated shard), остальные тысячи → pool по tenant_id, directory-routing знает кто где.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три tenancy patterns: (1) Pool model (shared schema) — все tenants в одной таблице, `tenant_id` в каждой строке, фильтрация через RLS или WHERE; шардируется по `tenant_id`. Use case: B2C SaaS с миллионами мелких tenants (Slack workspaces у инди-компаний, Notion personal accounts). (2) Bridge model (schema-per-tenant) — одна БД, разные PG schemas (по schema на tenant). Изоляция миграций (можно мигрировать tenant-by-tenant), но scaling ограничен — обычно до сотен schemas. Use case: средние tenants. (3) Silo model (DB-per-tenant) — каждый tenant своя БД или группа shards. Полная изоляция, compliance-friendly, дорого operationally. Use case: enterprise tenants с строгими требованиями (HIPAA, банки). Реальный гибрид: Slack делает 10 enterprise клиентов как silo (dedicated shards), остальные миллионы — pool на shared shards с routing через team_id directory.",
+                "example": "Slack: top enterprise (Salesforce, IBM, T-Mobile) — dedicated shards; обычные teams — shared shards с team_id routing. Atlassian Jira Cloud: per-tenant SQL schemas (bridge) для среднего размера + dedicated DBs (silo) для крупнейших клиентов. AWS RDS Multi-tenancy white papers описывают эти три модели.",
+                "when_to_apply": "Pool — startup MVP, B2C, миллионы tenants. Bridge — корпоративные SaaS с десятками-сотнями серьёзных клиентов. Silo — enterprise compliance, gov contracts.",
+                "edge_cases": "Pool сложно отделять метрики и costs per-tenant. Bridge упирается в число PG schemas (~5000 — практический предел). Silo дорогой operationally — backups, monitoring x N tenants.",
+                "related": "[[database-sharding-interview#Q10]] directory routing; [[database-sharding-interview#Q13]] tenant_id как shard key."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Существует только одна модель — DB-per-tenant; pool model и bridge model не используются в production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pool model — самая распространённая в массовых SaaS (Slack, Notion, Linear). Bridge model используется в Atlassian, GitLab self-managed. Silo model — для enterprise/compliance, минорная доля.",
+                "source_of_confusion": "Silo (DB-per-tenant) кажется самым 'правильным' для изоляции, но он самый дорогой.",
+                "if_it_were_true": "Slack/Notion с миллионами teams имели бы миллионы DBs.",
+                "how_it_should_be": "Все три модели используются, и hybrid — стандарт."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pool model даёт идеальную изоляцию tenants; silo model не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pool model даёт МИНИМАЛЬНУЮ изоляцию: все tenants на одних shards, hot tenant влияет на остальных (noisy neighbor). Silo даёт полную изоляцию, но стоит дороже. Enterprise клиенты часто требуют silo.",
+                "source_of_confusion": "RLS в PG звучит как 'изоляция', но это только row-level access control, не resource isolation.",
+                "if_it_were_true": "Enterprise SaaS не использовали бы dedicated infrastructure для крупных клиентов.",
+                "how_it_should_be": "Pool — minimal isolation. Silo — maximum. Bridge — middle ground."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Schema-per-tenant модель масштабируется до миллионов tenants без проблем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PostgreSQL не справляется с десятками тысяч schemas (catalog bloat, pg_dump медленный). Практический предел bridge ~5000 schemas. Для миллионов tenants — pool model.",
+                "source_of_confusion": "Schemas в PG логически отделяемые, и кажется, что число можно сделать любым.",
+                "if_it_were_true": "Slack использовал бы schema-per-team для миллионов teams.",
+                "how_it_should_be": "Bridge model ограничен ~5000 schemas. Для миллионов — pool."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему шардирование по дате (created_at) — это anti-pattern, и как правильно организовать time-series данные?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Шардирование по дате — отличный паттерн для time-series; никаких проблем нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шардирование по дате создаёт hot shard 'сегодня' (все новые INSERT туда), старые shards простаивают, запросы по user_id без даты — scatter-gather. Это classic anti-pattern.",
+                "source_of_confusion": "Time-series intuitively associated с partitioning by date, и кандидаты могут считать sharding by date 'естественным'.",
+                "if_it_were_true": "TimescaleDB и ClickHouse documentation не описывали бы composite key с (device_id, time_bucket).",
+                "how_it_should_be": "Шардировать по user_id/device_id, partitioning по дате ВНУТРИ shard."
+              }
+            },
+            {
+              "order": 1,
+              "label": "D",
+              "text": "Все новые INSERT идут в shard 'сегодня' → hot shard; старые shards простаивают; запросы по user_id без даты → scatter-gather по всем shards. Правильно: partitioning внутри shard по дате (PG PARTITION BY RANGE), sharding по user_id/tenant_id; time-series системы используют composite key (device_id, time_bucket).",
+              "correct": true,
+              "sections": {
+                "explanation": "Anti-pattern шардирование по дате создаёт три проблемы: (1) Hot shard 'сегодня' — все INSERT'ы идут в shard с максимальным диапазоном (это monotonic key); (2) Старые shards неактивны, занимают железо; (3) Запросы по user_id без даты → scatter-gather. Правильный подход: (a) внутри одной БД — `PARTITION BY RANGE` по дате (PG partitioning) или PARTITION BY toYYYYMM (ClickHouse), даёт partition pruning при range queries; (b) sharding верхнего уровня — по `user_id`/`tenant_id`/`device_id` для равномерного распределения; (c) time-series системы (TimescaleDB, ClickHouse, InfluxDB, Cassandra) — composite key `(device_id, time_bucket)`, например `(sensor_id, day)` или `(user_id, hour)`.",
+                "example": "TimescaleDB: hypertable шардируется по space (`device_id`) и партиционируется по time. ClickHouse: `ORDER BY (device_id, ts)` + `PARTITION BY toYYYYMM(ts)`. Cassandra: `PRIMARY KEY ((sensor_id, day), ts)` — partition key (sensor + day), clustering by ts. Discord messages 2017: переход с MongoDB на Cassandra использовал bucket_id чтобы избежать unbounded partitions.",
+                "when_to_apply": "Любая time-series данные: метрики, логи, события, IoT, audit-trail. Sharding всегда по entity (device/user/tenant), partitioning по time.",
+                "edge_cases": "Partitioning внутри PG позволяет drop старых партиций атомарно (TRUNCATE/DROP PARTITION) — это бесплатный способ удалять старые данные без VACUUM.",
+                "related": "[[database-sharding-interview#Q6]] range-based hot spots; [[database-sharding-interview#Q14]] anti-patterns."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Шардирование по дате — это лучшая стратегия для аналитики; всегда выбирать её для AdHoc queries.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для OLAP/analytics обычно используется columnar storage (ClickHouse, BigQuery) с time-based partitioning ВНУТРИ shard, но shard key обычно не date — это hash от dimension key или uniform distribution.",
+                "source_of_confusion": "Time-range queries — самые частые в analytics, и кажется логичным шардировать по времени.",
+                "if_it_were_true": "ClickHouse и BigQuery архитектура была бы примитивной.",
+                "how_it_should_be": "Sharding по dimension, partitioning внутри по time — это стандарт."
+              }
+            },
+            {
+              "order": 3,
+              "label": "B",
+              "text": "Шардирование по дате используется для всех time-series систем (Cassandra, DynamoDB, InfluxDB) без проблем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra, DynamoDB, InfluxDB используют COMPOSITE keys для time-series: `(device_id, time_bucket)` — distribution по device, ordering по time. Чистое sharding по time приводит к hot partitions.",
+                "source_of_confusion": "Все эти системы работают с timestamps, и кандидат может считать time = partition key.",
+                "if_it_were_true": "Cassandra documentation не рекомендовала бы time bucketing с user dimension.",
+                "how_it_should_be": "Composite key (entity_id, time_bucket) для time-series — не shard by time only."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему 'забытая reference table' (маленький справочник, который шардируется как обычная таблица) — это anti-pattern?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Reference tables не являются anti-pattern — всё хранится в шардированной форме одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маленький справочник (countries, currencies), шардированный по tenant_id, не имеет tenant_id в схеме — значит, какие данные на каком shard непонятно. JOIN с ним в запросе с tenant_id → cross-shard.",
+                "source_of_confusion": "Все таблицы выглядят 'одинаково' в schema, и можно считать sharding однородным.",
+                "if_it_were_true": "Citus и Vitess не имели бы explicit reference table API.",
+                "how_it_should_be": "Reference tables = реплицировать на все shards (broadcast)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "JOIN с этой таблицей в любом запросе → cross-shard (у countries нет tenant_id), каждый запрос становится scatter-gather. Правильно: в Citus — create_reference_table('countries'); в Vitess — пометить как `reference` в VSchema (реплицируется на все shards); в MongoDB — маленький chunk size или вообще не шардировать и кэшировать в приложении.",
+              "correct": true,
+              "sections": {
+                "explanation": "Anti-pattern: маленькая справочная таблица (`countries`, `categories`, `currencies` — 100-1000 строк) шардирована вместе со всеми остальными по `tenant_id`. Но у `countries` нет колонки `tenant_id` (это global справочник), значит непонятно, на каком shard какие страны. JOIN с этой таблицей в любом запросе (например, `SELECT u.name, c.name FROM users u JOIN countries c ON u.country_id = c.id`) становится cross-shard JOIN — приходится опросить все shards. Результат: каждый прикладной запрос с JOIN на reference table → scatter-gather. Правильно: (1) Citus — `SELECT create_reference_table('countries')` реплицирует на все workers; (2) Vitess — `vindex: reference` в VSchema, таблица копируется на каждый shard; (3) MongoDB — либо `shardCollection` с маленьким chunk size (но это плохо работает для tiny tables), либо вообще не шардировать и хранить в Redis / в коде приложения как enum.",
+                "example": "Classic case: SaaS с шардированием по tenant_id, и таблица `currencies` (200 строк) лежит в дефолтном keyspace без broadcast. Каждый order запрос JOIN'ит currencies → 100 shards опрашиваются. Решение в Citus занимает одну строку: `SELECT create_reference_table('currencies')`. Vitess аналогично через VSchema.",
+                "when_to_apply": "Любая маленькая (< 100K rows), редко изменяющаяся таблица в шардированной системе — reference table candidate. Cobranding currencies, status enums, country/region lookup, tax rates.",
+                "edge_cases": "Reference table при частых UPDATE'ах превращается в распределённую запись (UPDATE на 100 workers = N writes). Использовать только для read-mostly. Для часто меняющихся справочников лучше кэш в приложении с TTL.",
+                "related": "[[database-sharding-interview#Q18]] joins broadcast tables; [[database-sharding-interview#Q27]] Citus reference tables."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Забытая reference table — это про индексы; sharding к этому не имеет отношения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Anti-pattern именно про sharding: маленький справочник нужно либо реплицировать (broadcast), либо хранить в кэше/коде. Индексы — отдельный вопрос.",
+                "source_of_confusion": "Кандидаты могут смешать reference table (в sharding контексте) с reference index.",
+                "if_it_were_true": "Vitess `reference table` directive не существовал бы как feature.",
+                "how_it_should_be": "Reference table в sharding = broadcast tables, не про индексы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reference tables не существуют в Vitess или Citus — это академическая концепция.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Citus имеет `create_reference_table()` функцию. Vitess поддерживает `reference` directive в VSchema. Это core features обоих систем, не академия.",
+                "source_of_confusion": "Кандидаты могут не знать deep features Vitess/Citus.",
+                "if_it_were_true": "Documentation Citus/Vitess не содержала бы reference table sections.",
+                "how_it_should_be": "Reference tables — стандартная фича в Citus/Vitess."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие пункты входят в чек-лист перед закатом sharding в production, и что значит если хотя бы один пункт без ответа?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно одного пункта: 'выбран shard key' — остальное решится по ходу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sharding — multi-faceted решение: shard key + стратегия + cross-shard queries + transactions + GSI + resharding plan + replication + monitoring + operations. Каждый пункт требует ответа.",
+                "source_of_confusion": "Shard key — самое известное решение, и кандидаты могут считать его единственным важным.",
+                "if_it_were_true": "Foursquare 2010 outage не случился бы — у них был shard key.",
+                "how_it_should_be": "Полный чек-лист из 10 пунктов перед production."
+              }
+            },
+            {
+              "order": 1,
+              "label": "C",
+              "text": "(1) Точно ли нужно? Прошли vertical scaling, replicas, кэш, archival; (2) Shard key выбран? High cardinality, even distribution, 90%+ запросов; (3) Стратегия (Range/Hash/Consistent/Directory/Geo) обоснована under workload; (4) Cross-shard queries: список и план; (5) Distributed transactions: Saga/outbox, не 2PC; (6) GSI: какие нужны, stores; (7) Resharding plan: pre-split, dual-write; (8) Replication внутри shard: RF + failover; (9) Monitoring per-shard: hot shard алерты; (10) Operational: backup x N, migrations x N, deploy x N. Без ответа хотя бы на один — sharding пока не готов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Canonical 10-пункт чек-лист перед production sharding: (1) Точно ли это нужно — прошли ли vertical scaling, read replicas, кэш, archival? (Q5) (2) Выбран shard key — high cardinality, equal distribution, в 90%+ запросов? (Q13) (3) Стратегия — Range/Hash/Consistent/Directory/Geo с обоснованием? (Q6-Q12) (4) Cross-shard queries — список known queries, оценка стоимости, план денормализации/broadcast? (Q17-Q18) (5) Distributed transactions — будут ли? Saga или outbox, не 2PC? (Q19) (6) Global secondary indexes — какие нужны, в каких stores? (Q20) (7) Resharding plan — pre-split, consistent hashing, dual-write strategy? (Q21-Q22) (8) Replication внутри shard — RF и failover механизм? (Q23) (9) Monitoring per-shard — hot shard alerts, distribution metrics? (Q15) (10) Operational plan — backup x N, schema migrations x N, deploy x N, runbooks? Если хотя бы по одному пункту нет ответа — sharding пока не готов; проще отложить и решить оставшиеся проблемы другими средствами.",
+                "example": "Notion 2021 миграция: команда задокументировала каждый из 10 пунктов в design doc перед началом 6-месячного проекта. Foursquare 2010 — не было плана для hot shard scenario, потому 16-часовой outage. Healthcare.gov 2013 MongoDB — отсутствовал план для cross-shard queries.",
+                "when_to_apply": "ОБЯЗАТЕЛЬНО перед началом sharding-проекта. RFC документ с явными ответами на все 10 пунктов. Architecture review с senior engineers / DBRE.",
+                "edge_cases": "Reality check: даже если все 10 пунктов отвечены, sharding в production почти всегда вылезает в неожиданных местах (hot tenant появляется через год, новый access pattern требует GSI, etc). Чек-лист снижает риски, не устраняет.",
+                "related": "[[database-sharding-interview#Q5]] когда не шардировать; все вопросы топика."
+              }
+            },
+            {
+              "order": 2,
+              "label": "B",
+              "text": "Чек-лист включает только технические аспекты; operational план не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Operational план критичен: backup x N shards, schema migrations x N, deploy x N, monitoring x N, runbooks для failover каждого shard. Без operational plan production sharding превращается в боль.",
+                "source_of_confusion": "Кандидаты иногда фокусируются только на architecture, забывая ops.",
+                "if_it_were_true": "Большие SaaS не имели бы dedicated DBRE команд.",
+                "how_it_should_be": "Tech + operational + monitoring — всё в чек-листе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чек-лист содержит 50+ пунктов; меньше — недостаточно для production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "10 ключевых пунктов покрывают основные риски. Можно расширить до 50 (специфичные runbooks, конкретные queries, security review), но 10 — необходимый минимум.",
+                "source_of_confusion": "Большие компании имеют детальные чек-листы с 100+ пунктами, и можно подумать, что это норма.",
+                "if_it_were_true": "Startup не смог бы шардиться, имея только 10 пунктов.",
+                "how_it_should_be": "10 пунктов — core. Расширять под специфику команды/продукта."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

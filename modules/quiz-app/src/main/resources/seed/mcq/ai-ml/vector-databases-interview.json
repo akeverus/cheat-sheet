@@ -1,0 +1,1685 @@
+{
+  "topic_slug": "vector-databases-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое vector database и в чём её принципиальное отличие от обычной OLTP БД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Специализированная БД для high-dimensional векторов с ANN-индексами (HNSW, IVF) и kNN-поиском.",
+              "correct": true,
+              "sections": {
+                "explanation": "Vector DB хранит embeddings (256–3072 dims) и быстро находит k ближайших векторов через approximate nearest neighbor алгоритмы. Дополнительно — metadata filtering, hybrid search, replication. Главная операция — kNN search, а не exact equality по ключу как в classic OLTP.",
+                "example": "Pinecone, Weaviate, Qdrant, Milvus, pgvector. Применения: semantic search, RAG, recommendations, anomaly detection, image/audio retrieval.",
+                "when_to_apply": "Когда нужен similarity search по high-dim векторам в production: RAG, рекомендации, поиск по смыслу. Любая задача, где запрос — это embedding, а не точный ключ.",
+                "edge_cases": "На < 100K векторов разница с brute force незаметна, но при > 1M ANN становится единственным способом удержать sub-second latency. Для exact match по ID лучше отдельная KV-таблица.",
+                "related": "[[vector-databases-interview#Q2]] зачем специальная БД; [[vector-databases-interview#Q6]] ANN."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Обычная реляционная БД с колонкой типа VARBINARY для хранения векторов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "B-tree индексы и WHERE-фильтры не работают для multi-dimensional similarity search — придётся делать full table scan и сравнивать каждый вектор (O(n)).",
+                "source_of_confusion": "Хранение бинарного blob технически возможно в любой БД, и кажется, что «достаточно положить и искать». Но без специализированного индекса поиск вырождается в O(n).",
+                "if_it_were_true": "На 10M векторов один запрос занял бы минуты вместо миллисекунд — RAG-сервис лёг бы под нагрузкой.",
+                "how_it_should_be": "Использовать pgvector с HNSW-индексом или dedicated vector DB — это и есть специализированное решение для kNN."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Time-series база (InfluxDB, TimescaleDB) для хранения временных метрик ML-моделей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TSDB оптимизирована для append-only timestamped данных и aggregations по time-window, а не для similarity search в high-dim пространстве.",
+                "source_of_confusion": "И там, и там «спецбаза для нестандартных данных», но классы задач совершенно разные.",
+                "if_it_were_true": "При попытке хранить embeddings в TSDB не было бы ни kNN-индексов, ни эффективного фильтра по metadata.",
+                "how_it_should_be": "TSDB — для метрик ML-моделей и observability; для embeddings — отдельный vector store."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "In-memory cache (Redis) исключительно для key-value доступа к embeddings по ID.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redis с RediSearch умеет vector search, но «cache по ID» — это не vector DB. Без ANN-индекса возвращаемся к brute force на каждый запрос.",
+                "source_of_confusion": "Redis действительно часто используется рядом с vector DB как кэш, отсюда смешение ролей.",
+                "if_it_were_true": "Разработчики думают «у нас есть vector DB», а по факту делают O(n) сравнение — latency растёт линейно с корпусом.",
+                "how_it_should_be": "Vector DB должна включать ANN-индекс (HNSW/IVF) и поддержку kNN-запросов; чистый KV-кэш этого не даёт."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему для embeddings нужна специальная БД, а не B-tree индекс в Postgres?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Реляционная БД с B-tree индексом и WHERE-фильтром по компонентам вектора отлично решает задачу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "B-tree работает только на одномерных упорядоченных ключах. У 1024-мерного вектора нет естественного порядка — невозможно построить B-tree, который ускорит «найди ближайшего соседа в L2».",
+                "source_of_confusion": "Опыт с обычными WHERE-индексами создаёт интуицию «индексы решают всё». Но они решают только задачу range/equality по упорядоченному ключу.",
+                "if_it_were_true": "Запросы вырождаются в seq scan по всей таблице — на миллионе строк сотни мс CPU-времени per query, RAG неюзабелен.",
+                "how_it_should_be": "Использовать ANN-индекс (HNSW/IVF), который оперирует геометрией пространства, а не порядком значений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Brute force kNN — это O(n), а специальные БД дают близкую к O(log n) сложность через ANN-индексы (HNSW/IVF) и quantization.",
+              "correct": true,
+              "sections": {
+                "explanation": "1M векторов × 1024 dims = 4 GB; full scan на CPU ~500 ms. Vector DB через HNSW даёт миллисекунды, IVF — десятки мс. Плюс distributed scaling, streaming updates, hybrid search, quantization для cost reduction. Postgres B-tree не работает на multi-dim — нужен pgvector с HNSW/IVFFlat.",
+                "example": "На 10M × 1536 dims fp32 brute force = ~3 сек на ядро, HNSW efSearch=50 даёт recall 0.95 за < 10 мс. Разница в три порядка.",
+                "when_to_apply": "Как только корпус превышает ~100K векторов и нужна интерактивная latency, без ANN-индекса не обойтись.",
+                "edge_cases": "Для маленьких корпусов (< 10K) brute force через FAISS Flat быстрее в общем case — не надо строить индекс. ANN окупается с ростом N.",
+                "related": "[[vector-databases-interview#Q6]] ANN; [[vector-databases-interview#Q16]] pgvector."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Single-threaded сравнение каждого вектора с query достаточно быстрое на современных CPU.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На корпусе 100K–1M это сотни мс на запрос даже с SIMD. На 10M+ — секунды. Production RAG требует p95 < 50 мс, параллельные пользователи быстро забивают пул потоков.",
+                "source_of_confusion": "SIMD-инструкции (AVX-512) действительно ускоряют dot product в разы, и кажется, что brute force «уже достаточно».",
+                "if_it_were_true": "При росте корпуса latency деградирует линейно, throughput падает — реальный продакшен (Pinecone, Qdrant) использует ANN именно по этой причине.",
+                "how_it_should_be": "Использовать ANN-индекс — sub-linear сложность и предсказуемая latency на больших N."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно сохранить вектора в S3 как JSON и читать их при поиске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без индекса в RAM каждый запрос превращается в I/O-bound full scan — сотни мегабайт на запрос. S3 — object storage, не базовая абстракция для поиска.",
+                "source_of_confusion": "S3 «дешёвый и масштабируемый», поэтому возникает идея «положим всё туда». Но это storage слой, не query-engine.",
+                "if_it_were_true": "Latency измеряется секундами, cost на S3 GET-запросы взлетает, throughput ограничен пропускной способностью сети.",
+                "how_it_should_be": "S3 может быть слоем persistence (Milvus так делает), но поверх него обязателен query-engine с in-memory ANN-индексом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое embedding и почему они high-dimensional?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Embedding — это hash от текста для быстрого lookup по равенству.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hash детерминирован, но не сохраняет семантическую близость: «king» и «queen» имеют близкие embeddings, но совершенно разные hash-значения. Hash годится для exact-match, не для similarity.",
+                "source_of_confusion": "И hash, и embedding отображают входной текст в фиксированный байтовый набор, отсюда смешение.",
+                "if_it_were_true": "Semantic search вырождается в exact-match — весь смысл RAG и recommendations теряется.",
+                "how_it_should_be": "Embedding — это dense vector, в котором геометрическое расстояние отражает семантическую близость, а не хэш."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "One-hot vector размером со словарь, где каждое измерение соответствует уникальному слову.",
+              "correct": false,
+              "sections": {
+                "what_actually": "One-hot — это устаревшее представление (до 2013) с миллионами sparse-измерений без семантики: «cat» и «kitten» ортогональны (similarity = 0).",
+                "source_of_confusion": "Это первое, что приходит в голову как «представить слово числами», и часто упоминается в начальных курсах NLP.",
+                "if_it_were_true": "Получили бы огромные sparse-вектора без semantic similarity — нельзя найти «похожее по смыслу», только exact word match.",
+                "how_it_should_be": "Современные embeddings — dense, низкоразмерные (256–3072), и обучаются так, что геометрическая близость = семантическая близость."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Dense vector чисел (256–3072 dims), где близость в пространстве отражает semantic similarity.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждое измерение — abstract feature, выученная моделью (transformer, CLIP). «Hello» → [0.12, -0.45, ...] размерности 384–3072. Trade-off: больше dims = точнее, но дороже storage и slower поиск. Стандарты: 384 (MiniLM), 1024 (Cohere), 1536 (OpenAI text-embedding-3-small), 3072 (text-embedding-3-large).",
+                "example": "OpenAI text-embedding-3-small возвращает float32-вектор длины 1536, в котором cos(emb('cat'), emb('kitten')) ≈ 0.85, а cos(emb('cat'), emb('car')) ≈ 0.3.",
+                "when_to_apply": "Везде, где нужно сравнивать тексты/изображения по смыслу: RAG, поиск похожих документов, recommendations, классификация zero-shot.",
+                "edge_cases": "High-dim нужна, чтобы линейная разделимость концепций стала возможной. В low-dim близкие смыслы коллапсируют. С другой стороны, > 3072 dims даёт diminishing returns и убивает storage.",
+                "related": "[[vector-databases-interview#Q4]] метрики; [[vector-databases-interview#Q25]] storage estimation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Zip-сжатие raw текста с восстановлением через декодер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Embedding — lossy projection в смысловое пространство, а не сжатие. Из 1536-dim вектора нельзя восстановить исходный текст байт-в-байт — это feature extraction, не compression.",
+                "source_of_confusion": "Слово «representation» иногда переводят как «сжатое представление», что путает с lossless-сжатием.",
+                "if_it_were_true": "Существовал бы decoder, который из embedding восстанавливает оригинал — но research-направление embedding-inversion даёт лишь приблизительные реконструкции.",
+                "how_it_should_be": "Embeddings нужны для similarity; исходный текст хранится отдельно в metadata."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между cosine similarity, dot product и Euclidean distance?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все три метрики дают идентичный ranking результатов независимо от свойств векторов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cosine и dot совпадают только на нормализованных векторах (||v|| = 1). Если magnitude варьируется — dot отдаёт предпочтение длинным векторам, что меняет порядок top-k. Euclidean измеряет разницу позиций, а не angle.",
+                "source_of_confusion": "В туториалах часто говорят «cosine ≈ dot», что верно для нормализованных embeddings и переносится по умолчанию на остальные случаи.",
+                "if_it_were_true": "Не имело бы значения, какую метрику выбрать — но Pinecone/Qdrant требуют явно указать metric при создании индекса.",
+                "how_it_should_be": "Признать, что метрики дают разный ranking, и выбирать ту, под которую обучалась embedding-модель."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Euclidean distance даёт лучший recall чем cosine для всех типов embeddings.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Recall зависит от того, какой метрикой обучалась модель. Большинство современных embedding-моделей (OpenAI, Cohere, Sentence-Transformers, CLIP) обучаются с cosine loss — Euclidean даст хуже recall, потому что не соответствует training objective.",
+                "source_of_confusion": "Euclidean — самая привычная метрика из школьной геометрии, и хочется применить её «по умолчанию».",
+                "if_it_were_true": "Все vector DB по умолчанию использовали бы Euclidean, но они дефолтят на cosine именно по этой причине.",
+                "how_it_should_be": "Использовать ту метрику, которая указана в docs embedding-модели — обычно cosine."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cosine similarity всегда лучше dot product, потому что dot product не имеет геометрического смысла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dot имеет смысл: это проекция одного вектора на другой и совпадает с cosine на нормализованных векторах. На нормализованных embeddings dot быстрее — не надо считать норму.",
+                "source_of_confusion": "Cosine звучит «правильнее» геометрически, и кажется, что dot — лишь её аппроксимация.",
+                "if_it_were_true": "Запрет dot product закрыл бы оптимизацию, которая даёт 1.5–2× ускорение на нормализованных моделях (OpenAI, Cohere) без потери качества.",
+                "how_it_should_be": "Использовать dot как more efficient эквивалент cosine для нормализованных embeddings — это явно поддержано в Pinecone/Qdrant/pgvector."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cosine не зависит от magnitude (только angle), dot зависит от magnitude и angle, Euclidean — от позиции; на нормализованных векторах cosine ≡ dot, но dot быстрее.",
+              "correct": true,
+              "sections": {
+                "explanation": "cos(A,B) = (A·B) / (|A|·|B|), range [-1,1]. A·B = Σ a_i·b_i, range (-∞,+∞). ||A-B|| = sqrt(Σ(a_i-b_i)²), range [0,∞). Для ||v||=1 (OpenAI, Cohere, Voyage) cos == dot, но dot быстрее (без normalization).",
+                "example": "На нормализованных векторах ranking по cos и dot идентичен, но dot экономит деление на норму — 1.5–2× ускорение в hot path HNSW.",
+                "when_to_apply": "Выбор метрики должен соответствовать тому, как обучалась embedding-модель: sentence-transformers и CLIP — cosine; OpenAI/Cohere — cosine ≡ dot; legacy word2vec иногда L2.",
+                "edge_cases": "Manhattan (L1) используется редко, в основном для sparse-embeddings и анализа robustness. На нормализованных ||a-b||² = 2 - 2·cos, то есть L2 монотонно связан с cosine.",
+                "related": "[[vector-databases-interview#Q5]] какую метрику выбрать."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно выбрать distance metric под embedding-модель?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Выбирать ту метрику, под которую обучалась embedding-модель; для нормализованных моделей (OpenAI, Cohere) — dot product как более быстрый эквивалент cosine.",
+              "correct": true,
+              "sections": {
+                "explanation": "OpenAI/Cohere/Voyage выдают нормализованные векторы → cosine ≡ dot, выбирай dot для скорости (нет деления на норму). Sentence-transformers — cosine. CLIP — cosine. Главное правило: открыть docs модели и взять рекомендованную метрику — это та, под которую считался training loss.",
+                "example": "В Qdrant для text-embedding-3-small ставишь Distance.DOT (нормализованные векторы); для bge-m3 — Distance.COSINE; для legacy word2vec — иногда EUCLIDEAN.",
+                "when_to_apply": "Каждый раз при создании коллекции/индекса — выбор metric фиксируется на этапе создания и обычно требует rebuild при смене.",
+                "edge_cases": "На нормализованных векторах dot выигрывает 1.5–2× по latency без потери recall — это бесплатная оптимизация, если знать что embeddings уже unit-length.",
+                "related": "[[vector-databases-interview#Q4]] метрики детально."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Всегда выбирать Euclidean — она универсальна и работает с любой моделью.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Euclidean игнорирует тот факт, что современные embeddings обучаются с cosine/dot loss. На нормализованных векторах Euclidean монотонно связана с cosine, но на ненормализованных даёт другой ranking.",
+                "source_of_confusion": "Euclidean — самая знакомая метрика, и слово «универсальная» интуитивно цепляется.",
+                "if_it_were_true": "Подмена рекомендуемой метрики на Euclidean «по умолчанию» снижает retrieval-quality на 10–30% и ломает RAG-пайплайн без видимой причины.",
+                "how_it_should_be": "Брать метрику из docs embedding-модели; «по умолчанию» — cosine для современных нейросетевых embeddings."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Выбор метрики не важен — можно использовать любую, главное consistency между upsert и query.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Consistency обязательна, но недостаточна. Если индекс построен на Euclidean, а модель обучалась с cosine — top-k будет систематически «не тем» даже при идеальном matching upsert/query.",
+                "source_of_confusion": "Логически: «лишь бы метрики совпадали при записи и чтении» — звучит достаточным условием, но это про корректность, не про качество.",
+                "if_it_were_true": "Получили бы стабильно низкий recall и думали бы, что виновата модель — а виновато несоответствие метрики и training objective.",
+                "how_it_should_be": "Consistency + соответствие training objective модели — оба условия необходимы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cosine дороже dot product даже на нормализованных векторах, поэтому Pinecone/Qdrant используют только Euclidean.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pinecone, Qdrant, Weaviate, pgvector поддерживают все три метрики, и default обычно cosine. На нормализованных векторах сам HNSW считает dot — это деталь реализации, не выбор метрики на уровне API.",
+                "source_of_confusion": "Слышали про оптимизацию dot и сделали вывод «cosine всегда дороже» — но эта оптимизация уже внутри движков.",
+                "if_it_were_true": "Не было бы выбора Distance.COSINE в Qdrant/Pinecone API — но он есть и используется большинством.",
+                "how_it_should_be": "Использовать metric, рекомендованную моделью; vector DB сама применит оптимизации для нормализованных embeddings."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ANN (Approximate Nearest Neighbor) и чем он отличается от exact kNN?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ANN — это exact kNN, реализованный через GPU; recall всегда 1.0, отличается только hardware.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ANN расшифровывается как Approximate Nearest Neighbor — буква «A» означает «приблизительный», а не «accelerated». GPU-ускоренные exact kNN существуют (FAISS Flat на GPU), но это не ANN — у них recall=1.0 и сложность всё ещё O(n).",
+                "source_of_confusion": "GPU действительно ускоряет много чего, и аббревиатура «A...NN» может натолкнуть на «accelerated».",
+                "if_it_were_true": "Не было бы понятия recall как метрики качества ANN — оно ввeлось именно потому, что ANN approximate.",
+                "how_it_should_be": "ANN — сознательное приближение, у которого есть параметры качества (efSearch, nprobe), регулирующие trade-off recall/latency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ANN — приблизительный поиск top-k с измеримой потерей качества (recall), даёт sub-linear latency в обмен на возможные near-miss; production обычно настраивают на recall 0.9–0.99.",
+              "correct": true,
+              "sections": {
+                "explanation": "Exact kNN — O(n) full scan, гарантирует истинные top-k. ANN (HNSW/IVF) — sub-linear, может пропустить пару кандидатов. Recall = доля истинных top-k среди возвращённых: 0.95 = нашли 95% правильных. Trade-off: высокий recall → выше latency. В production 0.9–0.99 — приемлемо для RAG/recommendations, для критичных задач (fraud, medical) — выше или exact.",
+                "example": "HNSW efSearch=10 → recall 0.85, 2 мс; efSearch=200 → recall 0.99, 30 мс. Параметр настраивается под latency budget.",
+                "when_to_apply": "Везде, где корпус > ~100K и нужна интерактивная latency. Для маленьких корпусов (< 10K) brute force даёт recall 1.0 без overhead на ANN-индекс.",
+                "edge_cases": "Recall — это metric, который надо мерить на eval-set, а не «доверять» библиотеке. Параметры efSearch/nprobe тюнятся под целевой recall.",
+                "related": "[[vector-databases-interview#Q7]] HNSW; [[vector-databases-interview#Q23]] recall vs latency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ANN означает «Artificial Neural Network» — это нейросеть, которая предсказывает соседей по embedding.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В контексте vector search ANN = Approximate Nearest Neighbor. Artificial Neural Network — другая концепция (используется для генерации embeddings, но не для поиска по индексу).",
+                "source_of_confusion": "Аббревиатура ANN перегружена в ML-литературе — в курсах по deep learning это именно нейросеть.",
+                "if_it_were_true": "Искали бы «модель ANN» в HuggingFace вместо настройки HNSW/IVF индекса — потеряли бы время на ложном пути.",
+                "how_it_should_be": "В контексте vector DB ANN = Approximate Nearest Neighbor algorithm (HNSW, IVF, ScaNN, Annoy)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ANN гарантирует тот же top-k что exact kNN, просто быстрее за счёт SIMD-инструкций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если бы ANN гарантировал тот же top-k — он был бы exact kNN. Слово «approximate» означает, что результат может отличаться. SIMD ускоряет brute force, но не превращает его в ANN.",
+                "source_of_confusion": "SIMD-оптимизация действительно даёт большой прирост, и хочется приписать ей всю магию ANN-библиотек.",
+                "if_it_were_true": "Не было бы расхождений с brute force в результатах — но они есть и нормальны для ANN с recall < 1.0.",
+                "how_it_should_be": "ANN сознательно жертвует точностью ради скорости через структуры данных (граф/clustering), SIMD — отдельная оптимизация поверх."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое HNSW и какая ключевая особенность отличает его от других ANN-индексов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "HNSW строит сбалансированное B-дерево по векторам и обеспечивает гарантированный O(log N) точный поиск без потери recall.",
+              "correct": false,
+              "sections": {
+                "what_actually": "B-деревья работают на 1D ключах и неприменимы к high-dim векторам (curse of dimensionality). HNSW — это multi-layer graph (не дерево), верхние уровни sparse для быстрой навигации, нижний — dense со всеми узлами.",
+                "source_of_confusion": "B-tree — самый знакомый «O(log N)» index, и хочется натянуть его на любую задачу поиска.",
+                "if_it_were_true": "Можно было бы строить индекс по embedding средствами обычного Postgres B-tree, но это даёт линейный скан.",
+                "how_it_should_be": "HNSW — graph-based ANN с многоуровневой иерархией, где search идёт greedy walk сверху вниз."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "HNSW требует периодического полного rebuild при каждом insert/delete, поэтому подходит только для статичных датасетов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Одна из главных фишек HNSW — поддержка incremental updates (insert/delete без rebuild). Новый вектор вставляется greedy walk от верхнего уровня и соединяется с M ближайшими соседями.",
+                "source_of_confusion": "Путают с IVF, который при значительном data drift требует retraining (k-means).",
+                "if_it_were_true": "Pinecone/Qdrant/Weaviate не могли бы поддерживать streaming upsert — а это базовая функциональность.",
+                "how_it_should_be": "HNSW — основной выбор именно для динамических данных с частыми insert/update."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "HNSW использует иерархию графов с long-range рёбрами наверху и dense связностью внизу: search идёт greedy walk сверху вниз, давая отличный recall/latency trade-off при O(log N) ожидаемой сложности.",
+              "correct": true,
+              "sections": {
+                "explanation": "Верхние слои — sparse small-world граф для крупных прыжков, нижний слой содержит все узлы. ef_search контролирует ширину beam-search на уровне 0, M задаёт связность графа (обычно 16–32), efConstruction — качество индекса (200–500).",
+                "example": "В Qdrant/pgvector/Weaviate HNSW — дефолтный индекс. Pinecone serverless использует HNSW под капотом с проприетарными оптимизациями.",
+                "when_to_apply": "Latency-critical workloads (RAG, semantic search, recommender) с динамическими данными — дефолт в Pinecone, Weaviate, Qdrant, pgvector.",
+                "edge_cases": "Память ~1.5–3× от размера векторов и медленный build (efConstruction 200–500) в обмен на лучший recall@latency среди ANN. На очень больших датасетах (миллиарды) комбинируют с PQ.",
+                "related": "[[vector-databases-interview#Q8]] IVF; [[vector-databases-interview#Q23]] efSearch."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HNSW гарантирует exact nearest neighbor поиск и используется когда нужна 100% точность совпадения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HNSW — это Approximate NN алгоритм, recall обычно 0.95–0.99, не 1.0. Для exact search нужен brute-force (O(N)).",
+                "source_of_confusion": "Высокий типичный recall (0.99) для многих сценариев неотличим от 1.0, и кажется «exact».",
+                "if_it_were_true": "Не существовало бы параметра efSearch и понятия recall в литературе по HNSW.",
+                "how_it_should_be": "HNSW сознательно жертвует точностью ради скорости; для exact надо использовать Flat index с brute force на маленьких корпусах."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова основная идея IVF (Inverted File Index) и каким параметром регулируется recall на этапе поиска?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "IVF строит multi-layer навигационный граф со skip-уровнями, аналогично HNSW, но с меньшим M для экономии памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "IVF — это partition-based алгоритм (k-means clustering), а не graph-based. Pre-build делает k-means на N точках → nlist центроидов; каждый вектор приписан ближайшему центроиду — никакого графа нет.",
+                "source_of_confusion": "IVF и HNSW часто упоминаются рядом как «ANN-индексы», что создаёт впечатление общей механики.",
+                "if_it_were_true": "Параметры были бы те же (M, efSearch) — но в IVF есть свои (nlist, nprobe).",
+                "how_it_should_be": "Понимать IVF как clustering-based partition, где search ограничивается top-nprobe кластерами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "IVF поддерживает incremental updates без retraining и оптимален для динамичных датасетов с постоянными insert/delete.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При значительном data drift центроиды становятся неоптимальными — нужен retraining (новый k-means). IVF подходит для относительно стабильных распределений; для динамики лучше HNSW.",
+                "source_of_confusion": "Insert в IVF работает (приписали вектор ближайшему центроиду), и кажется, что incremental updates бесплатны.",
+                "if_it_were_true": "Не было бы рекомендации Milvus/FAISS periodically retrain IVF индекса.",
+                "how_it_should_be": "Для динамических данных выбирать HNSW; IVF — для статичных больших корпусов с memory-constraint."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "IVF использует параметр nlist во время search для выбора числа сканируемых clusters: чем больше nlist — тем выше recall.",
+              "correct": false,
+              "sections": {
+                "what_actually": "nlist — это build-time параметр (число центроидов, обычно √N), а не search-time. На этапе поиска nlist уже зафиксирован; recall/latency регулируется через nprobe.",
+                "source_of_confusion": "Оба параметра начинаются на «n» и оба «про кластеры», легко перепутать.",
+                "if_it_were_true": "Можно было бы менять nlist налету, но фактически это требует полного rebuild индекса (k-means на всём корпусе).",
+                "how_it_should_be": "nlist фиксируется на build, nprobe выбирается на каждом запросе по требуемому recall."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "IVF разбивает векторное пространство на nlist кластеров через k-means; при поиске пробует только top nprobe ближайших центроидов — параметр nprobe на этапе query управляет recall/latency trade-off.",
+              "correct": true,
+              "sections": {
+                "explanation": "Query vector сравнивается с nlist центроидами (дешёво) → выбираются top-nprobe → exhaustive search внутри них; всё остальное игнорируется. nlist — build-time параметр (обычно √N), nprobe — search-time (1–10% от nlist).",
+                "example": "Для 10M векторов nlist=3000, nprobe=10 даёт recall ~0.90 и хорошую latency; nprobe=100 — recall ~0.99 за счёт ×10 cost.",
+                "when_to_apply": "Memory-constrained сценарии с миллиардами векторов и относительно статичным распределением. Часто комбинируется с PQ (IVF-PQ) в FAISS/Milvus.",
+                "edge_cases": "При значительном data drift центроиды становятся неоптимальными — нужен retraining. nprobe=nlist эквивалентен brute-force; nprobe=1 — максимум скорости при низком recall.",
+                "related": "[[vector-databases-interview#Q9]] HNSW vs IVF; [[vector-databases-interview#Q10]] PQ."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Команда выбирает ANN-индекс для production semantic search с 50M документов, частыми обновлениями и SLA p95 < 50ms. Какой индекс предпочтительнее?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "HNSW — даёт лучший recall/latency trade-off, поддерживает incremental insert/delete без rebuild, и стал дефолтом в Pinecone/Weaviate/Qdrant/pgvector именно для latency-critical workloads.",
+              "correct": true,
+              "sections": {
+                "explanation": "Graph-based search идёт greedy walk сверху вниз → точное соответствие требованию p95<50ms на 50M. Новые документы каталога вставляются inline через efConstruction без блокировки трафика. Память 1.5–3× от raw vectors (для 50M × 768-dim float32 ≈ 150GB → можно шардить).",
+                "example": "В Qdrant Cloud HNSW по умолчанию, efSearch=64 даёт recall ~0.95 при p95 < 20 мс на 50M документов.",
+                "when_to_apply": "Latency-critical + dynamic data — HNSW стандарт индустрии в 2025 для RAG/semantic search/recommender.",
+                "edge_cases": "Build медленнее IVF — но это разовая стоимость. При очень большой размерности embedding (3072+) overhead на graph edges становится значимым — можно matryoshka-обрезать до 1024.",
+                "related": "[[vector-databases-interview#Q7]] HNSW; [[vector-databases-interview#Q8]] IVF."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "IVF — экономит память по сравнению с HNSW, поэтому всегда предпочтительнее для production с большими датасетами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Всегда предпочтительнее» — false. IVF хуже по recall@latency и требует retraining при data drift, что несовместимо с частыми обновлениями каталога.",
+                "source_of_confusion": "В benchmark-таблицах IVF часто выигрывает по памяти, и кажется, что это решающий фактор.",
+                "if_it_were_true": "Все managed vector DB дефолтили бы на IVF — но дефолт у всех HNSW.",
+                "how_it_should_be": "IVF выбирают, когда memory — главный constraint, а данные стабильны; для динамики и latency-критичности — HNSW."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Brute-force (exact KNN) — единственный способ гарантировать корректность search, ANN-индексы дают неверные результаты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Brute-force на 50M даёт O(N) per query → сотни мс–секунды, p95 < 50 мс физически недостижим. ANN — индустриальный стандарт с recall 0.95–0.99.",
+                "source_of_confusion": "Желание «правильности» иногда перевешивает практику, особенно у DBA-фона.",
+                "if_it_were_true": "Pinecone/Qdrant не существовали бы как бизнес — а они растут.",
+                "how_it_should_be": "Для semantic search 95–99% recall более чем достаточно (релевантность определяется не топ-1, а топ-k); SLA важнее идеальной точности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "IVF-PQ — комбинация даёт максимальный recall и лучше всего подходит для динамичных каталогов с частыми обновлениями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PQ — lossy compression, recall ниже чем у чистого HNSW. «Максимальный recall» — антитезис PQ. IVF-PQ выбирают для миллиардов векторов (не 50M), когда память — критичный bottleneck.",
+                "source_of_confusion": "IVF-PQ часто рекламируют как «production-grade» для big data — и забывают про trade-off на recall.",
+                "if_it_were_true": "Не существовало бы рекомендации «IVF-PQ для миллиардов, HNSW для миллионов» в guide-ах Milvus/FAISS.",
+                "how_it_should_be": "Для 50M достаточно HNSW на 1–2 нодах; PQ добавляют только когда память не вмещает индекс."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём суть Product Quantization (PQ) и как она достигает 32–128× сжатия векторов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "PQ сжимает каждый вектор целиком одним k-means на 256 центроидов и хранит ID центроида.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Так работает обычная скалярная/векторная квантизация — один codebook на весь вектор. PQ принципиально делит вектор на subvectors и обучает отдельный codebook для каждого куска.",
+                "source_of_confusion": "PQ действительно использует k-means внутри, поэтому легко свести его к «один codebook».",
+                "if_it_were_true": "1024-dim вектор сжимался бы в 1 байт, и вся high-dim информация терялась бы катастрофически — recall упал бы до неюзабельного уровня.",
+                "how_it_should_be": "PQ разбивает вектор на M subvectors и обучает M независимых codebook-ов, давая экспоненциальную ёмкость (256^M комбинаций)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "PQ делит вектор на M subvectors, обучает отдельный codebook (k-means) на каждом и хранит вектор как M байтов с ID центроидов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Lossy compression для high-dim векторов. Вектор размерности D режется на M равных частей; для каждой позиции subvector-а обучается независимый codebook через k-means (обычно k=256 → 1 байт). Поиск ускоряется через asymmetric distance computation (ADC): query не квантизуется, а кэшируется lookup-таблица расстояний до центроидов.",
+                "example": "1024-dim float32 = 4096 байт. M=32, D/M=32 dims, k=256 центроидов. Итог: 32 байта — 128× compression. Для 1B векторов это разница между 4 TB и 32 GB.",
+                "when_to_apply": "Датасеты от ~100M векторов, когда RAM становится bottleneck. Комбинируется с IVF (IVF-PQ) для миллиардов. Recall@10 = 0.85–0.90 приемлем (компенсируется rerank на топ-K оригинальных).",
+                "edge_cases": "Recall падает с ростом M; обучение codebook-ов требует representative sample (>100k); PQ плохо работает на векторах с сильной корреляцией координат — нужно делать random rotation (OPQ).",
+                "related": "[[vector-databases-interview#Q24]] quantization; [[vector-databases-interview#Q11]] FAISS."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "PQ — это lossless алгоритм компрессии типа gzip, применённый к float32-векторам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PQ — lossy quantization. Каждый subvector заменяется ближайшим центроидом из codebook, и оригинальные значения восстановить нельзя.",
+                "source_of_confusion": "Слово «compression» по умолчанию ассоциируется с gzip/zstd. Но general-purpose сжатие даёт максимум 2–3× на float-ах, а PQ — 32–128× именно за счёт потерь.",
+                "if_it_were_true": "Не пришлось бы делать re-ranking на оригинальных векторах, и не было бы trade-off с recall.",
+                "how_it_should_be": "PQ — lossy compression с trade-off, обычно подкреплённое rerank stage для финальной точности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "PQ строит graph index типа HNSW, но с пониженной размерностью векторов через PCA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PQ — это компрессия векторов, а не indexing structure. HNSW и IVF — отдельные ANN-индексы, которые можно скомбинировать с PQ (IVF-PQ, HNSW-PQ). PCA — линейная projection, другой подход.",
+                "source_of_confusion": "PQ часто используется внутри HNSW/IVF индексов, поэтому в docs FAISS они идут рядом.",
+                "if_it_were_true": "Не было бы комбинаций «HNSW-PQ» и «IVF-PQ» как отдельных опций в FAISS.",
+                "how_it_should_be": "PQ — слой compression поверх index; index определяет, как искать, PQ — как хранить."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем принципиально отличаются FAISS, ScaNN и Annoy как ANN-библиотеки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все три — managed cloud services с REST API; различаются только ценой и регионами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три — embedded libraries, которые подключаются как dependency в код (C++/Python). У них нет REST API, нет managed hosting, нет multi-tenancy.",
+                "source_of_confusion": "В обсуждениях vector DB часто перечисляют «Pinecone, Weaviate, FAISS, Milvus» в одном списке. Но это разные уровни абстракции.",
+                "if_it_were_true": "Не было бы смысла в Milvus и Vespa, которые именно оборачивают FAISS-подобные индексы в distributed БД.",
+                "how_it_should_be": "FAISS/ScaNN/Annoy — embedded libraries; Pinecone/Weaviate/Qdrant/Milvus — managed/distributed DB поверх них."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "FAISS и Annoy используют HNSW под капотом, а ScaNN — это форк FAISS с поддержкой gRPC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HNSW — лишь один из десятков index types в FAISS, и Annoy его вообще не использует (Annoy строит RP-tree forest). ScaNN — самостоятельная разработка Google на основе anisotropic quantization, не форк FAISS.",
+                "source_of_confusion": "HNSW стал де-факто стандартом, и кажется, что «все ANN-библиотеки = HNSW».",
+                "if_it_were_true": "Не было бы benchmark-категорий по разным алгоритмам на ann-benchmarks.com.",
+                "how_it_should_be": "Существуют три семейства: graph-based (HNSW, NSG), tree-based (Annoy, FLANN), quantization-based (IVF-PQ, ScaNN)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "FAISS — C++ библиотека Meta с IVF/HNSW/PQ (не БД); ScaNN — оптимизированная Google-библиотека (asymmetric hashing + anisotropic quantization); Annoy — Spotify, tree-based forest, проще но менее точная.",
+              "correct": true,
+              "sections": {
+                "explanation": "FAISS — самая универсальная: GPU support, десятки index types, Python/C++ API. ScaNN делает упор на anisotropic quantization для inner-product метрики, на ann-benchmarks выигрывает recall@10. Annoy строит forest of random projection trees — mmap-friendly формат файла (отсюда любовь Spotify).",
+                "example": "Pinterest visual search — FAISS (миллиарды image embeddings, GPU); YouTube recommendations — ScaNN внутри TFRS; Spotify music recommendations исторически на Annoy.",
+                "when_to_apply": "FAISS — дефолт для research и production когда нужны разные index types; ScaNN — максимальный recall на inner-product метрике; Annoy — когда index должен mmap-иться (мобильные приложения, edge).",
+                "edge_cases": "Ни одна не даёт CRUD на векторах — это библиотеки индексации. FAISS не thread-safe для записи. Annoy требует полной перестройки при добавлении векторов.",
+                "related": "[[vector-databases-interview#Q15]] Milvus поверх FAISS; [[vector-databases-interview#Q10]] PQ."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "FAISS работает только на CPU, ScaNN только на TPU, Annoy только на мобильных устройствах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "FAISS имеет первоклассную GPU поддержку (faiss-gpu — один из её главных козырей, ускорение 10–20×). ScaNN — CPU-библиотека, оптимизированная под AVX-512. Annoy работает где угодно.",
+                "source_of_confusion": "Annoy любят за маленький binary и mmap, удобный на мобильных — отсюда миф «только для мобильных».",
+                "if_it_were_true": "Не было бы faiss-gpu пакета в PyPI и benchmarks на NVIDIA.",
+                "how_it_should_be": "FAISS работает на CPU и GPU; ScaNN — CPU; Annoy — любое окружение, mmap бонус."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что характеризует Pinecone как managed vector DB и когда его выбирать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pinecone — open-source проект с возможностью self-hosted deployment в Kubernetes.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pinecone — это fully managed proprietary SaaS, исходного кода нет в публичном доступе, self-hosted опции не существует.",
+                "source_of_confusion": "Многие vector DB (Weaviate, Qdrant, Milvus) — open-source с managed-опцией, и Pinecone часто упоминают в том же ряду.",
+                "if_it_were_true": "Не было бы lock-in концерна при выборе Pinecone и роста Qdrant/Weaviate как «open-source альтернатив».",
+                "how_it_should_be": "Pinecone — closed-source managed SaaS, выбирают именно за отсутствие ops; для self-host берут open-source альтернативы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pinecone — это PostgreSQL extension типа pgvector, добавляющий vector type в существующую БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pinecone — самостоятельный SaaS, не связан с PostgreSQL. pgvector — это extension для Postgres, противоположный архитектурный подход.",
+                "source_of_confusion": "Оба решают задачу «хранение векторов», и в обзорах часто перечисляются рядом.",
+                "if_it_were_true": "Pinecone был бы бесплатным (как pgvector), и не имело бы смысла его managed tier $70+/M vectors.",
+                "how_it_should_be": "Pinecone — dedicated managed SaaS; pgvector — extension в существующем Postgres."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pinecone использует GraphQL API и встроенные модули для генерации embeddings типа text2vec-openai.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание Weaviate, не Pinecone. Pinecone использует REST/gRPC (без GraphQL) и не делает embeddings сам — пользователь должен сгенерировать векторы внешним моделью.",
+                "source_of_confusion": "Оба продукта позиционируются как «managed vector DB для RAG», и фичу автоматических embeddings часто приписывают всем.",
+                "if_it_were_true": "Не нужны были бы туториалы «OpenAI Embeddings + Pinecone», показывающие явный шаг embed → upsert.",
+                "how_it_should_be": "Pinecone — REST/gRPC, embeddings вычисляются клиентом; Pinecone Inference (с 2024) — отдельный сервис, не модуль index-а."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Pinecone — fully managed proprietary SaaS (нет self-hosted); HNSW под капотом; serverless tier с pay-per-use; HTTP/gRPC API; выбирают когда нужно minimal ops и есть бюджет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Самый известный managed vector DB (2019). Closed-source SaaS: данные в AWS/GCP/Azure, пользователь работает через REST/gRPC. Под капотом HNSW. С 2023 serverless tier (split compute/storage, pay per storage+queries). Поддерживает metadata filtering, hybrid search (sparse+dense), namespaces.",
+                "example": "Стартап делает RAG-чатбота: pip install pinecone-client, index.upsert(), index.query() — готово. Без него — поднимать Qdrant в K8s, persistence, мониторинг — недели работы.",
+                "when_to_apply": "Маленькая команда без DevOps; PoC/MVP; уже на AWS/GCP и проще через SaaS; compliance требует SOC2/HIPAA.",
+                "edge_cases": "Дорого на масштабе (~$70–100/M vectors/мес vs $30 Qdrant Cloud или $10 self-host); vendor lock-in (нет export/import); ограниченная кастомизация HNSW параметров.",
+                "related": "[[vector-databases-interview#Q13]] Weaviate; [[vector-databases-interview#Q14]] Qdrant; [[vector-databases-interview#Q26]] выбор."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что отличает Weaviate от других vector DB и почему его выбирают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Weaviate — open-source (Apache 2.0) vector DB с GraphQL API, встроенными vectorizer-модулями (text2vec-openai/cohere), hybrid search BM25+vector и multi-tenancy.",
+              "correct": true,
+              "sections": {
+                "explanation": "Самая feature-rich open-source vector DB. Vectorizer-модули генерируют embedding автоматически при insert: пишешь {\"content\": \"Hello\"}, text2vec-openai вызывает OpenAI и сохраняет вектор. GraphQL (основной API), REST, gRPC. Hybrid search BM25 + vector с alpha-параметром. Native multi-tenancy. Generative search — модуль вызывает LLM прямо из БД (RAG-in-DB).",
+                "example": "SaaS-документация для 1000 клиентов: multi-tenancy выделяет каждому изолированное пространство в одной collection; vectorizer избавляет от отдельного embedding-сервиса; hybrid search ловит и точные термины (BM25), и семантически близкие (vector).",
+                "when_to_apply": "Нужен feature-rich vector DB с минимумом glue-кода; готовы запустить self-hosted; multi-tenant SaaS; RAG-pipeline в одной системе.",
+                "edge_cases": "GraphQL имеет learning curve; vectorizer привязывает к провайдеру (text2vec-openai требует key + оплату на каждый insert); memory footprint выше Qdrant; eventually consistent при репликации.",
+                "related": "[[vector-databases-interview#Q19]] hybrid search; [[vector-databases-interview#Q21]] multi-tenancy."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Weaviate — closed-source proprietary SaaS без self-hosted опции, как Pinecone.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Weaviate — open-source под Apache 2.0, можно self-host в Docker/Kubernetes; managed cloud (Weaviate Cloud Services) — опциональный SaaS поверх того же кода.",
+                "source_of_confusion": "Weaviate Cloud рекламируется как managed-сервис, что у новичков ассоциируется с «значит закрытый».",
+                "if_it_were_true": "Не было бы self-hosted production deployments Weaviate в банках/госах, которым лицензионно нельзя использовать закрытый SaaS.",
+                "how_it_should_be": "Weaviate — open-source с опциональным managed cloud; противоположность Pinecone."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Weaviate использует только sparse-векторы (TF-IDF/BM25) и не поддерживает dense embeddings от neural networks.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Weaviate — dense-vector first БД, dense-векторы — основная структура хранения. BM25 (sparse) добавлен как часть hybrid search в дополнение к dense, не как замена.",
+                "source_of_confusion": "Упоминание BM25 в фичах могло создать впечатление «keyword-search движок типа Elasticsearch».",
+                "if_it_were_true": "Не было бы смысла в text2vec-openai модулях, генерирующих dense embeddings размерности 1536.",
+                "how_it_should_be": "Weaviate — dense-первичная DB с BM25 как hybrid-addition; не keyword-only."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Weaviate написан на Python и предназначен только для prototyping, в production не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Weaviate написан на Go (production-grade для concurrent systems), активно используется в production у Stack Overflow, Instabase, Cohere. Python — только клиент.",
+                "source_of_confusion": "В туториалах виден Python-клиент, и легко спутать клиент с реализацией БД.",
+                "if_it_were_true": "Не было бы Helm-чартов для production Kubernetes-deployment.",
+                "how_it_should_be": "Weaviate — сервер на Go; Python — лишь один из клиентов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что отличает Qdrant и почему он стал популярен в 2025?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Qdrant — Python-библиотека, встроенная в numpy для быстрого поиска ближайших соседей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Qdrant — standalone vector database на Rust с собственным сетевым сервером (REST + gRPC), а не in-process библиотека. Python — лишь клиент.",
+                "source_of_confusion": "Туториал начинается с from qdrant_client import QdrantClient, что напоминает обычную библиотеку.",
+                "if_it_were_true": "Не было бы Docker-образа qdrant/qdrant, на котором запускают production-кластеры.",
+                "how_it_should_be": "Qdrant — standalone server на Rust; клиенты для Python/Go/Java/JS подключаются по сети."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Qdrant — open-source vector DB на Rust с HNSW + опциональной quantization, excellent metadata filtering на indexed fields, gRPC+REST API, built-in sharding и replication.",
+              "correct": true,
+              "sections": {
+                "explanation": "Rust даёт преимущества по latency и memory footprint (нет GC pauses). HNSW + scalar/binary quantization (4–32× compress). Главная фишка — payload filtering: indexed поля попадают в отдельные индексы, фильтр применяется во время HNSW-обхода (in-search filter). gRPC для bulk, REST для exploration. Sharding (hash от ID) и replication (Raft) встроены.",
+                "example": "E-commerce поиск похожих товаров с фильтром по категории/цене: индекс на category + price_range, HNSW обходит только релевантные регионы графа; 50M товаров, p99 < 50ms даже при выборках 0.1% от датасета.",
+                "when_to_apply": "Open-source LLM-stack (LangChain/LlamaIndex имеют first-class интеграцию); интенсивное metadata filtering; production без vendor lock-in.",
+                "edge_cases": "Rust-стек — меньше экспертизы; replication через Raft требует чёткой конфигурации quorum; при квантизации recall падает на 2–5%; memory-mapping payload-ов хуже на NFS/cloud-disk.",
+                "related": "[[vector-databases-interview#Q20]] in-search filter; [[vector-databases-interview#Q24]] quantization."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Qdrant написан на Java и работает только внутри JVM-приложений, не имеет standalone сервера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Qdrant написан на Rust — это его ключевая отличительная черта (memory-safety без GC, низкая latency, малый footprint). Standalone-сервер запускается одним бинарём, не требует JVM.",
+                "source_of_confusion": "Lucene/Elasticsearch — Java, и vector search ассоциируется с этим стеком.",
+                "if_it_were_true": "Не было бы преимущества по memory-эффективности и cold-start latency, которые Qdrant именно подчёркивает.",
+                "how_it_should_be": "Qdrant — Rust standalone server; никакой JVM-зависимости."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Qdrant поддерживает только exact KNN (brute-force) и не имеет ANN-индексов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Qdrant основан на HNSW — одном из самых эффективных ANN-алгоритмов. Brute-force доступен как fallback (exact=true) для маленьких датасетов или тестов, но не основной режим.",
+                "source_of_confusion": "Возможно, путают с FAISS Flat-index или с тем, что Qdrant можно заставить выполнить точный поиск флагом.",
+                "if_it_were_true": "Не было бы sub-millisecond latency на 10M+ векторах — brute-force такого не даёт даже на Rust.",
+                "how_it_should_be": "Qdrant — HNSW по умолчанию с опциональным exact для тестов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Milvus принципиально отличается от Qdrant/Weaviate и когда его выбирать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Milvus — embedded ANN-библиотека уровня FAISS, без сетевого сервера и без persistence.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Milvus — distributed vector database с компонентной архитектурой (proxy, query node, data node, index node, root coordinator), persistence через S3/MinIO, сетевые API (gRPC/REST). FAISS используется как один из движков внутри Milvus.",
+                "source_of_confusion": "FAISS-like алгоритмы внутри Milvus создают впечатление эквивалентности.",
+                "if_it_were_true": "Не было бы Helm-чартов для K8s-deployment Milvus с десятком компонентов.",
+                "how_it_should_be": "Milvus — уровень выше FAISS: distributed orchestration, persistence, schema, multi-replica."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Milvus поддерживает только один ANN-алгоритм (HNSW) и не масштабируется горизонтально.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Milvus поддерживает множество ANN-индексов: HNSW, IVF_FLAT, IVF_PQ, IVF_SQ8, ANNOY, DiskANN, GPU-IVF. Горизонтальное масштабирование — одна из его архитектурных целей.",
+                "source_of_confusion": "HNSW — самый известный ANN-алгоритм, и его упоминают первым в туториалах.",
+                "if_it_were_true": "Не было бы production-deployments на десятках миллиардов векторов в enterprise.",
+                "how_it_should_be": "Milvus сознательно делает выбор алгоритма параметром; horizontal scaling — ключевая фича."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Milvus — open-source vector DB от Zilliz с distributed Kubernetes-native архитектурой, поддержкой множества ANN-алгоритмов (HNSW, IVF, ANNOY, DiskANN, GPU-IVF), strong consistency и GPU-acceleration для миллиардов векторов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cloud-native distributed vector database для масштаба миллиардов. Compute и storage разделены (compute scales horizontally, storage в S3/MinIO), компоненты деплоятся в K8s независимо. Широкий спектр индексов. Strong consistency через Pulsar/Kafka log. GPU acceleration даёт 10–100× на больших датасетах.",
+                "example": "Enterprise photo search на 10B изображений: distributed sharding раскидывает по 50 query-нодам, DiskANN-индекс хранит большую часть на NVMe; GPU-нода ускоряет nightly batch reindex.",
+                "when_to_apply": "Датасеты от 100M+ векторов с прогнозируемым ростом до миллиардов; enterprise-сценарии с SLA на latency и consistency; команды с Kubernetes-экспертизой; GPU-acceleration или DiskANN для on-disk данных.",
+                "edge_cases": "Complex deployment — десятки компонентов в K8s; overkill для проектов <10M (Qdrant/Weaviate проще); Pulsar — отдельная система; API между мажорными версиями (1.x → 2.x) ломался; memory overhead на coordinator-нодах высокий на маленьких deployments.",
+                "related": "[[vector-databases-interview#Q22]] sharding; [[vector-databases-interview#Q11]] FAISS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Milvus — простая single-node БД с deployment в один docker-compose, проще чем Qdrant.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Milvus имеет distributed architecture с разделёнными ролями нод (proxy/query/data/index/coordinator), что делает deployment сложнее Qdrant/Weaviate (запускаются одним бинарём). Milvus Lite существует как embedded-вариант для прототипов, но production требует K8s.",
+                "source_of_confusion": "Есть docker-compose для quick-start, что создаёт впечатление простоты.",
+                "if_it_were_true": "Не было бы основной критики Milvus в индустрии — «overkill для маленьких проектов».",
+                "how_it_should_be": "Milvus — distributed system, требующая K8s + etcd + MinIO/S3 + Pulsar/Kafka в production."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое pgvector и когда его выбирать вместо dedicated vector DB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "pgvector — отдельный standalone-сервер для векторов, независимый от PostgreSQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "pgvector — это PostgreSQL extension (CREATE EXTENSION vector;), работает внутри обычного Postgres-инстанса. Отдельного процесса/сервера нет — vector type становится нативным типом колонки.",
+                "source_of_confusion": "Другие vector DB — отдельные сервисы, и по аналогии кажется, что pgvector тоже отдельный.",
+                "if_it_were_true": "Не было бы главного преимущества — JOIN-ов с обычными таблицами в одной транзакции.",
+                "how_it_should_be": "pgvector живёт внутри Postgres как extension; одна инфра, одна транзакция, JOIN с реляционными таблицами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "pgvector рассчитан только на flat (brute-force) поиск и не поддерживает ANN-индексы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "pgvector 0.5+ поддерживает HNSW и IVFFlat ANN-индексы (CREATE INDEX ... USING hnsw (embedding vector_cosine_ops)), даёт sub-linear поиск. Операторы для cosine (<=>), Euclidean (<->) и inner product (<#>).",
+                "source_of_confusion": "Ранние версии pgvector (до 0.5) делали только sequential scan, что породило репутацию «медленный».",
+                "if_it_were_true": "pgvector не использовался бы в production на десятках миллионов векторов.",
+                "how_it_should_be": "pgvector 0.5+ имеет HNSW и IVFFlat ANN-индексы; flat остался опцией для < 100K векторов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "pgvector использует другой PostgreSQL-форк (например, Yugabyte) и несовместим со стандартным PostgreSQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "pgvector — extension для обычного upstream PostgreSQL (9.6+), устанавливается через CREATE EXTENSION vector; на любом стандартном Postgres-инстансе (включая RDS, Cloud SQL, Supabase, Neon).",
+                "source_of_confusion": "Есть отдельные vector-форки Postgres (Lantern, Timescale), но pgvector к ним не относится.",
+                "if_it_were_true": "Managed-сервисы (RDS, Supabase) не поддерживали бы pgvector «из коробки».",
+                "how_it_should_be": "pgvector — extension для upstream Postgres; работает на любом современном дистрибутиве."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "pgvector — PostgreSQL extension, добавляющий тип vector, операторы расстояний (<=>, <->, <#>) и HNSW/IVFFlat ANN-индексы; оптимален когда уже есть Postgres и объём < 10–100M векторов.",
+              "correct": true,
+              "sections": {
+                "explanation": "pgvector превращает обычный Postgres в гибридный store: одна и та же таблица содержит embedding vector(1536) и реляционные поля (tenant_id, created_at). Поиск через ORDER BY embedding <=> $1 LIMIT k, HNSW делает sub-linear. Плюсы: ACID и транзакции, JOIN-ы с фильтрами, готовая инфра (pg_dump, replication, pgBouncer).",
+                "example": "RAG-чат для SaaS: documents(id, tenant_id, content, embedding vector(1536)), HNSW-индекс с vector_cosine_ops, поиск WHERE tenant_id = $1 ORDER BY embedding <=> $2 LIMIT 10 — pre-filter по tenant_id + ANN, всё в одной транзакции.",
+                "when_to_apply": "Уже есть Postgres и не хочется заводить отдельный сервис; 100K–100M векторов; нужны JOIN-ы по реляционным полям; важны ACID и существующие backup/HA процессы.",
+                "edge_cases": "HNSW-индекс строится в RAM — большой объём = долгая индексация и пик памяти; HNSW в pgvector медленнее Qdrant/Pinecone (~2–3×); bloat при частых UPDATE векторов; на > 100M пора смотреть на dedicated.",
+                "related": "[[vector-databases-interview#Q26]] выбор DB; [[vector-databases-interview#Q14]] Qdrant."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Chroma и для каких сценариев она подходит?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Chroma — open-source embedded vector DB на Python, работает в процессе приложения (как SQLite), оптимальна для прототипов, локальной разработки и маленьких приложений.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spроектирована как dev-friendly: pip install chromadb, client = chromadb.Client(), collection.add(documents=[...], embeddings=[...]) — и сразу работает. Под капотом SQLite + DuckDB для хранения, HNSW-индекс в памяти. Нет отдельного сервера (хотя есть server-mode), нет cluster, нет sharding.",
+                "example": "RAG-прототип для демо: индексируем 50K документов из локальной папки, всё в одном Python-процессе, демо запускается одной командой; после валидации идеи мигрируем на Qdrant/pgvector.",
+                "when_to_apply": "Прототипы и MVP, локальная разработка, Jupyter-ноутбуки и research, маленькие приложения с < 1M векторов и одним процессом, тестовые fixtures для unit-tests RAG-pipeline.",
+                "edge_cases": "Не для production scale — нет sharding, replication, HA; embedded-режим теряет данные при рестарте без PersistentClient; API менялось между версиями (0.3 → 0.4 → 0.5) — миграции болезненные; падает производительность на > 5M векторах.",
+                "related": "[[vector-databases-interview#Q26]] выбор DB; [[vector-databases-interview#Q14]] Qdrant как next step."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Chroma — managed cloud-сервис для production-scale векторного поиска с гарантированным SLA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chroma — open-source embedded vector DB, работает в том же процессе, что и приложение (Python-библиотека), без отдельного сервера и без managed cloud-предложения от вендора. Это аналог SQLite, а не Pinecone.",
+                "source_of_confusion": "В 2024–2025 появился Chroma Cloud (early access), и можно решить, что Chroma — это managed-сервис.",
+                "if_it_were_true": "Документация Chroma не начиналась бы с pip install chromadb + chromadb.Client() как primary entry point.",
+                "how_it_should_be": "Chroma — embedded library; для production use cases — Qdrant/Pinecone/Weaviate."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Chroma — distributed vector DB на Rust с поддержкой миллиардов векторов и Kubernetes-deployment.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chroma написана на Python с C++/Rust компонентами для производительности, но это не distributed-система. Для миллиардов векторов используется Milvus или Pinecone.",
+                "source_of_confusion": "Часть кода переписывается на Rust для скорости, что породило мнение о «production-grade Rust DB».",
+                "if_it_were_true": "Chroma попадала бы в benchmark-и distributed vector DBs наравне с Milvus.",
+                "how_it_should_be": "Chroma — embedded для dev/prototype, не distributed для миллиардов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Chroma работает только через REST API и не поддерживает Python-клиент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Primary use case Chroma — именно Python-клиент в том же процессе (embedded). Server-mode с REST/gRPC появился позже и используется реже.",
+                "source_of_confusion": "Некоторые vector DB первично API-driven, и по аналогии можно предположить то же про Chroma.",
+                "if_it_were_true": "pip install chromadb не был бы первой командой в getting-started-гайде.",
+                "how_it_should_be": "Chroma — embedded Python-first; server-mode опционален."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда стоит использовать Elasticsearch/OpenSearch как vector DB вместо dedicated решения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Elasticsearch не поддерживает vector search — для семантики обязательно нужна отдельная vector DB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Elasticsearch 8+ и OpenSearch имеют нативную поддержку dense_vector с HNSW-индексом (type: dense_vector, index: true, similarity: cosine). Vector search работает «из коробки» через knn query.",
+                "source_of_confusion": "До Elasticsearch 7.x vector search был ограниченным (script_score, медленно), что породило репутацию «не для векторов».",
+                "if_it_were_true": "Не было бы официальной документации dense_vector field type и интеграций с LangChain/LlamaIndex.",
+                "how_it_should_be": "Elasticsearch 8+ полноценно поддерживает dense_vector + HNSW и подходит для production vector search."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Elasticsearch/OpenSearch с 8.x поддерживают dense_vector с HNSW и hybrid search (BM25 + kNN через RRF), оптимальны когда уже есть ES в стеке и нужен hybrid поиск в одной системе.",
+              "correct": true,
+              "sections": {
+                "explanation": "Elasticsearch добавил dense_vector field type с HNSW-индексом и операторы knn для search. Главная фича — hybrid search: в одном запросе можно делать match (BM25) + knn (vector) и комбинировать через RRF (Reciprocal Rank Fusion) или weighted scoring. Под капотом — Lucene HNSW, медленнее Qdrant/Pinecone (~2–3×), но достаточно быстр для большинства сценариев.",
+                "example": "Документация enterprise SaaS с RAG-чатом: пользователь ищет «JWT authentication 401 error» — keyword-часть ловит точный 401 и JWT, vector-часть подбирает семантически близкие статьи; RRF комбинирует, top-10 идёт в LLM.",
+                "when_to_apply": "Уже есть ES/OpenSearch (логи, поиск, аналитика); нужен hybrid search (BM25 + vector); объём до сотен миллионов векторов; команда владеет ES (cluster, shards, ILM).",
+                "edge_cases": "HNSW медленнее dedicated vector DB; memory-hungry (HNSW в heap); reindex для смены модели embedding — болезненный; ANN-параметры (m, ef_construction, num_candidates) надо тюнить; лицензия Elasticsearch (SSPL) vs OpenSearch (Apache 2.0).",
+                "related": "[[vector-databases-interview#Q19]] hybrid search; [[vector-databases-interview#Q14]] Qdrant как dedicated."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Elasticsearch — embedded-библиотека уровня Chroma и не подходит для production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Elasticsearch — distributed production-grade поисковый движок с шардированием, репликацией и cluster-mode, рассчитанный на миллиарды документов. Это противоположность embedded-решениям.",
+                "source_of_confusion": "Иногда сравнивают «vector-фичи» Elasticsearch с dedicated vector DB по latency, что верно, но не делает Elasticsearch embedded.",
+                "if_it_were_true": "Не было бы Elastic Cloud и тысяч production-deployments ES как primary search-системы.",
+                "how_it_should_be": "Elasticsearch — distributed search engine, vector search — одна из фич."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Elasticsearch использует только BM25 и не умеет combine-ить keyword + vector в одном запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Elasticsearch 8+ поддерживает hybrid search в одном запросе: combination BM25 + kNN через rank blocks или RRF (Reciprocal Rank Fusion).",
+                "source_of_confusion": "Исторически Elasticsearch был только BM25, и hybrid появился относительно недавно.",
+                "if_it_were_true": "Elasticsearch не позиционировался бы как ведущий выбор для RAG-сценариев.",
+                "how_it_should_be": "Elasticsearch 8+ — нативный hybrid (BM25+kNN с RRF) в одном запросе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое hybrid search (vector + keyword) и зачем он нужен поверх чистого semantic-поиска?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hybrid search — то же самое, что BM25 keyword search, просто с другим названием.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hybrid search — это комбинация BM25 (keyword/lexical) и vector (semantic) поиска с fusion-алгоритмом (обычно RRF). Это два разных метода, бегущих параллельно, результаты которых объединяются — не синоним BM25.",
+                "source_of_confusion": "BM25 — самый известный keyword-алгоритм, и термин может звучать «достаточно».",
+                "if_it_were_true": "Не было бы измеримого улучшения recall-а в RAG-сценариях при переходе с pure BM25 на hybrid.",
+                "how_it_should_be": "Hybrid = BM25 + vector + fusion (RRF/weighted); не синоним BM25."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hybrid search означает индексирование векторов с двумя разными distance metric (cosine + Euclidean) одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Hybrid» в контексте vector DB — это комбинация vector + keyword (BM25), а не комбинация двух distance metrics. Distance metric выбирается один раз под задачу.",
+                "source_of_confusion": "Слово «hybrid» широкое и в других контекстах может означать что-то ещё.",
+                "if_it_were_true": "Конференционные доклады про hybrid search обсуждали бы метрики, а они обсуждают RRF и fusion vector/BM25.",
+                "how_it_should_be": "Hybrid = vector + keyword; metrics остаются одна."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hybrid search — параллельный запуск vector ANN (для семантики) и BM25 keyword search (для точных терминов/имён/ID), с fusion результатов через Reciprocal Rank Fusion (RRF) или weighted score.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чистый vector хорош для семантически близких запросов, но проваливается на редких точных терминах (имена AccountServiceImpl, аббревиатуры JWT/OAuth2, коды ошибок 401, идентификаторы order-12345). BM25 наоборот ловит точные термины, но не понимает синонимы. Hybrid: оба поиска параллельно (top-50), затем fusion. RRF: score = Σ 1/(k + rank_i), обычно k=60 — не требует калибровки скоров. Weighted: α·vector + (1−α)·BM25 — нужна normalize и tuning.",
+                "example": "Документация API: пользователь ищет «401 JWT expired error» — BM25 ловит точный 401 и JWT, vector подбирает похожие статьи про token expiry; RRF объединяет, top-10 в LLM. Без BM25 чистый vector мог бы пропустить статью про 401.",
+                "when_to_apply": "RAG с технической документацией; code search; legal/compliance (точные формулировки); продукты с именами/SKU/ID в запросах; любой scenario «и точно, и по смыслу».",
+                "edge_cases": "Fusion-параметры (RRF k=60) надо tuning-овать на real queries; latency растёт (два поиска параллельно + fusion); BM25-индекс нужно строить отдельно; дубликаты в top-k надо корректно объединять; для не-английского BM25 требует proper analyzer.",
+                "related": "[[vector-databases-interview#Q18]] Elasticsearch hybrid; [[vector-databases-interview#Q13]] Weaviate hybrid API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hybrid search работает только в pgvector и не поддерживается dedicated vector DB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hybrid поддерживается в Weaviate (native API), Qdrant (1.10+), Elasticsearch/OpenSearch (RRF), Pinecone (с 2024). В pgvector наоборот — hybrid требует ручной комбинации с tsvector/pg_trgm.",
+                "source_of_confusion": "В Postgres есть и vector (pgvector), и full-text (tsvector), и можно подумать, что это «hybrid-friendly».",
+                "if_it_were_true": "Weaviate не позиционировал бы hybrid search как ключевую фичу с 2022.",
+                "how_it_should_be": "Hybrid — native в dedicated vector DB; в pgvector — DIY через сочетание расширений."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой подход к metadata filtering при vector search наиболее надёжен и почему?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pre-filter всегда лучший — сначала отфильтровать всех, потом искать топ-k среди оставшихся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pre-filter опасен при aggressive фильтрах: если после фильтра осталось мало кандидатов, ANN-индекс не сможет дать хороший recall. Особенно плохо для HNSW, рассчитанного на работу с большим набором.",
+                "source_of_confusion": "Интуитивно «сначала отфильтровать, потом искать» кажется правильным (как в SQL: WHERE перед ORDER BY).",
+                "if_it_were_true": "Qdrant и Pinecone не вкладывались бы в filterable HNSW (indexed filters).",
+                "how_it_should_be": "Использовать in-search filter, который комбинирует фильтрацию с ANN-обходом графа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Post-filter — единственно правильный подход: сделать vector search и потом отфильтровать результаты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Post-filter опасен, потому что vector ANN ничего не знает о фильтре и может вернуть top-k, где ни один не проходит filter. Особенно при селективных фильтрах (tenant_id = X, где X — редкий tenant).",
+                "source_of_confusion": "Post-filter прост в реализации (всё работает на любой DB), и для широких фильтров (status = 'active', 90% проходят) проблема не видна.",
+                "if_it_were_true": "Не было бы термина «post-filter recall problem» в литературе.",
+                "how_it_should_be": "In-search filter для селективных условий; post-filter — только для очень широких фильтров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Metadata filtering не нужен в vector DB — все фильтры надо делать в отдельной реляционной БД после получения IDs.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Filter в отдельной БД после получения top-k — это самый дешёвый по реализации post-filter, и он имеет те же проблемы: vector DB ничего не знает о фильтре и может вернуть top-k, который весь отфильтруется.",
+                "source_of_confusion": "В архитектуре «vector DB + SQL для метаданных» может казаться, что фильтры — задача SQL.",
+                "if_it_were_true": "Qdrant/Pinecone/Weaviate не имели бы native metadata filtering API.",
+                "how_it_should_be": "Filter внутри vector DB (in-search), реляционная БД — для transactional данных, не для фильтрации ANN."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "In-search filter (filter during ANN traversal) — оптимальный подход: фильтр проверяется во время обхода HNSW-графа, что сохраняет recall и даёт правильный top-k; требует indexed metadata fields.",
+              "correct": true,
+              "sections": {
+                "explanation": "ANN-обход идёт нормально, но на каждом узле проверяется filter; узлы, не прошедшие filter, не попадают в результаты, но используются для навигации по графу. Требует индексированных метаданных (filterable HNSW в Qdrant, payload-индексы), иначе проверка filter на каждой вершине слишком дорогая.",
+                "example": "Multi-tenant SaaS с миллионом документов на 10K тенантов: запрос vector_search WHERE tenant_id='acme' (~100 документов); pre-filter дал бы 100 кандидатов, ANN не разогнаться, recall падает; post-filter взял бы top-100 из миллиона, среди них ≈0 от 'acme'; in-search обходит HNSW целиком, но в результаты добавляет только проходящих filter.",
+                "when_to_apply": "Всегда, когда vector DB поддерживает (Qdrant, Pinecone, Weaviate); критично для multi-tenant, time-range, ACL-фильтров; для pgvector — pre-filter с обычным B-tree индексом по реляционному полю работает до ~10M.",
+                "edge_cases": "Обязательно индексировать filter-fields — без payload index Qdrant fallback-нется в slow path; на низкой селективности (<1% проходит) даже in-search медленный; планировщик иногда выбирает неоптимальный путь; сложные фильтры (OR, geo) могут падать в slow scan.",
+                "related": "[[vector-databases-interview#Q14]] Qdrant payload indexing; [[vector-databases-interview#Q21]] multi-tenancy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно реализовать multi-tenancy в vector DB и какие есть подходы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Есть три подхода: (1) collection per tenant для < 100 тенантов, (2) shared collection + tenant_id filter для большинства SaaS, (3) native multi-tenancy (Weaviate, Pinecone Serverless) для тысяч тенантов; критично тестировать isolation unit-тестами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Подход 1 (collection per tenant): index_acme, index_beta — полная физическая изоляция, легко удалить тенанта, но не масштабируется > 100–1000 collections. Подход 2 (shared collection + filter): все векторы в одной collection с metadata tenant_id, каждый запрос обязан включать WHERE tenant_id = ?; scaling до миллионов тенантов, но leak-риск. Подход 3 (native): Weaviate multiTenancyConfig, Pinecone Serverless namespaces — built-in isolation с per-tenant HNSW shards.",
+                "example": "B2B SaaS-чат: 50K тенантов, 1K документов на тенанта. Подход 1 (50K collections) — не пройдёт. Подход 2 — работает, но требует строгого code review. Подход 3 (Weaviate native) — каждый tenant = логический shard, активные в RAM, неактивные на диске.",
+                "when_to_apply": "Оценить число тенантов и SLA на изоляцию; для regulated industries (медицина, финансы) — native multi-tenancy или collection per tenant; для обычного SaaS — shared collection + tenant_id filter; всегда писать тест «tenant A search не возвращает данные tenant B».",
+                "edge_cases": "Leak через забытый filter — главный риск shared-подхода (wrap-ить search в helper); noisy-neighbour — тяжёлый tenant ест ресурсы; удаление тенанта (DELETE WHERE tenant_id) в HNSW — дорогая операция; per-tenant rate-limiting — вручную; backup/restore per-tenant — нетривиально для shared collection.",
+                "related": "[[vector-databases-interview#Q20]] in-search filter; [[vector-databases-interview#Q13]] Weaviate native MT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Multi-tenancy не нужна — все vector DB изолируют тенантов автоматически на уровне engine.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vector DB не имеют автоматической tenant-изоляции — это явная задача архитектора. Один index/collection доступен всем с credentials, и leak-и — реальная угроза, которую надо тестировать.",
+                "source_of_confusion": "Managed DB (Pinecone) имеют namespaces, которые выглядят как «автоматическая» изоляция. Но и там надо явно указывать namespace.",
+                "if_it_were_true": "Не было бы security-инцидентов с leak-ом данных между tenants в RAG-сервисах.",
+                "how_it_should_be": "Multi-tenancy — архитектурное решение и явная задача, требующая testing isolation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Multi-tenancy эквивалентна тому, чтобы каждому пользователю давать свой URL vector DB-сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-tenancy — архитектурный паттерн внутри одной installation, не про отдельный URL/сервис на пользователя. Отдельный сервис на тенанта — single-tenant deployment, что дорого и не масштабируется.",
+                "source_of_confusion": "В B2B иногда дают enterprise-клиентам отдельные deployments (premium tier), но это противоположность multi-tenancy.",
+                "if_it_were_true": "SaaS-индустрия не существовала бы экономически — multi-tenancy ровно про shared infrastructure.",
+                "how_it_should_be": "Shared infrastructure + logical isolation (filter/namespace/native MT)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственный правильный подход — один collection/index на tenant (index_acme, index_beta).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подход «collection per tenant» работает на малом числе тенантов (< 100), но scaling issues на тысячах: каждая collection — отдельный HNSW-граф со своим memory overhead; metadata-операции медленны; индексация холодных тенантов жрёт ресурсы.",
+                "source_of_confusion": "Интуитивно «полная изоляция» через отдельные collection кажется самой надёжной.",
+                "if_it_were_true": "Weaviate и Pinecone Serverless не вводили бы native multi-tenancy с тысячами логических тенантов.",
+                "how_it_should_be": "Выбирать подход по числу тенантов: collection per tenant до 100, shared с filter — большинству, native MT — для тысяч."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между replication и sharding в vector DB и когда что нужно?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Replication и sharding — синонимы, оба означают одно и то же распределение данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные паттерны: replication — копии одних и тех же данных на нескольких нодах (для HA и read scaling), sharding — разделение данных по нодам (для horizontal scale больших датасетов).",
+                "source_of_confusion": "Оба относятся к «распределённой архитектуре», и в маркетинге их упоминают вместе.",
+                "if_it_were_true": "Не существовало бы отдельных параметров replication_factor и shard_count в Weaviate/Qdrant/Milvus.",
+                "how_it_should_be": "Replication — копии для HA/reads; sharding — разделение для масштаба; используются вместе, но решают разные задачи."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Replication — копии данных для HA и read scaling; sharding — разделение данных между нодами для horizontal scale больших датасетов; для большинства production cases нужна replication, sharding — только при > 100M векторов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Replication делает N копий одних и тех же векторов на N нодах: чтения масштабируются, при падении ноды другие принимают трафик (replication_factor). Sharding разделяет векторы между N нодами по shard key (random/hash): каждая нода хранит свою часть HNSW-индекса, поиск идёт на все shards параллельно (scatter-gather) (shard_count). Sharding нужен когда индекс не помещается в RAM одной ноды.",
+                "example": "RAG-сервис на 50M документов с 1K QPS: replication_factor=3 (HA + 3× read throughput), shard_count=1 (50M × 1536 × 4B = 300 GB raw + ~450 GB HNSW — помещается в 512 GB instance), всего 3 ноды. Для 500M потребовался бы shard_count=4 и 12 нод (3 replicas × 4 shards).",
+                "when_to_apply": "Replication — почти всегда в production (RF=2 для HA); sharding — когда индекс не влезает в одну ноду (> 100M векторов на embedding-1024 или > 50M на embedding-3072).",
+                "edge_cases": "Replica lag — async-replication может вернуть устаревшие результаты; shard skew — плохой shard key даёт неравномерную загрузку; scatter-gather latency = max(latency_i) + merge; resharding при росте — дорогая операция; cross-shard ANN не даёт точно top-k.",
+                "related": "[[vector-databases-interview#Q15]] Milvus distributed; [[vector-databases-interview#Q25]] scales."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Replication нужен только для production, а sharding бесполезен в vector DB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sharding критичен для vector DB при > 100M векторов: один node не выдержит HNSW-индекс в RAM, нужно распределение по shards. Это одна из главных причин выбора Milvus/Pinecone для больших датасетов.",
+                "source_of_confusion": "Для маленьких датасетов (< 10M) sharding действительно не нужен, и можно решить, что он «бесполезен в принципе».",
+                "if_it_were_true": "Milvus не позиционировался бы как «распределённая vector DB для миллиардов векторов».",
+                "how_it_should_be": "Sharding включается с ростом данных, replication — почти всегда."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sharding в vector DB всегда выполняется автоматически и не требует настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sharding требует явной конфигурации — выбор shard count, sharding key (random/hash/range), strategy для resharding. Только managed-сервисы (Pinecone) делают это «прозрачно», но и там есть параметры.",
+                "source_of_confusion": "В managed cloud sharding выглядит автоматическим, и можно перенести впечатление на self-host.",
+                "if_it_were_true": "Не было бы документации «sharding configuration» в self-hosted vector DB и инцидентов из-за плохо выбранного shard key.",
+                "how_it_should_be": "В self-host (Qdrant/Weaviate/Milvus) sharding настраивается явно; managed скрывает детали, но не освобождает от sizing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что определяет trade-off между recall и latency в ANN-поиске (HNSW) и как его настраивать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Trade-off отсутствует — современные HNSW дают 100% recall с константной latency на любых данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HNSW — это approximate nearest neighbor, и trade-off recall/latency встроен в дизайн. Параметр efSearch напрямую регулирует: больше ef → больше посещённых узлов → лучше recall, выше latency. 100% recall достигается только при ef → N (что равно brute-force).",
+                "source_of_confusion": "Маркетинг vector DB обещает «sub-millisecond latency at high recall», что верно для конкретных параметров.",
+                "if_it_were_true": "Не было бы benchmark-ов ANN-benchmarks.com, где recall@10 vs QPS показывает Pareto-frontier.",
+                "how_it_should_be": "Признать наличие trade-off и тюнить efSearch под latency budget."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Trade-off регулируется только распределением данных — параметры алгоритма не имеют значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметры алгоритма (efSearch, M, efConstruction) критически влияют на trade-off. Распределение данных тоже важно (skewed embeddings дают плохой ANN-результат), но это не отменяет роли параметров.",
+                "source_of_confusion": "Иногда обвиняют «плохие embeddings» в проблемах с recall, но даже на идеальных embeddings без tuning ef будут проблемы.",
+                "if_it_were_true": "Документация Qdrant/Pinecone не имела бы детальных гайдов по tuning ANN-параметров.",
+                "how_it_should_be": "Сначала проверить параметры (efSearch/M/efConstruction), затем оптимизировать embeddings и distribution."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Recall/latency регулируется параметром efSearch в HNSW: больше ef → больше посещённых узлов графа → выше recall, выше latency; для RAG обычно 95%+ recall достаточно, что соответствует efSearch=50–100.",
+              "correct": true,
+              "sections": {
+                "explanation": "HNSW при поиске выполняет best-first traversal графа с priority queue размера efSearch. Чем больше ef, тем больший фронт исследуется. Типичные точки на Pareto-кривой: ef=10 → recall ~0.85, ~2 мс; ef=50 → recall ~0.95, ~8 мс; ef=200 → recall ~0.99, ~30 мс. Дополнительно build-time M (16–32) и efConstruction (200). Для RAG 95% обычно избыточно — LLM устойчив к шуму.",
+                "example": "RAG-чат с p95 latency budget 50 мс (LLM займёт ещё 1–2 секунды): начать с ef=50, мерить recall@10 на golden set; если < 90% — поднять до 100; если latency > 20 мс — попробовать quantization вместо роста ef.",
+                "when_to_apply": "Всегда при выборе vector DB определить latency budget и acceptable recall; настраивать ef per workload; для batch-задач (offline reindex) — высокий ef, для interactive — низкий.",
+                "edge_cases": "efSearch < k не работает (должно быть ef >= k); recall измеряется относительно ground truth — без него benchmark обман; efConstruction влияет на качество индекса; latency не линейна (ef×2 → latency ~×1.5); recall падает на out-of-distribution queries.",
+                "related": "[[vector-databases-interview#Q7]] HNSW параметры; [[vector-databases-interview#Q24]] quantization."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Recall/latency регулируется только размером embedding (768 vs 1536 vs 3072 dims).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер embedding влияет на качество семантического представления, но это отдельная ось от ANN-trade-off. Внутри одного embedding-размера ef регулирует recall/latency.",
+                "source_of_confusion": "Интуитивно «больше dims = лучше», и можно решить, что это главный регулятор.",
+                "if_it_were_true": "Все vector DB поставлялись бы с фиксированным ef без возможности tuning.",
+                "how_it_should_be": "Dims задают потолок recall (качество embedding), ef — реальный достигаемый recall в search."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое quantization векторов и какие есть варианты для production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Quantization — это zip-сжатие векторов, lossless по природе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quantization — lossy compression: значения мапятся в меньшее число бит (fp32 → fp16/int8/binary). Lossless-сжатие на float-векторах работает плохо (entropy уже высокая) и не даёт нужного gain.",
+                "source_of_confusion": "«Сжатие» интуитивно ассоциируется с zip.",
+                "if_it_were_true": "Quantization не оказывал бы влияния на recall — а влияет, и эта потеря — главная характеристика выбора метода.",
+                "how_it_should_be": "Quantization — про reduction of precision, всегда с trade-off на quality."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Quantization применима только к embeddings, не к индексу — индекс остаётся в полной точности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quantization применяется и к raw vectors, и к индексу — современные методы (PQ, OPQ) сжимают данные внутри HNSW/IVF-структур. Можно сжимать только indexed vectors при сохранении originals для rerank.",
+                "source_of_confusion": "В некоторых конфигурациях действительно хранят quantized для search + originals для rerank.",
+                "if_it_were_true": "Не было бы методов вроде IVF_PQ (PQ внутри IVF-индекса), которые именно сжимают индексные структуры.",
+                "how_it_should_be": "Quantization применима к обоим уровням; выбор зависит от стратегии (single-stage vs rerank pipeline)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Quantization применяется только в FAISS и не поддерживается production vector DB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quantization поддерживается всеми major production vector DB: Qdrant (binary/scalar/PQ), Pinecone (PQ), Milvus (полный набор), Weaviate (PQ, binary). FAISS — pioneer, но не единственный.",
+                "source_of_confusion": "FAISS — pioneer в этой области, и literature ссылается на FAISS examples.",
+                "if_it_were_true": "Qdrant Cloud не предлагал бы quantization-конфигурации в UI и Pinecone не имел бы p1/s1 pod types с PQ.",
+                "how_it_should_be": "Quantization — standard feature всех major vector DB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Quantization — сжатие векторов с потерей точности: fp32→fp16 (2×, минимальный impact на recall), fp32→int8 (4×, малый impact), binary 1-bit/dim (32×, заметный impact, используется как cheap first stage + rerank), Product Quantization (4–32×, параметрическая); в 2025 standard для миллионов+ векторов.",
+              "correct": true,
+              "sections": {
+                "explanation": "fp16 (half-precision) — экономия 2×, recall практически не страдает, безопасный default. int8 — 4×, нужна калибровка scale/zero-point per dim, recall падает на 1–3%. Binary — каждая координата заменяется sign(x), 32×, Hamming distance; recall падает заметно — используется как cheap first stage (top-N=1000) + rerank через full precision. PQ — разделяет вектор на подвектора с k-means кодом, 4–32×, recall зависит от M и nbits.",
+                "example": "RAG для enterprise documents, 100M векторов: fp32 raw = 600 GB. С int8 → 150 GB, помещается в 256 GB instance. Дополнительно binary для first-stage search (retrieval top-200) + rerank через int8 — latency p99 < 20 мс, recall@10 > 92%.",
+                "when_to_apply": "Датасет > 10M (на меньшем не окупается сложность); cost-sensitive (memory/disk главная статья); готовы потерять 1–5% recall ради 4–10× экономии; есть golden set для измерения.",
+                "edge_cases": "Calibration: int8/PQ требуют sample для калибровки; двойное хранение для rerank уменьшает экономию; embedding-обновление требует re-quantization всего индекса; binary работает только на нормализованных и теряет много recall без rerank.",
+                "related": "[[vector-databases-interview#Q10]] PQ детально; [[vector-databases-interview#Q23]] recall/latency."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие реалистичные масштабы датасетов в production vector DB и как оценить storage?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Типичные scales: demo 1K–100K (любая DB), small product 100K–10M (pgvector, Qdrant), mid 10M–100M (Pinecone, Weaviate, Qdrant), large 100M–1B (Milvus, Pinecone enterprise), hyper-scale 1B+ (custom/Milvus); storage = N × dims × bytes_per_dim, плюс ~1.5× HNSW overhead.",
+              "correct": true,
+              "sections": {
+                "explanation": "Demo (1K–100K) — любая DB, даже Chroma. Small product (100K–10M) — pgvector или Qdrant Cloud начального тира. Mid (10M–100M) — Pinecone/Weaviate/Qdrant с serious config. Large (100M–1B) — Milvus distributed или Pinecone enterprise. Hyper-scale (1B+) — FAISS-based custom или Milvus с sharding. Storage: N × dims × bytes_per_dim + ~1.5× HNSW overhead.",
+                "example": "10M × 1024 × 4 (fp32) = 40 GB raw + HNSW ~60 GB total. С int8 → 15 GB. С PQ → 5 GB. Memory ≥ storage (HNSW любит RAM). Plus metadata, payload-индексы, replicas — реальный footprint ×2–3 от raw.",
+                "when_to_apply": "При дизайне system — посчитать storage estimation в первый же день, чтобы выбрать DB и instance size; при cost-планировании (managed — Pinecone берёт деньги за pod-hours и storage); при оценке latency budget.",
+                "edge_cases": "Dim choice — embedding-3-large (3072) часто overkill; HNSW overhead на маленьких векторах непропорциональный; payload (metadata) может весить больше vectors; replicas (RF=3) утраивают storage; планировать на 2× от текущего.",
+                "related": "[[vector-databases-interview#Q22]] sharding; [[vector-databases-interview#Q24]] quantization."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все production-системы работают с миллиардами векторов — меньшие масштабы не существуют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подавляющее большинство production RAG-систем — это 10K–100M векторов. Миллиарды — редкое исключение (Spotify, Pinterest, large enterprises).",
+                "source_of_confusion": "Маркетинг vector DB рекламирует «billions of vectors», что верно как технический предел, но не как медианный use case.",
+                "if_it_were_true": "Не было бы стартап-сегмента с pgvector + Postgres как достаточным решением.",
+                "how_it_should_be": "Большинство стартапов работает в диапазоне 100K–10M; миллиарды — крайний случай."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Storage можно не учитывать — vector DB сжимают данные автоматически до 1% от raw.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без явной quantization vector DB не сжимают данные — fp32 хранится как fp32. Quantization есть как опция, но требует включения и tuning-а. Plus HNSW overhead обычно увеличивает storage.",
+                "source_of_confusion": "Некоторые managed-сервисы (Pinecone serverless) применяют compression «под капотом», что создаёт иллюзию.",
+                "if_it_were_true": "Pinecone не имел бы «storage cost» как отдельную статью billing-а.",
+                "how_it_should_be": "Storage надо учитывать; quantization — explicit feature с trade-off."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Размер embedding не влияет на storage — все embeddings весят одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Storage линейно зависит от dims. Embedding 3072 dims весит ровно 2× от 1536 и 8× от 384. Это одна из главных переменных при оценке cost.",
+                "source_of_confusion": "«Embedding это число» может звучать абстрактно.",
+                "if_it_were_true": "Не было бы рекомендации Matryoshka embeddings («хочешь меньше storage — отрежь dims»).",
+                "how_it_should_be": "Dims напрямую определяют storage; выбор embedding-модели — серьёзное cost-решение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать vector DB под конкретный сценарий и какие основные decision-факторы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда выбирать Pinecone — это безопасный default для любого проекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pinecone отличный managed-сервис, но не оптимален везде: для startup с уже имеющимся Postgres pgvector проще и дешевле; для self-host enterprise — Qdrant/Weaviate/Milvus; для prototype — Chroma. Выбор зависит от scale, ops-capacity, бюджета и existing stack.",
+                "source_of_confusion": "Pinecone имеет сильный маркетинг и часто упоминается в туториалах как «standard».",
+                "if_it_were_true": "Не было бы рынка open-source vector DB и стартапов на pgvector — все бы выбирали Pinecone.",
+                "how_it_should_be": "Decision по 6 факторам (scale, ops, stack, features, budget, lock-in)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Decision tree по факторам: < 1M векторов и есть Postgres → pgvector; open-source self-host → Qdrant (fast) или Weaviate (feature-rich); managed без ops → Pinecone; уже есть Elasticsearch → ES vector + hybrid; > 1B vectors → Milvus или custom; prototype/local → Chroma.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор — multi-factor decision. Ключевые оси: (1) Scale — pgvector до 10M, dedicated до 100M, Milvus/Pinecone до миллиардов; (2) Ops capacity — managed vs self-host vs embedded vs piggyback; (3) Existing stack — Postgres → pgvector, ES → ES vector; (4) Features — hybrid (Weaviate, ES), multi-tenancy (Weaviate, Pinecone), GPU (Milvus); (5) Budget — pgvector дёшево, Pinecone дорого; (6) Lock-in — Pinecone завязан на свой API, open-source переносимы.",
+                "example": "Стартап делает RAG-чат для B2B-SaaS, ~5M документов, есть Postgres, маленькая команда без K8s, бюджет $1K/мес. Анализ: scale в зоне pgvector, ops-capacity низкая, existing stack — Postgres. Выбор: pgvector. Полгода спустя 30M, latency p99 = 200 мс — миграция на Qdrant Cloud.",
+                "when_to_apply": "При выборе DB — пройти все 6 осей честно; не повторять выбор «как у больших» (Pinterest на Milvus не значит, что вам подходит); документировать trade-offs в ADR для будущей миграции.",
+                "edge_cases": "Переоценка scale — закладывать на 1B, когда реально 5M = overkill; недооценка ops — self-host Milvus требует full-time DevOps; lock-in через API/payload format; roadmap фич; benchmarks обманывают на вашем distribution.",
+                "related": "[[vector-databases-interview#Q12]] Pinecone; [[vector-databases-interview#Q14]] Qdrant; [[vector-databases-interview#Q16]] pgvector."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Выбор vector DB не имеет значения — все они эквивалентны по производительности и фичам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vector DB сильно различаются: Pinecone (managed), Qdrant (modern Rust), Weaviate (feature-rich), Milvus (distributed K8s), pgvector (extension), Chroma (embedded). Выбор влияет на cost, latency, ops, feature-set.",
+                "source_of_confusion": "Для маленьких prototype действительно «любая работает», и это переносится на production.",
+                "if_it_were_true": "Все vector DB сходились бы по фичам и benchmarks, чего нет.",
+                "how_it_should_be": "Делать осознанный выбор по конкретным факторам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Решение принимается только на основе benchmarks — никакие другие факторы не важны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Benchmarks важны, но не единственный фактор: важны ops-стоимость, existing stack, feature-fit, цена, lock-in. Часто «более медленная» DB выигрывает по совокупности.",
+                "source_of_confusion": "Ann-benchmarks.com и vendor whitepapers фокусируются на latency/recall.",
+                "if_it_were_true": "Все выбирали бы FAISS как фундамент (быстрее всего в benchmarks), но это не происходит из-за ops-сложности.",
+                "how_it_should_be": "Benchmarks — один из факторов; team velocity и cost тоже критичны."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как делать backup, restore и migrations в vector DB и в чём отличие от обычных БД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Vector DB имеют стандартные backup/restore tools уровня pg_dump/pg_restore, миграции между разными DB — стандартный процесс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vector DB не имеют унифицированных backup/restore tools уровня PostgreSQL. У каждой свой формат снапшотов (Qdrant snapshot, Pinecone collection backup, Milvus BulkInsert), несовместимый с другими. Миграции между разными DB — обычно через re-embed source documents.",
+                "source_of_confusion": "Опыт с реляционными БД создаёт ожидание pg_dump-эквивалента.",
+                "if_it_were_true": "Не было бы commercial-tools для миграции между vector DB.",
+                "how_it_should_be": "Использовать per-vendor snapshot + re-embed из source documents как универсальный fallback."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Backup делается через копирование файлов на disk — это всегда работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Простое копирование файлов работает только при остановленной DB (cold backup), что неприемлемо в production. Hot backup требует consistent snapshot, который DB должна поддерживать.",
+                "source_of_confusion": "Для embedded DB (Chroma, SQLite-based) копирование файла действительно работает после flush.",
+                "if_it_were_true": "Не было бы инцидентов «backup восстановился с corrupted index» при попытке копировать живые файлы.",
+                "how_it_should_be": "Использовать snapshot API; копирование файлов — только cold backup."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подходы: (1) re-embed everything из source documents (часто дешевле, чем восстанавливать снапшоты), (2) export embeddings в файл и restore, (3) snapshot API (Pinecone, Qdrant, Milvus), (4) replication-based DR; миграции между DB обычно через source documents, прямой export/import редко работает.",
+              "correct": true,
+              "sections": {
+                "explanation": "Embeddings — детерминированная функция от source documents (при фиксированной модели). Это даёт уникальный подход: re-embedding часто дешевле, чем backup/restore. Snapshot-подходы (Pinecone create_collection_backup, Qdrant POST /snapshots, Milvus BulkInsert + S3) несовместимы между DB. Export/import — через intermediate format (JSONL с {id, vector, metadata}). Replication-based DR: multi-region replicas, cluster replication. Production strategy: source documents в S3 как ground truth, vector DB — derived state.",
+                "example": "RAG-сервис, 20M документов: (1) source documents в S3 (immutable, lifecycle 90 days); (2) Qdrant nightly snapshot на S3; (3) replica в другой AZ. При disaster: пробуем restore из snapshot (1 час), если не работает — re-embed из S3 (3 часа, $50). RTO 4 часа, RPO 24 часа.",
+                "when_to_apply": "Маленькие прод-системы (< 10M) — re-embed подход; большие — snapshot + replica; всегда хранить source documents отдельно как ground truth; писать playbook restore с конкретными командами; тестировать restore раз в квартал.",
+                "edge_cases": "Embedding model versioning — если model обновилась, re-embed даст другие vectors; stale source documents — нужна синхронизация при deletes; PII в embeddings — backup нужно шифровать; partial restore (один tenant) сложно; incremental backup редко поддерживается.",
+                "related": "[[vector-databases-interview#Q21]] multi-tenancy backup; [[vector-databases-interview#Q22]] replication для DR."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Backup в vector DB вообще не нужен — embeddings можно всегда пересоздать через API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Re-embedding возможен, но имеет ограничения: занимает время (часы), стоит денег (API calls), требует stable embedding model, требует доступа к source documents. Backup нужен — просто стратегия другая.",
+                "source_of_confusion": "Философия «embeddings — derived state» иногда трактуется как «backup не нужен».",
+                "if_it_were_true": "Pinecone и Qdrant не реализовывали бы snapshot API.",
+                "how_it_should_be": "Source documents — backup ground truth; snapshot — для быстрого restore без re-embed."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой подводный камень в production vector DB чаще всего вызывает silent regression качества поиска и как его избежать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Самый частый подводный камень — недостаточная сетевая bandwidth между приложением и vector DB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Network bandwidth — редкая проблема (typical vector ~6 KB для 1536 dims fp32, latency search ~10 мс). Реальные silent regression приходят от embedding model mismatch, wrong distance metric и stale embeddings.",
+                "source_of_confusion": "Для cross-region setups bandwidth действительно может быть проблемой, но это видимая (timeouts), а не silent regression.",
+                "if_it_were_true": "Main troubleshooting гайды vector DB фокусировались бы на network, а они — на embedding consistency и distance metric.",
+                "how_it_should_be": "Главные silent regressions — про embeddings и distance, не про network."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главный pitfall — недостаточный CPU; всё остальное вторично.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CPU редко bottleneck в vector DB (HNSW — memory-bound, не CPU-bound). Главные риски — memory pressure (OOM на больших HNSW в RAM), wrong distance metric, embedding model drift, multi-tenancy leaks.",
+                "source_of_confusion": "В общих БД CPU часто bottleneck. Но vector DB — другой профиль: memory + I/O.",
+                "if_it_were_true": "Sizing guides vector DB начинались бы с CPU, а они — с RAM и количества векторов.",
+                "how_it_should_be": "Sizing — от RAM (HNSW в памяти) и числа векторов, CPU — вторично."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все pitfalls легко детектируются monitoring-ом и не требуют отдельного внимания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большинство pitfalls — silent: wrong distance metric не вызывает alert (всё «работает»), embedding model drift не виден через CPU/memory metrics — только через recall на golden set; multi-tenancy leak не покажется в логах.",
+                "source_of_confusion": "Мониторинг (latency, error rate, memory) хорош для infrastructure-проблем. Но quality regressions — другой класс.",
+                "if_it_were_true": "Не было бы инцидентов с deployed RAG-системами, которые «работают» (нет 5xx), но возвращают мусор.",
+                "how_it_should_be": "Помимо infra-мониторинга нужен recall-monitoring на golden set и shadow queries."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главные silent pitfalls: (1) wrong distance metric (cosine vs Euclidean), (2) embedding model mismatch между query и docs, (3) stale embeddings после обновления модели, (4) filtering после поиска убивает recall, (5) multi-tenancy leak, (6) memory pressure OOM при росте индекса; защита — golden set с regression-тестами, recall monitoring, версионирование embeddings.",
+              "correct": true,
+              "sections": {
+                "explanation": "Production-pitfalls делятся на silent quality regressions и operational failures. Silent опаснее — нет 5xx, но качество падает. Топ-10: (1) wrong distance metric (cosine vs euclidean дают разные top-k); (2) embedding model mismatch (индексировали ada-002, query embedded 3-small → катастрофа); (3) stale embeddings; (4) cost runaway (Pinecone Serverless берёт за каждый search); (5) index не используется (EXPLAIN full scan); (6) post-filter убивает recall; (7) multi-tenancy leak; (8) re-indexing painful; (9) memory pressure (HNSW в RAM); (10) slow updates блокируют поиски. Защита: golden set 100–500 пар с CI recall-тестом; production recall monitoring (sample 1%); embedding model version в metadata; integration-тесты tenant isolation; capacity planning на 2×.",
+                "example": "RAG-чат: обновили embedding-модель с ada-002 на text-embedding-3-small, качество упало — нет alerts. Discovered через golden set CI: recall@10 упал с 0.92 до 0.55. Root cause: docs реиндексировали, query-embedder ещё на старой модели (rolling deploy). Fix: embedding model version в metadata + проверка version match при search.",
+                "when_to_apply": "В day-one design vector DB сервиса заложить мониторинг качества (golden set), versioning embeddings, runbook для основных pitfalls; перед production launch — load test с realistic queries; периодически (раз в спринт) запускать recall regression test.",
+                "edge_cases": "Golden set degradation — со временем queries не отражают real distribution; monitoring overhead — recall measurement дорогой, делать sample; alert fatigue — слишком строгие пороги дают false positives; embedding model deprecation — нужна стратегия миграции; shadow traffic — ещё одна инфра-задача.",
+                "related": "[[vector-databases-interview#Q20]] filtering pitfalls; [[vector-databases-interview#Q27]] re-embedding; [[vector-databases-interview#Q22]] capacity planning."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

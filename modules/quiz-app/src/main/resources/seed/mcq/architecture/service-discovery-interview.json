@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "service-discovery-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое service discovery и зачем он нужен в микросервисной архитектуре?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Service discovery — это паттерн versioning API, при котором клиент по URL пути определяет, какой контракт сервиса использовать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описание соответствует API versioning (path-based, например /v1/orders, /v2/orders). Service discovery отвечает не за версию контракта, а за поиск сетевого адреса живого инстанса по логическому имени.",
+                "source_of_confusion": "Оба понятия связаны с маршрутизацией клиента к сервису, но решают разные задачи: versioning — какой контракт, discovery — где сейчас живой инстанс.",
+                "if_it_were_true": "Тогда discovery был бы бесполезен в Kubernetes с rolling deploy: после рестарта pod-а у инстанса меняется IP, а контракт остаётся прежним — некому было бы маршрутизировать.",
+                "how_it_should_be": "Service discovery находит host:port живого инстанса по логическому имени; versioning — отдельная тема, см. [[api-versioning-interview]]."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Service discovery — механизм, через который клиент находит сетевой адрес (host:port) живого инстанса сервиса в условиях динамических IP, auto-scaling и rolling deploy.",
+              "correct": true,
+              "sections": {
+                "explanation": "В микросервисах за каждым вызовом стоит вопрос: где сейчас payments-service и какой из его инстансов жив. Hard-coded IP ломается при рестарте контейнера; auto-scaling меняет число инстансов; failover требует реакции за секунды.",
+                "example": "Вместо RestTemplate.getForObject(\"http://10.0.0.42:8080/...\", ...) пишем http://payments-service/..., а под капотом DiscoveryClient / @LoadBalanced / DNS преобразует имя в живой адрес. В Kubernetes имя резолвится CoreDNS в ClusterIP, kube-proxy DNAT-ит на pod IP.",
+                "when_to_apply": "Любая система с динамическими IP: контейнеры, auto-scaling groups, Kubernetes, ECS. Если адреса статичные (5 серверов на VM с fixed IP) — discovery не обязателен, можно конфигом.",
+                "edge_cases": "Discovery должен сам быть HA — иначе становится SPOF. Защита: cluster registry, локальный snapshot на клиенте, fail-open при partition.",
+                "related": "[[service-discovery-interview#Q2]] что хранит registry; [[service-discovery-interview#Q4]] health-checks; [[service-discovery-interview#Q28]] discovery как SPOF."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Service discovery — это распределённая база данных, в которой сервисы хранят свои бизнес-данные с автоматической репликацией между нодами кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описание соответствует distributed database (Cassandra, CockroachDB). Service discovery — это registry метаданных об инстансах (host, port, health), а не хранилище бизнес-данных.",
+                "source_of_confusion": "Registries вроде etcd / ZooKeeper технически являются KV-store с репликацией, и их путают с базой приложения — но они хранят координационный state, а не бизнес-данные.",
+                "if_it_were_true": "Тогда каждая запись в БД проходила бы через Raft-консенсус — на write-heavy нагрузках registry бы коллапсировал. etcd специально не для high-write workloads.",
+                "how_it_should_be": "Registry хранит только список инстансов и метаданные; для бизнес-данных используется отдельная БД."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Service discovery — это компонент мониторинга, собирающий метрики со всех сервисов и отображающий их в едином дашборде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описание соответствует системе мониторинга (Prometheus + Grafana, Datadog). Service discovery занимается поиском адресов, а не сбором метрик.",
+                "source_of_confusion": "Prometheus использует service discovery, чтобы узнать, какие targets опрашивать (через Consul, Kubernetes SD) — отсюда смешение ролей.",
+                "if_it_were_true": "Тогда падение Grafana означало бы, что клиенты не могут найти друг друга — на практике это разные плоскости (discovery — control, monitoring — observability).",
+                "how_it_should_be": "Discovery отвечает за поиск адресов; мониторинг — отдельная подсистема, которая использует discovery как источник списка targets."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что хранится внутри Service Registry?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Полные исходники и Docker-образы зарегистрированных сервисов для развёртывания на новые ноды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описание соответствует Docker Registry / Nexus / Artifactory — это хранилище артефактов сборки, а не registry для discovery.",
+                "source_of_confusion": "Оба называются registry, но один хранит образы, другой — runtime-инстансы. Eureka и Nexus — разные категории.",
+                "if_it_were_true": "Тогда registry был бы гигабайтным и Raft-репликация была бы невозможна (etcd ограничивает значение 1.5 MB).",
+                "how_it_should_be": "В service registry хранятся метаданные об инстансах: id, host, port, status, last_heartbeat. Артефакты — в Docker registry."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только TLS-сертификаты сервисов для установления mTLS-соединений между ними.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описание соответствует PKI / Vault / cert-manager. В service mesh (Consul Connect, Istio Citadel) сертификаты могут быть рядом, но это не основная функция registry.",
+                "source_of_confusion": "В Consul Connect и SPIFFE / SPIRE сертификаты ассоциированы с identity сервиса — кажется, что они часть registry.",
+                "if_it_were_true": "Тогда registry без mTLS был бы невозможен, и любая система без TLS (legacy Eureka) не могла бы иметь registry.",
+                "how_it_should_be": "Registry хранит host/port/metadata/status; сертификаты — отдельный компонент (Citadel, Vault PKI), хотя в service mesh они интегрированы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Список инстансов сервиса с полями service_id, instance_id, host, port, metadata (zone, version, tags), status (UP/DOWN), last_heartbeat и health_check_url.",
+              "correct": true,
+              "sections": {
+                "explanation": "Минимальная запись в registry — это сетевые координаты плюс метаданные. service_id — логическое имя; instance_id — уникальный идентификатор pod-а; metadata позволяет фильтровать по версии / зоне / track (canary).",
+                "example": "В Eureka каждый InstanceInfo содержит ip, port, status, leaseInfo, metadata. В Kubernetes Endpoints / EndpointSlice — addresses, ports, conditions (ready), targetRef (на Pod). В Consul — Node, Service, Checks.",
+                "when_to_apply": "Любой registry: Eureka, Consul, etcd-based, K8s EndpointSlices. Минимум — host+port+status; metadata добавляется для traffic shaping (canary, blue-green).",
+                "edge_cases": "Размер записи имеет значение: в etcd значение ограничено 1.5 MB, в K8s EndpointSlice разбивается на куски по 100 endpoints. Большой Endpoints на 1000 pod-ов вызывает control-plane storm.",
+                "related": "[[service-discovery-interview#Q5]] heartbeat и TTL; [[service-discovery-interview#Q20]] K8s EndpointSlices; [[service-discovery-interview#Q26]] metadata для canary."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кэш HTTP-ответов с downstream-сервисов для ускорения повторных запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описание соответствует reverse proxy cache (Varnish, CDN, Nginx proxy_cache). Service registry не кеширует HTTP-ответы — только инстансы.",
+                "source_of_confusion": "И там и там присутствует слово cache, и оба ускоряют систему — но кеш ответов и кеш списка инстансов на клиенте — разные вещи.",
+                "if_it_were_true": "Тогда registry хранил бы тела HTTP-ответов, и при изменении инстансов кеш бы инвалидировался по entity tag — это совсем другая архитектура.",
+                "how_it_should_be": "Registry хранит только метаданные инстансов. Ответы кешируются на client-side (HTTP cache) или edge (CDN)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между self-registration и third-party registration?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Self-registration — инстанс сам регистрирует себя в registry при старте и шлёт heartbeat-ы; third-party — внешний контроллер (kubelet, Registrator) следит за жизненным циклом и сам пишет записи.",
+              "correct": true,
+              "sections": {
+                "explanation": "В self-registration приложение знает про registry и явно вызывает API (Eureka client, Consul agent). В third-party приложение не знает про discovery: ему достаточно отвечать на /health, а platform (Kubernetes EndpointController, Consul Registrator) синхронизирует state в registry.",
+                "example": "Spring Cloud + Eureka — self-registration через @EnableEurekaClient. Kubernetes — third-party: kubelet сообщает API-серверу о готовности pod-а через readiness probe, EndpointController обновляет EndpointSlice.",
+                "when_to_apply": "Self — когда приложение должно публиковать богатые метаданные (build version, feature flags). Third-party — когда хочется снять связку приложения с конкретным registry и менять реестр без редеплоя.",
+                "edge_cases": "В Kubernetes-мире победил third-party — приложение публикует /health, всё остальное делает platform. Гибрид: K8s + Spring Cloud Kubernetes — DiscoveryClient читает Endpoints, не регистрирует.",
+                "related": "[[service-discovery-interview#Q4]] health checks; [[service-discovery-interview#Q20]] EndpointController; [[service-discovery-interview#Q16]] Eureka client lifecycle."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Self-registration работает только в Kubernetes, а third-party — только в VM-окружении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Kubernetes как раз преобладает third-party (через EndpointController), а self-registration характерен для Eureka/Consul SDK — что встречается и в VM, и в K8s.",
+                "source_of_confusion": "В K8s pod не делает явный API-call на регистрацию — отсюда впечатление, что K8s = third-party. Но в K8s можно поставить Eureka и иметь self-registration внутри pod-ов.",
+                "if_it_were_true": "Тогда Spring Cloud Eureka не работал бы в Kubernetes — что не так, многие команды до сих пор используют этот стек в K8s.",
+                "how_it_should_be": "Дифференциация по тому, КТО регистрирует (приложение или внешний компонент), а не по платформе."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Self-registration требует distributed lock в registry, чтобы два инстанса не записались одновременно; third-party решает эту проблему через single writer.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой блокировки между инстансами при регистрации не нужно — каждый инстанс имеет уникальный instance_id, и запись идёт по этому ключу. Конкуренция отсутствует.",
+                "source_of_confusion": "Concurrent writes в registry — реальная задача, но решается уникальностью instance_id, а не distributed lock.",
+                "if_it_were_true": "Тогда auto-scaling-up на 50 инстансов одновременно вызвал бы lock contention в registry — на практике этого нет, потому что записи идут по разным ключам.",
+                "how_it_should_be": "Уникальность гарантируется instance_id; distributed lock не нужен ни для self-, ни для third-party registration."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Third-party registration — это когда у каждого pod-а есть sidecar Envoy, который выполняет регистрацию вместо приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описание частично похоже на service mesh, но Envoy sidecar не регистрирует приложение — он сам получает endpoints через xDS от control-plane (istiod), который читает K8s Service/EndpointSlice.",
+                "source_of_confusion": "Sidecar pattern и third-party registration — оба про вынесение функциональности из приложения, отсюда смешение.",
+                "if_it_were_true": "Тогда без Envoy не было бы third-party registration — но kubelet + EndpointController давно работают без всякого mesh.",
+                "how_it_should_be": "Third-party — это внешний контроллер (kubelet, Registrator), не обязательно sidecar; sidecar — отдельный паттерн."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы health checks существуют и в чём их различия?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Единственный надёжный тип — TCP-check: открыть соединение на порт и закрыть; всё остальное (HTTP, gRPC) даёт false-positive.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TCP-check, наоборот, самый слабый: established соединение не гарантирует, что приложение работает (например, TCP принят, но Spring context не поднялся и каждый запрос вернёт 503).",
+                "source_of_confusion": "TCP проще и быстрее, отсюда впечатление надёжности; но он проверяет только наличие listener-а, а не функциональность.",
+                "if_it_were_true": "Тогда K8s readinessProbe httpGet не существовало бы — но именно HTTP-probe считается best practice для Spring Boot и других HTTP-сервисов.",
+                "how_it_should_be": "TCP — fallback для non-HTTP сервисов. Для HTTP/gRPC использовать соответствующий протокол с проверкой реальной функциональности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "TTL-check работает только через активный HTTP-запрос от registry к /actuator/health, без него Eureka не может определить, жив ли инстанс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL-check (Eureka, push-модель) ровно наоборот: клиент САМ шлёт heartbeat в registry. Registry не делает активный pull. HTTP-probe — это Consul / Kubernetes, не Eureka.",
+                "source_of_confusion": "И HTTP-check, и TTL связаны с проверкой здоровья — отсюда смешение моделей push (TTL) и pull (HTTP-probe).",
+                "if_it_were_true": "Тогда Eureka не отличалась бы от Consul, но именно push-модель сделала Eureka AP — она устойчива к network-failure от registry к клиенту.",
+                "how_it_should_be": "Eureka: TTL push (heartbeat). Consul / K8s: HTTP/TCP/gRPC pull (registry зовёт probe)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Health checks нужны только в dev-окружении для отладки; в production registry должен принимать любые регистрации и доверять им.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямо наоборот: без health-check в production registry быстро заполняется зомби-записями (инстанс умер, не успел deregister). Health-check — критическая часть production setup.",
+                "source_of_confusion": "В dev действительно часто отключают self-preservation Eureka, чтобы быстрее увидеть removal — отсюда впечатление, что check для dev.",
+                "if_it_were_true": "Тогда падение JVM с OOM не отражалось бы в registry, и клиенты бились бы в мёртвый pod минутами.",
+                "how_it_should_be": "Health-check — обязательная часть registry в production; в dev можно ослабить таймауты для быстрой обратной связи."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Существуют TTL (push heartbeat от клиента), HTTP/TCP/gRPC (pull от registry), и комбинации; разделение liveness vs readiness отличает «процесс жив» от «готов принимать трафик».",
+              "correct": true,
+              "sections": {
+                "explanation": "TTL — клиент шлёт heartbeat (Eureka), registry ничего не знает про сеть до клиента. HTTP-pull — registry зовёт GET /health (Consul, K8s). TCP — open/close порта. gRPC — стандарт grpc.health.v1.Health/Check. Liveness отвечает «не нужно рестартить», readiness — «готов к трафику».",
+                "example": "Kubernetes: readinessProbe httpGet /actuator/health/readiness periodSeconds 10 failureThreshold 3. Spring Boot 2.3+ разделяет /readiness (БД подключена, кеш прогрелся) и /liveness (процесс не deadlock).",
+                "when_to_apply": "HTTP — для HTTP-сервисов; gRPC — для gRPC; TCP — для legacy/custom протоколов; TTL — когда registry не может достучаться до клиента (NAT, partition).",
+                "edge_cases": "TTL false-positive: процесс жив (поток heartbeat работает), но /api/order сломан. Решение — двойной check: heartbeat + actual functional probe. HTTP-probe нагружает сервис — нельзя ставить interval=1s на тысячу инстансов.",
+                "related": "[[service-discovery-interview#Q5]] heartbeat и TTL; [[service-discovery-interview#Q11]] Consul checks; [[service-discovery-interview#Q15]] self-preservation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как взаимосвязаны heartbeat interval, TTL и eviction в registry?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Heartbeat и TTL должны быть равны: если heartbeat = 30 сек, то TTL = 30 сек, иначе registry будет неверно интерпретировать пропуск одного пакета.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL делается 2-3× heartbeat (например, heartbeat 30 сек, TTL 90 сек). Это страховка от единичного потерянного пакета: пропуск одного heartbeat-а не помечает инстанс DOWN.",
+                "source_of_confusion": "Кажется логичным, что окно ожидания = периодичности пинга, но в сетях с jitter это даёт false-positive eviction.",
+                "if_it_were_true": "Тогда любой GC-pause длиннее одного heartbeat (30 сек) выкидывал бы инстанс из registry — на практике это слишком агрессивно.",
+                "how_it_should_be": "TTL = 2-3 × heartbeat. Spring Cloud Eureka default: lease-renewal=30s, lease-expiration=90s."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Heartbeat interval определяет частоту пинга от инстанса, TTL — окно ожидания (обычно 2-3× heartbeat), eviction interval — периодичность чистки в registry; sweet spot покрывает GC-pause + network blip, но меньше circuit-breaker timeout.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три параметра задают скорость реакции на падение: heartbeat (5-30 сек) — частота пинга, TTL (2-3× heartbeat) — порог объявления DOWN, eviction (30-60 сек) — как часто registry физически удаляет. Sweet spot — TTL покрывает GC-pause + network blip (типично 60-90 сек), но меньше circuit-breaker timeout клиента, иначе CB реагирует быстрее.",
+                "example": "Spring Cloud Eureka default: lease-renewal=30s, lease-expiration=90s. Consul: check interval=10s, deregister_critical_service_after=1m. Если CB на клиенте срабатывает за 5 сек, клиент сам отрежет инстанс задолго до eviction.",
+                "when_to_apply": "Короткий TTL (5-15 сек) — для критичных систем с быстрой реакцией (trading, payment). Длинный (60-90 сек) — для стабильных нагрузок и защиты от network glitch.",
+                "edge_cases": "Слишком короткий TTL → false-positive при GC-pause (например, ZGC может дать 1 сек паузу, CMS — десятки секунд). Двойной механизм: registry убирает медленно, CB на клиенте — мгновенно.",
+                "related": "[[service-discovery-interview#Q4]] health checks; [[service-discovery-interview#Q9]] клиентский кеш; [[service-discovery-interview#Q15]] self-preservation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Eviction interval должен быть равен heartbeat interval, чтобы registry удалял мёртвые записи сразу при пропуске пинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eviction interval — это период запуска scan-процесса в registry, он независим от heartbeat. Запись помечается DOWN при истечении TTL, а удаляется при следующем eviction scan (типично 30-60 сек).",
+                "source_of_confusion": "Кажется логичным удалять сразу — но это создаёт CPU-нагрузку и не даёт grace-period для возврата инстанса.",
+                "if_it_were_true": "Тогда инстанс с временным network blip удалился бы немедленно, и клиенты получили бы пустой реестр в момент сетевого спайка.",
+                "how_it_should_be": "Eviction — отдельный таймер, обычно 30-60 сек. Это добавляет небольшую задержку, но защищает от шторма."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TTL должен быть как можно короче (1-2 сек), чтобы клиенты никогда не били в мёртвые инстансы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL 1-2 сек на практике даёт массу false-positive: любой GC-pause, network blip, kernel scheduling jitter выкинет живой инстанс из registry. Sweet spot — 60-90 сек, защита через circuit-breaker на клиенте.",
+                "source_of_confusion": "Кажется, что чем короче TTL, тем быстрее реакция — но цена в false-positive evictions превышает выгоду.",
+                "if_it_were_true": "Тогда registry постоянно бы менял состояние, генерировал шторм watch-событий, и control-plane коллапсировал бы.",
+                "how_it_should_be": "TTL 60-90 сек, а мгновенная реакция на dead instance — через circuit-breaker / retry в клиенте."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает client-side discovery (модель и flow)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Клиент сам опрашивает registry, держит локальный snapshot и применяет балансировку (round-robin/weighted/locality-aware) перед отправкой запроса на конкретный инстанс — между клиентом и сервером нет дополнительного hop-а.",
+              "correct": true,
+              "sections": {
+                "explanation": "Client-side: при старте клиент тянет список инстансов из registry, кеширует in-memory (с disk-persistence в Eureka), периодически refresh-ит (30 сек) или подписан на watch. На каждый запрос — pickInstance() в клиенте: round-robin, weighted, locality-aware. TCP — напрямую к серверу.",
+                "example": "Netflix Eureka + Ribbon / Spring Cloud LoadBalancer: client держит in-memory snapshot, refresh каждые 30 сек, на запрос — round-robin по живым инстансам. gRPC custom resolver — клиент держит подключения ко всем инстансам сразу. Consul + Consul Connect SDK.",
+                "when_to_apply": "JVM-моноязык, low-latency, locality-aware routing (клиент знает свой AZ и предпочитает инстансы в той же зоне). Netflix-style архитектура.",
+                "edge_cases": "Multi-language → каждому языку нужна библиотека (Java, Go, Python ...). При partition клиент работает по stale cache (fail-open Eureka default). Cache на диск спасает после рестарта клиента.",
+                "related": "[[service-discovery-interview#Q7]] server-side; [[service-discovery-interview#Q8]] pros/cons; [[service-discovery-interview#Q9]] кеш и partition."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Клиент отправляет каждый запрос на well-known endpoint registry, и registry синхронно проксирует запрос на нужный инстанс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Registry не проксирует трафик — это data plane задача (LB / proxy / sidecar). Registry только отдаёт список инстансов. Описанное больше похоже на server-side discovery через LB.",
+                "source_of_confusion": "В service mesh control plane (istiod) близко связан с data plane (Envoy), отсюда смешение.",
+                "if_it_were_true": "Тогда registry стал бы bottleneck-ом всей системы (миллионы RPS через него), и Raft-replicated registry не выдержал бы такой нагрузки.",
+                "how_it_should_be": "Registry — control plane (отдаёт список). Маршрутизация трафика — data plane (клиент сам / LB / sidecar)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Клиент при каждом запросе делает DNS-resolve логического имени, и DNS-сервер выбирает один из живых IP методом round-robin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это упрощённое описание DNS-based server-side discovery (Kubernetes Service ClusterIP, headless service). В client-side клиент держит весь список локально и сам выбирает, не делая DNS на каждый запрос.",
+                "source_of_confusion": "DNS round-robin похож на client-side LB, но клиент в DNS-модели видит только один IP за раз и не контролирует выбор.",
+                "if_it_were_true": "Тогда client-side discovery в Eureka не существовала бы — но Ribbon / Spring Cloud LoadBalancer работают именно поверх локального snapshot.",
+                "how_it_should_be": "Client-side: локальный snapshot инстансов + явный pickInstance() в клиенте. DNS-based — отдельная модель, ближе к server-side."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Клиент отправляет запрос на sidecar-прокси, который локально маршрутизирует к нужному инстансу через xDS-конфигурацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описание соответствует service mesh (Istio + Envoy sidecar). Формально это server-side через sidecar (но локальный hop). В чистом client-side нет sidecar — балансировка встроена в клиентский код.",
+                "source_of_confusion": "Sidecar-pattern размывает границу client/server, отсюда смешение.",
+                "if_it_were_true": "Тогда client-side requires Envoy, и Eureka + Ribbon (без sidecar) не существовало бы.",
+                "how_it_should_be": "Чистый client-side — клиент сам, без sidecar. Mesh — гибрид с sidecar, формально server-side."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает server-side discovery (модель и flow)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Клиент держит snapshot реестра локально и сам выбирает инстанс перед каждым запросом, без участия промежуточного LB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание client-side discovery (Eureka + Ribbon). В server-side клиент НЕ знает про список инстансов — он видит только well-known endpoint.",
+                "source_of_confusion": "Названия похожи (client-side / server-side), и при поверхностном чтении легко перепутать кто за что отвечает.",
+                "if_it_were_true": "Тогда не нужны были бы Kubernetes Service / ELB / Envoy — а они и есть основа server-side discovery.",
+                "how_it_should_be": "Client-side: клиент знает все инстансы. Server-side: клиент знает один endpoint, LB знает инстансы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Клиент шлёт запрос непосредственно в registry, и registry синхронно выполняет бизнес-логику от имени target-сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Registry никогда не выполняет бизнес-логику — это координационный store. Запросы идут через LB / proxy, который опрашивает registry и форвардит на инстанс.",
+                "source_of_confusion": "В service mesh control-plane и data-plane тесно связаны — отсюда впечатление, что registry «обслуживает» запросы.",
+                "if_it_were_true": "Тогда registry должен был бы знать схему БД, бизнес-правила, и т.д. — это противоречит самой идее координационного store.",
+                "how_it_should_be": "Registry хранит метаданные; запросы маршрутизирует data plane (LB / proxy / sidecar)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Клиент шлёт запрос на well-known endpoint (LB / proxy / Kubernetes Service), который опрашивает registry (через watch) и сам выбирает target-инстанс; клиент не знает про registry и про инстансы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Server-side: клиент видит ОДИН endpoint (Kubernetes ClusterIP, AWS ELB DNS-name, Nginx upstream). За ним LB / proxy, который подписан на watch в registry и держит свой list of endpoints. На запрос — LB pickInstance() и форвардит. Клиент полностью «глупый».",
+                "example": "Kubernetes Service ClusterIP: kube-proxy на каждой ноде делает DNAT 10.96.123.45:80 → 10.244.1.5:8080. AWS ALB: target group опрашивается ALB. Nginx upstream + nginx-resolver. Envoy sidecar опрашивает Pilot через xDS.",
+                "when_to_apply": "Polyglot (разные языки), Kubernetes, простота клиента, желание иметь L7-routing в одном месте. Любая публичная HTTP-нагрузка через managed LB.",
+                "edge_cases": "Лишний hop через LB → +1-3 ms latency в одном AZ. LB может стать bottleneck → нужен HA-кластер. Sticky session требует session affinity на LB.",
+                "related": "[[service-discovery-interview#Q6]] client-side; [[service-discovery-interview#Q8]] pros/cons; [[service-discovery-interview#Q20]] K8s Service."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Server-side discovery — это когда registry сам пушит новые endpoints через WebSocket-уведомления в браузер клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого WebSocket в браузер registry не пушит. Описание звучит как реал-тайм UI обновление, но это не имеет отношения к discovery.",
+                "source_of_confusion": "Watch / long-poll действительно используется (Consul blocking query, etcd watch, K8s watch), но это между registry и data-plane компонентом, а не браузером.",
+                "if_it_were_true": "Тогда discovery работал бы только в браузерах и не работал бы для backend-to-backend communication — что абсурдно.",
+                "how_it_should_be": "Server-side: LB опрашивает registry, клиент видит один endpoint."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каковы pros/cons client-side vs server-side discovery?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Client-side всегда быстрее и проще, server-side вызывает обязательный round-trip через registry на каждый запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Server-side НЕ ходит в registry на каждый запрос — LB подписан на watch и держит локальный кеш endpoints. Hop через LB добавляет 1-3 ms (в одном AZ), но это не round-trip к registry.",
+                "source_of_confusion": "Кажется, что server-side подразумевает «спросить registry», но это происходит асинхронно через watch.",
+                "if_it_were_true": "Тогда K8s Service не масштабировался бы — на каждый запрос hit в etcd. На практике kube-proxy держит endpoints в памяти, etcd дёргается только при изменениях.",
+                "how_it_should_be": "Server-side: LB кеширует endpoints через watch; +hop ~1-3 ms, но не запрос к registry per request."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Client-side и server-side эквивалентны по всем параметрам — выбор делается по личным предпочтениям команды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальные различия: hop count, latency, polyglot support, где живёт логика балансировки, где CB/retry — это объективные trade-off, не личные предпочтения.",
+                "source_of_confusion": "Команды действительно делают выбор «по привычке» (Spring Cloud в JVM, K8s Service в DevOps-mind), но это не делает их эквивалентными.",
+                "if_it_were_true": "Тогда не было бы дебатов в индустрии и Netflix не публиковал бы отдельные blog posts про Eureka 2.0.",
+                "how_it_should_be": "Выбор по: latency-critical (client-side), polyglot (server-side), locality-aware (client-side проще), centralized policy (server-side / mesh)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Server-side discovery невозможен в Kubernetes — там только client-side.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямо наоборот: Kubernetes Service ClusterIP — это классический server-side (через kube-proxy DNAT). Client-side в K8s — это headless Service + библиотека клиента.",
+                "source_of_confusion": "Headless Service возвращает все pod IPs — что выглядит как client-side, отсюда обобщение.",
+                "if_it_were_true": "Тогда kube-proxy и iptables/IPVS не имели бы смысла — но они и есть основа K8s discovery.",
+                "how_it_should_be": "K8s по умолчанию server-side (ClusterIP). Headless Service — client-side."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Client-side даёт минимальный latency (1 hop, прямой TCP) и locality-aware-балансировку, но требует библиотеку в каждом языке; server-side прозрачен для клиента и polyglot-friendly, но добавляет hop через LB и централизует логику в одном месте.",
+              "correct": true,
+              "sections": {
+                "explanation": "Client-side: 1 hop, минимальная latency, легко делать locality-aware (клиент знает свой AZ), CB/retry в клиенте; но multi-language → SDK для каждого языка, деплой клиентов медленный. Server-side: 2 hop (client → LB → server), +1-3 ms, прозрачно для клиента (HTTP — и достаточно), один деплой LB меняет балансировку, polyglot-friendly.",
+                "example": "Netflix перешёл на client-side через Eureka+Ribbon — у них Java-моноязык, важна latency. AWS / Kubernetes используют server-side — там polyglot и важна простота. Service mesh (Istio+Envoy) — гибрид: server-side через sidecar, но sidecar локален → нет inter-host hop.",
+                "when_to_apply": "Client-side: JVM-моноязык, low-latency, locality routing. Server-side: polyglot, Kubernetes, managed cloud LB. Mesh: best of both worlds за ценой CPU/memory overhead.",
+                "edge_cases": "Sticky sessions проще делать в LB (server-side); locality-aware проще в клиенте (client-side); mTLS между всеми клиент-сервер пары — дорого, mTLS только до LB — проще.",
+                "related": "[[service-discovery-interview#Q6]] client-side flow; [[service-discovery-interview#Q7]] server-side flow; [[service-discovery-interview#Q24]] service mesh."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем клиент держит локальный кэш реестра и что делать при partition с registry?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Кэш не нужен — каждый запрос должен идти через свежий resolve в registry, иначе клиент рискует получить stale данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без кеша registry становится bottleneck-ом: каждый запрос == round-trip. При тысячах RPS на одного клиента registry падает первым.",
+                "source_of_confusion": "Кажется, что свежие данные = лучше, но цена — нагрузка на registry и SPOF.",
+                "if_it_were_true": "Тогда Eureka не делала бы periodic fetch + delta — но именно это спасает от каскадного падения при downtime registry.",
+                "how_it_should_be": "Локальный кеш — обязателен; refresh 5-30 сек или watch; fail-open на partition."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Клиент держит локальный snapshot (refresh 5-30 сек или watch), при partition типично работает fail-open (stale data ОК), сохраняет snapshot на disk для cold start; fail-closed применяется редко и опасен.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый запрос через registry == round-trip и SPOF. Локальный кеш убирает горячий path. При partition две стратегии: fail-open (stale read, Eureka default) — продолжаем работать со старым cache, плюс CB на запросах в мёртвые инстансы; fail-closed (отказ) — опасен, каскадирует падение.",
+                "example": "Eureka сохраняет последний snapshot в файл — после перезапуска клиент сразу работает, не дожидаясь первого refresh. Spring Cloud Consul Watch использует blocking query (long-poll). gRPC custom resolver — push через streaming.",
+                "when_to_apply": "Fail-open — для большинства discovery (stale ≤ unavailable). Fail-closed — для critical data (но registry редко так делает).",
+                "edge_cases": "Cold start chicken-and-egg: registry-сервер сам — клиент discovery для health-check. Решение — seed-config (статичный список peers). Длинный stale cache может слать в мёртвые инстансы минутами — спасает CB.",
+                "related": "[[service-discovery-interview#Q15]] self-preservation Eureka; [[service-discovery-interview#Q28]] discovery как SPOF; [[service-discovery-interview#Q27]] CAP trade-offs."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При partition с registry клиент должен немедленно прекратить принимать любые входящие запросы (fail-closed) — это единственная безопасная стратегия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fail-closed каскадирует падение: registry down → весь mesh down. Eureka именно для того и AP, чтобы избежать этого. Stale читать почти всегда безопаснее.",
+                "source_of_confusion": "Fail-closed звучит как «безопаснее», но для discovery — нет: stale данные обычно не приведут к коррупции, а отказ обслуживания приведёт.",
+                "if_it_were_true": "Тогда любой сбой Eureka вынес бы весь Netflix — но в реальности Netflix падал реже, чем Eureka.",
+                "how_it_should_be": "Fail-open в discovery; CB на клиенте отрежет конкретный мёртвый instance."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кэш на клиенте противоречит CAP-теореме и поэтому применяется только в эволюционно-устаревших системах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэш не противоречит CAP — это локальный snapshot последнего consistent state. CAP про partition behavior всей системы, а кеш — про performance и resilience клиента.",
+                "source_of_confusion": "CAP часто упоминают вместе с distributed state, но кеш — это read-only копия, а не write quorum.",
+                "if_it_were_true": "Тогда все современные клиенты Kubernetes (kubectl, controllers) не работали бы — но они активно используют informer/watch cache.",
+                "how_it_should_be": "Кэш — стандартная практика; CAP про другое — про write quorum при partition."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова архитектура Consul: client / server agents и роль gossip?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Consul состоит из server agents (3 или 5, Raft-кластер, хранят registry/KV/ACL) и client agents (по одному на машину, не хранят state, делают local health-check и форвардят регистрации); gossip-протокол (Serf на базе SWIM) разносит membership и failure detection.",
+              "correct": true,
+              "sections": {
+                "explanation": "Server agents — Raft-кластер из 3 или 5 нод, один leader, остальные followers; хранят registry, KV, ACL. Client agents — на каждой машине/pod, stateless, форвардят регистрации в server-кластер, делают local health-check, экспонируют локально DNS (127.0.0.1:8600) и HTTP (127.0.0.1:8500). Gossip (Serf на SWIM) — все агенты знают друг друга через P2P-обмен, секунды разносят membership changes.",
+                "example": "Production Consul: 3 server-нод в одном DC (Raft quorum), client agent на каждой VM/host. Multi-DC: ещё один server-кластер в DC2, объединение через WAN gossip + RPC forwarding для cross-DC запросов. Spring Cloud Consul подключается к локальному client agent.",
+                "when_to_apply": "Гибридные окружения (VM + Kubernetes), мульти-DC, нужны KV-store и Consul Connect (mTLS) — Consul идеален. Чистый K8s — обычно избыточен (есть Service+CoreDNS).",
+                "edge_cases": "5 нод вместо 3 — лучше tolerate 2 failures, но latency Raft выше. Падение client agent на ноде = недоступность local API на этой ноде; падение server-кластера = весь DC деградирован.",
+                "related": "[[service-discovery-interview#Q11]] Consul registration; [[service-discovery-interview#Q12]] DNS/HTTP API; [[service-discovery-interview#Q13]] KV/multi-DC."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Consul — это monolithic single-node service, все клиенты ходят на один центральный сервер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Consul изначально проектировался распределённым (3-5 серверов через Raft + client agents через gossip). Single-node режим существует только для dev (dev-режим).",
+                "source_of_confusion": "Документация показывает primitive dev-команды (consul agent -dev), и кажется что в проде так же — но дев-режим не для production.",
+                "if_it_were_true": "Тогда Consul был бы SPOF и HashiCorp не позиционировал бы его как «production-grade».",
+                "how_it_should_be": "Production Consul — 3 или 5 server-нод + client agents на каждой машине; dev — один процесс."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В Consul gossip-протокол отвечает за репликацию registry и KV-store между server-нодами вместо Raft.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Registry/KV в Consul реплицируются через Raft (strong consistency), а не gossip (eventually consistent). Gossip (Serf) — для membership и failure detection.",
+                "source_of_confusion": "Оба протокола обмениваются сообщениями между нодами, но Raft — для consensus, gossip — для membership.",
+                "if_it_were_true": "Тогда Consul был бы AP-системой как Eureka — но он специально CP именно из-за Raft.",
+                "how_it_should_be": "Raft — для state (registry, KV). Gossip — для membership и health failure propagation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все client agents в Consul делают health-check для всех зарегистрированных сервисов во всём кластере, поэтому нагрузка распределена равномерно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Local-agent делает health-check только для local services (зарегистрированных через него). Это масштабирует горизонтально: 1000 нод → каждая делает свои checks, не всё через центр.",
+                "source_of_confusion": "Кажется, что распределить health-check между всеми agents — лучше, но это бы создало N×M нагрузку и потребовало бы routing к target.",
+                "if_it_were_true": "Тогда добавление инстанса вызвало бы каскад reconfiguration всех agents в кластере.",
+                "how_it_should_be": "Local-agent делает health-check только для local services; результаты разносятся через gossip и Raft."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как происходит регистрация сервиса и health-check в Consul?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Регистрация возможна только через CLI команду consul services register; HTTP API и config-файлы не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Consul поддерживает три способа: JSON-файл в /etc/consul.d/ (статичная регистрация), HTTP-PUT в local agent (динамическая), и CLI как обёртка над HTTP API.",
+                "source_of_confusion": "CLI — самый видимый способ в туториалах, отсюда обобщение.",
+                "if_it_were_true": "Тогда не было бы Spring Cloud Consul auto-registration — но он именно через HTTP-PUT на старте.",
+                "how_it_should_be": "JSON-файл (статика), HTTP-PUT (динамика), CLI (обёртка) — все три способа поддержаны."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Health-check для всех сервисов выполняется centralized HTTP-вызовом из server-кластера, что создаёт нагрузку на server-ноды пропорциональную числу сервисов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямо наоборот: health-check выполняется LOCAL agent-ом на той же машине, где сервис. Это масштабируется горизонтально: больше нод → больше agents → больше параллельных проверок.",
+                "source_of_confusion": "Привычка к centralized monitoring (Prometheus pull) переносится на discovery — но Consul специально делает иначе.",
+                "if_it_were_true": "Тогда Consul server-кластер коллапсировал бы при 10k+ инстансов — но реальные deployments на 50k+ инстансов работают.",
+                "how_it_should_be": "Local agent делает HTTP/TCP/gRPC/TTL/script checks для local services; результаты через Raft и gossip."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Регистрация в Consul возможна через JSON-файл (/etc/consul.d/), HTTP-PUT в local agent или Spring Cloud Consul auto-registration; health-checks (HTTP/TCP/gRPC/TTL/script) выполняются local-agent-ом с поддержкой deregister_critical_service_after для авто-удаления.",
+              "correct": true,
+              "sections": {
+                "explanation": "Регистрация: JSON-файл (статичная) или POST/PUT /v1/agent/service/register (динамическая). Local agent реплицирует в server-кластер. Health-check определяется в той же регистрации: http, tcp, grpc, ttl (push), script. Параметр deregister_critical_service_after задаёт grace-period после которого инстанс автоматически удаляется.",
+                "example": "JSON: {\"service\":{\"name\":\"payments-service\",\"port\":8080,\"checks\":[{\"http\":\"http://localhost:8080/actuator/health\",\"interval\":\"10s\",\"timeout\":\"2s\",\"deregister_critical_service_after\":\"1m\"}]}}. Spring Cloud Consul auto-registers через @EnableDiscoveryClient.",
+                "when_to_apply": "JSON-config — для immutable infrastructure (configuration-as-code). HTTP API — для динамики (контейнеры). Auto-registration через SDK — простейший вариант для микросервисов.",
+                "edge_cases": "deregister_critical_service_after важен — без него мёртвые инстансы остаются как critical навечно. Слишком короткий интервал check-а нагружает сервис; слишком длинный замедляет реакцию.",
+                "related": "[[service-discovery-interview#Q4]] health checks; [[service-discovery-interview#Q10]] Consul архитектура; [[service-discovery-interview#Q12]] DNS/HTTP API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Consul поддерживает только один тип health-check — HTTP probe на endpoint /health; TCP, gRPC и TTL не реализованы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Consul поддерживает HTTP, TCP, gRPC, TTL, script, alias и docker checks. Это одна из его сильных сторон — широкая палитра типов проверок.",
+                "source_of_confusion": "HTTP — самый распространённый пример в документации, отсюда обобщение.",
+                "if_it_were_true": "Тогда невозможно было бы регистрировать non-HTTP сервисы (Kafka, Cassandra) — но Consul активно используется для них через TCP/script checks.",
+                "how_it_should_be": "Consul поддерживает 5+ типов checks; выбор по типу сервиса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем DNS-интерфейс Consul отличается от HTTP API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DNS-интерфейс и HTTP API в Consul идентичны по функциональности — разница только в имени endpoint-а.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DNS отдаёт A/SRV records (host:port), но не метаданные (tags, version); HTTP API отдаёт полный JSON с metadata, check status и поддерживает блокирующий long-poll.",
+                "source_of_confusion": "Оба отдают список инстансов — отсюда впечатление эквивалентности.",
+                "if_it_were_true": "Тогда не было бы причины использовать HTTP API для filtering по tags / versioning — но именно это его главное преимущество.",
+                "how_it_should_be": "DNS — простой, для legacy. HTTP — богатые метаданные + long-poll watch."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DNS-интерфейс Consul работает только из Kubernetes pod-ов и блокирован для запросов извне кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DNS-интерфейс Consul работает на UDP/TCP 8600 на любом client/server agent. Доступ зависит от network policy и ACL, но не привязан к Kubernetes.",
+                "source_of_confusion": "В K8s Consul часто запускается рядом с CoreDNS, отсюда привязка к pod-ам в восприятии.",
+                "if_it_were_true": "Тогда Consul DNS не работал бы в VM-окружении — но как раз именно в VM он часто и используется (наследие до Kubernetes).",
+                "how_it_should_be": "Consul DNS доступен на любом agent через 8600; ограничения — по сетевым правилам и ACL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DNS работает только через TCP, HTTP API — только через UDP; это создаёт ограничения для streaming.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DNS работает по UDP (по умолчанию) и TCP (для больших ответов). HTTP API работает по TCP. UDP в HTTP-протоколе как раз не используется (есть HTTP/3 над QUIC, но не для Consul API).",
+                "source_of_confusion": "Сетевая терминология (UDP/TCP) перепутана с протоколами приложения.",
+                "if_it_were_true": "Тогда HTTP API не работал бы как RESTful — что противоречит каждому туториалу Consul.",
+                "how_it_should_be": "DNS: UDP + TCP fallback. HTTP API: TCP (HTTP/1.1 или HTTP/2)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DNS-интерфейс (порт 8600, A/SRV records) — для legacy-клиентов, не требует кода; HTTP API (порт 8500, JSON) — для современных клиентов с метаданными и long-poll watch (?wait=30s&index=X).",
+              "correct": true,
+              "sections": {
+                "explanation": "DNS: dig @127.0.0.1 -p 8600 payments-service.service.consul — A-records на каждый живой инстанс; SRV — с портами. Plus: zero code change для legacy. Cons: нет метаданных. HTTP API: GET /v1/health/service/payments-service?passing&tag=v2.3.1 — JSON с host/port/metadata/check; ?wait=30s&index=X — blocking query (long-poll watch).",
+                "example": "Spring Cloud Consul по умолчанию использует HTTP API + watch (через blocking query). Legacy Java-приложение через JNDI/InetAddress — DNS на 8600. Mixed setups: Nginx через DNS resolver, новые сервисы через HTTP.",
+                "when_to_apply": "DNS — когда нужен zero-code-change или интеграция с DNS-aware tools (Nginx, Envoy с DNS resolver). HTTP — для filtering по tag, watch-based push.",
+                "edge_cases": "DNS не передаёт версии (нет structured metadata в A/SRV — только в TXT через ad-hoc). HTTP long-poll держит TCP-соединение → потребляет fd на server-side. ACL применяется одинаково к обоим интерфейсам.",
+                "related": "[[service-discovery-interview#Q11]] Consul регистрация; [[service-discovery-interview#Q21]] CoreDNS; [[service-discovery-interview#Q22]] SRV records."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие возможности даёт Consul KV-store, multi-datacenter и ACL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Consul KV-store предназначен только для конфигурации DNS-сервера и не используется приложениями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "KV — универсальный Raft-replicated key-value store для distributed config, locks (через session), leader election. Активно используется приложениями (Spring Cloud Config через Consul backend).",
+                "source_of_confusion": "Один из use-case — DNS-config, отсюда обобщение.",
+                "if_it_were_true": "Тогда не было бы Spring Cloud Consul Config — но это распространённая замена application.yml.",
+                "how_it_should_be": "KV — общее назначение: config, locks, leader election, ad-hoc metadata."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Consul KV (Raft-replicated) служит для distributed config, locks (через session) и leader election; multi-DC — независимые Raft-кластеры в каждом DC + WAN gossip + RPC forwarding для cross-DC запросов; ACL — token-based RBAC на сервисы / KV / nodes; Consul Connect добавляет встроенный mTLS + intentions.",
+              "correct": true,
+              "sections": {
+                "explanation": "KV — встроенная Raft-replicated БД ключ-значение: config (заменяет application.yml), distributed lock (acquire по session), leader election (session + KV). Multi-DC: каждый DC — независимый Raft-кластер; cross-DC запрос — через RPC forwarding между server-кластерами + WAN gossip для membership. ACL — token-based, ограничивает read/write на namespace. Consul Connect — service mesh с встроенным mTLS и intentions (allow/deny политики между сервисами).",
+                "example": "Multi-DC: payments-service.service.dc2.consul резолвится в DC2. KV: consul kv put config/app/db.url ... ; Spring Cloud читает через consul-config. Intention: «order-service может ходить в payments-service» — без явной IP allowlist.",
+                "when_to_apply": "KV — distributed config. Multi-DC — geo-distributed deployment с активным both-DC сценарием. ACL — production hardening. Connect — service mesh без отдельного Istio.",
+                "edge_cases": "Cross-DC запрос имеет повышенный latency (WAN RTT); нельзя писать в KV из minority partition (CP). ACL надо включать с самого начала (postponing создаёт миграцию).",
+                "related": "[[service-discovery-interview#Q10]] Consul архитектура; [[service-discovery-interview#Q11]] регистрация и checks; [[service-discovery-interview#Q24]] service mesh."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Multi-DC в Consul реализован через global Raft-кластер из 7 нод, охватывающий все DC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Global Raft через WAN был бы катастрофой по latency (cross-DC RTT может быть 100+ ms на write quorum). Consul использует независимые Raft в каждом DC + WAN gossip для membership + RPC forwarding для cross-DC reads.",
+                "source_of_confusion": "Раз все ноды связаны — кажется, что один Raft-кластер; но это два разных Raft + gossip-bridge.",
+                "if_it_were_true": "Тогда DC2 не мог бы писать без подтверждения от DC1 — latency убийственная.",
+                "how_it_should_be": "Independent Raft per DC + WAN gossip + RPC forwarding на cross-DC read."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ACL в Consul реализован через X.509 сертификаты клиентов и не поддерживает token-based authentication.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Consul ACL — token-based (HTTP header X-Consul-Token или query parameter). Сертификаты используются в Consul Connect (mTLS между сервисами), но это отдельный механизм.",
+                "source_of_confusion": "В Connect (service mesh) активно используются сертификаты — отсюда смешение с ACL.",
+                "if_it_were_true": "Тогда нельзя было бы давать токены CI/CD pipeline без выпуска сертификата — что неудобно.",
+                "how_it_should_be": "ACL — токены; Connect — mTLS сертификаты. Это два разных механизма."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова архитектура Eureka и почему она AP?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Eureka — несколько серверов (обычно 3) с peer-to-peer асинхронной репликацией через REST (без Raft/Paxos); при partition каждый peer обслуживает клиентов своим snapshot-ом; Netflix выбрал AP, потому что stale list ≤ unavailability при потоковом видео.",
+              "correct": true,
+              "sections": {
+                "explanation": "Топология: 3+ Eureka-серверов с peer-to-peer REST-репликацией. Запись принимается локально и асинхронно реплицируется на peers; если peer недоступен — догонится позже. При split-brain каждый peer продолжает обслуживать клиентов своим (возможно устаревшим) snapshot-ом. Никакого Raft / Paxos. Stale read допустим — registry никогда не отказывает.",
+                "example": "Netflix-сценарий: видео-streaming не должен лежать из-за registry. Лучше отдать клиенту 95% актуальный список (со старым инстансом, который через CB будет отрезан) — чем вернуть «registry unavailable» и положить весь сервис. Spring Cloud Netflix Eureka: defaultZone=http://peer1:8761/eureka/,http://peer2:8761/eureka/.",
+                "when_to_apply": "Когда unavailability registry хуже, чем stale data — почти всегда для чистого discovery. JVM-моноязык. Netflix-style high-availability требования.",
+                "edge_cases": "Self-preservation mode защищает от network partition между Eureka и большинством клиентов — Eureka перестаёт evict-ить, лучше держать stale, чем выкинуть всех. В dev часто отключают.",
+                "related": "[[service-discovery-interview#Q15]] self-preservation; [[service-discovery-interview#Q16]] Eureka client; [[service-discovery-interview#Q27]] CAP trade-offs."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Eureka использует Raft consensus для синхронной репликации между серверами, что делает её CP-системой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eureka не использует Raft — это peer-to-peer асинхронная репликация через REST, что делает её AP. Если бы был Raft — она была бы CP как Consul.",
+                "source_of_confusion": "Многие современные registries (etcd, Consul) используют Raft, и пресуппозиция переносится на Eureka.",
+                "if_it_were_true": "Тогда self-preservation mode не имел бы смысла — это типично AP-фича для защиты от false eviction.",
+                "how_it_should_be": "Eureka — peer-to-peer async replication, AP. Consul/etcd/ZK — Raft/ZAB, CP."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Eureka — single-server registry без репликации; HA достигается через периодическое резервное копирование в S3.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eureka изначально проектировалась под multi-node deployment с peer-to-peer репликацией. S3 backup не упоминается в архитектуре — клиенты сохраняют snapshot локально на диск.",
+                "source_of_confusion": "В Netflix-tech blogs обсуждается резервная стратегия в S3, но это отдельный пресет, не часть архитектуры Eureka.",
+                "if_it_were_true": "Тогда smashed peer = потеря registry — что противоречит Netflix-style HA.",
+                "how_it_should_be": "Multi-node Eureka с P2P REST replication; client-side disk snapshot для cold start."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Eureka — CP-система, выбранная Netflix именно за strong consistency между peers, чтобы избежать stale reads.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eureka — AP-система. Netflix сознательно выбрал AP, потому что в их сценарии (streaming) недоступность registry хуже, чем stale read. Цитата Netflix: «Лучше клиент пошлёт запрос в чуть устаревший инстанс, чем мы вернём ошибку registry недоступна».",
+                "source_of_confusion": "Кажется, что strong consistency — всегда лучше, но в discovery это не так.",
+                "if_it_were_true": "Тогда не появился бы self-preservation mode — он специально для AP-сценария.",
+                "how_it_should_be": "Eureka — AP. CP-аналоги: Consul, etcd, ZooKeeper."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое self-preservation mode в Eureka и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Self-preservation mode — это механизм, при котором Eureka сохраняет registry в локальный файл каждые 30 секунд для disaster recovery.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описанное — disk snapshot persistence, который тоже есть в Eureka, но это другой механизм. Self-preservation — про прекращение eviction при подозрении на network partition.",
+                "source_of_confusion": "Оба механизма про «сохранение state», отсюда смешение.",
+                "if_it_were_true": "Тогда self-preservation не имел бы trigger от renewal-percent-threshold — но именно этот порог его включает.",
+                "how_it_should_be": "Self-preservation — прекращение eviction при low heartbeat rate; disk snapshot — отдельная feature."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Self-preservation — это режим shutdown, в который Eureka переходит при критически малом числе peers (1 из 3), чтобы избежать split-brain.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eureka — AP, она специально не делает shutdown при partition. Self-preservation — прекращение eviction, чтобы держать stale записи, не прекращение обслуживания.",
+                "source_of_confusion": "В CP-системах при split-brain minority partition действительно shutdown-ится — переносится на Eureka.",
+                "if_it_were_true": "Тогда Eureka была бы CP — но она AP, и self-preservation подчёркивает именно AP-логику.",
+                "how_it_should_be": "Self-preservation — не shutdown, а защитное отключение eviction при низком rate heartbeat-ов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Self-preservation — режим, при котором Eureka прекращает eviction если за последнюю минуту пришло меньше 85% (renewalPercentThreshold) ожидаемых heartbeat-ов: лучше держать stale записи, чем выкинуть всех при network partition между Eureka и клиентами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сценарий: между Eureka и большинством клиентов — network partition. Heartbeats не приходят. Без self-preservation Eureka думает «все умерли» и evict-ит всё — клиенты получат пустой реестр. Self-preservation сравнивает real heartbeat rate с expected; если < 85% — переходит в режим «прекращаем eviction», логирует SELF-PRESERVATION ACTIVE, ждёт восстановления.",
+                "example": "Кластер на 100 инстансах, ожидается 200 heartbeat/min (каждый 30s). Реально пришло 100 — значит upstream issue. Self-preservation срабатывает, eviction отключается. После восстановления — автоматически выходит из режима. В dev с 1 инстансом self-preservation часто false-positive — отключают.",
+                "when_to_apply": "В production — обязательно включён. В dev/staging с малым числом инстансов — обычно отключают, иначе любое kill -9 даёт срабатывание.",
+                "edge_cases": "Если реальный кластер действительно умирает (real outage), self-preservation держит stale записи — клиенты бьются в мёртвые инстансы; спасает CB. Threshold можно тюнить (renewalPercentThreshold от 0.85).",
+                "related": "[[service-discovery-interview#Q14]] Eureka архитектура AP; [[service-discovery-interview#Q9]] клиентский кеш; [[service-discovery-interview#Q5]] heartbeat и TTL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Self-preservation активируется только когда сама Eureka теряет связь с другими peer-Eureka серверами; клиенты в этом не участвуют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Trigger — соотношение heartbeat от КЛИЕНТОВ против ожидаемого. Peer-disconnect — отдельная ситуация (peer awareness), не self-preservation.",
+                "source_of_confusion": "В Eureka есть и peer-aware-логика, и self-preservation — отсюда смешение.",
+                "if_it_were_true": "Тогда self-preservation не работал бы в single-node Eureka — но он работает.",
+                "how_it_should_be": "Trigger — heartbeat rate от клиентов; peer-related — отдельный механизм."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Eureka client: регистрация и heartbeat?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Eureka client регистрируется один раз при старте и не шлёт heartbeat-ов — статус инстанса определяется по последнему успешному вызову от другого сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Heartbeat — обязательный механизм Eureka. Без него запись через 90 сек (default lease-expiration) помечается DOWN. Eureka не отслеживает запросы между сервисами.",
+                "source_of_confusion": "Кажется, что трафик можно использовать как сигнал жизни — но это плохо для idle-сервисов (например, scheduled jobs).",
+                "if_it_were_true": "Тогда сервис, который никто не вызывал час, выкинулся бы из registry — даже если был жив.",
+                "how_it_should_be": "Heartbeat каждые 30 сек (lease-renewal-interval); lease-expiration 90 сек."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Eureka client отправляет heartbeat только при запросах от других сервисов — если трафика нет, heartbeat не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Heartbeat — periodic, независим от трафика. Это критично для idle сервисов: scheduled jobs, low-traffic services должны оставаться в registry.",
+                "source_of_confusion": "Кажется, что «жив» = «обслуживает трафик» — но в discovery это не так.",
+                "if_it_were_true": "Тогда любой idle service в течение lease-expiration window вылетел бы из registry.",
+                "how_it_should_be": "Heartbeat — periodic фоновый таск, независим от бизнес-трафика."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Eureka client должен синхронно блокироваться при каждом запросе до получения ответа от registry, что обеспечивает strong consistency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eureka client держит in-memory snapshot и на запрос не ходит в registry — это AP-модель с локальным кешем. Иначе registry стал бы bottleneck-ом.",
+                "source_of_confusion": "Strong consistency звучит как «правильнее», но Eureka специально AP с stale read.",
+                "if_it_were_true": "Тогда падение Eureka означало бы немедленное падение всех клиентов — но именно от этого Eureka защищает через локальный snapshot.",
+                "how_it_should_be": "Eureka client = локальный snapshot + periodic refresh + heartbeat в background."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При старте: POST /eureka/apps/SERVICE-NAME со статусом STARTING, после успешного /actuator/health=UP — PUT со статусом UP; каждые 30 сек — PUT heartbeat; на shutdown — DELETE (graceful deregistration). Snapshot хранится на disk для быстрого cold start.",
+              "correct": true,
+              "sections": {
+                "explanation": "Жизненный цикл: 1) Startup — POST register со status=STARTING. 2) /actuator/health=UP — PUT status=UP. 3) Каждые 30 сек (lease-renewal-interval) — PUT heartbeat. 4) Shutdown hook — DELETE (graceful). Client тянет полный snapshot первый раз, потом delta (только изменения). Snapshot хранится на disk → после рестарта моментально доступен без waiting first refresh.",
+                "example": "Spring Cloud Netflix Eureka — стартер spring-cloud-starter-netflix-eureka-client. eureka.client.serviceUrl.defaultZone, eureka.instance.prefer-ip-address=true, metadata-map для version/zone. Lease-renewal=30s, lease-expiration=90s (3× heartbeat).",
+                "when_to_apply": "Default flow для JVM-моноязыка с Eureka. Graceful deregistration важен для rolling deploy — иначе клиенты бьются в shutting-down инстанс.",
+                "edge_cases": "Если /actuator/health недоступен — статус застрянет в STARTING. Если shutdown hook не успел выполниться (SIGKILL) — запись висит до lease-expiration. Disk snapshot спасает только клиента — на server-side snapshot не сохраняется.",
+                "related": "[[service-discovery-interview#Q14]] Eureka архитектура; [[service-discovery-interview#Q5]] heartbeat и TTL; [[service-discovery-interview#Q29]] Spring Cloud DiscoveryClient."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое etcd: Raft, watch API и leases?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "etcd использует gossip-протокол для репликации и предоставляет HTTP REST API с polling вместо watch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "etcd использует Raft consensus (CP), не gossip. API — gRPC streaming с native watch (long-running stream, не polling). HTTP v2 API устарел.",
+                "source_of_confusion": "Gossip-протокол ассоциируется с Consul/Cassandra; перенос на etcd ошибочен. HTTP polling — это старый ZooKeeper-стиль.",
+                "if_it_were_true": "Тогда etcd не был бы CP — а вся K8s control-plane архитектура построена именно на CP-гарантиях etcd.",
+                "how_it_should_be": "Raft + gRPC + streaming watch — отличия etcd от ZK."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "etcd — distributed KV-store на Raft (CP, 3 или 5 нод), gRPC + protobuf API, native streaming watch на префиксы, и leases с автоматическим удалением key при истечении TTL (через KeepAlive); используется как control-plane Kubernetes.",
+              "correct": true,
+              "sections": {
+                "explanation": "Raft: 3/5 нод, leader принимает writes, реплицирует на majority. gRPC + protobuf эффективнее JSON/HTTP. Watch API — streaming long-poll на префикс ключей (watch --prefix /services/payments/). Lease — TTL для key: lease grant 30s → put --lease=X key val → периодический keep-alive; если keep-alive прекратился — lease истёк, все key с lease автоматически удалены. Так делается service discovery: каждый инстанс берёт lease + put endpoint.",
+                "example": "etcd как control-plane K8s: хранит все объекты (Pod, Service, EndpointSlice, ConfigMap). EndpointController наблюдает изменения через watch, обновляет EndpointSlices, kube-proxy читает их через watch.",
+                "when_to_apply": "Координационный store + watch API для динамики (K8s, CoreDNS). Leader election (compare-and-swap). Secrets (через RBAC). Не для high-write workloads — Raft overhead.",
+                "edge_cases": "Значение ограничено 1.5 MB (защита от больших объектов). Linearizable read опционален (быстрее: serializable read). Compaction обязательна — иначе MVCC-история разрастается.",
+                "related": "[[service-discovery-interview#Q18]] ZooKeeper; [[service-discovery-interview#Q19]] etcd vs ZK; [[service-discovery-interview#Q20]] K8s API server."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В etcd lease — это TLS-сертификат для подключения клиента, который надо обновлять каждые 30 сек.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lease в etcd — это TTL для group of keys, не сертификат. TLS-сертификаты в etcd — отдельный механизм (client/server cert).",
+                "source_of_confusion": "Оба понятия про «истекают по времени» и «надо обновлять» — отсюда смешение.",
+                "if_it_were_true": "Тогда нельзя было бы делать service discovery (key with TTL) — но это основной use case etcd lease.",
+                "how_it_should_be": "Lease — TTL для keys; X.509 — для аутентификации соединения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Watch API в etcd — это one-shot подписка: после первого события watch автоматически закрывается и клиент должен пересоздать его.",
+              "correct": false,
+              "sections": {
+                "what_actually": "One-shot watch — это ZooKeeper. etcd watch — long-running streaming gRPC. Это одно из ключевых преимуществ etcd над ZK.",
+                "source_of_confusion": "Сходные имена (watch) у ZK и etcd создают confusion.",
+                "if_it_were_true": "Тогда etcd не подходил бы для high-frequency events — но именно его watch model сделала возможным K8s controller pattern.",
+                "how_it_should_be": "etcd: long-running streaming watch. ZK: one-shot, требует re-register."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ZooKeeper: ZAB, ephemeral znodes и watches?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ZooKeeper — координационный сервис на ZAB-консенсусе (leader+followers, кворум), с иерархической ФС из znode-ов; ephemeral znode привязан к сессии клиента (умер → удалён); watch — одноразовая подписка, после события нужно пересоздать.",
+              "correct": true,
+              "sections": {
+                "explanation": "ZAB (ZooKeeper Atomic Broadcast) — близок к Raft, leader+followers, кворум 3/5 нод. Иерархическая ФС: /services/payments/inst-1 с данными в znode и attributes. Ephemeral znode — привязан к TCP-сессии клиента; сессия отвалилась (close или session timeout) → znode удалён автоматически. Идеально для discovery: умер → znode исчез. Watch — one-shot подписка на изменения (znode или children); после триггера нужно re-register (плата за упрощённую модель).",
+                "example": "Kafka brokers до KRaft регистрировались как ephemeral znodes в /brokers/ids/; Kafka controller следил через watch. HBase master election — через ephemeral znode. Curator framework упрощает работу с watches (auto-renew, retries).",
+                "when_to_apply": "Legacy Hadoop / Kafka до 3.x / HBase / Solr. Распределённый lock + leader election. Когда нужна strong ordering всех writes.",
+                "edge_cases": "Watch one-shot vs etcd streaming — разница в реализации long-running subscriptions. JVM overhead + GC pauses. Session timeout > tickTime × 2 — иначе ephemeral znode преждевременно удаляется.",
+                "related": "[[service-discovery-interview#Q17]] etcd; [[service-discovery-interview#Q19]] etcd vs ZK; [[distributed-systems-interview#zab]] ZAB protocol."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ZooKeeper использует Paxos consensus и предоставляет EVENTUAL consistency для всех reads.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ZooKeeper использует ZAB (близок к Raft, не Paxos в чистом виде). Read consistency: по умолчанию sync-read (sequentially consistent), можно sync()+read для linearizable. Не eventual.",
+                "source_of_confusion": "Paxos и ZAB оба про consensus, отсюда смешение. Eventual consistency — это AP-системы (Eureka, Cassandra), не ZK.",
+                "if_it_were_true": "Тогда ZK не подходил бы для leader election — eventual reads давали бы split-brain.",
+                "how_it_should_be": "ZAB consensus + sequentially consistent reads (linearizable через sync())."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ephemeral znode сохраняется на диск и переживает рестарт ZooKeeper — это аналог K8s PersistentVolume.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ephemeral znode именно НЕ сохраняется при потере сессии — это её определяющее свойство. Сохраняются только persistent znodes.",
+                "source_of_confusion": "В ZK есть оба типа (persistent и ephemeral), и атрибут persistent ассоциируется с durability.",
+                "if_it_were_true": "Тогда ephemeral не годились бы для discovery — но они specifically именно для этого: умер процесс → автоматически удалён znode.",
+                "how_it_should_be": "Ephemeral — привязан к сессии, удаляется при close. Persistent — durable между сессиями."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Watch в ZooKeeper — это long-running streaming subscription, идентичная etcd watch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ZK watch — one-shot: после события watch удаляется, клиент должен re-register через очередной API call. Это одно из главных отличий от etcd, где watch — long-running.",
+                "source_of_confusion": "Имя watch одинаковое — кажется, что и реализация одинаковая.",
+                "if_it_were_true": "Тогда не было бы Curator framework, который специально упрощает работу с one-shot watches.",
+                "how_it_should_be": "ZK: one-shot watch + re-register. etcd: streaming watch."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему etcd выиграл у ZooKeeper для облачных систем?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "etcd проще в дисках и быстрее на чтение благодаря отсутствию consensus-протокола.",
+              "correct": false,
+              "sections": {
+                "what_actually": "etcd использует Raft — это полноценный consensus, не отсутствие. Скорость на write одинакова по порядку величины (оба ограничены fsync + RTT майоритета).",
+                "source_of_confusion": "etcd ассоциируется с «легче» — но это про operational story и API, не про отсутствие consensus.",
+                "if_it_were_true": "Тогда etcd не был бы CP — но именно его CP-гарантии (через Raft) лежат в основе K8s.",
+                "how_it_should_be": "Оба используют consensus (Raft/ZAB); etcd выиграл по operational/API/ecosystem."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ZooKeeper использует EVENTUAL consistency, и поэтому Kubernetes не мог его использовать; etcd дал CP-гарантии впервые.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ZooKeeper — CP (через ZAB), не eventual. CP-гарантии у ZK были с самого начала (2010). etcd не уникален в CP — он выиграл по другим критериям.",
+                "source_of_confusion": "Eventual ассоциируется с «устаревший», CP — с «современный» — но оба здесь CP.",
+                "if_it_were_true": "Тогда не было бы Kafka на ZK 10+ лет — но Kafka именно зависела от strong consistency ZK.",
+                "how_it_should_be": "Оба CP; etcd выиграл по API/protocol/operational, не по consistency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ZooKeeper является managed-cloud сервисом, а etcd — самохостящимся; для облачных систем выбрали etcd ради автономности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба self-hosted (есть managed-варианты для каждого, но не основа). Логика наоборот: ZK сложнее operate (JVM + Kerberos + ensemble config), etcd проще (Go binary + TLS встроено).",
+                "source_of_confusion": "Cloud-native ассоциируется с «managed», отсюда обратная логика.",
+                "if_it_were_true": "Тогда выбор был бы про billing, а не про архитектуру — но реальная мотивация именно архитектурная.",
+                "how_it_should_be": "Оба self-hosted; etcd выиграл по operational simplicity и cloud-native fit."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "etcd выиграл по: gRPC+protobuf vs custom TCP (Jute), streaming watch vs one-shot, один Go binary vs JVM+ensemble, встроенный TLS/mTLS vs сложный SASL/Kerberos, native Kubernetes-integration vs Java-centric exosystem, lighweight ops для small teams.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сравнение по ключевым аспектам: Protocol — gRPC+protobuf эффективнее Jute. API — clean KV+watch+lease vs Java-centric getChildren/setData. Watch — streaming vs one-shot. Установка — один Go binary vs JVM + ensemble.cfg. TLS/mTLS — встроено vs сложно настраивается. Ecosystem — cloud-native (K8s, CoreDNS) vs Java mir (Kafka, HBase). JVM overhead — нет vs GC pauses.",
+                "example": "Kafka сама ушла от ZK к KRaft (Raft внутри Kafka-кластера) — даже там ZK признали legacy. K8s изначально на etcd. CoreDNS, Envoy используют etcd как backend в некоторых конфигурациях.",
+                "when_to_apply": "Новые cloud-native системы → etcd. Legacy Hadoop/Kafka pre-3.x/HBase → ZK остаётся. Distributed lock + leader election с богатой Java библиотекой (Curator) → ZK всё ещё OK.",
+                "edge_cases": "ZK не мёртв в больших Hadoop / Kafka инсталляциях; для classic coordination Curator+ZK всё ещё надёжный выбор. Но новые проекты в 2026+ почти всегда etcd или встроенный Raft.",
+                "related": "[[service-discovery-interview#Q17]] etcd архитектура; [[service-discovery-interview#Q18]] ZooKeeper; [[service-discovery-interview#Q20]] Kubernetes."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена discovery в Kubernetes через Service, Endpoints и EndpointSlices?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Kubernetes каждый pod регистрируется в Service вручную через kubectl при старте — без этого Service не знает о новых pod-ах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Kubernetes pod не делает явную регистрацию — EndpointController/EndpointSliceController подписан на изменения pod-ов и автоматически обновляет EndpointSlice через label-selector. Это third-party registration через kubelet.",
+                "source_of_confusion": "Привычка к Eureka self-registration переносится на K8s.",
+                "if_it_were_true": "Тогда auto-scaling и rolling deploy в K8s не работали бы автоматически — но они автоматичны именно благодаря controller pattern.",
+                "how_it_should_be": "K8s — third-party registration через EndpointController; pod только отвечает на /readyz."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Endpoints и EndpointSlices — одно и то же; EndpointSlices просто переименование Endpoints в k8s 1.21.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Endpoints (legacy) — один объект на Service со всеми endpoints (огромный при тысячах pod-ов); EndpointSlices разбивают на куски по 100, снижая control-plane storm. Это разные kind с разными CRD.",
+                "source_of_confusion": "Похожие имена и оба содержат IP — отсюда впечатление эквивалентности.",
+                "if_it_were_true": "Тогда EndpointSlices не решали бы scale-проблему — но именно для этого и были введены.",
+                "how_it_should_be": "Endpoints (legacy, один объект); EndpointSlices (новое, chunked по 100)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Service — стабильный сетевой identity (с ClusterIP) с label-selector; EndpointController/EndpointSliceController автоматически поддерживает Endpoints/EndpointSlices с IP живых pod-ов (с conditions ready); kube-proxy читает их и пишет iptables/IPVS правила; EndpointSlices разбивают endpoints на куски по 100, чтобы избежать control-plane storm при больших Services.",
+              "correct": true,
+              "sections": {
+                "explanation": "Service — kind:Service с selector app=payments + ports → ClusterIP (виртуальный IP внутри кластера). EndpointController наблюдает pod-ы с матчующим label; для каждого ready pod создаёт endpoint. EndpointSlice (k8s 1.21+, default) — разбивка по 100 endpoints, чтобы при 1000 pod-ах не было одного гигантского Endpoints-объекта и full re-broadcast на каждое изменение. kube-proxy на каждой node читает Service + EndpointSlices и пишет iptables/IPVS правила для DNAT с ClusterIP на pod IP.",
+                "example": "kubectl apply Service payments-service selector app=payments port 80 targetPort 8080. Pod-ы с этим label автоматически попадают в EndpointSlice. kubectl get endpointslices показывает текущее состояние.",
+                "when_to_apply": "Default в Kubernetes для любого backend, требующего LB. Для StatefulSet — headless Service (ClusterIP: None). Для external traffic — NodePort/LoadBalancer/Ingress.",
+                "edge_cases": "EndpointSlice topology aware routing — endpoints в той же zone предпочитаются. Slow rolling update вызывает временную deviation: ready pod удалён из EndpointSlice → kube-proxy обновляет правила через ~30 сек.",
+                "related": "[[service-discovery-interview#Q21]] CoreDNS; [[service-discovery-interview#Q23]] kube-proxy modes; [[service-discovery-interview#Q24]] Istio."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Service в Kubernetes — это аппаратный балансировщик, который физически разворачивается на бare-metal перед кластером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Service — это объект в etcd + kube-proxy правила (iptables/IPVS) на каждой node. ClusterIP — виртуальный, не аппаратный. LoadBalancer type создаёт cloud LB, но это другая history.",
+                "source_of_confusion": "Слово LoadBalancer и type:LoadBalancer ассоциируется с hardware.",
+                "if_it_were_true": "Тогда внутрикластерные сервисы требовали бы hardware LB — что нонсенс для облачных K8s.",
+                "how_it_should_be": "Service ClusterIP — kernel-space (kube-proxy + iptables/IPVS); type LoadBalancer — provision cloud LB."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как CoreDNS резолвит Service в IP в Kubernetes?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CoreDNS читает данные напрямую из etcd через прямое подключение к ключам /registry/services/.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CoreDNS использует kubernetes plugin, который читает Service и Endpoints через K8s API server (с watch), а не из etcd напрямую. Direct etcd access считается анти-паттерном (нарушает RBAC, дублирует API server).",
+                "source_of_confusion": "etcd хранит state, кажется логичным читать оттуда — но всё должно идти через API server для validation и RBAC.",
+                "if_it_were_true": "Тогда CoreDNS обходил бы RBAC и аудит — это нарушение security модели K8s.",
+                "how_it_should_be": "CoreDNS через kubernetes plugin → K8s API server (watch) → in-memory mapping."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CoreDNS (kubernetes plugin) подписан через watch на Service/Endpoints в K8s API server, строит in-memory mapping name→IP; pod-ы используют /etc/resolv.conf с nameserver=ClusterIP CoreDNS, search domains и ndots:5 — короткое имя payments-service резолвится в FQDN payments-service.default.svc.cluster.local → A-record ClusterIP; TTL обычно 30 сек, клиент должен кешировать.",
+              "correct": true,
+              "sections": {
+                "explanation": "CoreDNS — DNS-сервер по умолчанию в K8s (раньше kube-dns). Внутри — kubernetes plugin читает Service и Endpoints через API server watch и держит in-memory mapping. /etc/resolv.conf pod-а: nameserver=10.96.0.10 (CoreDNS Service IP), search default.svc.cluster.local svc.cluster.local cluster.local, options ndots:5. Запрос payments-service → resolver попробует payments-service.default.svc.cluster.local → A 10.96.123.45 (ClusterIP). TTL 30 сек, плагин cache на CoreDNS сам.",
+                "example": "Corefile: kubernetes cluster.local in-addr.arpa ip6.arpa { pods insecure }, forward . /etc/resolv.conf (external DNS), cache 30. dig payments-service.default.svc.cluster.local → A 10.96.123.45.",
+                "when_to_apply": "Default discovery в любом Kubernetes-кластере. Зачастую без явного configuration — autopilot для in-cluster resolution.",
+                "edge_cases": "TTL=30s + клиент без cache → CoreDNS под нагрузкой. ndots:5 means короткое имя проходит через все search domains — лишние lookups, можно тюнить. NodeLocal DNSCache spawns DNS cache per node для дальнейшей разгрузки.",
+                "related": "[[service-discovery-interview#Q20]] Service/Endpoints; [[service-discovery-interview#Q22]] headless+SRV; [[service-discovery-interview#Q23]] kube-proxy."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CoreDNS работает как HTTP-сервер на порту 53 и резолвит имена через REST API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CoreDNS — это DNS-сервер по протоколу DNS (UDP/TCP 53). HTTP REST не используется для DNS-запросов (хотя есть DoH — DNS over HTTPS, но это не основное).",
+                "source_of_confusion": "Многие современные APIs — REST, перенос на DNS неверный.",
+                "if_it_were_true": "Тогда любой DNS-клиент (dig, glibc resolver) не работал бы с CoreDNS — но они работают по стандарту DNS.",
+                "how_it_should_be": "CoreDNS — стандартный DNS-сервер по UDP/TCP 53; REST API не для resolution."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Каждый pod в Kubernetes получает свой собственный CoreDNS instance как sidecar, и резолвит имена локально.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CoreDNS deploys как Deployment в kube-system namespace (обычно 2 replica) с Service ClusterIP. Pod-ы используют этот ClusterIP в /etc/resolv.conf, sidecar НЕ ставится.",
+                "source_of_confusion": "Sidecar-pattern ассоциируется с K8s, переносится на DNS неверно.",
+                "if_it_were_true": "Тогда тысячи pod-ов имели бы тысячи CoreDNS instances — лишний overhead. На практике 2 instance обслуживают весь кластер.",
+                "how_it_should_be": "CoreDNS — central Deployment + Service. NodeLocal DNSCache — опциональный sidecar per node, не per pod."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужен headless Service и SRV-records?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Headless Service (clusterIP: None) — НЕТ виртуального IP, DNS возвращает A-records на каждый pod (или SRV для host:port); используется для client-side load balancing (gRPC, Cassandra/Kafka driver), для StatefulSet (stable DNS name per pod, например payments-0.payments-headless...), для нестандартных портов через SRV.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обычный Service: ClusterIP + kube-proxy DNAT — клиент видит один IP, не знает про инстансы. Headless (clusterIP: None): НЕТ виртуального IP, DNS возвращает A-records на каждый ready pod. Use cases: 1) Client-side LB (gRPC, Java reactive — клиент сам выбирает по списку IP); 2) StatefulSet stable DNS name (payments-0.payments-headless.default.svc.cluster.local — для master-replica топологий Kafka, Cassandra, MongoDB); 3) SRV records — резолвят host:port, удобно для нестандартных портов.",
+                "example": "dig payments-headless.default.svc.cluster.local → 10.244.1.5, 10.244.2.7, 10.244.3.9 (все pod IPs). dig SRV _http._tcp.payments-headless → 0 100 8080 payments-0.payments-headless.default.svc.cluster.local. gRPC client получает все endpoints и держит подключение к каждому.",
+                "when_to_apply": "StatefulSet (Kafka, Cassandra, ZooKeeper). gRPC client-side LB. Когда нужен SRV для discovery port (legacy LDAP, IRC, Minecraft).",
+                "edge_cases": "Headless не работает с type:LoadBalancer (clusterIP: None конфликтует). Клиент должен сам обновлять список (через DNS re-query или watch). При большом числе pod-ов DNS-response может превысить UDP-предел (512 байт) — TCP fallback.",
+                "related": "[[service-discovery-interview#Q20]] regular Service; [[service-discovery-interview#Q21]] CoreDNS; [[service-discovery-interview#Q12]] Consul SRV records."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Headless Service используется только когда внешний LB не доступен — это fallback-режим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Headless — это намеренная архитектурная choice для client-side LB и StatefulSet, а не fallback. Внешний LB и headless — независимые механизмы.",
+                "source_of_confusion": "Слово headless звучит как «без head», и кажется degraded mode.",
+                "if_it_were_true": "Тогда Kafka в K8s через StatefulSet не использовала бы headless — но это стандартный pattern.",
+                "how_it_should_be": "Headless — намеренный выбор для client-side LB / StatefulSet, не fallback."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SRV-records отдают только public DNS (Cloudflare) и не работают внутри Kubernetes-кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SRV — стандартный DNS RR, поддерживается всеми DNS-серверами включая CoreDNS. Внутри K8s работает: dig SRV _http._tcp.svc-name.default.svc.cluster.local.",
+                "source_of_confusion": "SRV ассоциируется с публичным DNS (SIP, XMPP), но это просто RR-тип.",
+                "if_it_were_true": "Тогда internal service discovery с custom portами было бы невозможно — но Cassandra/Kafka используют SRV внутри K8s.",
+                "how_it_should_be": "SRV работает и в public DNS и в CoreDNS; стандартный RR-тип."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Headless Service не поддерживается в Kubernetes — это deprecated feature из v1.18.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Headless Service — активная и поддерживаемая фича Kubernetes. Используется StatefulSet (Kafka, Cassandra operator), gRPC clients, operator-pattern.",
+                "source_of_confusion": "Endpoints (legacy) был deprecated в пользу EndpointSlices — переносится на headless ошибочно.",
+                "if_it_were_true": "Тогда StatefulSet не имел бы stable DNS names — но он имеет, через headless.",
+                "how_it_should_be": "Headless Service — active feature; deprecated был Endpoints (legacy), не headless."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как kube-proxy реализует Service: iptables vs IPVS vs eBPF?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "kube-proxy всегда работает только в iptables режиме; IPVS и eBPF — это маркетинговые альтернативы без реальной поддержки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "kube-proxy поддерживает три mode: iptables (default), IPVS (kubernetes.io 1.11+), userspace (deprecated). eBPF — через CNI Cilium kubeProxyReplacement: true (заменяет kube-proxy полностью).",
+                "source_of_confusion": "iptables — самый видимый default, отсюда обобщение.",
+                "if_it_were_true": "Тогда крупные K8s deployments (>5k Services) не масштабировались бы — но именно IPVS/eBPF решают эту проблему.",
+                "how_it_should_be": "Три реальных режима: iptables / IPVS / userspace + Cilium eBPF replacement."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все три режима одинаковы по производительности — выбор делается по личным предпочтениям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальная разница в complexity: iptables O(N) на packet, IPVS O(1) hash, eBPF — самый быстрый + L7. На малых кластерах разница минимальна; на >5k Services iptables становится bottleneck.",
+                "source_of_confusion": "На малых кластерах разница не видна — отсюда впечатление эквивалентности.",
+                "if_it_were_true": "Тогда не было бы причины переходить с iptables на IPVS — но крупные кластера именно это и делают.",
+                "how_it_should_be": "Production-grade сравнение по latency, control-plane reload, CPU at scale."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Service Discovery в коде приложения зависит от выбора kube-proxy mode — нужно по-разному писать клиента для iptables vs IPVS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С точки зрения приложения все три mode выглядят одинаково — это деталь kernel data plane. Клиент бьётся в ClusterIP, kernel делает DNAT. Изменение mode — operational decision, не code change.",
+                "source_of_confusion": "Mode звучит как «API contract», но это kernel-level implementation.",
+                "if_it_were_true": "Тогда пришлось бы перекомпилировать приложения при смене mode — но рестарт kube-proxy достаточно.",
+                "how_it_should_be": "Mode — kernel-level deta; transparent для приложений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "iptables (default) — DNAT-правила со статистической балансировкой (O(N) на packet, плохо масштабируется при >5k Services); IPVS — L4 LB в ядре с O(1) hash lookup и алгоритмами round-robin/least-connection; eBPF (Cilium kubeProxyReplacement) — самый быстрый, DNAT в eBPF-программах, поддержка L7 policy без sidecar; transparent для приложения.",
+              "correct": true,
+              "sections": {
+                "explanation": "iptables: на каждой node DNAT-правила «трафик на ClusterIP:80 → DNAT на pod1:8080 с p=33%, pod2:8080 с p=33% ...» через statistic mode random. Reload медленный (O(N) правил). IPVS: L4 LB в kernel (IP Virtual Server), O(1) hash, поддерживает round-robin, least-connection, source-hashing. eBPF/Cilium: полная замена kube-proxy, DNAT и routing в eBPF-программах в kernel; самый быстрый, plus L7 policy без sidecar (CiliumNetworkPolicy).",
+                "example": "Cluster с 50 Services и 200 endpoints — iptables ОК. Cluster с 5000 Services → IPVS или eBPF. Cilium kubeProxyReplacement в production у Datadog, Google, others. Calico тоже добавил eBPF mode.",
+                "when_to_apply": "iptables — default для маленьких/средних кластеров. IPVS — при scale (>5k Services). eBPF/Cilium — при scale + желание L7 без service mesh.",
+                "edge_cases": "IPVS требует ip_vs kernel module и иногда не работает в managed K8s (provider может ограничить). eBPF требует kernel 4.9+, CO-RE для портабельности. Cilium заменяет CNI — нельзя сочетать с другими CNI.",
+                "related": "[[service-discovery-interview#Q20]] Service/Endpoints; [[service-discovery-interview#Q24]] Istio mesh; [[service-discovery-interview#Q21]] CoreDNS."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает service discovery в service mesh: Istio Pilot/istiod и Envoy xDS?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В service mesh приложение само опрашивает istiod через xDS API и применяет полученные конфигурации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С istiod общается Envoy sidecar (через xDS gRPC streaming), а не само приложение. Приложение шлёт обычный HTTP/gRPC на localhost — sidecar его перехватывает и применяет mesh-логику.",
+                "source_of_confusion": "Раз xDS — это API, кажется, что приложение его использует — но это API между control и data plane.",
+                "if_it_were_true": "Тогда service mesh не был бы прозрачен для приложений — но именно прозрачность его killer feature.",
+                "how_it_should_be": "Приложение → Envoy sidecar (на localhost) → upstream Envoy → target. Конфиг — istiod → Envoy через xDS."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Service mesh заменяет CoreDNS — DNS-resolution в mesh идёт через Envoy без участия kube-dns.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CoreDNS остаётся для имени → ClusterIP. Envoy не делает DNS-resolution сам — он получает endpoints через EDS (push от istiod). DNS-запросы pod-а к CoreDNS продолжают работать.",
+                "source_of_confusion": "Envoy умеет делать DNS-based service discovery (как Nginx), но в Istio это не основной mode.",
+                "if_it_were_true": "Тогда Istio был бы full DNS-replacement — но он работает поверх стандартного K8s DNS-стека.",
+                "how_it_should_be": "CoreDNS остаётся; Envoy получает endpoints через xDS, не через DNS."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В Istio Envoy sidecar — это HTTP-клиент, который опрашивает Pilot REST API раз в 30 секунд и обновляет endpoints.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Envoy + istiod общаются через gRPC streaming xDS — это long-running stream, push-based, не 30-секундный poll. Это даёт near-realtime updates.",
+                "source_of_confusion": "Многие APIs polling-based, перенос на xDS ошибочен.",
+                "if_it_were_true": "Тогда canary deploy с changes в каждые несколько секунд был бы невозможен — но именно через xDS streaming это работает.",
+                "how_it_should_be": "xDS = gRPC streaming, push-based, не poll."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "istiod (Pilot+Citadel+Galley) — control plane, читает Service/Endpoint/VirtualService из K8s; xDS API (gRPC streaming) пушит конфиг в Envoy sidecar в каждом pod-е (CDS clusters, EDS endpoints, LDS listeners, RDS routes, SDS secrets); локальная балансировка в sidecar (нет hop через kube-proxy) + L7 routing по headers/version + автоматический mTLS.",
+              "correct": true,
+              "sections": {
+                "explanation": "istiod (раньше Pilot+Citadel+Galley отдельно, теперь один процесс) — control plane: читает Service/EndpointSlice/VirtualService/DestinationRule из K8s API server через watch и преобразует в Envoy-конфиг. xDS API (gRPC streaming): CDS (clusters), EDS (endpoints), LDS (listeners), RDS (routes), SDS (secrets). Envoy sidecar в каждом pod-е (injection через mutating webhook). Локальная балансировка в sidecar → нет hop через kube-proxy → меньше latency. L7 routing — по headers, version, source workload (canary 5% по x-user-cohort). mTLS автоматически через SPIFFE identity.",
+                "example": "VirtualService routes 5% трафика на subset=v2-canary. istiod пересчитывает EDS endpoints с weights, пушит в Envoy. Observability — все запросы через Envoy → distributed tracing (Jaeger), metrics (Prometheus). Цена: +CPU/memory per pod, сложность config.",
+                "when_to_apply": "Когда нужны: L7 routing (canary, A/B по headers), автоматический mTLS, observability без instrumenting кода, traffic policies (timeout, retry, circuit-breaker в Envoy). Не для маленьких кластеров — overhead не оправдан.",
+                "edge_cases": "Pilot scaling: при 10k+ workloads — pilot становится bottleneck (xDS push storm). Envoy memory ~50-100 MB per sidecar — 1000 pod-ов = 50-100 GB только на sidecars. Ambient mesh (Istio 1.18+) — без sidecar, только per-node proxy.",
+                "related": "[[service-discovery-interview#Q20]] K8s Service/Endpoint; [[service-discovery-interview#Q23]] kube-proxy; [[service-discovery-interview#Q26]] canary/blue-green."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое AWS Cloud Map и GCP Service Directory как managed service discovery?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "AWS Cloud Map и GCP Service Directory — это устаревшие сервисы, выведенные из production и заменённые на Route 53 / Cloud DNS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cloud Map и Service Directory — active managed-services. Route 53 / Cloud DNS — это DNS под капотом; Cloud Map / Service Directory — managed registry с metadata и health-checks, DNS — один из выходов (плюс REST API).",
+                "source_of_confusion": "В AWS Route 53 включает service discovery feature — кажется, что Cloud Map — это устаревший wrapper.",
+                "if_it_were_true": "Тогда AWS не интегрировал бы Cloud Map с ECS/EKS/Lambda — но это активная интеграция.",
+                "how_it_should_be": "Cloud Map и Service Directory — active managed services; DNS — один из транспортов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "AWS Cloud Map и GCP Service Directory — managed-аналоги Consul/Eureka в облаке: регистрация инстансов с metadata, резолвинг через DNS (Route 53/Cloud DNS) ИЛИ HTTP/REST API, health-checks, интеграция с ECS/EKS/Lambda/Cloud Run; платите $$ за query/instance, но нет operational overhead на HA/backup/patching.",
+              "correct": true,
+              "sections": {
+                "explanation": "AWS Cloud Map: namespace → services → instances + metadata; резолвинг через Route 53 (A/SRV records) или HTTP API; health-check через Route 53; интеграция auto-registration с ECS / EKS / Lambda. GCP Service Directory: аналогично — namespace → services → endpoints + metadata; resolve через Cloud DNS или REST; интеграция с GKE и Cloud Run.",
+                "example": "ECS task auto-registers в Cloud Map при старте, deregister при stop; Route 53 PrivateHostedZone отдаёт A/SRV records. Lambda через Cloud Map invokes downstream services по имени. Multi-region не нативно — нужно объединять через global accelerator.",
+                "when_to_apply": "Когда команда не хочет content with running Consul/etcd сами; экосистема уже cloud-native (ECS/Lambda/Cloud Run); не нужен service mesh с rich L7.",
+                "edge_cases": "Платить $$ за query / instance — может быть дорого на больших кластерах (миллионы lookups в день). Multi-region не нативно — нужно federation через global accelerator. Vendor lock-in: миграция с Cloud Map на Consul не trivial.",
+                "related": "[[service-discovery-interview#Q10]] Consul; [[service-discovery-interview#Q14]] Eureka; [[service-discovery-interview#Q24]] Istio."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cloud Map работает только с EC2-инстансами и не поддерживает Lambda или ECS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cloud Map специально интегрирован с ECS (auto-registration через service discovery integration), EKS, Lambda, plus EC2. Это его killer feature как managed.",
+                "source_of_confusion": "EC2 — самый старый сервис AWS, отсюда привязка.",
+                "if_it_were_true": "Тогда serverless архитектуры не получали бы выгоду от managed discovery.",
+                "how_it_should_be": "Cloud Map — across ECS / EKS / Lambda / EC2; auto-registration с ECS особенно зрелая."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "GCP Service Directory — это деплоймент Consul в GCP с автоматическим billing; функционально тот же Consul.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Service Directory — это собственный managed-сервис Google, не Consul под капотом. Архитектура и API отличаются. Есть и managed Consul (HCP Consul), но это отдельный продукт.",
+                "source_of_confusion": "Управляемые сервисы часто за реализуют поверх open-source, отсюда обобщение.",
+                "if_it_were_true": "Тогда у Service Directory был бы Consul API — но он имеет свой REST + DNS.",
+                "how_it_should_be": "Service Directory — proprietary Google managed; HCP Consul — managed Consul (HashiCorp partnership)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как metadata в service discovery позволяет делать canary, blue-green и A/B testing?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Хранение metadata (version, track, color, zone) в registry — основа traffic shaping: canary (track=canary с ~5% weight), blue-green (color=blue/green switch), A/B testing (routing по header типа x-user-cohort=A → subset=v2); без metadata невозможен любой advanced routing.",
+              "correct": true,
+              "sections": {
+                "explanation": "Registry хранит метаданные с инстансом (version=2.3.1, track=canary, zone=eu-west-1a). LB / sidecar фильтрует по этим метаданным для traffic shaping. Canary: 1 instance с track=canary среди 9 stable, Istio VirtualService routes 5% на subset canary, monitoring → постепенно увеличивать долю. Blue-green: color=blue (current) vs green (new); selector / route переключается на green при release. A/B: routing по header (x-user-cohort=A → version=2; B → version=1) через Istio VirtualService match headers.",
+                "example": "Istio VirtualService: http: - match: - headers: x-user-cohort: { exact: A } route: - destination: { host: payments-service, subset: v2 }. DestinationRule defines subsets: v1=label:version=1, v2=label:version=2. Spring Cloud LoadBalancer фильтрует через metadata-based filter.",
+                "when_to_apply": "Любая система с progressive delivery: canary при каждом deploy, A/B на новые фичи, blue-green для critical changes. Без metadata — только flat round-robin.",
+                "edge_cases": "Metadata должна быть consistent (одинаковые ключи), иначе фильтрация ломается. Большая cardinality metadata увеличивает registry size. Multi-cluster — metadata должна синхронизироваться (federation).",
+                "related": "[[service-discovery-interview#Q24]] Istio VirtualService; [[service-discovery-interview#Q20]] K8s Service labels; [[load-balancing-interview#weighted]] weighted LB."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Canary и blue-green реализуются через две отдельные registry — одна для production, одна для тестируемого релиза, без metadata.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Двойной registry — анти-паттерн (сложность синхронизации, split traffic между registries). Стандартный подход — один registry + metadata для фильтрации.",
+                "source_of_confusion": "Кажется, что физическое разделение проще, но логическое разделение через metadata намного гибче.",
+                "if_it_were_true": "Тогда переключение blue→green было бы deploy registry, а не label update — гораздо медленнее.",
+                "how_it_should_be": "Один registry + metadata; разделение через filter, не физическое."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Service discovery никогда не используется для traffic shaping — это исключительно задача API gateway.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Service discovery + metadata — основа traffic shaping для east-west трафика (между сервисами). API gateway — для north-south (внешний → внутрь). Оба используют metadata из registry.",
+                "source_of_confusion": "API gateway — самый видимый компонент traffic management, отсюда обобщение.",
+                "if_it_were_true": "Тогда canary внутри mesh был бы невозможен — но Istio VirtualService именно для этого.",
+                "how_it_should_be": "Discovery + metadata — основа east-west traffic shaping; API gateway — north-south."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "A/B testing требует физического разделения инстансов на отдельные DNS-зоны (a.example.com и b.example.com) — metadata в registry не помогает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DNS-зоны слишком грубое разделение для A/B (нельзя сделать routing по header). Modern A/B — через L7 metadata filtering в sidecar/LB на одном logical service.",
+                "source_of_confusion": "Public A/B сайтов иногда делается через DNS, но для backend service mesh это не работает.",
+                "if_it_were_true": "Тогда нельзя было бы дать 5% пользователей с конкретным header другую версию backend без отдельной DNS-zone.",
+                "how_it_should_be": "L7 routing по headers + metadata subsets; DNS-разделение — крайний случай."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каковы CAP trade-offs: Eureka (AP) vs Consul/etcd/ZK (CP)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CAP-теорема не применима к service discovery, потому что registry — не distributed база.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Registry — это распределённое state (3-5 нод с репликацией), и CAP полностью применим. При partition приходится выбирать C или A.",
+                "source_of_confusion": "Слово registry звучит просто как «список», отсюда занижение архитектурной сложности.",
+                "if_it_were_true": "Тогда не было бы разницы между Eureka и Consul — но они выбирают разные точки CAP.",
+                "how_it_should_be": "Registry — distributed state; CAP применим; выбор AP vs CP — фундаментальный."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все registries — AP, потому что доступность важнее consistency для discovery.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только Eureka намеренно AP. Consul, etcd, ZooKeeper, Kubernetes (через etcd) — CP. Discovery чаще хочет AP-style, но не все реализации это делают.",
+                "source_of_confusion": "Аргумент «discovery хочет availability» переносится на все системы.",
+                "if_it_were_true": "Тогда не было бы критики Consul за CP-блокировку при partition — но эта критика существует.",
+                "how_it_should_be": "Eureka — AP; Consul/etcd/ZK — CP. Разные точки в CAP."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Eureka — AP (peer-to-peer async, stale reads OK, никогда не отдаёт ошибку «registry недоступна»); Consul/etcd/ZK — CP (Raft/ZAB, minority partition блокируется, читает либо актуально либо ошибка); discovery почти всегда хочет AP-style, но CP-системы дают strong consistency для coordination (leader election, locks).",
+              "correct": true,
+              "sections": {
+                "explanation": "Eureka AP: peer-to-peer async replication, при partition каждый peer отдаёт свой snapshot (возможно stale), но НИКОГДА не отдаёт ошибку «registry недоступна». Stale данные ≤ unavailability для discovery. Consul/etcd/ZK CP: Raft/ZAB, minority partition блокирует writes; reads через leader блокируются (или возвращают consistent value); сильная гарантия — если ответ пришёл, он актуален. Дискавери лучше AP-style; но для coordination (distributed lock, leader election — нельзя двух leader-ов) нужна CP.",
+                "example": "Netflix-сценарий (streaming) — Eureka AP, лучше stale, чем недоступно. Kubernetes — etcd CP, потому что API server должен быть consistent (создание pod-а должно одинаково видеться всеми controller-ами). Consul Connect используется для service mesh (нужна CP для intentions).",
+                "when_to_apply": "Чистый service discovery без coordination → AP-style (Eureka) или CP с агрессивным client cache (Consul + Spring Cloud Consul с fail-open). Coordination + leader election → CP (etcd/ZK).",
+                "edge_cases": "Hybrid: K8s — etcd CP control plane, но data plane (kube-proxy с cached endpoints) продолжает работать со stale endpoints при etcd down. То есть logical AP даже на CP-storage.",
+                "related": "[[service-discovery-interview#Q14]] Eureka AP; [[service-discovery-interview#Q17]] etcd CP; [[cap-theorem-interview#cap]] CAP theorem."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "etcd является AP-системой как Eureka, и это делает его легковесным для cloud-native.",
+              "correct": false,
+              "sections": {
+                "what_actually": "etcd специально CP (через Raft) — Kubernetes именно для этого выбрал etcd, чтобы API server отдавал линеаризуемые reads. Eureka AP — это противоположность.",
+                "source_of_confusion": "etcd lightweight по operational story, но это не имеет отношения к CAP.",
+                "if_it_were_true": "Тогда K8s API server мог бы получать stale reads — что разрушило бы controller-pattern.",
+                "how_it_should_be": "etcd — CP; Eureka — AP. Разные категории."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему discovery становится single point of failure и как защититься?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Discovery не может быть SPOF, потому что все registries по определению distributed.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Distributed не означает «не SPOF» — есть много способов сделать SPOF: один инстанс, blocking registration, no client cache, sync heartbeat. Distributed implementation ≠ resilient deployment.",
+                "source_of_confusion": "Слово distributed звучит как гарантия — но это про архитектуру, а deployment может быть anti-resilient.",
+                "if_it_were_true": "Тогда не было бы blog posts «когда упала Eureka и весь Netflix лежал» — но они есть.",
+                "how_it_should_be": "SPOF возможен; защита через cluster + client cache + fail-open + async."
+              }
+            },
+            {
+              "order": 1,
+              "label": "C",
+              "text": "Защита от SPOF — переход с distributed на single-node registry с локальной репликацией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямо наоборот: single-node = guaranteed SPOF. Multi-node cluster + client cache — основная защита.",
+                "source_of_confusion": "Локальная репликация звучит безопасно, но это lazy replication к одной точке.",
+                "if_it_were_true": "Тогда Eureka не имела бы 3+ peers — но именно multi-node даёт HA.",
+                "how_it_should_be": "Cluster registry (3-5 nodes) + client cache; single-node только для dev."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Анти-паттерны: один инстанс registry, blocking регистрация, sync heartbeat в request path, no client cache; защита: cluster (3-5 nodes), локальный snapshot+disk persistence, stale OK (fail-open), async heartbeat, lazy registration, multi-registry/fallback DNS, circuit breaker на запросах к registry. Facebook 2021 — пример: BGP убрал NS, DNS отказала, internal tools тоже не могли работать (out-of-band management не должен зависеть от той же discovery).",
+              "correct": true,
+              "sections": {
+                "explanation": "Анти-паттерны делают registry hot path: 1) один инстанс — no HA; 2) blocking registration — pod не стартует пока не зарегистрировался; 3) sync heartbeat — поток приложения завис на heartbeat; 4) no client cache — каждый запрос hit registry. Защита: 1) cluster (3-5 nodes); 2) локальный snapshot + disk persistence (Eureka); 3) stale OK (fail-open) — клиент работает по cache даже если registry down; 4) async heartbeat (отдельный поток/event-loop); 5) lazy registration — pod ready после health-check, не после registration; 6) multi-registry / fallback DNS; 7) CB на запросах к registry.",
+                "example": "Facebook 2021: BGP rollout убрал NS-серверы из интернета → DNS-resolution отказала → внутренние tools (которые ходили в API через DNS) тоже не могли работать. Lesson: out-of-band management не должен зависеть от той же discovery, которой управляет. Slack 2021 ZooKeeper outage — аналогично, не было fallback.",
+                "when_to_apply": "Для production registry всегда: cluster + client cache + fail-open. Out-of-band path должен быть независим (например, static IP для emergency console).",
+                "edge_cases": "Cold start chicken-and-egg: registry-сервер сам клиент discovery для health-check → нужен seed-config. Multi-registry усложняет операционную модель (когда обновлять второй).",
+                "related": "[[service-discovery-interview#Q9]] клиентский кеш; [[service-discovery-interview#Q15]] self-preservation; [[service-discovery-interview#Q14]] Eureka AP."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственная защита — поставить два разных типа registry параллельно (Eureka + Consul) и переключаться между ними.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dual-registry — экзотика, редко применяется (сложность синхронизации). Стандартная защита — cluster одного registry + client cache + fail-open.",
+                "source_of_confusion": "«Два — лучше одного» звучит логично, но добавляет другие проблемы.",
+                "if_it_were_true": "Тогда индустрия применяла бы это повсеместно — но почти никто не делает.",
+                "how_it_should_be": "Cluster + client cache + fail-open; dual-registry — special case (миграция, vendor lock-in защита)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Spring Cloud DiscoveryClient и зачем нужна эта абстракция?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring Cloud DiscoveryClient — это HTTP-клиент для вызова внешних API, заменяющий RestTemplate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DiscoveryClient — это интерфейс для discovery (поиск инстансов сервиса), а не HTTP-клиент. HTTP-вызовы делаются через RestTemplate / WebClient / Feign + @LoadBalanced (отдельный механизм).",
+                "source_of_confusion": "Оба про сетевые вызовы, отсюда смешение.",
+                "if_it_were_true": "Тогда DiscoveryClient.getInstances() возвращал бы HTTP response, а не List<ServiceInstance> — но возвращает именно последнее.",
+                "how_it_should_be": "DiscoveryClient — для поиска инстансов; HTTP-вызов — отдельный механизм через @LoadBalanced RestTemplate / WebClient."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DiscoveryClient — абстракция Spring Cloud над registries (Eureka/Consul/Kubernetes/ZooKeeper/Nacos), даёт getInstances(serviceName)→List<ServiceInstance> (host, port, metadata, URI); включается через @EnableDiscoveryClient (или auto-config по classpath); работает с @LoadBalanced RestTemplate/WebClient для прозрачного name-resolution в URL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Cloud абстрагирует разные registries за одним интерфейсом DiscoveryClient: getInstances(serviceName) → List<ServiceInstance> с getHost(), getPort(), getMetadata(), getUri(). Включение: @EnableDiscoveryClient (опционально с Spring Boot 3, auto-config работает по classpath). Реализации: spring-cloud-starter-netflix-eureka-client, spring-cloud-starter-consul-discovery, spring-cloud-starter-kubernetes-client (читает Endpoints через k8s API), spring-cloud-starter-zookeeper-discovery, spring-cloud-starter-alibaba-nacos-discovery. LoadBalancer integration: @LoadBalanced RestTemplate подключает интерсептор → через DiscoveryClient резолвит payments-service → конкретный URL + балансировка (Spring Cloud LoadBalancer, не Ribbon с 2020).",
+                "example": "@RestController class PaymentsResolver { @Autowired DiscoveryClient discoveryClient; @GetMapping(\"/instances\") public List<ServiceInstance> instances() { return discoveryClient.getInstances(\"payments-service\"); } }. @Bean @LoadBalanced public RestTemplate restTemplate() { return new RestTemplate(); } restTemplate.getForObject(\"http://payments-service/pay\", ...) — имя, а не IP.",
+                "when_to_apply": "Любое Spring Cloud приложение, нужно integrating с registry. Когда вы хотите менять backend (Eureka → Consul → K8s) без переписывания бизнес-кода.",
+                "edge_cases": "Spring Boot 3 + auto-config иногда конфликтует с явным @EnableDiscoveryClient — лучше один способ. Ribbon deprecated с 2020 — теперь Spring Cloud LoadBalancer. Locality-aware routing требует custom ServiceInstanceListSupplier.",
+                "related": "[[service-discovery-interview#Q16]] Eureka client; [[service-discovery-interview#Q11]] Consul client; [[service-discovery-interview#Q20]] K8s integration."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DiscoveryClient работает только с Eureka — для Consul и других registry нужна другая абстракция.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DiscoveryClient — общий интерфейс. Реализации: Eureka, Consul, K8s, ZooKeeper, Nacos. Switch между ними — изменение dependency, не code change.",
+                "source_of_confusion": "Spring Cloud начался с Netflix-стека (Eureka), отсюда привязка.",
+                "if_it_were_true": "Тогда было бы много несовместимых интерфейсов — но единый interface — это и есть суть абстракции.",
+                "how_it_should_be": "Один интерфейс DiscoveryClient — много реализаций; swap через dependency."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DiscoveryClient использует только синхронные HTTP-вызовы и не поддерживает реактивные клиенты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Cloud 2020+ имеет ReactiveDiscoveryClient (Mono<List<ServiceInstance>>). Plus, @LoadBalanced работает с WebClient (reactive), не только с RestTemplate.",
+                "source_of_confusion": "DiscoveryClient API исторически synchronous, расширения добавились позже.",
+                "if_it_were_true": "Тогда reactive Spring Cloud не работал бы с discovery — но он работает.",
+                "how_it_should_be": "DiscoveryClient + ReactiveDiscoveryClient; WebClient с @LoadBalanced."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбирать между Consul, Eureka, etcd, ZooKeeper и Kubernetes DNS?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Kubernetes → Service+CoreDNS (+ опционально service mesh для L7); гибрид VM+K8s → Consul (multi-DC, WAN gossip, KV, Connect); JVM-моноязык с приоритетом availability → Eureka (AP, self-preservation); coordination+leader election+config → etcd/ZooKeeper (CP, Raft/ZAB); managed cloud → AWS Cloud Map / GCP Service Directory.",
+              "correct": true,
+              "sections": {
+                "explanation": "Rule of thumb по сценариям: 1) В Kubernetes — Service+CoreDNS+EndpointSlices, опционально Istio для L7. 2) Hybrid (VM+K8s) — Consul (multi-DC, WAN gossip, KV для config, Connect для mTLS). 3) JVM-моноязык, max availability — Eureka (AP, self-preservation, simple ops). 4) Coordination, leader election, distributed lock — etcd (cloud-native) или ZK (legacy Hadoop/Kafka). 5) Cloud-native managed — AWS Cloud Map / GCP Service Directory (нет ops overhead).",
+                "example": "Netflix — Eureka (JVM, AP важен). Detmir/любой K8s-native проект — K8s Service+CoreDNS. Hybrid организация с legacy VM-приложениями + новый K8s — Consul. Kafka до 3.x — ZK для coordination. Современная Kafka 3.x+ — KRaft (Raft внутри Kafka).",
+                "when_to_apply": "Любой выбор registry для нового проекта. Migration легче через DiscoveryClient-абстракцию.",
+                "edge_cases": "Consul + K8s — overengineering (CoreDNS уже есть); choose только если есть конкретная потребность (multi-DC, ACL beyond RBAC). Eureka вне Netflix-style — устаревший выбор для новых проектов. ZK для новых проектов — почти никогда.",
+                "related": "[[service-discovery-interview#Q10]] Consul; [[service-discovery-interview#Q14]] Eureka; [[service-discovery-interview#Q17]] etcd; [[service-discovery-interview#Q20]] K8s; [[service-discovery-interview#Q25]] managed cloud."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Consul — лучший выбор всегда, потому что он самый универсальный и заменяет все остальные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Consul универсален, но overengineered для чистого Kubernetes (там есть Service+CoreDNS+Endpoints). В K8s ставить Consul только если нужен multi-DC, KV, Connect — иначе избыточно.",
+                "source_of_confusion": "HashiCorp marketing позиционирует Consul как «всё в одном», но в K8s-native стеке многое дублируется.",
+                "if_it_were_true": "Тогда K8s по умолчанию ставил бы Consul — но он использует свой Service+CoreDNS.",
+                "how_it_should_be": "Consul — для hybrid и multi-DC; в чистом K8s — CoreDNS+Service."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Выбор зависит только от программного языка приложения — Java=Eureka, Go=etcd, Python=Consul.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все registries имеют SDK для всех языков (или DNS, что языко-независимо). Выбор по архитектурным критериям: CAP, multi-DC, coordination, managed vs self-hosted.",
+                "source_of_confusion": "Eureka исторически Java (Netflix), etcd на Go — отсюда обобщение.",
+                "if_it_were_true": "Тогда polyglot teams не могли бы выбрать один registry — но Consul/K8s именно polyglot-friendly.",
+                "how_it_should_be": "Выбор по архитектурным критериям, не по языку."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ZooKeeper — рекомендованный выбор для всех новых проектов 2026+, потому что он самый зрелый.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для новых проектов в 2026+ ZK почти никогда не выбирают. Даже Kafka ушла на KRaft. ZK остаётся в legacy Hadoop/Kafka pre-3.x, но новые системы выбирают etcd/Consul/K8s.",
+                "source_of_confusion": "ZK действительно самый старый и stable — отсюда впечатление «самый зрелый = лучший».",
+                "if_it_were_true": "Тогда Kafka не уходила бы на KRaft — но именно ушла.",
+                "how_it_should_be": "ZK для legacy; новые проекты — etcd/Consul/K8s/Eureka (по сценарию)."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

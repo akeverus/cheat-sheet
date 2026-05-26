@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "design-key-value-store-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие non-functional требования закладывают в Dynamo-style KV-хранилище уровня DynamoDB/Cassandra?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Линеаризуемость операций PUT/GET даже при network partition.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dynamo-стиль выбирает AP по CAP — линеаризуемость заведомо приносится в жертву ради availability.",
+                "source_of_confusion": "Перенос требований из ACID-СУБД на распределённый KV.",
+                "if_it_were_true": "Пришлось бы делать consensus per write (как etcd) и терять p99<10ms.",
+                "how_it_should_be": "Закладывать availability 99.99%, tunable consistency, latency p99 read <10ms."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Availability 99.99%, p99 read <10 ms, петабайтная ёмкость, multi-region и tunable consistency.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это набор non-functional из Dynamo paper 2007: AP-выбор, low-latency single-DC чтения, гео-распределение, клиент сам выбирает CL.",
+                "example": "DynamoDB продакшен: 99.99% SLA, p99 ≈ 10 ms внутри региона, экзабайты данных, Global Tables.",
+                "when_to_apply": "На interview сразу формализуй: что жертвуем строгой консистентностью ради доступности и latency.",
+                "edge_cases": "Для финтранзакций такие требования не подойдут — нужна CP-система (Spanner/etcd).",
+                "related": "Q3 CAP-выбор, Q4 PACELC, Q24 tunable consistency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Поддержка SQL JOIN и вторичных индексов на любое поле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "KV API ограничивается PUT/GET/DELETE; JOIN и произвольные индексы делают денормализацией на стороне приложения.",
+                "source_of_confusion": "Подмена KV на реляционную СУБД.",
+                "if_it_were_true": "Линейная масштабируемость по узлам стала бы невозможной.",
+                "how_it_should_be": "Денормализуй и фан-аут на write, в KV храни плоские записи."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Строгая schema-валидация значений на стороне сервера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Value — это произвольный байтовый блоб (до ~1 MB); серверу безразлично содержимое.",
+                "source_of_confusion": "Опыт с документными БД вроде MongoDB JSON-schema.",
+                "if_it_were_true": "Сервер пришлось бы парсить каждое значение — потеря throughput.",
+                "how_it_should_be": "Schema валидируется на клиенте/в схеме-реестре (Avro), но не в KV."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что является основным ограничением single-node KV-хранилища и заставляет переходить к распределённой архитектуре?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Совокупность ограничений RAM/диска/сети одного узла плюс SPOF — даже если данные влезают, availability требует репликации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Single-node KV упирается в 100s GB RAM, единицы TB SSD, 10 Gbit/s NIC; и самое главное — один узел = SPOF, любой failover уже требует второго узла.",
+                "example": "Redis на одной ноде: 256 GB RAM — потолок, плюс падение = downtime. С Redis Cluster масштабируешь по shard'ам.",
+                "when_to_apply": "Когда обосновываешь, зачем нужны sharding и replication уже при умеренном объёме.",
+                "edge_cases": "Для маленьких кэшей <10 GB single-node + AOF может быть достаточно.",
+                "related": "Q5 consistent hashing, Q9 replication factor."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только нехватка CPU — современные SSD дают неограниченный IOPS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "NVMe SSD даёт ~1M IOPS, но это всё ещё единицы TB и один узел; плюс CPU не главный затык.",
+                "source_of_confusion": "Гипертрофия одного компонента архитектуры.",
+                "if_it_were_true": "Хватало бы вертикального масштабирования, как в Oracle Exadata.",
+                "how_it_should_be": "Видеть несколько ограничений вместе: RAM, диск, сеть, availability."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Невозможность сделать backup на одном узле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backup на одном узле возможен (snapshot/AOF), просто без распределённости теряется HA.",
+                "source_of_confusion": "Смешение operational concerns с архитектурным потолком.",
+                "if_it_were_true": "Решением была бы внешняя backup-система, а не sharding.",
+                "how_it_should_be": "Главный аргумент — petabyte scale + 99.99% availability, а не бэкап."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Языковая модель — Java GC не позволяет KV держать больше 4 GB heap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra-ноды держат heap 8-31 GB, off-heap кэши — сотни GB; GC — тюнинговый вопрос, а не предел.",
+                "source_of_confusion": "Преувеличение JVM-ограничений.",
+                "if_it_were_true": "KV-хранилища писались бы только на C++.",
+                "how_it_should_be": "Видеть предел как RAM/диск/сеть/SPOF, а не GC."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Dynamo-style KV-хранилища выбирают AP, а не CP по CAP?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Потому что AP проще реализовать, чем CP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AP-системы с vector clocks и gossip — это не «проще»; они сложнее в эксплуатации (repair, conflict resolution).",
+                "source_of_confusion": "Эстетическое суждение вместо бизнес-обоснования.",
+                "if_it_were_true": "Все БД были бы AP, что не так (Spanner, etcd, ZooKeeper — CP).",
+                "how_it_should_be": "Главный аргумент — бизнес-стоимость недоступности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Потому что AP-системы автоматически дают линеаризуемость через kvorum.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кворум R+W>N даёт strong consistency только в норме; при partition AP-система продолжает принимать запросы и допускает расхождение.",
+                "source_of_confusion": "Смешение strong consistency и линеаризуемости.",
+                "if_it_were_true": "CAP-теоремы бы не существовало.",
+                "how_it_should_be": "AP жертвует C при partition; quorum — это compromise, а не магия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Потому что бизнес-сценарии (например, shopping cart в Amazon) ценят availability выше строгой консистентности и допускают eventual.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Dynamo paper 2007 Amazon формулирует: «потерянная продажа дороже несогласованности корзины»; кэш ответов — eventual-tolerant.",
+                "example": "Cassandra at Discord (2017): сотни TB сообщений с tunable CL, AP-выбор даёт low-latency reads даже при сбоях узлов.",
+                "when_to_apply": "Для read-your-writes per-user и idempotent payloads AP+quorum достаточны.",
+                "edge_cases": "Банковский ledger или счётчик уникальности — это всё-таки CP-задача (Spanner/etcd).",
+                "related": "Q4 PACELC, Q10 quorum R+W>N."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Потому что AP даёт лучшее использование диска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CAP-выбор не про диск, а про поведение при partition.",
+                "source_of_confusion": "Смешение разных архитектурных решений.",
+                "if_it_were_true": "Диск был бы аргументом за/против Paxos vs gossip.",
+                "how_it_should_be": "Обосновывать AP через стоимость недоступности для бизнеса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что добавляет PACELC к CAP-классификации Dynamo-style KV?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "PACELC игнорирует Dynamo-системы и применим только к CP-БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PACELC классифицирует обе семьи; Cassandra и DynamoDB — PA/EL.",
+                "source_of_confusion": "Неверная ассоциация PACELC с consensus-системами.",
+                "if_it_were_true": "Не было бы строки «Cassandra — PA/EL» в учебниках.",
+                "how_it_should_be": "Помнить, что PACELC расширяет CAP для нормального режима тоже."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "PACELC — это лимит на partition latency в милисекундах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PACELC — модель trade-off, а не численный лимит.",
+                "source_of_confusion": "Похожее звучание с метриками latency.",
+                "if_it_were_true": "Была бы конкретная формула в секундах.",
+                "how_it_should_be": "PACELC = Partition→A/C, Else→L/C."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "PACELC заменяет CAP и делает выбор AP/CP ненужным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PACELC расширяет CAP, не заменяет; AP/CP-часть осталась.",
+                "source_of_confusion": "Маркетинговая упрощённая трактовка.",
+                "if_it_were_true": "В учебниках бы не упоминали обе модели.",
+                "how_it_should_be": "Использовать обе как комплементарные оси анализа."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "PACELC показывает, что Dynamo-style жертвует C ради L и без partition: даже в норме предпочитает latency, а не линеаризуемость.",
+              "correct": true,
+              "sections": {
+                "explanation": "PA/EL: при partition — AP, иначе — EL (latency over consistency). Один round-trip к локальной реплике, а не два через координатор + sync replicas.",
+                "example": "Cassandra LOCAL_ONE: ~1 ms read из ближайшей реплики; LOCAL_QUORUM: ~5-10 ms; ALL: десятки ms + tail latency.",
+                "when_to_apply": "Когда обосновываешь, почему даже без сбоев нельзя получить linearizability бесплатно.",
+                "edge_cases": "MongoDB с majority writes — это PC/EC: даже без partition платит RTT за linearizable read.",
+                "related": "Q3 AP-выбор, Q23 LOCAL_QUORUM."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему наивная схема `hash(key) % N` непригодна для распределённого KV, а consistent hashing работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Modulo даёт неравномерное распределение, а consistent hashing — идеальное даже без vnodes.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чистый consistent hashing без vnodes тоже неравномерен (дисперсия высокая) — поэтому ввели vnodes.",
+                "source_of_confusion": "Смешение проблемы rebalancing с проблемой равномерности.",
+                "if_it_were_true": "Не было бы нужды в vnodes.",
+                "how_it_should_be": "Главный плюс — minimal disruption при изменении кластера, не равномерность саму по себе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При изменении N меняется владелец у ~(N-1)/N ключей, а consistent hashing двигает только ~1/N — ключи соседнего сегмента кольца.",
+              "correct": true,
+              "sections": {
+                "explanation": "Karger 1997: хеш-пространство — кольцо [0..2^32); ключ берёт первый узел по часовой стрелке; добавление узла перемещает только соседний сегмент.",
+                "example": "N=10 → modulo при +1 узле трогает ~90% ключей; consistent hashing — ~9%.",
+                "when_to_apply": "Когда обосновываешь выбор partition-схемы для KV; критично для кэшей и shards.",
+                "edge_cases": "При экстремальной гетерогенности нужно дополнительно proportional weighting через vnodes.",
+                "related": "Q6 vnodes, Q7 равномерность."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Modulo требует hash-функции, а consistent hashing работает без неё.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Consistent hashing тоже использует hash (MD5/Murmur) для позиции на кольце.",
+                "source_of_confusion": "Терминологическая путаница.",
+                "if_it_were_true": "Не было бы поля num_tokens или random hash-функции.",
+                "how_it_should_be": "Видеть hash как общий компонент обеих схем."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Modulo быстрее на чтении, поэтому используется в Cassandra.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra использует consistent hashing с vnodes; modulo там нет.",
+                "source_of_confusion": "Перенос локального шардинга СУБД на KV.",
+                "if_it_were_true": "Cassandra не пережила бы добавление узла без полного rebalance.",
+                "how_it_should_be": "Помнить: modulo — это про статические шарды, не для elastic-кластера."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем в consistent hashing нужны virtual nodes (vnodes)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Vnodes снижают дисперсию (1/√(M·V)), поддерживают пропорциональную нагрузку и упрощают rebalancing — соседи отдают по чуть-чуть, а не один большой кусок.",
+              "correct": true,
+              "sections": {
+                "explanation": "При V×M точках стандартное отклонение размеров сегментов падает как 1/√(M·V); мощному узлу можно дать больше vnodes; при добавлении узла каждый сосед отдаёт ~1/V сегмента.",
+                "example": "Cassandra num_tokens=256 по умолчанию; DynamoDB и Riak — десятки-сотни vnodes на физическую ноду.",
+                "when_to_apply": "Каждый раз, когда обосновываешь выбор partition layout с учётом hot spots и heterogeneous hardware.",
+                "edge_cases": "Слишком большой num_tokens (>1024) увеличивает gossip overhead и время repair.",
+                "related": "Q7 математика равномерности, Q18 bootstrap."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Они уменьшают дисперсию размеров сегментов и позволяют пропорциональную нагрузку для гетерогенных узлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это часть правильного ответа, но не полная — vnodes также облегчают rebalancing при join/leave.",
+                "source_of_confusion": "Видим только статистический аспект.",
+                "if_it_were_true": "Было бы достаточно много случайных позиций без понятия «vnode».",
+                "how_it_should_be": "Видеть все три эффекта: равномерность, weighting и плавный rebalancing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы данные физически хранились в разных файлах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vnodes — логические позиции на хеш-кольце; физическое хранение организуется SSTable, не vnodes.",
+                "source_of_confusion": "Смешение logical partition и physical storage layout.",
+                "if_it_were_true": "Кардинально менялась бы дисковая структура.",
+                "how_it_should_be": "Vnodes — это про распределение ownership, не про storage."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы поддерживать transactions ACID между узлами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vnodes никак не относятся к ACID-транзакциям.",
+                "source_of_confusion": "Перенос реляционных понятий на distributed KV.",
+                "if_it_were_true": "Не было бы LWT или Paxos-расширений поверх Cassandra.",
+                "how_it_should_be": "Vnodes — это исключительно про распределение нагрузки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова относительная ошибка распределения ключей при M узлах и V vnodes на узел?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Линейная по M·V.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из закона больших чисел стандартное отклонение пропорционально √n, не n.",
+                "source_of_confusion": "Путаница между линейной и корневой зависимостью.",
+                "if_it_were_true": "Большие V давали бы непропорционально хороший эффект.",
+                "how_it_should_be": "Помнить, что разброс растёт как √n, а относительная ошибка падает как 1/√n."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Постоянная и равна 1 независимо от M и V.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Закон больших чисел даёт уменьшение разброса с ростом точек.",
+                "source_of_confusion": "Не учитывается зависимость от размера выборки.",
+                "if_it_were_true": "Vnodes были бы бесполезны для равномерности.",
+                "how_it_should_be": "Использовать формулу ~1/√(M·V)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "~1/√(M·V) — при M=10 узлов и V=256 vnodes ошибка ≈ 2% от средней нагрузки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Размещение N независимых случайных точек на отрезке даёт дисперсию ~N; относительное отклонение ~1/√N. При M·V=2560 это ≈ 1/50 = 2%.",
+                "example": "В Cassandra с num_tokens=256 на 10 узлах перекос между узлами обычно <5%, что и подтверждает формулу.",
+                "when_to_apply": "Когда сайзишь кластер или объясняешь, почему хочется V≥100.",
+                "edge_cases": "При неудачной hash-функции (плохая uniformity) формула не работает.",
+                "related": "Q6 vnodes, Q26 hot keys."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Зависит от value-size, а не от количества узлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Распределение ключей определяется hash-функцией и числом точек, value-size роли не играет.",
+                "source_of_confusion": "Смешение распределения нагрузки и storage utilization.",
+                "if_it_were_true": "Хеш-функцию пришлось бы выбирать под payload.",
+                "how_it_should_be": "Формула равномерности — про количество точек, не размер."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что обязан делать `get_preference_list` в реализации consistent hashing, чтобы N реплик были устойчивы к потере одного физического узла?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Брать первые N подряд идущих позиций кольца независимо от node_id.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это даёт N vnodes, которые могут принадлежать одной физической ноде — при её падении все реплики недоступны.",
+                "source_of_confusion": "Кажется, что vnodes уже распределены равномерно.",
+                "if_it_were_true": "Repair и hinted handoff не помогли бы — была бы потеря всех реплик одновременно.",
+                "how_it_should_be": "Пропускать дубликаты по физическому node_id."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Возвращать N узлов по возрастанию node_id, а не по позиции на кольце.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это вообще не consistent hashing — ownership должно определяться позицией ключа.",
+                "source_of_confusion": "Слишком наивное упрощение.",
+                "if_it_were_true": "При добавлении узла менялись бы все владельцы — minimal disruption теряется.",
+                "how_it_should_be": "Идти по кольцу clockwise от позиции ключа."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Возвращать случайные N узлов из кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Случайный выбор ломает детерминизм consistent hashing и принцип minimal disruption.",
+                "source_of_confusion": "Подмена детерминированного алгоритма на rand load-balancer.",
+                "if_it_were_true": "Каждый клиент видел бы разные реплики — невозможно read repair.",
+                "how_it_should_be": "Всегда детерминированный обход по кольцу."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Идти по кольцу и собирать первые N различных физических узлов, пропуская дубликаты vnodes одного и того же узла.",
+              "correct": true,
+              "sections": {
+                "explanation": "Несколько vnodes одной физической ноды могут оказаться подряд. Если их посчитать как разные реплики, при падении ноды теряем все копии — нарушается весь смысл RF=N.",
+                "example": "Python-реализация: `seen = set(); for pos in ring: if node not in seen: seen.add(node); result.append(node); if len(result) == N: break`.",
+                "when_to_apply": "В любой production-реализации consistent hashing с vnodes.",
+                "edge_cases": "Если узлов меньше N — отдать всё, что есть, и логировать предупреждение.",
+                "related": "Q9 preference list, Q11 sloppy quorum."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое preference list и почему типично выбирают replication factor N=3?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это случайный набор из 3 узлов; N=3 выбран по историческим причинам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Preference list — детерминированный список первых N различных физических узлов clockwise от позиции ключа.",
+                "source_of_confusion": "Упрощённое описание replication.",
+                "if_it_were_true": "Каждый клиент выбирал бы свой набор — невозможен quorum.",
+                "how_it_should_be": "Detrminstic ordering от hash(key) по кольцу."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Упорядоченный список первых N различных физических узлов clockwise от ключа; N=3 — компромисс: N=2 не выдерживает квowum при падении 1 узла, N≥5 дорог по записи и месту.",
+              "correct": true,
+              "sections": {
+                "explanation": "При N=3 потеря одного узла оставляет 2 живые реплики — кворум W=2 или R=2 ещё достижим. N=2 + W=2 = full ALL, фейл при любом падении.",
+                "example": "DynamoDB всегда 3 копии в AZ; Cassandra default keyspace replication_factor: 3.",
+                "when_to_apply": "Дефолт для production OLTP-нагрузки в одном DC.",
+                "edge_cases": "Для критичных данных RF=5 + W=3 + R=3 даёт устойчивость к 2 одновременным падениям.",
+                "related": "Q10 quorum, Q11 sloppy quorum."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это полный список узлов кластера; N=3 — это число координаторов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Preference list — это N реплик из всех узлов, не весь кластер. Координатор — отдельная роль.",
+                "source_of_confusion": "Путаница ролей.",
+                "if_it_were_true": "Запись шла бы на 100+ узлов — write amplification x100.",
+                "how_it_should_be": "Запоминать: preference list = N, coordinator = 1."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это список slave-узлов одной master-replica; N=3 — это лимит протокола.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Dynamo-style нет master/slave — все реплики симметричны (leaderless).",
+                "source_of_confusion": "Перенос master/slave из MySQL/PostgreSQL.",
+                "if_it_were_true": "Был бы failover-плэйбук и read replicas.",
+                "how_it_should_be": "Помнить, что Dynamo-стиль — leaderless replication."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что гарантирует формула R + W > N в Dynamo-style replication?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Что write-set и read-set реплик пересекаются хотя бы в одной — следующее чтение увидит последнюю успешную запись (strong consistency без partition и сбоев).",
+              "correct": true,
+              "sections": {
+                "explanation": "При N=3, W=2, R=2 множества из 2 реплик с обязательной общей нодой; на ней live последний value с timestamp/VC → read возвращает свежее.",
+                "example": "Типичный prod-профиль Cassandra: N=3, W=QUORUM, R=QUORUM — балансирует latency и consistency.",
+                "when_to_apply": "Когда обосновываешь выбор CL=QUORUM или LOCAL_QUORUM для конкретного use case.",
+                "edge_cases": "При partition/sloppy quorum формула может нарушаться — strong → eventual в edge.",
+                "related": "Q11 sloppy quorum, Q24 tunable CL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Что репликация бесплатна и не влияет на latency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чем больше W, тем медленнее p99 — ждём самую медленную из W реплик.",
+                "source_of_confusion": "Игнор latency-стоимости quorum.",
+                "if_it_were_true": "Не было бы CL=ONE для быстрых чтений.",
+                "how_it_should_be": "Помнить, что R+W>N стоит latency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Что данные физически хранятся в R+W копиях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реплик всегда N, а R и W — это сколько узлов отвечает на чтение/запись.",
+                "source_of_confusion": "Смешение storage replication и consistency-level.",
+                "if_it_were_true": "Storage cost зависел бы от CL.",
+                "how_it_should_be": "Реплики физически N; R, W — про подтверждения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Что линеаризуемость гарантирована даже при network partition.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При partition AP-система продолжает принимать запросы вне кворума (sloppy quorum), формула может нарушаться.",
+                "source_of_confusion": "Преувеличение гарантий quorum.",
+                "if_it_were_true": "CAP-теорема была бы опровергнута.",
+                "how_it_should_be": "R+W>N даёт strong consistency только в норме."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает sloppy quorum и hinted handoff в Dynamo при недоступности части preference list?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Координатор фейлит запрос пока все узлы preference list не вернутся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это strict quorum (Paxos/Raft style); Dynamo вместо этого пишет на следующий доступный узел с hint.",
+                "source_of_confusion": "Подмена sloppy на strict quorum.",
+                "if_it_were_true": "Availability KV была бы низкой при любых сбоях.",
+                "how_it_should_be": "Sloppy quorum использует резервные узлы вне preference list."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Координатор автоматически удаляет недоступный узел из кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Membership меняется через operator-команды (decommission/removenode), не автоматически.",
+                "source_of_confusion": "Спутали с автоматическим failover в managed-сервисах.",
+                "if_it_were_true": "Кратковременные сбои сети вызывали бы постоянную потерю узлов.",
+                "how_it_should_be": "Узел остаётся в кластере; gossip помечает его DOWN."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Координатор записывает копию на следующий доступный узел по кольцу с пометкой `intended_for: B`; узел хранит hint и реплеит его, когда B вернётся.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sloppy quorum: W подтверждений могут прийти от узлов вне preference list (по кольцу дальше). Hinted handoff обеспечивает eventual delivery, когда intended-узел поднимется.",
+                "example": "Cassandra: hint хранится в отдельной keyspace `system.hints`, TTL 3 часа по умолчанию (hinted_handoff_max_hint_window_ms).",
+                "when_to_apply": "По умолчанию включено; даёт высокую availability ценой возможной потери strong consistency.",
+                "edge_cases": "Если intended-узел вернулся после TTL, hint выкидывается → реплика останется stale до следующего repair.",
+                "related": "Q10 quorum, Q12 read repair, Q27 tombstones."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Координатор фейловерит на read-replica мастер-ноды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В leaderless Dynamo-style нет master/slave; failover работает иначе.",
+                "source_of_confusion": "Перенос MySQL/PostgreSQL модели.",
+                "if_it_were_true": "Был бы single point of coordination.",
+                "how_it_should_be": "Координатор может быть любой узел; preference list определяется hash."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Merkle trees помогают anti-entropy между репликами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Узлы обмениваются корнями хеш-дерева; при несовпадении рекурсивно спускаются до конкретных расходящихся блоков и передают только их.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это правильное описание, но не полное — упускаем сложность O(log N) и почему это лучше брутфорса.",
+                "source_of_confusion": "Поверхностный ответ без указания сложности.",
+                "if_it_were_true": "Хватило бы краткого описания, но это часть правды.",
+                "how_it_should_be": "Добавить O(log N) и сравнение с O(N) полного сканирования."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Merkle tree автоматически чинит конфликты vector clock.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Merkle tree обнаруживает расхождение; разрешением конфликтов занимается LWW/VC/CRDT.",
+                "source_of_confusion": "Смешение detection и resolution.",
+                "if_it_were_true": "Был бы один механизм вместо двух.",
+                "how_it_should_be": "Merkle = detect, VC/LWW = resolve."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Merkle tree — это структура для шифрования данных при репликации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Merkle tree даёт integrity hashes, не шифрование; в KV используется для diff-обнаружения.",
+                "source_of_confusion": "Ассоциация с blockchain/crypto.",
+                "if_it_were_true": "Был бы encryption key flow.",
+                "how_it_should_be": "Merkle tree — про hash-структуру, не encryption."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Merkle tree даёт O(log N) сравнение вместо O(N): узлы обмениваются root-hash, при совпадении синхронизация не нужна; иначе рекурсивно ищут несовпадающие листья и стримят только diff.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый узел строит дерево хешей по своему диапазону ключей; листья — хеши блоков, внутренние узлы — хеши детей. Совпадение root → данные идентичны; иначе O(log N) шагов до конкретных блоков.",
+                "example": "Cassandra: `nodetool repair` запускает Merkle-сравнение раз в неделю; передаёт только реальные diff'ы.",
+                "when_to_apply": "Для регулярного background-repair, особенно после длительных сбоев или истёкших hints.",
+                "edge_cases": "Очень много мелких изменений → большой diff → большой network impact; делать incremental или sub-range repair.",
+                "related": "Q11 sloppy quorum, Q18 streaming."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая основная проблема Last-Write-Wins (LWW) как стратегии разрешения конфликтов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "LWW не работает с replication.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LWW специально разработан для leaderless replication (Cassandra default).",
+                "source_of_confusion": "Слишком категоричное заявление.",
+                "if_it_were_true": "Cassandra не использовала бы LWW по умолчанию.",
+                "how_it_should_be": "LWW работает с репликацией, но имеет точечные проблемы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Часовой skew между узлами: узел с забегающими часами «всегда побеждает» даже если фактически писал раньше, плюс LWW не детектирует параллелизм.",
+              "correct": true,
+              "sections": {
+                "explanation": "NTP даёт ~10-100 ms skew, иногда секунды; LWW по wall-clock timestamp может откатить более позднюю с точки зрения causality запись.",
+                "example": "Классический Dynamo shopping cart: при LWW конкурентные `add(itemA)` и `add(itemB)` теряют один товар; в реальности нужен merge как union.",
+                "when_to_apply": "Если используешь LWW — обязательно идемпотентный full-state payload и единственный writer per key.",
+                "edge_cases": "Для write-heavy log-like данных с natural ordering (sensor timestamps) LWW приемлем.",
+                "related": "Q14 vector clocks, Q15 client merge."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "LWW требует Paxos для каждой записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LWW — это leaderless и не требует консенсуса; Paxos нужен для linearizable LWT.",
+                "source_of_confusion": "Смешение LWW и LWT.",
+                "if_it_were_true": "LWW был бы дорогим — мы бы не выбирали его как default.",
+                "how_it_should_be": "LWW по timestamp; никакого консенсуса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "LWW работает только в single-DC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LWW работает в multi-DC, но clock skew между DC ещё больше — проблема усугубляется.",
+                "source_of_confusion": "Локализация проблемы.",
+                "if_it_were_true": "Multi-DC требовал бы только vector clocks.",
+                "how_it_should_be": "LWW работает везде, но opasen там, где параллелизм важен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое vector clock и как он обнаруживает конкурентные записи?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это карта `{node_id: counter}`; при записи инкремент своего счётчика; две VC incomparable (есть и большие, и меньшие компоненты) → конкурентные → возвращаем siblings клиенту.",
+              "correct": true,
+              "sections": {
+                "explanation": "Lamport's happens-before расширен per-node счётчиками. VC1<VC2 означает причинную следующесть; incomparable — параллельность.",
+                "example": "Riak возвращает siblings и просит клиент сделать merge; Dynamo paper описывает shopping cart с union.",
+                "when_to_apply": "Когда нужна точная детекция параллелизма (не LWW): collaborative editing, counters, sets.",
+                "edge_cases": "VC растёт пропорционально числу writers per key; Riak делает pruning старых писателей.",
+                "related": "Q13 LWW, Q15 client merge."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это wall-clock timestamp с микросекундной точностью.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VC — это логический счётчик per node, не wall-clock; не подвержен clock skew.",
+                "source_of_confusion": "Похожее звучание «vector» и «timestamp».",
+                "if_it_were_true": "VC имел бы те же проблемы, что и LWW.",
+                "how_it_should_be": "VC = {node_id: counter}, инкрементируется на запись."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это глобальный consensus-сервис, выдающий монотонные timestamps.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VC — distributed, без центрального сервиса; ничего общего с TrueTime/HLC.",
+                "source_of_confusion": "Перенос Spanner TrueTime на Dynamo.",
+                "if_it_were_true": "Был бы SPOF и/или Paxos под каждым PUT.",
+                "how_it_should_be": "VC локален per node, синхронизируется при репликации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это hash-функция от key и value для conflict detection.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VC не зависит от содержимого value; это счётчик операций.",
+                "source_of_confusion": "Смешение с content-addressed хешами.",
+                "if_it_were_true": "Один и тот же value давал бы один и тот же VC.",
+                "how_it_should_be": "VC привязан к операциям записи, не к значениям."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как клиент должен мерджить siblings, возвращённые KV-хранилищем при VC-конфликте?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Запросить у KV-сервера автоматический merge через хранимую процедуру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Dynamo-style сервер не знает бизнес-семантику; хранимых процедур нет.",
+                "source_of_confusion": "Перенос реляционных stored procedures.",
+                "if_it_were_true": "KV терял бы простоту.",
+                "how_it_should_be": "Merge на стороне клиента/приложения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Всегда брать sibling с максимальным wall-clock timestamp.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это LWW; теряем смысл vector clocks и параллельные изменения.",
+                "source_of_confusion": "Подмена VC-merge на LWW.",
+                "if_it_were_true": "Не было бы понятия siblings.",
+                "how_it_should_be": "Использовать application-merge."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Применить бизнес-логику merge: union для set-like, CRDT для счётчиков, application-функция для сложных структур; записать обратно с VC = merge(VC1, VC2).inc(client).",
+              "correct": true,
+              "sections": {
+                "explanation": "KV сам не знает семантику данных; разрешение конфликта — задача application. После merge новая запись causally-после обоих siblings.",
+                "example": "Dynamo shopping cart: `merged[sku] = max(cart_a[sku], cart_b[sku])`; Riak G-Counter: sum по node_id.",
+                "when_to_apply": "Когда выбираешь стратегию consistency для конкретного use case (cart, counter, profile).",
+                "edge_cases": "Удалённые элементы при naive union «воскресают» — нужен tombstone-aware merge (OR-Set).",
+                "related": "Q13 LWW, Q14 vector clocks."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Выкинуть все siblings и записать дефолтное значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это data loss — самый плохой ответ на конфликт.",
+                "source_of_confusion": "Слишком агрессивное разрешение.",
+                "if_it_were_true": "Любой конфликт = потеря данных пользователя.",
+                "how_it_should_be": "Использовать осмысленный merge, не reset."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает gossip-протокол для распространения membership state?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Центральный координатор рассылает state всем узлам каждую секунду.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gossip — это decentralized epidemic protocol; нет центрального координатора (он был бы SPOF).",
+                "source_of_confusion": "Перенос централизованной модели (ZooKeeper).",
+                "if_it_were_true": "Координатор был бы SPOF — против всей идеи AP.",
+                "how_it_should_be": "Каждый узел гоsipает к случайным k соседям."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Узлы получают полный state кластера через DNS SRV-записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DNS используется только для seed discovery; live-state — через gossip.",
+                "source_of_confusion": "Перенос service discovery на membership.",
+                "if_it_were_true": "DNS TTL делал бы membership неэффективным.",
+                "how_it_should_be": "DNS — для seed, gossip — для live state."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Узлы синхронизируют state через Paxos consensus.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gossip — eventually consistent, не consensus.",
+                "source_of_confusion": "Смешение AP-протоколов с CP.",
+                "if_it_were_true": "Memberhip-изменения стоили бы минуты latency.",
+                "how_it_should_be": "Gossip = eventual, без consensus."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Каждый узел раз в 1 сек выбирает случайно k=1..3 соседей и обменивается state-картой `{node_id: (heartbeat, gen, status, tokens)}`; новости расходятся экспоненциально за O(log N) раундов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Epidemic protocol: с probability 1-1/N все узлы узнают за O(log N) секунд; для N=1000 ≈ 10 сек. Scalable, partition-tolerant, self-healing.",
+                "example": "Cassandra Gossiper + EndpointState; seed_nodes только для bootstrap-знакомства, дальше — full gossip mesh.",
+                "when_to_apply": "Для membership, schema, token ranges и любого eventually-consistent state в кластере.",
+                "edge_cases": "Большой кластер (>1000 нод) или num_tokens=256 → overhead gossip растёт; ограничивай tokens.",
+                "related": "Q17 phi-accrual, Q18 bootstrap."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём преимущество φ-accrual failure detector над фиксированным heartbeat timeout?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "φ-accrual быстрее обычного heartbeat, потому что не требует сетевых пакетов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "φ-accrual использует те же heartbeats, отличие — в trick анализе.",
+                "source_of_confusion": "Кажется, что разные алгоритмы — разные протоколы.",
+                "if_it_were_true": "φ-accrual работал бы без gossip — что не так.",
+                "how_it_should_be": "Тот же heartbeat, разная интерпретация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "φ-accrual возвращает не bool, а число φ = «насколько подозрителен узел», адаптируясь к историческому RTT и jitter; application выбирает порог под свой use case.",
+              "correct": true,
+              "sections": {
+                "explanation": "Хранится sliding window inter-arrival heartbeats; распределение аппроксимируется (нормальное/экспоненциальное); φ = -log10(P(прибытие > t)). При нестабильной сети threshold авто-поднимается.",
+                "example": "Cassandra phi_convict_threshold=8 по умолчанию (вероятность ошибки ~10^-8); UI tools могут использовать φ=3 для быстрой реакции.",
+                "when_to_apply": "Везде, где сетевой RTT варьируется (cross-DC, контейнеры с CPU throttling).",
+                "edge_cases": "Холодный старт без истории — φ ведёт себя странно первые секунды; обычно есть warmup-фаза.",
+                "related": "Q16 gossip, Q25 scaling."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "φ-accrual использует TCP keepalive вместо application heartbeat.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TCP keepalive — это другой механизм; φ-accrual работает на application-level heartbeats через gossip.",
+                "source_of_confusion": "Смешение уровней OSI.",
+                "if_it_were_true": "Был бы зависимым от TCP-настроек ОС.",
+                "how_it_should_be": "Application-level heartbeat + статистическое распределение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "φ-accrual не требует синхронизации часов NTP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Heartbeat-based детекторы все не требуют синхронизации clocks (используют local time delta).",
+                "source_of_confusion": "Это свойство всех heartbeat-механизмов, не уникальное для φ.",
+                "if_it_were_true": "Был бы аргументом против обычного heartbeat — не так.",
+                "how_it_should_be": "Главное отличие — адаптивность, не clock-независимость."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие шаги bootstrap-а нового узла обеспечивают целостность данных во время streaming?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Новый узел gossip-присоединяется как JOINING; вычисляет токены, стримит данные от текущих owners; координатор пишет двойную запись (старый + новый) до завершения streaming; затем gossip status=NORMAL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Двойная запись на `pending range` предотвращает потерю записей во время bootstrap; после NORMAL старый owner делает `cleanup` своих копий.",
+                "example": "Cassandra `nodetool status` показывает UJ (Up, Joining) → UN (Up, Normal); streaming может занимать часы для больших нод.",
+                "when_to_apply": "Plan capacity changes заранее; не запускать в hot path.",
+                "edge_cases": "Bootstrap fail → pending range остаётся; нужен `removenode` + повторный bootstrap.",
+                "related": "Q25 scaling, Q12 anti-entropy."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Узел сразу принимает писатели в нормальном режиме, и старые owners просто прекращают принимать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это вызовет потерю записей — пока streaming идёт, нужен двойной приём.",
+                "source_of_confusion": "Игнор переходного периода bootstrap.",
+                "if_it_were_true": "При любом добавлении узла теряли бы часть писем.",
+                "how_it_should_be": "Координатор пишет и на старого, и на нового owner (`pending range`) во время bootstrap."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Узел копирует все данные кластера, потом отбрасывает лишнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Streaming передаёт только нужные диапазоны ключей, не весь кластер.",
+                "source_of_confusion": "Наивный подход без оптимизации.",
+                "if_it_were_true": "Bootstrap кластера в петабайт занял бы недели.",
+                "how_it_should_be": "Стримим только то, что попадает в новые token ranges."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Узел сразу становится координатором всех запросов кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Координатор — это per-request роль, не permanent звание; новый узел сначала JOINING.",
+                "source_of_confusion": "Смешение ролей и состояний.",
+                "if_it_were_true": "Кластер вёл бы себя нестабильно при каждом join.",
+                "how_it_should_be": "Координатором может быть любой узел в NORMAL state."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему LSM-tree предпочтительнее B-tree для Dynamo-style KV-хранилища?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "LSM-tree автоматически выполняет ACID-транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LSM — это storage engine, не transaction layer; ACID требует отдельных уровней.",
+                "source_of_confusion": "Смешение storage и transaction.",
+                "if_it_were_true": "Cassandra поддерживала бы multi-row transactions из коробки.",
+                "how_it_should_be": "LSM — про disk I/O, не про ACID."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "LSM-tree не требует диска и работает только в памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SSTable на диске — фундаментальная часть LSM; в памяти только memtable.",
+                "source_of_confusion": "Смешение LSM с in-memory KV (Redis).",
+                "if_it_were_true": "Cassandra не падала бы при reboot — что не так без WAL.",
+                "how_it_should_be": "Memtable RAM + SSTable disk = персистентный LSM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "LSM-tree даёт sequential disk writes (append в memtable + WAL), что подходит write-heavy профилю; compaction делается в фоне и не блокирует hot path.",
+              "correct": true,
+              "sections": {
+                "explanation": "Writes → memtable (RAM) + WAL append → eventually flush в immutable SSTable. Sequential I/O даёт высокий throughput даже на HDD; B-tree требует random writes в страницы.",
+                "example": "RocksDB / Cassandra: миллионы writes/sec на одну ноду благодаря sequential WAL; B-tree в Postgres ограничен ~100k writes/sec random I/O.",
+                "when_to_apply": "Write-heavy KV, time-series, event log; replication-friendly из-за immutable SSTable.",
+                "edge_cases": "Read-heavy с big range scans — B-tree может выиграть; LSM с Bloom filters неплохо, но read amp выше.",
+                "related": "Q20 memtable/SSTable/WAL, Q21 compaction."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "LSM-tree даёт лучшие join'ы между таблицами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LSM не оптимизирован для join'ов; KV вообще не делает join на сервере.",
+                "source_of_confusion": "Перенос реляционных требований.",
+                "if_it_were_true": "Cassandra поддерживала бы SQL join.",
+                "how_it_should_be": "Join — задача приложения через денормализацию."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой путь проходит запись в LSM-движке (WAL → memtable → SSTable)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сначала пишется напрямую в SSTable, потом копируется в memtable.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обратный порядок — SSTable immutable и создаётся только из memtable flush.",
+                "source_of_confusion": "Путаница в направлении потока.",
+                "if_it_were_true": "Не было бы immutable SSTable.",
+                "how_it_should_be": "WAL → memtable → SSTable (один путь)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "WAL не нужен в LSM, потому что SSTable immutable.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WAL критичен для durability — memtable RAM теряется при crash до flush.",
+                "source_of_confusion": "Кажется, что immutable SSTable достаточно.",
+                "if_it_were_true": "Любой crash до flush терял бы up-to-32-MB записей.",
+                "how_it_should_be": "WAL обязателен; replay восстанавливает memtable."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Memtable пишется на диск синхронно в каждом запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Memtable в RAM; на диск идёт WAL (durability) и flush (когда memtable полная).",
+                "source_of_confusion": "Смешение WAL и memtable.",
+                "if_it_were_true": "Throughput был бы ограничен random disk write.",
+                "how_it_should_be": "Memtable in-memory; диск — WAL append и SSTable flush."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "WAL append с fsync (durability) → insert в memtable (sorted in-memory map) → при заполнении immutable flush в SSTable L0 → background compaction в уровни.",
+              "correct": true,
+              "sections": {
+                "explanation": "WAL обеспечивает durability при крэше (replay memtable). Memtable принимает писатели мгновенно; flush создаёт новую SSTable; compaction мерджит несколько SSTable, выбрасывая старые версии и tombstones.",
+                "example": "Cassandra: memtable ~32 MB → flush в L0; STCS/LCS compaction в L1+.",
+                "when_to_apply": "Каждый раз, когда обсуждаешь write path KV или нужно объяснить, почему writes так быстры.",
+                "edge_cases": "WAL fsync — bottleneck по latency; group commit/batch fsync помогает.",
+                "related": "Q21 compaction, Q22 Bloom filters."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевое отличие size-tiered (STCS) от leveled (LCS) compaction strategies?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "STCS быстрее на чтении, LCS быстрее на записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: LCS даёт predictable read amp (ключ в ≤1 SSTable на уровень), STCS быстрее на писи (меньше write amp).",
+                "source_of_confusion": "Запоминание перепутано.",
+                "if_it_were_true": "Recommendations для write-heavy были бы LCS.",
+                "how_it_should_be": "STCS = write-friendly, LCS = read-friendly."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "STCS группирует SSTable по размеру в `tier`, мерджит T штук одного tier в больший; write amp ~log(N), но ключ может быть в нескольких SSTable одновременно. LCS — уровни L0/L1/L2 с x10 ростом, внутри уровня SSTable не пересекаются → predictable read.",
+              "correct": true,
+              "sections": {
+                "explanation": "STCS дёшев по write, дорог по read и временно требует 2× места. LCS наоборот: high write amp (~levels × 10), но guaranteed read путь.",
+                "example": "Cassandra: STCS default для write-heavy; LCS — для read-latency-critical таблиц; TWCS для time-series с TTL.",
+                "when_to_apply": "STCS для логов/событий; LCS для read-heavy lookup; TWCS для time-series.",
+                "edge_cases": "LCS с slow disk → compaction backlog → space amp всё равно растёт.",
+                "related": "Q20 path, Q27 tombstones."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все compaction strategies эквивалентны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждая оптимизирует свой trade-off: STCS — write amp, LCS — read amp, TWCS — time-series + TTL.",
+                "source_of_confusion": "Поверхностный ответ.",
+                "if_it_were_true": "Не было бы выбора в Cassandra.",
+                "how_it_should_be": "Знать характеристики и use case каждой."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "STCS работает только с time-series данными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Time-series specific — это TWCS; STCS общего назначения.",
+                "source_of_confusion": "Перенос характеристики TWCS на STCS.",
+                "if_it_were_true": "STCS не была бы default в Cassandra.",
+                "how_it_should_be": "STCS — generic write-heavy; TWCS — time-series."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что даёт Bloom filter в LSM-движке и как он ускоряет чтение?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Probabilistic set membership на каждый SSTable: false negative невозможен, false positive ~1% при ~10 битах/ключ; позволяет пропустить SSTable, где ключа точно нет, без disk seek.",
+              "correct": true,
+              "sections": {
+                "explanation": "Битовый массив m бит + k hash-функций; при чтении — если хоть один бит не выставлен, ключа нет → skip; иначе читаем (возможно false positive).",
+                "example": "Cassandra default p=0.01 → ~10 бит/ключ в RAM; для 1 млрд ключей ~1.25 GB Bloom filter.",
+                "when_to_apply": "Всегда в LSM с многими SSTable; key cache + Bloom filter — стандарт.",
+                "edge_cases": "Большой dataset + слабый Bloom (1%) даёт всё равно много false positives → читаем reread; tune p=0.001 для критичных таблиц.",
+                "related": "Q20 read path, Q19 LSM."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Bloom filter гарантирует, что чтение пройдёт за O(1) даже без disk I/O.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если ключ есть — придётся читать SSTable с диска; Bloom только отсеивает «точно нет».",
+                "source_of_confusion": "Преувеличение возможностей.",
+                "if_it_were_true": "Можно было бы вообще не хранить данные на диске.",
+                "how_it_should_be": "Bloom — это фильтр-pre-check, не storage."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Bloom filter хранит сами значения в сжатом виде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bloom filter — это битовая структура membership, не storage values.",
+                "source_of_confusion": "Подмена понятия.",
+                "if_it_were_true": "Можно было бы выдавать value без чтения SSTable.",
+                "how_it_should_be": "Bloom: \"key, возможно, есть в этом файле\"."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Bloom filter работает только в B-tree и не применим в LSM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bloom filter — фирменная техника LSM (Cassandra/RocksDB); в B-tree не нужна.",
+                "source_of_confusion": "Перепутаны структуры.",
+                "if_it_were_true": "Cassandra не использовала бы Bloom.",
+                "how_it_should_be": "Bloom — LSM, не B-tree."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем использовать `LOCAL_QUORUM` вместо просто `QUORUM` в multi-DC Cassandra?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "LOCAL_QUORUM запрещает запись в удалённые DC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LOCAL_QUORUM пишет на все DC асинхронно; ждёт ack только от локального quorum.",
+                "source_of_confusion": "Кажется, что local = no remote.",
+                "if_it_were_true": "Multi-DC не имел бы смысла.",
+                "how_it_should_be": "Запись идёт на все DC, ack ждём только от local."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "LOCAL_QUORUM даёт ту же латентность, что и QUORUM, но проще конфигурируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разница в latency на порядок: cross-DC RTT vs intra-DC RTT.",
+                "source_of_confusion": "Минимизация значения CL.",
+                "if_it_were_true": "Не нужно было бы LOCAL_QUORUM.",
+                "how_it_should_be": "LOCAL_QUORUM = local intra-DC kvorum, QUORUM = global."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "QUORUM в multi-DC берёт кворум по всем репликам кластера, включая cross-DC RTT (десятки-сотни ms), убивая latency. LOCAL_QUORUM ограничивается локальным DC → p99 как single-DC.",
+              "correct": true,
+              "sections": {
+                "explanation": "При RF={DC1:3, DC2:3} QUORUM = 4 из 6, что точно потянет cross-DC RTT. LOCAL_QUORUM = 2 из 3 в локальном DC = быстро.",
+                "example": "Discord, Apple — LOCAL_QUORUM для user-facing reads; асинхронная репликация между DC.",
+                "when_to_apply": "Multi-region deployments, где локальная latency критична.",
+                "edge_cases": "Если локальный DC лежит, LOCAL_QUORUM фейлится → нужен fallback на другой DC через cross-region routing.",
+                "related": "Q24 tunable CL, Q4 PACELC."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "LOCAL_QUORUM используется только для read-операций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LOCAL_QUORUM применим к обоим: read и write.",
+                "source_of_confusion": "Ложное ограничение области применения.",
+                "if_it_were_true": "Не было бы симметрии R/W для quorum формулы.",
+                "how_it_should_be": "Любой CL применим и к R, и к W."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой Cassandra consistency level даёт линеаризуемое чтение ценой максимальной потери availability?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ALL` — ждёт ответа от всех N реплик; при падении одной реплики запрос фейлится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это часть правильного ответа, но не подчёркивает «availability страдает».",
+                "source_of_confusion": "Краткий ответ без объяснения.",
+                "if_it_were_true": "Достаточно было бы простой констатации.",
+                "how_it_should_be": "Указать и определение, и trade-off availability."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`EACH_QUORUM` — это только для записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EACH_QUORUM требует quorum в каждом DC; не максимальная availability потеря, ALL хуже.",
+                "source_of_confusion": "Смешение строгих CL.",
+                "if_it_were_true": "EACH_QUORUM = ALL.",
+                "how_it_should_be": "ALL = все N реплик, любая down = fail."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ONE` — самый строгий, потому что одна реплика достоверный источник.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ONE — самый слабый, eventual; читает любую одну реплику, может быть stale.",
+                "source_of_confusion": "Зеркальная инверсия strength.",
+                "if_it_were_true": "Не было бы trade-off availability/consistency.",
+                "how_it_should_be": "ONE = fast & eventual; ALL = slow & linearizable."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ALL` — требует ответа от всех N реплик; даёт linearizable read, но любая недоступная реплика → запрос фейлится. Используется крайне редко (admin-команды, миграции).",
+              "correct": true,
+              "sections": {
+                "explanation": "ALL = R+W=N+N > N, плюс синхронное чтение со всех — даёт сильнейшие гарантии; но availability == min(нормально работающие реплики == N).",
+                "example": "Cassandra `CONSISTENCY ALL; SELECT *` для аудита данных; для prod hot path не используется.",
+                "when_to_apply": "Только когда нужна максимальная гарантия и допустим downtime.",
+                "edge_cases": "Network partition или один rolling restart → all reads/writes падают.",
+                "related": "Q10 quorum, Q23 LOCAL_QUORUM."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой главный подводный камень горизонтального масштабирования (добавления узла) в production Cassandra-кластере?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Кластер автоматически делает scale-out без операторских действий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Cassandra/Riak добавление узла — manual operation (nodetool/cli); managed DynamoDB справляется сам.",
+                "source_of_confusion": "Перенос managed-cloud experience.",
+                "if_it_were_true": "Не было бы capacity planning и trade-off обсуждения.",
+                "how_it_should_be": "Manual scale-out — planning required."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Streaming throttling и planning: без ограничения скорости bootstrap забивает сеть и бьёт по latency продакшена; на крупных кластерах streaming занимает часы, и нельзя добавлять >1 узла одновременно в один DC.",
+              "correct": true,
+              "sections": {
+                "explanation": "При bootstrap новой ноды старые owners стримят свои диапазоны — это network-heavy и CPU-heavy. Без throttling (stream_throughput_outbound_megabits_per_sec) можно положить продакшен.",
+                "example": "DynamoDB Black Friday 2017: пришлось pre-warm кластер заранее, capacity bumps в hot path не успевают.",
+                "when_to_apply": "Всегда планируй scale-out заранее, не во время пиков; throttling — обязательно.",
+                "edge_cases": "Bootstrap >1 ноды → пересекающиеся pending ranges → нарушение consistency.",
+                "related": "Q18 bootstrap, Q12 anti-entropy."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Bootstrap занимает миллисекунды и не имеет операционного влияния.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bootstrap большой ноды (террабайтный диск) занимает часы; влияет на latency через streaming load.",
+                "source_of_confusion": "Игнор реальной операционной нагрузки.",
+                "if_it_were_true": "Не было бы предупреждений в документации.",
+                "how_it_should_be": "Часы streaming + impact на prod latency."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После bootstrap нужно вручную пересоздать все SSTable на старых узлах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После bootstrap старые узлы делают `cleanup` — удаляют ставшие чужими ключи; SSTable пересоздавать не нужно.",
+                "source_of_confusion": "Преувеличение операционных шагов.",
+                "if_it_were_true": "Каждый scale-out требовал бы полного rebuild.",
+                "how_it_should_be": "Cleanup, не rebuild."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие техники применяют для борьбы с hot keys в Dynamo-style KV?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Salting (`key + bucket_id`), внешний cache layer (Redis перед KV), увеличение RF для hot partitions, application-level re-design ключей.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hot key даёт перегрузку координатора одной партиции. Salting размазывает по K координаторам ценой read amp = K. Cache layer — самый дешёвый для read-heavy.",
+                "example": "Цена популярного товара в e-commerce: 100k reads/sec на 1 партицию → Redis cache перед KV снимает нагрузку.",
+                "when_to_apply": "Когда мониторинг (`nodetool toppartitions`, `coordinator_read_latency`) показывает skew.",
+                "edge_cases": "Salting ломает range-scan; увеличение RF — больше disk и репликации.",
+                "related": "Q7 равномерность, Q22 кэши."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hot keys нельзя решить — нужно полностью переписывать систему.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть несколько проверенных техник (salting, cache, RF bump).",
+                "source_of_confusion": "Слишком категоричное заявление.",
+                "if_it_were_true": "Не было бы прод-систем с hot keys.",
+                "how_it_should_be": "Использовать sequence из техник в зависимости от профиля."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно увеличить count vnodes на ноду.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vnodes не помогают одному hot key — он всё равно живёт на одной партиции.",
+                "source_of_confusion": "Смешение skew по партициям и hot single-key.",
+                "if_it_were_true": "Vnodes решали бы всё.",
+                "how_it_should_be": "Vnodes — про equality между нодами, не hot key."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Включить compression на SSTable.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Compression снижает disk usage, не нагрузку на координатора.",
+                "source_of_confusion": "Смешение storage и compute bottleneck.",
+                "if_it_were_true": "Compression решал бы CPU/network проблемы.",
+                "how_it_should_be": "Hot key — про request distribution, не storage."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему накопление tombstones в LSM критично и как с этим бороться?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tombstones — это in-memory флаги, которые исчезают сразу после следующего GET.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tombstones — это записи на диске в SSTable, и живут `gc_grace_seconds` (default 10 дней); никаких in-memory флагов с авто-cleanup.",
+                "source_of_confusion": "Наивная модель «delete = немедленная очистка».",
+                "if_it_were_true": "Не было бы read amplification и `tombstone_failure_threshold`.",
+                "how_it_should_be": "Tombstone — disk record; cleanup происходит в compaction после grace period."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tombstones автоматически удаляются после каждого DELETE.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tombstones живут `gc_grace_seconds` (default 10 дней) — этот период нужен, чтобы repair успел синхронизировать удаление.",
+                "source_of_confusion": "Наивное ожидание мгновенного cleanup.",
+                "if_it_were_true": "Не было бы проблем накопления.",
+                "how_it_should_be": "Tombstones удаляются compaction'ом после grace period."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Tombstones — это записи «key deleted at T» (SSTable immutable, in-place delete невозможен). Накапливаются → read amp растёт; `tombstone_failure_threshold` обрубает query. Решения: TWCS для time-series+TTL, не использовать KV как очередь (Kafka вместо), мониторинг `tombstone_scanned`, regular repair + `gc_grace_seconds`.",
+              "correct": true,
+              "sections": {
+                "explanation": "DELETE в LSM = write tombstone; при чтении нужно увидеть все версии до compaction и вернуть not_found. Чем больше tombstones, тем больше disk reads на один lookup.",
+                "example": "Cassandra анти-паттерн «очередь через INSERT+DELETE»: тысячи tombstones на одной partition → query timeout.",
+                "when_to_apply": "Регулярный мониторинг + правильный выбор compaction strategy (TWCS для time-series).",
+                "edge_cases": "Сокращение `gc_grace_seconds` без regular repair = «оживание» удалённых ключей.",
+                "related": "Q21 compaction, Q28 TTL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Tombstones не существуют в Cassandra.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tombstones — фундамент DELETE в LSM-движках.",
+                "source_of_confusion": "Полное непонимание.",
+                "if_it_were_true": "DELETE был бы невозможен в LSM.",
+                "how_it_should_be": "Tombstone = «key X deleted at T»."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему хранить большие значения (>1 MB) напрямую в KV — анти-паттерн?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Большие значения автоматически разделяются на chunks без проблем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra/DynamoDB не делают auto-chunking; это задача приложения.",
+                "source_of_confusion": "Ложное предположение об автоматизации.",
+                "if_it_were_true": "Не было бы лимитов на mutation_size.",
+                "how_it_should_be": "Приложение само режет blob на куски или использует S3."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Большие значения нельзя зашифровать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Encryption работает с любым размером; проблема не в шифровании, а в storage engine.",
+                "source_of_confusion": "Иррелевантная характеристика.",
+                "if_it_were_true": "Был бы только security argument.",
+                "how_it_should_be": "Главное — storage layout и compaction."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Большие значения медленнее реплицируются — это единственная проблема.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это лишь один аспект; storage/heap/compaction страдают сильнее.",
+                "source_of_confusion": "Узкий взгляд.",
+                "if_it_were_true": "Решением был бы только быстрый network.",
+                "how_it_should_be": "Видеть все стороны: storage, heap, compaction, replication."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Большие значения блокируют SSTable row, ломают compaction, едят JVM heap при чтении; Cassandra жёстко лимитирует `max_mutation_size` (16 MB по умолчанию). Решение: хранить в blob storage (S3/Ceph), а в KV — только ссылку и метаданные.",
+              "correct": true,
+              "sections": {
+                "explanation": "KV оптимизирован для small values: in-memory memtable, sequential WAL, fixed block sizes. Большие values нарушают эти инварианты.",
+                "example": "Cassandra: row >100 MB кладёт compaction; чтение такого row через CQL даёт OOM на coordinator.",
+                "when_to_apply": "Любые медиа, документы, бинарники → blob storage; KV — для метаданных.",
+                "edge_cases": "При offline pipeline (batch ETL) допустимы большие cells в специализированных таблицах.",
+                "related": "Q21 compaction, Q30 anti-patterns."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевое отличие Redis Cluster от Cassandra/DynamoDB/Riak по CAP-выбору?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Redis Cluster — single master per shard (CP-ish), но при split-brain возможна потеря записей; Cassandra/DynamoDB/Riak — leaderless AP с tunable consistency и conflict resolution.",
+              "correct": true,
+              "sections": {
+                "explanation": "Redis Cluster: 16384 hash slots → masters, replicas только для failover; при split-brain (master в minority partition) writes принимаются, но потом откатываются. Dynamo-стиль — leaderless с VC/LWW.",
+                "example": "Известные incidents: Redis Cluster split-brain при network partition теряет writes; Cassandra с LOCAL_QUORUM в обоих DC переживает partition и потом мерджит.",
+                "when_to_apply": "Redis — для cache/hot data <1ms; Cassandra/DynamoDB — для durable petabyte storage.",
+                "edge_cases": "Redis с AOF + WAIT даёт квази-durability, но не AP-availability.",
+                "related": "Q3 AP-выбор, Q24 tunable CL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все четыре системы одинаковы по CAP-выбору.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redis Cluster CP-ish с single master per shard; остальные — leaderless AP.",
+                "source_of_confusion": "Упрощение различий.",
+                "if_it_were_true": "Не нужно было бы выбирать между ними.",
+                "how_it_should_be": "Видеть архитектурные различия в replication model."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cassandra — strong consistency by default, Redis — eventual.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Зеркальная инверсия — Cassandra eventual (tunable), Redis Cluster ближе к CP per-shard.",
+                "source_of_confusion": "Перепутаны характеристики.",
+                "if_it_were_true": "Cassandra не нужны бы LWW/VC.",
+                "how_it_should_be": "Cassandra/DynamoDB/Riak = AP, Redis Cluster = CP-ish."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только Riak использует vector clocks, остальные — LWW.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DynamoDB также может использовать VC (для cart-like); Cassandra default LWW; Redis — single master, conflict не возникает.",
+                "source_of_confusion": "Преувеличение уникальности Riak.",
+                "if_it_were_true": "Riak был бы единственно правильным выбором.",
+                "how_it_should_be": "VC vs LWW — это не critereion CAP."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие три анти-паттерна эксплуатации Dynamo-style KV приводят к деградации хуже всего?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Использование LZ4 compression вместо Snappy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LZ4 vs Snappy — это минорный tuning, не anti-pattern.",
+                "source_of_confusion": "Низкоуровневый detail вместо архитектурных пробem.",
+                "if_it_were_true": "Был бы критичный production-impact от выбора compression.",
+                "how_it_should_be": "LZ4 ~ Snappy по performance; разница в percent, не порядки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "KV как очередь (INSERT+DELETE → tombstone explosion), low RF (RF=2 не даёт quorum при падении 1 узла, Riak EOL 2017 — пример индустрии, отказавшейся от RF=1), игнорирование regular repair (реплики постепенно расходятся).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый из трёх anti-patterns даёт несколько-кратную деградацию: tombstone-вспышка — read failures, RF=2 — split-brain non-quorum, нет repair — eventual divergence без конвергенции.",
+                "example": "MongoDB CP-vs-AP tuning at Healthcare.gov 2013: неправильный CL + low RF дал длительный downtime; Riak EOL 2017 убрал RF=1 production deployments из практики.",
+                "when_to_apply": "На interview всегда упоминай эти три; в проде — мониторинг + чек-листы.",
+                "edge_cases": "В dev/test можно RF=1 для скорости — но никогда не в prod.",
+                "related": "Q27 tombstones, Q9 RF, Q12 anti-entropy."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Установка num_tokens=256 в Cassandra.",
+              "correct": false,
+              "sections": {
+                "what_actually": "num_tokens=256 — default Cassandra, нормальная настройка для большинства кластеров.",
+                "source_of_confusion": "Подмена optimal на anti-pattern.",
+                "if_it_were_true": "Cassandra не работала бы с дефолтами.",
+                "how_it_should_be": "Default — это baseline, не anti-pattern."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использование multi-DC replication.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-DC — это best practice для DR и geo-latency, не anti-pattern.",
+                "source_of_confusion": "Обратная характеристика.",
+                "if_it_were_true": "Все managed KV отказались бы от multi-region.",
+                "how_it_should_be": "Multi-DC — must-have для production."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

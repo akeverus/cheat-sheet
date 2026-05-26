@@ -1,0 +1,1865 @@
+{
+  "topic_slug": "database-replication-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужна репликация БД и какие задачи она решает в production-системе?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Репликация — это способ автоматически шардировать данные между узлами для увеличения write-throughput.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шардирование и репликация — разные стратегии: шардирование делит данные (каждый узел хранит свой кусок), репликация копирует одни и те же данные на несколько узлов. Single-leader репликация не масштабирует writes — все писать продолжают в primary.",
+                "source_of_confusion": "Оба термина связаны со словом `distributed`, и в Cassandra/MongoDB используются одновременно (sharding + replication factor).",
+                "if_it_were_true": "Если бы репликация масштабировала writes, не нужно было бы шардирование вообще — но writes в single-leader всегда упираются в один узел.",
+                "how_it_should_be": "Запомнить: replication = копии данных (HA, read scaling, DR). Sharding = разделение данных (write scaling)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Репликация решает HA (выживаемость при отказе узла), read scaling, geo-distribution, disaster recovery и offload аналитики с OLTP.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реплика становится primary при отказе (HA); тяжёлые SELECT уходят на read-replica (offload); региональные replicas снижают latency для удалённых пользователей (geo); DR-копия в другом ДЦ переживёт катастрофу. Все цели достигаются за счёт того, что одни и те же данные доступны на нескольких узлах.",
+                "example": "В GitHub 24h outage 2018 года primary MySQL в US East упал, и failover на ДЦ в US West оказался невозможен из-за топологии репликации — это пример того, как замысел HA через replication разбился об архитектурную ошибку. Aurora Global Database же даёт RPO < 1s между регионами.",
+                "when_to_apply": "Любой production-сервис с требованием доступности > 99.9% и масштабом read-нагрузки выше, чем выдержит один узел. Также при regulatory требованиях data residency.",
+                "edge_cases": "Replication не заменяет backup: `DROP TABLE` улетит на реплики за миллисекунды. Не масштабирует writes в single-leader. Не даёт автоматически strong consistency — нужны дополнительные механизмы (sync replication, quorum reads).",
+                "related": "[[database-replication-interview#Q5]] replication vs backup; [[database-replication-interview#Q30]] cross-region trade-off; [[database-sharding-interview]] масштабирование writes через sharding."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Репликация заменяет регулярный backup: достаточно держать 3 реплики, и любая логическая ошибка будет восстановима.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реплики получают изменения в реальном времени, включая `DROP TABLE` и `DELETE FROM users WHERE 1=1`. Через секунды все три копии будут пусты. Backup защищает от логических ошибок (point-in-time recovery), репликация — от аппаратных сбоев.",
+                "source_of_confusion": "И replicas, и backups — это `копии данных`, разница в том, что они защищают разные типы угроз.",
+                "if_it_were_true": "GitLab 2017 incident: разработчик случайно сделал `rm -rf` на primary; репликация распространила бы это, но к счастью реплики уже отстали из-за другой проблемы. Спасли только бэкапы (точнее, snapshot).",
+                "how_it_should_be": "Держать и replication (HA), и backup (PITR). Тестировать restore регулярно — не реже раза в квартал."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Репликация автоматически обеспечивает strong consistency: все клиенты всегда видят одинаковые данные на всех узлах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию репликация асинхронная — replicas отстают на миллисекунды-секунды. Strong consistency требует sync repication, quorum чтений или causal consistency tokens — это явные дополнительные механизмы.",
+                "source_of_confusion": "Слово `replica` ассоциируется с `идентичная копия`, но в реальности — копия с лагом.",
+                "if_it_were_true": "Если бы async replication давала strong consistency, не нужны были бы semi-sync, quorum, CRDT и весь Designing Data-Intensive Applications.",
+                "how_it_should_be": "Понимать, что consistency model — это отдельное измерение от replication topology. Async + read from replica = eventual consistency by default."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие три фундаментальные модели репликации существуют и чем они отличаются по обработке writes?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Synchronous, asynchronous и semi-synchronous — три модели, различающиеся таймингом подтверждения write от реплики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sync/async/semi-sync — это режимы подтверждения коммита, а не модели топологии. Топологические модели: single-leader, multi-leader, leaderless. Каждая может быть async или sync.",
+                "source_of_confusion": "Оба разреза часто упоминаются вместе, и кандидаты путают `топология` и `режим коммита`.",
+                "if_it_were_true": "Если бы это были топологии, нельзя было бы сказать `multi-leader async` или `leaderless quorum-write` — а это валидные комбинации.",
+                "how_it_should_be": "Помнить две оси: топология (single/multi/leaderless) × consistency mode (sync/async/semi-sync)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Active-passive, active-active и hot-standby — три модели, описывающие availability replicas.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Active-passive ≈ single-leader, active-active ≈ multi-leader, hot-standby — это просто replica, доступная для чтения. Это не три ортогональные модели, а смесь маркетинговых терминов.",
+                "source_of_confusion": "Vendors часто используют эти термины (Oracle, SQL Server, AWS), но они описывают operational mode, а не replication topology.",
+                "if_it_were_true": "Не было бы стандартной классификации в Designing Data-Intensive Applications и не было бы leaderless систем (Cassandra/Dynamo) в этой схеме.",
+                "how_it_should_be": "Использовать каноническую классификацию Kleppmann: single-leader / multi-leader / leaderless."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Single-leader (writes только в primary), multi-leader (writes в любой leader, конфликты резолвятся), leaderless (writes в любой узел через quorum).",
+              "correct": true,
+              "sections": {
+                "explanation": "Single-leader: PostgreSQL, MySQL, MongoDB replica set — простая модель, нет конфликтов, primary узкое место. Multi-leader: Galera, MySQL Group Replication, CouchDB — несколько writable узлов, нужен conflict resolution (LWW, vector clocks). Leaderless: Cassandra, DynamoDB, Riak — любой узел принимает writes, координация через quorum (R+W > N).",
+                "example": "PostgreSQL streaming = single-leader. Active Cassandra cluster с RF=3 и QUORUM = leaderless. Galera cluster для MariaDB = multi-leader (sync через Group Communication System).",
+                "when_to_apply": "Single-leader — дефолт для OLTP с одним ДЦ. Multi-leader — multi-region writes (Figma, Notion-like collab). Leaderless — write-heavy с extreme availability (IoT metrics, time-series).",
+                "edge_cases": "Multi-leader требует решать конфликты вручную или через CRDT, что часто недооценивают на интервью. Leaderless даёт eventual consistency by default — strong consistency через quorum имеет latency-cost.",
+                "related": "[[database-replication-interview#Q10]] когда оправдан multi-leader; [[database-replication-interview#Q12]] leaderless механика; [[database-replication-interview#Q13]] quorum правила."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Physical (WAL shipping), logical (row-based) и trigger-based — три уровня абстракции репликации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это три способа РЕАЛИЗАЦИИ передачи изменений (что именно передавать по проводу), а не модели топологии. Можно построить single-leader как physical, так и logical.",
+                "source_of_confusion": "Trigger-based replication действительно использовалась в Slony-I для PostgreSQL, и термины `physical`/`logical` распространены — но они на другом уровне абстракции.",
+                "if_it_were_true": "Не было бы Cassandra (leaderless) в этой классификации, так как она не использует ни physical WAL, ни logical decoding.",
+                "how_it_should_be": "Разделять: топология (single/multi/leaderless) — про writes; формат replication log (physical/logical/trigger) — про данные."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевое отличие sync, async и semi-sync репликации с точки зрения trade-off?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sync — primary ждёт ACK от всех реплик (нулевая потеря данных, высокая latency); async — не ждёт (быстро, но возможна потеря); semi-sync — ждёт хотя бы одну (компромисс).",
+              "correct": true,
+              "sections": {
+                "explanation": "Это классический CAP-подобный trade-off между durability и latency. Sync гарантирует, что commit на primary означает commit и на replicas, но любая медленная replica замедляет всё. Async — primary всегда быстрый, но при крахе теряются последние N миллисекунд транзакций. Semi-sync (MySQL `rpl_semi_sync_master`, PG `synchronous_commit = on` + `ANY 1`) ждёт минимум одной replica — балансирует риск и скорость.",
+                "example": "MySQL semi-sync: при `rpl_semi_sync_source_timeout = 10000` primary ждёт ACK максимум 10 секунд от одной из replicas; если никто не отвечает — деградирует до async. PostgreSQL: `synchronous_standby_names = 'ANY 1 (replica1, replica2, replica3)'` даёт устойчивость к отказу любой одной реплики.",
+                "when_to_apply": "Sync — финансовые транзакции, audit-критичные данные. Async — основной режим OLTP с приемлемым RPO в секунды. Semi-sync — большинство production-систем, где нужно zero-data-loss при отказе одного узла, но не хочется зависеть от ВСЕХ replicas.",
+                "edge_cases": "Чистый sync на >2 узлах редко используется — слишком хрупок. Если все sync replicas упали при `FIRST 1` — primary зависнет на commit (классический инцидент). Решение: `ANY N` вместо `FIRST N` плюс мониторинг + готовность переключить на `synchronous_commit = local`.",
+                "related": "[[database-replication-interview#Q18]] semi-sync MySQL настройка; [[database-replication-interview#Q22]] PostgreSQL synchronous_standby_names; [[database-replication-interview#Q9]] проблемы async."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Sync — реплика читает binlog синхронно по таймеру; async — по событию; semi-sync — по комбинации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три режима читают replication log по мере появления событий (push или pull). Различие — в моменте подтверждения коммита, а не в способе чтения лога.",
+                "source_of_confusion": "Слово `synchronous` ассоциируется с таймером, но в БД оно означает `согласованный во времени с writer`.",
+                "if_it_were_true": "Если бы sync означало polling, его latency была бы фиксированной (как poll interval), а на деле она зависит от network RTT до самой медленной replica.",
+                "how_it_should_be": "Sync/async — про момент возврата OK клиенту, а не про механику IO."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sync, async и semi-sync — три уровня шифрования replication stream между primary и replica.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шифрование replication-трафика — отдельная вещь, настраивается через TLS (`ssl=on`, `require_secure_transport`). Не имеет отношения к sync/async семантике.",
+                "source_of_confusion": "Аналогия с TLS handshake (синхронный) тут не работает — терминология совпадает случайно.",
+                "if_it_were_true": "Не было бы упоминаний RPO и data loss при обсуждении sync/async — они бы про шифрование не имели смысла.",
+                "how_it_should_be": "Sync/async — про durability, TLS — про confidentiality. Это разные оси."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sync — physical replication, async — logical, semi-sync — гибрид.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sync/async — режимы коммита, physical/logical — формат replication log. Можно иметь sync logical replication (PG `synchronous_commit = on` с logical subscription).",
+                "source_of_confusion": "Physical replication часто настраивают sync (для HA), а logical — async (для CDC). Но это операционная привычка, а не определение.",
+                "if_it_were_true": "Не существовало бы async physical replication — а это самый частый режим (default в PostgreSQL streaming).",
+                "how_it_should_be": "Не смешивать ортогональные параметры: топология × формат лога × режим коммита."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем logical репликация отличается от physical и когда выбирать каждую?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Logical — это просто physical с шифрованием; разница только в TLS-слое.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Logical парсит WAL/binlog в логические события (`INSERT id=42`), physical передаёт байты страниц или WAL-записей. Это разные форматы передачи, шифрование тут ни при чём.",
+                "source_of_confusion": "В обоих случаях можно включить TLS, поэтому новички ищут в шифровании отличие.",
+                "if_it_were_true": "Если бы logical был physical+TLS, можно было бы реплицировать между PG 13 → PG 16, что для physical невозможно. Но именно selective replication между версиями — главное преимущество logical.",
+                "how_it_should_be": "Запомнить уровень абстракции: physical = байты, logical = операции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Logical работает только в Cassandra, physical — только в PostgreSQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra — leaderless, не использует ни physical, ни logical replication в том смысле, что PG/MySQL. У PG есть и physical (streaming), и logical (publications). У MySQL — primarily logical (binlog ROW format).",
+                "source_of_confusion": "Cassandra часто упоминается в контексте репликации, но её механизм — gossip + hinted handoff, не replication log streaming.",
+                "if_it_were_true": "Не существовало бы pg_basebackup (physical snapshot) и CREATE PUBLICATION (logical) в одном PostgreSQL.",
+                "how_it_should_be": "Помнить: PG — поддерживает оба режима; MySQL — logical; Cassandra — отдельный класс (leaderless)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Logical и physical отличаются только производительностью — logical медленнее в 100 раз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Logical действительно имеет overhead на decode (PG: ~10-30% по сравнению с physical), но не в 100 раз. Главное отличие — функциональное: logical поддерживает selective replication, cross-version, writable replicas.",
+                "source_of_confusion": "Бенчмарки показывают, что logical медленнее, и кандидаты гиперболизируют.",
+                "if_it_were_true": "При 100x slowdown Debezium и pglogical были бы неюзабельны в production, но они работают на петабайтах трафика.",
+                "how_it_should_be": "Знать конкретные числа (10-30% overhead) и понимать, что выбор делается не по скорости, а по сценарию."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Physical передаёт байты WAL/страниц (одинаковая версия, вся БД, read-only replica); logical передаёт логические операции INSERT/UPDATE/DELETE (cross-version, selective tables, writable replica).",
+              "correct": true,
+              "sections": {
+                "explanation": "Physical (PG streaming, MySQL ROW binlog) — replica бит-в-бит копия primary, нужны одинаковые versions/архитектуры. Logical (PG publications, Debezium, pglogical) — реплицируются логические события, replica может иметь другие индексы, другую схему, быть на другой версии PG. Logical подходит для zero-downtime upgrade (PG 13 → 16) и CDC.",
+                "example": "PostgreSQL major upgrade без downtime: setup PG 16 как logical subscriber для PG 13 publisher → дождаться catch-up → switchover. Debezium PostgreSQL connector использует logical decoding через `pgoutput` или `wal2json` для CDC в Kafka.",
+                "when_to_apply": "Physical — для HA с hot standby (read replica, failover target). Logical — для upgrade, миграции, CDC, selective replication (multi-tenant), heterogeneous replication (PG → MySQL).",
+                "edge_cases": "Logical не реплицирует DDL (`ALTER TABLE`) — нужны event triggers или manual sync. Не реплицирует sequences до PG 16. Каждая таблица должна иметь PK или `REPLICA IDENTITY FULL`. Large objects не поддерживаются.",
+                "related": "[[database-replication-interview#Q19]] streaming replication механика; [[database-replication-interview#Q21]] logical через publications; [[database-replication-interview#Q28]] CDC через logical."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему репликация не заменяет backup, и когда репликация бесполезна для восстановления?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Репликация не работает в Postgres в принципе, поэтому backup — единственный способ HA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PostgreSQL имеет streaming replication, logical replication, replication slots — все production-grade. Сравнение с MySQL по фичам — равные.",
+                "source_of_confusion": "Иногда говорят `Postgres до 9.x не имел встроенной replication`, но это устаревшая информация (с 9.0 в 2010 году streaming работает out of the box).",
+                "if_it_were_true": "Не существовали бы Patroni, RDS for PostgreSQL Multi-AZ, Aurora PostgreSQL — а они держат петабайты production.",
+                "how_it_should_be": "Знать: PG имеет полноценную репликацию с 2010 года, она production-ready."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Replication защищает от аппаратных/сетевых сбоев (узел упал → failover), но не от логических ошибок: DROP TABLE / DELETE без WHERE улетит на все реплики за миллисекунды. Backup защищает именно от логических ошибок и ransomware.",
+              "correct": true,
+              "sections": {
+                "explanation": "Replication распространяет ВСЕ изменения, включая катастрофические. Backup даёт point-in-time recovery — можно откатиться на 10 минут назад до `DROP DATABASE`. В GitLab 2017 разработчик случайно выполнил `rm -rf` на primary, репликация бы только размножила ущерб; спасли LVM snapshot и database dump. С 2017 года индустрия выучила урок: replication + backup — не альтернативы.",
+                "example": "PG: `pg_basebackup` + WAL archiving + `pg_dump` для PITR. MySQL: `Xtrabackup` + binlog. Тестировать restore не реже раза в квартал — иначе бэкап может быть невосстановимым (corrupted, отсутствует ключ шифрования и т.п.).",
+                "when_to_apply": "Всегда: production-система обязана иметь и replicas (HA), и регулярные backups (PITR). RPO/RTO считаются отдельно для каждой категории угроз.",
+                "edge_cases": "Логические ошибки опасны не только людьми: bug в приложении (`DELETE` с неправильным WHERE) распространяется по replicas мгновенно. Ransomware шифрует и primary, и replicas (если они online). Air-gapped backup — единственная защита от destructive attacks.",
+                "related": "[[database-replication-interview#Q1]] что не решает replication; [[database-replication-interview#Q9]] проблемы async; [[backup-strategies-interview]] PITR паттерны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Backup нужен только в облаке; on-prem с replication backup не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backup нужен везде. Облако (RDS, Aurora) делает automated backups встроенно, но это всё ещё backup, не replication. On-prem операторы делают backup явно, но не реже.",
+                "source_of_confusion": "В RDS автоматический backup настолько прозрачен, что новички думают, что он `включён в replication`.",
+                "if_it_were_true": "AWS не предоставлял бы automated snapshots, PITR (point-in-time recovery to second) и manual snapshots отдельно от Multi-AZ replication.",
+                "how_it_should_be": "Backup — обязательно везде. В облаке надо явно настроить retention и проверять restorability."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Replication = backup, если replicas в другом ДЦ; cross-region replica автоматически бэкап.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cross-region replica защищает от падения целого региона (DR), но не от логических ошибок — `DROP TABLE` улетит и через океан. Нужен ТРЕТИЙ механизм — backup с retention.",
+                "source_of_confusion": "Geo-распределение даёт ощущение `точно безопасно`, но это безопасность по другой оси (geo-failure), а не по time-rollback.",
+                "if_it_were_true": "Не существовало бы 3-2-1 backup rule (3 копии, 2 разных media, 1 offsite) — она бы автоматически выполнялась через geo-replicas.",
+                "how_it_should_be": "Знать: 3-2-1 = 3 копии (production + 2 backup), 2 разных media, 1 offsite. Geo-replica — не offline backup."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена single-leader репликация на уровне потока данных от клиента до replica?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Клиенты пишут только в primary, primary логирует изменения в replication log (WAL/binlog/oplog), replicas асинхронно (или sync) применяют этот лог в своём порядке; чтения могут идти на primary или replicas.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поток: Client → Primary → write to WAL → fsync → ACK to client (или ждать sync replica) → walsender отправляет WAL по сети → walreceiver на replica пишет на диск → startup process применяет. Каждое изменение проходит через единый replication log с уникальной позицией: `pg_lsn` в PG, `binlog file:position` или GTID в MySQL, `ts` в MongoDB oplog. Реплика хранит свою позицию (last_applied_lsn) и при reconnect просит лог с этой точки.",
+                "example": "PostgreSQL: `Backend → WAL buffer → fsync (commit) → walsender stream → walreceiver на replica → recovery worker replays на pages`. Позиция = `pg_lsn` типа `0/3000060`. MySQL: master пишет в binlog, replica IO thread тянет в relay log, SQL thread применяет.",
+                "when_to_apply": "Стандарт для PostgreSQL streaming, MySQL replication, MongoDB replica set, любая SQL OLTP-СУБД. Поток одинаков, отличия — в формате лога и threading модели apply.",
+                "edge_cases": "Cascade replication: replica → replica (снижает нагрузку на primary). Single-threaded apply исторически был bottleneck в MySQL — в 8.0 multi-threaded apply через `replica_parallel_workers`. В PG 16+ есть `max_parallel_apply_workers_per_subscription` для logical.",
+                "related": "[[database-replication-interview#Q15]] MySQL детально; [[database-replication-interview#Q19]] PostgreSQL streaming; [[database-replication-interview#Q23]] MongoDB oplog."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Каждый клиент пишет в primary и параллельно во все replicas; primary координирует консистентность через 2PC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Клиент общается только с primary. Primary сам распространяет изменения через replication log. 2PC между primary и replicas не используется — это слишком дорого. Используется WAL streaming + position tracking.",
+                "source_of_confusion": "В multi-leader/distributed транзакциях 2PC иногда фигурирует — отсюда путаница.",
+                "if_it_were_true": "Если бы клиенты писали во все replicas сами, не существовало бы понятия replication lag — все были бы синхронны. Но мы постоянно мониторим `Seconds_Behind_Source`.",
+                "how_it_should_be": "Клиент → primary → primary → replicas (асинхронно или sync). Клиент про replicas не знает."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Primary периодически делает full snapshot БД и шлёт на replicas каждые 60 секунд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Full snapshot — это backup-механизм (pg_basebackup, mysqldump), а не replication. Replication передаёт инкрементальные изменения через replication log в real-time, не пакетами раз в минуту.",
+                "source_of_confusion": "Snapshot нужен один раз — при initial setup replica. Дальше идёт streaming.",
+                "if_it_were_true": "Replication lag был бы всегда минимум 60 секунд, что неприемлемо для HA. Реально lag в production — миллисекунды.",
+                "how_it_should_be": "Snapshot (initial seed) + continuous WAL streaming = polished pattern."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Primary шлёт SQL-стейтменты replicas, которые их повторяют как обычные queries.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это statement-based replication (SBR), которое существовало в MySQL до 5.7 как default, но имеет проблемы с non-deterministic функциями (`NOW()`, `UUID()`, `LIMIT` без ORDER BY). Сейчас default — row-based binlog (RBR), который пишет конкретные значения.",
+                "source_of_confusion": "Концепция `replay SQL` интуитивна, поэтому часто всплывает в первых ответах.",
+                "if_it_were_true": "Replica с SBR при `UPDATE users SET last_login = NOW()` вычисляла бы свой NOW() — данные расходятся. Это и был один из главных аргументов перехода на RBR.",
+                "how_it_should_be": "Знать: SBR существует, но default — RBR. Логические события содержат конкретные значения, а не выражения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое replication lag, какие его причины и как измерять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Replication lag — это время на установку соединения между primary и replica при reconnect.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lag — это разница между текущей позицией primary и применённой позицией replica, а не время handshake. Reconnect overhead — миллисекунды, а production lag может быть секунды-минуты при high write load.",
+                "source_of_confusion": "Слово `lag` ассоциируется с network latency, но в replication context это про прогресс apply.",
+                "if_it_were_true": "После reconnect lag всегда обнулялся бы — но фактически после длительного outage replica может догонять часы.",
+                "how_it_should_be": "Lag = primary_lsn − replica_replay_lsn (в байтах WAL) или now() − last_replay_timestamp (в секундах)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Replication lag — это размер relay log на disk replica в мегабайтах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер relay log (MySQL) или WAL spool (PG) — связан с lag, но не равен ему. Lag измеряется в bytes между LSN или секундах между timestamps.",
+                "source_of_confusion": "Большой relay log часто бывает индикатором lag, но lag можно иметь и при пустом log (если IO быстрый, но apply медленный).",
+                "if_it_were_true": "Метрика была бы напрямую `relay_log_size`, но в PG `pg_stat_replication.replay_lag` показывает время, а `pg_wal_lsn_diff` — байты.",
+                "how_it_should_be": "Использовать time-based (seconds_behind) и bytes-based (LSN diff) метрики."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Replication lag — задержка между моментом коммита на primary и применением изменения на replica. Причины: большие транзакции, slow network, слабое железо replica, single-threaded apply, lock contention на replica, тяжёлые DDL. Измерять в PG через pg_stat_replication, в MySQL — SHOW REPLICA STATUS, в Mongo — rs.printSecondaryReplicationInfo().",
+              "correct": true,
+              "sections": {
+                "explanation": "Lag — фундаментальная метрика replication health. Различают: send_lag (replica ещё не получила), write_lag (получила, не записала), flush_lag (записала, не fsync), replay_lag (fsync, не применила к страницам). Каждый этап может тормозить независимо. В PG: `pg_stat_replication` показывает `sent_lsn`, `write_lsn`, `flush_lsn`, `replay_lsn` + соответствующие `_lag` interval. В MySQL: `Seconds_Behind_Source` (грубо), плюс `Replica_IO_Running`/`Replica_SQL_Running`.",
+                "example": "PG-запрос на primary: `SELECT client_addr, state, pg_wal_lsn_diff(sent_lsn, replay_lsn) AS bytes_behind FROM pg_stat_replication;`. На replica: `SELECT now() - pg_last_xact_replay_timestamp() AS lag;`. MySQL: `SHOW REPLICA STATUS\\G` — поле `Seconds_Behind_Source: 42`.",
+                "when_to_apply": "Постоянный мониторинг lag в production — алерт на `lag > 5s` для критичных систем, `> 60s` для аналитики. Перед использованием replica для read-your-writes — обязательно проверять lag.",
+                "edge_cases": "`Seconds_Behind_Source` в MySQL обманчив: показывает 0, если replica не получает события вообще (idle primary), хотя реально replica отстаёт. Для надёжности использовать heartbeat-таблицу — пишем timestamp на primary каждую секунду, измеряем разницу на replica.",
+                "related": "[[database-replication-interview#Q9]] проблемы async; [[database-replication-interview#Q8]] read-your-writes защиты; [[mysql-interview]] heartbeat patterns."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Replication lag — это разница часов (clock skew) между primary и replica узлами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Clock skew между узлами — отдельная проблема (важна для LWW в Cassandra), но replication lag — про прогресс данных, а не про сами часы. Plus, NTP обычно держит skew в пределах миллисекунд.",
+                "source_of_confusion": "Lag измеряется в секундах через `now() - timestamp`, что требует синхронных часов — отсюда смешение.",
+                "if_it_were_true": "Lag нельзя было бы измерить через WAL byte diff (`pg_wal_lsn_diff`), а можно. Significantly, lag в byte-based терминах не зависит от часов.",
+                "how_it_should_be": "Clock skew — про когерентность wall-clock. Replication lag — про прогресс apply."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое read-your-writes и monotonic reads consistency, и как их обеспечить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это два режима strong consistency, требующие sync replication на ВСЕ replicas.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это weaker-than-strong consistency гарантии. Read-your-writes — клиент видит СВОИ записи (другие могут не видеть). Monotonic reads — клиент не видит откат во времени. Sync replication overkill — достаточно sticky session или LSN tracking.",
+                "source_of_confusion": "Они звучат как `обещание чтения после записи всегда`, что путают с linearizability.",
+                "if_it_were_true": "Нужны были бы Paxos/Raft вокруг каждой запросной пары — overhead убил бы performance. Реально применяются легче механизмы.",
+                "how_it_should_be": "Помнить иерархию: eventual < read-your-writes < monotonic reads < causal < linearizable. Каждый уровень дороже."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это уровни изоляции транзакций (как READ COMMITTED, SERIALIZABLE), не имеют отношения к replication.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Isolation levels — про concurrent transactions внутри одной СУБД. Replication consistency — про когерентность между узлами. Это ортогональные axes.",
+                "source_of_confusion": "Оба раздела используют слово `consistency`, отсюда путаница. Read-your-writes в book Kleppmann — глава о replication, а не transactions.",
+                "if_it_were_true": "Нельзя было бы говорить о read-your-writes в leaderless системе без транзакций (Cassandra) — а это валидное обсуждение.",
+                "how_it_should_be": "Разделять: transaction isolation (внутри узла), replication consistency (между узлами)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это маркетинговые термины Oracle, не имеют технического значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это академически определённые consistency levels (Bermbach, Tönnis 2014; ранее в обсуждениях Bayou). MongoDB и многие БД явно их реализуют (causalConsistency session option).",
+                "source_of_confusion": "Терминология variations between vendors, но семантика стандартизирована.",
+                "if_it_were_true": "Не существовало бы `Designing Data-Intensive Applications` глав 5/9 — а это база современной БД-теории.",
+                "how_it_should_be": "Знать как фундаментальные понятия из Kleppmann."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Read-your-writes — клиент видит свои записи (sticky session к primary, или LSN tracking, или causal consistency token). Monotonic reads — клиент не видит откат во времени (hash user_id → конкретная replica). В MongoDB обе гарантии достигаются через session.startSession({causalConsistency: true}).",
+              "correct": true,
+              "sections": {
+                "explanation": "Async replication ломает read-your-writes: клиент пишет на primary → читает с replica → не видит свою запись. Fix-ы: (a) sticky to primary для X секунд после write; (b) клиент хранит last_write_lsn → replica ждёт `replay_lsn >= last_write_lsn` (PG 18: `pg_wal_replay_wait`); (c) causal consistency tokens (MongoDB sessions, Bigtable). Monotonic reads ломаются при переключении replica (replica A впереди, replica B отстаёт) — fix: hash user_id → конкретная replica.",
+                "example": "MongoDB: `const session = client.startSession({causalConsistency: true}); db.users.updateOne({_id: 1}, {...}, {session}); db.users.findOne({_id: 1}, {session});` — гарантирует read-your-writes даже на secondaries. AWS RDS Proxy: `READ_INTENT` направляет SELECT после INSERT на primary в пределах одной session.",
+                "when_to_apply": "Везде, где есть UX-критичные операции `сохранил → прочитал` (профиль, корзина, форма). Также для административных интерфейсов, где stale read будет confused user.",
+                "edge_cases": "Anti-pattern: `userRepo.save(user); User u = userRepo.findById(id);` — без force-primary это race против lag. Fix: HikariCP routing или Spring TransactionRoutingDataSource → force primary для read после write в той же транзакции.",
+                "related": "[[database-replication-interview#Q9]] проблемы async; [[consistency-patterns-interview]] полная иерархия consistency; [[database-replication-interview#Q23]] MongoDB causal sessions."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные проблемы у async репликации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Async вообще не работает в production — все используют только sync.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Async — это default в PostgreSQL, MySQL, MongoDB и большинстве OLTP-систем. Sync редко используется чисто (только на 2 узлах, или semi-sync в production).",
+                "source_of_confusion": "Кандидат может слышать про критику async и преувеличивать.",
+                "if_it_were_true": "AWS RDS, Aurora, GitHub, Twitter, любой крупный сайт использует async — индустрия бы умерла.",
+                "how_it_should_be": "Async — pragmatic default. Sync применяется выборочно для critical paths."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Data loss при failover (последние транзакции теряются); replication lag inconsistency (read after write возвращает старое); cascade failover проблемы (replicas с разным lag); split-brain после неудачного failover; long transactions душат replicas. Митигации: monitoring, semi-sync для critical, fencing/STONITH, идемпотентность на app уровне.",
+              "correct": true,
+              "sections": {
+                "explanation": "Async — это principled compromise durability vs latency. Конкретные риски: (1) primary упал, не успев отреплицировать N последних транзакций → они потеряны (или останутся `ghost data` на старом primary, что хуже). (2) Клиент пишет → читает → видит старое (UX-боль). (3) При выборе нового primary из replicas с разным lag — выбирается тот, у кого минимальный, остальные надо `pg_rewind` или пересоздавать. (4) Если старый primary вернулся, не зная о failover — split-brain. (5) `VACUUM`/`UPDATE` на миллион строк создаёт огромный WAL → replicas не успевают применить.",
+                "example": "GitHub October 2018 — 24-hour MySQL outage произошёл из-за async replication + неудачного failover между US East и US West datacenters. Replication topology была сложной, при сетевом partition failover пошёл не туда, и потребовался ручной восстановительный процесс на сутки.",
+                "when_to_apply": "Понимать риски при выборе async — это default, но не safe by default. Critical-money paths требуют semi-sync minimum, плюс fencing, плюс мониторинг lag.",
+                "edge_cases": "`Ghost data` на старом primary особенно опасен: после failover старый primary имеет данные, которых нет на новом. При просто reconnect — конфликт по primary key. Решение: `pg_rewind` или полное пересоздание replica.",
+                "related": "[[database-replication-interview#Q25]] failover механика; [[database-replication-interview#Q26]] split-brain; [[database-replication-interview#Q3]] sync/async/semi-sync."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Async требует фиксированной топологии — нельзя добавить или убрать replica без даунтайма.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Динамически добавлять/удалять replicas — стандартная операция. Setup новой replica через `pg_basebackup` (PG) или Xtrabackup (MySQL) делается без downtime primary.",
+                "source_of_confusion": "Некоторые multi-leader системы (Galera) имеют ограничения на топологию, но это не свойство async vs sync.",
+                "if_it_were_true": "AWS RDS не позволял бы scale read replicas через UI — а он позволяет.",
+                "how_it_should_be": "Async топология гибкая — добавление/удаление replicas штатно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Async всегда медленнее sync, потому что нужна дополнительная очередь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: async быстрее, потому что primary не ждёт ACK от replicas. Sync медленнее на величину network RTT × max replica latency.",
+                "source_of_confusion": "Слово `async` ассоциируется с `сложнее` → ошибочно с `медленнее`.",
+                "if_it_were_true": "Никто не использовал бы async ради latency, но именно ради latency его и выбирают.",
+                "how_it_should_be": "Async = быстрее commit, риск data loss. Sync = медленнее commit, durability."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда оправдан multi-leader (master-master) и в чём его главная сложность?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Multi-leader оправдан для multi-region writes (низкая latency локально), offline-first apps (мобильные клиенты с локальной БД), collaborative editing (Google Docs / Figma), HA с writable любым узлом. Главная сложность — conflict resolution, когда два leader-а одновременно меняют одну строку.",
+              "correct": true,
+              "sections": {
+                "explanation": "Multi-leader позволяет писать локально с низкой latency, потом синхронизировать. В multi-region: пользователь в Сингапуре пишет на ap-southeast-1 leader, пользователь в Дублине — на eu-west-1, между leaders changes реплицируются async. В offline-first: PouchDB на телефоне = local leader, CouchDB на сервере = remote leader. Конфликты возникают, когда concurrent writes идут на разные leaders — разрешение через LWW (теряется одна запись), version vectors (детектирует и зовёт app для merge) или CRDT (математически сходится).",
+                "example": "Galera Cluster (MariaDB): sync multi-master через Group Communication System, при конфликте — последняя транзакция получает deadlock error и должна retry. CouchDB: async multi-master, конфликты сохраняются как multiple revisions, app сама решает. Figma collaborative editing: операции через OT (Operational Transformation) или CRDT.",
+                "when_to_apply": "(1) Distributed teams, нужна real-time коллаборация. (2) Mobile apps offline-first (PouchDB, Realm, Couchbase Lite). (3) Multi-region active-active SaaS (DynamoDB Global Tables). (4) Cassandra-like systems по сути multi-leader на уровне keyspace.",
+                "edge_cases": "НЕ применять multi-leader для финансовых транзакций без явной conflict-стратегии — concurrent writes на счёт могут дать `lost update`. НЕ применять, если нет понимания, как мержить — это вопрос business logic, не БД. Простой OLTP с одним ДЦ — multi-leader = overkill, ловите свои же баги конфликтов.",
+                "related": "[[database-replication-interview#Q11]] conflict resolution; [[database-replication-interview#Q30]] cross-region; [[crdt-interview]] CRDT механика."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Multi-leader всегда оправдан вместо single-leader, потому что устраняет SPOF.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Single-leader тоже устраняет SPOF через automatic failover (Patroni, Orchestrator). Multi-leader добавляет сложность conflict resolution, которая часто не оправдана.",
+                "source_of_confusion": "`Multi`-anything звучит лучше `single`-anything, но в БД это не так.",
+                "if_it_were_true": "Все production использовали бы Galera/BDR, но default — single-leader.",
+                "how_it_should_be": "Multi-leader — узкий use case (geo writes, offline-first, collab). Single-leader — default для OLTP."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Multi-leader решает проблему replication lag, делая все replicas синхронными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-leader НЕ устраняет lag — между leaders репликация обычно async (особенно cross-region). Lag в multi-leader = время на синхронизацию между leaders + риск конфликтов из-за этого окна.",
+                "source_of_confusion": "Терминология `multi-master` звучит как `все master-ы видят всё`, но реально они синхронизируются с задержкой.",
+                "if_it_were_true": "Не существовало бы понятия `replication lag` в Galera или BDR — но оно есть.",
+                "how_it_should_be": "Multi-leader = несколько writable узлов с async sync между ними. Lag и конфликты остаются."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Multi-leader делает БД работающей на полудуплексе — каждый узел только пишет, не читает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый leader в multi-leader выполняет и reads, и writes. Это `multi-master`, а не `write-only nodes`. Чтения локальны, что снижает latency.",
+                "source_of_confusion": "Терминология `master` иногда ассоциируется с asymmetric ролями, но в multi-leader все симметричны.",
+                "if_it_were_true": "Это была бы странная архитектура без преимуществ — но реально multi-leader даёт locally-fast reads + writes.",
+                "how_it_should_be": "Multi-leader = симметричная топология, каждый leader полный."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные стратегии conflict resolution в multi-leader/leaderless и в чём их trade-off?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Единственный способ — отказывать в одной из двух concurrent writes (reject conflict).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reject — один из вариантов, но не единственный. Есть LWW, version vectors, CRDT, application-level merge. У каждого свой trade-off.",
+                "source_of_confusion": "Reject интуитивно понятен и иногда применяется (Galera deadlock), но не универсален.",
+                "if_it_were_true": "Не существовало бы CRDT и multi-master систем с автоматическим merge.",
+                "how_it_should_be": "Знать всю палитру стратегий, выбирать по семантике данных."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно использовать timestamps — последняя запись побеждает (LWW), это работает всегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LWW работает, но имеет опасность: clock skew между узлами (NTP ошибается на сотни мс) → одна запись `тихо теряется` без видимого conflict. Это default в Cassandra/DynamoDB, но требует synchronized clocks и понимания, что lost-update — приемлемо.",
+                "source_of_confusion": "LWW — самый простой подход, кажется решением всего.",
+                "if_it_were_true": "Не было бы Cassandra clock skew проблем, vector clocks, CRDT. Все опубликованные incidents с потерей данных в Cassandra не существовали бы.",
+                "how_it_should_be": "LWW — для данных, где lost update приемлем (cache, counters). Для денег — vector clocks или CRDT."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Last-Write-Wins (просто, теряет данные при clock skew); version vectors (детектирует concurrent updates, нужен app merge); CRDT (математический merge, ограниченный набор операций); application-level merge (гибко, сложно); reject conflicts (строго, плохой UX). Выбор по семантике данных.",
+              "correct": true,
+              "sections": {
+                "explanation": "LWW: timestamp + node_id, побеждает большее. Cassandra default. Опасно при clock skew. Version vectors: каждый узел инкрементит свой счётчик, сравнение даёт `before`/`after`/`concurrent`. Если concurrent — приложение должно мержить. CRDT (G-Counter, OR-Set, LWW-Element-Set, RGA): структуры с математически доказанной convergence — операции коммутативны, идемпотентны, ассоциативны. Используются в Redis Enterprise, Riak, Yjs/Automerge. Application-level: business logic решает (пример: shopping cart с union сетов).",
+                "example": "Riak: вы можете выбрать стратегию per-bucket — `last_write_wins=true` (LWW) или `allow_mult=true` (siblings, ваше приложение мержит). DynamoDB Global Tables: LWW по timestamp от writer. CouchDB: conflicting revisions сохраняются, приложение делает `_conflicts` queries и резолвит.",
+                "when_to_apply": "Cache, counters, last-seen-status → LWW. Shopping cart, social feed → CRDT (union). Финансовые балансы → reject + retry или single-leader. Document edits → OT/CRDT (Yjs).",
+                "edge_cases": "Vector vs version vector: vector clocks (Lamport) — частичный порядок событий. Version vectors — обобщение для нескольких реплик. Dotted version vectors — для client-server scenarios. Riak от version → dotted version из-за scaling issues.",
+                "related": "[[database-replication-interview#Q12]] leaderless context; [[crdt-interview]] CRDT детально; [[vector-clocks-interview]] vector clocks механика."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Single primary всегда. Multi-leader без primary — невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-leader существует и работает (Galera, BDR, CouchDB, DynamoDB Global Tables). Никакого `главного primary` там нет — все симметричны.",
+                "source_of_confusion": "Single-leader так доминирует в SQL-OLTP, что multi-leader кажется тeoretическим.",
+                "if_it_were_true": "Не было бы Dynamo paper, Cassandra, Riak — а они в production у Amazon, Apple, Walmart.",
+                "how_it_should_be": "Multi-leader — реальный класс систем со своими паттернами resolution."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает leaderless репликация в Cassandra/Dynamo-style системах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один из узлов выбирается leader-ом через Raft, остальные следуют за ним.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В leaderless нет выборов leader-а. Любой узел может принять write. Координация — через quorum reads/writes, hinted handoff, read repair, anti-entropy. Это принципиально другая модель.",
+                "source_of_confusion": "Слово `leaderless` буквально означает `без leader-а`, но многие путают с `leader выбирается dynamically`.",
+                "if_it_were_true": "Не было бы Cassandra и Dynamo как отдельных архитектур — они были бы вариантом MongoDB.",
+                "how_it_should_be": "Leaderless = ВООБЩЕ нет leader-а ни в каком виде. Координация — peer-to-peer."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нет leader-а — любой узел принимает reads/writes. Replication factor (RF) определяет число копий. Consistent hashing маппит ключи на узлы. Quorum reads/writes (R+W>N для strong consistency). Hinted handoff (если узел недоступен, сосед хранит подсказку). Read repair (расхождения мержатся при чтении). Anti-entropy repair (nodetool repair) — фоновая полная сверка через Merkle trees. Примеры: Cassandra, DynamoDB, Riak, ScyllaDB.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поток write: Client → Coordinator (любой узел) → forward to RF=3 replicas → ждём W ACK → OK. Поток read: Client → Coordinator → query R replicas → возвращаем latest (по timestamp/version) → async read repair для устаревших. Consistent hashing на ring: ключ хеш → точка → следующие RF узлов по часовой стрелке хранят копии. Виртуальные ноды (vnodes) сглаживают распределение. Snitches определяют топологию (DC/rack). Hinted handoff: если узел B недоступен, координатор A сохраняет `hint`, передаёт B когда тот вернётся — но только до `max_hint_window_in_ms` (default 3h в Cassandra). Anti-entropy: периодический `nodetool repair` сверяет данные через Merkle trees, обязательно до `gc_grace_seconds` (default 10 дней) — иначе zombie data.",
+                "example": "Cassandra: CREATE KEYSPACE app WITH replication = {'class': 'NetworkTopologyStrategy', 'dc_east': 3}; → ключ `user:42` хешится → попадает на узлы N1, N2, N3 в кольце. Запись с CL=QUORUM → координатор шлёт всем трём, ждёт 2 ACK. DynamoDB Single-Region: то же самое, но абстрагировано (replication factor и consistency через API).",
+                "when_to_apply": "Write-heavy workload (IoT, metrics, time-series), требование extreme availability (узлы могут падать, кластер работает), eventual consistency acceptable, multi-DC active-active.",
+                "edge_cases": "`Sloppy quorum`: при partial failure write идёт на `wrong` узлы (не RF-set, любые доступные) — quorum формально получен, но при partition восстановления данные нужно довозить через hinted handoff. Это спасает availability, ломает linearizability. Reddit 2014 split-brain: Cassandra cluster имел split, обе половины принимали writes, конфликты разрешались LWW с потерей данных.",
+                "related": "[[database-replication-interview#Q13]] quorum механика; [[database-replication-interview#Q14]] hinted handoff и repair; [[cassandra-interview]] Cassandra detailed."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Leaderless — это просто multi-leader без conflict resolution, конфликты невозможны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конфликты в leaderless ВОЗМОЖНЫ — concurrent writes на разные replicas разрешаются через LWW/vector clocks. Read repair и anti-entropy — механизмы починки расходящихся реплик.",
+                "source_of_confusion": "Многие думают, что `leaderless через quorum` = `strong consistency` = `нет конфликтов`. Но quorum даёт только определённые гарантии.",
+                "if_it_were_true": "Не существовало бы tombstone проблемы в Cassandra, zombie data, repair. А они есть.",
+                "how_it_should_be": "Leaderless ≠ conflict-free. Quorum читает свежую копию, но за кулисами реплики могут расходиться."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Leaderless = peer-to-peer как BitTorrent — нет centralized координатора, узлы общаются gossip.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Координатор есть — это узел, который клиент случайно выбрал для текущего запроса (любой узел может быть coordinator). Он не master, а transient role per-request. Gossip действительно используется для membership, но не для каждого write.",
+                "source_of_confusion": "Аналогия с P2P близка, но не точна. Cassandra — distributed coordination, не pure P2P.",
+                "if_it_were_true": "Не было бы понятия `coordinator` в Cassandra и tracing per-request не показывал бы конкретный узел.",
+                "how_it_should_be": "Coordinator per request — это сервисная роль. Membership — gossip. Repair — anti-entropy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое quorum (R + W > N) в leaderless системах и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Quorum — это минимальное число узлов в кластере для запуска (например, 3 для Cassandra).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quorum в leaderless — это число replicas, которые должны ответить на read (R) или подтвердить write (W). Минимальное число узлов для кластера — отдельный концепт.",
+                "source_of_confusion": "Слово `quorum` также применяется к Raft/Paxos voting members, отсюда путаница.",
+                "if_it_were_true": "Не было бы возможности настроить per-request consistency level (CL=ONE, QUORUM, ALL) — а это базовый Cassandra API.",
+                "how_it_should_be": "Quorum в Dynamo-context — per-request R/W threshold, не cluster size."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Quorum означает, что все запросы должны идти через одного coordinator-а.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Любой узел может быть coordinator. Quorum — это сколько copies участвуют в read/write, а не кто координирует.",
+                "source_of_confusion": "Слово `quorum` в voting-системах ассоциируется с `главный голосующий`.",
+                "if_it_were_true": "Был бы SPOF — а leaderless как раз про отсутствие SPOF.",
+                "how_it_should_be": "Coordinator distribution: load balancer выбирает любой узел per request."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Quorum — это математический выбор W=N/2, R=N/2 для RF=N.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quorum = `floor(N/2) + 1`, не `N/2`. Для N=3: quorum = 2. Можно выбирать любые W, R удовлетворяющие R+W>N — не обязательно W=R=quorum.",
+                "source_of_confusion": "QUORUM как Cassandra consistency level = `floor(RF/2)+1`, но это конкретный pre-set.",
+                "if_it_were_true": "Не было бы вариантов W=ALL, R=ONE (быстрые reads, надёжные writes) и W=ONE, R=ALL — а они применяются.",
+                "how_it_should_be": "R+W>N — общее правило strong consistency. QUORUM (R=W=majority) — частный случай."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "N — replication factor, W — сколько узлов подтверждают write, R — сколько отвечают на read. Правило R+W>N гарантирует, что хотя бы одна копия пересечётся между write-set и read-set → read увидит свежую версию. Cassandra CLs: ONE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM. Sloppy quorum пишет на 'wrong' узлы при недоступности правильных.",
+              "correct": true,
+              "sections": {
+                "explanation": "Геометрическая интуиция: если W replicas подтвердили write, и R replicas отвечают на read, то |W ∩ R| ≥ R+W−N. Если R+W>N, то пересечение ≥ 1 → read видит хотя бы одну `свежую` копию (с последним timestamp). Это даёт strong consistency без leader. Trade-off: больше W/R → лучше consistency, ниже availability (если узлы упали — quorum не собрать). Cassandra consistency levels: ONE (R/W=1, eventual), QUORUM (majority), ALL (все RF узлов), LOCAL_QUORUM (quorum в DC, без cross-DC latency), EACH_QUORUM (quorum в каждом DC, надёжно и медленно).",
+                "example": "N=3, типовая боевая: W=2, R=2 (QUORUM) — переживает 1 отказ. N=3, fast writes: W=1, R=3 (write fast, read slow, sync). N=3, fast reads: W=3, R=1 (write slow, read fast). Multi-DC N=6 (3+3): LOCAL_QUORUM = 2 в local DC → быстро.",
+                "when_to_apply": "QUORUM — баланс для большинства данных. LOCAL_QUORUM — multi-DC с per-DC read latency. EACH_QUORUM — критичные данные cross-DC. ONE — telemetry, logs, time-series (eventual OK).",
+                "edge_cases": "Sloppy quorum: при недоступности правильных N узлов, координатор пишет на другие доступные узлы → quorum формально получен, но это не те узлы. Hinted handoff потом доставит на правильные. Опасность: при network partition в `другом DC` могут идти sloppy writes, которые не дойдут до правильных replicas → потеря данных. Strict quorum: только правильные узлы или fail (`consistency level ALL` это даёт).",
+                "related": "[[database-replication-interview#Q12]] leaderless context; [[database-replication-interview#Q14]] hinted handoff; [[cassandra-interview]] consistency levels detail."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое hinted handoff и anti-entropy repair в Cassandra, и почему обязательно регулярно запускать nodetool repair?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hinted handoff — координатор сохраняет 'подсказку' для недоступного узла и доставляет когда он вернётся (но только в пределах max_hint_window_in_ms, default 3h). Read repair — при read координатор детектит расхождения и асинхронно обновляет stale replicas. Anti-entropy (nodetool repair) — полная фоновая сверка через Merkle trees, обязательна раз в gc_grace_seconds (default 10 дней), иначе tombstones удалятся и удалённые данные 'воскреснут' (zombie data).",
+              "correct": true,
+              "sections": {
+                "explanation": "Hinted handoff — оптимистичный mechanism: координатор пытается записать на все RF replicas; если N узлов недоступны, сохраняет `hints` локально (или на любом доступном узле); когда узел возвращается, hints передаются и применяются. Лимит на `hint window` (default 3h) — чтобы не накапливать бесконечно. Read repair — при quorum read с расходящимися версиями, координатор пишет свежую версию на устаревшие реплики (асинхронно или blocking). Anti-entropy repair — полная сверка: каждая нода строит Merkle tree своих диапазонов ключей, реплики обмениваются root-хешами, при расхождении спускаются по дереву и передают различающиеся ranges. Зачем регулярно: tombstones (маркеры удалений) удаляются после `gc_grace_seconds`; если узел был недоступен дольше этого срока, он не узнает об удалении → при reconnect его старая запись reappears как новая.",
+                "example": "Real incident: Cassandra cluster, узел в `dc_east` упал на 2 недели. `gc_grace_seconds = 10 days`. Когда узел вернулся, его данные (включая давно удалённые записи) реплицировались обратно. Пользователи `вернулись из небытия`. Решение: `nodetool repair` обязательно каждые 10 дней (или меньше), Reaper для оркестрации в больших кластерах.",
+                "when_to_apply": "Hinted handoff и read repair — встроены, работают автоматически. Anti-entropy repair — нужно оркестрировать: cron + Reaper (TLP-Cassandra-Reaper) для управления одновременными repair-операциями (тяжёлый IO).",
+                "edge_cases": "(1) Если узел отсутствует дольше `max_hint_window` (3h), hints удаляются и replica остаётся stale до repair. (2) `Repair` тяжёлый — IO + network — поэтому пускается на off-peak. (3) Incremental repair: только изменившиеся ranges, быстрее. (4) Cassandra 4.0+ `mutation-based repair` ещё лучше.",
+                "related": "[[database-replication-interview#Q12]] leaderless context; [[database-replication-interview#Q13]] quorum; [[cassandra-interview]] tombstone механика и nodetool."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hinted handoff — это синоним read repair, оба термина обозначают одно и то же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hinted handoff и read repair — разные механизмы. Hinted handoff — write-time mechanism (отложенная доставка при недоступности узла). Read repair — read-time mechanism (синхронизация при quorum read с расхождениями).",
+                "source_of_confusion": "Оба про `restore consistency`, отсюда смешение.",
+                "if_it_were_true": "В документации Cassandra они описывались бы как один концепт, но они в разных разделах architecture.",
+                "how_it_should_be": "Разделять: hinted = write-side, read repair = read-side, anti-entropy = scheduled."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Anti-entropy repair восстанавливает данные из backup, поэтому его можно не запускать, если есть бэкапы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Anti-entropy repair сверяет копии между узлами, не использует backup. Backup и repair — независимые механизмы. Не запускать repair = риск zombie data, не lack of backup.",
+                "source_of_confusion": "Оба про `восстановление чего-то`, но из разных источников.",
+                "if_it_were_true": "Не существовало бы `gc_grace_seconds` константы и tombstone механики.",
+                "how_it_should_be": "Repair — peer sync. Backup — point-in-time recovery. Независимы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Repair можно не запускать, если у вас replication factor = 5 (избыточность).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Repair требуется при любом RF > 1. Высокий RF не спасает от tombstone expiration: если узел был offline > gc_grace_seconds, его старые данные после возвращения распространятся ALL replicas, перезаписав tombstones, которые уже удалены везде.",
+                "source_of_confusion": "Интуиция: больше копий → меньше нужно repair.",
+                "if_it_were_true": "DataStax не рекомендовал бы repair как обязательную операцию при любом RF.",
+                "how_it_should_be": "Repair = invariant maintenance, не зависит от RF."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена репликация в MySQL: ключевые компоненты и потоки данных?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Replica делает SELECT * FROM каждой таблицы каждую секунду и сравнивает с локальной копией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это была бы query-based polling, что не используется в MySQL replication. Используется streaming binlog через IO thread.",
+                "source_of_confusion": "Иногда query-based polling используется в простых ETL, но это не replication.",
+                "if_it_were_true": "Нагрузка была бы катастрофической, replication lag — секунды минимум.",
+                "how_it_should_be": "Streaming binlog, не polling."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Master отправляет дамп БД (mysqldump) каждые 5 минут, replica применяет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "mysqldump — это для backup/initial setup, не для replication. Replication использует binlog streaming.",
+                "source_of_confusion": "Initial setup replica часто использует mysqldump + binlog position, отсюда путаница.",
+                "if_it_were_true": "Lag в 5 минут был бы постоянным, что неприемлемо.",
+                "how_it_should_be": "Initial seed = dump или Xtrabackup. Дальше = continuous binlog stream."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Master пишет все изменения в binary log (binlog); IO thread на replica читает binlog и сохраняет в relay log; SQL thread (или multiple workers в MySQL 8) на replica применяет relay log. Конфиг master: log-bin, binlog-format=ROW, gtid-mode=ON. Replica: read-only=1, super-read-only=1, log-slave-updates=ON. Запуск: CHANGE REPLICATION SOURCE TO ... SOURCE_AUTO_POSITION=1 (GTID).",
+              "correct": true,
+              "sections": {
+                "explanation": "Архитектура MySQL replication: (1) Master serializes изменения в binlog (default format = ROW с MySQL 5.7). (2) IO thread на replica подключается к master, получает binlog events, пишет в relay log на диск replica. (3) SQL thread читает relay log и применяет. В MySQL 8 — multi-threaded apply (`replica_parallel_workers > 0`) с `replica_parallel_type = LOGICAL_CLOCK` (parallel применение независимых транзакций). GTID (Global Transaction Identifier) делает failover автоматическим — replica знает, какие GTID применила. `SOURCE_AUTO_POSITION = 1` использует GTID вместо file:position.",
+                "example": "Конфиг master my.cnf: `server-id=1, log-bin=mysql-bin, binlog-format=ROW, sync-binlog=1, innodb-flush-log-at-trx-commit=1, gtid-mode=ON, enforce-gtid-consistency=ON`. Replica: `server-id=2, relay-log=relay-bin, read-only=1, super-read-only=1, gtid-mode=ON, log-slave-updates=ON`. CHANGE REPLICATION SOURCE TO SOURCE_HOST='master', SOURCE_USER='repl', SOURCE_AUTO_POSITION=1; START REPLICA;",
+                "when_to_apply": "Любая MySQL HA topology. Single async replica для read scaling. Multi-replica с semi-sync для critical workloads. MySQL InnoDB Cluster + Group Replication для multi-primary через consensus.",
+                "edge_cases": "GTID требуется для современных автофейловер инструментов (Orchestrator, MHA). `enforce-gtid-consistency = ON` запрещает некоторые операции (CREATE TABLE AS SELECT, non-transactional within transaction). `super-read-only = 1` важен — `read-only` не блокирует SUPER privilege, что приводило к accidental writes на replica.",
+                "related": "[[database-replication-interview#Q16]] binlog formats; [[database-replication-interview#Q17]] GTID; [[database-replication-interview#Q18]] semi-sync."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MySQL replication работает через InnoDB Cluster, который использует Paxos для каждой транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "InnoDB Cluster — это конкретное решение поверх Group Replication, использующее Paxos-like для multi-primary mode. Но обычная master-replica MySQL replication — async binlog streaming, без Paxos.",
+                "source_of_confusion": "Group Replication действительно использует consensus, но это специфическая фича.",
+                "if_it_were_true": "Latency commit была бы значительной из-за Paxos rounds. Простая async replication есть и используется.",
+                "how_it_should_be": "Default = async binlog. Group Replication = optional, для multi-primary."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются statement-based (SBR), row-based (RBR) и mixed форматы binlog в MySQL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все три формата идентичны, выбор косметический.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Форматы кардинально различаются: SBR пишет SQL, RBR пишет конкретные значения строк, mixed — автоматически переключается. Это влияет на безопасность, размер, debugging.",
+                "source_of_confusion": "Все три формата живут в одной системе binlog, может казаться косметикой.",
+                "if_it_were_true": "MySQL не имел бы default переключения с SBR на RBR в 5.7, не было бы CDC-проблем для Debezium.",
+                "how_it_should_be": "Понимать различия: SBR компактный/unsafe, RBR безопасный/большой, mixed = auto-switch."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "STATEMENT (SBR) — пишет SQL целиком (компактный, но unsafe для NOW(), UUID(), LIMIT без ORDER BY — replica выполнит NOW() со своим временем). ROW (RBR, default с 5.7) — пишет конкретные значения изменённых строк (детерминированный, безопасный, объёмнее). MIXED — автоматический выбор: дефолтно SBR, переключается на RBR для unsafe statements. Рекомендация production: binlog-format=ROW + binlog-row-image=MINIMAL.",
+              "correct": true,
+              "sections": {
+                "explanation": "SBR пример: `UPDATE users SET last_login=NOW() WHERE id=42` записывается дословно — replica при apply вычислит свой NOW() → разные значения! Unsafe statements: `NOW()`, `RAND()`, `UUID()`, `LIMIT N` без ORDER BY, stored functions с side effects. RBR пример: `UPDATE users WHERE id=42 AND last_login='2026-05-01 10:00' SET last_login='2026-05-23 14:32:11'` — конкретные `до` и `после`. Безопасно, но больше объёма (особенно для bulk-операций). `binlog_row_image=MINIMAL` уменьшает: пишет только PK + изменённые столбцы. MIXED — heuristic: SBR пока возможно, RBR при unsafe.",
+                "example": "Real example: replication потерял данные из-за `INSERT INTO audit ... SELECT ... LIMIT 100` в SBR без ORDER BY — на replica LIMIT вернул другие 100 строк. Решение: переход на ROW format, default с 5.7.",
+                "when_to_apply": "Production: `binlog-format=ROW` всегда. Это безопаснее, debugging решается через `mysqlbinlog -vv` (декодирует RBR в human-readable). MIXED — legacy, не рекомендуется.",
+                "edge_cases": "(1) RBR увеличивает binlog в 5-10x для bulk operations (`UPDATE ... WHERE 1=1` пишет все строки). Размер диска и network bandwidth — учитывать в capacity. (2) Debezium и Maxwell требуют ROW format — на SBR не работают. (3) `binlog_row_image=NOBLOB` — не записывать BLOB-поля до изменения, экономит место.",
+                "related": "[[database-replication-interview#Q15]] MySQL архитектура; [[database-replication-interview#Q29]] Debezium MySQL; [[cdc-interview]] log-based CDC требования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SBR пишет в JSON, RBR — в Avro, MIXED — оба.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Binlog имеет proprietary binary format, не JSON/Avro. JSON/Avro используются после decode CDC tool-ами (Debezium → Kafka может производить Avro).",
+                "source_of_confusion": "В CDC pipeline данные конвертируются в Avro/JSON, путают с binlog исходным форматом.",
+                "if_it_were_true": "Размер binlog был бы в 5-10 раз больше — но binary компактнее.",
+                "how_it_should_be": "Binlog = MySQL binary protocol. Конверсия в JSON/Avro — отдельный шаг."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В современном MySQL остался только ROW; STATEMENT и MIXED удалены в 8.0.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три формата существуют в MySQL 8.0. ROW — default, но STATEMENT и MIXED доступны для backward compatibility.",
+                "source_of_confusion": "Многие deprecated features действительно удалены в 8.0, но binlog format — нет.",
+                "if_it_were_true": "MySQL 8.0 release notes указали бы removal — но они указывают, что ROW default и рекомендуется.",
+                "how_it_should_be": "Все три доступны; ROW = production choice."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое GTID в MySQL и зачем он нужен по сравнению с file:position?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "GTID (Global Transaction Identifier) — глобально уникальный ID транзакции в формате SERVER_UUID:TRANSACTION_NUMBER. Replica знает, какие GTID применила, и при failover может автоматически продолжить с нового master (SOURCE_AUTO_POSITION=1) без ручного поиска position. Упрощает failover, поддерживается Orchestrator и MHA.",
+              "correct": true,
+              "sections": {
+                "explanation": "До GTID failover был болью: при смене master нужно вручную искать позицию через `SHOW SLAVE STATUS` (`Exec_Master_Log_Pos`), пересчитывать на новом master, любая ошибка → дублирование или потеря транзакций. GTID решает: каждая транзакция получает уникальный ID `<UUID>:<N>`, replica хранит set применённых GTID (`gtid_executed`). При `CHANGE REPLICATION SOURCE TO SOURCE_HOST='new_master', SOURCE_AUTO_POSITION=1` replica автоматически просит транзакции, которых у неё нет. Никакой ручной арифметики.",
+                "example": "GTID: `3E11FA47-71CA-11E1-9E33-C80AA9429562:23` — UUID master + 23-я транзакция. Проверка: `SELECT @@gtid_executed;`, `SELECT @@gtid_purged;`, `SHOW REPLICA STATUS\\G` → `Retrieved_Gtid_Set`, `Executed_Gtid_Set`. Orchestrator использует GTID для автоматического failover — без него работает, но с GTID гораздо надёжнее.",
+                "when_to_apply": "ALL production MySQL replication. Без GTID — только legacy systems. Enable: `gtid-mode=ON, enforce-gtid-consistency=ON` (требует rolling restart всего кластера, нельзя на лету).",
+                "edge_cases": "`enforce-gtid-consistency=ON` запрещает: `CREATE TABLE ... SELECT` (non-atomic), non-transactional updates внутри transactions (mixing MyISAM и InnoDB). Это редко мешает в современных приложениях. Migration legacy → GTID: rolling enable через `ANONYMOUS_TO_GTID` mode сначала.",
+                "related": "[[database-replication-interview#Q15]] MySQL architecture; [[database-replication-interview#Q25]] failover; [[mysql-interview]] orchestrator detail."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GTID — это маркетинговое название binlog file:position, ничего нового не добавляет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GTID добавляет global uniqueness и автоматический tracking on replica. File:position — local per master, при смене master теряет смысл.",
+                "source_of_confusion": "Оба используются для tracking replication progress, поэтому могут казаться синонимами.",
+                "if_it_were_true": "MySQL Documentation не имел бы отдельной главы `Replication with GTIDs` с подробностями setup.",
+                "how_it_should_be": "GTID = global, position = local. GTID решает проблему позиции при failover."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "GTID требуется только для encryption replication-трафика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Encryption — отдельная фича (TLS). GTID — про tracking transactions. Никакой связи.",
+                "source_of_confusion": "Слово `global` ассоциируется с security, но в данном случае это `unique across cluster`.",
+                "if_it_were_true": "TLS for replication настраивался бы через `gtid-mode` — но он через `require_secure_transport`.",
+                "how_it_should_be": "GTID = identifier для transaction tracking. Encryption — отдельный layer."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "GTID работает только с InnoDB, MyISAM не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GTID работает с любым transactional engine. MyISAM не transactional → можно получать `enforce-gtid-consistency` violations, но GTID сам работает.",
+                "source_of_confusion": "MyISAM имеет много ограничений, ассоциируется с `не поддерживает modern features`.",
+                "if_it_were_true": "Документация явно перечисляла бы это ограничение, но указывает другие (mix of transactional и non-transactional within transaction).",
+                "how_it_should_be": "GTID работает с InnoDB и in principle с MyISAM, но с ограничениями consistency."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить semi-sync replication в MySQL и как она ведёт себя при недоступности replicas?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Semi-sync включается флагом sync_binlog=2 и работает автоматически без плагинов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Semi-sync требует установки плагина (`semisync_source.so` на master, `semisync_replica.so` на replica) + конфиг flags. `sync_binlog=2` — отдельный параметр (fsync binlog при commit), не semi-sync.",
+                "source_of_confusion": "Много параметров с словом `sync` в MySQL, новички смешивают.",
+                "if_it_were_true": "Не требовался бы шаг `INSTALL PLUGIN` в документации.",
+                "how_it_should_be": "Semi-sync = плагин + конфиг. sync_binlog = local fsync, ортогонально."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Semi-sync в MySQL устарел и заменён на InnoDB Cluster.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Semi-sync поддерживается в MySQL 8.0+, активно используется. InnoDB Cluster (Group Replication) — отдельное решение, не замена semi-sync.",
+                "source_of_confusion": "Оба про reliability, но разные mechanisms.",
+                "if_it_were_true": "Документация 8.0 не имела бы главы про semi-sync — но имеет.",
+                "how_it_should_be": "Semi-sync = production-ready, легче чем Group Replication."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Semi-sync ждёт ACK от всех replicas, как обычная sync.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Semi-sync ждёт ACK от `rpl_semi_sync_source_wait_for_replica_count` replicas (default 1), не от всех. Это и есть `semi-` — компромисс между sync (все) и async (никого).",
+                "source_of_confusion": "Слово `sync` ассоциируется с `all`, но `semi` означает `partial`.",
+                "if_it_were_true": "Не было бы разницы между semi-sync и sync, не нужны были бы оба термина.",
+                "how_it_should_be": "Semi-sync = ждать минимум N (default 1) replicas из доступных."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Установить плагины: INSTALL PLUGIN rpl_semi_sync_source SONAME 'semisync_source.so' на master, rpl_semi_sync_replica на replica. Конфиг master: rpl_semi_sync_source_enabled=1, rpl_semi_sync_source_timeout=10000 (10s), rpl_semi_sync_source_wait_for_replica_count=1, rpl_semi_sync_source_wait_point=AFTER_SYNC. При недоступности replicas дольше timeout — деградирует до async (есть транзакция, но без подтверждения). При возвращении replica — обратно в semi-sync mode.",
+              "correct": true,
+              "sections": {
+                "explanation": "Semi-sync в MySQL 8.0+: master ждёт ACK от ≥1 replica (или N через `wait_for_replica_count`) перед возвратом OK клиенту. Это гарантирует, что транзакция есть на минимум двух узлах. `wait_point=AFTER_SYNC` (default 8.0+) — ждать ACK после flush в binlog, но до commit complete; `AFTER_COMMIT` — после commit. AFTER_SYNC лучше: при крахе master другие clients не видят `phantom` транзакций. Timeout (`rpl_semi_sync_source_timeout`): если ни одна replica не отвечает за это время → master деградирует в async, продолжает работать без подтверждений. Когда replica возвращается → автоматически обратно в semi-sync.",
+                "example": "Установка: INSTALL PLUGIN на master и replica → my.cnf updates → restart IO thread на replica (`STOP REPLICA IO_THREAD; START REPLICA IO_THREAD;`). Мониторинг: `SHOW STATUS LIKE 'Rpl_semi_sync_source%'` → `Rpl_semi_sync_source_status=ON`, `Rpl_semi_sync_source_clients=2`, `Rpl_semi_sync_source_tx_avg_wait_time=1234` (микросекунды).",
+                "when_to_apply": "Production MySQL с требованием durability > чем async, но без overhead полного sync. Финансовые системы, billing, audit-критичные данные.",
+                "edge_cases": "(1) `wait_for_replica_count=1` и одна replica — single point of failure. Используйте 2+ replicas. (2) Latency overhead = max(network RTT to replicas). (3) При деградации в async (long timeout, замедленная network) writes продолжаются — мониторить `Rpl_semi_sync_source_status` и алерт. (4) Альтернатива — Group Replication (MySQL InnoDB Cluster) с sync multi-primary через Paxos-like consensus.",
+                "related": "[[database-replication-interview#Q15]] MySQL architecture; [[database-replication-interview#Q3]] sync/async/semi-sync; [[database-replication-interview#Q22]] PG synchronous_standby_names."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена streaming replication в PostgreSQL: компоненты, конфиг и поток данных?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "PostgreSQL копирует все таблицы через COPY каждый час.",
+              "correct": false,
+              "sections": {
+                "what_actually": "COPY используется для одноразового снимка (initial seed через pg_basebackup внутри использует похожий механизм). Continuous replication = WAL streaming.",
+                "source_of_confusion": "COPY — основной инструмент bulk загрузки, ассоциируется с массовой передачей данных.",
+                "if_it_were_true": "Lag был бы час минимум — но реально миллисекунды.",
+                "how_it_should_be": "Initial seed (pg_basebackup) + continuous WAL streaming."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Primary пишет WAL → walsender отправляет WAL по сети → walreceiver на replica принимает → startup process применяет WAL к страницам. Создание replica через pg_basebackup с -R (создаёт standby.signal) и -C/-S (создаёт replication slot). Настройка: wal_level=replica, max_wal_senders, max_replication_slots, hot_standby=on на replica.",
+              "correct": true,
+              "sections": {
+                "explanation": "PostgreSQL streaming replication: на primary backend пишет в WAL buffer → fsync при commit → walsender (один на каждую replica connection) шлёт WAL по network protocol. На replica walreceiver принимает и пишет WAL на disk → startup process / recovery worker replays WAL на data pages в `replica` mode. Replica знает свою replay LSN (`pg_last_wal_replay_lsn()`). При `hot_standby=on` — read queries разрешены (со своими nuances: recovery conflicts).",
+                "example": "Setup: на primary `wal_level=replica, max_wal_senders=10, max_replication_slots=10, wal_keep_size=1GB`. На replica: `pg_basebackup -h primary -U repl_user -D /var/lib/postgresql/data -X stream -R -C -S replica1_slot`. Этот команда: (a) делает physical копию data directory; (b) -R создаёт standby.signal и пишет primary_conninfo в postgresql.auto.conf; (c) -C -S создаёт replication slot. Replica config: `hot_standby=on, hot_standby_feedback=on, max_standby_streaming_delay=30s, primary_slot_name='replica1_slot'`.",
+                "when_to_apply": "Default для PostgreSQL HA: 1 primary + 1-2 sync standby + N async standby. Cascade replication для большой read-fanout: replica → replica → replica.",
+                "edge_cases": "(1) Recovery conflicts: long-running queries on replica конфликтуют с VACUUM на primary, replica может убить query или задержать apply. `max_standby_streaming_delay=30s` — баланс. (2) `hot_standby_feedback=on` — replica шлёт обратно `oldest snapshot xmin`, primary не вакуумит используемые tuples. Но: если replica хранит долгий query → primary table bloat. (3) Без `wal_keep_size` или replication slot WAL может удалиться до того, как replica его получит → replica умирает с ошибкой `requested WAL segment has already been removed`.",
+                "related": "[[database-replication-interview#Q20]] replication slots; [[database-replication-interview#Q21]] logical replication; [[database-replication-interview#Q22]] synchronous_commit."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "PostgreSQL использует bin-log как MySQL, переименованный в WAL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WAL и binlog — концептуально похожи, но это разные форматы. WAL — physical (changes to pages), binlog — logical (row events). PostgreSQL не имеет binlog как такового.",
+                "source_of_confusion": "Оба are append-only logs of changes used for replication and recovery.",
+                "if_it_were_true": "Можно было бы использовать MySQL CDC tools напрямую с PG WAL — но нет, нужен logical decoding (`pgoutput`).",
+                "how_it_should_be": "WAL ≠ binlog. WAL — physical, для logical decoding нужен pgoutput plugin."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Streaming replication в PG требует Patroni для работы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Streaming replication работает сама по себе. Patroni — это HA orchestrator поверх streaming replication (управляет primary election, failover, configuration).",
+                "source_of_confusion": "В production Patroni часто используют, поэтому ассоциируют с самой replication.",
+                "if_it_were_true": "Не было бы возможности настроить streaming replication без Patroni — но это базовая PG-операция.",
+                "how_it_should_be": "Streaming = layer 1 (replication механика). Patroni = layer 2 (HA orchestration)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужны replication slots в PostgreSQL и какая опасность связана с их использованием?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Replication slots ускоряют WAL apply на replica в 2-3 раза.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Slots не влияют на скорость apply — это механизм удержания WAL на primary. Apply скорость зависит от CPU/IO на replica и parallel workers.",
+                "source_of_confusion": "`Slot` звучит как `cache/buffer slot`, что ассоциируется с ускорением.",
+                "if_it_were_true": "Документация рекомендовала бы slots как performance optimization, но описывает их как retention mechanism.",
+                "how_it_should_be": "Slots = retention guarantee, не performance optimization."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Replication slots шифруют WAL-трафик между primary и replica.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шифрование — отдельный layer (TLS). Slots — про WAL retention guarantee.",
+                "source_of_confusion": "Multiple security concerns в replication, могут смешиваться.",
+                "if_it_were_true": "Не было бы отдельных TLS параметров в pg_hba.conf для replication.",
+                "how_it_should_be": "Slots = retention. TLS = encryption. Разные axes."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Replication slot — сущность на primary, гарантирующая, что WAL не удалится, пока конкретная replica его не применила. Physical slots для streaming replication, logical slots для logical decoding (Debezium, pglogical). Опасность: если consumer остановился, slot держит WAL бесконечно → диск primary заполняется → primary падает. Митигация: max_slot_wal_keep_size (PG 13+), мониторинг pg_replication_slots.confirmed_flush_lsn.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без slot primary удаляет WAL по `wal_keep_size` или после checkpoint. Если replica отстала больше — WAL потерян, replica нужно пересоздавать с нуля. Slot решает: primary знает, какие WAL ещё нужны конкретной replica, и не удаляет их. Это критично для logical decoding (Debezium): consumer может быть offline на минуты-часы (rolling restart, deploy), slot сохраняет события. Но это и опасность: inactive slot держит WAL бесконечно, диск primary заполнится за часы при высокой write rate.",
+                "example": "Real incident: Debezium consumer закрашился в пятницу вечером, никто не заметил. К утру понедельника primary PG-сервер упал — `/var/lib/postgresql/pg_wal/` забил 1TB диск. Restart primary не помогает — он не может стартовать пока WAL не recoverable. Решение: `SELECT pg_drop_replication_slot('debezium_slot');` для освобождения retention → но это значит, что Debezium при reconnect не сможет получить недостающие события и нужен resnapshot.",
+                "when_to_apply": "Slot нужен для (a) physical replication с риском долгого reconnect; (b) logical replication / CDC всегда. Без slot logical decoding теряет события при любом reconnect.",
+                "edge_cases": "(1) `max_slot_wal_keep_size` (PG 13+) ограничивает retention — slot deactivated, если threshold превышен. Это спасает primary, но ломает consumer (придётся resnapshot). (2) Мониторинг: `SELECT slot_name, active, pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)) AS retained FROM pg_replication_slots;`. Алерт на `active=false` и retained > threshold. (3) Logical slot уникален per consumer — нельзя `share` slot между двумя Debezium instances.",
+                "related": "[[database-replication-interview#Q19]] streaming replication; [[database-replication-interview#Q21]] logical replication; [[database-replication-interview#Q29]] Debezium и slot retention."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Slots — это connection pool slots для replication-сессий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Replication slot — это retention object на primary, не connection. Конкурент — `max_wal_senders` (число одновременных replication connections).",
+                "source_of_confusion": "Терминология `slot` в PG используется в нескольких местах (replication slot, foreign data wrapper).",
+                "if_it_were_true": "Не было бы `max_replication_slots` отдельно от `max_wal_senders`.",
+                "how_it_should_be": "Slot = retention guarantee. wal_sender = connection."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает logical replication через publications/subscriptions в PostgreSQL и какие у неё ограничения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Publisher: wal_level=logical, CREATE PUBLICATION my_pub FOR TABLE users, orders; (или FOR ALL TABLES; или с фильтром WHERE country='RU' в PG 15+). Subscriber: CREATE SUBSCRIPTION my_sub CONNECTION '...' PUBLICATION my_pub. Использование: zero-downtime upgrade между PG-версиями, миграция, CDC, selective replication по таблицам, multi-tenant. Ограничения: не реплицирует DDL, sequences (до PG 16), large objects, TRUNCATE до PG 11. Таблица должна иметь PK или REPLICA IDENTITY FULL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Logical replication использует `pgoutput` plugin для logical decoding — парсит WAL в логические события (`INSERT id=42, name='Alice'`). Publication — на publisher определяет, что реплицировать (одна publication может содержать несколько таблиц, поддерживает row filter в PG 15+, column lists в PG 15+). Subscription — на subscriber создаёт background worker (apply worker), который подключается к publisher через replication slot, получает события и применяет. Хорошо для cross-version (PG 13 → PG 16) и selective (только нужные tables).",
+                "example": "Zero-downtime PG upgrade: (1) Setup PG 16 как fresh instance. (2) `CREATE PUBLICATION upgrade_pub FOR ALL TABLES;` на PG 13. (3) Initial snapshot + `CREATE SUBSCRIPTION upgrade_sub CONNECTION '...' PUBLICATION upgrade_pub;` на PG 16. (4) Дождаться catch-up (`pg_stat_subscription` показывает lag). (5) Stop writes на PG 13, дождаться final flush. (6) Switchover приложений на PG 16. (7) Drop subscription. Downtime — 30 секунд вместо часов.",
+                "when_to_apply": "(1) Major version upgrades без долгого downtime. (2) Selective replication (только подмножество таблиц для analytics). (3) Multi-tenant (только данные одного tenant). (4) CDC для downstream (Debezium PostgreSQL connector использует logical decoding). (5) Heterogeneous: PG → MySQL через pglogical-output.",
+                "edge_cases": "(1) DDL не реплицируется автоматически — нужны event triggers или manual sync. (2) Sequences не до PG 16. (3) Large objects не поддерживаются. (4) TRUNCATE требует PG 11+. (5) Каждая таблица должна иметь PK или `ALTER TABLE ... REPLICA IDENTITY FULL` (медленнее, full row in WAL). (6) Schema на subscriber должна существовать заранее. (7) `wal_level=logical` имеет 10-30% write overhead.",
+                "related": "[[database-replication-interview#Q19]] physical streaming; [[database-replication-interview#Q20]] replication slots; [[database-replication-interview#Q29]] Debezium PostgreSQL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Logical replication в PG работает только в одну сторону — multi-master невозможен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Logical replication — основа для multi-master решений (pglogical, BDR by EDB). Bi-directional настраивается явно через двунаправленные publications/subscriptions с conflict resolution.",
+                "source_of_confusion": "Built-in publications/subscriptions — unidirectional, но это building block, не ограничение.",
+                "if_it_were_true": "BDR от EDB и pglogical не существовали бы.",
+                "how_it_should_be": "Logical = building block. Multi-master = надстройка с conflict resolution."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Logical replication = SQL триггеры на каждой таблице.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Logical replication использует logical decoding из WAL, не триггеры. Trigger-based replication существует (Slony-I, бывший стандарт), но это другой подход — медленнее и тяжелее для primary.",
+                "source_of_confusion": "Trigger-based replication ассоциируется с `logical`, но это разные эпохи.",
+                "if_it_were_true": "Каждый INSERT на publisher вызывал бы trigger, что значительно замедлило бы writes. Реальный overhead = 10-30% от logical decoding.",
+                "how_it_should_be": "Modern logical replication = WAL decoding, не triggers."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Logical replication автоматически реплицирует DDL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DDL (`CREATE TABLE`, `ALTER TABLE`) НЕ реплицируется. Это известное ограничение. Нужны event triggers (manual) или extensions (pglogical имеет частичную DDL replication).",
+                "source_of_confusion": "Кажется, что 'logical' покрывает всё logical, но DDL — отдельный класс.",
+                "if_it_were_true": "Не было бы в документации явного раздела `Limitations: DDL not replicated`.",
+                "how_it_should_be": "DDL apply runbooks на обе стороны одновременно. Liquibase/Flyway помогает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие уровни synchronous_commit в PostgreSQL и как корректно настроить synchronous_standby_names?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "synchronous_commit имеет только два значения: on и off.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пять значений: off, local, remote_write, remote_apply, on. Каждый — разный уровень durability в trade-off с latency.",
+                "source_of_confusion": "Boolean-like name, ожидается on/off.",
+                "if_it_were_true": "Не было бы тонкого контроля над remote semantics — например, нельзя было бы выбрать `wait apply, but not write` (есть `remote_apply` отдельно от `remote_write`).",
+                "how_it_should_be": "Знать пять значений и trade-off."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все sync replicas всегда указываются как FIRST 1 (replica1) — это самая надёжная конфигурация.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FIRST 1 (replica1)` опасно: если replica1 умерла → primary зависает на commit (ждёт ACK от umer replica). Рекомендуется `ANY 1 (replica1, replica2, replica3)` — любая из нескольких → устойчиво к отказу одной.",
+                "source_of_confusion": "FIRST звучит как `главная`, кажется надёжным.",
+                "if_it_were_true": "Production guides не рекомендовали бы `ANY N` configurations.",
+                "how_it_should_be": "`ANY N (...)` — устойчиво к отказу. `FIRST` — для случаев приоритетного порядка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "synchronous_standby_names задаёт port для replicas.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это список `application_name` standbys, которые считаются sync. Port задаётся в `primary_conninfo` на replica или client port primary.",
+                "source_of_confusion": "Network настройки разбросаны по разным параметрам.",
+                "if_it_were_true": "Никогда нельзя было бы иметь sync-кандидатов на одном host (через app_name).",
+                "how_it_should_be": "synchronous_standby_names = application_name list. Port — отдельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Пять значений synchronous_commit: off (до fsync, риск 200ms), local (local WAL flush), remote_write (WAL flushed на replica file system), remote_apply (WAL applied на replica — read-your-write через replica), on (default, local+sync standbys). synchronous_standby_names: 'replica1' (одна конкретная), 'ANY 1 (replica1, replica2, replica3)' (любая из, устойчиво), 'FIRST 2 (...)' (приоритетный порядок). Опасность: при FIRST с одной replica и её падении primary зависает; митигация — ANY N или мониторинг + готовность переключить на 'synchronous_commit=local'.",
+              "correct": true,
+              "sections": {
+                "explanation": "synchronous_commit levels по возрастанию durability: `off` — fsync асинхронно, можно потерять последние ~200ms при крахе primary; `local` — wait local WAL flush, crash-safe на этом узле; `remote_write` — WAL получен и записан на replica file system buffer (не fsync); `remote_apply` — WAL применен на replica, можно делать read-your-write через эту replica; `on` (default) — `local` + sync standby flush. synchronous_standby_names определяет sync-кандидатов по `application_name` (задаётся в `primary_conninfo` на replica): `'replica1'` — strict single, `'ANY 1 (r1, r2, r3)'` — quorum-like 1 из 3, `'FIRST 2 (r1, r2, r3)'` — приоритетный порядок (если r1, r2 ОК — других не ждёт), `'ANY 2 (r1, r2, r3, r4)'` — quorum 2 из 4.",
+                "example": "Production setup: 3 replicas, конфиг `synchronous_standby_names = 'ANY 1 (replica1, replica2, replica3)'`, `synchronous_commit = on`. Это значит — ждать ACK от любой одной replica, переживает отказ двух из трёх. Application name на каждой replica: `primary_conninfo = 'host=primary application_name=replica1 ...'`.",
+                "when_to_apply": "(1) Финансовые транзакции, billing, audit-data — `synchronous_commit = on` + `ANY 1 (multiple replicas)`. (2) Read-your-write через standby — `synchronous_commit = remote_apply`. (3) Logs, telemetry — `synchronous_commit = local` или даже `off`. (4) Долгие background jobs — temporary `SET synchronous_commit = local;` в сессии.",
+                "edge_cases": "(1) Если все sync replicas упали при `FIRST 1` или `ANY 1` без backup — primary блокируется на commit. Митигация: ALERT + готовность `ALTER SYSTEM SET synchronous_commit = local; SELECT pg_reload_conf();` (downtime тут — commits wait, не сам primary). (2) `remote_apply` имеет latency RTT + apply time — может быть значительно. (3) Application name на replica должен совпадать с указанным в `synchronous_standby_names`, проверять через `pg_stat_replication`.",
+                "related": "[[database-replication-interview#Q3]] sync/async/semi-sync; [[database-replication-interview#Q19]] PG streaming; [[database-replication-interview#Q25]] failover при потере sync replicas."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен replica set в MongoDB: компоненты, oplog, election и write concerns?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MongoDB не имеет replica set, использует shard cluster для HA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Replica set — фундаментальная MongoDB primitive для HA. Sharding — для horizontal scaling, состоит из нескольких replica sets.",
+                "source_of_confusion": "Sharding и replication часто упоминаются вместе.",
+                "if_it_were_true": "`rs.initiate()` не было бы базовой командой.",
+                "how_it_should_be": "Replica set = HA building block. Sharded cluster = sharding поверх replica sets."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Состав: primary (единственный, принимает writes), secondaries (реплицируют, обслуживают reads), arbiter (голосует, не хранит данные). Oplog — capped collection (local.oplog.rs), все операции primary пишутся туда, secondaries читают и применяют. Election через Raft-like протокол при недоступности primary > electionTimeoutMillis. Write concerns: w:1 / w:'majority' / w:N + j:true (journal). Causal consistency через session.startSession({causalConsistency: true}).",
+              "correct": true,
+              "sections": {
+                "explanation": "Replica set обычно состоит из 3 узлов (нечётное число для majority): один primary (initiate `rs.initiate()`), два secondaries. Primary логирует операции в `local.oplog.rs` — capped collection (фиксированный размер, обычно 5% диска, можно настроить). Secondaries читают oplog из primary (или из другого secondary в chained replication) и применяют. Каждая операция в oplog имеет `ts` (timestamp) + `op` (i/u/d/c) + payload — это идемпотентные операции, можно применять много раз без эффекта. Election: Raft-like, secondaries имеют priority + electionTimeoutMillis (default 10s). При недоступности primary > timeout — secondaries запускают election. Побеждает с свежее oplog + больший priority. Нужен majority для election (1 узел не может выбрать сам себя — нужно ≥2 из 3).",
+                "example": "Setup: `rs.initiate({_id: 'rs0', members: [{_id:0, host:'n1:27017', priority:2}, {_id:1, host:'n2:27017', priority:1}, {_id:2, host:'n3:27017', priority:1}]})`. Write concerns: `db.users.insertOne({name:'Alice'}, {writeConcern: {w:'majority', wtimeout:5000, j:true}})` — wait majority + journal flush, timeout 5s. Read preference: `db.users.find().readPref('secondary')` — читать с secondary.",
+                "when_to_apply": "Любая production MongoDB. Replica set даёт HA, automatic failover (< 12 seconds typically), read scaling через secondaries. Causal consistency через sessions — для read-your-writes scenarios.",
+                "edge_cases": "(1) Arbiter — голосует, но не хранит data. Используется для нечётного quorum при 2 data-nodes (но рекомендуется иметь 3 data-nodes). (2) MongoDB Healthcare.gov 2013: replica set ошибка конфигурации — primary не мог стать primary из-за clock skew и priority mismatch, downtime. (3) `w:1` — primary acked, NO durability guarantee при failover. `w:'majority'` + `j:true` — durable, но slower. (4) Read preference `nearest` — низкая latency, но lag possible.",
+                "related": "[[database-replication-interview#Q25]] election и failover; [[database-replication-interview#Q8]] causal consistency; [[mongodb-interview]] replica set detail."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MongoDB replica set использует Paxos для каждого write.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Election использует Raft-like протокол (MongoDB Replication Protocol с версии 3.2). Writes — async oplog replication, не consensus per-write.",
+                "source_of_confusion": "Consensus используется в election, не в writes.",
+                "if_it_were_true": "Latency writes была бы значительной из-за consensus rounds.",
+                "how_it_should_be": "Raft-like только для election. Writes — async через oplog."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все members в replica set равноправны, как в leaderless системе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Replica set — это single-leader архитектура: только primary принимает writes. Secondaries только реплицируют.",
+                "source_of_confusion": "Multi-master это другая архитектура.",
+                "if_it_were_true": "Не нужны были бы election и concept primary вообще.",
+                "how_it_should_be": "Replica set = single-leader с automatic failover. Не leaderless."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настраивается replication factor в Cassandra и что такое snitches?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Replication factor задаётся глобально для всего cluster через cassandra.yaml.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RF задаётся per keyspace через `replication` опцию в CREATE KEYSPACE. Разные keyspaces могут иметь разный RF.",
+                "source_of_confusion": "В простых конфигурациях все keyspaces имеют один RF, кажется глобальной настройкой.",
+                "if_it_were_true": "Не было бы возможности иметь production с RF=3 и logging с RF=1 в одном cluster.",
+                "how_it_should_be": "RF per keyspace, через CREATE/ALTER KEYSPACE."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Snitches в Cassandra определяют пользовательские права доступа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Snitch — это компонент топологии: определяет, в каком DC и rack находится каждый узел. Используется для replica placement и routing. Authentication/authorization — отдельные модули.",
+                "source_of_confusion": "Терминология `snitch` (`стукач`) странная, может ассоциироваться с `мониторинг`.",
+                "if_it_were_true": "`auth` модули не были бы отдельными в Cassandra.",
+                "how_it_should_be": "Snitch = topology awareness. Auth — отдельное."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "RF задаётся per keyspace: SimpleStrategy для single DC (replication_factor:3), NetworkTopologyStrategy для multi-DC ({'dc_east':3, 'dc_west':3}). Snitches определяют топологию (узел → DC/rack): SimpleSnitch (single DC), GossipingPropertyFileSnitch (production, конфиг в cassandra-rackdc.properties), Ec2Snitch / Ec2MultiRegionSnitch (AWS), GoogleCloudSnitch (GCP). Replica placement — в разные racks для устойчивости к rack failure. LOCAL_QUORUM для multi-DC reads — баланс латенции и durability.",
+              "correct": true,
+              "sections": {
+                "explanation": "CREATE KEYSPACE для production: `WITH replication = {'class': 'NetworkTopologyStrategy', 'dc_east': 3, 'dc_west': 3}`. Это значит — 3 копии в dc_east, 3 в dc_west, итого 6 копий ключа. Cassandra размещает replicas в разные racks (если known через snitch), что обеспечивает выживаемость при отказе целого rack. Snitch — это абстракция топологии: `GossipingPropertyFileSnitch` читает `cassandra-rackdc.properties` (`dc=dc_east, rack=rack1`) и распространяет через gossip. Ec2Snitch автоматически детектит AZ из EC2 metadata. Для on-prem правильный выбор — GossipingPropertyFileSnitch, потому что allow explicit topology.",
+                "example": "Multi-DC setup: dc_east (3 nodes, 3 racks), dc_west (3 nodes, 3 racks). CREATE KEYSPACE app WITH replication = {'class':'NetworkTopologyStrategy', 'dc_east':3, 'dc_west':3}. Read с CL=LOCAL_QUORUM из dc_east → ждёт 2 ACK из 3 nodes в dc_east → cross-DC latency не задействован. CL=EACH_QUORUM → ждёт 2 в dc_east И 2 в dc_west → выше durability, но добавляет cross-DC latency (50-300ms).",
+                "when_to_apply": "RF=3 — стандарт для production. RF=1 — только dev/test (нет fault tolerance). NetworkTopologyStrategy — multi-DC всегда. SimpleStrategy — только single-DC dev. LOCAL_QUORUM — большинство production reads. EACH_QUORUM — critical-data cross-DC.",
+                "edge_cases": "(1) Изменение RF — `ALTER KEYSPACE ... REPLICATION = ...` — требует `nodetool repair` для backfill новых replicas. (2) Снижение RF (3 → 2) — risky, лучше cleanup через repair потом. (3) Cross-DC replication latency может пиково расти — мониторить `Cross-DC latency` метрики. (4) `LOCAL_ONE` для high-throughput reads (telemetry), `LOCAL_QUORUM` для read-after-write (с small lag).",
+                "related": "[[database-replication-interview#Q12]] leaderless context; [[database-replication-interview#Q13]] quorum levels; [[cassandra-interview]] keyspaces и snitches detail."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Snitch — это ID каждого write, как GTID в MySQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra использует TimeUUID для write ordering и timestamps, не GTID-эквивалент. Snitch — topology, не identifier.",
+                "source_of_confusion": "Тендирующие термины из MySQL applied to Cassandra ошибочно.",
+                "if_it_were_true": "Documentation описывала бы snitch как identifier, но это topology component.",
+                "how_it_should_be": "Cassandra ordering = TimeUUID / TS. Snitch = topology."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает автоматический failover в современных HA-системах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Этапы: detection (health checks, timeouts) → election (выбор нового primary из replicas) → promotion (promote replica) → reconfiguration (переключение клиентов и оставшихся replicas на нового primary) → fencing (изоляция старого primary). Инструменты: PostgreSQL — Patroni + etcd/Consul, MySQL — Orchestrator/MHA, MongoDB — встроенный election, Cassandra — не нужен (leaderless), AWS RDS — Multi-AZ. Без fencing — split-brain.",
+              "correct": true,
+              "sections": {
+                "explanation": "Detection: health check проваливается X раз подряд → declare primary down. Election: оставшиеся replicas / orchestrator решает, кто новый primary (свежее WAL/oplog + большая priority). Promotion: `pg_promote()`, `STOP REPLICA; CHANGE MASTER...; START REPLICA`. Reconfiguration: обновить DNS / connection pool / прочие replicas (`CHANGE REPLICATION SOURCE TO new_primary`). Fencing: ОБЯЗАТЕЛЬНО — изолировать старый primary, чтобы он не принимал writes. Без fencing старый primary может вернуться → split-brain. В Patroni — watchdog (linux kernel убивает узел при потере lock), в облаке — revoke security group / detach EBS.",
+                "example": "Patroni для PG: 3 узла + etcd (или Consul/ZK). Каждый узел держит leader lock с TTL (30s). Если primary не обновил lock за TTL → secondaries запускают election. Победитель делает `pg_promote()` + обновляет etcd. Старый primary при возвращении видит, что он больше не leader → demote себя + `pg_rewind` для возврата как replica. Orchestrator для MySQL: discovers topology через connect, при detect failure promote candidate + reconfigure topology.",
+                "when_to_apply": "Production HA для любой single-leader системы. Без automatic failover RTO измеряется в минутах-часах. С automatic — секунды-минуты.",
+                "edge_cases": "(1) Слишком чувствительный health check (1 timeout → failover) → ложные failovers при network glitches. (2) Слишком терпимый → долгий downtime. Sweet spot: 3 consecutive failures, 10s interval = 30s detection time. (3) Без fencing старый primary может accept writes от unaware clients → split-brain. GitHub 2018 incident — частично из-за topology, failover не сработал автоматически, потребовалось 24 часа ручного восстановления. (4) Replicas с разным lag — выбирается с наименьшим (минимизировать data loss), но другие нужно `pg_rewind` или recreate.",
+                "related": "[[database-replication-interview#Q26]] split-brain; [[database-replication-interview#Q9]] async failover проблемы; [[database-replication-interview#Q27]] cloud failover."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Failover делает DBA вручную через SSH когда получает алерт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Manual failover — это how it was 15 лет назад, и до сих пор используется в небольших setups. Production HA требует automation — DBA не успеет реагировать за секунды.",
+                "source_of_confusion": "Многие small setups действительно полагаются на manual.",
+                "if_it_were_true": "Не существовало бы Patroni, Orchestrator, MHA, Multi-AZ RDS — а это индустрия.",
+                "how_it_should_be": "Automatic failover для production HA. Manual только для controlled switchover."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Failover — это просто перезапуск primary с новым IP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Failover — это promote replica → primary, потому что старый primary недоступен или upe. Просто рестартить старый primary с новым IP не поможет, если он не работает.",
+                "source_of_confusion": "Network reconfiguration входит в failover, но это только часть.",
+                "if_it_were_true": "Не было бы понятия `promote replica`.",
+                "how_it_should_be": "Failover = topology change, не network change."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Failover в MongoDB требует Patroni.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB имеет встроенный election в replica set protocol. Patroni — для PostgreSQL.",
+                "source_of_confusion": "Patroni часто упоминается в HA-контексте, ассоциируется с любыми БД.",
+                "if_it_were_true": "MongoDB не работал бы без external coordinator, но он работает.",
+                "how_it_should_be": "MongoDB = built-in. Patroni = только PG."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое split-brain в replication context и какие основные способы его избегать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Split-brain — это медленный network между primary и replica.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Slow network — это просто lag. Split-brain — когда ДВА узла одновременно считают себя primary и принимают writes, что создаёт divergent state.",
+                "source_of_confusion": "Оба про network issues.",
+                "if_it_were_true": "Slow network решался бы fencing, но это не так — split-brain принципиально другой класс проблем.",
+                "how_it_should_be": "Split-brain = topology mismatch (две правды). Slow network = просто lag."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Split-brain невозможен в современных системах с consensus.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Consensus (Raft/Paxos) значительно снижает риск, но не устраняет полностью. Реальные incidents (Reddit 2014, многие Cassandra splits) случались.",
+                "source_of_confusion": "`Modern systems are safe` — общая ошибка.",
+                "if_it_were_true": "Не было бы literature по STONITH, fencing, watchdogs.",
+                "how_it_should_be": "Consensus снижает, но не устраняет. Plus fencing all the way down."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Split-brain — когда после network partition обе половины кластера думают, что они primary, и принимают divergent writes. Способы избежать: (1) Quorum (majority voting) — failover только при согласии большинства; (2) Fencing/STONITH — отключить старого primary перед promote (revoke security group, detach EBS, IPMI poweroff); (3) External consensus store (etcd/Consul/ZK) для одного source of truth; (4) Нечётное число узлов (3/5 вместо 2/4); (5) Read-only при потере quorum.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сценарий split-brain: network между primary и replicas расщепилась → replicas не видят primary → выбирают нового primary → старый primary продолжает принимать writes от своей части клиентов → у нас две версии истории. Это catastrophic: cannot merge automatically, data loss when пересекаются. Решения: (1) Quorum — failover требует majority. 3-узел cluster, partition (2-1) — большинство (2) принимает решение, меньшинство (1) сам отключается. (2) STONITH (Shoot The Other Node In The Head) — физически отключить старого primary, чтобы он точно не accept writes. Pacemaker/Corosync делают это через IPMI/iLO. (3) External store (etcd/Consul/ZK) — узлы проверяют `am I still leader?` перед каждой важной операцией. Если store говорит нет → step down. (4) Нечётное число узлов — partition даёт чёткое majority/minority. (5) Read-only mode — узлы в minority partition переходят в read-only, пока quorum не восстановится.",
+                "example": "Reddit 2014: Cassandra cluster имел network partition, обе половины принимали writes на разные replicas с CL=LOCAL_QUORUM. LWW resolution дал potential data loss. После incident индустрия перешла на более строгий fencing и quorum-based decisions. AWS RDS Multi-AZ: stonith через AWS API — старый primary получает revoke на security group ingress before new primary активен.",
+                "when_to_apply": "Любая HA система с automatic failover ОБЯЗАНА иметь fencing. Без него — это not really HA, это just slow disaster.",
+                "edge_cases": "(1) Watchdog timer (Patroni) — kernel-level guarantee: если узел потерял leader lock и не shutdown в течение N секунд, watchdog hard-reboot его. (2) Cloud fencing: AWS revoke security group + detach EBS volume. (3) `Last resort` — если split-brain произошёл, нужно выбрать `winner DC` и отбросить второй (downtime + data loss). (4) Pseudo-split-brain через slow client: client продолжает писать на старый primary через cached DNS — fix через connection killing.",
+                "related": "[[database-replication-interview#Q25]] failover механика; [[database-replication-interview#Q9]] async failover проблемы; [[consensus-interview]] Raft/Paxos."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Split-brain — это редкая теоретическая проблема, не происходит в реальных системах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Split-brain — реальный, регулярно случающийся class incidents. Reddit 2014, GitHub 2018, многие Cassandra/MongoDB incidents.",
+                "source_of_confusion": "Кажется, что современные системы решают эту проблему автоматически.",
+                "if_it_were_true": "STONITH и fencing были бы deprecated, но это active research and production practice.",
+                "how_it_should_be": "Split-brain — реальный risk. Mitigation = part of HA design."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются read replicas в RDS, Aurora и Cloud SQL и какие специфические anti-patterns в облаке?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все облачные read replicas — одинаковые, разница только в цене.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Архитектурные различия принципиальны: RDS = async streaming (5-30 sec lag), Aurora = shared storage (<10ms lag), Cloud SQL ≈ RDS-like. Aurora уникальна через storage-level replication.",
+                "source_of_confusion": "Сверху все они выглядят одинаково через API.",
+                "if_it_were_true": "Aurora не имела бы 4x performance над RDS PostgreSQL по бенчмаркам.",
+                "how_it_should_be": "RDS = managed traditional. Aurora = re-architected storage."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "RDS Read Replicas: async streaming, до 15 replicas, cross-region возможно, Multi-AZ это standby (не для reads). Aurora: shared storage между primary и replicas, lag <10ms, до 15 Aurora Replicas + 1 writer, Aurora Global Database cross-region <1s, Aurora Serverless v2 autoscaling. Cloud SQL: похоже на RDS, async streaming, cross-region replica, cascading replication. Anti-patterns: db.t3.micro для read replica при write-heavy primary → постоянный lag; heavy analytics без hot_standby_feedback → recovery conflicts; промотировать read replica и забыть обновить connection strings → split-brain или потеря writes.",
+              "correct": true,
+              "sections": {
+                "explanation": "RDS использует традиционную WAL/binlog streaming replication — primary шлёт WAL, replicas применяют. Lag зависит от write rate, network, replica размера; типично 5-30 сек при нормальной нагрузке. Multi-AZ — это `standby` (другой instance в другой AZ), не read replica — нельзя читать с него, но failover автоматический. Aurora принципиально другой: data хранится в распределённой storage layer (6 копий в 3 AZ), primary и replicas разделяют один storage. Replica просто reads pages из shared storage — нет WAL streaming, lag < 10ms (storage-level). До 15 replicas + 1 writer. Aurora Global Database: cross-region read replicas через storage-level replication, RPO < 1 sec. Cloud SQL — близко к RDS архитектурно.",
+                "example": "AWS RDS Multi-AZ failover: 60-120 секунд (DNS flip + standby становится primary). Aurora failover: 30 секунд (один из replicas становится writer). Aurora Global Database: planned failover 1-2 минуты, unplanned восстановление в другом регионе RPO < 1s. Anti-pattern real: команда промотировала read replica в standalone через AWS Console, забыла обновить connection string в приложении — half приложений писали на старый primary (теперь tagged как `production`), half на новый (теперь tagged как `production-new`) → split-brain с 2-часовым data loss.",
+                "when_to_apply": "RDS Read Replicas — для read scaling, cross-region DR. Aurora — high-performance OLTP, требование низкого lag. Aurora Global — multi-region DR с минимальным RPO. Cloud SQL — для GCP-native приложений.",
+                "edge_cases": "(1) Multi-AZ RDS — это НЕ read replica, нельзя использовать standby для reads. Read replicas — отдельно. (2) Cross-region replica добавляет network egress costs ($0.02/GB между регионами). (3) Aurora Serverless v2 auto-pause не работает с replicas. (4) PostgreSQL replica с `hot_standby_feedback=off` может убивать long queries (recovery conflicts). (5) Promotion RDS read replica → standalone — не отменяемо, replication останавливается.",
+                "related": "[[database-replication-interview#Q19]] streaming replication; [[database-replication-interview#Q25]] failover механика; [[database-replication-interview#Q30]] cross-region."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Aurora использует ту же replication, что и RDS, только с другим брендингом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Aurora — это переархитектуренная storage layer, sharing между primary и replicas. RDS — traditional WAL streaming. Это разные подходы.",
+                "source_of_confusion": "AWS marketing положения иногда смешивают их.",
+                "if_it_were_true": "Aurora не имела бы свою price point и performance characteristics.",
+                "how_it_should_be": "Aurora и RDS архитектурно разные. Aurora storage-level, RDS WAL streaming."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Read replicas в облаке не имеют lag.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RDS Read Replicas — async с lag 5-30 sec типично. Aurora replicas — <10ms (значительно меньше, но не ноль). Lag всегда есть, важно его монitor.",
+                "source_of_confusion": "`Cloud is magic` impression.",
+                "if_it_were_true": "Не было бы метрики `ReplicaLag` в CloudWatch RDS — а она есть для всех replicas.",
+                "how_it_should_be": "Cloud не отменяет физику. Lag есть, его меньше, но не ноль."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Change Data Capture (CDC) и какие подходы к его реализации существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CDC — это backup, который пишется в Kafka.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CDC — это паттерн извлечения изменений в real-time как event stream. Backup — это static point-in-time snapshot. CDC может питать downstream (search index, DWH), backup — для restore.",
+                "source_of_confusion": "Оба сохраняют changes, но с разной целью.",
+                "if_it_were_true": "Не было бы отдельной экосистемы (Debezium, Maxwell) и use cases.",
+                "how_it_should_be": "CDC = real-time event stream. Backup = static snapshot."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CDC всегда требует triggers в БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Trigger-based CDC — один из подходов (legacy). Modern CDC использует log-based (читает binlog/WAL), что не требует triggers.",
+                "source_of_confusion": "Trigger-based — самый интуитивный, легко найти в старых tutorials.",
+                "if_it_were_true": "Debezium не существовал бы как log-based CDC.",
+                "how_it_should_be": "Подходы: query-based (poll), trigger-based, log-based (modern)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CDC — паттерн извлечения изменений из БД и публикации как event stream. Применения: search index sync (Elasticsearch), DWH/data lake (Snowflake, BigQuery), event-driven microservices, cache invalidation, audit log, outbox pattern. Подходы: query-based (poll updated_at, простой, пропускает deletes); trigger-based (AFTER INSERT/UPDATE → audit-таблица, overhead на каждом write); log-based (читаем binlog/WAL, низкий overhead, real-time, ничего не теряет). Log-based — стандарт де-факто. Инструменты: Debezium, Maxwell, Airbyte, AWS DMS.",
+              "correct": true,
+              "sections": {
+                "explanation": "CDC даёт реактивную интеграцию: вместо ETL batch jobs раз в час — events в real-time. Query-based: `SELECT * WHERE updated_at > last_check` — просто, но (a) пропускает deletes (нет updated_at в удалённой строке), (b) нагружает primary каждый poll. Trigger-based: AFTER INSERT/UPDATE/DELETE триггер пишет в audit-таблицу, ETL читает оттуда. Работает на любой БД, но добавляет overhead на каждый write (10-30% commonly) и trigger logic — это код в БД, который сложно версионировать. Log-based: используем ту же механику, что и replication. Debezium читает binlog (MySQL) / logical WAL (PG) / oplog (Mongo) → message в Kafka. Это самый низкий overhead — БД уже пишет log для replication, CDC consumer просто `подключается` к этому потоку.",
+                "example": "Outbox pattern: BEGIN; INSERT INTO orders ...; INSERT INTO outbox (event_type, payload) VALUES ('OrderCreated', '{...}'); COMMIT;. Debezium ловит изменения в outbox таблице → публикует в Kafka. Гарантирует at-least-once delivery + transactional consistency (event и order в одной транзакции). Без outbox: после INSERT в БД нужно отдельно публиковать в Kafka — между ними возможен crash → event lost или duplicated.",
+                "when_to_apply": "(1) Real-time sync БД → search/analytics. (2) Microservices, reagирующие на change. (3) Cache invalidation. (4) Audit / compliance logging. (5) Strangler fig pattern: новый микросервис slurps existing БД changes через CDC.",
+                "edge_cases": "(1) Schema changes (`ALTER TABLE`) — нужна Schema Registry или специальная обработка. (2) Reordering между partitions — внутри partition порядок гарантирован, между — нет (важно для multi-table transactions). (3) Initial snapshot перед incremental — занимает время для больших таблиц. (4) Replication slot retention (PG) — если consumer offline → диск primary fills up.",
+                "related": "[[database-replication-interview#Q29]] Debezium + Kafka; [[database-replication-interview#Q21]] PG logical replication; [[outbox-pattern-interview]] outbox details."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CDC требует custom code на каждое изменение в БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современный CDC (Debezium, Maxwell, AWS DMS) — фреймворки, не требующие custom code на каждое изменение. Достаточно конфигурации connector-а.",
+                "source_of_confusion": "Trigger-based действительно требует triggers, что иногда custom.",
+                "if_it_were_true": "Debezium не имел бы готовых connectors для PG/MySQL/Mongo/SQL Server.",
+                "how_it_should_be": "CDC = framework with config, не custom per-change code."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает CDC через Kafka и Debezium и какие у этой связки pitfalls?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Debezium — это CDC-платформа на Kafka Connect, читает replication log БД (binlog/WAL/oplog) и публикует события в Kafka topics. Для PG: создаёт logical replication slot + publication + использует pgoutput plugin; для MySQL: читает binlog с GTID; для MongoDB: oplog или change streams. Snapshot при initial + incremental updates. Pitfalls: (1) Logical slot держит WAL — если Debezium упал на сутки, диск primary заполнится. (2) Schema changes (ALTER TABLE) — нужна Schema Registry. (3) Reordering между partitions — within OK, between — нет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Архитектура: PostgreSQL/MySQL/MongoDB → Debezium Connector (running on Kafka Connect) → Kafka topics (`<topic_prefix>.<schema>.<table>`) → consumers (Elasticsearch sink, ClickHouse, microservices). Каждое изменение становится message в Kafka с структурой `{before: {...}, after: {...}, source: {ts_ms, lsn}, op: 'c'|'u'|'d'|'r'}` (`c`=create, `u`=update, `d`=delete, `r`=read/snapshot). Snapshot mode: `initial` (snapshot then streaming), `never` (skip snapshot, only new), `when_needed` (snapshot only when no offset).",
+                "example": "Конфиг Debezium PostgreSQL: `{ \"connector.class\": \"io.debezium.connector.postgresql.PostgresConnector\", \"database.hostname\": \"postgres.example.com\", \"plugin.name\": \"pgoutput\", \"publication.name\": \"debezium_pub\", \"slot.name\": \"debezium_slot\", \"snapshot.mode\": \"initial\", \"table.include.list\": \"public.users,public.orders\" }`. Каждый изменённый row в users → message в topic `app.public.users` с partitioning по PK.",
+                "when_to_apply": "(1) ETL в DWH (Snowflake, BigQuery) в real-time. (2) Search index sync (Elasticsearch, OpenSearch). (3) Read model для CQRS (event sourcing). (4) Cross-service event publication через outbox pattern. (5) Microservices migration (strangler fig).",
+                "edge_cases": "(1) PostgreSQL slot retention — самая частая проблема. Real incident: Debezium consumer down 18 часов, primary PG диск заполнился, primary crashed. Митигация: алерт на `pg_replication_slots.active=false` и retained size + автоматический pause writes при threshold. (2) Schema evolution: Debezium публикует schema в Schema Registry (Confluent), consumers должны handle backward/forward compatibility. (3) Reordering: транзакция, меняющая 2 таблицы (orders + order_items) — orders могут прийти в Kafka раньше items (или наоборот). Если consumer пишет в ES сначала items → fail (no order). Решение: outbox + sequential consumer per aggregate. (4) Mongo change streams require replica set (not standalone).",
+                "related": "[[database-replication-interview#Q28]] CDC concepts; [[database-replication-interview#Q20]] PG slots; [[outbox-pattern-interview]] outbox + Debezium."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Debezium работает через polling SELECT каждые 100ms.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Debezium — log-based, не polling. Подключается к replication protocol БД (это streaming, не polling).",
+                "source_of_confusion": "Простейшая CDC (query-based) использует polling, поэтому путают.",
+                "if_it_were_true": "Lag был бы 100ms+ постоянно, и overhead на БД был бы значительным.",
+                "how_it_should_be": "Debezium = streaming через replication protocol."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Debezium работает только с PostgreSQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Debezium имеет connectors для PG, MySQL, MongoDB, SQL Server, Oracle, Db2, Cassandra, Vitess, и других.",
+                "source_of_confusion": "В каждом туториале часто показывают на PG.",
+                "if_it_were_true": "Documentation Debezium показывал бы только PostgreSQL.",
+                "how_it_should_be": "Debezium = multi-DB CDC platform."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Debezium гарантирует exactly-once delivery без дополнительной настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Debezium гарантирует at-least-once delivery (может быть дубликаты при restart/failover). Exactly-once требует idempotent consumers или `transactional.id` в Kafka Producer (Debezium 2.x experimental).",
+                "source_of_confusion": "Exactly-once — желаемая semantics, часто overstated.",
+                "if_it_were_true": "Не было бы необходимости в idempotent consumers и downstream deduplication.",
+                "how_it_should_be": "At-least-once + idempotent consumer = practical exactly-once-effect."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные trade-off и pitfalls в cross-region репликации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cross-region replication работает так же как single-region, только дороже.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cross-region — это не просто cost-up. Latency 50-300ms между регионами делает sync replication impossible, eventual consistency by default, regulatory compliance complexity (GDPR, 152-ФЗ).",
+                "source_of_confusion": "Cloud услуги unify API, поэтому архитектурные различия маскируются.",
+                "if_it_were_true": "Не было бы отдельных архитектур (Aurora Global, DynamoDB Global Tables, Spanner) для cross-region.",
+                "how_it_should_be": "Cross-region — отдельный класс задач со своими паттернами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cross-region всегда даёт strong consistency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cross-region replication обычно async и eventual consistency. Strong consistency cross-region требует Spanner/CockroachDB (TrueTime/HLC) — это уникальная архитектура.",
+                "source_of_confusion": "`Replicated globally` ассоциируется с `consistent globally`.",
+                "if_it_were_true": "Не нужны были бы Aurora Global vs DynamoDB Global Tables vs Spanner — все были бы strong consistency.",
+                "how_it_should_be": "Cross-region default = eventual. Strong = special architecture."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cross-region — это просто дополнительная replica в другом регионе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это правда, но trade-offs significant: latency, cost, consistency. Просто `добавить replica` не решает всего класса проблем.",
+                "source_of_confusion": "Mechanically оно так и есть, но complexity больше.",
+                "if_it_were_true": "Не было бы articles типа `mistakes we made with cross-region`.",
+                "how_it_should_be": "Mechanics — yes. Implications — много."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Trade-off: latency replication 50-300ms cross-region (vs <10ms single-region), sync replication практически невозможна, cost (inter-region traffic ~$0.02/GB на AWS), RPO секунды-минуты, consistency обычно eventual. Pitfalls: (1) sync cross-region = commit ждёт 300ms; (2) async = data loss при региональной катастрофе; (3) cost (1TB/day = $600/month); (4) regulatory (GDPR, 152-ФЗ); (5) schema/version drift между регионами; (6) conflict resolution в multi-region multi-master. Паттерны: active-passive (primary в одном регионе, DR в другом), active-active с partitioning (user-region affinity), global tables (DynamoDB multi-region LWW).",
+              "correct": true,
+              "sections": {
+                "explanation": "Latency cross-region = physics: Москва ↔ Нью-Йорк ~80ms RTT, Москва ↔ Сидней ~250ms RTT. Sync replication через 300ms RTT = commit takes 300ms minimum → throughput cap 3-5 TPS на write thread. Cost: 1TB/day inter-region на AWS = ~$600/month только за data transfer. Regulatory: GDPR требует данные граждан ЕС оставаться в ЕС (или special transfer mechanisms). Россия 152-ФЗ требует обработки персональных данных на территории РФ. Conflict resolution в multi-region multi-master: DynamoDB Global Tables — LWW (потеря concurrent writes), Spanner/CockroachDB — TrueTime/HLC даёт strong consistency, Aurora Global Database — read-only replicas в других регионах (single writer).",
+                "example": "Active-passive: primary RDS PostgreSQL в us-east-1, async cross-region read replica в eu-west-1 для DR. RTO при failover ~15-30 минут. Active-active с partitioning: пользователи EU → EU primary, US → US primary, sync пользовательских данных через Debezium → Kafka MirrorMaker. Global tables: DynamoDB users table с replication в 3 регионах, LWW по timestamp от writer (риск потери concurrent updates).",
+                "when_to_apply": "(1) DR при региональных авариях — обязательно для critical business. (2) Низкая latency для глобальных users — Aurora Global, DynamoDB Global Tables. (3) Regulatory data residency — partitioning по регионам. (4) High availability при региональных провайдер-инцидентах (AWS us-east-1 down — fallback на us-west-2).",
+                "edge_cases": "(1) Сложно одновременно делать `ALTER TABLE` во всех регионах — drift возможен. (2) Cross-region traffic billing surprises — мониторинг каждого месяца. (3) NTP skew между регионами — для LWW critical, использовать TrueTime/atomic clocks где возможно. (4) Cascading failures — региональная авария может перегрузить остальные регионы.",
+                "related": "[[database-replication-interview#Q3]] sync/async; [[database-replication-interview#Q11]] conflict resolution; [[database-replication-interview#Q27]] облачные replicas."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие наиболее частые anti-patterns при работе с репликацией БД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Если использовать только sync replication, anti-patterns невозможны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sync replication имеет свои anti-patterns: один sync replica = SPOF (если он умер → primary зависает на commit), tight coupling latency primary к slowest replica, recovery conflicts.",
+                "source_of_confusion": "Sync кажется `safe by default`, но имеет свои edge cases.",
+                "if_it_were_true": "Все использовали бы sync, но в production default = async с явными sync exceptions.",
+                "how_it_should_be": "Каждая replication mode имеет anti-patterns."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Frequent anti-patterns: (1) writes на replica (read-only fails); (2) critical reads с replica без проверки lag (read-your-writes ломается); (3) игнорирование lag в мониторинге; (4) забытая replica после failover (CHANGE REPLICATION SOURCE не сделан); (5) replication = backup (DROP TABLE → все replicas пусты); (6) один sync replica = SPOF; (7) wal_level=logical без logical consumers (waste); (8) inactive replication slot (диск primary заполняется); (9) failover без fencing → split-brain; (10) LWW при clock skew; (11) тяжёлая аналитика на single replica + hot_standby_feedback → bloat; (12) промоушн без pg_rewind; (13) забыть nodetool repair каждые 10 дней → zombie data; (14) CDC без outbox.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реальная коллекция из production-incidents. Каждый item — это incident, который произошёл многократно в индустрии: (4) Real случай: после failover один из старых replicas продолжал получать WAL со старого primary (который вернулся как replica нового primary), но никто не сделал `CHANGE REPLICATION SOURCE` → две истории. (5) GitLab 2017 — `rm -rf` на primary, реплики не помогли (отстали по другой причине), спас snapshot. (8) Многие PG инциденты: Debezium consumer down → диск primary заполнился за часы. (10) Cassandra: один узел получил wrong time от NTP → его writes с future timestamp `выиграли` LWW над correct writes других узлов → invisible data corruption. (13) Cassandra zombie data — забытый repair приводит к воскрешению удалённых записей при reintroduction of stale node.",
+                "example": "Anti-pattern 11 in detail: heavy analytics query на read replica с `hot_standby_feedback=on` → replica отвечает primary `мой oldest xmin = X` → primary не может вакуумить tuples с xmin > X → table bloat на primary. После 24 часов: primary table size 5x larger than data, performance degraded. Решение: dedicated replica для analytics с `hot_standby_feedback=off` (acceptable trade-off: analytics queries cancelled при recovery conflicts).",
+                "when_to_apply": "Code review checklist для production replication setup. Каждый pattern — это потенциальный incident.",
+                "edge_cases": "(1) `super-read-only=1` in MySQL предотвращает accidental writes на replica — used to be `read-only=1` could be bypassed by SUPER privilege. (2) Cassandra `gc_grace_seconds` default 10 дней, но в multi-DC может требовать больше (cross-DC repair takes time). (3) PG `pg_rewind` work только когда old primary и new primary diverged недавно — если расхождение слишком большое, нужно `pg_basebackup` (полная пересборка).",
+                "related": "[[database-replication-interview#Q5]] replication != backup; [[database-replication-interview#Q9]] async failover problems; [[database-replication-interview#Q14]] Cassandra repair; [[database-replication-interview#Q26]] split-brain prevention."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главный anti-pattern — использовать replication вообще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Replication — необходимый компонент HA. Anti-patterns в её использовании, а не в её существовании.",
+                "source_of_confusion": "Кажется радикальной позицией, что иногда озвучивают.",
+                "if_it_were_true": "Никто бы не использовал PostgreSQL streaming, RDS Multi-AZ, MongoDB replica sets.",
+                "how_it_should_be": "Replication — must-have. Anti-patterns — в misuse, not existence."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Anti-patterns касаются только NoSQL баз, SQL replication safe.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SQL replication имеет много anti-patterns (см. список): MySQL split-brain, PG slot retention, lag inconsistency. NoSQL добавляет свои (Cassandra repair, MongoDB election quirks), но SQL тоже polluted.",
+                "source_of_confusion": "SQL `мature`, кажется безопасным.",
+                "if_it_were_true": "Production incidents с MySQL/PG replication не существовали бы — но они происходят постоянно.",
+                "how_it_should_be": "Anti-patterns универсальны для SQL и NoSQL."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

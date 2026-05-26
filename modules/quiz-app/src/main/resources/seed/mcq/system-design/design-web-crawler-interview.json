@@ -1,0 +1,1565 @@
+{
+  "topic_slug": "design-web-crawler-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что входит в базовый функциональный scope web crawler-а на интервью?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Fetch HTML по seed URLs, extract content и outlinks, recurse и сохранить raw HTML.",
+              "correct": true,
+              "sections": {
+                "explanation": "Классический цикл Mercator/Heritrix: seed → fetch → parse → store → enqueue outlinks → повтор.",
+                "example": "Googlebot стартует с топ-доменов и DMOZ-подобных списков, потом разворачивает граф через outlinks.",
+                "when_to_apply": "В первые 2-3 минуты собеседования — зафиксировать scope, чтобы не уйти в indexer/ranking.",
+                "edge_cases": "Vertical crawl (news/e-commerce) требует особой seed-стратегии и фильтров.",
+                "related": "Q2 NFR, Q4 архитектура, Q5 lifecycle URL-а."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Построить inverted index и обслуживать поисковые запросы пользователей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это zadacha indexer-а и search backend (см. design-search), а не crawler-а.",
+                "source_of_confusion": "Crawler и search часто упоминают в одном вопросе, но это разные сервисы.",
+                "if_it_were_true": "Crawler бы тянул на себя ranking и query parsing, что ломает разделение ответственности.",
+                "how_it_should_be": "Зафиксировать crawler как «качаю и складываю», indexing — downstream."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Делать ranking страниц по PageRank и персонализацию SERP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ranking и personalization живут в search/SERP-сервисе, crawler только готовит сырой контент.",
+                "source_of_confusion": "PageRank считается по outlinks-графу, который дёргают из crawler-output, отсюда смешение.",
+                "if_it_were_true": "Crawler стал бы compute-heavy и потерял throughput скачивания.",
+                "how_it_should_be": "PageRank — отдельный batch-пайплайн поверх outlinks-таблицы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только проверять uptime сайтов из seed-списка раз в сутки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Crawler качает контент и разворачивает граф, а не делает healthcheck.",
+                "source_of_confusion": "Путают с uptime-мониторами (Pingdom, UptimeRobot).",
+                "if_it_were_true": "Не было бы parser-а, dedup-а и storage — ничего из дизайна не нужно.",
+                "how_it_should_be": "Чётко отделить crawler от monitoring-задач."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой нагрузочный профиль типично закладывают для web crawler на интервью?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "~10 RPS sustained и пара ГБ HTML в сутки — небольшой vertical crawler.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для system-design кейса берут масштаб ближе к Common Crawl: ~1B страниц/месяц и ~400 RPS.",
+                "source_of_confusion": "Локальный scrapy-проект действительно работает на таком масштабе.",
+                "if_it_were_true": "Не нужны были бы distributed frontier, Bloom-filter dedup и tiered storage.",
+                "how_it_should_be": "Сразу закладывать 100+ TB/месяц и сотни RPS, чтобы упражнение имело смысл."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "1B страниц/месяц, ~400 RPS sustained и ~100 KB средний размер страницы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это типовые цифры интервью: 1e9 / (30*86400) ≈ 386 RPS, средняя страница ~100 KB после декомпрессии.",
+                "example": "Common Crawl публикует ~250B страниц cumulative, ежемесячный delta — порядка миллиарда.",
+                "when_to_apply": "На стадии NFR, перед capacity estimation и выбором storage tier.",
+                "edge_cases": "Peak QPS ~1000/sec, размеры страниц 1 KB - 500 KB.",
+                "related": "Q3 capacity, Q13 fetcher concurrency, Q18 storage tiering."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "1M страниц/секунду по 1 MB каждая — нужно петабайт хранилища в день.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На два порядка завышено: 1M RPS × 1 MB = 1 TB/sec — нереалистично даже для Google.",
+                "source_of_confusion": "Смешивают RPS поисковых запросов и crawler fetch RPS.",
+                "if_it_were_true": "Потребовалось бы 100+ Tbps egress и весь интернет-bandwidth региона.",
+                "how_it_should_be": "Sustained ~400 RPS, peak ~1000 RPS, прячем за politeness."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Strictly write-heavy: 100k uploads пользовательских страниц в секунду.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Crawler сам инициирует GET-запросы наружу, user uploads — это не его сценарий.",
+                "source_of_confusion": "Путают с UGC-сервисом или web archive с user submissions.",
+                "if_it_were_true": "Нужен был бы API ingestion-слой, как у Instagram/YouTube.",
+                "how_it_should_be": "Запросы идут от crawler к чужим сайтам, нагрузка считается по fetch RPS."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сколько примерно raw HTML генерирует crawler за месяц на профиле 1B страниц × 100 KB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "~10 TB/месяц — основной объём gzip-ится в момент скачивания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже после gzip 3-5× остаётся ~25 TB, а сырой объём — 100 TB/месяц.",
+                "source_of_confusion": "Считают только compressed size, забывая про метаданные и replication.",
+                "if_it_were_true": "Не нужны были бы S3 lifecycle policies и Glacier tier.",
+                "how_it_should_be": "Считать raw = 100 TB, compressed ~25 TB, год ~1.2 PB raw."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "~100 TB raw HTML/месяц, ~25 TB после gzip и ~500 GB метаданных.",
+              "correct": true,
+              "sections": {
+                "explanation": "1e9 × 100 KB = 1e14 байт = 100 TB; gzip 3-5× → ~25 TB; метаданные ~500 B × 1e9 = 500 GB.",
+                "example": "За год накапливается ~1.2 PB raw HTML — типичный объём, ради которого S3 standard → IA → Glacier tiered.",
+                "when_to_apply": "На стадии capacity estimation, до выбора storage backend и compression strategy.",
+                "edge_cases": "Видео/PDF поднимают средний размер; нужно отдельно считать non-HTML контент.",
+                "related": "Q18 tiered storage, Q19 Cassandra schema, Q23 JS-rendered."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "~1 EB/месяц — каждая страница тянет с собой все ресурсы (CSS, JS, images).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Crawler скачивает только HTML страницы, CSS/JS/images — отдельные fetch-и и часто не нужны.",
+                "source_of_confusion": "Путают с архивированием всего сайта (как WebArchive WARC).",
+                "if_it_were_true": "Потребовалось бы 10+ PB storage в день и собственные ДЦ.",
+                "how_it_should_be": "Считать только HTML (~100 KB средний) и опционально assets для JS-rendered страниц."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Невозможно посчитать без знания точного content type каждой страницы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Back-of-the-envelope как раз и нужен, чтобы дать порядок без точных данных.",
+                "source_of_confusion": "Боязнь дать число — но интервьюер ждёт ровно прикидку.",
+                "if_it_were_true": "Невозможно было бы планировать ёмкость storage в любой системе.",
+                "how_it_should_be": "Брать средние (100 KB/страница) и умножать на объём — этого достаточно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой компонент стоит в центре high-level архитектуры crawler-а?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "URL Frontier (Mercator) — все остальные компоненты обвязка вокруг него.",
+              "correct": true,
+              "sections": {
+                "explanation": "Frontier решает что и когда скачивать; fetcher, parser, dedup, storage — всё крутится вокруг него и пополняет/опустошает frontier.",
+                "example": "В Heritrix и Apache Nutch центральная структура — именно frontier с приоритетами и politeness.",
+                "when_to_apply": "При рисовании high-level диаграммы — поставить frontier в центр, остальное по периметру.",
+                "edge_cases": "На распределённом масштабе frontier шардится по hash(host) и общается через Kafka.",
+                "related": "Q6 что такое frontier, Q7 Mercator, Q25 centralized vs distributed."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Elasticsearch индекс — куда складывается весь текст для поиска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ES — downstream-консумер crawler-а, он принимает уже спарсенный контент.",
+                "source_of_confusion": "Search-функционал воспринимается как «главное», но это другой сервис.",
+                "if_it_were_true": "Crawler бы зависел от ES uptime и не мог накапливать backlog в S3.",
+                "how_it_should_be": "ES живёт за Cassandra/S3 как отдельный пайплайн индексации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DNS resolver кластер — без него ни один URL не качается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DNS — важный shared service, но не центр архитектуры; это поддержка fetcher-а.",
+                "source_of_confusion": "DNS действительно узкое место (Q12), отсюда переоценка его роли.",
+                "if_it_were_true": "Crawler был бы спроектирован «вокруг lookup-ов», что не отражает реальный flow.",
+                "how_it_should_be": "DNS — sidecar для fetcher pool, не центральный компонент."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Headless Chrome pool для рендеринга всех страниц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Headless pool — отдельный медленный fetch pipeline только для SPA, не основной flow.",
+                "source_of_confusion": "Современный web много JS, кажется что нужно везде рендерить.",
+                "if_it_were_true": "Throughput упал бы в 20-50 раз — невозможно держать 400 RPS на headless.",
+                "how_it_should_be": "Selective JS rendering: headless только когда HTML почти пуст."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой порядок шагов проходит каждый URL в lifecycle?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Discovered → queued → fetched → robots.txt проверяется уже на стороне fetcher worker-а.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Robots.txt проверка должна идти до queueing, иначе frontier заполнен запрещёнными URLs.",
+                "source_of_confusion": "Robots-cache часто живёт около fetcher-а, путают с местом проверки.",
+                "if_it_were_true": "Frontier распухает в N раз и worker впустую вытаскивает URL → выкидывает.",
+                "how_it_should_be": "robots.txt применяется в URL filter до enqueue."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Discovered → fetched сразу → потом normalized и проверка дубликата задним числом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fetch до dedup-а бесполезен — потратим bandwidth на уже виденные URLs.",
+                "source_of_confusion": "Кажется быстрее «сначала скачать, разберёмся потом».",
+                "if_it_were_true": "Crawler качал бы один контент по 10 раз и забивал бы целевые сайты.",
+                "how_it_should_be": "Сначала dedup и filter, потом fetch — экономия bandwidth и politeness."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Discovered → normalized → dedup check → filter (robots/quota) → queued → fetched → parsed → stored → outlinks обратно в discovered.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический lifecycle: нормализация и фильтры идут до queuing, иначе frontier забьётся мусором.",
+                "example": "В Mercator-реализации все pre-queue шаги выполняет URL filter pipeline, fetcher уже получает «чистый» URL.",
+                "when_to_apply": "Когда рисуешь state machine URL-а или диаграмму потока.",
+                "edge_cases": "Re-crawl возвращает URL в `queued` минуя discovery; SimHash может пометить `duplicate`.",
+                "related": "Q15 normalization, Q16 dedup, Q20 re-crawl."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Lifecycle линейный без states — URL либо скачан, либо нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На практике состояний 5-7: queued, in_flight, fetched, error, filtered, duplicate, dead.",
+                "source_of_confusion": "Упрощённая модель «boolean fetched» удобна, но скрывает retry и leases.",
+                "if_it_were_true": "Невозможно было бы реализовать lease timeout для упавших worker-ов.",
+                "how_it_should_be": "URL DB хранит явный state и timestamps для каждого перехода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему наивный FIFO-frontier ломается на реальном web crawl?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Concurrency не масштабируется, FIFO O(N) при вставке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Структурно очередь быстрая, проблема не в perf, а в логике politeness и приоритетов.",
+                "source_of_confusion": "Звучит как «классическая» проблема структур данных, но это не она.",
+                "if_it_were_true": "Замена на priority queue решила бы вопрос — но и она не решает politeness.",
+                "how_it_should_be": "Проблема FIFO — нарушение politeness и потеря приоритетов, а не latency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Если 90% URLs из frontier ведут на один домен — либо нарушим politeness, либо все workers idle.",
+              "correct": true,
+              "sections": {
+                "explanation": "FIFO не различает hosts — взяв подряд 100 URLs одного домена, либо забиваем его (DDoS), либо ждём crawl-delay.",
+                "example": "Crawl большого новостного сайта: 10k outlinks за минуту на один host блокирует всех worker-ов на час.",
+                "when_to_apply": "Когда нужно объяснить, зачем нужна Mercator-схема с back queues per host.",
+                "edge_cases": "Спам-домены и крупные форумы — основной источник такой неравномерности.",
+                "related": "Q7 Mercator, Q10 politeness, Q22 spider traps."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "FIFO не персистентен и теряет URLs при restart кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Персистентность ортогональна типу очереди — FIFO можно положить на Kafka/RocksDB.",
+                "source_of_confusion": "Frontier правда должен быть durable, но это отдельная проблема.",
+                "if_it_were_true": "Замена FIFO на priority queue не решила бы persistence.",
+                "how_it_should_be": "Сначала разделить politeness vs durability, потом решать каждый отдельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "FIFO нельзя шардировать — он по определению single-node.",
+              "correct": false,
+              "sections": {
+                "what_actually": "FIFO легко шардится по hash(url) — Kafka и SQS реализуют именно это.",
+                "source_of_confusion": "Путают концепт FIFO и его конкретные in-memory реализации.",
+                "if_it_were_true": "Невозможно было бы строить распределённые очереди задач (Celery, Sidekiq).",
+                "how_it_should_be": "Шардирование возможно, но не решает problem of politeness."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена двухуровневая Mercator-схема URL Frontier?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Одна big priority queue + token bucket per host рядом — heap не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Token bucket per host работает, но требует миллионы in-memory state-ов и плохо переживает restart.",
+                "source_of_confusion": "Token bucket — стандартный rate-limit pattern.",
+                "if_it_were_true": "Worker пришлось бы крутить while-loop по всем bucket-ам в поиске готового — O(N) на pop.",
+                "how_it_should_be": "Min-heap по ready_time даёт O(log N) и масштабируется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Один уровень с round-robin по доменам — каждый worker берёт свой домен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Round-robin не учитывает приоритеты страниц и плохо балансирует разные размеры доменов.",
+                "source_of_confusion": "Round-robin прост и часто упоминается в load-balancing.",
+                "if_it_were_true": "Низкоприоритетные домены отбирали бы time slot у news-сайтов с freshness SLA.",
+                "how_it_should_be": "Two-level: priority + per-host queue с probabilistic biased router."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Front queues по приоритету, biased router маршрутизирует в back queues per-host, min-heap по next-fetch time.",
+              "correct": true,
+              "sections": {
+                "explanation": "Front queue даёт приоритет, back queue per host обеспечивает politeness, heap по ready_time — выбор готового host-а worker-у.",
+                "example": "Heritrix реализует точно эту схему: 3-5 priority front queues + N back queues + global heap.",
+                "when_to_apply": "Это центральный артефакт собеседования: нарисовать именно эту картинку.",
+                "edge_cases": "Когда back queue пустеет, она refill-ится из front queue (тот же host, если есть в front).",
+                "related": "Q6 зачем frontier, Q10 politeness, Q25 distributed frontier."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Front и back — это просто два FIFO, между ними random shuffle.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Random shuffle убил бы и приоритет, и politeness — обе ключевые гарантии.",
+                "source_of_confusion": "Слова «front» и «back» создают иллюзию симметрии без специфики.",
+                "if_it_were_true": "Crawler работал бы как тот же наивный FIFO с лишним слоем.",
+                "how_it_should_be": "Biased router по приоритету + per-host back queue + global heap."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему production crawler-ы используют BFS с приоритетами, а не DFS?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DFS медленнее по тактовой частоте процессора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Performance pop/push у DFS и BFS одинаков — выбор не по CPU.",
+                "source_of_confusion": "Микро-оптимизации часто заслоняют content-driven решения.",
+                "if_it_were_true": "Выбор зависел бы от железа, а не от структуры web-графа.",
+                "how_it_should_be": "Выбор по покрытию и устойчивости к ловушкам, не по скорости pop."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DFS вообще не работает на ориентированных графах с циклами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DFS работает на циклах с visited-set; проблема не математическая, а практическая (traps, покрытие).",
+                "source_of_confusion": "Учебный DFS на дереве без visited-set действительно зацикливается.",
+                "if_it_were_true": "Никто не использовал бы DFS в graph algorithms, что неправда.",
+                "how_it_should_be": "DFS работает, но плох для web по содержательным причинам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "BFS требует меньше памяти на frontier, чем DFS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот — BFS frontier распухает экспоненциально, DFS экономит память (одна цепочка).",
+                "source_of_confusion": "Путают с DAG-обходом, где BFS может быть компактнее.",
+                "if_it_were_true": "Не нужны были бы priority queues и depth limits для контроля.",
+                "how_it_should_be": "BFS выбирают несмотря на память — за качество покрытия и приоритезации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "BFS даёт лучшее покрытие, коррелирует с PageRank и легко параллелится; DFS легко застревает в spider trap.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hub-страницы близко к seed, их соседи обычно важные — BFS их видит первыми. DFS уходит на 10k уровней в календарь.",
+                "example": "Mercator/Heritrix используют best-first search (BFS + priority), Nutch — то же самое.",
+                "when_to_apply": "Когда обсуждаешь traversal strategy и защиту от spider traps.",
+                "edge_cases": "Чистый BFS жрёт память на frontier — отсюда нужен priority + depth limit.",
+                "related": "Q9 priority signals, Q22 spider traps, Q26 trade-offs."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор сигналов используют для priority score URL-а во front queue?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только domain authority — топ-1000 доменов в priority 1, остальное в одну общую очередь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Domain authority — один из сигналов, но не единственный: ещё depth, freshness и update frequency.",
+                "source_of_confusion": "PageRank/authority воспринимается как «главный» сигнал.",
+                "if_it_were_true": "Crawler не отличал бы свежую новость от старой статьи на том же домене.",
+                "how_it_should_be": "Комбинировать authority, depth, last_crawled_age и update frequency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Domain authority + depth from seed + last-crawled age + update frequency + domain quota.",
+              "correct": true,
+              "sections": {
+                "explanation": "Score = ω1·authority − ω2·depth + ω3·freshness_bonus − ω4·domain_overuse, с квотой на host.",
+                "example": "News-домены получают +50 к score, страницы depth>5 -25, не виделись 30 дней — ещё +30.",
+                "when_to_apply": "При проектировании front-queue приоритезации в Mercator.",
+                "edge_cases": "Без domain quota один крупный сайт забивает всю high-priority frontier.",
+                "related": "Q7 Mercator front queues, Q20 re-crawl, Q22 traps."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Random shuffle для fairness — фиксированный приоритет нечестен по отношению к новым доменам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Random shuffle убивает freshness SLA для news и тратит бюджет на спам.",
+                "source_of_confusion": "Fairness важен в multi-tenant очередях, но не для web crawl целиком.",
+                "if_it_were_true": "Crawler не успевал бы обходить топ-1000 сайтов за нужное окно.",
+                "how_it_should_be": "Веса можно подкрутить, но базовая логика — content/domain-driven priority."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только размер ответа в байтах — большие страницы важнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер не коррелирует с важностью — спам-страницы часто крупнее новостей.",
+                "source_of_confusion": "Подсознательно большое = важное.",
+                "if_it_were_true": "Crawler тратил бы bandwidth на длинные форумные треды и spider traps.",
+                "how_it_should_be": "Размер используется для cut-off (>5 MB), а не как priority сигнал."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что значит «politeness» в дизайне crawler-а и как её реализовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Открывать 100 параллельных TCP connections к одному host для ускорения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параллельные connections к одному host = DDoS-паттерн, который сразу детектят WAF и Cloudflare.",
+                "source_of_confusion": "Браузерное «5-6 connections per host» воспринимают как разрешённый максимум.",
+                "if_it_were_true": "Crawler был бы заблокирован за минуту работы.",
+                "how_it_should_be": "Sequential per-host, можно HTTP/2 multiplex одним connection."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Один глобальный rate-limit 1000 RPS на весь crawler независимо от целевого host-а.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Глобальный лимит без per-host разбиения не защищает конкретный сайт от 1000 RPS на нём же.",
+                "source_of_confusion": "Похоже на token bucket в API gateway, но контекст совсем другой.",
+                "if_it_were_true": "Можно было бы забить один host всеми 1000 RPS — Cloudflare сразу ban.",
+                "how_it_should_be": "Лимит должен быть per-host, реализация — back queue или token bucket per host."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Per-host rate-limit (1 req/sec default), respect crawl-delay из robots.txt, sequential connections к одному host, identifying User-Agent.",
+              "correct": true,
+              "sections": {
+                "explanation": "Politeness защищает целевой сайт от перегрузки — без неё crawler выглядит как DDoS и IP-banится Cloudflare/firewall-ами.",
+                "example": "Googlebot и Bingbot держат ровно по одному в полёте к одному host-у; нарушители получают 429/блок CDN.",
+                "when_to_apply": "Сразу после обсуждения архитектуры frontier — это объяснение зачем нужны back queues.",
+                "edge_cases": "На HTTP 429/503 — exponential backoff, не просто retry.",
+                "related": "Q7 back queues, Q11 robots.txt, Q24 failure handling."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "User-Agent можно ставить пустым или маскироваться под обычный браузер для скрытности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Identifying UA с контактом — обязательное правило; маскировка нарушает интернет-этикет.",
+                "source_of_confusion": "Скрейперы действительно маскируются, отсюда заблуждение, что так и надо.",
+                "if_it_were_true": "Невозможно было бы связаться с админом сайта при проблеме, репутация crawler-а упала бы.",
+                "how_it_should_be": "User-Agent типа `MyCrawler/1.0 (+https://example.com/bot)` с контактом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно работать с robots.txt в crawler-е?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Скачивать /robots.txt перед первым fetch домена, парсить группы по User-Agent (longest-prefix match для Allow/Disallow), кэшировать TTL 24h.",
+              "correct": true,
+              "sections": {
+                "explanation": "Google спецификация требует именно longest-prefix match; TTL 24h — рекомендация Google webmaster docs.",
+                "example": "Heritrix/Nutch кэшируют robots в Redis-подобном хранилище с key=hostname, TTL=24h.",
+                "when_to_apply": "В URL filter, до момента enqueue в frontier.",
+                "edge_cases": "4xx → считаем «всё разрешено», 5xx → временно «всё запрещено» с retry через 1h.",
+                "related": "Q10 politeness, Q21 sitemap, Q24 HTTP error handling."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Скачивать robots.txt перед каждым URL — кэширование рискует пропустить обновление.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это создаёт N лишних запросов на host — сам по себе нарушение politeness.",
+                "source_of_confusion": "Кажется, что fresh всегда лучше cached.",
+                "if_it_were_true": "RPS на robots.txt сравнялся бы с RPS на сами страницы — ×2 нагрузка.",
+                "how_it_should_be": "TTL 24h по Google рекомендации, eviction по timestamp."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Если robots.txt вернул 404 — считать «всё запрещено».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандарт: 4xx → нет ограничений, всё разрешено; 5xx → временно блокируем.",
+                "source_of_confusion": "Семантически 404 «не найдено» иногда читают как «нет права».",
+                "if_it_were_true": "Crawler не смог бы качать миллионы сайтов без robots.txt.",
+                "how_it_should_be": "4xx = открытый сайт, 5xx = временная блокировка с retry."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Robots.txt можно игнорировать, если краулер маленький и редкий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Игнор robots.txt = немедленный bann по IP плюс репутационный риск.",
+                "source_of_confusion": "«Маленькому никто не заметит» — заблуждение, CDN ловят паттерны.",
+                "if_it_were_true": "Crawler за день получил бы Cloudflare-bann на половину web-а.",
+                "how_it_should_be": "Robots.txt — обязательный protocol, без исключений."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему DNS resolution — узкое место crawler-а и как его обходят?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DNS resolver не нужен — современные ОС резолвят достаточно быстро через системный getaddrinfo.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Default glibc resolver синхронный, blocking 10-50ms — на 400 RPS легко становится bottleneck.",
+                "source_of_confusion": "Для пользовательских приложений система действительно справляется.",
+                "if_it_were_true": "Heritrix и Nutch не строили бы dedicated DNS resolver кластеры.",
+                "how_it_should_be": "Async resolver (c-ares/aiodns) + app-level cache + dedicated cluster."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Default OS resolver синхронный и blocking; решение — dedicated cluster (Unbound/BIND) + app-level cache TTL 1h + async resolver (aiodns/c-ares).",
+              "correct": true,
+              "sections": {
+                "explanation": "getaddrinfo блокирует тред, default TTL часто игнорируется, public DNS легко overload-ятся — отсюда отдельный resolver и app cache.",
+                "example": "Heritrix имеет встроенный resolver pool; Google использует свои DNS с переопределённым TTL.",
+                "when_to_apply": "При обсуждении fetcher-а и его concurrency profile (50-200 connections per worker).",
+                "edge_cases": "Cache hit 95% при TTL 1h; ~20 lookups/sec при 400 RPS общем.",
+                "related": "Q13 fetcher, Q24 failure handling, dns-interview.md."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DNS медленный из-за TCP — нужно переключить весь трафик на DoT/DoH.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DNS обычно UDP, проблема не в протоколе, а в синхронности и overload public серверов.",
+                "source_of_confusion": "DoT/DoH модны, но не решают bottleneck crawler-а.",
+                "if_it_were_true": "Достаточно было бы поменять конфиг resolver-а, а не строить кэш.",
+                "how_it_should_be": "Async + cache + own cluster — это решает суть проблемы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DNS можно убрать вообще — резолвить IP заранее при добавлении в seed.",
+              "correct": false,
+              "sections": {
+                "what_actually": "IP меняются (CDN, load-balancing), статический резолв ломается через дни.",
+                "source_of_confusion": "Pre-resolve звучит как простая оптимизация.",
+                "if_it_were_true": "Crawler перестал бы попадать на актуальный IP крупных сайтов.",
+                "how_it_should_be": "Кэшировать с TTL, а не фиксировать на старте."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ключевые параметры HTTP-клиента (fetcher) на интервью?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один connection — один URL, без connection pool и без keep-alive.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это создаёт TCP+TLS handshake на каждый GET — 100-300ms лишних на запрос.",
+                "source_of_confusion": "Idea «stateless и просто» неверно применена к HTTP-клиенту.",
+                "if_it_were_true": "Throughput упал бы в 3-5 раз, CPU выросла на TLS.",
+                "how_it_should_be": "Connection pool per-host + keep-alive + опционально HTTP/2."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Connect timeout 60s, read timeout без лимита — нельзя терять страницы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без timeout один зависший сайт парализует worker-ов на часы — резкое падение throughput.",
+                "source_of_confusion": "«Не терять данные» звучит как good practice, но дороже потери throughput.",
+                "if_it_were_true": "Один зависший host мог бы выключить весь crawler через несколько часов.",
+                "how_it_should_be": "Жёсткие timeout-ы + retry, лучше выбросить 0.1% страниц, чем стоять."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Connect timeout 5s, read timeout 30s, max redirects 5, max response size 5 MB, 50-200 concurrent connections async, retry 3× с exponential backoff.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти числа закрывают типичные failure modes: hung-сайты, redirect-loops, gigabytes-страницы, временные 5xx.",
+                "example": "Heritrix значения близки; Apache HttpClient + retry-handler настраивают именно так.",
+                "when_to_apply": "Когда обсуждаешь устойчивость fetcher-а и SLA на один URL.",
+                "edge_cases": "HTTP/2 multiplex может держать N streams через одно TCP; SSL session cache экономит handshake.",
+                "related": "Q10 politeness, Q24 failure, Q12 DNS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Без User-Agent и Accept-Encoding — экономия headers экономит bandwidth.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без Accept-Encoding теряется gzip 3-5× компрессии — десятки TB лишнего трафика.",
+                "source_of_confusion": "Headers выглядят мелочью на фоне body, но эффект противоположный.",
+                "if_it_were_true": "Bandwidth-бюджет вырос бы кратно.",
+                "how_it_should_be": "Accept-Encoding обязателен, UA — обязателен для identifying."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает Parser и какие инструменты типично используют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Extract только текст, outlinks не нужны — discovery через sitemap.xml.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без outlinks crawler не сможет развернуть граф web-а, sitemap есть не у всех сайтов.",
+                "source_of_confusion": "Sitemap кажется «более структурированным» источником.",
+                "if_it_were_true": "Coverage упало бы до сотен миллионов страниц вместо миллиардов.",
+                "how_it_should_be": "Outlinks как основной источник, sitemap как ускоритель."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Парсить HTML regex-ами `<a href=...>` — DOM-парсер избыточен для извлечения ссылок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Regex ломается на quoted attributes, nested структуре, CDATA — известный antipattern.",
+                "source_of_confusion": "Простые regex-ы работают на toy-примерах, отсюда соблазн.",
+                "if_it_were_true": "Crawler терял бы 10-20% ссылок и периодически крашился на edge cases.",
+                "how_it_should_be": "DOM-парсер (lxml/Jericho); regex только как доп-фильтр поверх."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Парсер должен исполнять `<script>` теги — иначе outlinks из JS не найдутся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исполнение JS — задача headless browser pool, а не parser-а; иначе перформанс падает в 20-50×.",
+                "source_of_confusion": "SPA с client-side роутингом действительно нужны headless.",
+                "if_it_were_true": "Throughput parser-а упал бы с 1000 страниц/sec до 20-50.",
+                "how_it_should_be": "Parser работает на статике, JS-страницы идут в отдельный pool."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Charset detection → DOM parse (lxml/Jericho/Tika) → extract outlinks через `<a href>` + urljoin → extract text → metadata (title, meta description, canonical).",
+              "correct": true,
+              "sections": {
+                "explanation": "Pipeline стандартный: правильный encoding → DOM → outlinks + text + structured data; lxml на C быстрее BeautifulSoup в разы.",
+                "example": "Apache Tika — универсальный экстрактор в Heritrix, Jericho — в Nutch.",
+                "when_to_apply": "Сразу после fetch, до URL filter и dedup.",
+                "edge_cases": "`<link rel=\"canonical\">` для dedup; `<meta name=\"robots\" content=\"noindex,nofollow\">` для respect.",
+                "related": "Q15 normalization, Q16 dedup, Q23 JS-rendered."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие шаги входят в URL normalization?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Scheme/host lowercase, default port убрать, percent-decode, resolve `..`/`.`, убрать fragment, сортировать query, выкинуть tracking-params (utm_*, fbclid) и session IDs.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без этих шагов одна страница порождает десятки разных URL-строк → dedup ломается, frontier распухает.",
+                "example": "`http://Example.COM/path/?b=2&a=1#x` и `https://example.com/path?a=1&b=2` после норм совпадают.",
+                "when_to_apply": "Сразу после parser, до dedup-проверки.",
+                "edge_cases": "WWW-prefix — единая политика; trailing slash убирается на не-корневых путях.",
+                "related": "Q16 dedup, Q22 session-ID traps, Q14 parser."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только lowercase всей строки целиком — этого достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lowercase всего ломает case-sensitive path (на многих сайтах /User != /user) и percent-encoding.",
+                "source_of_confusion": "Звучит просто и универсально.",
+                "if_it_were_true": "Crawler терял бы реальные ресурсы или собирал duplicates без понимания.",
+                "how_it_should_be": "Lowercase только scheme и host, остальные шаги отдельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Удалить весь query string — параметры всегда являются tracking.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Многие сайты используют query для реальных ресурсов (`?id=42`); удалить всё = потерять контент.",
+                "source_of_confusion": "Tracking-params действительно частая беда, но не все params такие.",
+                "if_it_were_true": "Crawler не отличал бы товар №1 от товара №2 на e-commerce сайте.",
+                "how_it_should_be": "Удалять только known tracking-params и session IDs; остальные сортировать."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Оставить fragment (#section) — он часто несёт уникальный контент SPA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fragment не отправляется на сервер; для статичного HTML это не отдельный ресурс.",
+                "source_of_confusion": "SPA-роутинг через hashbang создаёт иллюзию.",
+                "if_it_were_true": "Crawler качал бы одну страницу N раз с разными #-якорями.",
+                "how_it_should_be": "Fragment убираем; для SPA — отдельный headless pipeline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать URL dedup для 50B известных URL-ов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Хранить весь hash-set в RAM — 50B × 16 байт = 800 GB, шардировать на 100 серверов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Работает, но дорого: 800 GB RAM минимум, плюс репликация — это 100+ серверов только под set.",
+                "source_of_confusion": "Hash-set даёт точный ответ за O(1), кажется естественным.",
+                "if_it_were_true": "Cost оправдан только при экстремальной precision-требовательности.",
+                "how_it_should_be": "Bloom filter (~60 GB на 50B URLs) + sharded DB для verification — то же качество за порядок дешевле."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Bloom filter ~60 GB RAM (sharded, 10 bits/key) + sharded URL DB (RocksDB/Cassandra) для верификации FP.",
+              "correct": true,
+              "sections": {
+                "explanation": "Bloom отсекает 99% «новый URL» за O(1) без disk; для «возможно видел» (1% FP) идёт DB-lookup.",
+                "example": "Google и Common Crawl используют примерно эту схему; mark_seen() добавляет в Bloom + persist в DB.",
+                "when_to_apply": "При планировании capacity и latency dedup стадии.",
+                "edge_cases": "Scalable Bloom (pybloom) растёт по мере добавления; sharding по hash(host) даёт локальность.",
+                "related": "Q17 content dedup, Q18 storage, Q19 schema."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один Redis cluster с 2.5 TB RAM для всех URLs.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дорого и нестабильно: 2.5 TB RAM на Redis — много шардов, репликация, eviction risk.",
+                "source_of_confusion": "Redis действительно отлично подходит для kv-кеша, но не для всей вселенной URL-ов.",
+                "if_it_were_true": "Cost-of-ownership Redis cluster выше, чем Bloom+RocksDB на порядок.",
+                "how_it_should_be": "Redis оставить под robots.txt и hot data, URL set — Bloom+DB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Полный scan Cassandra на каждый новый URL — DB сама сделает dedup.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На 400+ RPS dedup-стадии Cassandra-lookup на каждый URL — 30-50ms × N → throughput collapse.",
+                "source_of_confusion": "DB действительно может дать exact answer, но без in-memory short-circuit это медленно.",
+                "if_it_were_true": "Dedup стал бы bottleneck-ом всего crawler-а.",
+                "how_it_should_be": "Bloom сначала, DB только на possibles."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что выбрать для near-duplicate content dedup в web crawler — SimHash или MinHash+LSH?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Exact SHA256 контента достаточно — near-duplicates редки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Near-dups составляют 20-30% web-а (mirrors, syndication, скопированные статьи) — пропускать нельзя.",
+                "source_of_confusion": "SHA256 — стандартный fingerprint, кажется универсальным.",
+                "if_it_were_true": "Index был бы забит дублями с одного источника.",
+                "how_it_should_be": "SHA256 + SimHash в паре: exact и near-dup."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MinHash + LSH — единственный способ для near-duplicate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MinHash отлично подходит для set-данных (basket recommendation), для web crawl-а SimHash проще.",
+                "source_of_confusion": "MinHash действительно классический ответ для near-dup, но не лучший для weighted features.",
+                "if_it_were_true": "Google не использовал бы SimHash в production.",
+                "how_it_should_be": "SimHash для crawl, MinHash для recommendation/basket-similarity."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SimHash 64 бита (Charikar/Google): XOR + popcount, Hamming distance ≤ k (обычно k=3) — компактно и мгновенно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Google использует SimHash именно в web crawl — 64 бит на документ, near-dup проверка через bit-permutation tables за O(log n).",
+                "example": "Mirrors, syndication, A/B-варианты страниц с одинаковым основным текстом — SimHash их ловит.",
+                "when_to_apply": "После parse → text-content, перед store в Cassandra.",
+                "edge_cases": "Exact dup ловится SHA256 контента, SimHash — для near-dups (отличие в дате/рекламе).",
+                "related": "Q16 URL dedup, Q19 schema simhash column, Q22 spider traps."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сравнивать тексты целиком через diff — самый точный путь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pairwise diff на 1B страниц — O(N²), даже одну страницу со всеми сравнить нереально.",
+                "source_of_confusion": "Diff даёт точный ответ для двух документов, но не масштабируется.",
+                "if_it_were_true": "Один cycle dedup занял бы века CPU.",
+                "how_it_should_be": "Fingerprint (SimHash) + bucket index для candidate retrieval за O(log n)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой tiered storage stack выбрать для crawler-а?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Локальный SSD каждой fetcher-машины — быстрее любого distributed store.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Локальный SSD теряется при падении хоста, не доступен другим воркерам — нет durability и shareability.",
+                "source_of_confusion": "IOPS локального SSD выше сетевого, отсюда соблазн.",
+                "if_it_were_true": "Терять данные при каждом перезапуске worker-а — недопустимо.",
+                "how_it_should_be": "S3 (durable shared) + Kafka log для consistency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Всё положить в один PostgreSQL — проще и атомарно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PostgreSQL не масштабируется на 100 TB/месяц write-throughput и 50B rows без шардирования.",
+                "source_of_confusion": "Single-DB удобно для CRUD-приложений.",
+                "if_it_were_true": "Cluster vacuum и репликация легли бы под нагрузкой за дни.",
+                "how_it_should_be": "Wide-column DB для metadata, объект-стор для blob, ES для search."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только Elasticsearch — он сам и индекс, и storage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ES не подходит как primary blob-storage: дорогой по cost/GB, сложный в operations на петабайтах.",
+                "source_of_confusion": "ES действительно держит документы, но это не объект-стор.",
+                "if_it_were_true": "Cost storage вырос бы в 10-50× против S3.",
+                "how_it_should_be": "ES — full-text index поверх Cassandra/S3."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Raw HTML → S3/HDFS (gzip, tiered Standard→IA→Glacier), URL metadata → Cassandra/HBase, robots.txt → Redis, full-text → Elasticsearch.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый тип данных в подходящий store: cold HTML на дешёвый объект-стор, hot writes — wide-column, hot lookup — RAM, search — ES.",
+                "example": "Common Crawl кладёт WARC файлы в S3 публичным bucket; Heritrix умеет писать WARC прямо в HDFS.",
+                "when_to_apply": "При обсуждении data layer и cost optimization.",
+                "edge_cases": "Crawl logs → Kafka → ClickHouse для аналитики; SimHash index — отдельная таблица + permutation index.",
+                "related": "Q19 Cassandra schema, Q20 re-crawl, Q17 simhash."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как лучше партиционировать Cassandra-таблицу url_state?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Partition key = `url_hash` сам по себе — равномерное распределение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Равномерно, но теряется локальность по host: refill back queue делает N точечных lookup-ов вместо одного scan.",
+                "source_of_confusion": "Uniform distribution — частая дефолтная стратегия для KV.",
+                "if_it_were_true": "Operations per-host были бы scatter-gather, медленно.",
+                "how_it_should_be": "Партиционировать по hash(host), внутри сортировать по url_hash."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Partition key = `hash(host) % N`, clustering = (host, url_hash); даёт локальность по host и параллелизм между hosts.",
+              "correct": true,
+              "sections": {
+                "explanation": "Per-host локальность критична для refill back queue и politeness; разные hosts на разных node-ах дают параллелизм.",
+                "example": "Один partition хранит все URL example.com — scan для re-crawl scheduler идёт по одному node.",
+                "when_to_apply": "При проектировании Cassandra schema; учитывать также `next_crawl_at` index для re-crawl.",
+                "edge_cases": "Hot host (один домен ~100M URLs) может перегрузить partition — нужен sub-shard по url_hash bucket.",
+                "related": "Q7 back queues, Q20 re-crawl, Q25 distributed frontier."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Partition key = timestamp вставки URL — естественная упорядоченность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Time-partitioning создаёт hot partition (текущий час), все writes идут в один node.",
+                "source_of_confusion": "Time-series DB используют такой паттерн, но для URL state он создаёт hot spots.",
+                "if_it_were_true": "Один node ловил бы все writes, кластер не масштабировался бы.",
+                "how_it_should_be": "Hash(host) дискриминирует записи равномерно по времени."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Без партиционирования — Cassandra сама всё распределит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra обязательно требует partition key — без него distribution не работает.",
+                "source_of_confusion": "Иллюзия «автоматизма» в managed DB.",
+                "if_it_were_true": "Невозможно было бы создать таблицу.",
+                "how_it_should_be": "Явный partition key — это основа Cassandra data modeling."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как решать когда переобходить страницу (re-crawl policy)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Re-crawl только при ручном triggering админом — экономия бюджета.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без auto re-crawl freshness деградирует, search index становится stale через дни.",
+                "source_of_confusion": "Manual triggering удобен для batch-сценариев, но не для web search.",
+                "if_it_were_true": "Search backend отдавал бы устаревший контент.",
+                "how_it_should_be": "Scheduler автоматически кладёт URLs в frontier по next_crawl_at."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Фиксированный интервал 24 часа для всех страниц — справедливо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fixed interval либо отстаёт на news (час vs день), либо переплачивает на evergreen (день vs месяц).",
+                "source_of_confusion": "«Просто» решение, но рассинхрон по обоим концам спектра.",
+                "if_it_were_true": "Crawler не выполнял бы freshness SLA новостей и тратил бы 90% бюджета на старые статьи.",
+                "how_it_should_be": "Adaptive по типу контента и наблюдаемой change frequency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Adaptive по domain type + change frequency: news ~ежечасно, blog ~ежедневно, evergreen ~раз в месяц, удваиваем интервал если N подряд unchanged.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без adaptive подхода бюджет crawler-а тратится впустую на статичные страницы и не успевает за свежими.",
+                "example": "Если страница 5 раз подряд вернула 304 Not Modified — следующий re-crawl через 2× интервала.",
+                "when_to_apply": "При построении Re-crawl Scheduler service поверх url_state.next_crawl_at.",
+                "edge_cases": "Conditional GET с `If-Modified-Since`/`If-None-Match` экономит bandwidth даже при re-crawl.",
+                "related": "Q21 sitemap.xml, Q13 conditional GET, Q19 next_crawl_at index."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Re-crawl никогда — один проход за всё время.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без re-crawl freshness = бесконечность, index безнадёжно устаревает.",
+                "source_of_confusion": "Идея one-pass crawl применима к archival, но не к live search.",
+                "if_it_were_true": "Google показывал бы новости 2010 года.",
+                "how_it_should_be": "Re-crawl — фундамент freshness, обязателен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как crawler использует sitemap.xml?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sitemap нужен только для small static-сайтов — для крупных бесполезен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: для крупных e-commerce с миллионами URL sitemap — основной discovery boost.",
+                "source_of_confusion": "Small-сайты действительно часто имеют sitemap, отсюда обратное обобщение.",
+                "if_it_were_true": "Amazon/eBay не публиковали бы свои sitemap-индексы.",
+                "how_it_should_be": "Sitemap критичен именно на больших сайтах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Sitemap.xml — авторитет, нужно использовать только URL из sitemap и игнорировать outlinks.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sitemap есть не у всех сайтов и часто неполный — outlinks остаются основным discovery.",
+                "source_of_confusion": "Sitemap кажется «правильнее» html-парсинга.",
+                "if_it_were_true": "Coverage упало бы до сайтов с sitemap-ами, остальной web невидим.",
+                "how_it_should_be": "Sitemap — ускоритель discovery, не замена outlinks."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sitemap игнорируем — он часто неконсистентен и устарел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже неполный sitemap даёт 10-100× ускорение discovery для крупных сайтов.",
+                "source_of_confusion": "Sitemap правда бывает stale, но полезен даже частично.",
+                "if_it_were_true": "Crawler тратил бы недели на discovery 10M товаров через outlinks.",
+                "how_it_should_be": "Использовать как hint, не доверять полностью."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Discovery URLs мимо parse-стадии + lastmod/changefreq/priority как сигналы для re-crawl scheduler-а.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sitemap — это hint от сайта о структуре и обновлениях; ускоряет coverage крупных e-commerce и news.",
+                "example": "Amazon/Yandex.Market имеют sitemap-индексы с миллионами URL — crawler берёт их прямо в frontier.",
+                "when_to_apply": "В discovery-stage параллельно с outlinks-парсингом.",
+                "edge_cases": "Sitemap может ссылаться на другие sitemap-ы (sitemap index); путь в robots.txt директивой `Sitemap:`.",
+                "related": "Q11 robots.txt, Q20 re-crawl, Q4 архитектура."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой комбинированный набор защит от spider traps работает на практике?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Depth limit (10-15), URL normalization (убирает session IDs), domain quota (max ~1M URLs/host), pattern detection и content-sameness (SimHash) для авто-блэклиста.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ни одна защита по отдельности не закрывает все типы trap-ов (calendar, faceted nav, session IDs, faceted) — нужен слоёный подход.",
+                "example": "Календарь-trap `/calendar?date=2050-..` ловится depth+date-heuristic; faceted ловится content sameness.",
+                "when_to_apply": "В URL filter pipeline между normalization и dedup.",
+                "edge_cases": "MAX_PATH_LENGTH=256, MAX_QUERY_PARAMS=20, URL pattern blacklist auto-update при 1000+ matches.",
+                "related": "Q15 normalization, Q17 simhash, Q9 priority."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только depth limit — этого достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Depth не ловит session-ID-loops (depth=1, но миллион URLs) и faceted navigation на верхнем уровне.",
+                "source_of_confusion": "Depth — самый известный и простой механизм.",
+                "if_it_were_true": "Faceted-каталог с 1M комбинаций забил бы frontier.",
+                "how_it_should_be": "Depth + normalization + quota + content sameness — слои."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ручной blacklist доменов — авто-детект ненадёжен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Web слишком велик для manual blacklist; нужны auto-heuristics.",
+                "source_of_confusion": "Manual подход кажется надёжным, но не масштабируется.",
+                "if_it_were_true": "Команда crawler-а тратила бы дни на ручной анализ.",
+                "how_it_should_be": "Auto-detection patterns + thresholds на quota и similarity."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Спайдер-трапы редки, защита не нужна — потеряем 0.1% и забудем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один calendar-trap может сгенерировать 10M URLs и заполнить frontier полностью.",
+                "source_of_confusion": "Trap кажется edge case, но взрывной рост происходит за часы.",
+                "if_it_were_true": "Crawler перестал бы продвигаться по основному web-у.",
+                "how_it_should_be": "Защита обязательна, даже если trap редок — его взрыв катастрофичен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать JavaScript-rendered страницы (SPA)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Парсер сам исполняет `<script>` теги через встроенный V8.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенный JS-engine в parser не моделирует DOM, не загружает зависимости — это полноценный browser нужен.",
+                "source_of_confusion": "В Node.js V8 есть, но без DOM/window/timers.",
+                "if_it_were_true": "SPA frameworks (React, Vue) ломались бы на отсутствующих API.",
+                "how_it_should_be": "Headless Chrome — единственный надёжный путь."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все страницы через headless Chrome — иначе SPA не покрыты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Throughput упал бы с 400 RPS до 10-20 RPS, ресурсы кратно выросли.",
+                "source_of_confusion": "Современный web много JS, кажется проще «всё через headless».",
+                "if_it_were_true": "Crawler не выполнил бы 1B страниц/месяц SLA.",
+                "how_it_should_be": "Selective rendering — только когда без JS не работает."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SPA игнорируем — большая часть всё ещё статичный HTML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "30-50% коммерческого web-а сегодня SPA — без headless coverage упадёт радикально.",
+                "source_of_confusion": "Статистика 5 лет назад действительно была в пользу статики.",
+                "if_it_were_true": "Index пропустил бы крупные e-commerce, soc-сети, продукты.",
+                "how_it_should_be": "Selective rendering — критичная часть современного crawler-а."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Отдельный headless pool (Puppeteer/Playwright/Splash) для selective rendering: HTML почти пуст → re-fetch через JS pool; основной HTTP pool остаётся быстрым.",
+              "correct": true,
+              "sections": {
+                "explanation": "Headless в 20-50× медленнее plain HTTP и жрёт ~100 MB RAM/instance — рендерим только когда без JS не получить контент.",
+                "example": "Router: если plain HTML <1 KB text или есть `<noscript>` warning → отправить в JS pool.",
+                "when_to_apply": "При обсуждении coverage современного web-а (SPA-доли 30-50%).",
+                "edge_cases": "Schema.org/JSON-LD часто содержит структурированные данные в plain HTML — пробовать сначала.",
+                "related": "Q4 архитектура, Q13 fetcher, Q14 parser."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать падение worker-а с in-flight URL и разные HTTP-ошибки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Worker сам пишет state перед смертью — coordination не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если worker «умер» из-за SIGKILL/OOM/сетевого разрыва — он не успеет ничего записать.",
+                "source_of_confusion": "Graceful shutdown работает, но не покрывает hard crash.",
+                "if_it_were_true": "Crawler терял бы URL при каждом hard crash worker-а.",
+                "how_it_should_be": "External lease timeout с auto-recovery в URL DB."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Lease timeout: `in_flight > 5min` → state обратно в `queued`; 4xx (permanent) → mark `dead`, 5xx/429/network → retry с exp backoff (3 раза), DNS NXDOMAIN → permanent fail.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без lease-mechanism падение worker-а потеряло бы URL навсегда; разные HTTP коды требуют разной reaction.",
+                "example": "Cassandra `UPDATE url_state SET state='queued' WHERE state='in_flight' AND in_flight_since < now()-5min`.",
+                "when_to_apply": "При обсуждении устойчивости системы и idempotency.",
+                "edge_cases": "Consecutive_errors > 5 → state `dead`, TTL 90 дней; 410 Gone → hard delete из index.",
+                "related": "Q13 fetcher params, Q19 url_state schema, Q25 distributed."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все HTTP-коды трактуем одинаково — retry бесконечно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бесконечный retry на 404 = бесконечная нагрузка на dead-URL; 429 без backoff = баннят.",
+                "source_of_confusion": "«Простая» политика, но она ломает всех соседей.",
+                "if_it_were_true": "Bandwidth тратился бы на гарантированно-fail URLs.",
+                "how_it_should_be": "Разделять permanent (4xx, NXDOMAIN) и transient (5xx, timeout, 429)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Frontier держится только in-memory — после restart все pending теряем намеренно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Потеря всего frontier на restart = полный re-crawl с нуля и часы downtime.",
+                "source_of_confusion": "Простота in-memory привлекает, но цена huge.",
+                "if_it_were_true": "Один deploy crawler-а терял бы прогресс месяца.",
+                "how_it_should_be": "Frontier durable (Cassandra/Kafka), workers stateless."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой trade-off centralized vs distributed frontier применяется в Google-scale crawl?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Distributed: shard по `hash(host) % N_shards` (~256), внутри shard — Mercator front+back, cross-shard outlinks через Kafka topic `outlinks-to-shard-N`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Линейный scale по N_shards; politeness локальна (один shard — свои hosts); failure-isolation между shards.",
+                "example": "Apache Nutch на Hadoop делает именно так; Google crawl партиционирован по хостам исторически.",
+                "when_to_apply": "На стадии «как масштабируем frontier за пределы одного DC».",
+                "edge_cases": "Hot shard (один host доминирует) — нужен sub-shard или ребалансировка.",
+                "related": "Q7 Mercator, Q19 partition by host, scalability-patterns-interview.md."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Centralized всегда лучше — single point координации проще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Centralized упирается в throughput одного frontier service и в single point of failure.",
+                "source_of_confusion": "Mercator оригинальный был centralized — отсюда соблазн.",
+                "if_it_were_true": "Google-scale обработка через один frontier невозможна.",
+                "how_it_should_be": "Centralized хорош на старте, distributed — для scale."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Distributed без cross-shard коммуникации — outlinks остаются в shard discovery.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Outlink с одного host часто ведёт на другой host — без cross-shard передачи URL потерян.",
+                "source_of_confusion": "Isolation между shards звучит как плюс.",
+                "if_it_were_true": "Граф web-а не разворачивался бы — изоляция убивает discovery.",
+                "how_it_should_be": "Kafka topic для outlinks-to-shard-N — обязательный mechanism."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Шардировать по hash(url), а не hash(host) — равномернее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hash(url) ломает per-host локальность: URLs одного host разлетаются по N шардам, politeness требует cross-shard coord.",
+                "source_of_confusion": "Uniform distribution — стандартная цель.",
+                "if_it_were_true": "Каждый fetcher должен был бы синхронизироваться по rate-limit с N-1 другими — нереально.",
+                "how_it_should_be": "Shard по hash(host) — один host принадлежит одному shard."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой главный мета-принцип web crawler design?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главное — search backend; crawler сам по себе вторичен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без хорошего crawl search backend получает stale/incomplete данные — garbage in, garbage out.",
+                "source_of_confusion": "Search видим пользователю, crawler — нет, отсюда переоценка.",
+                "if_it_were_true": "Google не вкладывался бы в Mercator/PageRank на стороне crawl.",
+                "how_it_should_be": "Crawler — фундамент качества search."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Storage — главное: где и как хранить 100 TB/месяц решает всё.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Storage важен, но без правильного frontier crawler не дойдёт до момента «есть что хранить».",
+                "source_of_confusion": "Storage tiering — наглядная часть дизайна, поэтому переоценивается.",
+                "if_it_were_true": "Все crawler-ы выбирали бы по storage stack, но Heritrix/Nutch различаются именно frontier.",
+                "how_it_should_be": "Frontier — центр, storage — производный."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Скорость fetcher-а — единственное, что считается; всё остальное оптимизация.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fetcher без politeness даст 0 RPS уже через час (banned), без priority — будет качать мусор.",
+                "source_of_confusion": "Throughput звучит как KPI №1.",
+                "if_it_were_true": "Crawler был бы заблокирован Cloudflare/WAF на массе сайтов.",
+                "how_it_should_be": "Throughput ограничен politeness + priority — frontier это контролирует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Frontier — сердце системы: правильный (politeness + priority + persistent) frontier превращает crawler в индустриальный сервис, простой FIFO — в DDoS-генератор.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все остальные компоненты (fetcher, parser, dedup, storage) — обвязка вокруг frontier; именно его дизайн отличает Heritrix от любительского scrapy.",
+                "example": "Heritrix, Nutch, Mercator — все три используют Mercator-style frontier как ключевое архитектурное решение.",
+                "when_to_apply": "В завершающих минутах собеседования — суммируй trade-offs и выдели frontier как центр.",
+                "edge_cases": "Distributed frontier добавляет cross-shard outlinks; политики (BFS+priority, adaptive re-crawl, content dedup) уточняют детали, но не меняют центр.",
+                "related": "Q6, Q7, Q25 — всё про frontier; Q22 traps — почему priority + dedup важны."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

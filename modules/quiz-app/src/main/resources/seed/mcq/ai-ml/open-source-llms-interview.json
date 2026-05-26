@@ -1,0 +1,2045 @@
+{
+  "topic_slug": "open-source-llms-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём принципиальная разница между open-source LLM, open-weight LLM и open-source-friendly моделью?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Open-source открывает веса, training-код, данные и recipe (OLMo, BLOOM); open-weight открывает только веса при закрытых данных/коде (Llama, Mistral, Qwen); open-source-friendly — closed-модель с liberal API без открытых весов",
+              "correct": true,
+              "sections": {
+                "explanation": "Открытость — это не бинарный признак, а спектр артефактов: веса, training-код, данные, recipe, intermediate checkpoints. Только полный набор удовлетворяет OSI OSAID; типичный «open-source» в индустрии на деле open-weight.",
+                "example": "OLMo от AI2 публикует Dolma dataset (3T токенов), WandB логи и checkpoints — это open-source. Llama 3 публикует только safetensors-веса и AUP — это open-weight.",
+                "when_to_apply": "Когда compliance/legal спрашивает «можем ли мы воспроизвести pretraining» — ответ зависит именно от этого разделения.",
+                "edge_cases": "Open-source-friendly — маркетинговый термин для closed-моделей с хорошим SDK; к OSI это отношения не имеет.",
+                "related": "Q2 почему Llama open-weight; Q20 OLMo fully open; Q27 лицензии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все три термина синонимы и означают «веса можно скачать с HuggingFace»",
+              "correct": false,
+              "sections": {
+                "what_actually": "Термины различаются именно по объёму открытых артефактов — open-source включает данные и recipe, open-weight нет, open-source-friendly вообще не открывает веса.",
+                "source_of_confusion": "Community часто называет любую модель с HF-репозиторием «open-source», смешивая категории.",
+                "if_it_were_true": "Тогда Llama 3 и OLMo были бы взаимозаменяемыми для академических исследований воспроизводимости — это не так.",
+                "how_it_should_be": "Open-weight ≠ open-source; OSI в 2024 опубликовал OSAID, разводящий эти понятия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Open-source требует MIT/Apache 2.0, а open-weight всегда коммерческая лицензия",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип лицензии — не главный признак: OLMo под Apache 2.0 является open-source именно благодаря открытым данным/коду, а Mistral 7B под той же Apache 2.0 — open-weight (нет открытых данных).",
+                "source_of_confusion": "Лицензия — заметный сигнал, но достаточно артефактов: веса + код + данные + recipe.",
+                "if_it_were_true": "Тогда Mistral 7B был бы автоматически open-source, но это open-weight.",
+                "how_it_should_be": "Открытость определяется набором артефактов, лицензия — отдельная ось."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Open-source запрещает коммерческое использование, open-weight разрешает",
+              "correct": false,
+              "sections": {
+                "what_actually": "Apache 2.0/MIT (классический open-source) явно разрешают коммерческое использование без оговорок; именно open-weight (Llama, Gemma) добавляют MAU-clauses и AUP.",
+                "source_of_confusion": "Путаница с CC-BY-NC, которая non-commercial — это отдельный класс, не «open-source».",
+                "if_it_were_true": "Тогда OLMo нельзя было бы embed в продукт, что противоречит Apache 2.0.",
+                "how_it_should_be": "Open-source часто более permissive именно для коммерции; open-weight добавляет clauses."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Llama 3 и Gemma корректно называть open-weight, а не open-source, с точки зрения OSI?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Потому что их веса распространяются только в формате GGUF, а не safetensors",
+              "correct": false,
+              "sections": {
+                "what_actually": "Формат хранения весов (GGUF/safetensors/pickle) не влияет на классификацию open-source vs open-weight — это инженерное решение, а не лицензионное.",
+                "source_of_confusion": "GGUF действительно community-формат для llama.cpp, но Meta и Google релизят safetensors.",
+                "if_it_were_true": "Тогда переупаковка в safetensors превращала бы Llama в open-source, что absurd.",
+                "how_it_should_be": "Классификация определяется составом открытых артефактов и use-restrictions в лицензии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Training-данные не опубликованы, training-код частичен, а лицензия содержит use-restrictions (Llama AUP, Gemma Terms) — OSAID такие модели не считает open-source",
+              "correct": true,
+              "sections": {
+                "explanation": "OSI в 2024 опубликовал Open Source AI Definition (OSAID): требуется доступ к данным, training-коду, recipe и отсутствие use-restrictions. Llama даёт только веса + paper + AUP; Gemma добавляет anti-distillation. Под OSAID они не подпадают, под него подпадает OLMo.",
+                "example": "Llama 3 paper описывает '15T tokens, web + code + math' без публикации датасета; Gemma Terms запрещают тренировать другие LLM на её output — оба ограничения нарушают OSAID.",
+                "when_to_apply": "Когда нужно различать в legal/compliance контексте, особенно при ответах регуляторам и при выборе моделей под Article 53 EU AI Act.",
+                "edge_cases": "В неформальной речи «open-source» допустимо, но в legal/procurement — нет.",
+                "related": "Q1 терминология; Q20 OLMo; Q27 лицензии."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Потому что Meta и Google требуют подписания NDA перед скачиванием весов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого NDA нет — нужно только согласиться с лицензией (Llama Community / Gemma Terms) и иногда подтвердить email/имя на HuggingFace.",
+                "source_of_confusion": "Llama 1 в 2023 требовал заявки через форму, что воспринималось как «не open» — но это уже Llama 2+ permissive.",
+                "if_it_were_true": "Тогда миллионы скачиваний Llama 3 на HF не были бы возможны.",
+                "how_it_should_be": "Дело в составе артефактов и use-restrictions, а не в gating механизме."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Потому что веса доступны только enterprise-клиентам через платный API",
+              "correct": false,
+              "sections": {
+                "what_actually": "Llama и Gemma веса абсолютно публичны и бесплатны для скачивания через HuggingFace под соответствующей лицензией.",
+                "source_of_confusion": "Llama API (Meta) и Gemini API (Google) — отдельные коммерческие продукты, не связанные с открытыми весами.",
+                "if_it_were_true": "Тогда не существовала бы экосистема fine-tunes на HuggingFace.",
+                "how_it_should_be": "Веса открыты, но статус open-source определяется составом артефактов и AUP."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое model card на HuggingFace и какие компоненты он обязательно включает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это бинарный manifest формата safetensors, описывающий tensor shapes и dtype",
+              "correct": false,
+              "sections": {
+                "what_actually": "Model card — текстовый README.md с метаданными о модели, а не бинарный manifest. Tensor shapes описываются в config.json и safetensors header, отдельно от model card.",
+                "source_of_confusion": "Существуют служебные файлы (model.safetensors.index.json), но это техническое описание весов, не model card.",
+                "if_it_were_true": "Тогда не было бы human-readable секций intended use, limitations, evaluation.",
+                "how_it_should_be": "Model card — это документация в README.md с YAML frontmatter."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это форма заявки на доступ к закрытым моделям; включает паспортные данные пользователя",
+              "correct": false,
+              "sections": {
+                "what_actually": "Заявки на gated models (Llama, Gemma) и model card — разные сущности. Model card — публичный README с описанием самой модели, не пользователя.",
+                "source_of_confusion": "Gated-репозитории требуют email + AUP-согласие, но это не model card.",
+                "if_it_were_true": "Тогда model card был бы недоступен публично, что противоречит цели документации.",
+                "how_it_should_be": "Model card — публичный документ, видный всем без gating."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Структурированный README.md с intended use, training data summary, evaluation results, limitations, license и citation; обязателен по индустриальному стандарту (Mitchell et al. 2018) и compliance-требованиям (EU AI Act, NIST AI RMF)",
+              "correct": true,
+              "sections": {
+                "explanation": "Model card введён paper «Model Cards for Model Reporting» (Mitchell et al., 2018) и стал стандартом. HuggingFace с 2024 в Spaces и enterprise tiers блокирует загрузку моделей без model card. Обязателен для license clarity, reproducibility, bias disclosure и compliance с EU AI Act / NIST AI RMF.",
+                "example": "YAML frontmatter с license, language, base_model + секции Intended use, Training data, Evaluation (MMLU 65.2, HumanEval 42.1), Limitations (hallucinations, English-primary).",
+                "when_to_apply": "Перед публикацией любой fine-tuned модели на HF; перед использованием чужой модели в production — читать model card первым делом.",
+                "edge_cases": "Минимальный model card может быть кратким, но обязательно включает license — без неё модель нельзя законно использовать в продакшене.",
+                "related": "Q29 security risks; AI governance/compliance."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это JSON-файл model_card.json с machine-readable метаданными; парсится HuggingFace API при upload",
+              "correct": false,
+              "sections": {
+                "what_actually": "Model card — это README.md (Markdown с YAML frontmatter), а не отдельный model_card.json. HuggingFace парсит YAML header (license, tags, language) и рендерит остальное как Markdown.",
+                "source_of_confusion": "config.json содержит технические параметры (hidden_size, num_layers) — но это другой файл.",
+                "if_it_were_true": "Тогда human-readable документация не отображалась бы на страницах HF.",
+                "how_it_should_be": "Markdown README с YAML frontmatter — индустриальный формат."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое архитектурное изменение Llama 3 (April 2024) выделило его относительно Llama 2 и сделало стандартом для open-weight семейств?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Переход на encoder-decoder архитектуру с cross-attention между блоками",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все Llama (1/2/3/4) — decoder-only Transformer; encoder-decoder используют T5/BART, но не Llama. Это фундаментальное архитектурное решение Meta с 2023.",
+                "source_of_confusion": "Encoder-decoder популярен для translation/summarization (T5), и иногда ошибочно ассоциируется с современными LLM.",
+                "if_it_were_true": "Тогда KV-cache механика и chat-template Llama были бы иными, и tooling (vLLM, llama.cpp) выглядел бы по-другому.",
+                "how_it_should_be": "Llama 3 — decoder-only с RoPE, RMSNorm, SwiGLU."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Замена RoPE на ALiBi positional encoding для всех размеров",
+              "correct": false,
+              "sections": {
+                "what_actually": "Llama 3 продолжает использовать RoPE (Rotary Positional Embedding), а не ALiBi. RoPE — стандарт всей семьи Llama.",
+                "source_of_confusion": "ALiBi применялся в BLOOM/MPT, но не в Llama.",
+                "if_it_were_true": "Тогда сменилась бы вся kernel-инфраструктура (FlashAttention RoPE-specific kernels не работали бы).",
+                "how_it_should_be": "RoPE — стандарт; в Llama 3.1 даже использовали modified RoPE для long-context."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Введение sparse MoE с 16 экспертами в каждом блоке начиная с Llama 3 8B",
+              "correct": false,
+              "sections": {
+                "what_actually": "Llama 3 (8B/70B/405B) — полностью dense. MoE появился только в Llama 4 (Scout/Maverick/Behemoth) в April 2025.",
+                "source_of_confusion": "MoE — модная архитектура (Mixtral, DeepSeek), её ошибочно приписывают Llama 3.",
+                "if_it_were_true": "Тогда VRAM-профиль Llama 3 был бы в разы больше, что противоречит наблюдаемому ~140GB для 70B в bf16.",
+                "how_it_should_be": "MoE — это Llama 4, а не Llama 3."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Распространение Grouped Query Attention (GQA) на все размеры (8B и 70B), 15T tokens pretraining и расширение tokenizer до 128K BPE",
+              "correct": true,
+              "sections": {
+                "explanation": "Llama 2 имел GQA только в 70B; Llama 3 (8B/70B) применил GQA на всех размерах, обучен на 15T tokens (vs 2T для Llama 2) и получил расширенный 128K BPE-токенизатор (vs 32K). Эти три изменения дали significant uplift по качеству и эффективности KV-cache.",
+                "example": "Llama 3 8B превзошёл Llama 2 13B на большинстве бенчмарков (MMLU 66 vs 55) и при этом имеет меньший KV-cache благодаря GQA с 8 KV-heads.",
+                "when_to_apply": "При планировании self-host: знать что Llama 3 8B имеет KV-cache в ~4× меньше Llama 2 13B → больше параллельных пользователей на той же VRAM.",
+                "edge_cases": "GQA — компромисс между MHA (всем нужны свои K/V) и MQA (все Q разделяют K/V); даёт почти качество MHA при KV-cache как MQA.",
+                "related": "Q5 Llama 3.3 vs 3.1; Q8 Mistral GQA."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевая особенность Llama 3.3 70B (Dec 2024) относительно Llama 3.1 405B?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Тот же 70B размер что Llama 3.1 70B, но через улучшенный post-training (RLHF/DPO recipe) качество reasoning/math приближается к Llama 3.1 405B — это сделало 3.3 70B практическим defacto-выбором",
+              "correct": true,
+              "sections": {
+                "explanation": "Llama 3.3 70B — instruct-only release с теми же 70B параметрами что 3.1 70B, но с лучшим post-training: на MMLU 86.0 vs 88.6 у 405B, HumanEval 88.4 vs 89.0, GPQA 50.5 vs 50.7. Inference 70B fits на 2× H100 в fp8, 405B требует 8× H100 — стоимость inference в ~5-6× ниже при близком качестве.",
+                "example": "Production-команда переключилась с Llama 3.1 405B на 3.3 70B и сэкономила ~80% inference compute при потере ~2 пунктов на MMLU.",
+                "when_to_apply": "Когда нужен open-weight 70B с reasoning ≈ 405B и приемлемой стоимостью inference; стандарт для self-host в 2025-2026.",
+                "edge_cases": "На последних 1-2% пользовательских задач 405B всё ещё превосходит — для frontier-критичных use cases.",
+                "related": "Q24 self-host economics; Q26 quantization."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это уменьшенная версия Llama 3.1 405B через прунинг до 70B параметров",
+              "correct": false,
+              "sections": {
+                "what_actually": "Llama 3.3 70B — не прунинг 405B, а отдельная модель с тем же количеством параметров что 3.1 70B, отличающаяся только post-training data и recipe.",
+                "source_of_confusion": "Существуют distill-варианты (DeepSeek-R1-Distill-Llama-70B) — но это другой процесс и другая модель.",
+                "if_it_were_true": "Тогда model card указывал бы 'pruned from Llama 3.1 405B', но это не так.",
+                "how_it_should_be": "Llama 3.3 70B — independent fine-tune от base 3.1 70B с улучшенным SFT/DPO."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Llama 3.3 70B — это multimodal версия Llama 3.1 70B с native vision-encoder",
+              "correct": false,
+              "sections": {
+                "what_actually": "Llama 3.3 70B — text-only release. Multimodal — это Llama 3.2 (11B/90B Vision).",
+                "source_of_confusion": "Версионная нумерация 3.x порождает путаницу; 3.2 — vision, 3.3 — text-only улучшенный post-training.",
+                "if_it_were_true": "Тогда был бы SigLIP/CLIP encoder в model card, но его там нет.",
+                "how_it_should_be": "Llama 3.3 70B = text-only instruct, лучше post-trained чем 3.1 70B."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это первая Llama-модель на sparse MoE архитектуре с 70B active params",
+              "correct": false,
+              "sections": {
+                "what_actually": "Llama 3.3 70B — dense, не MoE. MoE появился в Llama 4 (April 2025), а 3.3 (Dec 2024) — последняя dense из 3-й серии.",
+                "source_of_confusion": "Llama 4 Scout/Maverick — 17B active MoE, путаница из-за хронологии релизов.",
+                "if_it_were_true": "Тогда VRAM был бы значительно больше 140GB и архитектура bf16 inference отличалась бы.",
+                "how_it_should_be": "Llama 3.3 70B dense; MoE — это уже 4.x."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что изменилось в Llama 4 (Scout/Maverick/Behemoth, April 2025) относительно Llama 3?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Llama 4 полностью отказался от Transformer в пользу state-space модели на основе Mamba",
+              "correct": false,
+              "sections": {
+                "what_actually": "Llama 4 — Transformer с sparse MoE, не state-space модель. Mamba/SSM применяются в нишевых релизах (Codestral Mamba), но не в Llama.",
+                "source_of_confusion": "Long-context (10M у Scout) ассоциируется с linear attention/SSM, но достигнут через interleaved RoPE и pretraining на long docs.",
+                "if_it_were_true": "Тогда был бы Mamba-блок в architecture-section, но Llama 4 paper описывает Transformer MoE.",
+                "how_it_should_be": "Llama 4 — MoE Transformer с native multimodality."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Первое поколение Meta на sparse MoE (Scout 17B active × 16 experts / 109B total, Maverick 17B × 128/400B, Behemoth ~288B × 16/~2T) с native multimodality (text + image, early fusion) и заявленным 10M+ context у Scout",
+              "correct": true,
+              "sections": {
+                "explanation": "Llama 4 — первая Llama-семья на MoE: dense закончился. Routing на token-level через learned gate. Все модели native multimodal (text+image, early fusion). Scout — 17B active/109B total с заявленным 10M контекстом (через interleaved RoPE + специальное pre-training на long docs), помещается на одиночный H100. Лицензия — Llama 4 Community с тем же 700M MAU clause плюс EU-restrictions из-за Digital Markets Act.",
+                "example": "Scout (109B total / 17B active) на 1× H100 80GB через fp8 — compute как 17B dense, но качество выше за счёт sparsity.",
+                "when_to_apply": "Когда нужна MoE-экономия compute и native multimodality в open-weight; помнить что VRAM нужен под total params.",
+                "edge_cases": "10M context — заявленное, но quality degrades заметно за пределами 1M; Maverick после релиза попал в скандал с benchmark gaming (April 2025) — community потребовала независимой верификации.",
+                "related": "Q9 Mixtral MoE; Q22 MoE economics."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Llama 4 — это просто Llama 3.3 70B с расширенным до 1M context",
+              "correct": false,
+              "sections": {
+                "what_actually": "Llama 4 — это новая семья на MoE архитектуре с тремя вариантами (Scout/Maverick/Behemoth), а не один dense 70B с расширенным контекстом.",
+                "source_of_confusion": "В community часто путают версионную нумерацию и считают что .x это просто context extension.",
+                "if_it_were_true": "Тогда не было бы Maverick 400B total / 17B active — таких MoE параметров у dense 70B не бывает.",
+                "how_it_should_be": "Llama 4 — новая MoE-семья, не extension от 3.3."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Llama 4 — это closed-source модель, доступная только через Meta AI API",
+              "correct": false,
+              "sections": {
+                "what_actually": "Llama 4 Scout и Maverick released как open-weight под Llama 4 Community License в April 2025; Behemoth ещё в тренировке.",
+                "source_of_confusion": "Meta AI имеет коммерческий API, но open-weight модели публикуются на HuggingFace параллельно.",
+                "if_it_were_true": "Тогда не было бы скачиваний Llama 4 weights и vLLM/llama.cpp поддержки.",
+                "how_it_should_be": "Scout/Maverick доступны как open-weight; Behemoth ожидается в 2026."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что означает clause «700M monthly active users» в Llama Community License?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это лимит на количество API-запросов в месяц, после которого пользователь обязан платить Meta лицензионные отчисления",
+              "correct": false,
+              "sections": {
+                "what_actually": "700M — это порог MAU вашего продукта/приложения, а не лимит API-запросов. Считаются пользователи end-product, а не запросы к модели.",
+                "source_of_confusion": "Звучит как «pay-per-use threshold», но это совсем другая конструкция: license restriction на BigTech-конкурентов.",
+                "if_it_were_true": "Тогда любая компания при росте трафика должна была бы платить Meta — это противоречит permissive нативе лицензии.",
+                "how_it_should_be": "Это threshold по размеру компании, а не tarif на запросы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Веса Llama нельзя использовать для тренировки моделей, у которых будет более 700M пользователей",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лицензия ограничивает не пользовательскую базу обученной модели, а MAU продукта/приложения, использующего Llama (или derivative) на дату релиза модели.",
+                "source_of_confusion": "Многие лицензии (Gemma Terms) запрещают тренировать другие LLM на output — но это другая клауза (anti-distillation), не MAU.",
+                "if_it_were_true": "Тогда невозможно было бы отслеживать MAU будущих fine-tunes — это нереализуемая регуляция.",
+                "how_it_should_be": "Threshold — на MAU использующего продукта/компании, не на end-modal MAU."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Если компания (включая аффилиатов) имеет >700M MAU на дату релиза модели, для коммерческого использования Llama требуется отдельная лицензия от Meta — это «poison pill» против прямых BigTech-конкурентов (Apple, Google, Microsoft, Amazon, ByteDance, Tencent)",
+              "correct": true,
+              "sections": {
+                "explanation": "Llama Community License разрешает коммерческое использование по умолчанию, но с поправкой: если product/affiliate имеет >700M MAU (для Llama 3 — на дату релиза модели), нужна отдельная лицензия от Meta. Для 99.99% компаний clause не релевантен; цель — не дать BigTech-конкурентам бесплатно строить AI-продукты на работе Meta.",
+                "example": "Стартап с 100k MAU — clause не задевает; Apple Intelligence (>1B MAU) формально должен был бы запросить отдельную лицензию.",
+                "when_to_apply": "При legal-review перед production rollout проверить MAU; для b2b с разовыми клиентами — обычно безопасно.",
+                "edge_cases": "AUP (Acceptable Use Policy) запрещает military, CSAM, illegal surveillance — это отдельный набор restrictions поверх MAU clause; именно из-за use restrictions Llama не open-source по OSI.",
+                "related": "Q13 Qwen 100M MAU; Q27 лицензии."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "700M — это минимальное количество tokens, требуемое для обучения derivative-моделей",
+              "correct": false,
+              "sections": {
+                "what_actually": "700M MAU — про пользователей продукта, а не tokens. Llicense вообще не регулирует количество данных для derivative.",
+                "source_of_confusion": "Совпадение чисел (Llama 3 тренировался на 15T токенов, derivative часто на ~миллионах samples) порождает путаницу.",
+                "if_it_were_true": "Тогда любой fine-tune на >700M токенов попадал бы под clause, что блокировало бы adoption.",
+                "how_it_should_be": "MAU clause — про пользователей продукта, не про training tokens."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Mistral 7B (Sept 2023) принципиально отличался от Llama 2 7B на момент выхода?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Mistral 7B был первым LLM с native MoE-архитектурой из 8 экспертов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mistral 7B — dense decoder-only Transformer. MoE появился у Mistral позже, в Mixtral 8x7B (Dec 2023).",
+                "source_of_confusion": "Mistral AI ассоциируется с MoE через Mixtral, и иногда задним числом приписывают MoE и 7B-версии.",
+                "if_it_were_true": "Тогда VRAM-профиль и inference cost Mistral 7B были бы другими.",
+                "how_it_should_be": "Mistral 7B — dense, Mixtral — MoE; это разные модели."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Mistral 7B использовался только для research под Mistral Research License",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mistral 7B (v0.1/v0.2/v0.3) выпущен под Apache 2.0 — полностью permissive commercial-OK. Mistral Research License появилась позже только для Large 2 и Codestral.",
+                "source_of_confusion": "Mistral AI разделил линейку на open (Apache) и commercial-only (research license) с 2024.",
+                "if_it_were_true": "Тогда Mistral 7B не стал бы baseline для community fine-tunes — а он стал именно благодаря Apache 2.0.",
+                "how_it_should_be": "Mistral 7B = Apache 2.0; Research License — для frontier (Large, Pixtral Large)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Mistral 7B был лишь повторением Llama 2 7B с минимальными изменениями",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mistral 7B принципиально отличался: Sliding Window Attention (SWA), GQA на всех размерах, Apache 2.0 — и обогнал Llama 2 13B на большинстве benchmarks.",
+                "source_of_confusion": "Архитектурно decoder-only Transformer похож, но детали (SWA, GQA, лицензия) — критически отличающиеся.",
+                "if_it_were_true": "Тогда Mistral не вызвал бы такой ажиотаж и не стал бы стандартом для fine-tunes.",
+                "how_it_should_be": "Это разные модели с разной лицензией и архитектурными деталями."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sliding Window Attention (4K window) + GQA на всех размерах + Apache 2.0 (vs Llama 2 Community с 700M clause); обогнал Llama 2 13B на большинстве benchmarks",
+              "correct": true,
+              "sections": {
+                "explanation": "Mistral 7B принёс три ключевых отличия: (1) SWA ограничивает attention локальным окном (4096 токенов), снижая память/compute до O(n×w) вместо O(n²); (2) GQA (Grouped Query Attention) — Llama 2 имел только в 70B, Mistral сделал во всех размерах; (3) Apache 2.0 — без оговорок, против Llama 2 Community License с 700M clause. Результат — Mistral 7B обогнал Llama 2 13B на MMLU/HumanEval, будучи в 2× меньше.",
+                "example": "На MMLU Mistral 7B ≈ 60, Llama 2 13B ≈ 55 — при том что Mistral в 2× меньше параметров.",
+                "when_to_apply": "Apache 2.0 у Mistral 7B стал критичным для community adoption: можно использовать commercially без оговорок, fork, продавать, embed.",
+                "edge_cases": "SWA — приближение, теряет глобальный контекст за пределами окна; в long-context задачах хуже full attention.",
+                "related": "Q9 Mixtral MoE; Q4 Llama GQA."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Mixtral 8x7B имеет 47B total параметров (а не 56B = 8×7) и 12.9B active?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Attention-слой общий для всех экспертов (не реплицируется на 8), а реплицируются только FFN (≈80% параметров блока) — отсюда 47B total. На каждый токен router выбирает top-2 из 8 экспертов, поэтому compute ≈ 12.9B dense эквивалент (attention + 2/8 FFN)",
+              "correct": true,
+              "sections": {
+                "explanation": "В Mixtral 8x7B каждый Transformer-блок содержит 8 параллельных FFN-экспертов, но attention-слой общий (shared). Поскольку FFN составляет ~80% параметров блока, реплицируется только эта часть: 8×FFN + 1×attention + embeddings ≈ 47B (а не 56B). Активные параметры на токен: полный attention + top-2 FFN из 8 (2/8 = 25% FFN) ≈ 12.9B compute эквивалент.",
+                "example": "Mixtral 8x7B по качеству соревнуется с Llama 2 70B, но inference в 4-6× дешевле (compute как 13B dense). VRAM нужен под все 47B (~90GB в fp16, ~24GB в 4-bit GGUF).",
+                "when_to_apply": "Когда оценивается стоимость inference MoE: считать active params (compute), но VRAM-планировать под total.",
+                "edge_cases": "Router тоже занимает память и compute (gate network), но это ~1% оверхеда; embeddings shared, не реплицируются.",
+                "related": "Q22 MoE economics; Q23 routing overhead."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Mistral квантизовал embeddings до 4-bit, что снижает суммарные параметры с 56B до 47B",
+              "correct": false,
+              "sections": {
+                "what_actually": "47B — это размер в fp16/bf16, без квантизации. Квантизация — отдельный шаг при выгрузке (GGUF/AWQ/GPTQ), которым занимается community.",
+                "source_of_confusion": "Квантизация уменьшает размер на диске (например, в 4-bit ~24GB), но не количество параметров.",
+                "if_it_were_true": "Тогда нативный fp16 Mixtral был бы ~90GB, а не ~94GB как наблюдаемо.",
+                "how_it_should_be": "47B — fundamental count, не результат квантизации; квантизация уменьшает байты на параметр, не число параметров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Mixtral 8x7B имеет 56B параметров, как 8×7B; «47B» — это маркетинговая ошибка Mistral AI",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не маркетинг: реальный фактический параметр-count Mixtral 8x7B ~47B, и это подтверждается параметрами в safetensors и paper.",
+                "source_of_confusion": "Название '8x7B' звучит как 8×7=56, но это упрощённое название — не математический счёт.",
+                "if_it_were_true": "Тогда VRAM Mixtral в fp16 был бы 112GB, а реальный профиль ~94GB.",
+                "how_it_should_be": "Attention shared, поэтому 47B; counting через safetensors даёт именно эту цифру."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "8 экспертов работают параллельно для каждого токена, поэтому active params = 56B",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mixtral 8x7B использует top-2 routing: на каждый токен активны только 2 из 8 экспертов, не все 8. Active params = ~12.9B, не 56B.",
+                "source_of_confusion": "Если бы все эксперты активировались — это был бы dense ensemble, не MoE.",
+                "if_it_were_true": "Тогда inference cost был бы как у 56B dense, и MoE-преимущество исчезло бы.",
+                "how_it_should_be": "Top-K routing (K=2) — суть MoE: дешёвый compute при большой capacity."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Mistral разделил свою линейку моделей по лицензиям в 2024-2025?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все модели Mistral под единой Mistral Research License — коммерческое использование требует enterprise-договора",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mistral разделил линейку: small/medium (7B, Mixtral 8x7B/8x22B, NeMo 12B, Small 3, Pixtral 12B) — Apache 2.0; flagship (Codestral, Large 2, Pixtral Large) — Research License или MNPL.",
+                "source_of_confusion": "С 2024 действительно появились ограничительные лицензии для frontier — но не на всю линейку.",
+                "if_it_were_true": "Тогда Mistral 7B не было бы в open-source ecosystem, что противоречит реальности.",
+                "how_it_should_be": "Open для small/medium → community adoption; commercial для frontier → монетизация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Small/medium (Mistral 7B всех версий, Mixtral 8x7B/8x22B, NeMo 12B, Small 3, Pixtral 12B) — Apache 2.0; frontier (Codestral под MNPL, Mistral Large 2 и Pixtral Large под Mistral Research License) — non-commercial/research only",
+              "correct": true,
+              "sections": {
+                "explanation": "Бизнес-логика Mistral: open small/medium → community adoption и стандарт baseline; frontier (Large) под research license → монетизация через API/enterprise. Mistral Research License разрешает research, internal evaluation, academic publication, но запрещает коммерческое использование и предоставление как сервис.",
+                "example": "Pixtral 12B (Apache 2.0) можно embed в SaaS-продукт; Pixtral Large (Research License) — только для R&D / academic, для production нужна enterprise-лицензия от Mistral.",
+                "when_to_apply": "При выборе vision/code модели Mistral: проверять лицензию каждой модели отдельно — общего правила нет.",
+                "edge_cases": "Был случай Mistral Large 2 license rollback (часть community ожидала Apache, получили Research License — adoption frontier-моделей просел); Mistral 7B v0.3 — Apache 2.0.",
+                "related": "Q27 лицензии; Q33 Codestral."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "С 2024 Mistral перешёл на closed-source: веса доступны только через API",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mistral сохраняет open-weight стратегию для small/medium; closed только commercial frontier через API.",
+                "source_of_confusion": "Стратегия 'open core + commercial frontier' даёт впечатление частичного перехода на closed.",
+                "if_it_were_true": "Тогда Mistral 7B и Mixtral исчезли бы с HuggingFace, что не так.",
+                "how_it_should_be": "Open для community-tier моделей сохраняется; frontier — research license или enterprise."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все Mistral модели под MIT License со снятыми use-restrictions",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mistral не использует MIT. Open модели — Apache 2.0 (с patent grant), а не MIT; frontier — собственные restrictive лицензии.",
+                "source_of_confusion": "Apache 2.0 и MIT часто упоминаются вместе как permissive, но различаются в патентных правах.",
+                "if_it_were_true": "Тогда у Mistral не было бы commercial business model — license-restrictions именно так монетизируются.",
+                "how_it_should_be": "Apache 2.0 для open моделей; research/MNPL для closed-tier."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова структура размерного ряда Qwen 2.5 (Sept 2024) и в чём её особенность?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Qwen 2.5 представлен только одной flagship-моделью 72B под Apache 2.0",
+              "correct": false,
+              "sections": {
+                "what_actually": "Qwen 2.5 — самая полная по размерному ряду семья: 0.5B, 1.5B, 3B, 7B, 14B, 32B, 72B + специализированные (Math, Coder, VL, QwQ-32B).",
+                "source_of_confusion": "Llama чаще представлен 2-3 размерами; ошибочно проецируют тот же подход на Qwen.",
+                "if_it_were_true": "Тогда Qwen 2.5 не покрывал бы edge-устройства (0.5B/1.5B) и mainstream (7B/14B).",
+                "how_it_should_be": "Qwen 2.5 — полный размерный ряд от 0.5B до 72B."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Qwen 2.5 — это семейство только code-моделей (Qwen 2.5 Coder)",
+              "correct": false,
+              "sections": {
+                "what_actually": "Qwen 2.5 Coder — лишь один из специализированных вариантов; базовая семья — general-purpose с 7 размерами + Math/VL/QwQ.",
+                "source_of_confusion": "Qwen 2.5 Coder популярен как конкурент DeepSeek-Coder, и иногда называется без 'Coder'.",
+                "if_it_were_true": "Тогда не было бы 'Qwen 2.5 7B general' базы.",
+                "how_it_should_be": "Базовая семья Qwen 2.5 — general; Coder/Math/VL — производные."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Полный размерный ряд 0.5B/1.5B/3B/7B/14B/32B/72B с 128K context (YARN scaling); ≤32B под Apache 2.0, 72B под Qwen License (>100M MAU clause); специализации: Math, Coder, VL, QwQ-32B reasoning",
+              "correct": true,
+              "sections": {
+                "explanation": "Qwen 2.5 (Sept 2024) — наиболее полная по размерному ряду open-weight семья: 0.5B/1.5B/3B/7B/14B/32B/72B + 128K context через YARN scaling. ≤32B (кроме 3B) — Apache 2.0; 72B и 3B — Qwen License с MAU-clause. Специализации: Qwen 2.5 Math (1.5B/7B/72B), Qwen 2.5 Coder (0.5B→32B), Qwen 2.5 VL (vision), QwQ-32B (reasoning via RL).",
+                "example": "Можно выбрать 0.5B для mobile edge, 7B для chat-bot, 32B для quality production, 72B для frontier; и Coder/Math для специализированных задач.",
+                "when_to_apply": "Когда нужен open-weight под точный размер VRAM/budget — Qwen покрывает почти любую точку.",
+                "edge_cases": "Qwen хорошо работает с китайским/JP/KR; слабее на восточноевропейских языках; Qwen 3 (2025) принёс native reasoning modes (thinking/non-thinking switchable).",
+                "related": "Q12 QwQ-32B; Q13 Qwen 72B license."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Qwen 2.5 — это только closed модель от Alibaba Cloud, веса не публикуются",
+              "correct": false,
+              "sections": {
+                "what_actually": "Qwen 2.5 — open-weight: все размеры (кроме Qwen 2.5-Max через API) опубликованы на HuggingFace с открытыми весами.",
+                "source_of_confusion": "Qwen 2.5-Max (Jan 2025) действительно frontier MoE через API, но это исключение; основная семья open.",
+                "if_it_were_true": "Тогда не было бы тысяч fine-tunes Qwen 2.5 в community.",
+                "how_it_should_be": "Open-weight (Apache 2.0 / Qwen License) для большинства размеров; Max — API-only."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое QwQ-32B и как он связан с reasoning-парадигмой?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "QwQ-32B — это closed-source reasoning модель Alibaba, доступная только через API",
+              "correct": false,
+              "sections": {
+                "what_actually": "QwQ-32B — open-weight под Apache 2.0, опубликован на HuggingFace.",
+                "source_of_confusion": "Qwen 2.5-Max (Jan 2025) frontier closed; QwQ — другая модель, open.",
+                "if_it_were_true": "Тогда community не мог бы reproduce results и compare с o1-preview/DeepSeek-R1.",
+                "how_it_should_be": "QwQ-32B = Apache 2.0 open-weight; Max = closed API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "QwQ-32B — это quantized version Qwen 72B в 4-bit",
+              "correct": false,
+              "sections": {
+                "what_actually": "QwQ-32B — отдельная reasoning модель на base Qwen 2.5-32B, дообученная через RL; не quantization Qwen 72B.",
+                "source_of_confusion": "Существуют GGUF/AWQ-варианты Qwen 72B, но они не называются QwQ.",
+                "if_it_were_true": "Тогда не было бы emergent CoT и архитектурного <thinking> блока.",
+                "how_it_should_be": "QwQ — RL-trained reasoning derivative, не quantized variant."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "QwQ-32B — это первая MoE-модель Qwen с 32 экспертами и 8B active params",
+              "correct": false,
+              "sections": {
+                "what_actually": "QwQ-32B — dense 32B reasoning model, не MoE. MoE-варианты появятся в Qwen 3 family.",
+                "source_of_confusion": "Цифра 32 в названии иногда интерпретируется как 32 эксперта, но это total params dense модели.",
+                "if_it_were_true": "Тогда VRAM-профиль и compute-стоимость были бы другими.",
+                "how_it_should_be": "QwQ-32B — dense, RL-trained reasoning."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reasoning model (Qwen with Questions, нояб 2024) на base Qwen 2.5-32B, дообученная через RL с reward за корректные CoT; генерирует длинные <thinking> блоки (8-16K токенов), MATH 90.6%, GPQA Diamond 65.2% (≈ o1-mini), под Apache 2.0 — первый public open reasoning model уровня o1, помещается на 1× H100 80GB",
+              "correct": true,
+              "sections": {
+                "explanation": "QwQ-32B (Qwen with Questions, нояб 2024) — reasoning model от Alibaba, 32B dense, base Qwen 2.5-32B, RL-trained с reward за корректные CoT. Генерирует длинные <thinking> блоки перед финальным ответом. MATH 90.6%, GPQA Diamond 65.2% (близко к o1-mini). Apache 2.0 (в отличие от Qwen 72B). Inference дорогой: 5-10× больше токенов из-за длинных CoT.",
+                "example": "Использовать QwQ-32B для math-heavy агента: помещается на 1× H100 80GB в fp8, даёт reasoning quality o1-mini за open-weight стек.",
+                "when_to_apply": "Когда нужна reasoning-модель умещающаяся на единственный H100; альтернатива DeepSeek-R1 (671B MoE — требует 8× H100).",
+                "edge_cases": "QwQ-32B-Preview — первый public open reasoning. После него вышел DeepSeek-R1 (обошёл на большинстве задач), но QwQ актуален при ограниченном VRAM.",
+                "related": "Q15 DeepSeek-R1; reasoning-models-interview.md."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём лицензионная особенность Qwen 72B и чем она отличается от Apache 2.0 в меньших размерах семьи?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Qwen 72B (и Qwen 2.5 72B) — под Qwen License (раньше Tongyi Qianwen License): commercial OK, но при >100M MAU требуется отдельная лицензия от Alibaba; меньшие размеры (0.5B-32B, кроме 3B) — Apache 2.0",
+              "correct": true,
+              "sections": {
+                "explanation": "Qwen 72B (и 2.5 72B) выпущен не под Apache 2.0, а под Qwen License. Ключевое: commercial OK, но если >100M MAU — нужна отдельная лицензия от Alibaba. Меньшие варианты (0.5B/1.5B/7B/14B/32B) — под Apache 2.0. Идея аналогична Llama: монетизация через clauses, защищающие от прямых конкурентов масштаба BigTech (порог 100M ниже Llama 700M).",
+                "example": "Стартап с 1M MAU и Qwen 72B — clause не задевает; TikTok/Douyin с >100M MAU формально нуждается в дополнительной лицензии.",
+                "when_to_apply": "Перед использованием Qwen 72B в production B2C-продукте — проверить MAU и AUP; для ≤32B можно использовать без MAU-проверки.",
+                "edge_cases": "Qwen License содержит anti-distillation clause (запрещено использовать output Qwen для тренировки других LLM, формально); AUP запрещает military, illegal, etc.",
+                "related": "Q7 Llama 700M; Q11 Qwen sizes; Q27 лицензии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Qwen 72B полностью под Apache 2.0, как и все остальные размеры",
+              "correct": false,
+              "sections": {
+                "what_actually": "Qwen 72B и 2.5 72B имеют отдельную Qwen License с MAU-clause; не Apache 2.0.",
+                "source_of_confusion": "Меньшие размеры (≤32B) действительно под Apache 2.0 — отсюда ошибочное обобщение.",
+                "if_it_were_true": "Тогда Qwen 72B был бы фактически свободнее Llama, но это не так — он имеет 100M MAU restriction.",
+                "how_it_should_be": "≤32B = Apache 2.0; 72B = Qwen License с clauses."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Qwen 72B вообще non-commercial (только research)",
+              "correct": false,
+              "sections": {
+                "what_actually": "Qwen License разрешает коммерческое использование при <100M MAU — это не Research License как у Mistral Large 2.",
+                "source_of_confusion": "Слово 'license' и наличие clauses ассоциируется с non-commercial — но конкретно у Qwen 72B commercial OK при ограничениях.",
+                "if_it_were_true": "Тогда не было бы commercial fine-tunes Qwen 72B (а они существуют).",
+                "how_it_should_be": "Commercial OK при <100M MAU; для BigTech-масштаба — нужна отдельная лицензия."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Qwen 72B — closed-source, веса не публикуются вообще",
+              "correct": false,
+              "sections": {
+                "what_actually": "Qwen 72B — open-weight на HuggingFace, под Qwen License (commercial OK с MAU-clause).",
+                "source_of_confusion": "Qwen 2.5-Max — closed API-only, но это другая модель.",
+                "if_it_were_true": "Тогда не было бы Qwen 72B в vLLM/llama.cpp поддержке.",
+                "how_it_should_be": "Open-weight, custom лицензия с MAU-clauses."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое DeepSeek-V3 (Dec 2024) и почему его training cost $5.5M шокировал индустрию?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DeepSeek-V3 — это closed-source модель Alibaba, обученная за $5.5M на закрытых GPU-фермах",
+              "correct": false,
+              "sections": {
+                "what_actually": "DeepSeek-V3 — open-weight под DeepSeek License (MIT-like) от компании DeepSeek (не Alibaba; Alibaba делает Qwen).",
+                "source_of_confusion": "Обе китайские лаборатории, часто путают; DeepSeek — отдельная команда (бывший High-Flyer hedge fund).",
+                "if_it_were_true": "Тогда не было бы paper с детальным описанием training pipeline и публикации весов.",
+                "how_it_should_be": "DeepSeek-V3 = open-weight, MIT-like license."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "671B MoE (37B active) под DeepSeek License (MIT-like), обучен за заявленные $5.576M (2.788M H800-часов × $2/час) на 14.8T токенов; шок индустрии — Llama 3.1 405B стоил ~$60M, GPT-4 оценочно $100M+. Достижение через MLA, DeepSeekMoE (256 routed + 1 shared, top-8), auxiliary-loss-free balancing, FP8 training и Multi-Token Prediction",
+              "correct": true,
+              "sections": {
+                "explanation": "DeepSeek-V3 (Dec 2024) — 671B MoE / 37B active под DeepSeek License (MIT-like). Paper заявляет training cost $5.576M: 14.8T tokens pretraining × 2.788M H800-часов × $2/час. Ключевые инновации: MLA (Multi-head Latent Attention) с низкоранговой компрессией KV-cache, DeepSeekMoE (256 routed experts + 1 shared, top-8 routing), auxiliary-loss-free load balancing, FP8 training на большинстве операций, Multi-Token Prediction (MTP) как auxiliary objective, highly engineered pipeline для H800 (компенсация за слабый NVLink из-за US export controls).",
+                "example": "DeepSeek-V3 соревнуется с GPT-4o на MMLU/HumanEval при cost в ~10× меньше Llama 3.1 405B ($5.5M vs $60M).",
+                "when_to_apply": "Когда нужна frontier open-weight модель уровня GPT-4o с MIT-like лицензией; помнить про политику anti-distillation в TOS DeepSeek API.",
+                "edge_cases": "$5.5M — только final training run, без research, неудачных экспериментов, salaries, infra; реальный sunk cost команды кратно выше. H800 — китайская версия H100 с урезанным NVLink из-за export controls.",
+                "related": "Q15 DeepSeek-R1; Q22 MoE economics."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DeepSeek-V3 — это dense 405B модель, fine-tuned от Llama 3.1 за $5.5M",
+              "correct": false,
+              "sections": {
+                "what_actually": "DeepSeek-V3 — 671B MoE / 37B active, не fine-tune Llama; собственная архитектура DeepSeek с MLA и DeepSeekMoE.",
+                "source_of_confusion": "Существуют DeepSeek-R1-Distill-Llama-70B — это distill на Llama, но V3 базируется на собственной архитектуре.",
+                "if_it_were_true": "Тогда лицензия V3 наследовалась бы от Llama (Community License с 700M MAU), но V3 = MIT-like.",
+                "how_it_should_be": "V3 — оригинальная DeepSeek архитектура (MoE), не Llama fine-tune."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DeepSeek-V3 — quantized version GPT-4, обученная distillation за $5.5M",
+              "correct": false,
+              "sections": {
+                "what_actually": "DeepSeek-V3 — pretrained from scratch на 14.8T tokens, не distillation от GPT-4. OpenAI обвинила DeepSeek в подозрениях на distillation (TOS-нарушения), но это спорная позиция и не подтверждено публично.",
+                "source_of_confusion": "OpenAI публично выразила обеспокоенность distillation, но V3 paper описывает pretraining from scratch.",
+                "if_it_were_true": "Тогда не было бы 14.8T tokens corpus и full pretraining pipeline.",
+                "how_it_should_be": "V3 — original pretraining на собственном корпусе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем DeepSeek-R1 принципиально отличается от DeepSeek-V3?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DeepSeek-R1 — это уменьшенная distill-версия V3 на 70B параметров",
+              "correct": false,
+              "sections": {
+                "what_actually": "DeepSeek-R1 — это reasoning version на той же базе V3 (671B MoE / 37B active), дообученная через GRPO; не distill в 70B. Distill-варианты называются DeepSeek-R1-Distill-* и базируются на Llama/Qwen.",
+                "source_of_confusion": "Существуют DeepSeek-R1-Distill-Qwen-70B и т.п.; R1-original не имеет уменьшенного размера.",
+                "if_it_were_true": "Тогда R1 fit на одиночный H100, но реально требует 8× H100 как V3.",
+                "how_it_should_be": "R1 = V3-base + GRPO reasoning fine-tune, тот же 671B MoE."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DeepSeek-R1 — multimodal version V3 с native vision encoder",
+              "correct": false,
+              "sections": {
+                "what_actually": "R1 — reasoning-фокус, text-only. Multimodal DeepSeek — отдельные проекты (DeepSeek-VL).",
+                "source_of_confusion": "Постфикс 'R1' созвучен Qwen-VL/Pixtral-VL, но это другая ось.",
+                "if_it_were_true": "Тогда в model card был бы SigLIP/CLIP encoder, но R1 — pure text.",
+                "how_it_should_be": "R1 = reasoning text-only; multimodal — другие модели семьи."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Reasoning version на той же базе V3 (671B MoE / 37B active), дообученная через GRPO (Group Relative Policy Optimization); длинный <think> CoT по умолчанию, лицензия чистая MIT (V3 — DeepSeek License MIT-like); GPQA Diamond 71.5% vs 59.1%, AIME 2024 79.8% vs 39.2%. Первая open-weight reasoning model уровня o1-preview",
+              "correct": true,
+              "sections": {
+                "explanation": "DeepSeek-R1 (Jan 2025) — reasoning version на той же базе V3, дообученная через GRPO. Pipeline: V3-Base → SFT/DPO → V3 (chat); параллельно V3-Base → RL via GRPO → R1-Zero → SFT → RL → R1. Отличия от V3: reasoning-фокус, длинный <think> по умолчанию (vs короткий CoT по запросу у V3), MIT лицензия (V3 — DeepSeek License), GPQA Diamond 71.5% vs 59.1%, AIME 2024 79.8% vs 39.2%. R1-Zero — экспериментальная версия только через RL без SFT.",
+                "example": "Для math/code reasoning использовать R1 (даёт длинные CoT), для general chat — V3 (дешевле, прямые ответы).",
+                "when_to_apply": "Когда нужна reasoning-модель уровня o1 в open-weight; помнить про стоимость thinking-токенов в API.",
+                "edge_cases": "Главный вклад в open-source — первая reproducible o1-уровня reasoning под MIT; после R1 все labs начали выкатывать open reasoning варианты.",
+                "related": "Q14 DeepSeek-V3; Q16 R1-Distill; reasoning-models-interview.md."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DeepSeek-R1 — это просто V3 с другим chat-template, никаких архитектурных или training-отличий",
+              "correct": false,
+              "sections": {
+                "what_actually": "R1 — отдельная fine-tuned модель через RL/GRPO с разными reward-сигналами; не просто template.",
+                "source_of_confusion": "Иногда reasoning-модели рассматривают как 'prompt-сигнал', но R1 явно дообучен на reasoning.",
+                "if_it_were_true": "Тогда GPQA/AIME числа не отличались бы значительно (а они отличаются вдвое).",
+                "how_it_should_be": "R1 = trained model, не template-shim."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое DeepSeek-R1-Distill и почему дистиллированный 70B-вариант доступнее оригинала R1?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это квантизация R1 в 4-bit для запуска на consumer GPU",
+              "correct": false,
+              "sections": {
+                "what_actually": "Distill — это knowledge distillation: SFT на small base модели (Llama/Qwen) на ~800k длинных CoT-ответов от R1; не quantization.",
+                "source_of_confusion": "Распространены 4-bit GGUF-квантизации R1, но они отдельны от Distill.",
+                "if_it_were_true": "Тогда Distill сохранял бы 671B параметров, но он 1.5B/7B/8B/14B/32B/70B dense.",
+                "how_it_should_be": "Distill — SFT-fine-tune на small base моделях с R1-CoT данными."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это full retraining R1 на меньшем corpus",
+              "correct": false,
+              "sections": {
+                "what_actually": "Distill — это SFT на small base (Llama 3.1 8B, Qwen 2.5 14B и т.д.) на R1-генерированных reasoning traces, не retraining from scratch.",
+                "source_of_confusion": "Retraining vs distillation — разные процессы; distillation в 100-1000× дешевле.",
+                "if_it_were_true": "Тогда DeepSeek потратил бы $50M+ на дистилляты, что не оправдано.",
+                "how_it_should_be": "SFT-based distillation на готовом base — типовой workflow."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Distill — это GGUF-формат для запуска на CPU",
+              "correct": false,
+              "sections": {
+                "what_actually": "GGUF — это формат хранения весов для llama.cpp/CPU; Distill — это процесс обучения, к формату не относится.",
+                "source_of_confusion": "Community-репозитории распространяют GGUF-варианты Distill-моделей, но это отдельный шаг (community quantization).",
+                "if_it_were_true": "Тогда Distill жил бы только в GGUF, но он публикуется в safetensors fp16/bf16.",
+                "how_it_should_be": "Distill — training method, GGUF — формат хранения; разные оси."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Дистиллированная серия 1.5B/7B/8B/14B/32B/70B на base Qwen 2.5 / Llama 3.x: команда DeepSeek сгенерировала ~800k длинных CoT-ответов от R1 и SFT-дообучила маленькие модели; Distill-Llama-70B fits на 2× A100 80GB или 1× H100 в fp8 vs ~700GB VRAM для R1 (8× H100 минимум); лицензия наследуется от base — Qwen-distill = Apache 2.0, Llama-distill = Llama Community",
+              "correct": true,
+              "sections": {
+                "explanation": "DeepSeek-R1 оригинал — 671B MoE, требует ~700GB VRAM (минимум 8× H100 80GB) в bf16. Решение — distillation: команда DeepSeek сгенерировала ~800k длинных CoT-ответов R1 и дообучила маленькие base-модели методом SFT. Серия: 1.5B (Qwen base), 7B (Qwen Math base), 8B (Llama 3.1 base), 14B (Qwen base), 32B (Qwen base), 70B (Llama 3.3 base). Лицензия наследуется от base: Qwen-distill — Apache 2.0, Llama-distill — Llama Community License (с 700M clause).",
+                "example": "Distill-Llama-70B fit на 2× A100 80GB или 1× H100 в fp8 — на порядок доступнее оригинала R1 (требующего 8× H100 минимум).",
+                "when_to_apply": "Когда нужно добавить reasoning к существующей base-модели на ограниченном hardware; для production B2C с Llama-distill — учитывать Llama 700M MAU clause.",
+                "edge_cases": "Distill теряет ~10-20% качества на сложных задачах vs full R1, но добавляет CoT-возможность к существующей base; quality trade-off приемлемый для большинства production use cases.",
+                "related": "Q15 R1; Q27 license inheritance."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что входит в семейство Gemma 3 от Google (March 2025) и какие архитектурные особенности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Размеры 1B (text-only, 32K), 4B/12B/27B (native multimodal vision+text, 128K context); SigLIP vision encoder + Gemma text decoder (адаптация Gemini); 140+ языков; лицензия Gemma Terms of Use (commercial OK с anti-distillation clause)",
+              "correct": true,
+              "sections": {
+                "explanation": "Gemma 3 (March 2025) — третья итерация Google open-weight семьи. Размеры: 1B (text-only, 32K context), 4B/12B/27B (native multimodal vision+text, 128K context). Архитектура: SigLIP vision encoder + Gemma text decoder (адаптация Gemini). 140+ языков из коробки. Лицензия — Gemma Terms of Use: commercial OK, но запрещено использовать output для тренировки других LLM (anti-distillation), запрещены defined harmful use cases (deception, surveillance, malware).",
+                "example": "Gemma 3 27B используется как open-weight конкурент Llama 3.3 70B с native multimodality; Gemma 3 4B — для edge с 128K context.",
+                "when_to_apply": "Когда нужен open-weight multimodal с decent качеством и Google-tier model card; всегда читать Gemma AUP перед production.",
+                "edge_cases": "Anti-distillation clause в Gemma Terms делает её более restrictive чем Apache 2.0 и формально нарушает OSI freedom-of-use; Gemma 2 (June 2024, 9B/27B) была text-only.",
+                "related": "Q18 PaliGemma/CodeGemma; Q27 лицензии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Gemma 3 — это только code-модели (наследники CodeGemma)",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gemma 3 — general-purpose multimodal семейство; CodeGemma — отдельная производная на Gemma 2 base.",
+                "source_of_confusion": "Существование CodeGemma создаёт путаницу про специализацию основной семьи.",
+                "if_it_were_true": "Тогда Gemma 3 не имела бы vision-encoder для native multimodality.",
+                "how_it_should_be": "Gemma 3 — general multimodal; CodeGemma — отдельная code-fine-tune."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Gemma 3 — это closed-source модель Google, доступная только через Vertex AI",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gemma 3 — open-weight на HuggingFace, под Gemma Terms of Use; commercial-OK через self-host. Gemini — closed-source отдельная модель.",
+                "source_of_confusion": "Gemini и Gemma часто путают; Gemini = closed frontier, Gemma = open-weight кузен.",
+                "if_it_were_true": "Тогда не было бы Gemma 3 в Ollama/llama.cpp поддержке.",
+                "how_it_should_be": "Gemma open-weight; Gemini closed."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все Gemma 3 модели только text-only, без vision",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gemma 3 native multimodal от 4B и выше; только 1B text-only. Это критическое отличие от Gemma 2 (которая была text-only по всей линейке).",
+                "source_of_confusion": "Gemma 2 была text-only, и иногда это ошибочно проецируют на 3-ю версию.",
+                "if_it_were_true": "Тогда не было бы apples-to-apples сравнения с Llama 3.2 Vision и Qwen 2.5-VL.",
+                "how_it_should_be": "Gemma 3 4B+ — multimodal; 1B — text-only исключение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое PaliGemma, CodeGemma и ShieldGemma в Google open-weight экосистеме?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это закрытые корпоративные варианты Gemma, доступные только enterprise-клиентам Google",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три — open-weight на HuggingFace под Gemma Terms of Use, доступны всем.",
+                "source_of_confusion": "Названия выглядят 'corporate', но это публичные релизы.",
+                "if_it_were_true": "Тогда не было бы PaliGemma/CodeGemma fine-tunes в community.",
+                "how_it_should_be": "Все три — open-weight под Gemma Terms."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "PaliGemma — vision-language model (SigLIP + Gemma base, 3B/10B/28B) для image captioning/OCR/VQA; CodeGemma — code-specialized fine-tune (2B/7B) с FIM support; ShieldGemma — safety classifier (2B/9B/27B) для prompt/response классификации harm-категорий (hate, harassment, sexual, dangerous), аналог Llama Guard. Все под Gemma Terms of Use",
+              "correct": true,
+              "sections": {
+                "explanation": "Сателлиты Gemma под специфические задачи. PaliGemma (2024, обновление PaliGemma 2 в 2025): vision-language, SigLIP + Gemma, 3B/10B/28B, для captioning/OCR/VQA. CodeGemma (2024): code-specialized fine-tune, 2B/7B, заточен под code completion и FIM (fill in the middle). ShieldGemma (2024): safety classifier на Gemma base, 2B/9B/27B, принимает prompt+response, классифицирует категории harm (hate, harassment, sexual, dangerous). Все под Gemma Terms of Use.",
+                "example": "Production-pipeline: ShieldGemma 9B как pre/post filter перед main LLM (Llama/Qwen) для blocking harm-категорий; аналог Llama Guard.",
+                "when_to_apply": "ShieldGemma — когда нужен guardrail на уровне model classifier; PaliGemma — когда нужна специализированная VLM с лучшей OCR.",
+                "edge_cases": "До Gemma 3 native multimodal — PaliGemma был основным path для vision; теперь PaliGemma более нишевый. RecurrentGemma — экспериментальная на Griffin (linear recurrence). DataGemma — fine-tune для Google Data Commons.",
+                "related": "Q17 Gemma 3; ai-safety-guardrails-interview.md."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "PaliGemma/CodeGemma/ShieldGemma — это три отдельных provider'а, все базируются на Llama, не Gemma",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три базируются именно на Gemma base от Google; ничего общего с Llama.",
+                "source_of_confusion": "Llama Guard — это safety classifier от Meta; путают с ShieldGemma от Google.",
+                "if_it_were_true": "Тогда лицензия была бы Llama Community, а не Gemma Terms.",
+                "how_it_should_be": "Google Gemma base + специализация → каждая модель."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это три квантизованные версии Gemma 2 27B в разных bit-widths",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это три разные fine-tuned модели с разными задачами, не quantizations одной модели.",
+                "source_of_confusion": "Существуют quantized варианты Gemma в GGUF/AWQ, но они называются как 'Gemma-3-27B-4bit-AWQ', не PaliGemma/CodeGemma/ShieldGemma.",
+                "if_it_were_true": "Тогда они имели бы одинаковую функциональность с разной точностью.",
+                "how_it_should_be": "Разные задачи (vision/code/safety) — разные fine-tunes."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Phi-4 (14B dense, Dec 2024) отличается от Phi-3.5-MoE (42B total / 6.6B active)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Phi-4 — это сжатая до 14B версия Phi-3.5-MoE через прунинг",
+              "correct": false,
+              "sections": {
+                "what_actually": "Phi-4 — independent training с фокусом на reasoning quality, не прунинг MoE. Архитектурно это разные модели с разными целями.",
+                "source_of_confusion": "Названия 'Phi-4' vs 'Phi-3.5' предполагают преемственность, но это разные fine-tuning runs.",
+                "if_it_were_true": "Тогда benchmark-результаты Phi-4 были бы автоматически близки Phi-3.5-MoE, но Phi-4 заметно превосходит на reasoning.",
+                "how_it_should_be": "Phi-4 — собственный pretraining+reasoning focus, не прунинг."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Phi-4 — это закрытая модель Microsoft через Azure OpenAI; Phi-3.5-MoE — open",
+              "correct": false,
+              "sections": {
+                "what_actually": "Phi-4 — open-weight под MIT License, опубликован на HuggingFace. Доступен и через Azure AI, но веса публичны.",
+                "source_of_confusion": "Microsoft партнёр OpenAI, и Phi иногда ассоциируется с GPT-line; но Phi — open-weight стратегия Microsoft Research.",
+                "if_it_were_true": "Тогда не было бы community fine-tunes Phi-4.",
+                "how_it_should_be": "Оба Phi — open-weight под MIT."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Phi-4 — dense 14B с фокусом на reasoning quality (GPQA Diamond 56.1%, обходит Llama 3.1 70B при 5× меньше параметрах), fit на 1× H100 80GB в bf16; Phi-3.5-MoE — 42B total / 6.6B active (16×3.8B MoE) с фокусом на efficiency at scale, требует ~85GB VRAM (для всех весов), compute как 6.6B dense. Оба под MIT License",
+              "correct": true,
+              "sections": {
+                "explanation": "Microsoft Phi family — серия small models с фокусом на качество данных, а не размер. Phi-4 (14B dense): reasoning-фокус, GPQA Diamond 56.1% (обходит Llama 3.1 70B). Phi-3.5-MoE (42B/6.6B active): efficiency at scale, качество ≈ Mixtral 8x7B при compute как 6.6B. Phi-4 fits на 1× H100 80GB в bf16; Phi-3.5-MoE требует ~85GB VRAM (для всех весов), compute дешевле. Оба под MIT.",
+                "example": "Если важна latency и compute-cost на единичный запрос — Phi-3.5-MoE. Если важно reasoning quality на single GPU — Phi-4.",
+                "when_to_apply": "Phi-4 в reasoning-heavy задачах на single H100; Phi-3.5-MoE в batched inference с большим throughput.",
+                "edge_cases": "Философия Phi: 'textbook quality' synthetic data + filtered web + хорошее reasoning supervision; альтернатива 'больше параметров = лучше'. Phi-4 multimodal (~5.6B) добавил audio+vision+text.",
+                "related": "Q22 MoE economics; Q4 dense Llama."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Phi-4 — это multimodal version Phi-3.5-MoE с native vision",
+              "correct": false,
+              "sections": {
+                "what_actually": "Phi-4 base — text-only dense 14B. Multimodal — отдельная модель Phi-4-multimodal (~5.6B) с audio+vision+text.",
+                "source_of_confusion": "В семействе Phi есть multimodal версии, но Phi-4 base — text-only.",
+                "if_it_were_true": "Тогда GPQA reasoning-числа Phi-4 не были бы напрямую сравнимы с text-only Llama.",
+                "how_it_should_be": "Phi-4 = text-only dense; Phi-4 multimodal — отдельный релиз."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое OLMo и почему его называют «fully open» — единственной серией соответствующей строгому OSAID?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "OLMo выпустил веса под MIT, но без training-данных и кода — поэтому называется fully open",
+              "correct": false,
+              "sections": {
+                "what_actually": "OLMo публикует именно training data (Dolma 3T tokens), training code, recipe и intermediate checkpoints — это ключевое отличие от Llama/Mistral, которые публикуют только веса.",
+                "source_of_confusion": "Многие 'open' модели публикуют веса + paper; OLMo идёт дальше до полной воспроизводимости.",
+                "if_it_were_true": "Тогда OLMo не отличался бы от Mistral 7B (тоже Apache 2.0).",
+                "how_it_should_be": "OLMo — fully open именно через публикацию всех артефактов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "OLMo — это closed-source от AI2, доступен только академическим партнёрам",
+              "correct": false,
+              "sections": {
+                "what_actually": "OLMo — публично open на HuggingFace под Apache 2.0; доступен всем.",
+                "source_of_confusion": "AI2 — академическая лаборатория, но публикации полностью открыты.",
+                "if_it_were_true": "Тогда не было бы community downloads OLMo.",
+                "how_it_should_be": "OLMo — public open-source, не gated."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это просто более новая версия GPT-2 под MIT License",
+              "correct": false,
+              "sections": {
+                "what_actually": "OLMo — собственная архитектура AI2 (decoder-only Transformer), не GPT-2 fork. GPT-2 устарел в 2019.",
+                "source_of_confusion": "AI2 — академическая лаборатория, ассоциируется с reproducibility, как Pythia (EleutherAI на GPT-Neo).",
+                "if_it_were_true": "Тогда OLMo не был бы competitive по качеству.",
+                "how_it_should_be": "OLMo — собственная архитектура AI2."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "OLMo (Open Language Model, AI2) публикует ВСЁ: weights + training code (GitHub repo) + training data (Dolma 3T tokens) + recipes + intermediate checkpoints (~500 steps) + WandB logs + evaluation suite (OLMES, Paloma) под Apache 2.0; единственная серия удовлетворяющая OSI OSAID",
+              "correct": true,
+              "sections": {
+                "explanation": "OLMo (Open Language Model, Allen Institute for AI) — единственная серия моделей, реально соответствующая строгому OSI OSAID. Открыто всё: weights (все checkpoints), training code (OLMo repo), training data (Dolma 3T tokens), recipes (конфиги, гиперпараметры, learning rate schedules), intermediate checkpoints (~500 steps), WandB logs (full telemetry), evaluation suite (OLMES, Paloma), license Apache 2.0. Размеры: OLMo 1B/7B, OLMo 2 7B/13B, OLMo 2 32B (2025).",
+                "example": "Academia для воспроизводимых исследований pretraining-динамики; compliance для регулируемых индустрий (EU AI Act Article 53); education — единственный LLM, который можно изучать end-to-end.",
+                "when_to_apply": "Когда нужен audit trail, voluntary code of practice или научное исследование; для production B2C обычно выбирают Llama/Qwen из-за лучшего качества.",
+                "edge_cases": "Качество ниже Llama/Qwen/DeepSeek (бюджет AI2 кратно меньше Meta), но это principal trade-off — OLMo решает другую проблему (transparency). Похожие проекты: Pythia (EleutherAI), BLOOM (BigScience, устарел).",
+                "related": "Q1 open-source vs weight; Q27 лицензии."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ещё open-weight семейства полезно знать (Yi, DBRX, Command R+, Granite) и какие у них особенности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Yi (01.AI Kai-Fu Lee, 6B/9B/34B, Apache 2.0) — сильный multilingual, в 2024 34B был sweet spot; DBRX (Databricks, 132B/36B active MoE 16×11B, Databricks Open Model License) — enterprise-focused; Command R+ (Cohere, 104B dense, CC-BY-NC-4.0 для весов, commercial API) — RAG/tool-use focused; Granite (IBM, 3B/8B/20B/34B + MoE, Apache 2.0) — enterprise/code, IBM customers",
+              "correct": true,
+              "sections": {
+                "explanation": "Полезные open-weight семейства за пределами Llama/Mistral/Qwen/DeepSeek/Gemma/Phi. Yi (01.AI, Kai-Fu Lee): 6B/9B/34B/Yi-1.5/Yi-VL под Apache 2.0, multilingual, 34B был sweet spot в 2024. DBRX (Databricks): 132B/36B active MoE 16×11B под Databricks Open Model License, enterprise. Command R+ (Cohere): 104B dense под CC-BY-NC-4.0 (non-commercial weights), commercial доступ через API, RAG/tool-use focused. Granite (IBM): 3B/8B/20B/34B + MoE 1B/3B под Apache 2.0, enterprise-grade, code-focused.",
+                "example": "В production-обзоре: Yi-34B (legacy), DBRX (Databricks-нативные стеки), Granite (IBM customers), Command R+ (RAG-focused через Cohere API).",
+                "when_to_apply": "Когда экосистема Llama/Qwen не подходит — например для RAG-focused (Command R+) или Databricks-native (DBRX) или IBM enterprise (Granite).",
+                "edge_cases": "Falcon (TII UAE, был первым 180B open в 2023) сейчас legacy — Qwen/Llama/Mistral вытеснили. Aya (Cohere for AI) — 23+ языков multilingual focus, CC-BY-NC. Snowflake Arctic — Apache 2.0, enterprise SQL/code. Nemotron — Llama 3.1 70B + NVIDIA RLHF refresh.",
+                "related": "Q27 лицензии; Q24 self-host."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все четыре (Yi, DBRX, Command R+, Granite) — это просто rebrands Llama 3 от разных компаний",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это четыре независимых семейства с собственными архитектурами и pretraining; не Llama derivatives (хотя некоторые (Nemotron) реально базируются на Llama).",
+                "source_of_confusion": "Llama 3 действительно популярная база для fine-tunes, и иногда обобщают.",
+                "if_it_were_true": "Тогда все лицензии были бы Llama Community, что не так (Yi и Granite — Apache).",
+                "how_it_should_be": "Это independent семейства, каждое со своей архитектурой и лицензией."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все они closed-source — веса не публикуются",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все четыре — open-weight на HuggingFace; различаются лицензией (Apache vs Databricks Open vs CC-BY-NC).",
+                "source_of_confusion": "Enterprise-focused (DBRX, Granite) звучит как 'closed', но они опубликованы.",
+                "if_it_were_true": "Тогда не было бы download counts на HF и community fine-tunes.",
+                "how_it_should_be": "Все четыре — open-weight, лицензии разные."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это четыре multimodal модели от Meta",
+              "correct": false,
+              "sections": {
+                "what_actually": "Yi — 01.AI (Китай), DBRX — Databricks (US), Command R+ — Cohere (Canada), Granite — IBM (US). Meta делает Llama, не эти модели.",
+                "source_of_confusion": "Meta доминирует open-weight ландшафт, и иногда обобщают.",
+                "if_it_were_true": "Тогда они были бы под Llama Community License.",
+                "how_it_should_be": "Четыре разных вендора, не Meta."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему в MoE-моделях total params важен для VRAM, а active params — для compute?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "VRAM зависит от active params (только активные эксперты в памяти), compute — от total",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: VRAM зависит от total (все эксперты должны быть в памяти, потому что router выбирает разные на разные токены — нельзя выгрузить 'неиспользуемых'), compute зависит от active.",
+                "source_of_confusion": "Интуитивно кажется логичным 'грузить только то, что используется', но это невозможно из-за непредсказуемости routing на per-token уровне.",
+                "if_it_were_true": "Тогда DeepSeek-V3 (671B/37B) помещался бы на 80GB VRAM, но реально нужно ~700GB+.",
+                "how_it_should_be": "Total в VRAM, active в compute — это основа MoE-экономики."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "VRAM = total params (все эксперты должны быть в HBM, потому что router выбирает разные эксперты для разных токенов; пример DeepSeek-V3 — 671B × 2 байта = ~1.3TB в bf16, ~700GB в fp8, ~340GB в 4-bit); Compute (FLOPs) ≈ active params (forward pass на каждый токен использует только active params, например 37B для V3); следствие — MoE окупается на high-throughput batched inference на server multi-GPU, не на consumer",
+              "correct": true,
+              "sections": {
+                "explanation": "MoE разделяет масштаб и compute. VRAM: все эксперты должны быть в памяти, потому что router выбирает разные эксперты для разных токенов — нельзя выгрузить 'неиспользуемых'. DeepSeek-V3 671B × 2 байта = ~1.3TB в bf16, ~700GB в fp8, ~340GB в 4-bit. Compute: forward pass на каждый токен использует только active params (37B для V3) — FLOPs ≈ как у dense 37B. Inference latency/cost ≈ как у 37B dense, не 671B. Окупается когда (а) есть VRAM на total params, (б) хочется качество выше dense + дешёвый inference.",
+                "example": "Dense 70B: ~140GB VRAM, FLOPs 70B. MoE 671B/37B: ~1300GB VRAM, FLOPs 37B. Качество > dense, но VRAM нужен серверный.",
+                "when_to_apply": "При сайзинге кластера: считать VRAM по total, throughput/latency — по active.",
+                "edge_cases": "При недостатке VRAM MoE приходится swap'ать веса с CPU/disk — это убивает performance; на consumer GPU dense часто проще.",
+                "related": "Q9 Mixtral 47B; Q23 routing overhead."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Total и active params означают одно и то же в разной нотации",
+              "correct": false,
+              "sections": {
+                "what_actually": "Total params — все параметры модели (включая всех экспертов); active params — параметры, реально вычисляемые на токен (топ-K экспертов из N).",
+                "source_of_confusion": "Для dense модели total = active; путаница приходит когда обобщают на MoE.",
+                "if_it_were_true": "Тогда не было бы экономии compute в MoE — основной смысл архитектуры исчезает.",
+                "how_it_should_be": "Total ≠ active для MoE; именно это разделение даёт sparse activation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В MoE можно загрузить только active params в HBM и хранить остальное на NVMe — latency приемлемая",
+              "correct": false,
+              "sections": {
+                "what_actually": "На каждый токен router может выбрать любые из N экспертов; latency swap'а с NVMe (миллисекунды) делает per-token throughput недопустимо медленным.",
+                "source_of_confusion": "На уровне batch 'один эксперт чаще нужен' — но per-token непредсказуемо.",
+                "if_it_were_true": "Тогда DeepSeek-V3 можно было бы запускать на 1× H100 — что не работает в реальности.",
+                "how_it_should_be": "Все эксперты в HBM; offloading на NVMe только для extreme low-throughput сценариев."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое routing overhead в MoE и почему MoE не всегда дешевле dense?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Routing overhead — это только compute gate-network, остальное идентично dense",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gate-network compute — лишь часть. Также all-to-all communication, load balancing penalty, memory bandwidth bottleneck для всех экспертов, capacity factor token dropping — это всё routing overhead.",
+                "source_of_confusion": "Gate network — visible часть; остальное скрыто в distributed system mechanics.",
+                "if_it_were_true": "Тогда MoE всегда был бы лучше dense, что эмпирически не так.",
+                "how_it_should_be": "Routing overhead — комплексный, не сводится к gate."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MoE всегда дешевле dense — нет никакого overhead",
+              "correct": false,
+              "sections": {
+                "what_actually": "MoE имеет реальные overheads: gate compute (O(d×N) на token), all-to-all communication в expert parallelism, load balancing (часть экспертов простаивает), KV-cache size, memory bandwidth — на small batch / single-user не амортизируются.",
+                "source_of_confusion": "MoE-маркетинг подчёркивает 'дешевле compute', но opex картина сложнее.",
+                "if_it_were_true": "Тогда dense вышли бы из использования, что не так (Llama 3.3 70B доминирует).",
+                "how_it_should_be": "MoE дешевле в специфических условиях, не всегда."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Routing overhead включает gate-network compute (O(d×N), при N=256 в DeepSeek не пренебрежимо), all-to-all communication в expert parallelism (bottleneck при больших batch), load balancing (auxiliary losses или token dropping), memory bandwidth на все эксперты в HBM, KV-cache как у dense эквивалента; MoE может оказаться не дешевле dense при малых batch (all-to-all dominate), single-user inference (overhead не амортизируется), consumer GPU (не помещается total), strict latency SLA (jitter)",
+              "correct": true,
+              "sections": {
+                "explanation": "Routing overhead в MoE — комплексный набор затрат: (1) Gate-network compute O(d×N) на token, при N=256 (DeepSeek) заметно; (2) All-to-all communication в expert parallelism — токены маршрутизируются между GPU/узлами, при больших batch bottleneck сильнее самих FFN; (3) Load balancing — если router посылает 90% токенов в один эксперт, остальные простаивают, нужны auxiliary losses или capacity factor; (4) KV-cache такой же как у dense эквивалента; (5) Memory bandwidth — все эксперты в HBM, чтение их весов может стать bottleneck. MoE может быть не дешевле dense при малом batch, single-user, consumer GPU, strict latency SLA.",
+                "example": "На малом batch для single-user в реальном времени Llama 3.3 70B dense часто быстрее DeepSeek-V3 MoE из-за routing overhead и all-to-all.",
+                "when_to_apply": "MoE хорош для high-throughput batched inference на server-grade GPU с быстрым NVLink/InfiniBand; на edge/single GPU dense часто проще.",
+                "edge_cases": "DeepSeek-V3 auxiliary-loss-free balancing — попытка избежать stiff penalty за дисбаланс; но проблема не исчезает полностью.",
+                "related": "Q22 MoE economics; Q24 self-host."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Routing overhead — это лицензионная плата за использование MoE-патентов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это технический термин про compute/communication затраты, не лицензионную плату. MoE-патенты существуют, но это отдельный domain.",
+                "source_of_confusion": "Слово 'overhead' в бизнес-контексте часто означает накладные расходы; в ML контексте — compute/memory затраты.",
+                "if_it_were_true": "Тогда open-weight MoE (Mixtral, DeepSeek) не существовали бы из-за патентных конфликтов.",
+                "how_it_should_be": "Technical overhead — про compute/comms, не про licensing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда self-host open-source LLM выгоднее API провайдеру, и когда наоборот?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Self-host выгоднее всегда (нет per-token платы)",
+              "correct": false,
+              "sections": {
+                "what_actually": "Self-host требует upfront инвестиций в GPU + MLOps команду + 24/7 maintenance; для low/spikey volume API дешевле.",
+                "source_of_confusion": "Пер-токен плата API легко считается, скрытые затраты self-host недооцениваются.",
+                "if_it_were_true": "Тогда никто не покупал бы API DeepSeek/OpenAI/Together.",
+                "how_it_should_be": "Это decision tree от volume, latency, privacy, team capacity."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "API выгоднее всегда (no maintenance)",
+              "correct": false,
+              "sections": {
+                "what_actually": "При высоком стабильном volume self-host существенно дешевле; также при data privacy, on-prem mandate, latency SLA.",
+                "source_of_confusion": "Convenience API делает их default выбором для small teams.",
+                "if_it_were_true": "Тогда не было бы Llama 3.3 70B production deployments через vLLM.",
+                "how_it_should_be": "Self-host vs API — это break-even анализ."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Self-host vs API определяется ТОЛЬКО типом hardware (GPU vs CPU)",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hardware — лишь один фактор; данные privacy, compliance, MAU, team capacity, geographic — все имеют значение.",
+                "source_of_confusion": "Hardware — заметная переменная; но это упрощение.",
+                "if_it_were_true": "Тогда не было бы trade-off по privacy/latency/quality.",
+                "how_it_should_be": "Multi-dimensional decision."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Self-host выгоднее при высоком стабильном volume (Llama 3.3 70B на 1× H100 за $2.5/час → ~$0.23/1M tokens vs ~$1.20/1M через Together/Fireworks; break-even ~77M tok/day), нужной data privacy (медицина/финансы/PII), compliance (EU AI Act on-prem mandate), кастомизации (fine-tuned версии); API выгоднее при низком/скачкообразном volume, latency 200-1000ms OK, public data, нужны frontier модели (GPT-4o/Claude/o3), нет MLOps команды. DeepSeek API — особый случай: $0.07-0.27/1M (subsidized) дешевле self-host для большинства, но data leaves в Китай",
+              "correct": true,
+              "sections": {
+                "explanation": "Self-host выгоднее: volume >5-10M tok/day стабильно, sub-100ms latency steady-state, sensitive data (медицина/финансы/PII), EU AI Act on-prem mandate, кастомизация (fine-tuned версии), open-source модели достаточны, есть MLOps команда, нужно geographic locality (Russia, China). API выгоднее: низкое или скачкообразное volume, 200-1000ms latency OK, public data, нужны frontier (GPT-4o/Claude/o3), нет ML-инженеров, нужна pay-per-use. Грубая математика Llama 3.3 70B: API ~$1.20/1M total; self-host H100 ~$0.23/1M; break-even ~30% utilization = ~77M tok/day. Особый случай DeepSeek API ($0.07-0.27/1M, subsidized) — дешевле self-host для большинства, но data в Китай.",
+                "example": "Стартап на 10M tok/day на Llama 3.3 70B: API стоит $360/day, self-host H100 ~$60/day за compute + MLOps salary — для постоянной нагрузки self-host окупается за месяц.",
+                "when_to_apply": "Считать break-even: (utilization × hours × token_rate) vs (API_rate × tokens) с учётом privacy/compliance/latency constraints.",
+                "edge_cases": "DeepSeek subsidized API раскачивает рынок (geopolitical positioning) — данные leaves в Китай, не подходит для regulated/sensitive use cases.",
+                "related": "Q25 production stack; Q30 fine-tune."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой типичный production-стек для self-host open-source LLM на vLLM/TensorRT-LLM?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Client → API Gateway (Kong/Envoy: auth, rate limit, multi-tenant routing) → Inference Serving (vLLM/TensorRT-LLM/SGLang/TGI: PagedAttention, continuous batching, KV cache, speculative decoding) → GPU Cluster (H100/A100/MI300, tensor parallelism, optional pipeline) → Storage (HF weights / quantized GGUF/AWQ в safetensors на S3/GCS/NVMe). Cross-cutting: Observability (Prometheus + Grafana + Langfuse), Orchestration (K8s + KServe/BentoML/Ray Serve), Safety (Llama Guard / ShieldGemma как pre/post filter)",
+              "correct": true,
+              "sections": {
+                "explanation": "Типичный production-стек self-host. Client → API Gateway (Kong/Envoy: rate limit, auth, multi-tenant routing) → Inference Serving (vLLM с PagedAttention, TensorRT-LLM с kernel fusion, SGLang с structured generation, TGI; continuous batching, KV cache, speculative decoding) → GPU Cluster (H100/A100/MI300 с tensor parallelism, optional pipeline parallelism через NCCL) → Storage (HF weights, quantized GGUF/AWQ, safetensors формат на S3/GCS/local NVMe). Cross-cutting: Observability (Prometheus + Grafana + Langfuse/Arize), Orchestration (Kubernetes + KServe/BentoML/Ray Serve), CI/CD (Argo Workflows), Safety (Llama Guard / ShieldGemma как pre/post filter).",
+                "example": "Стандарт open-source self-host в 2025: vLLM + KServe на H100 cluster с Prometheus метриками; safetensors веса в S3 с hash-pinning.",
+                "when_to_apply": "При построении production self-host: каждый слой решает конкретную проблему (auth, batching, parallelism, observability).",
+                "edge_cases": "safetensors — обязательный формат (нет pickle, secure load, faster mmap); .bin/.pt опасны (см. Q29). TensorRT-LLM — NVIDIA-only, выше throughput через compiled engines, сложнее в эксплуатации.",
+                "related": "Q26 quantization; Q29 security; model-serving-interview.md."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно одного docker-compose с моделью на CPU — production-ready",
+              "correct": false,
+              "sections": {
+                "what_actually": "Production требует API gateway, observability, K8s orchestration, GPU cluster, safety filters; docker-compose на CPU — это prototype/demo, не production.",
+                "source_of_confusion": "Для small-scale demos Ollama+CPU работает, но не для production traffic.",
+                "if_it_were_true": "Тогда p99 latency и throughput не выдерживали бы реального traffic.",
+                "how_it_should_be": "Production-stack — multi-layer с GPU, observability, safety."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только vLLM нужен — он покрывает auth, monitoring, GPU orchestration",
+              "correct": false,
+              "sections": {
+                "what_actually": "vLLM — inference engine, не auth/monitoring layer. Нужны отдельно API gateway, observability stack, K8s orchestration.",
+                "source_of_confusion": "vLLM предоставляет OpenAI-compatible API, но это не gateway-уровень.",
+                "if_it_were_true": "Тогда не было бы рынка для KServe/BentoML/Ray Serve.",
+                "how_it_should_be": "vLLM — один слой production-stack."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TensorRT-LLM — единственный production-ready engine; vLLM/SGLang — академические",
+              "correct": false,
+              "sections": {
+                "what_actually": "vLLM — самый popular в production (Anyscale, OpenAI-compatible API, активная разработка); TensorRT-LLM — NVIDIA-only, выше throughput, но сложнее. SGLang — production в HuggingFace и других.",
+                "source_of_confusion": "NVIDIA-маркетинг подчёркивает TensorRT-LLM как 'enterprise', но vLLM не отстаёт.",
+                "if_it_were_true": "Тогда vLLM не использовался бы в Anthropic, Microsoft, etc.",
+                "how_it_should_be": "Все три — production-grade, выбор по trade-off."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое GGUF, AWQ, GPTQ и почему их выкладывает community, а не авторы моделей?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "GGUF/AWQ/GPTQ — это закрытые корпоративные форматы Meta/Google для шифрования весов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три — открытые форматы post-training quantization (llama.cpp/AutoAWQ/AutoGPTQ); никак не закрытые и не от Meta/Google.",
+                "source_of_confusion": "Корпоративные форматы существуют (TensorRT engines), но это другое.",
+                "if_it_were_true": "Тогда не было бы community quantization авторов на HF.",
+                "how_it_should_be": "Открытые форматы, community-driven."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это форматы post-training quantization для уменьшения VRAM/ускорения inference (GGUF — llama.cpp/Ollama/LM Studio, 2-8 bit + K-quants, CPU/edge; AWQ — vLLM/TGI/HF, ~4-bit sweet spot quality/speed на GPU; GPTQ — vLLM/ExLlama, 3-4 bit, более старый чем AWQ). Авторы релизят fp16/bf16 safetensors; community (TheBloke, bartowski, unsloth, lmstudio-community) калибрует под конкретные форматы/hardware и выкладывает — авторы избегают support burden по 'эта 4-bit плохо работает'",
+              "correct": true,
+              "sections": {
+                "explanation": "Это форматы post-training quantization. GGUF — llama.cpp/Ollama/LM Studio, 2/3/4/5/6/8 bit + K-quants, для CPU/edge inference, простая загрузка. AWQ — vLLM/TGI/HF Transformers, ~4-bit, sweet spot quality/speed для GPU. GPTQ — vLLM/ExLlama/AutoGPTQ, 3-4 bit, более старый. EXL2 — variable per-layer для ExLlamaV2. bitsandbytes (NF4/INT8) — on-the-fly quantization. safetensors fp16/bf16 — базовый формат HF. Авторы (Meta/Google/Mistral/Qwen) релизят только fp16/bf16 safetensors; quantization — lossy compression с калибровкой под конкретный hardware. Community (TheBloke, bartowski, unsloth, lmstudio-community) делает калибровку и выкладывает; авторы избегают support burden.",
+                "example": "Llama 3.3 70B в bf16 — ~140GB; в AWQ 4-bit — ~35GB (fit на 1× A100 40GB); в GGUF Q4_K_M — ~40GB (CPU inference).",
+                "when_to_apply": "При выборе quantization читать README quant-репозитория — там perplexity test и subjective quality notes; не все 4-bit одинаковы.",
+                "edge_cases": "Quality trade-off: 8-bit <1% loss vs fp16, 4-bit AWQ/GPTQ-act-order 1-3%, 3-bit и ниже — заметная деградация особенно на reasoning.",
+                "related": "Q25 production stack; Q29 security."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это форматы дистилляции (knowledge distillation в malых моделях)",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quantization (изменение precision весов) и distillation (обучение small модели у large) — разные процессы.",
+                "source_of_confusion": "Оба сжимают модель, но разными механизмами.",
+                "if_it_were_true": "Тогда GGUF/AWQ изменяли бы архитектуру и количество параметров, что не так.",
+                "how_it_should_be": "Quantization = precision (bits per weight); distillation = retraining."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "GGUF — только для NVIDIA GPU, AWQ — для AMD",
+              "correct": false,
+              "sections": {
+                "what_actually": "GGUF — кросс-платформенный (CPU primarily через llama.cpp, GPU offload поддерживается); AWQ — GPU (CUDA primarily). Vendor-routing неверный.",
+                "source_of_confusion": "ROCm/CUDA различия путают с форматом quantization.",
+                "if_it_were_true": "Тогда CPU inference через llama.cpp был бы невозможен.",
+                "how_it_should_be": "GGUF — для CPU/edge; AWQ/GPTQ — для GPU."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сравнить Apache 2.0, MIT, Llama Community, Gemma Terms, Mistral Research License по permissivity для коммерческого использования?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Apache 2.0 = MIT = Llama Community — все безусловно разрешают коммерческое использование",
+              "correct": false,
+              "sections": {
+                "what_actually": "Apache 2.0 и MIT — без оговорок (OSI-approved), Llama Community имеет 700M MAU clause + AUP, Gemma Terms — anti-distillation + AUP, Mistral Research — non-commercial.",
+                "source_of_confusion": "Все четыре часто описываются как 'open' — но детали различаются.",
+                "if_it_were_true": "Тогда нечего было бы обсуждать в legal review.",
+                "how_it_should_be": "Это разные классы лицензий с разными restrictions."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все лицензии запрещают коммерческое использование без enterprise-договора",
+              "correct": false,
+              "sections": {
+                "what_actually": "Apache 2.0/MIT/Llama/Gemma — commercial OK (с clauses); только Mistral Research License и CC-BY-NC — non-commercial.",
+                "source_of_confusion": "Legal-ёмкие лицензии типа Llama Community с clauses порождают избыточную осторожность.",
+                "if_it_were_true": "Тогда open-weight ecosystem не существовала бы для commercial.",
+                "how_it_should_be": "Большинство open-weight — commercial OK; non-commercial — research-only исключения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Apache 2.0/MIT (OSI-approved) — самое безопасное для коммерции, без use-restrictions (Mistral 7B, OLMo, Qwen ≤32B, DeepSeek-R1, Phi); Llama Community — commercial OK кроме >700M MAU + AUP; Gemma Terms — commercial OK + AUP + anti-distillation; Mistral Research License — NO commercial (Mistral Large 2, Pixtral Large); Qwen License (72B) — OK кроме >100M MAU + AUP; DeepSeek License — MIT-like minimal AUP; Open RAIL — behavior-restricted; CC-BY-NC — NO commercial",
+              "correct": true,
+              "sections": {
+                "explanation": "Сравнение лицензий по permissivity: Apache 2.0 (OSI-approved, no use restrictions, OLMo/Mistral 7B/Qwen ≤32B/Yi/Granite/Falcon/Snowflake Arctic), MIT (OSI, no restrictions, DeepSeek-R1/Phi), Llama Community (custom, commercial OK кроме >700M MAU + AUP), Gemma Terms (custom, commercial OK + Gemma AUP + anti-distillation), Mistral Research License (non-commercial only, Large 2/Pixtral Large), Qwen License 72B (custom, commercial OK кроме >100M MAU), DeepSeek License (MIT-like, minimal AUP), Open RAIL (behavior-restricted, BLOOM/Stable Diffusion), CC-BY-NC-4.0 (non-commercial only, Command R+/Aya).",
+                "example": "Practical triage: Apache/MIT для production без оговорок; Llama/Gemma с привычкой проверять use case, MAU, output-disclosure; дисквалификация для production B2C: Mistral Research, CC-BY-NC; всегда читать AUP даже под Apache.",
+                "when_to_apply": "Перед любым production deployment проверять лицензию каждой используемой модели; не полагаться на общее правило по семейству — внутри одной семьи (Qwen, Mistral) разные лицензии.",
+                "edge_cases": "AUP может содержать неочевидные restrictions: military, illegal surveillance, CSAM (Llama), medical misdiagnosis без supervision (Open RAIL).",
+                "related": "Q7 Llama MAU; Q13 Qwen MAU; Q28 Open RAIL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все open-weight лицензии под GPL — viral, derivative должен быть open",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ни одна крупная LLM не под GPL. Open-weight используют Apache/MIT/custom permissive — без copyleft.",
+                "source_of_confusion": "GPL — старый open-source стандарт для софта, но не применяется к ML-моделям.",
+                "if_it_were_true": "Тогда fine-tune Llama требовал бы публиковать веса под GPL, что блокировало бы commercial.",
+                "how_it_should_be": "Permissive лицензии (Apache/MIT/custom), не copyleft."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Open RAIL License и где она применяется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Open RAIL — это GPL для AI с copyleft на derivatives",
+              "correct": false,
+              "sections": {
+                "what_actually": "Open RAIL — permissive с behavioral restrictions, не copyleft. Derivative не обязан быть Open RAIL.",
+                "source_of_confusion": "RAIL ассоциируется с 'responsible' — путают со 'restrictive copyleft'.",
+                "if_it_were_true": "Тогда Stable Diffusion derivatives автоматически были бы Open RAIL.",
+                "how_it_should_be": "Permissive grant + use-restrictions, без copyleft."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Open RAIL — это синоним Apache 2.0 без оговорок",
+              "correct": false,
+              "sections": {
+                "what_actually": "Apache 2.0 не имеет use-restrictions; Open RAIL имеет behavioral restrictions — это разные классы лицензий.",
+                "source_of_confusion": "Оба permissive в смысле commercial, но restrictions у Open RAIL дополнительные.",
+                "if_it_were_true": "Тогда OSI считал бы Open RAIL open-source (как Apache), но не считает.",
+                "how_it_should_be": "Apache = no restrictions; Open RAIL = restrictions + permissive grant."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Open RAIL — это лицензия только OpenAI",
+              "correct": false,
+              "sections": {
+                "what_actually": "Open RAIL — от BigScience/HuggingFace, не OpenAI. OpenAI использует closed-source модели через API.",
+                "source_of_confusion": "Совпадение префикса 'Open' порождает путаницу.",
+                "if_it_were_true": "Тогда OpenAI релизил бы веса GPT-4 под Open RAIL.",
+                "how_it_should_be": "BigScience/HF community лицензия."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Open RAIL (Responsible AI License, BigScience/HF 2022) — permissive grant (commercial/modification/distribution OK) с behavioral restrictions (Attachment A: defamation, weapons, exploitation, medical misdiagnosis без supervision). Use-based, follows the model. Варианты: OpenRAIL-M (models), OpenRAIL-S (source), OpenRAIL-D (data). Применяется в BLOOM 176B, Stable Diffusion v1/v2 (CreativeML Open RAIL-M), IDEFICS. В 2026 не стал стандартом — Meta/Google/Mistral/Qwen/DeepSeek предпочитают custom или Apache/MIT. OSI считает Open RAIL не open-source из-за use restrictions",
+              "correct": true,
+              "sections": {
+                "explanation": "Open RAIL (Responsible AI License, BigScience/HuggingFace 2022) — лицензия для AI artifacts с permissive grant и behavioral restrictions. Структура: разрешено использование, modification, distribution, commerce; запрещены специфические use cases (defamation, weapons, exploitation, medical misdiagnosis без supervision). Use-based — restrictions follow the model. Варианты: OpenRAIL-M (models), OpenRAIL-S (source code), OpenRAIL-D (data). Применяется в BLOOM 176B (BigScience, первый крупный LLM под Open RAIL), Stable Diffusion v1/v2 (CreativeML Open RAIL-M), IDEFICS (HF multimodal).",
+                "example": "BLOOM можно использовать commercially для chat-бота, но не для weapons/surveillance — restrictions именно use-based.",
+                "when_to_apply": "В нишах generative image (Stable Diffusion экосистема) и старых LLM (BLOOM). Для нового LLM-проекта 2026 — лучше Apache/MIT или custom Llama-style.",
+                "edge_cases": "Open RAIL не стал стандартом для top-tier LLM. OSI считает Open RAIL не open-source потому что use restrictions нарушают freedom-of-use (как и Llama/Gemma).",
+                "related": "Q27 лицензии; Q1 open-source vs weight."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие security-риски возникают при загрузке моделей с HuggingFace?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pickle deserialization (.bin/.pt → arbitrary code execution через torch.load), trust_remote_code=True (выполняет modeling_<arch>.py из репо — может содержать malware/exfiltration), backdoored models (sleeper agents на специфических trigger-prompts), tokenizer code injection (custom tokenizer Python), supply-chain hijacks (атакующий захватывает HF account популярного автора). Mitigation: только safetensors, trust_remote_code=False по умолчанию, sandbox/Docker без network, pin specific revision hash, проверять PGP подписи",
+              "correct": true,
+              "sections": {
+                "explanation": "Скачивание model weights — это загрузка untrusted кода, если формат поддерживает execution. Риски: (1) Pickle deserialization в .bin/.pt: PyTorch torch.save использует Python pickle, который позволяет arbitrary code execution при load — malicious model файл запустит shell commands. Mitigation: safetensors. (2) trust_remote_code=True для моделей с custom architecture выполняет modeling_<arch>.py — может содержать malware. Mitigation: только проверенные авторы (meta-llama/mistralai/Qwen/google/microsoft/deepseek-ai), audit, isolated container. (3) Backdoored models: веса с sleeper agent на trigger-prompts — невозможно обнаружить без black-box red-team testing. (4) Tokenizer code injection: custom tokenizer Python. (5) Supply-chain hijacks: захват HF account популярного автора — pin specific revision hash, проверять PGP подписи.",
+                "example": "Practical workflow: только safetensors (не .bin), trust_remote_code=False по умолчанию, sandbox-исполнение в Docker без network/host mounts, mirror weights в свой artifact registry с hash-pinning.",
+                "when_to_apply": "Перед загрузкой любой модели с HF в production environment; особенно при использовании малоизвестных авторов или для regulated indústrias.",
+                "edge_cases": "HF в 2023 ввели pickle scanner и safetensors-friendly badge, но не все модели мигрированы; legacy .bin часто остаются. HF Transformers по умолчанию предпочитает safetensors если оба есть.",
+                "related": "Q25 production stack; Q3 model card."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Никаких рисков нет — HuggingFace полностью аудитирует все upload",
+              "correct": false,
+              "sections": {
+                "what_actually": "HF — open registry; community-uploaded модели не проходят полный security audit. Pickle, custom code, supply-chain — реальные риски.",
+                "source_of_confusion": "HF гарантирует TLS download и pickle scanner для очевидных malicious patterns, но не глубокий audit.",
+                "if_it_were_true": "Тогда не было бы рекомендаций trust_remote_code=False и safetensors-preference.",
+                "how_it_should_be": "HF — registry, не security gateway; ответственность на пользователе."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только риск — превышение rate-limit при downloading",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rate-limit — operational issue, не security. Security риски: pickle RCE, custom code, supply-chain hijack — гораздо серьёзнее.",
+                "source_of_confusion": "Rate limit заметен в developer experience, security риски скрытые.",
+                "if_it_were_true": "Тогда не существовало бы CVE-репортов про malicious HF models.",
+                "how_it_should_be": "Security риски реальны и должны быть mitigated."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Риск только в копирайте — модели могут нарушать IP третьих лиц",
+              "correct": false,
+              "sections": {
+                "what_actually": "Copyright/training data копирайт — отдельный риск (например NYT vs OpenAI), но техническая security HF загрузки — отдельный класс рисков (RCE, supply-chain).",
+                "source_of_confusion": "Юридические vs технические риски смешивают.",
+                "if_it_were_true": "Тогда trust_remote_code и pickle не имели бы значения.",
+                "how_it_should_be": "Security и copyright — разные оси рисков."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие open-source модели реально fine-tune-нуть на consumer GPU (RTX 4090 24GB)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "На 4090 24GB можно full fine-tune любую модель до 70B",
+              "correct": false,
+              "sections": {
+                "what_actually": "Full fine-tune 70B требует >700GB VRAM (с optimizer states/gradients/activations); даже QLoRA 70B не помещается на 24GB (нужно ≥48GB или 2× 4090).",
+                "source_of_confusion": "Inference 70B возможен на 4090 в 4-bit (~40GB через offload, очень медленно); fine-tune требует больше памяти.",
+                "if_it_were_true": "Тогда не было бы рынка для cloud GPU аренды.",
+                "how_it_should_be": "На 4090 — QLoRA 7B-14B comfortable, 32B с offload."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "QLoRA (4-bit base + fp16 trainable adapters через bitsandbytes NF4): comfortable 7B-8B (Llama 3.1 8B, Qwen 2.5 7B, Mistral 7B v0.3, Gemma 2 9B), OK 13-14B (Qwen 2.5 14B, Phi-3 medium), с offload 27-34B (Qwen 2.5 32B, Gemma 3 27B). LoRA fp16: OK 7-8B (tight, batch=1-2, gradient checkpoint). Full fine-tune: только 1-3B. 70B и MoE total >40B не влезает. Стек: unsloth/axolotl/LLaMA-Factory; training 7B QLoRA на 50k samples — 6-12 часов",
+              "correct": true,
+              "sections": {
+                "explanation": "RTX 4090 24GB VRAM позволяет fine-tune через LoRA/QLoRA. Размеры: 1B-3B trivial для всех методов. 7B-8B: QLoRA comfortable, LoRA fp16 на грани (batch=1-2, gradient checkpoint), full fine-tune NO. 13B-14B: QLoRA OK с adjustments, LoRA tight. 27B-34B: QLoRA с CPU offload (медленно). 70B: NO даже QLoRA — нужно ≥48GB или 2× 4090. QLoRA: base model в 4-bit через bitsandbytes NF4, trainable LoRA adapters в fp16 поверх — VRAM в 4× меньше full fp16 fine-tune. Стек: unsloth (memory-efficient kernels), axolotl, LLaMA-Factory поверх PyTorch. Training time 7B QLoRA на 50k samples — 6-12 часов на 4090.",
+                "example": "Llama 3.1 8B QLoRA 4-bit — comfortable; Qwen 2.5 32B QLoRA с CPU offload — работает но медленно; Llama 3.3 70B — нужен A100 80GB или 2× 4090.",
+                "when_to_apply": "Когда нужен fine-tune на consumer hardware: выбирать 7B-14B base, QLoRA, unsloth kernels для скорости.",
+                "edge_cases": "Что не влезает: 70B (любой метод), MoE total >40B, любые fp16 ≥ 20B; для A100 80GB → 70B QLoRA OK; для H100 → 70B LoRA.",
+                "related": "Q24 self-host; fine-tuning-llm-interview.md."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "На 4090 fine-tune только 1B моделей доступен",
+              "correct": false,
+              "sections": {
+                "what_actually": "QLoRA позволяет 7B-14B comfortable; 1B — это trivial для full fine-tune, но недооценка возможностей 4090.",
+                "source_of_confusion": "Без QLoRA full fine-tune действительно ограничен 3B-7B; но с QLoRA размеры расширены.",
+                "if_it_were_true": "Тогда community не было бы фокусом 7B/13B fine-tunes (а это сейчас mainstream).",
+                "how_it_should_be": "QLoRA → 7B-14B comfortable на 24GB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Fine-tune вообще не требует GPU — всё делает на CPU через llama.cpp",
+              "correct": false,
+              "sections": {
+                "what_actually": "llama.cpp поддерживает inference на CPU и базовые LoRA на маленьких моделях, но для эффективного training даже 1B нужен GPU.",
+                "source_of_confusion": "Inference на CPU реален через GGUF, training — нет.",
+                "if_it_were_true": "Тогда не было бы рынка для GPU аренды для fine-tuning.",
+                "how_it_should_be": "Training — GPU (минимум); CPU — только для inference."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие подводные камни при оценке open-source моделей по бенчмаркам?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Бенчмарки полностью надёжны — высокий MMLU гарантирует production-качество",
+              "correct": false,
+              "sections": {
+                "what_actually": "Contamination, cherry-picking, prompting differences, locale bias, single-turn limitation — типичные проблемы; высокий MMLU не гарантирует production-success.",
+                "source_of_confusion": "MMLU — старейший public benchmark, легко интерпретировать число.",
+                "if_it_were_true": "Тогда не было бы LiveBench и custom internal eval как better practices.",
+                "how_it_should_be": "Бенчмарки — индикативны, не decisive; нужны live-benchmarks + internal eval."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Llama 4 Maverick (April 2025) был отдельным incident-якорем — где-то была benchmark gaming",
+              "correct": false,
+              "sections": {
+                "what_actually": "Llama 4 Maverick benchmark gaming — реальный случай (April 2025), но это лишь один пример более широкой проблемы. Главные подводные камни — contamination, cherry-picking, locale bias, single-turn bias, harness differences.",
+                "source_of_confusion": "Конкретный incident — easy-to-quote, но не покрывает всю палитру проблем.",
+                "if_it_were_true": "Тогда не было бы остальных типов pitfalls (contamination, locale).",
+                "how_it_should_be": "Maverick — один случай в broader problem space."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подводные камни: contamination (test sets утекают в pretraining — MMLU, GSM8K особенно), cherry-picking benchmarks (показ только лучших), different prompting (zero-shot vs 5-shot CoT даёт 5-15% разницы), reported vs reproducible mismatch (sampling/prompt format), locale bias (Qwen/DeepSeek сильнее на CN бенчмарках), benchmark saturation (MMLU 90%+ noise = 10% errors в benchmark), single-turn bias (multi-turn не покрыт), Chatbot Arena Elo depends on prompt pool composition. Llama 4 Maverick (April 2025) — публичный случай benchmark gaming. Better: LiveBench/LiveCodeBench, custom internal eval, human blind A/B",
+              "correct": true,
+              "sections": {
+                "explanation": "Подводные камни оценки open-source. (1) Contamination — test sets утекли в pretraining данные, особенно MMLU/GSM8K. (2) Cherry-picking — выбор только bench с SOTA результатами. (3) Different prompting/few-shot setup — MMLU zero-shot vs 5-shot CoT даёт 5-15% разницы. (4) Reported vs reproducible — paper заявляет 90%, при попытке воспроизвести 85% (sampling, prompt format, evaluation harness). (5) Locale bias — китайские модели (Qwen, DeepSeek) сильнее на CN бенчмарках. (6) Benchmark saturation — MMLU 90% → noise от ошибок в самом benchmark. (7) Single-turn bias — multi-turn dialogue не покрыт. (8) Chatbot Arena Elo — зависит от prompt pool composition. Llama 4 Maverick (April 2025) был публичным incident с benchmark gaming claims. Better practices: LiveBench/LiveCodeBench (monthly updates, contamination минимум), custom internal eval на задачах вашего домена, human eval на blind A/B (LMSYS подход), несколько reference benchmarks.",
+                "example": "Llama 3.1 405B заявлен 88.6% MMLU; при reproduction с другим evaluation harness получают 85-87% — это норма из-за prompt format и sampling.",
+                "when_to_apply": "При выборе модели для production: не полагаться на один benchmark; делать internal eval на собственных задачах.",
+                "edge_cases": "Live-benchmarks (LiveBench, LiveCodeBench) обновляются ежемесячно — contamination минимум; но они не покрывают всё.",
+                "related": "llm-evaluation-interview.md; Q34 outlook."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственная проблема — это разные random seeds при evaluation",
+              "correct": false,
+              "sections": {
+                "what_actually": "Random seeds — небольшой фактор; основные проблемы — contamination, cherry-picking, prompting differences, locale bias.",
+                "source_of_confusion": "Seeds легко контролировать (set fixed), но это не основа проблемы.",
+                "if_it_were_true": "Тогда не было бы рекомендаций live-benchmarks и custom eval.",
+                "how_it_should_be": "Seeds — minor; contamination и methodology — major."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как структурно подойти к выбору open-source модели под конкретную задачу (decision tree)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда выбирать самую большую доступную модель",
+              "correct": false,
+              "sections": {
+                "what_actually": "Decision tree должен учитывать licence (commercial/MAU), size budget (hardware/latency), task type (general/code/math/multilingual/vision/safety), fine-tune requirements.",
+                "source_of_confusion": "Большая модель = лучше — упрощённый эвристический подход.",
+                "if_it_were_true": "Тогда все production использовали бы DeepSeek-V3, что не так.",
+                "how_it_should_be": "Multi-dimensional decision, не just-size."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Выбор модели — только по цене API",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цена API — один из факторов, но self-host vs API сам по себе зависит от volume/privacy/MAU.",
+                "source_of_confusion": "Cost-первый подход прост для recap, но игнорирует quality/licence.",
+                "if_it_were_true": "Тогда DeepSeek API (subsidized) был бы universal default, что не подходит regulated/sensitive use cases.",
+                "how_it_should_be": "Multi-criteria decision."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все модели одинаковы — выбор не имеет значения",
+              "correct": false,
+              "sections": {
+                "what_actually": "Существуют значительные различия по licence (Apache vs Llama Community vs Research), task suitability (Qwen для CN, Llama для EN), size (1B-671B).",
+                "source_of_confusion": "Близость по top-tier benchmarks даёт впечатление равнозначности.",
+                "if_it_were_true": "Тогда не было бы decision tree и market diversity.",
+                "how_it_should_be": "Choice matters."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Algorithm: (1) License check — отсекает запрещённые (Strict OSI: Apache/MIT для no-clause production; OK with clauses: Llama/Gemma если MAU не задевает); (2) Size budget по hardware (≤8B edge, 14-32B sweet spot, 70B production, frontier MoE); (3) Task type (general/RAG → Llama/Qwen/Mistral; code → DeepSeek-Coder/Qwen Coder/Codestral; math/reasoning → R1/QwQ/Qwen Math; multilingual non-EN → Qwen для CN/JP/KR, Mistral для EU, Aya для low-resource; vision-language → Llama 3.2 Vision/Qwen-VL/Gemma 3/Pixtral; safety classifier → Llama Guard/ShieldGemma); (4) Fine-tune requirements (consumer GPU → QLoRA 7-14B, server → LoRA/full FT 70B+, inference-only → vLLM)",
+              "correct": true,
+              "sections": {
+                "explanation": "Алгоритм выбора open-source модели. Шаг 1: License — отсекает запрещённые комбинации сразу (Apache/MIT для no-restriction production; Llama/Gemma если MAU не задевает). Шаг 2: Size budget по hardware и latency target: ≤8B edge (Llama 3.2 3B, Qwen 2.5 7B, Phi-3.5-mini, Gemma 3 4B); 14-32B sweet spot (Qwen 2.5 14B/32B, Phi-4 14B, Gemma 3 27B, Mistral Small 3 24B); 70B production (Llama 3.3 70B, Qwen 2.5 72B, DeepSeek-R1-Distill 70B); Frontier MoE (DeepSeek-V3/R1, Mixtral 8x22B, Llama 4 Maverick). Шаг 3: Task type — general/RAG → Llama/Qwen/Mistral; code → DeepSeek-Coder/Qwen Coder/Codestral; math/reasoning → R1/QwQ; multilingual non-EN → Qwen CN/JP/KR, Mistral EU, Aya low-resource; vision-language → Llama 3.2 Vision/Qwen-VL/Gemma 3/Pixtral; safety classifier → Llama Guard/ShieldGemma. Шаг 4: Fine-tune requirements — consumer GPU QLoRA 7-14B, server LoRA/full 70B+, inference-only vLLM.",
+                "example": "Production RAG-агент с EU compliance, 10M MAU, sub-200ms latency: Mistral 7B (Apache 2.0, fast) или Llama 3.1 8B (MAU OK) + RAG infrastructure.",
+                "when_to_apply": "При любом выборе модели для нового use case; не пропускать license check (часто delete-criteria).",
+                "edge_cases": "Для frontier-критичных задач (advanced reasoning) — open-source ещё отстаёт от o3/Claude/Gemini; используйте API.",
+                "related": "Q24 self-host; Q27 лицензии; Q34 outlook."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие code-specific open-source модели сейчас актуальны и под какие сценарии каждая?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DeepSeek-Coder V2 (16B / 236B MoE / 21B active, DeepSeek License — strong code, FIM, многоязычный); Qwen 2.5 Coder (0.5B/1.5B/3B/7B/14B/32B, Apache 2.0 ≤14B — обходит Codestral, полный размерный ряд); Codestral (22B, MNPL non-production); Codestral Mamba (7B, Apache 2.0, 256K context, state-space arch); Code Llama (legacy, заменён Llama 3 derivatives); StarCoder 2 (3B/7B/15B, BigCode OpenRAIL-M — FIM); Granite Code (3B/8B/20B/34B, Apache 2.0, IBM enterprise, 116 языков); OpenCoder (1.5B/8B, full transparency Apache 2.0). Сценарии: IDE FIM — Qwen 2.5 Coder 7B / StarCoder 2 7B / DeepSeek-Coder 6.7B (малые, быстрые); chat/explain/refactor — Qwen 2.5 Coder 32B / DeepSeek-Coder V2 16B; frontier reasoning+code — DeepSeek-V3 / R1-Distill-Qwen-32B; long-context — Codestral Mamba 256K / Qwen 2.5 Coder 32B 128K; enterprise — Granite Code",
+              "correct": true,
+              "sections": {
+                "explanation": "Code-specific open-source модели по категориям. DeepSeek-Coder V2 (16B / 236B MoE / 21B active, DeepSeek License) — strong code, FIM, многоязычный. Qwen 2.5 Coder (0.5B/1.5B/3B/7B/14B/32B, Apache 2.0 ≤14B) — обходит Codestral, полный размерный ряд. Codestral (22B, MNPL non-production) — single-pass code. Codestral Mamba (7B, Apache 2.0, 256K, state-space). Code Llama (legacy). StarCoder 2 (3B/7B/15B, BigCode OpenRAIL-M) — code completion, FIM. WizardCoder, Phind-CodeLlama (Llama 2 derivatives). Granite Code (3B/8B/20B/34B, Apache 2.0) — IBM enterprise, 116 языков. OpenCoder (1.5B/8B, Apache 2.0, full transparency). Сценарии: IDE FIM — Qwen 2.5 Coder 7B / StarCoder 2 7B / DeepSeek-Coder 6.7B; chat/refactor — Qwen 2.5 Coder 32B / DeepSeek-Coder V2 16B; frontier — DeepSeek-V3 / R1-Distill-Qwen-32B; long-context — Codestral Mamba 256K; enterprise compliance — Granite Code.",
+                "example": "В IDE для FIM: Qwen 2.5 Coder 7B даёт лучший trade-off speed/quality; для code chat — DeepSeek-Coder V2 16B с MoE.",
+                "when_to_apply": "При выборе code-model: учитывать FIM-support (для IDE), context length (для navigation), license (Codestral MNPL ≠ production).",
+                "edge_cases": "Сравнение с frontier: Claude Sonnet 4.5 Coder, GPT-4o Code всё ещё впереди по multi-file refactor и agentic coding; open-source closes на single-pass tasks (HumanEval, MBPP).",
+                "related": "Q15 R1; Q24 self-host."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только Code Llama актуален; остальные code-модели либо устарели, либо closed",
+              "correct": false,
+              "sections": {
+                "what_actually": "Code Llama сейчас legacy — заменён Qwen 2.5 Coder и DeepSeek-Coder V2 по большинству benchmarks.",
+                "source_of_confusion": "Code Llama имел название с 'Code' и Meta-бренд, но его экосистема устарела.",
+                "if_it_were_true": "Тогда HumanEval топовый был бы Code Llama, но это уже Qwen 2.5 Coder 32B или DeepSeek-Coder V2.",
+                "how_it_should_be": "Code Llama legacy; mainstream — Qwen/DeepSeek/Codestral."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все code-модели одинаковы по качеству и лицензии",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различия значительные: Codestral под MNPL (non-production), Qwen ≤14B Apache 2.0, DeepSeek own license; качество тоже различается.",
+                "source_of_confusion": "Близость на HumanEval даёт впечатление равнозначности, но context length/FIM/license отличаются.",
+                "if_it_were_true": "Тогда не было бы дифференциации в production code-stack.",
+                "how_it_should_be": "Code models имеют разные характеристики и trade-off."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Code-модели — это только GPT-4o и Claude; open-source их не имеет",
+              "correct": false,
+              "sections": {
+                "what_actually": "Open-source code-models существуют и закрывают разрыв с frontier на single-pass tasks (Qwen 2.5 Coder 32B, DeepSeek-Coder V2).",
+                "source_of_confusion": "Frontier coding (Cursor, Windsurf) часто использует Claude/GPT, но open-source альтернативы есть.",
+                "if_it_were_true": "Тогда не было бы рынка self-host IDE-assistants.",
+                "how_it_should_be": "Open-source code-models — рабочий стек, не только closed."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой outlook open-source LLM экосистемы в 2026: где open уже close-to-parity с frontier, где отстаёт, и каков геополитический контекст?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Open-source полностью догнал frontier во всех аспектах — нет смысла платить за API",
+              "correct": false,
+              "sections": {
+                "what_actually": "В нишах parity (MMLU, code single-pass, math reasoning), но frontier сохраняет преимущество в top-tier reasoning (o3/o4), native multimodal high quality (audio/video), agentic long-horizon (100-step traces), 1M+ context quality, safety/alignment robustness.",
+                "source_of_confusion": "DeepSeek-V3 ≈ GPT-4o на benchmarks даёт ощущение polnogo parity, но domains различаются.",
+                "if_it_were_true": "Тогда OpenAI/Anthropic потеряли бы revenue, что не произошло.",
+                "how_it_should_be": "Parity в нишах, отставание в frontier — nuanced картина."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Где close-to-parity или впереди: general Q&A (Llama 3.3 70B / Qwen 2.5 72B / DeepSeek-V3 ≈ GPT-4o/Claude Sonnet), math (R1/QwQ ≈ o1), code single-pass (Qwen 2.5 Coder 32B / DeepSeek-Coder V2 ≈ GPT-4o), multilingual non-EN (Qwen CN, Mistral EU), on-device/edge (Llama 3.2 1B/3B, Phi-3.5-mini, Gemma 3 4B — frontier closed здесь не играет). Где frontier сохраняет: top-tier reasoning o3/o4 (научные multi-step), native multimodal high quality (audio Gemini, vision Claude — open закрыл image но audio/video отстаёт), agentic 100-step traces (Claude Sonnet 4.5/o3), 1M+ context quality (Gemini/Claude — open декларирует 10M Llama 4 Scout но quality degrades), safety/alignment robustness. Геополитика: China open-source ascendance (DeepSeek/Qwen/Yi как противовес US export controls — soft power); US closed-frontier (OpenAI/Anthropic/Google не релизят weights); Europe Mistral (middle ground, open-base + commercial frontier, capex несопоставим)",
+              "correct": true,
+              "sections": {
+                "explanation": "Outlook 2026. Open close-to-parity или впереди: general Q&A (Llama 3.3 70B / Qwen 2.5 72B / DeepSeek-V3 ≈ GPT-4o/Claude Sonnet); math reasoning (DeepSeek-R1 / QwQ-32B близко к o1); code single-pass (Qwen 2.5 Coder 32B / DeepSeek-Coder V2 ≈ GPT-4o); multilingual non-EN (Qwen для CN, Mistral для EU langs); on-device/edge (Llama 3.2 1B/3B, Phi-3.5-mini, Gemma 3 4B — frontier closed здесь не играет, нет deploy). Frontier сохраняет: top-tier reasoning o3/o4 (multi-step научные/математические); native multimodal high quality (GPT-4o audio, Gemini 2 video, Claude vision — open закрыл image но audio/video отстаёт); agentic 100-step traces (Claude Sonnet 4.5/o3); 1M+ context quality (Gemini/Claude — open декларирует 10M Llama 4 Scout, но quality degrades); safety/alignment robustness. Геополитический контекст: China open-source ascendance (DeepSeek, Qwen, Yi — стратегически как противовес US export controls, soft power); US closed-frontier (OpenAI, Anthropic, Google не релизят frontier weights, конкурируют через API); Europe Mistral пытается среднюю позицию (open-base + commercial frontier, capex несопоставим с US/CN).",
+                "example": "Production-takeaway 2026: для большинства use cases open-source достаточно (Llama 3.3 70B + RAG для general Q&A, Qwen 2.5 Coder 32B для code, DeepSeek-R1 для reasoning); frontier API зарезервирован для (а) reasoning-критичных, (б) agentic, (в) когда не хочется maintenance ML-стека.",
+                "when_to_apply": "При planning AI-стратегии 2026 — учитывать что 80% задач покрыты open-source; frontier API только для top-tier reasoning/agentic/multimodal high quality.",
+                "edge_cases": "Что вероятно к концу 2026: open-source o3-уровня reasoning (DeepSeek-R2?), open-source native multimodal audio (после Llama 4.x), open-source 1M context production quality, регуляторное давление в EU/California на frontier safety (Article 53 EU AI Act освобождает open-source).",
+                "related": "Q14 DeepSeek-V3; Q32 decision tree; Q24 self-host."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Open-source безнадёжно отстал — frontier (OpenAI/Anthropic/Google) недостижим",
+              "correct": false,
+              "sections": {
+                "what_actually": "В нишах open-source достиг parity (math, single-pass code, general Q&A); отстаёт в top-tier reasoning, native multimodal high quality, agentic long-horizon — но не безнадёжно.",
+                "source_of_confusion": "Frontier (o3, Claude) видны в публикациях; open-source часто 'дешевле, но не frontier'.",
+                "if_it_were_true": "Тогда не было бы DeepSeek shock о $5.5M training cost.",
+                "how_it_should_be": "Nuanced parity — в нишах yes, frontier — no yet."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Геополитика не имеет отношения — open-source это нейтральный технический ландшафт",
+              "correct": false,
+              "sections": {
+                "what_actually": "Геополитика играет огромную роль: China использует open-source как soft power противовес US export controls; DeepSeek/Qwen/Yi стратегически релизятся; US closed-frontier; EU AI Act освобождает open-source.",
+                "source_of_confusion": "Технический ландшафт кажется apolitical, но reality — глубокий геополитический контекст.",
+                "if_it_were_true": "Тогда DeepSeek не был бы subsidized API за $0.07/1M, и export controls не имели бы значения.",
+                "how_it_should_be": "Геополитика — fundamental контекст open-source LLM 2026."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2165 @@
+{
+  "topic_slug": "inference-optimization-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор метрик корректно описывает LLM inference в production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "TTFT, TPOT, throughput, end-to-end latency, cost и goodput — с p50/p95/p99 отдельно для prefill и decode",
+              "correct": true,
+              "sections": {
+                "explanation": "Inference нельзя сводить к одной latency. TTFT измеряет задержку до первого токена (для UX), TPOT — среднее время между токенами, throughput — aggregate tokens/sec по всем requests, cost — $/1M tokens, goodput — доля requests внутри SLA. Prefill и decode имеют разный профиль, поэтому процентили считают отдельно.",
+                "example": "Чат-бот: TTFT <500ms, TPOT <50ms (=20 tok/sec); RAG-pipeline: throughput критичнее, TTFT может быть до 2s; batch-обработка: только cost важен.",
+                "when_to_apply": "Любой production deployment LLM: дашборды Grafana, SLA-контракты, capacity planning, выбор инстанса GPU.",
+                "edge_cases": "Streaming SSE снижает perceived latency, но end-to-end остаётся TTFT + N×TPOT. Continuous batching повышает throughput, но растёт TTFT новых запросов в очереди.",
+                "related": "TTFT/TPOT — основа SLA. Goodput учитывает соблюдение порога. См. Q9 (continuous batching) и Q36 (streaming SSE)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно одной метрики end-to-end latency, остальные производные",
+              "correct": false,
+              "sections": {
+                "what_actually": "End-to-end latency = TTFT + N×TPOT, где N зависит от длины ответа. Без разделения нельзя понять, что тюнить — prefill или decode.",
+                "source_of_confusion": "В traditional REST API latency действительно одна метрика. Но LLM генерирует токены потоком — поэтому первый токен и стационарный темп измеряют отдельно.",
+                "if_it_were_true": "Не отличить ситуацию «первый токен через 5s, затем мгновенно» от «300ms TTFT, потом по 100ms на токен» — обе дадут одинаковый total, но UX совершенно разный.",
+                "how_it_should_be": "Минимум: TTFT + TPOT + throughput. Production-ready: добавить goodput и cost per 1M tokens."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное — GPU utilization, остальное вторично",
+              "correct": false,
+              "sections": {
+                "what_actually": "Высокий GPU util может означать compute-bound prefill при медленном decode. Util не предсказывает latency для пользователя.",
+                "source_of_confusion": "Для batch-инференса util действительно важен. Но в interactive serving — это инфра-метрика, а не UX-метрика.",
+                "if_it_were_true": "Можно было бы maximize util огромным batch — но при этом TTFT новых запросов выстреливал бы до неприемлемых значений.",
+                "how_it_should_be": "GPU util — sanity check для capacity, но SLA строится на TTFT/TPOT/throughput с разрезом p95/p99."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TPS (transactions per second) и количество CPU cores — стандарт мониторинга",
+              "correct": false,
+              "sections": {
+                "what_actually": "LLM inference измеряется в tokens/sec, не TPS — один request даёт сотни токенов. CPU cores почти не задействованы (GPU-bound).",
+                "source_of_confusion": "TPS — классика веб-сервисов. Но LLM имеет внутреннее состояние генерации, и request != единица работы.",
+                "if_it_were_true": "Если бы TPS определял всё, длинные генерации были бы бесплатными — на деле они блокируют GPU на секунды.",
+                "how_it_should_be": "Считать tokens/sec aggregate (throughput) и per-stream (TPOT). CPU cores релевантны только для llama.cpp и preprocessing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему LLM inference принципиально медленный?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сетевые задержки между серверами доминируют над computation",
+              "correct": false,
+              "sections": {
+                "what_actually": "Single-host inference на GPU не зависит от сети — все веса в VRAM, attention локально.",
+                "source_of_confusion": "Distributed serving (TP/PP) добавляет all-reduce, но это малая доля от общего времени декодирования.",
+                "if_it_were_true": "Тогда переход на NVLink или InfiniBand давал бы 10× ускорение — но реально дает 1.2-1.5× и только при cross-node.",
+                "how_it_should_be": "Bottleneck — autoregressive nature: генерация по одному токену с полным forward pass через все слои на каждом шаге."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Autoregressive генерация требует полного forward pass на каждый токен; decode — memory-bound по HBM bandwidth",
+              "correct": true,
+              "sections": {
+                "explanation": "P(token_i | token_1..i-1) — следующий токен зависит от предыдущих, поэтому генерация неснимаемо последовательна. На каждом шаге нужно прочитать все веса модели из HBM, что упирается в bandwidth, а не в compute.",
+                "example": "Llama-70B FP16 = 140 GB, H100 HBM = 3.35 TB/s → теоретический предел ~24 tok/sec на одного клиента. На batch=1 GPU compute idle ~90%.",
+                "when_to_apply": "Понимание подсказывает оптимизации: continuous batching амортизирует чтение весов по N requests, quantization уменьшает байты, speculative decoding выдаёт больше токенов за чтение.",
+                "edge_cases": "Prefill стадия compute-bound (параллельная обработка prompt), там нужны другие оптимизации — FlashAttention, chunked prefill.",
+                "related": "См. Q4 (memory-bound vs compute-bound) и Q12 (speculative decoding). Прямое следствие — Q9 (continuous batching)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Python GIL и накладные расходы интерпретатора",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hot path inference исполняется в CUDA kernels на GPU, Python только орchestrates. GIL не влияет на математику.",
+                "source_of_confusion": "Python действительно медленный для CPU, но vLLM/TGI выгружают всё горячее в C++/CUDA через PyTorch.",
+                "if_it_were_true": "Переписывание на Rust/Go дало бы порядок ускорения — но llama.cpp на C++ упирается в те же HBM bandwidth и autoregressive limits.",
+                "how_it_should_be": "Bottleneck — фундаментальная природа autoregressive generation, не runtime overhead."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JSON parsing API ответов занимает основное время",
+              "correct": false,
+              "sections": {
+                "what_actually": "JSON ответ — килобайты текста, парсится в микросекундах. Generation — секунды.",
+                "source_of_confusion": "В web-API JSON может быть заметной долей, но не для LLM где payload крошечный по сравнению с временем генерации.",
+                "if_it_were_true": "Streaming SSE с chunk-by-chunk парсингом всё равно показывал бы те же сотни ms на токен.",
+                "how_it_should_be": "Генерация ограничена HBM bandwidth и autoregressive характером — JSON в шуме."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевое различие между prefill и decode стадиями?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Prefill — это warm-up GPU, decode — основная фаза; различия только в кэшах",
+              "correct": false,
+              "sections": {
+                "what_actually": "Prefill — полноценная стадия обработки промпта параллельно, не warm-up. Создаёт KV cache и первый токен.",
+                "source_of_confusion": "В RDBMS prefetch иногда называют warm-up; здесь же это полноценная фаза с другим профилем нагрузки.",
+                "if_it_were_true": "Можно было бы выключить — на деле без prefill нет KV cache и генерация невозможна.",
+                "how_it_should_be": "Prefill — параллельная compute-bound обработка всех prompt-токенов; decode — sequential memory-bound по одному токену."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Prefill и decode используют одинаковые kernels, разница только в batch size",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kernels похожи, но profile нагрузки противоположный: prefill compute-bound, decode memory-bound — оптимизации совершенно разные.",
+                "source_of_confusion": "Архитектурно это один transformer, и поверхностно — те же matmul. Но FLOPs/byte для них отличается в десятки раз.",
+                "if_it_were_true": "Тогда не было бы chunked prefill и disaggregated inference — а они в проде дают 1.5-3× выигрыша.",
+                "how_it_should_be": "Prefill параллельный по seq_len → нужны FlashAttention, chunked prefill. Decode iterative → нужны continuous batching, speculative."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Prefill параллельно обрабатывает весь prompt (compute-bound), decode генерирует по одному токену (memory-bound); требуют разных оптимизаций",
+              "correct": true,
+              "sections": {
+                "explanation": "Prefill пропускает все токены промпта через модель за один проход — GPU занят матричными умножениями (compute-bound). Decode autoregressive: один токен за раз, нужно перечитать все веса (memory-bound), compute idle 80-95%.",
+                "example": "Промпт 32K токенов на H100: prefill ~500ms (compute saturated), затем decode по 30-50ms на токен (HBM bandwidth saturated, ALUs простаивают).",
+                "when_to_apply": "Выбор оптимизаций: FlashAttention/chunked prefill для prefill-стадии; continuous batching, KV cache, quantization, speculative decoding для decode.",
+                "edge_cases": "Disaggregated inference (Mooncake) разделяет prefill и decode на разные GPU pools для независимого тюнинга. Chunked prefill (vLLM) смешивает оба, чтобы prefill длинных промптов не блокировал decode.",
+                "related": "Прямо связано с Q4 (memory-bound vs compute-bound), Q11 (chunked prefill), Q31 (disaggregated)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Prefill — только на CPU, decode — только на GPU",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обе стадии идут на GPU (или CPU/Metal для llama.cpp — но обе на одном устройстве).",
+                "source_of_confusion": "Tokenization действительно часто на CPU, но это микросекунды до prefill — не сама стадия.",
+                "if_it_were_true": "Тогда долгий prompt мог бы блокироваться CPU bandwidth — а реально упирается в GPU FLOPs.",
+                "how_it_should_be": "Prefill и decode — обе GPU-стадии, разница в parallelism (параллельно vs sequentially) и характере bottleneck."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему decode при batch=1 жёстко memory-bound, и что реально помогает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Decode становится compute-bound только после увеличения context до 100K+ токенов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Длинный context не превращает decode-step в compute-bound: один токен = одна последовательная итерация. Длина влияет на attention, но веса всё равно нужно прочитать целиком.",
+                "source_of_confusion": "Long context действительно меняет cost attention (O(n)), но per-step bottleneck остаётся memory bandwidth по весам модели.",
+                "if_it_were_true": "Тогда long context требовал бы compute, а не bandwidth — но H200/B200 (большая HBM) даёт больше выигрыша, чем чистый compute upgrade.",
+                "how_it_should_be": "Decode batch=1 = arithmetic intensity ~1-2 FLOPs/byte ≪ ridge point H100 (~290). Помогает большой batch, quantization, speculative."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Decode не memory-bound; всё ограничено числом ядер CUDA",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бенчмарки показывают obvious: даже с full util CUDA cores decode batch=1 даёт всего ~5% peak FLOPs — bandwidth-limited.",
+                "source_of_confusion": "Маркетинг любит говорить про TFLOPs и CUDA cores, забывая, что для LLM HBM bandwidth важнее.",
+                "if_it_were_true": "Тогда B200 (4500 TFLOPs vs 1979 у H100) давала бы 2× в decode — реально ~1.5× и в основном за счёт HBM3e.",
+                "how_it_should_be": "Decode batch=1 = memory-bound. Lever — batching (амортизация), quantization (меньше байтов) или speculative (больше токенов за чтение)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Помогает только увеличение частоты GPU — overclocking",
+              "correct": false,
+              "sections": {
+                "what_actually": "GPU частота повышает compute FLOPs, но не bandwidth HBM. Decode bottleneck именно в bandwidth.",
+                "source_of_confusion": "В CPU мире overclock даёт линейный прирост, для GPU memory-bound workloads — почти ноль.",
+                "if_it_were_true": "RTX 4090 (165 FP16 TFLOPs) была бы немногим хуже H100 (1979 TFLOPs) — но реально H100 в декоде сильно быстрее благодаря HBM bandwidth.",
+                "how_it_should_be": "Чтобы decode разогнать, нужно либо снизить байты (quantization), либо амортизировать чтение (batching, speculative), либо ускорить HBM (H200, B200)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "На batch=1 arithmetic intensity ~1-2 FLOPs/byte ≪ ridge point H100 (~290); помогают batching, quantization, speculative decoding и FlashAttention",
+              "correct": true,
+              "sections": {
+                "explanation": "Arithmetic intensity = FLOPs/byte. На decode batch=1 каждый чтение веса даёт горстку FLOPs — то есть GPU bandwidth saturated, а compute простаивает (~90% idle). Большой batch амортизирует чтение весов по N requests (batch=32 → 32 FLOPs/byte), quantization уменьшает байты (INT4 = -4× памяти), speculative decoding даёт больше токенов за один проход весов.",
+                "example": "H100 ridge ~290 FLOPs/byte для BF16. Decode 70B batch=1 → ~24 tok/sec лимит. С continuous batching batch=64 → пропускная способность растёт в 30+× раз.",
+                "when_to_apply": "Тюнинг production-сервера: всегда включай continuous batching, exploring quantization (FP8/INT4) — это даёт 2-4× throughput почти без потерь качества.",
+                "edge_cases": "Prefill batch=1 long prompt уже compute-bound — там не помогает quantization весов так сильно, нужны FlashAttention/chunked prefill. На очень больших batch GPU memory исчерпывается раньше, чем compute.",
+                "related": "Связано с Q9 (batching), Q15-17 (quantization), Q12 (speculative), Q21 (FlashAttention)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое KV cache и зачем он нужен в transformer-инференсе?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Кэшированные keys и values предыдущих токенов, чтобы не пересчитывать их для всех t токенов на каждом шаге; снижает один decode-step с O(n²) до O(n)",
+              "correct": true,
+              "sections": {
+                "explanation": "Attention считает Q × K^T × V. При генерации токена t новый Q_t берётся из текущего hidden state, но K_1..K_t и V_1..V_t — уже посчитаны для предыдущих токенов. Кэшируем их → один шаг стоит O(n) вместо O(n²). Цена — линейный рост памяти по длине контекста.",
+                "example": "Llama-70B 2K context FP16 → ~1 GB на один request. 100 concurrent users = 100 GB только под KV cache (выше веса модели).",
+                "when_to_apply": "Всегда при autoregressive generation — это стандарт. Без KV cache GPT-3 был бы непригодным.",
+                "edge_cases": "Long context (128K+) делает KV cache доминантной частью памяти. Решения: GQA (Llama-3 70B), KV cache в FP8 (--kv-cache-dtype fp8), PagedAttention для эффективности.",
+                "related": "Q6 (как считать размер), Q7 (PagedAttention), Q22 (prefix caching), Q15 (квантизация KV)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Кэш весов модели для быстрого доступа из VRAM",
+              "correct": false,
+              "sections": {
+                "what_actually": "Веса модели уже в VRAM целиком — никакой kv cache их не «кэширует». KV cache хранит активации attention.",
+                "source_of_confusion": "Слово «cache» провоцирует мысль о tier-кэше памяти; здесь же это per-request state.",
+                "if_it_were_true": "Тогда KV cache размер не зависел бы от длины context — а реально растёт линейно с числом токенов.",
+                "how_it_should_be": "KV cache = K и V для каждого предыдущего токена в каждом слое. Per-request, освобождается при завершении генерации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cache промптов для дедупликации между разными пользователями",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это prefix caching, отдельный механизм поверх KV cache. Сам KV cache — per-request state, не межклиентский.",
+                "source_of_confusion": "Prefix caching действительно использует KV cache, но это другой уровень оптимизации (Q22).",
+                "if_it_were_true": "Тогда любой LLM-server автоматически делил бы данные между пользователями — privacy/security катастрофа.",
+                "how_it_should_be": "KV cache — низкоуровневая структура per-request. Prefix caching (vLLM --enable-prefix-caching) — отдельный layer для шеринга prefix."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cache токенизаторов для ускорения парсинга текста",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tokenizer уже работает за микросекунды на CPU. KV cache не имеет к этому отношения.",
+                "source_of_confusion": "Tokenization тоже называется иногда «encoding» — но KV cache работает после tokenizer, на уровне attention-активаций.",
+                "if_it_were_true": "Tokenizer cache не дал бы заметного выигрыша — он и так быстрый.",
+                "how_it_should_be": "KV cache хранит keys/values activations attention, не результат tokenization."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно посчитать размер KV cache для одного request?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "n_params × seq_len × bytes_per_element — пропорционально размеру модели в параметрах",
+              "correct": false,
+              "sections": {
+                "what_actually": "KV cache зависит от числа слоёв и attention heads, а не от общего n_params (которое включает FFN — а они в kv cache не входят).",
+                "source_of_confusion": "Кажется, что больше модель → больше cache. Это так, но не через n_params, а через n_layers × n_kv_heads × head_dim.",
+                "if_it_were_true": "Тогда для Llama-3-70B (с GQA) KV cache был бы пропорционален 70B — на деле благодаря GQA он 8× меньше, чем у MHA-модели той же ширины.",
+                "how_it_should_be": "Формула: 2 × n_layers × n_kv_heads × head_dim × seq_len × bytes_per_element."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "2 × n_layers × n_kv_heads × head_dim × seq_len × bytes_per_element; «2» — отдельно K и V",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый слой хранит K и V (отсюда множитель 2) для каждого kv-head, каждой длины seq, в byte-формате выбранного dtype. Для Llama-3-70B (80 layers, 8 GQA kv heads, 128 head_dim) при seq=2K FP16 → ~640 MB. Для Llama-3-405B (126 layers) seq=32K FP16 → ~16 GB.",
+                "example": "Llama-3-8B: 32 × 8 × 128 × 2K × 2 bytes = ~256 MB; та же модель в FP8 (--kv-cache-dtype fp8) — ~128 MB, что позволяет вдвое больший batch.",
+                "when_to_apply": "Capacity planning: считаешь, сколько concurrent requests влезет в GPU. VRAM total minus weights = budget для KV cache, делишь на размер per-request.",
+                "edge_cases": "GQA/MQA сокращают n_kv_heads vs n_q_heads (Llama-3-70B: 8 vs 64 — экономия ×8). Multi-token prediction (Medusa) кешируют extra heads. Long context (128K+) делает KV cache доминирующим.",
+                "related": "Связано с Q5 (зачем KV cache), Q7 (PagedAttention для эффективного хранения), Q15 (квантизация KV до FP8)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Равен размеру модели в байтах",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это конкретная цифра, но обычно совпадает только случайно. KV cache зависит от seq_len и числа concurrent requests, не от размера модели один-в-один.",
+                "source_of_confusion": "Иногда при определённых seq_len/batch значения сходятся — но это совпадение, не формула.",
+                "if_it_were_true": "Тогда Llama-3-70B всегда требовала бы 140 GB только под KV cache + 140 GB веса = 280 GB на любой запрос. Реально ~1 GB на request 2K context.",
+                "how_it_should_be": "Считать по формуле 2 × n_layers × n_kv_heads × head_dim × seq_len × bytes."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Линейно зависит только от batch_size и не от seq_len",
+              "correct": false,
+              "sections": {
+                "what_actually": "Зависит от обоих: batch масштабирует, seq_len растёт линейно (новый токен — новые K, V).",
+                "source_of_confusion": "Для prefill известной длины КV cache добавляется сразу — поэтому кажется, что seq_len тут роли не играет.",
+                "if_it_were_true": "Тогда long context (128K) был бы бесплатным — а реально KV cache становится доминирующей памятью.",
+                "how_it_should_be": "Размер = 2 × n_layers × n_kv_heads × head_dim × seq_len × bytes — обе оси растут."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём суть PagedAttention и почему даёт до ×24 throughput?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сжимает KV cache в 24 раза с помощью INT4 квантизации",
+              "correct": false,
+              "sections": {
+                "what_actually": "PagedAttention — не quantization. KV cache хранится в FP16 (или FP8), но в виде блоков фиксированного размера 16 tokens.",
+                "source_of_confusion": "INT4 действительно даёт 4× экономии, но это другая техника (см. Q15). Цифра «24×» из paper про fragmentation, не precision.",
+                "if_it_were_true": "INT4 KV cache реально существует, но даёт 4× экономии, не 24×. Качество при этом просаживается.",
+                "how_it_should_be": "PagedAttention решает fragmentation, аналогично OS virtual memory. Память упакована >95% vs ~30% наивно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использует разреженную attention с topK=24 для каждой позиции",
+              "correct": false,
+              "sections": {
+                "what_actually": "PagedAttention не меняет attention pattern — это full attention. Sparse attention — другие подходы (BigBird, Longformer).",
+                "source_of_confusion": "TopK attention действительно ускоряет long context, но это другая техника, не имеющая отношения к paging.",
+                "if_it_were_true": "Sparse топK ухудшил бы quality, требовал retrain. PagedAttention же lossless для существующих моделей.",
+                "how_it_should_be": "PagedAttention — memory management trick: KV в блоках, никаких изменений в математике attention."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "KV cache хранится в блоках фиксированного размера (page) с таблицей указателей — устраняет fragmentation, позволяет шаринг блоков и большой batch size; throughput ×24 vs HuggingFace transformers",
+              "correct": true,
+              "sections": {
+                "explanation": "Inspired by OS virtual memory. Вместо резервации contiguous max_seq_len под каждый request, KV cache разбит на блоки по 16 токенов. Logical sequence → block table указателей. Memory efficiency растёт с ~30% до >95%, batch size кратно увеличивается, общие prefix-блоки шарятся между requests.",
+                "example": "Request A и B с одним system prompt — блок 42 шарится. Beam search ветви используют общий префикс. vLLM в Llama-3-70B на H100 даёт ~1900 tok/s aggregate, HF transformers ~80 tok/s.",
+                "when_to_apply": "Любой production LLM serving с concurrent requests — стандарт. Особенно ценно для variable-length workload (chat, RAG).",
+                "edge_cases": "Block size 16 — компромисс: больше = меньше overhead block-table, но больше internal fragmentation в последнем блоке. PagedAttention требует особых CUDA kernels (paged_attention) — поддерживается в vLLM, TGI, SGLang.",
+                "related": "Q5-6 (KV cache), Q8 (fragmentation), Q9 (continuous batching работает поверх PagedAttention), Q22 (prefix caching как application paging)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Параллелит attention по 24 GPU одновременно",
+              "correct": false,
+              "sections": {
+                "what_actually": "PagedAttention — single-GPU memory management. Параллелизация по GPU — это Tensor/Pipeline Parallelism (Q28).",
+                "source_of_confusion": "Цифра 24 фигурирует в paper title — но как throughput multiplier vs HF transformers, не количество GPU.",
+                "if_it_were_true": "24 GPU были бы абсурдным требованием для production — vLLM работает и на одной GPU.",
+                "how_it_should_be": "PagedAttention решает память на одной GPU; TP/PP — отдельная техника для distributed serving."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое KV cache fragmentation и как с ней борется PagedAttention?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это потеря производительности из-за переключения между requests; PagedAttention использует один большой буфер",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fragmentation — про память (потерянное пространство), не про CPU/scheduling overhead.",
+                "source_of_confusion": "Слово «fragmentation» в OS-контексте про разное — disk, memory, network. Здесь именно memory.",
+                "if_it_were_true": "Тогда решение было бы про batching, а не про block-allocator.",
+                "how_it_should_be": "Internal fragmentation — request зарезервировал max_seq_len, использовал часть. External — дыры между requests. PagedAttention бьёт KV на блоки по 16 токенов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это растущая задержка SSD при загрузке весов модели",
+              "correct": false,
+              "sections": {
+                "what_actually": "Веса модели грузятся один раз при старте; SSD не участвует в inference loop.",
+                "source_of_confusion": "Иногда конечно swap-space используется для preemption (--swap-space в vLLM), но это не fragmentation.",
+                "if_it_were_true": "Тогда NVMe ускорял бы LLM — а на деле всё в VRAM.",
+                "how_it_should_be": "Fragmentation — про потерянное пространство в KV cache VRAM, решается block-allocator PagedAttention."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только проблема CPU-кэшей L1/L2; для GPU нерелевантна",
+              "correct": false,
+              "sections": {
+                "what_actually": "На GPU тоже бывают cache, но fragmentation здесь — про VRAM, выделяемую под KV cache, а не CPU-кэши.",
+                "source_of_confusion": "L1/L2 действительно подвержены fragmentation в традиционном смысле, но это не та проблема, которую решает PagedAttention.",
+                "if_it_were_true": "Тогда vLLM не нужен был бы — а реально HF transformers даёт 5-10× худшую memory efficiency.",
+                "how_it_should_be": "Fragmentation KV cache — это про VRAM allocation per-request, не про hardware caches."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Internal — request зарезервировал max_seq_len, использовал меньше; external — дыры между requests; PagedAttention блокирует KV в пейджи по 16 токенов и достигает >95% memory efficiency",
+              "correct": true,
+              "sections": {
+                "explanation": "Внутри request: зарезервировано 2K под max_seq_len, использовано 200 токенов — 1800 «потеряно». Между requests: разные размеры оставляют дыры, в которые не вписывается новый. PagedAttention решает аналогично OS paging: блоки одинакового размера (16 tokens), таблица указателей.",
+                "example": "HF transformers: ~20-40% полезного использования KV cache. vLLM PagedAttention: internal <4% (только последний неполный блок), external 0% — итого >95% efficiency. На той же GPU помещается в 2-3× больше concurrent requests.",
+                "when_to_apply": "Production serving с variable-length workload (chat, RAG). Чем шире разброс длин — тем больше выигрыш PagedAttention vs naive.",
+                "edge_cases": "Block size 16 — компромисс. Меньше = меньше internal frag, но больше overhead block table. Hash блока (для prefix caching) детерминированно зависит от содержимого + хэша предыдущего блока.",
+                "related": "Q7 (PagedAttention в целом), Q22 (prefix caching строится поверх блоков), Q9 (большой batch требует упакованной памяти)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сравнение static и continuous batching: ключевое отличие и эффект?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Static дожидается, пока все requests в batch закончат, потом следующий batch; continuous добавляет/убирает requests на каждой decode iteration → 5-10× throughput",
+              "correct": true,
+              "sections": {
+                "explanation": "Static batching: фиксированный batch, GPU простаивает после первых завершений и пока все ждут самый длинный. Continuous batching (iteration-level scheduling, Orca/vLLM): на каждом шаге scheduler смотрит KV cache, решает, какие активные запросы продолжать и какие новые подключить. Завершённый освобождает slot сразу.",
+                "example": "Static: req A (50 tok) + B (200 tok) + C (30 tok) — все 250 итераций GPU чем-то занят, но 2/3 заняты только B. Continuous: A освобождается на шаге 50, его slot занимает D. Throughput для variable-length workload ×5-10.",
+                "when_to_apply": "Default для production serving с непредсказуемой длиной ответов (chat, RAG, code-gen). Включено по умолчанию в vLLM, TGI, TensorRT-LLM, SGLang.",
+                "edge_cases": "Static проще для embedding API (фиксированный output 0 токенов), для batch jobs одной длины. Continuous требует динамичной памяти под KV — это и решает PagedAttention.",
+                "related": "Q7 (PagedAttention — основа), Q10 (iteration-level scheduling), Q11 (chunked prefill — расширение)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Static — синхронный, continuous — асинхронный, в остальном идентичны",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие фундаментально: continuous batching — это iteration-level scheduling, а не просто async wrapper.",
+                "source_of_confusion": "Слово «continuous» вызывает ассоциации с continuous deployment, async streams. Но техническая суть — динамичное add/remove requests внутри batch.",
+                "if_it_were_true": "Тогда any async wrapper над static batching давал бы тот же 5-10× выигрыш — на деле без iteration-level scheduling никакого выигрыша.",
+                "how_it_should_be": "Static = collect all, run all, wait for all. Continuous = на каждом шаге решать состав batch."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Continuous требует больше VRAM, поэтому используется редко",
+              "correct": false,
+              "sections": {
+                "what_actually": "Continuous batching экономит память (через PagedAttention), а не тратит больше. Используется default в vLLM, TGI, TRT-LLM.",
+                "source_of_confusion": "Большой batch действительно требует памяти под KV cache — но в продакшене это и есть основной механизм.",
+                "if_it_were_true": "Тогда production LLM была бы дороже — реально continuous batching снижает $/token в 5-10×.",
+                "how_it_should_be": "Continuous batching — индустриальный стандарт, default everywhere; static используется только для специальных случаев (embeddings)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Static быстрее для длинных promptов, continuous — для коротких",
+              "correct": false,
+              "sections": {
+                "what_actually": "Continuous batching быстрее для variable-length workload (любого), для длинных и коротких. Длина promptа отдельно решается chunked prefill.",
+                "source_of_confusion": "Длинный prompt действительно блокирует GPU на prefill — но это решает chunked prefill (Q11), а не выбор static.",
+                "if_it_were_true": "Тогда vLLM требовал бы переключаться между режимами — реально continuous работает для любых длин.",
+                "how_it_should_be": "Continuous batching универсально выигрывает; для long prompts добавляют chunked prefill."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает iteration-level scheduling в vLLM?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Запускает одну batch до полного завершения, потом следующую",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это поведение static batching, не iteration-level. iteration-level переоценивает состав batch на каждой decode-итерации.",
+                "source_of_confusion": "Кажется логичным: «запустили, дождались, дальше». Но это и есть основная проблема static, которую решает iteration-level.",
+                "if_it_were_true": "Тогда у vLLM не было бы прироста vs HF transformers (которые делали именно это).",
+                "how_it_should_be": "Каждую итерацию (~30-50ms) scheduler решает: какие активные продолжить, какие добавить из очереди, какие preempt при нехватке KV cache."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "На каждой итерации (≈один decode step) scheduler смотрит свободные KV блоки и решает, какие active requests продолжать, какие добавить из очереди; при нехватке — preemption (swap или recompute)",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждые ~30-50ms scheduler пересматривает состав batch: завершённые слоты освобождает, добавляет новые из очереди (если KV хватает), continues active. Если KV cache переполняется — preempt (swap на CPU RAM или recompute prefill при возобновлении).",
+                "example": "Knobs: --max-num-seqs 256 (max concurrent), --max-num-batched-tokens 16384 (token budget per batch), --scheduling-policy fcfs|priority, --swap-space 4 (GB CPU swap).",
+                "when_to_apply": "Любое production deployment vLLM/TGI/SGLang — это и есть continuous batching. Тюнинг knobs влияет на throughput и TTFT.",
+                "edge_cases": "Длинный prompt (32K) блокирует decode остальных на сотни ms TTFT spike → решается chunked prefill. Slow draining: при низком трафике preemption неэффективна — лучше keep alive.",
+                "related": "Q9 (continuous batching в целом), Q11 (chunked prefill), Q26 (vLLM knobs)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использует priority queue по user ID для fairness между клиентами",
+              "correct": false,
+              "sections": {
+                "what_actually": "vLLM default — FCFS (FIFO). Priority policy есть, но не привязан к user ID — это application-level concern.",
+                "source_of_confusion": "Fairness между tenants — отдельная тема (rate limiting, queue per tenant), не часть iteration-level scheduling.",
+                "if_it_were_true": "Тогда multi-tenant SaaS работал бы из коробки — на практике fairness реализуют на уровне gateway.",
+                "how_it_should_be": "iteration-level scheduling — про управление KV cache и batch composition, fairness — отдельный layer (LiteLLM, Kong, custom)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Полностью randomized scheduling для равной утилизации GPU",
+              "correct": false,
+              "sections": {
+                "what_actually": "vLLM использует FCFS или priority, не random. Цель — минимизация TTFT и максимизация throughput, а не равномерность.",
+                "source_of_confusion": "Random load balancing в multi-server — другая концепция. Здесь один scheduler внутри одного instance.",
+                "if_it_were_true": "Random схема приводила бы к старвейшен длинных запросов и непредсказуемому TTFT.",
+                "how_it_should_be": "Scheduler детерминированный: FCFS обеспечивает fairness по времени прихода, priority — по бизнес-логике."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужен chunked prefill?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы сэкономить VRAM при загрузке весов модели",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chunked prefill не связан с весами модели — он про разбиение обработки prompt на куски.",
+                "source_of_confusion": "Chunked loading действительно бывает для весов (особенно offload на CPU), но это другая техника.",
+                "if_it_were_true": "Тогда chunked prefill включался бы при недостатке VRAM — реально включают для длинных промптов чтобы не блокировать decode.",
+                "how_it_should_be": "Chunked prefill бьёт длинный prompt на куски ~512 токенов, смешивая с decode активных requests в каждом batch."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы шардировать prefill между несколькими GPU",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шардинг prefill по GPU — это tensor/sequence parallelism (Q28), отдельная техника. Chunked prefill работает на одной GPU.",
+                "source_of_confusion": "Оба способа имеют дело с длинным prompt, но решают разные задачи: scaling vs scheduling.",
+                "if_it_were_true": "Тогда chunked prefill требовал бы multi-GPU — а реально включается флагом на одной GPU.",
+                "how_it_should_be": "Chunked prefill — про темпоральное разбиение для co-scheduling с decode. Sequence parallelism — про spatial split."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Длинный prompt (32K) на prefill блокирует GPU на 500ms-1s, в это время decode стоит → P99 TPOT всплеск; chunked prefill бьёт prefill на куски 512 токенов и смешивает с decode активных requests в каждом batch",
+              "correct": true,
+              "sections": {
+                "explanation": "Без chunked prefill prefill длинного prompt захватывает GPU полностью — decode остальных requests стоит, TPOT spike. С chunked prefill в каждом batch — смесь prefill-chunk + decode-tokens, GPU занят, decode не блокируется. P99 TPOT падает 3-5×.",
+                "example": "Batch N: [decode_A, decode_B, prefill_C_chunk_1]. Batch N+1: [decode_A, decode_B, prefill_C_chunk_2]. После завершения chunks: [decode_A, decode_B, decode_C]. Включить vLLM: --enable-chunked-prefill (с 0.5+ default on для long context).",
+                "when_to_apply": "Если в workload есть смесь коротких и длинных promptов (RAG, code, document QA) — обязательно. Без chunked prefill long context разрушает SLA для коротких запросов.",
+                "edge_cases": "Throughput почти не страдает (~2-5% overhead). Chunk size 512 — компромисс: меньше = больше overhead, больше = хуже smoothing. SGLang имеет аналогичный механизм.",
+                "related": "Q3 (prefill vs decode), Q10 (iteration-level scheduling), Q31 (disaggregated — альтернатива)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это улучшение точности генерации, не производительности",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chunked prefill mathematically equivalent — выдаёт идентичные токены. Это purely performance/scheduling оптимизация.",
+                "source_of_confusion": "Изменение порядка вычислений иногда влияет на численную стабильность, но не на семантику attention.",
+                "if_it_were_true": "Тогда нужно было бы сравнивать quality — реально включается без quality regression.",
+                "how_it_should_be": "Цель — снизить P99 TPOT за счёт co-scheduling длинного prefill с decode коротких запросов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём суть speculative decoding и какие гарантии он даёт?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Заменяет большую модель на маленькую при низкой нагрузке",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это model routing (Q35) — отдельная техника. Speculative decoding использует обе модели одновременно для ускорения каждого запроса.",
+                "source_of_confusion": "Обе техники используют маленькую модель, но routing выбирает одну, а speculative — комбинирует.",
+                "if_it_were_true": "Тогда quality просаживалась бы при низкой нагрузке — а speculative гарантирует идентичный target distribution.",
+                "how_it_should_be": "Draft model генерирует k tokens, target проверяет их за один forward pass через rejection sampling — результат идентичен target alone."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Просто уменьшает temperature для более предсказуемого вывода",
+              "correct": false,
+              "sections": {
+                "what_actually": "Temperature влияет на sampling distribution, не на скорость. Speculative — про parallel verification, не sampling parameters.",
+                "source_of_confusion": "Низкий temperature делает токены более detrministic, что повышает acceptance rate в speculative — но это побочный эффект, не сам метод.",
+                "if_it_were_true": "Тогда любой greedy decode был бы 2-3× быстрее — на практике speedup только в speculative decoding setup.",
+                "how_it_should_be": "Speculative использует две модели + rejection sampling; temperature остаётся control sampling diversity."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Угадывает токены через словарный частотный анализ, без второй модели",
+              "correct": false,
+              "sections": {
+                "what_actually": "Классический speculative decoding использует draft model или n-gram. Frequency analysis — недостаточно для качественного guess.",
+                "source_of_confusion": "Lookahead decoding использует n-gram cache из предыдущей генерации — но это не «словарный частотный анализ».",
+                "if_it_were_true": "Тогда любой LLM мог бы быть ускорен без extra model — на практике n-gram даёт лишь скромный прирост и работает узко.",
+                "how_it_should_be": "Draft = маленькая LM или n-gram cache; verification через rejection sampling сохраняет distribution."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Draft model (маленькая) генерирует k токенов; target (большая) проверяет их параллельно одним forward pass через rejection sampling; результат mathematically идентичен target alone; speedup 2-3× при acceptance ~70%",
+              "correct": true,
+              "sections": {
+                "explanation": "Leviathan et al. 2023: дешёвая draft model предсказывает k токенов вперёд, мощная target за один проход даёт probability distributions на этих позициях. Rejection sampling: токен i принят если target_prob[i] ≥ draft_prob[i], иначе reject и пересэмпл target. Все принятые — в ответ. Mathematically equivalent target distribution.",
+                "example": "Llama-3-8B → Llama-3-70B (×8 разница): 2-3× speedup при acceptance 70%. Draft вариант: n-gram (без модели вовсе, для code/structured). vLLM: --speculative-model meta-llama/Llama-3-8B --num-speculative-tokens 5.",
+                "when_to_apply": "Latency-critical batch=1 chat, code-gen, translation, structured output (JSON). Везде, где acceptance rate >50%.",
+                "edge_cases": "При высоком batch target уже compute-bound → overhead draft model перевешивает. Reasoning models (o1, Claude thinking) часто промахиваются на reasoning steps. Distillation mismatch (Mistral-draft для Llama-target) даёт низкий acceptance.",
+                "related": "Q13 (EAGLE/Medusa — улучшенные варианты), Q14 (когда не помогает), Q4 (memory-bound — основа выигрыша)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем EAGLE и Medusa отличаются от классического speculative decoding?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Medusa добавляет N decoding heads в target (без отдельной draft, +tree-based verification, speedup 2-3×); EAGLE строит draft на feature level (предпоследний слой target) → выше acceptance rate, speedup 3-4×",
+              "correct": true,
+              "sections": {
+                "explanation": "Medusa (Cai et al., 2024): добавляет M дополнительных heads, каждый предсказывает t+1, t+2, ..., t+M параллельно. Tree-based verification пробует много candidates. Требует fine-tuning target. EAGLE (Li et al., 2024): draft предсказывает не tokens, а features второго-к-последнему слоя target. Acceptance rate существенно выше → 3-4× speedup. EAGLE-2/3 (2024-25) — adaptive draft tree.",
+                "example": "vLLM 2025: native --speculative-model для классики; eagle-config для EAGLE. Lookahead decoding — n-gram cache, без модели вообще.",
+                "when_to_apply": "Medusa если можно fine-tune target. EAGLE для готовых моделей с минимумом доработок. Lookahead для structured/code-gen.",
+                "edge_cases": "Medusa требует training extra heads — не plug-and-play. EAGLE-1 требует тренировки draft network на собственных features, но не модифицирует target. На high batch — overhead растёт.",
+                "related": "Q12 (speculative basis), Q14 (когда не помогает), Q26 (vLLM speculative knobs)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это просто переименование классического алгоритма",
+              "correct": false,
+              "sections": {
+                "what_actually": "EAGLE и Medusa — содержательно другие подходы. Medusa добавляет heads в target, EAGLE работает на feature level.",
+                "source_of_confusion": "Все три — варианты speculative decoding идеи. Поверхностно похоже, но архитектурно разные.",
+                "if_it_were_true": "Тогда papers просто описывали бы то же самое — на деле speedup и acceptance rate отличаются заметно.",
+                "how_it_should_be": "Medusa = multiple decoding heads в target, без отдельной draft model. EAGLE = draft предсказывает features предпоследнего слоя, выше acceptance."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это две альтернативы FlashAttention для длинного context",
+              "correct": false,
+              "sections": {
+                "what_actually": "EAGLE и Medusa — speculative decoding варианты, не attention оптимизации. FlashAttention — отдельный класс (Q21).",
+                "source_of_confusion": "Все эти техники ускоряют LLM inference, но через разные mechanisms.",
+                "if_it_were_true": "Тогда они конкурировали бы с FlashAttention v2/v3 — а на деле используются ВМЕСТЕ с FlashAttention.",
+                "how_it_should_be": "Medusa/EAGLE — про parallel token prediction; FlashAttention — про memory-aware attention kernels."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Они отличаются только тем, что Medusa для NVIDIA, а EAGLE для AMD",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба алгоритма аппаратно-независимы. Работают на любых GPU, где запускается target model.",
+                "source_of_confusion": "Hardware-specific варианты есть (например, EAGLE с FlashAttention на H100) — но сами алгоритмы не привязаны.",
+                "if_it_were_true": "Тогда нельзя было бы использовать в кросс-вендорных deployments — реально оба портативны.",
+                "how_it_should_be": "Различие алгоритмическое: Medusa = heads в target; EAGLE = feature-level draft."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда speculative decoding НЕ помогает или даже замедляет?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда помогает; единственный риск — небольшой quality drop",
+              "correct": false,
+              "sections": {
+                "what_actually": "Speculative decoding mathematically lossless (rejection sampling сохраняет distribution). Но overhead draft может замедлять на конкретных workload.",
+                "source_of_confusion": "В вакууме идея безусловно выигрышная, но в production conditions есть несколько режимов, где overhead перевешивает.",
+                "if_it_were_true": "Тогда все production deployments включали бы spec decoding по умолчанию — на деле его осознанно выключают для high-batch serving.",
+                "how_it_should_be": "Не помогает: high batch (target уже compute-bound), low acceptance (<30%), distillation mismatch, очень короткие ответы, reasoning models с непредсказуемым CoT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При высоком batch (target уже compute-bound), при низком acceptance rate <30% (творческие тексты, reasoning models), при distillation mismatch и очень коротких ответах",
+              "correct": true,
+              "sections": {
+                "explanation": "Speculative выигрывает за счёт амортизации чтения весов target (memory-bound). При высоком batch target уже compute-bound, draft добавляет лишний overhead. При низком acceptance rate (<30%) большинство токенов отбрасывается — это просто потерянное draft время. Distillation mismatch (Mistral-draft для Llama-target) убивает acceptance. Reasoning models с длинными CoT часто промахиваются на reasoning steps.",
+                "example": "Latency-critical batch=1 chat → speedup 2-3×. High-throughput batch=64 serving → spec decoding может замедлить на 5-15%. Claude Sonnet thinking long reasoning — лучше выключить.",
+                "when_to_apply": "Тестировать на реальном workload: code, translation, JSON, structured — отлично работает. Открытые творческие задачи, reasoning — измерять.",
+                "edge_cases": "Промежуточный режим: spec для interactive endpoint, без него для batch endpoint. n-gram lookahead дешевле — иногда полезен и при высоком batch.",
+                "related": "Q12 (основа), Q4 (memory-bound — fundamental basis), Q13 (EAGLE/Medusa для лучшего acceptance)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только на CPU; на GPU всегда выгоден",
+              "correct": false,
+              "sections": {
+                "what_actually": "Speculative — типично GPU-фишка (memory-bound характер decode на GPU делает её эффективной). На CPU работает, но другой профиль.",
+                "source_of_confusion": "CPU действительно медленнее, что меняет цифры — но не само поведение.",
+                "if_it_were_true": "Тогда H100/H200 deployments никогда не выключали бы спек — а в high-batch serving его осознанно отключают.",
+                "how_it_should_be": "На GPU не помогает при high batch, low acceptance, distillation mismatch — описано выше."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Не помогает, если модель сжата квантизацией INT4",
+              "correct": false,
+              "sections": {
+                "what_actually": "INT4 квантизация ортогональна speculative decoding — обе техники сочетаемы и складываются в выигрыше.",
+                "source_of_confusion": "INT4 уменьшает байты весов, что также адресует memory-bound; кажется, что spec становится не нужен. Но они дополняют друг друга.",
+                "if_it_were_true": "Тогда AWQ Llama-70B + spec было бы конфликтом — на практике обе вместе дают 4-6× ускорения.",
+                "how_it_should_be": "Quantization и speculative — друзья, а не альтернативы. Не помогает spec при high batch и low acceptance."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая раскладка форматов точности (FP16/BF16/FP8/INT8/INT4) корректна для современных GPU?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "FP16 и BF16 одинаковы по точности; FP8 есть на любой современной GPU",
+              "correct": false,
+              "sections": {
+                "what_actually": "BF16 (8 exp + 7 mant) и FP16 (5 exp + 10 mant) — разные распределения. BF16 шире range, FP16 точнее. FP8 нативно есть только на H100+ и MI300X.",
+                "source_of_confusion": "И FP16, и BF16 — 16 бит, поэтому путаются. Но численная стабильность разная (BF16 лучше для тренинга).",
+                "if_it_were_true": "Тогда A100 ускорял бы FP8 — а на A100 FP8 идёт через эмуляцию, без real speedup.",
+                "how_it_should_be": "FP16 — точность; BF16 — range. FP8 (E4M3/E5M2) только H100+, MI300X."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "INT4 даёт 4× ускорение по сравнению с FP16 на любой GPU",
+              "correct": false,
+              "sections": {
+                "what_actually": "INT4 даёт 4× memory savings, но compute speedup зависит от kernels (CUTLASS) и hardware. На A100 типично 1.5-2× speedup для decode, не 4×.",
+                "source_of_confusion": "4 бита vs 16 бит = ×4 экономии байтов — кажется, что и speedup ×4. Но bottleneck часто не только memory.",
+                "if_it_were_true": "Тогда INT4 был бы повсеместно — на практике для prefill (compute-bound) выигрыш меньше.",
+                "how_it_should_be": "INT4: 4× memory, 1.5-3× decode speedup (memory-bound). FP8 native H100: 2× compute + 2× memory."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "FP16 = ±65K (3 dec); BF16 = ±3e38 (2 dec, range = FP32); FP8 E4M3 weights + E5M2 gradients на H100+/MI300X; INT8 везде; INT4 через CUTLASS на A100+",
+              "correct": true,
+              "sections": {
+                "explanation": "FP16: 5 exp + 10 mantissa, диапазон ±65504, ~3 decimal digits. BF16: 8 exp + 7 mantissa, range как FP32, но 2 decimal — стабильнее для тренинга. FP8 E4M3 (4 exp + 3 mant, ±448) для weights/forward, E5M2 (5 exp + 2 mant, ±57K) для backward gradients; нативно H100+/B100/MI300X. INT8 везде. INT4 (GPTQ/AWQ) через CUTLASS kernels на A100+. NF4 (NormalFloat) для QLoRA fine-tuning.",
+                "example": "Llama-3-70B: FP16=140 GB (2×H100 80GB), INT8=70 GB (1×H100), INT4 AWQ=35 GB (1×A100 40GB). FP16→INT8: <1% drop MMLU. FP16→INT4: 1-3% drop.",
+                "when_to_apply": "Выбор формата — компромисс качество/память/скорость. На H100 — FP8 default (2× compute vs FP16, half memory). На A100 — AWQ INT4 для 70B+ моделей. На consumer (4090) — INT4 GGUF.",
+                "edge_cases": "1.58-bit BitNet — research, требует training from scratch. NF4 — для QLoRA fine-tuning, не serving. FP8 на A100 — эмуляция (no speedup).",
+                "related": "Q16 (GPTQ), Q17 (AWQ), Q18 (FP8 на H100), Q19 (weight-only vs activation), Q20 (GGUF на edge)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "FP8 устарел, всё ушло на 1-bit BitNet",
+              "correct": false,
+              "sections": {
+                "what_actually": "FP8 — индустриальный стандарт 2024-2026 на H100+. BitNet — research, требует training from scratch, нет production-ready моделей.",
+                "source_of_confusion": "BitNet активно обсуждается в research, но в production не используется.",
+                "if_it_were_true": "Тогда vLLM/TensorRT-LLM имели бы 1-bit бэкенды — реально только FP8/INT4/INT8.",
+                "how_it_should_be": "FP8 = production стандарт 2025+. 1.58-bit BitNet = future, research."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает GPTQ post-training quantization?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто округляет веса к ближайшему 4-bit значению; ошибки игнорируются",
+              "correct": false,
+              "sections": {
+                "what_actually": "Naive round-to-nearest даёт жёсткую деградацию quality. GPTQ умнее: error compensation между колонками weight matrix.",
+                "source_of_confusion": "Округление действительно базовая идея, но без compensation Llama-70B INT4 RTN потеряла бы 10-20% MMLU.",
+                "if_it_were_true": "Тогда GPTQ не был бы нужен — а его придумали именно потому что RTN catastrophic.",
+                "how_it_should_be": "GPTQ квантизирует layer-by-layer, колонка за колонкой, размазывает ошибку на оставшиеся через H^-1 (inverse Hessian)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Требует fine-tuning модели на новой precision",
+              "correct": false,
+              "sections": {
+                "what_actually": "GPTQ — post-training, без re-training или fine-tuning. Это его ключевое преимущество.",
+                "source_of_confusion": "QAT (Quantization-Aware Training) действительно требует fine-tuning, но это другая категория методов.",
+                "if_it_were_true": "Тогда GPTQ не масштабировался бы на готовые модели типа Llama без доступа к training data.",
+                "how_it_should_be": "Берёт обученные веса + 128-1024 calibration samples; квантизирует layer-by-layer с error compensation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использует генетический алгоритм для поиска оптимальной precision per-layer",
+              "correct": false,
+              "sections": {
+                "what_actually": "GPTQ — детерминированный greedy algorithm с error compensation. Никакой эволюции.",
+                "source_of_confusion": "Mixed-precision quantization (например, AdaRound, BRECQ) исследует разные precisions, но GPTQ — фиксированная bit-width.",
+                "if_it_were_true": "Тогда quantize 70B модель занимал бы дни — GPTQ работает за минуты на одной GPU.",
+                "how_it_should_be": "GPTQ — closed-form solver с inverse Hessian compensation, не search."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Layer-by-layer quantization готовой модели: на calibration dataset (128-1024 samples) считает Hessian H=2X^TX, квантизирует колонки веса, размазывает ошибку на оставшиеся через H^-1; минимизирует ||W×X − W_q×X||²",
+              "correct": true,
+              "sections": {
+                "explanation": "Frantar et al. 2022. Берёт обученную модель, проходит каждый linear layer: 1) считает Hessian H=2X^TX (importance матрица), 2) квантизирует веса колонка за колонкой, 3) error compensation — после quantization колонки i размазывает ошибку на оставшиеся через H^-1. Минимизирует L2 loss активаций.",
+                "example": "Llama-2-70B → INT4 GPTQ: <1% drop на MMLU. Параметры: bits=4, group_size=128, desc_act=True (порядок колонок по important).",
+                "when_to_apply": "Когда нужен быстрый INT4 без training. Готовые модели на HuggingFace под именем TheBloke/*-GPTQ. Запуск vLLM: --model TheBloke/Llama-2-70B-GPTQ --quantization gptq.",
+                "edge_cases": "Calibration data важна — если из другого домена, quality drop больше. Group size 128 — компромисс; меньше = точнее, больше = меньше overhead. desc_act=False быстрее, но хуже quality.",
+                "related": "Q17 (AWQ — альтернатива), Q15 (форматы), Q19 (weight-only vs activation)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем AWQ отличается от GPTQ?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "AWQ замечает, что 0.1-1% весов критичны (через activation magnitude per-channel) и scaling-ит их с большей precision; быстрее calibration, лучше perplexity, особенно на instruction-tuned моделях; default INT4 в 2025",
+              "correct": true,
+              "sections": {
+                "explanation": "Lin et al. 2023, Activation-aware Weight Quantization. Insight: веса, через которые проходят большие активации (salient channels), критичнее остальных — их нужно сохранить точнее. Алгоритм: на calibration данных считает |X| per-channel (activation magnitude), находит salient каналы (top-1%), scale weights up + scale activations down (mathematically equivalent: y = (W/s) × (s × x)) — сохраняет salient веса с большей precision.",
+                "example": "Vs GPTQ: лучше perplexity (особенно на instruction-tuned), faster calibration (нет Hessian), лучше generalizes на out-of-domain, hardware-friendly (no странных group permutations). vLLM: --model casperhansen/llama-3-70b-instruct-awq --quantization awq.",
+                "when_to_apply": "Default INT4 выбор в 2025 для production serving. Особенно для instruction-tuned моделей (chat, code-gen). Готовые модели: casperhansen/*, TheBloke/*-AWQ.",
+                "edge_cases": "Salient threshold (1%) — гиперпараметр. Calibration data quality важна. Для очень небольших моделей (<1B) разница с GPTQ незаметна.",
+                "related": "Q16 (GPTQ — альтернатива), Q15 (форматы), Q18 (FP8 — другой подход), Q19 (weight-only)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "AWQ требует fine-tuning, GPTQ — нет",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обе — post-training, не требуют fine-tuning. Это их общая категория.",
+                "source_of_confusion": "AWQ и GPTQ конкурируют в одной нише; путаница может быть с QAT (Quantization-Aware Training).",
+                "if_it_were_true": "Тогда AWQ был бы менее популярен — а в 2025 он default INT4.",
+                "how_it_should_be": "AWQ и GPTQ — оба post-training. Отличие в алгоритме: AWQ через activation-magnitude scaling, GPTQ через Hessian compensation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "AWQ работает только на CPU, GPTQ — только на GPU",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба формата поддерживаются на GPU (vLLM, TGI). На CPU предпочитают GGUF (llama.cpp).",
+                "source_of_confusion": "Возможно путаница с llama.cpp форматами — но это GGUF, не AWQ.",
+                "if_it_were_true": "Тогда нельзя было бы запускать AWQ-модели в vLLM — а это default 2025.",
+                "how_it_should_be": "Оба для GPU; для CPU/edge — GGUF Q4/Q5."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "AWQ использует только 8 бит, GPTQ — 4 бита",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба поддерживают 4-bit (основное применение) и 8-bit. AWQ часто INT4 по умолчанию.",
+                "source_of_confusion": "Bit-width не привязан к методу — оба гибкие.",
+                "if_it_were_true": "Тогда AWQ-70B весил бы как INT8 (70GB), а реально INT4 AWQ — 35GB.",
+                "how_it_should_be": "Оба алгоритма поддерживают разные bit-width; default INT4 для современных Llama."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему FP8 на H100 — большое событие для inference?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "FP8 просто короткое название для INT8 — без принципиальных отличий",
+              "correct": false,
+              "sections": {
+                "what_actually": "FP8 — floating point (E4M3 = 4 exp + 3 mantissa), INT8 — integer. Forматы разные: range FP8 шире, outliers переносятся лучше.",
+                "source_of_confusion": "Оба 8-bit и оба для inference — кажется одно и то же.",
+                "if_it_were_true": "Тогда NVIDIA не добавляла бы FP8 tensor cores в H100 — был бы достаточно INT8.",
+                "how_it_should_be": "FP8 E4M3 для weights/forward, E5M2 для gradients; native tensor cores на H100/H200/B100/MI300X; 2× compute vs FP16."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "H100 добавил native FP8 tensor cores (E4M3 + E5M2), даёт 2× compute vs FP16 и половину памяти; KV cache в FP8 — 2× больше batch; quality drop <0.5%; работает на H100+/MI300X, на A100 только эмуляция",
+              "correct": true,
+              "sections": {
+                "explanation": "H100 ввёл native FP8 Tensor Cores — 2× compute throughput vs FP16 при half memory. Форматы: E4M3 (4 exp + 3 mantissa, range ±448) для weights/forward activations; E5M2 (5 exp + 2 mantissa, range ±57K) для gradients (training). Per-tensor или per-row scaling factor избегает overflow. KV cache в FP8 → 2× больше concurrent requests на той же VRAM.",
+                "example": "vLLM: --model neuralmagic/Meta-Llama-3-70B-Instruct-FP8 --quantization fp8 --kv-cache-dtype fp8. Latency и throughput оба растут vs FP16.",
+                "when_to_apply": "Production deployment на H100+/H200/B100. Дефолт для serving в 2025 на этом hardware.",
+                "edge_cases": "На A100 FP8 — эмуляция (no real speedup, иногда замедление). MI300X имеет FP8 поддержку, но через ROCm — софт-стек менее зрелый. Calibration важна для quality.",
+                "related": "Q15 (форматы), Q19 (W8A8), Q32 (hardware), Q25 (vLLM/TRT-LLM)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только теоретическая ценность; в реальности не используется",
+              "correct": false,
+              "sections": {
+                "what_actually": "FP8 — production стандарт 2024-2026. NeuralMagic, vLLM, TensorRT-LLM активно используют. Llama-3-70B FP8 — основной production деplo.",
+                "source_of_confusion": "Когда H100 только вышел (2022), FP8 действительно был skeptical experiment. Сейчас всё иначе.",
+                "if_it_were_true": "Тогда не было бы neuralmagic/*-FP8 моделей и --quantization fp8 в vLLM.",
+                "how_it_should_be": "FP8 = production-ready 2024+. 2× throughput vs FP16, half memory, quality drop <0.5%."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "FP8 даёт 4× speedup, но quality падает на 10%+",
+              "correct": false,
+              "sections": {
+                "what_actually": "FP8 даёт 2× speedup vs FP16 (а не 4×) и quality drop <0.5% при правильной calibration.",
+                "source_of_confusion": "Преувеличение в обе стороны — speedup и degradation; маркетинговые слайды иногда показывают peak, не realistic.",
+                "if_it_were_true": "Тогда никто не использовал бы FP8 в production — а neuralmagic publishes хорошие quality numbers.",
+                "how_it_should_be": "2× compute + half memory; quality drop <0.5%; стандарт production на H100+."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между weight-only и weight+activation quantization?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Weight-only это medium accuracy, weight+activation — high accuracy",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: weight-only обычно даёт лучше quality (меньше outliers issues), но не использует INT tensor cores напрямую. W8A8 быстрее compute, но сложнее с outliers в activations.",
+                "source_of_confusion": "Кажется логичным «больше квантизируем — больше потерь», но quality для weight-only часто чище.",
+                "if_it_were_true": "Тогда W8A8 был бы default — а в memory-bound decode выигрывает W4A16 weight-only.",
+                "how_it_should_be": "Weight-only (W4A16/W8A16): только веса в INT, activations FP16. W8A8: и веса, и activations в INT8 — использует INT8 tensor cores."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Они идентичны; «weight+activation» — маркетинговый термин",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие реальное и техническое: что именно квантизируется. Влияет на hardware utilization (tensor cores vs general matmul) и quality.",
+                "source_of_confusion": "Поверхностно — оба «8-bit модель» — но компиляционные стратегии разные.",
+                "if_it_were_true": "Тогда не было бы отдельных категорий моделей (AWQ vs SmoothQuant).",
+                "how_it_should_be": "Weight-only = только веса в INT, activations FP16. W8A8 = всё в INT8."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Weight-only (W4A16): веса INT4/INT8, activations FP16; перед matmul dequantize веса; GPTQ/AWQ/GGUF; minimal quality drop. W8A8: и веса, и activations квантизуем; использует INT8 tensor cores → 2× compute; сложнее с outliers; SmoothQuant/OmniQuant. На decode (memory-bound) weight-only выигрывает; на prefill (compute-bound) W8A8 FP8 даёт compute speedup. Hybrid: --quantization awq + --kv-cache-dtype fp8",
+              "correct": true,
+              "sections": {
+                "explanation": "Weight-only: квантизируем только веса (W4A16, W8A16). Перед matmul dequantize в FP16 на лету. GPTQ, AWQ, GGUF Q4_K_M — все weight-only. Простой, минимальный quality drop. Не использует INT tensor cores напрямую. Weight + Activation (W8A8/W4A8): и веса, и activations квантуем. INT8 tensor cores → 2× compute. Сложнее (outliers в activations), larger quality drop. SmoothQuant, OmniQuant. FP8 W8A8 без проблем с outliers (range FP8 шире INT8).",
+                "example": "Practical 2025: decode memory-bound → weight-only выигрывает (грузит меньше байтов). Prefill compute-bound long context → W8A8 FP8 даёт compute speedup. Hybrid: --quantization awq (W4A16) + --kv-cache-dtype fp8 — best of both.",
+                "when_to_apply": "Decode-heavy workload (chat, generation) → weight-only INT4. Prefill-heavy (long-context summarization, code review) → FP8 W8A8. RAG mixed → hybrid.",
+                "edge_cases": "INT8 activations имеют outliers (~0.1% значений в 10-100× больше остальных), требуют SmoothQuant migration. FP8 этих проблем не имеет — range шире.",
+                "related": "Q15 (форматы), Q16-17 (GPTQ/AWQ — weight-only), Q18 (FP8 W8A8)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Weight-only только для CPU, weight+activation только для GPU",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба подхода используются и на CPU, и на GPU. GGUF (weight-only) — CPU/edge. AWQ (weight-only) — GPU. SmoothQuant (W8A8) — GPU.",
+                "source_of_confusion": "GGUF действительно популярен на CPU и weight-only — частная корреляция, не правило.",
+                "if_it_were_true": "Тогда vLLM не поддерживал бы AWQ — а это default.",
+                "how_it_should_be": "Hardware независимо; выбор по задаче (decode vs prefill heavy)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Для чего нужны GGUF и llama.cpp?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это production-grade replacement vLLM для GPU serving",
+              "correct": false,
+              "sections": {
+                "what_actually": "llama.cpp оптимизирован для CPU/Apple Silicon/edge. Для production GPU serving vLLM/TGI/TRT-LLM в разы быстрее.",
+                "source_of_confusion": "llama.cpp поддерживает CUDA — кажется, что универсальное решение. Но throughput на GPU значительно ниже vLLM.",
+                "if_it_were_true": "Тогда vLLM был бы не нужен — а у него отдельная ниша production GPU serving.",
+                "how_it_should_be": "llama.cpp = CPU/Apple/edge инференс через GGUF. Production GPU = vLLM."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только для смартфонов, не для серверов",
+              "correct": false,
+              "sections": {
+                "what_actually": "llama.cpp работает на смартфонах (Android/iOS), но и на серверах CPU, RPi 5, Jetson, и Apple Silicon. Широкое применение для local/edge.",
+                "source_of_confusion": "Мобильная демонстрация запомнилась широко — но это лишь часть применений.",
+                "if_it_were_true": "Тогда Ollama (wrapper над llama.cpp) не был бы default для local dev в 2025.",
+                "how_it_should_be": "GGUF/llama.cpp = CPU инференс (AVX2/AVX-512), Apple Silicon через Metal, edge (Jetson, RPi 5), мобилки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это альтернативные форматы для FP16-only inference",
+              "correct": false,
+              "sections": {
+                "what_actually": "GGUF поддерживает Q2_K до Q8_0 (2-8 bit), включая mixed precision (важные слои в Q6, FFN в Q4). FP16 — лишь один из вариантов (F16 type).",
+                "source_of_confusion": "Можно загрузить FP16 в GGUF — но основное использование квантизованные варианты.",
+                "if_it_were_true": "Тогда GGUF не давал бы преимущества по размеру — а Llama-3-8B Q4_K_M = 4.9GB vs 16GB FP16.",
+                "how_it_should_be": "GGUF — формат с поддержкой 2-8 bit квантизации и mixed precision."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "GGUF — формат llama.cpp с mixed precision (Q2_K..Q8_0); llama.cpp для CPU (AVX2/AVX-512), Apple Silicon (Metal), edge (Jetson, RPi 5), мобильных; Ollama/LM Studio/Jan — UI поверх. Не для production GPU serving — vLLM/TRT в разы быстрее",
+              "correct": true,
+              "sections": {
+                "explanation": "GGUF (GPT-Generated Unified Format) — формат `llama.cpp`. Квантизации: Q8_0 (8 bit, max quality), Q6_K, Q5_K_M (recommended laptop), Q4_K_M (default sweet spot), Q3_K_M (edge), Q2_K (phones, degraded). Mixed precision: important layers держат больше бит (K/V attention в Q6, FFN в Q4). llama.cpp = C/C++ inference engine от Georgi Gerganov. Supports CPU (AVX2/AVX-512), CUDA, Metal, Vulkan, ROCm.",
+                "example": "Llama-3-8B sizes: Q8_0=8.5GB, Q5_K_M=5.7GB, Q4_K_M=4.9GB (default), Q2_K=3.2GB. Server: ./server -m model.gguf --port 8080 (OpenAI-compatible API).",
+                "when_to_apply": "Local dev (через Ollama), Apple Silicon, edge devices, mobile, on-device privacy-sensitive apps. Не для production GPU scale.",
+                "edge_cases": "Q2_K сильно деградирует (используют только для phones). На Apple Silicon MLX часто быстрее llama.cpp. Для production GPU vLLM/TRT даёт 5-10× throughput.",
+                "related": "Q27 (Ollama/MLX), Q15 (quantization форматы), Q25 (сравнение серверов)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему FlashAttention даёт 2-3× speedup и где скрытая фишка?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tiling Q/K/V на блоки в SRAM (~100KB), online softmax incremental, никогда не материализует полную N×N матрицу в HBM; ×2-3 wall-clock + ×5-20 memory savings → длинный context (32K/128K/1M); IO-aware алгоритм",
+              "correct": true,
+              "sections": {
+                "explanation": "Standard attention: Q@K^T (write N×N в HBM), softmax (read N×N, write N×N), @V (read N×N) — каждый шаг round-trip через slow HBM. Для seq=8K → ~16 GB трафика. FlashAttention (Dao et al. 2022): tiling Q/K/V в блоки, помещающиеся в SRAM (~100 KB on-chip), вычислять softmax инкрементально (online softmax), recomputation в backward вместо storing — никогда не материализуем полную N×N. ×2-3 wall-clock, ×5-20 memory savings.",
+                "example": "Версии: v1 (2022) — A100; v2 (2023) — лучше parallelism по seq_len; v3 (2024) — H100 FP8, asynchronous warp specialization, +1.5-2× vs v2. Built into vLLM, TGI, TRT-LLM, PyTorch SDPA.",
+                "when_to_apply": "Везде, где есть attention — стандарт. Особенно критично для длинного context (32K+).",
+                "edge_cases": "v3 на H100 имеет известные compile-time issues с некоторыми моделями (требует prebuilt wheels). Для очень специфичных attention patterns (sliding window) могут понадобиться custom kernels.",
+                "related": "Q5 (KV cache), Q3-4 (attention в prefill compute-bound), Q25 (vLLM/TRT включают FA по дефолту)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Заменяет softmax на ReLU для скорости",
+              "correct": false,
+              "sections": {
+                "what_actually": "FlashAttention сохраняет полный softmax — это не approximation. Использует online softmax с numerical stability.",
+                "source_of_confusion": "Linear attention действительно заменяет softmax (Performer, Linformer) — но это другая семья методов.",
+                "if_it_were_true": "Тогда quality модели страдала бы — а FlashAttention mathematically equivalent.",
+                "how_it_should_be": "FlashAttention = exact attention; tiling + online softmax для memory efficiency, без изменения semantics."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параллелит attention между GPU через NVLink",
+              "correct": false,
+              "sections": {
+                "what_actually": "FlashAttention — single-GPU optimization (точнее, single-thread-block). Multi-GPU — отдельные техники (TP, sequence parallelism).",
+                "source_of_confusion": "Оба ускоряют attention, но на разных уровнях.",
+                "if_it_were_true": "Тогда FlashAttention требовал бы multi-GPU — а он работает на одной GPU и встроен в любой LLM фреймворк.",
+                "how_it_should_be": "FlashAttention = single-GPU IO-aware; TP/SP = multi-GPU split."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использует TPU вместо GPU для специфических операций",
+              "correct": false,
+              "sections": {
+                "what_actually": "FlashAttention — для GPU (CUDA), не TPU. TPU имеет свои attention optimizations (PaLM kernels).",
+                "source_of_confusion": "TPU и GPU обе имеют tensor units — путаница архитектур.",
+                "if_it_were_true": "Тогда vLLM (GPU-only) не поддерживал бы FA — а это его дефолт.",
+                "how_it_should_be": "FlashAttention — CUDA для NVIDIA, ROCm port для AMD. TPU — отдельный fused softmax-attention в XLA."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Prefix Caching / Automatic Prefix Caching (APC)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это компрессия HTTP response через gzip",
+              "correct": false,
+              "sections": {
+                "what_actually": "Prefix caching — это server-side reuse KV cache для общих prefix между requests. Никакой связи с HTTP/gzip.",
+                "source_of_confusion": "Слово «caching» применимо в HTTP world, но контекст совсем другой.",
+                "if_it_were_true": "Тогда оно было бы про network, не про KV state — а реально снижает prefill time.",
+                "how_it_should_be": "APC хеширует prefix tokens на уровне PagedAttention блоков (16 tokens), переиспользует KV для уже виденных prefixes."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Хэширование prefix tokens, переиспользование KV блоков для уже виденных prefixes; новый request с тем же prefix пропускает prefill этой части; vLLM --enable-prefix-caching, SGLang RadixAttention (trie); 3-10× throughput, TTFT падает в 5-50× для RAG",
+              "correct": true,
+              "sections": {
+                "explanation": "RAG, агенты, multi-turn chat — все requests делят общий system prompt + examples + retrieved docs. Без cache prefill повторяется каждый раз. APC: хэшировать prefix tokens (на уровне PagedAttention блоков 16 tokens), cache KV blocks для уже виденных prefixes. Новый request с тем же prefix — переиспользует KV, prefill идёт только для нового suffix.",
+                "example": "vLLM: --enable-prefix-caching. Хэш блока = содержимое + хэш предыдущего → детерминированно. SGLang RadixAttention — trie (radix tree) из всех КЭШированных prefixes, эффективный matching длиннейшего общего prefix, поддерживает branching (parallel sampling).",
+                "when_to_apply": "RAG (общий docs context), агенты (большой system prompt с tools), multi-turn chat (cache истории), parallel sampling (beam search, multiple candidates).",
+                "edge_cases": "Грануляция 16 токенов — изменение в начале prefix инвалидирует весь suffix. Cache eviction по LRU — частые prefixes остаются. Память — компромисс с batch size.",
+                "related": "Q7 (PagedAttention — основа), Q23 (Anthropic Prompt Caching — API уровень), Q24 (OpenAI APC), Q25 (SGLang)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Кэширование исходных строк промптов в SQLite",
+              "correct": false,
+              "sections": {
+                "what_actually": "APC работает на уровне KV cache (вычисленных активаций), не текста промптов в БД.",
+                "source_of_confusion": "Слово «cache» вызывает ассоциации с application-level кэшем, но здесь GPU-уровневый.",
+                "if_it_were_true": "Тогда не было бы выигрыша по prefill — а основной профит от того, что не нужно пересчитывать KV.",
+                "how_it_should_be": "Кэш = KV blocks (PagedAttention pages по 16 tokens), хэшируемые по содержимому + предыдущий хэш."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это reverse proxy перед vLLM для дедупликации запросов",
+              "correct": false,
+              "sections": {
+                "what_actually": "APC — внутри vLLM, не reverse proxy. Application-level дедупликация — другой layer (cache responses, not KV state).",
+                "source_of_confusion": "Reverse proxy с request deduplication существует, но это другая оптимизация.",
+                "if_it_were_true": "Тогда нужно было бы развернуть отдельный сервис — а APC включается одним флагом vLLM.",
+                "how_it_should_be": "APC = internal feature inference engine, работает на KV cache блоках."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать Anthropic Prompt Caching API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто переслать API key и Claude автоматически закэширует всё",
+              "correct": false,
+              "sections": {
+                "what_actually": "Anthropic Prompt Caching — explicit: помечаешь cacheable части через cache_control: ephemeral. Без этого ничего не кэшируется.",
+                "source_of_confusion": "OpenAI Prompt Caching — automatic (Q24). Путаница между двумя вендорами.",
+                "if_it_were_true": "Тогда не было бы cache_control field — а это центральная фишка API.",
+                "how_it_should_be": "В каждом сегменте content (system или message) добавить cache_control: {type: 'ephemeral'}; до 4 cache breakpoints."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Через HTTP header X-Anthropic-Cache: true",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нет такого header. Cache control через body field cache_control в content blocks.",
+                "source_of_confusion": "В HTTP мире часто всё контролируется headers — но Anthropic API использует структурированный JSON body.",
+                "if_it_were_true": "Тогда нельзя было бы выборочно кэшировать части — а это центральная особенность API.",
+                "how_it_should_be": "cache_control: {type: 'ephemeral'} внутри content block, до 4 breakpoints."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В каждом content-блоке (system или message) добавить cache_control: {type: 'ephemeral'} — до 4 breakpoints. Pricing: cache write +25% input, cache read −90% input, TTL 5 мин (или 1ч за надбавку), min 1024 токенов (Haiku 2048). Break-even 2-3 reuse.",
+              "correct": true,
+              "sections": {
+                "explanation": "Anthropic Prompt Caching (GA 2024-2025) — server-side caching через explicit breakpoints. До 4 cache_control breakpoints в одном request. TTL: 5 минут default (1 час за extra cost). Pricing: cache write +25% от обычной input цены (one-time), cache read −90% input. Min cacheable: 1024 токенов (для Haiku — 2048). Break-even уже на 2-3 reuse.",
+                "example": "system=[{'type':'text','text':'You are expert...','cache_control':{'type':'ephemeral'}}, {'type':'text','text':'Patient history [50K]','cache_control':{'type':'ephemeral'}}], messages=[{'role':'user','content':'Diagnose...'}]. Каждый breakpoint — отдельная granularity, нельзя ломать порядок.",
+                "when_to_apply": "Многоступенчатые агенты (large system prompt), RAG с большим context docs, long conversations (cache history), document Q&A (cache документ один раз).",
+                "edge_cases": "TTL 5 мин — sliding (refresh on hit). Order matters — нельзя поменять prefix, инвалидируется cache. 4 breakpoints limit — для очень многослойного prompt нужно объединять.",
+                "related": "Q22 (APC — local equivalent), Q24 (OpenAI разница), Q35 (model routing)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Бесплатно для всех тарифов, без TTL",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cache write дороже (+25% input cost). TTL 5 мин default (1ч за extra cost). Cache read дешевле (−90%).",
+                "source_of_confusion": "vLLM --enable-prefix-caching действительно бесплатно — но это self-host, не Anthropic API.",
+                "if_it_were_true": "Тогда не было бы pricing strategy — а это явный аспект API.",
+                "how_it_should_be": "Write +25%, read −90%, TTL 5 мин (1ч за extra). Break-even 2-3 reuse."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем OpenAI Prompt Caching отличается от Anthropic?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "OpenAI требует ручной разметки cache_control, как у Anthropic",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenAI — полностью автоматический: сервер сам матчит prefix. Никаких API изменений.",
+                "source_of_confusion": "Путаница между двумя вендорами — у каждого свой подход.",
+                "if_it_were_true": "Тогда оба API были бы одинаковы — на деле OpenAI = automatic, Anthropic = explicit breakpoints.",
+                "how_it_should_be": "OpenAI auto-matching, structuring prompt: static prefix → dynamic suffix. Anthropic — explicit cache_control до 4 breakpoints."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "OpenAI Caching полностью отключён для пользователей",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenAI Prompt Caching включён by default на gpt-4o/4o-mini/o1 series с октября 2024.",
+                "source_of_confusion": "Anthropic был первым с GA caching — поэтому путаница, что OpenAI «ещё нет».",
+                "if_it_were_true": "Тогда не было бы −50% off cached input в pricing page.",
+                "how_it_should_be": "OpenAI Caching automatic on gpt-4o, gpt-4o-mini, o1; −50% off cached input."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "OpenAI каширует на 1 минуту, Anthropic на 1 час",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenAI TTL 5-10 min default; Anthropic TTL 5 min default (1ч за extra cost). Цифры почти совпадают.",
+                "source_of_confusion": "Маркетинг иногда упоминает разные числа в разных контекстах.",
+                "if_it_were_true": "Тогда OpenAI Caching был бы практически бесполезен — на деле он эффективен.",
+                "how_it_should_be": "OpenAI 5-10 мин; Anthropic 5 мин default или 1ч с надбавкой."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Полностью автоматический (без API изменений), просто структурируй: static prefix → dynamic suffix; cache read −50% (vs Anthropic −90%); cache write 0% extra (vs +25%); TTL 5-10 мин (1ч off-peak); min 1024 tokens; gpt-4o, gpt-4o-mini, o1-series",
+              "correct": true,
+              "sections": {
+                "explanation": "OpenAI Prompt Caching (Oct 2024) — automatic, lookup по prefix matching (как RadixAttention). −50% off cached input tokens (vs Anthropic −90%). TTL 5-10 min (≤1ч off-peak). Min cacheable 1024 tokens. Никаких API изменений — просто структурируй prompt: static prefix (system + docs + few-shot) → dynamic suffix (user query). Поддерживается на gpt-4o, gpt-4o-mini, o1-series.",
+                "example": "Сравнение: OpenAI auto-matching vs Anthropic explicit breakpoints; cache write OpenAI 0 vs Anthropic +25%; cache read OpenAI −50% vs Anthropic −90%; TTL OpenAI 5-10 мин vs Anthropic 5 мин (1ч за надбавку); granularity OpenAI auto vs Anthropic 4 breakpoints.",
+                "when_to_apply": "RAG, агенты, multi-turn chat. Преимущество — нулевая работа разработчика; недостаток — меньше discount чем у Anthropic.",
+                "edge_cases": "Vendor lock-in: при self-host через vLLM --enable-prefix-caching получаешь 100% бесплатно, без TTL лимитов. OpenAI Auto matching может не сработать если в prefix есть динамические части (timestamp в system).",
+                "related": "Q22 (APC — self-host), Q23 (Anthropic), Q33 (cost optimization)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сравниваются vLLM, TensorRT-LLM, TGI и SGLang в 2025?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "vLLM (UC Berkeley OSS): PagedAttention, easy setup, broad model support — default 2025; TensorRT-LLM (NVIDIA): fastest (~2200 tok/s Llama-70B H100) через kernel fusion + custom ops + best FP8, но complex build, NVIDIA-only; TGI (HF): production-ready Rust core; SGLang (LMSYS): RadixAttention prefix + structured output, fastest для chat; llama.cpp/MLX для local/edge",
+              "correct": true,
+              "sections": {
+                "explanation": "Benchmark 2025 (Llama-3-70B, H100, throughput): TensorRT-LLM ~2200 tok/s (max), vLLM latest ~1900, SGLang ~2000 (с prefix cache hits — выше), TGI ~1500. vLLM = default; TRT-LLM = max perf prod (NVIDIA-only, сложный build); TGI = HF Hub workflow; SGLang = agents/structured output; llama.cpp = CPU/edge/Apple; MLX = Apple unified memory.",
+                "example": "Decision: не уверен → vLLM; max perf H100 → TensorRT-LLM; heavy prefix sharing (agents) → SGLang; HF ecosystem → TGI; local Mac → MLX; mobile/edge → llama.cpp.",
+                "when_to_apply": "Выбор inference server: vLLM почти всегда хорошее начало; TRT-LLM когда max throughput критичен и можно вложиться в complex build; SGLang когда много shared prefix (агенты, многошаговое reasoning).",
+                "edge_cases": "vLLM известны periodic memory leaks в long runs (issues #5345, #6234) — мониторить RSS. TensorRT-LLM требует prebuild engines per-model/per-precision (часы). SGLang ещё новее, меньше models поддерживается.",
+                "related": "Q26 (vLLM tuning), Q22 (prefix caching), Q27 (llama.cpp/Ollama/MLX), Q29 (MoE serving)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все одинаковы, различия только в логотипе",
+              "correct": false,
+              "sections": {
+                "what_actually": "Существенные различия в throughput, ease of setup, model support, фичах (prefix caching, MoE, structured output).",
+                "source_of_confusion": "На поверхности все «inference servers» — но детали реализации серьёзно расходятся.",
+                "if_it_were_true": "Тогда benchmarks показывали бы одинаковые цифры — а на H100 разница 1.5-3× между ними.",
+                "how_it_should_be": "Каждый имеет ниши; default 2025 — vLLM, max perf — TRT-LLM, agents/structured — SGLang, HF ecosystem — TGI."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "TGI быстрее всех; vLLM устарел",
+              "correct": false,
+              "sections": {
+                "what_actually": "Benchmark Llama-3-70B H100: TGI ~1500 tok/s — ниже vLLM (~1900) и TRT-LLM (~2200). vLLM активно развивается (PagedAttention, FP8, spec decoding).",
+                "source_of_confusion": "TGI был первым production-ready (2022-2023), отсюда репутация. Сейчас догоняет.",
+                "if_it_were_true": "Тогда industry перешёл бы на TGI — но 2025 default остаётся vLLM.",
+                "how_it_should_be": "vLLM = default 2025; TGI хорош для HF workflow, но не fastest."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "SGLang работает только с моделями <1B параметров",
+              "correct": false,
+              "sections": {
+                "what_actually": "SGLang поддерживает large models включая Llama-3-70B, DeepSeek-V3 671B (где он часто быстрее vLLM из-за оптимизированной поддержки MoE).",
+                "source_of_confusion": "SGLang новее vLLM — кажется, что менее зрелый. Но именно для крупных MoE-моделей он лидер.",
+                "if_it_were_true": "Тогда LMSYS не использовал бы его на Chatbot Arena с frontier моделями.",
+                "how_it_should_be": "SGLang поддерживает full range моделей; особо силён в structured output и prefix-heavy workloads."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие vLLM флаги критичны для production tuning?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только --model, остальное оптимально по дефолту",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолты vLLM работают, но без тюнинга оставляешь 2-4× throughput на столе.",
+                "source_of_confusion": "Easy setup vLLM — известная фишка, отсюда мысль что дефолты хороши.",
+                "if_it_were_true": "Тогда production deployments не вкладывались бы в config — а Anyscale/Modal публикуют detailed tuning guides.",
+                "how_it_should_be": "Минимум tuning: --tensor-parallel-size, --max-model-len, --gpu-memory-utilization, --enable-prefix-caching, --enable-chunked-prefill, --quantization, --kv-cache-dtype."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "--tensor-parallel-size (=GPU count node), --max-model-len, --gpu-memory-utilization 0.85-0.95, --max-num-seqs 128-512, --max-num-batched-tokens 4K-32K, --enable-prefix-caching, --enable-chunked-prefill, --quantization (awq/gptq/fp8), --kv-cache-dtype fp8, --speculative-model + --num-speculative-tokens, --swap-space",
+              "correct": true,
+              "sections": {
+                "explanation": "Основные knobs: --tensor-parallel-size = GPU count в node (split весов); --max-model-len ограничивает context (KV budget); --gpu-memory-utilization 0.85-0.95 (доля VRAM под KV cache); --max-num-seqs 128-512 (concurrent requests); --max-num-batched-tokens 4K-32K (token budget per batch); --enable-prefix-caching (всегда on при shared prefix); --enable-chunked-prefill (on для long context); --quantization awq/gptq/fp8/bitsandbytes; --kv-cache-dtype fp8 (на H100 — 2× batch); --speculative-model + --num-speculative-tokens (если acceptance >50%); --swap-space 4-16 GB (для preemption).",
+                "example": "vLLM Llama-3-70B на 2× H100 FP8: --tensor-parallel-size 2 --max-model-len 32768 --gpu-memory-utilization 0.92 --max-num-seqs 256 --max-num-batched-tokens 16384 --enable-prefix-caching --enable-chunked-prefill --quantization fp8 --kv-cache-dtype fp8 --speculative-model meta-llama/Llama-3-8B --num-speculative-tokens 5.",
+                "when_to_apply": "Любой production deployment. Тюнинг под конкретный workload (chat vs RAG vs batch) даёт 2-4× throughput vs дефолтов.",
+                "edge_cases": "--gpu-memory-utilization >0.95 — рискованно (OOM на pikes). --max-num-batched-tokens слишком высокий — TTFT новых запросов растёт. spec decoding overhead в high batch — измерять.",
+                "related": "Q9 (continuous batching), Q11 (chunked prefill), Q22 (prefix caching), Q15-18 (quantization), Q12 (speculative)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно --max-tokens 1024",
+              "correct": false,
+              "sections": {
+                "what_actually": "--max-tokens — это per-request output limit, не server config. Серверный tuning — отдельная история.",
+                "source_of_confusion": "OpenAI API использует max_tokens — путаница между per-request и server-level.",
+                "if_it_were_true": "Тогда serving 100 concurrent на 1× H100 был бы тривиальным — реально требует осознанного tuning.",
+                "how_it_should_be": "Server flags: tensor parallel, max model len, memory util, batching, quantization. Per-request — другое."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Тюнинг бесполезен, всё определяет hardware",
+              "correct": false,
+              "sections": {
+                "what_actually": "На том же H100 правильный config даёт 2-4× throughput. Hardware важен, но конфиг — нет.",
+                "source_of_confusion": "GPU действительно top-1 фактор — но без правильного config даже H100 даст низкий throughput.",
+                "if_it_were_true": "Тогда benchmark teams не публиковали бы tuning guides — а Anyscale/Modal/etc делают это регулярно.",
+                "how_it_should_be": "Hardware + tuning together. Default vLLM работает, но не максимизирует hardware."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются llama.cpp, Ollama и MLX для local/edge?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все три — синонимы одного проекта",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разные проекты: llama.cpp = C/C++ engine (Georgi Gerganov); Ollama = Go wrapper над llama.cpp; MLX = Apple unified-memory framework.",
+                "source_of_confusion": "Все три для local LLM inference, что вызывает путаницу.",
+                "if_it_were_true": "Тогда нельзя было бы сравнивать производительность — а они дают разные benchmarks.",
+                "how_it_should_be": "llama.cpp — low-level C/C++; Ollama — user-friendly wrapper; MLX — Apple native."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это всё проекты NVIDIA",
+              "correct": false,
+              "sections": {
+                "what_actually": "llama.cpp — open source (Georgi Gerganov); Ollama — Y Combinator startup; MLX — Apple. Никакого отношения к NVIDIA.",
+                "source_of_confusion": "NVIDIA доминирует в GPU LLM mind-share — отсюда default ассоциация.",
+                "if_it_were_true": "Тогда они работали бы только на CUDA — а llama.cpp/MLX оптимизированы для не-NVIDIA hardware.",
+                "how_it_should_be": "llama.cpp — community; Ollama — startup; MLX — Apple."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "llama.cpp = C/C++ engine (CPU AVX/CUDA/Metal/Vulkan/ROCm, GGUF, server mode); Ollama = Go wrapper, auto model management, OpenAI-compatible API на :11434, default local dev 2025; MLX = Apple native framework, unified memory, на M3 Max 128GB запускает Llama-70B FP16, mlx_lm.server",
+              "correct": true,
+              "sections": {
+                "explanation": "llama.cpp: C/C++ inference engine от Georgi Gerganov. Backends: CPU (AVX2/AVX-512), CUDA, Metal, Vulkan, ROCm. Format GGUF. Server mode (OpenAI-compatible) на 8080. Ollama (Go wrapper над llama.cpp): ollama run llama3:70b → автодownload, REPL; ollama serve → HTTP API на :11434; OpenAI-compatible. Default для local dev 2025. MLX (Apple): Native Apple Silicon (unified memory). MLX-LM lib для LLM. На M3 Max 128GB запускает Llama-70B FP16. mlx_lm.server — HTTP API.",
+                "example": "Mac local → MLX (быстрее llama.cpp на M-series); Linux/Win local → Ollama (проще); Edge/embedded → llama.cpp напрямую; Production GPU → vLLM (не эти).",
+                "when_to_apply": "Local development, privacy-sensitive workloads (data not leaves device), demos без интернета, mobile apps, edge devices (Jetson, RPi).",
+                "edge_cases": "Ollama имеет limited customization (gguf-flavored). MLX поддерживает только Apple Silicon — нет Linux/Windows. llama.cpp на GPU медленнее vLLM в 5-10×.",
+                "related": "Q20 (GGUF), Q25 (vs production servers), Q32 (hardware)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Поддерживают только Linux",
+              "correct": false,
+              "sections": {
+                "what_actually": "llama.cpp — Linux/Windows/macOS/iOS/Android. Ollama — Linux/macOS/Windows. MLX — только macOS (Apple Silicon).",
+                "source_of_confusion": "Open source часто Linux-first, но эти инструменты широко портированы.",
+                "if_it_were_true": "Тогда не было бы Mac/Windows demos — а они flagship use case.",
+                "how_it_should_be": "Cross-platform support — широкий; MLX — исключение (Apple only)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём принципиальная разница между Tensor Parallelism и Pipeline Parallelism?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "TP всегда быстрее PP, разницы кроме скорости нет",
+              "correct": false,
+              "sections": {
+                "what_actually": "TP даёт лучше latency (parallel compute внутри слоя), но требует жирный interconnect (NVLink). PP меньше communication, но pipeline bubble и latency растёт.",
+                "source_of_confusion": "TP часто используют для single-node multi-GPU и кажется default — но на cross-node без NVLink PP выигрывает.",
+                "if_it_were_true": "Тогда PP был бы deprecated — а он нужен для cross-node deployments (multi-machine).",
+                "how_it_should_be": "TP внутри node по NVLink; PP cross-node по PCIe/RDMA; часто комбинируют TP+PP."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "TP и PP — одно и то же; названия легасили",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фундаментально разные стратегии split: внутри слоя vs между слоями. Разные требования к interconnect, разные trade-offs.",
+                "source_of_confusion": "Оба «parallelism» для big models — но через разные axes.",
+                "if_it_were_true": "Тогда не было бы отдельных флагов --tensor-parallel-size vs --pipeline-parallel-size.",
+                "how_it_should_be": "TP = intra-layer; PP = inter-layer; разные usecases."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "PP — это просто batch parallelism на multiple machines",
+              "correct": false,
+              "sections": {
+                "what_actually": "PP = pipeline parallelism: разные слои на разных GPU, активации передаются между ними. Batch parallelism — это data parallelism, другая ось.",
+                "source_of_confusion": "Слово «parallel» применимо к множеству axes; легко путать.",
+                "if_it_were_true": "Тогда не было бы pipeline bubble — а это известное PP ограничение.",
+                "how_it_should_be": "PP = layer split; DP = batch split; TP = within-layer split; SP = seq dim split."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TP — split внутри каждого слоя по dim (attention heads, FFN hidden); latency не растёт, требует fast interconnect (NVLink), all-reduce каждый слой; PP — split по слоям (GPU 0 — слои 0-19, GPU 1 — 20-39), меньше communication, работает по PCIe/RDMA, но pipeline bubble и latency растёт линейно с #stages",
+              "correct": true,
+              "sections": {
+                "explanation": "Tensor Parallelism: split внутри каждого слоя. Attention heads — разные heads на разных GPU. FFN — split по hidden dim. + latency не растёт (parallel compute); − требует fast interconnect (NVLink, не PCIe); − communication каждый layer (all-reduce). Pipeline Parallelism: split по слоям. GPU 0 — layers 0-19, GPU 1 — 20-39, ... + меньше communication; + работает по PCIe/RDMA; − pipeline bubble (нужно прогреть); − latency растёт линейно с #stages.",
+                "example": "vLLM практика: --tensor-parallel-size 4 (4 GPU в одном node через NVLink) + --pipeline-parallel-size 2 (2 nodes по 4 GPU = 8 GPU total). Sequence Parallelism / Context Parallelism — для очень длинного context (1M+), split по seq dim.",
+                "when_to_apply": "В одной машине, NVLink — TP. Кроссноды — PP (или TP+PP combo). Сверхдлинный context — добавить SP/CP.",
+                "edge_cases": "TP без NVLink катастрофически медленный (PCIe bottleneck в all-reduce). PP bubble минимизируется micro-batching, но всё равно есть. TP не масштабируется бесконечно — после 8-way начинаются дubious returns.",
+                "related": "Q29 (MoE — expert parallelism), Q31 (disaggregated), Q26 (vLLM flags), Q32 (hardware constraints)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему serving MoE моделей (Mixtral 8x7B, DeepSeek-V3) сложнее, чем dense?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Нужно держать ВСЕ experts в памяти (вес большой), хотя активна только часть; routing overhead — каждый token может уйти к другим experts → плохой batching по experts; load imbalance — popular experts перегружены; expert parallelism требует all-to-all communication. Active params занижают real cost",
+              "correct": true,
+              "sections": {
+                "explanation": "MoE: layer имеет M экспертов, router выбирает K per token. Mixtral 8x7B: 8 experts × 7B FFN, активны 2 → effective compute как 12.9B, но 47B надо хранить. DeepSeek-V3: 671B total, 37B active, 256 routed + 1 shared, top-9 per token. Сложности: 1) memory — все experts в VRAM; 2) routing overhead — нет batching по experts; 3) load imbalance — popular experts перегружены; 4) expert parallelism требует all-to-all communication; 5) KV cache не зависит от router, но routing decisions = extra data.",
+                "example": "vLLM поддерживает Mixtral/DeepSeek с --expert-parallel-size. SGLang оптимизирован для DeepSeek (LMSYS делает совместно). DeepSpeed-MoE — академический baseline.",
+                "when_to_apply": "Развёртывание MoE моделей (Mixtral, DeepSeek-V3, Qwen MoE). Понимание trade-off: дешевле compute, но дороже memory + complex.",
+                "edge_cases": "Top-K routing может коcr-routing — два токена один батч идут к разным experts, GPU busy partial. Load imbalance research-active: auxiliary loss балансирует во время training.",
+                "related": "Q28 (TP/PP), Q25 (SGLang оптимизирован для MoE), Q32 (hardware — большая VRAM нужна)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MoE требуют меньше памяти, всё проще",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: Mixtral 8x7B имеет 47B parameters веса (надо хранить все), хотя активны 12.9B. Память доминанта.",
+                "source_of_confusion": "Active parameters реально меньше — это и обманывает: думают, что VRAM нужен под active, а не под total.",
+                "if_it_were_true": "Тогда DeepSeek-V3 (37B active) запускался бы на 1× H100 — реально нужно держать 671B весов.",
+                "how_it_should_be": "MoE нужно держать ВСЕ experts в памяти + routing overhead + load imbalance + all-to-all communication для expert parallelism."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MoE — это просто dense + dropout",
+              "correct": false,
+              "sections": {
+                "what_actually": "MoE = sparse activation: router выбирает K из M experts per token. Это архитектурное отличие, не dropout.",
+                "source_of_confusion": "Dropout deactivates neurons случайно — внешне похоже на routing. Но routing learned и deterministic per token.",
+                "if_it_were_true": "Тогда serving не отличался бы — но reality: специальные kernels для MoE (Megablocks, vLLM MoE)).",
+                "how_it_should_be": "MoE = sparse architecture с router; serving требует expert parallelism, all-to-all, load balancing."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MoE работают только на TPU",
+              "correct": false,
+              "sections": {
+                "what_actually": "MoE работают на GPU (vLLM, SGLang, TGI), TPU и AMD MI300X. TPU имеет первоначальную история (GShard), но не эксклюзив.",
+                "source_of_confusion": "Google ввёл MoE-at-scale через TPU (GShard, GLaM) — отсюда ассоциация.",
+                "if_it_were_true": "Тогда Mixtral не запускался бы на NVIDIA — а это популярнейший model 2024-25.",
+                "how_it_should_be": "MoE портативны; GPU — основная platform; TPU/AMD — secondary."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Multi-LoRA serving (LoRAX, Punica)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто хранит 1000 копий полной модели на диске",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это и есть проблема, которую решает Multi-LoRA. Хранить 1000 × 140GB = 140TB — экономически бессмысленно.",
+                "source_of_confusion": "Naive решение действительно так выглядит — Multi-LoRA придумали именно чтобы избежать.",
+                "if_it_were_true": "Тогда per-tenant fine-tuning был бы недоступен большинству — а с LoRAX это commodity.",
+                "how_it_should_be": "Один base model + сотни маленьких адаптеров; share base в memory; hot-swap adapters."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Одна base модель в памяти + сотни LoRA адаптеров (10-100 MB каждый) hot-swap on-demand; в одном batch разные requests могут использовать разные адаптеры; special bgmv/sgmv kernels выполняют per-request LoRA в batched matmul; vLLM: --enable-lora --max-loras 16/32 + --lora-modules name=path",
+              "correct": true,
+              "sections": {
+                "explanation": "Сценарий: SaaS с per-tenant fine-tuning. 1000 клиентов = 1000 fine-tuned моделей. Нельзя держать 1000 копий базы. Решение: base model + LoRA адаптеры. Адаптер = пара матриц A (r × d) и B (d × r) где r=8-64 (rank). Маленький (~10-100 MB) vs база 14-140 GB. Multi-LoRA inference: одна base модель в памяти, сотни LoRA адаптеров hot-swap, в одном batch разные requests могут использовать разные адаптеры. Special kernels (bgmv, sgmv) выполняют per-request LoRA в batched matmul.",
+                "example": "vLLM: --model meta-llama/Llama-3-8B --enable-lora --max-loras 32 --lora-modules customer_a=/loras/cust_a customer_b=/loras/cust_b. В request 'model': 'customer_a' — vLLM применит правильный адаптер.",
+                "when_to_apply": "Multi-tenant SaaS с per-tenant customization, A/B testing разных fine-tunes, internal R&D с быстрой итерацией LoRA.",
+                "edge_cases": "Cold start — первый request новым адаптером требует загрузки (диск/CPU → GPU). max_lora_rank ограничивает поддерживаемые ranks. Throughput с разнообразными адаптерами ниже vs один адаптер (batching эффективен только когда multiple requests на тот же adapter).",
+                "related": "Q22 (prefix caching — другая фишка для batched serving), Q35 (model routing — на верхнем уровне). LoRAX (Predibase), Punica (academic basis)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Каждый запрос обрабатывается отдельным процессом",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-LoRA suserving — в одном процессе, с shared base model. Отдельные процессы = no batching, низкий throughput.",
+                "source_of_confusion": "Process isolation популярна для multi-tenant в general — но для LLM это убивает GPU efficiency.",
+                "if_it_were_true": "Тогда GPU был бы underutilized на каждом tenant — а Multi-LoRA достигает throughput близкого к single-tenant.",
+                "how_it_should_be": "Один процесс, один base, multiple adapters; bgmv/sgmv kernels для batched per-request LoRA."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "LoRA адаптеры размером с базовую модель",
+              "correct": false,
+              "sections": {
+                "what_actually": "Адаптер = пара матриц (A: r × d, B: d × r), где r=8-64. Размер 10-100 MB vs база 14-140 GB. ×100-1000 меньше.",
+                "source_of_confusion": "Если LoRA были бы такими же по размеру — не имела бы смысла.",
+                "if_it_were_true": "Тогда не было бы выигрыша по storage / hot-swap не работал.",
+                "how_it_should_be": "LoRA = low-rank delta (r=8-64); поэтому маленький."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое disaggregated inference (prefill/decode split)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Разделение модели на TP-шарды между GPU в одном node",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это tensor parallelism (Q28), не disaggregation. Disaggregated — split по стадии (prefill vs decode), не по слоям.",
+                "source_of_confusion": "Оба термина про разделение — путаница на verbal level.",
+                "if_it_were_true": "Тогда disaggregated не давал бы дополнительного выигрыша поверх TP — а реально 1.5-2× throughput.",
+                "how_it_should_be": "Disaggregated = prefill instances (большой compute, H100) + decode instances (большой bandwidth, H200/MI300X), KV transfer между ними."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Загрузка модели частями с диска",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это model sharding / offload — другая техника. Disaggregated inference про разделение стадий compute, не storage.",
+                "source_of_confusion": "Слово «disaggregated» применимо к storage (disaggregated storage), что вызывает путаницу.",
+                "if_it_were_true": "Тогда оно было бы про cold start, а не про runtime throughput.",
+                "how_it_should_be": "Disaggregated inference = split compute stages (prefill vs decode), KV cache transfer."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Prefill instances (большой compute, H100) и decode instances (большой bandwidth, H200/MI300X) на отдельных GPU pools; KV cache передаётся между ними (NVLink/RDMA); TTFT и TPOT тюнятся независимо, +1.5-2× throughput. Mooncake (Moonshot), DistServe, TRT-LLM disaggregation",
+              "correct": true,
+              "sections": {
+                "explanation": "Проблема: prefill (compute-bound, нужен FLOPS) и decode (memory-bound, нужен bandwidth) имеют разные оптимальные конфиги. Совмещение на одной GPU = компромисс. Disaggregated: prefill instances оптимизированы под throughput prefill (большой compute, H100); decode instances оптимизированы под decode batching (большой bandwidth, H200/MI300X); между ними передача KV cache (NVLink, RDMA).",
+                "example": "Системы: DistServe (2024) — академический prototype. Mooncake (Moonshot AI) — production для Kimi. TensorRT-LLM — disaggregation поддержка. vLLM — disaggregated experimental в roadmap.",
+                "when_to_apply": "Very large scale serving где разный профиль prefill/decode даёт большой эффект. Long context (lots of prefill) + many short replies = идеальный кейс.",
+                "edge_cases": "Complexity растёт значительно. KV transfer overhead требует fat interconnect (NVLink, RDMA). При короткие prompts overhead транспорта может превысить выигрыш.",
+                "related": "Q3 (prefill vs decode), Q4 (compute vs memory bound), Q28 (TP/PP), Q11 (chunked prefill — альтернатива)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Один экземпляр vLLM на каждого пользователя",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это per-tenant deployment, не disaggregation. Disaggregated — про split стадий внутри одного «logical» сервиса.",
+                "source_of_confusion": "Multi-tenant isolation иногда называют disaggregation в other contexts — но здесь специфический смысл.",
+                "if_it_were_true": "Тогда не нужны были бы Mooncake/DistServe — это решение для совершенно другой проблемы.",
+                "how_it_should_be": "Disaggregated = prefill pool + decode pool, shared between users."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбирать GPU между A100, H100, H200, MI300X и Blackwell для LLM inference?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда H100 — единственно правильный выбор",
+              "correct": false,
+              "sections": {
+                "what_actually": "H100 — отличный default, но не единственный. A100 дешевле для small models, H200 лучше для long context, MI300X альтернатива от AMD, B100/B200 — top tier.",
+                "source_of_confusion": "H100 = mind share leader, отсюда default рекомендация.",
+                "if_it_were_true": "Тогда AMD и Apple не имели бы LLM продаж — а они активно растут.",
+                "how_it_should_be": "Выбор по workload: small model = A100/4090; large memory = H200/MI300X (192GB); top throughput = B200; long context = HBM3e (H200, B200)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все GPU дают одинаковую скорость для LLM",
+              "correct": false,
+              "sections": {
+                "what_actually": "Огромная разница: H100 даёт ~6× FP16 TFLOPs vs A100, B200 ещё ×2. Decode bandwidth-limited — H200 заметно быстрее H100 на long context.",
+                "source_of_confusion": "Marketing flops показывают peak, real-world бывает ближе. Но всё равно разница большая.",
+                "if_it_were_true": "Тогда не было бы причин платить $40K за H100 vs $10K за A100.",
+                "how_it_should_be": "Линейка GPU имеет реальное расслоение performance; выбор по workload и budget."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только VRAM имеет значение, остальное второстепенно",
+              "correct": false,
+              "sections": {
+                "what_actually": "VRAM критична (модель должна влезть), но HBM bandwidth и FP8 support — не менее важны. H100 (80GB) часто быстрее MI300X (192GB) на одной модели.",
+                "source_of_confusion": "OOM — самая видимая проблема, отсюда фокус на VRAM. Но throughput определяется bandwidth.",
+                "if_it_were_true": "Тогда RTX A6000 (48GB) был бы лучше H100 (80GB) — но H100 в разы быстрее за счёт HBM3.",
+                "how_it_should_be": "VRAM = fit; HBM bandwidth = throughput; FP8 = compute + density. Все три важны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "A100 (80GB HBM2e, 2TB/s, no FP8) — workhorse; H100 (80GB HBM3, 3.35TB/s, FP8 native, 1979 FP16 TFLOPs) — default 2024-25; H200 (141GB HBM3e, 4.8TB/s) — long context; B100/B200 (192GB HBM3e, 8TB/s, 7000+ FP8 TFLOPs) — top tier; MI300X (192GB, 5.3TB/s, ROCm) — NVIDIA alternative. RTX 4090 (24GB, 1TB/s) — hobby 7-13B",
+              "correct": true,
+              "sections": {
+                "explanation": "Спецификации (FP16/FP8 TFLOPs, HBM): A100 80GB HBM2e, 2TB/s, 312 FP16 TFLOPs, нет FP8. H100 80GB HBM3, 3.35TB/s, 1979 FP16 / 3958 FP8 TFLOPs. H200 141GB HBM3e, 4.8TB/s — long context, KV cache. B100/B200 192GB HBM3e, 8TB/s, ~3500-4500 FP16 / 7000-9000 FP8 TFLOPs. MI300X 192GB HBM3, 5.3TB/s, 1300 FP16 / 2600 FP8 TFLOPs — ROCm. RTX 4090 24GB GDDR6X, 1TB/s — hobby.",
+                "example": "Llama-3-8B FP16: A100 / 4090 / Mac M-series. Llama-3-70B INT4: 1× A100 80GB или 1× 4090×2. Llama-3-70B FP16: 2× H100 / 1× H200 / 1× MI300X. Llama-3-405B FP8: 8× H100 / 4× B200 / 4× MI300X. Long context 1M: H200/B200 за HBM, либо distributed.",
+                "when_to_apply": "Capacity planning: смотри размер модели в выбранной precision, добавь KV cache budget, выбери GPU с достаточной VRAM и нужным compute. Бюджет/availability — практический фактор.",
+                "edge_cases": "FP8 не работает на A100 (только emulation). MI300X имеет 192GB, но ROCm software stack менее зрелый — vLLM поддержка есть, но TRT-LLM нет. TPU/Inferentia дешевле в GCP/AWS, но JAX/Neuron SDK — другая экосистема.",
+                "related": "Q18 (FP8 — почему H100+ важен), Q33 (cost per 1M tokens), Q26 (vLLM tuning)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сравнивается cost per 1M tokens между API и self-host?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "API pricing (Q2 2026): claude-sonnet-4-5 $3/$15, gpt-4o $2.5/$10, deepseek-v3 $0.27/$1.10, gemini-2.5-pro $1.25/$10. Self-host Llama-70B vLLM FP8 на 1×H100 (~$98/hr): ~2000 tok/s output → $13.6 / 1M output (100% util) или $27 (50%). Break-even ~100-500M tokens/month. Optimizations: prompt caching (-50..-90%), Batch API (-50%), routing, quantization",
+              "correct": true,
+              "sections": {
+                "explanation": "API pricing Q2 2026 ориентир: claude-sonnet-4-5 $3 / $15 / 1M (input/output), claude-haiku-4-5 $1/$5, gpt-4o $2.5/$10, gpt-4o-mini $0.15/$0.60, o1 $15/$60, deepseek-v3 $0.27/$1.10, gemini-2.5-pro $1.25/$10. Self-host Llama-3-70B FP8 на 1× H100 AWS p5.48xlarge (~$98/hr): vLLM ~2000 tok/s output = 7.2M tokens/hr → $13.6 / 1M output (100% util) или $27 (50%). Break-even: API дешевле до 100M tokens/month; self-host >500M tokens/month; compliance/privacy могут перевешивать.",
+                "example": "Optimization stack: prompt caching (-50% to -90% на input, huge для RAG), Batch API (-50% для non-realtime), model routing (cheap для 80% запросов), quantization self-host (INT4 fits 70B на одной 80GB GPU).",
+                "when_to_apply": "Сравнение TCO: учитывать utilization, ops cost, ramp time, talent. Маленькая команда — API почти всегда; крупный consistent workload — self-host.",
+                "edge_cases": "API цены меняются часто (вниз). Self-host цена железа амортизируется за 2-3 года. Spot instances снижают cost но создают availability risk.",
+                "related": "Q23-24 (prompt caching API), Q34 (Batch API), Q35 (model routing), Q15-17 (quantization)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Self-host всегда экономичнее",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для малого/среднего volume API радикально дешевле — нет upfront costs, нет idle GPU costs, нет ops overhead.",
+                "source_of_confusion": "Self-host «бесплатно после железа» — кажется выгодным. Но idle GPU всё равно стоит.",
+                "if_it_were_true": "Тогда стартапы все запускали бы self-host — реально API доминирует для <500M tokens/month.",
+                "how_it_should_be": "Break-even ~100-500M tokens/month; ниже — API, выше — self-host (с правильным utilization)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "API всегда дешевле в любом scale",
+              "correct": false,
+              "sections": {
+                "what_actually": "API дешевле до ~100M tokens/month. Self-host экономнее при >500M tokens/month consistent load.",
+                "source_of_confusion": "API дешёвый старт и no upfront — оптично кажется всегда выгодным.",
+                "if_it_were_true": "Тогда крупные компании не self-hosted — а Meta/Microsoft/etc активно self-host.",
+                "how_it_should_be": "Break-even по volume; также privacy/compliance/data residency могут перевешивать чистую цену."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все API стоят одинаково — выбор бренда",
+              "correct": false,
+              "sections": {
+                "what_actually": "Огромный разброс: deepseek-v3 ($0.27/$1.10) vs o1 ($15/$60) — разница ×60. gpt-4o-mini ($0.15/$0.60) vs claude-opus-4 — большие пропорции.",
+                "source_of_confusion": "Все говорят «LLM API» одним словом — провоцирует мысль одной цены.",
+                "if_it_were_true": "Тогда model routing (Q35) не давал бы 3-7× savings — а это standard optimization.",
+                "how_it_should_be": "Pricing варьируется на порядки — нужно подбирать модель к задаче."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда использовать Batch API (OpenAI/Anthropic), а когда нет?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только когда нужна максимальная скорость ответа",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямо наоборот. Batch API — для non-realtime; SLA 24 hours. За -50% от обычной цены.",
+                "source_of_confusion": "Слово «Batch» может ассоциироваться с performance (batch processing) — но здесь экономия за latency.",
+                "if_it_were_true": "Тогда чат был бы основным use case — а реально chat блокирован batching по SLA.",
+                "how_it_should_be": "Batch API: 24h window, -50% цены, для backgr. tasks (embedding, labeling, syntetic data, reports, document processing)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подходит: embedding большого корпуса, data labeling/categorization, synthetic data generation, periodic reports, document processing (overnight). Не подходит: realtime chat, жёсткий SLA deadlines, iterative experiments. Submit JSONL, get результат в 24h, -50% цены input/output",
+              "correct": true,
+              "sections": {
+                "explanation": "Batch API: submit job (JSONL файл с requests), результат через 24 hours. -50% от обычной цены. Не для realtime — для бэкграунда. OpenAI Batch: client.batches.create(input_file_id=file.id, endpoint='/v1/chat/completions', completion_window='24h'). Anthropic Message Batches: client.messages.batches.create(requests=[...]).",
+                "example": "Подходит: embedding 1M документов для индекса (overnight), classify 100K customer feedback, generate synthetic training data, ежедневные analytics reports. Не подходит: chat UI, code completion в IDE, alert classification.",
+                "when_to_apply": "Любой workload, где результат можно ждать 24h. Регулярные batches каждую ночь — отличный fit. Стартовая загрузка корпуса для RAG.",
+                "edge_cases": "Не гарантируется faster than 24h (часто быстрее на практике). При неудаче batch retries не входят в SLA. Self-host эквивалент — свой queue + vLLM offline mode (LLM.generate(...) на массив) — без -50% discount, но без API лимитов.",
+                "related": "Q33 (cost optimization stack), Q23-24 (prompt caching), Q35 (routing)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только для PDF и Word документов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Batch API работает с любыми text requests — chat completions, embeddings, не привязан к формату документа.",
+                "source_of_confusion": "Document processing — популярный use case, отсюда ассоциация.",
+                "if_it_were_true": "Тогда не было бы embeddings batches — а они major use case.",
+                "how_it_should_be": "Batch API универсальный для не-realtime LLM workloads."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Дороже обычного API",
+              "correct": false,
+              "sections": {
+                "what_actually": "Batch API дает -50% off от обычной цены input/output. Это и есть основной incentive.",
+                "source_of_confusion": "«Дороже» может быть в смысле total latency cost — но в money дешевле.",
+                "if_it_were_true": "Тогда никто не использовал бы — а используют активно.",
+                "how_it_should_be": "Batch API = -50% off цены, в обмен на 24h window."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём идея model routing (cheap для simple, expensive для hard)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это load balancing между разными datacenter regions",
+              "correct": false,
+              "sections": {
+                "what_actually": "Model routing — про выбор модели по сложности запроса, не про геораспределение.",
+                "source_of_confusion": "«Routing» в network world про географию — отсюда путаница.",
+                "if_it_were_true": "Тогда не давало бы экономии — а реально 3-7× savings.",
+                "how_it_should_be": "Routing классифицирует complexity запроса и направляет в weak (gpt-4o-mini, Haiku) или strong (gpt-4o, Sonnet)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Случайное распределение запросов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Random не учитывает complexity, не даёт экономии. Routing использует rule/classifier/cascade strategies.",
+                "source_of_confusion": "Random load balancing — стандарт для traffic — путаница с model selection.",
+                "if_it_were_true": "Тогда 50% запросов попадали бы в дорогую модель — никакой экономии.",
+                "how_it_should_be": "Routing intelligent: rule-based, classifier-based (RouteLLM), cascade (try cheap → escalate), multi-armed bandit."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "~70% типичного трафика — простые задачи (классификация, простой Q&A, RAG-резюме), которые решит cheap модель (gpt-4o-mini, Haiku) в 10× дешевле. Strategies: rule-based (by intent), classifier (RouteLLM), cascade (try cheap → escalate), bandit. Savings 3-7×, quality drop <5%",
+              "correct": true,
+              "sections": {
+                "explanation": "Не каждому запросу нужен GPT-4o. ~70% типичного трафика — простые задачи (классификация, простой Q&A, RAG-резюме), которые решит gpt-4o-mini или Haiku в 10× дешевле. Стратегии: rule-based (по domain/intent: 'summarize → cheap', 'code review → strong'); classifier-based (маленькая модель классифицирует complexity, например RouteLLM от LMSYS, или Martian commercial); cascade (попробовать cheap, escalate если low confidence); multi-armed bandit (A/B online learning).",
+                "example": "RouteLLM: from routellm.controller import Controller; router = Controller(routers=['mf'], strong_model='gpt-4o', weak_model='gpt-4o-mini'); router.completion(messages=[...], model='router-mf-0.116'). Реальные результаты: 50-80% запросов в weak model, quality drop <5% при правильной калибровке threshold. Savings 3-7×.",
+                "when_to_apply": "Любая система с заметным volume API запросов разной complexity. Особенно: chatbots, RAG, агенты. Окупается мгновенно при >$1K/month spend.",
+                "edge_cases": "Calibration threshold критичен — слишком агрессивно = quality drop ощутимый, слишком консервативно = маленькая экономия. Cascade добавляет latency (retry overhead). Reasoning queries — обычно direct to strong (cascade неэффективен).",
+                "related": "Q33 (cost optimization stack), Q34 (Batch API), Q22-24 (prompt caching)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать всегда самую дорогую модель «на всякий случай»",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это противоположность routing. Дорогая для всех — экономически расточительно, qualité не улучшается на простых задачах.",
+                "source_of_confusion": "«Safe default» mentality — кажется правильным «не рисковать». Но cost растёт в разы.",
+                "if_it_were_true": "Тогда не существовало бы gpt-4o-mini ($0.15/1M) — а это популярнейшая модель именно для routed cheap path.",
+                "how_it_should_be": "Match сложность модели к сложности задачи; cheap default для большинства, escalate для сложных."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Снижает ли streaming SSE реальную latency и какие гтотчи?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Streaming уменьшает end-to-end latency в 10×",
+              "correct": false,
+              "sections": {
+                "what_actually": "End-to-end latency остаётся та же (TTFT + N × TPOT). Streaming снижает только perceived latency.",
+                "source_of_confusion": "Subjectively кажется «гораздо быстрее» — отсюда мысль про real latency.",
+                "if_it_were_true": "Тогда streaming был бы performance optimization, а не UX feature.",
+                "how_it_should_be": "End-to-end latency идентичен; perceived latency резко снижается (первый токен 500ms vs ожидание 10s)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Streaming SSE не работает с HTTPS",
+              "correct": false,
+              "sections": {
+                "what_actually": "SSE работает поверх HTTP/HTTPS/HTTP2/HTTP3 — это просто chunked encoding с keep-alive.",
+                "source_of_confusion": "Иногда SSE имеет проблемы с прокси/буферизацией — но не с HTTPS как таковым.",
+                "if_it_were_true": "Тогда нельзя было бы использовать в production (где HTTPS обязателен) — а все провайдеры используют.",
+                "how_it_should_be": "SSE поверх HTTPS работает; нужно правильно настроить proxy/gzip/buffering."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Streaming заменяет необходимость в TTFT метрике",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: streaming делает TTFT критически важной метрикой UX. Без streaming TTFT скрыт в общей latency.",
+                "source_of_confusion": "Streaming делает first token visible — кажется, что TTFT неважен.",
+                "if_it_were_true": "Тогда мониторинг не разделял бы TTFT — а в production это core metric.",
+                "how_it_should_be": "Streaming amplifies importance TTFT — главная UX метрика для interactive."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Streaming не снижает end-to-end latency, но резко снижает perceived (первый токен через 500ms vs 10s ожидания); требует TTFT отдельно от total как главную UX-метрику. Gotchas: отключить HTTP/2 буферизацию (X-Accel-Buffering: no nginx), исключить gzip middleware, настроить flush в reverse proxy (CloudFront/Cloudflare)",
+              "correct": true,
+              "sections": {
+                "explanation": "Streaming (SSE): сервер шлёт каждый токен сразу как сгенерирован, клиент отображает progressively. End-to-end остаётся TTFT + N × TPOT, но perceived latency резко падает: без streaming пользователь видит полный ответ через 10s для 500-token answer; со streaming первый токен через 500ms, остальные текут → ощущение мгновенности.",
+                "example": "Server (FastAPI + vLLM): StreamingResponse(generate_stream(request), media_type='text/event-stream'). OpenAI client: stream = client.chat.completions.create(model='gpt-4o', messages=[...], stream=True); for chunk in stream: print(chunk.choices[0].delta.content or '', end=''). Format SSE: data: {'choices': [{'delta': {'content': 'Hello'}}]} \\n\\n.",
+                "when_to_apply": "Любой chat UI, code completion, любой interactive endpoint. Считай TTFT отдельно от total — это главная UX-метрика для chat.",
+                "edge_cases": "HTTP/2 буферизация — отключить X-Accel-Buffering: no на nginx. gzip middleware ломает SSE — exclude. Reverse proxy (CloudFront, Cloudflare) — нужен flush. Some клиентские библиотеки не понимают SSE — fall back to long-polling.",
+                "related": "Q1 (TTFT/TPOT metrics — почему важно разделять), Q22 (prefix caching для снижения TTFT)."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1685 @@
+{
+  "topic_slug": "design-parking-lot-oo-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие требования критично проговорить вслух в первые минуты LLD-интервью по парковке?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Перечислить только список фич: парковка, билет, оплата — non-functional не нужны для LLD.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Non-functional требования (thread safety, latency, availability) задают рамки дизайна классов.",
+                "source_of_confusion": "Путают LLD с feature list — структура классов зависит от NFR.",
+                "if_it_were_true": "Получили бы дизайн, который ломается на двух одновременных въездах.",
+                "how_it_should_be": "Functional: типы транспорта, multi-floor, билет, оплата. Non-functional: thread safety, latency < 200ms, availability 99.95%, audit log."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно non-functional: latency и availability — functional требования всегда стандартные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без functional неясен domain — разные парковки имеют разные правила (тарифы, типы spot, бронирование).",
+                "source_of_confusion": "Кажется, что парковка — типовая задача и detail-функционал можно не уточнять.",
+                "if_it_were_true": "Дизайн получился бы для абстрактной системы, а не конкретного use case интервьюера.",
+                "how_it_should_be": "Сначала functional (scope), затем non-functional (качество); оба пункта обязательны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Functional описывают что система делает (типы транспорта, билет, оплата), non-functional задают качественные ограничения (thread safety, latency < 200ms, availability).",
+              "correct": true,
+              "sections": {
+                "explanation": "Functional и non-functional фиксируют scope и качественные рамки до начала дизайна классов.",
+                "example": "Functional: мульти-этаж, билет с entryTime; non-functional: две камеры на двух въездах не выдают один spot, выдача билета < 200 мс.",
+                "when_to_apply": "Первые 5 минут LLD-интервью — проговорить scope вслух, чтобы интервьюер скорректировал ожидания.",
+                "edge_cases": "Audit log часто забывают, а финансы потом требуют все события вход/выход/оплата для разборов.",
+                "related": "Q2 (actors), Q3 (out of scope), Q21 (thread safety как реализация NFR)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Functional и non-functional одно и то же — это просто список требований без классификации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это две разные категории: что (functional) и как хорошо (non-functional).",
+                "source_of_confusion": "Junior-уровень — смешивают всё в один bullet list.",
+                "if_it_were_true": "Тогда не получилось бы приоритизировать: интервьюер не понимает, что критично, а что nice-to-have.",
+                "how_it_should_be": "Functional и non-functional требования — две отдельные секции с разной природой и метриками."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие actors и use cases стоит выделить для системы парковки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только Driver — остальные роли (Attendant, Admin) не нужны для LLD.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Attendant и Admin — отдельные actors с разными use cases (lost ticket, настройка тарифов).",
+                "source_of_confusion": "Фокус только на happy path водителя.",
+                "if_it_were_true": "Пропустили бы важные edge cases — потерянный билет, изменение тарифов.",
+                "how_it_should_be": "Driver, ParkingAttendant, Admin, System — четыре actors с разными use cases."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Driver, ParkingAttendant, Admin и внутренний System — каждый со своим набором use cases (взять билет, ручной платёж, настроить тарифы, мониторинг).",
+              "correct": true,
+              "sections": {
+                "explanation": "Несколько actors с разделёнными use cases помогают раннему обнаружению ролей и edge cases.",
+                "example": "Driver: takeTicket/payAndExit. Attendant: handleLostTicket. Admin: updateRates. System: monitorOccupancy.",
+                "when_to_apply": "Сразу после requirements — actors помогают раскрыть API системы и потенциальные edge cases.",
+                "edge_cases": "Attendant нужен для lost ticket; Admin — для закрытия этажа; System — для алертов о full lot.",
+                "related": "Q1 (functional req), Q24 (lost ticket), Q27 (REST API)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только System actor — людей вообще не моделируем, всё автомат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже полностью автоматическая парковка имеет интерфейсы для людей: водитель, оператор поддержки.",
+                "source_of_confusion": "Желание упростить, но это убирает реальные use cases.",
+                "if_it_were_true": "Не было бы понимания, как обрабатывать lost ticket или ручную операцию.",
+                "how_it_should_be": "System — внутренний actor для мониторинга; внешние actors — реальные люди."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Actors — это классы дизайна (Vehicle, Ticket), а не роли пользователей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Actors в UML use case diagram — это внешние сущности, взаимодействующие с системой, не классы домена.",
+                "source_of_confusion": "Путаница между UML use case (actor) и UML class diagram (классы).",
+                "if_it_were_true": "Не было бы понимания внешнего API системы и точек входа.",
+                "how_it_should_be": "Actor — внешняя сущность; классы домена — Vehicle, Ticket — это уже model."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что разумно отрезать как out of scope в 45-минутном LLD-интервью по парковке?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ничего не отрезаем — за 45 минут проектируем всё: shuttle bus, мобильное приложение, ML license plate recognition.",
+              "correct": false,
+              "sections": {
+                "what_actually": "За 45 минут невозможно сделать всё качественно; интервьюер ожидает приоритизацию.",
+                "source_of_confusion": "Желание показать всё, что знаешь, в ущерб глубине.",
+                "if_it_were_true": "Получили бы поверхностный дизайн без проработанных классов и thread safety.",
+                "how_it_should_be": "Чётко проговорить границы scope в первые минуты — это часть оценки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Отрезаем core: thread safety, edge cases — оставляем только классы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Thread safety и edge cases — это и есть ключевые темы LLD-интервью.",
+                "source_of_confusion": "Желание упростить за счёт самого ценного.",
+                "if_it_were_true": "Интервьюер не увидит понимания concurrency — основной сигнал на senior LLD.",
+                "how_it_should_be": "Отрезать периферию (shuttle, mobile), а core (concurrency, edge cases) проработать."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Out of scope — это только нефункциональные требования, которые опускаем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Out of scope — функциональные части, которые осознанно не проектируем (LPR, mobile app).",
+                "source_of_confusion": "Путаница между нефункциональными требованиями и out-of-scope функционалом.",
+                "if_it_were_true": "NFR (thread safety, latency) пропадут — а они критичны для LLD.",
+                "how_it_should_be": "Out of scope — это функционал, который не делаем; NFR остаются."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Shuttle bus, license plate recognition, банковский шлюз, мобильное приложение и multi-tenant — отрезаем сразу, остальное проговариваем как чёрный ящик.",
+              "correct": true,
+              "sections": {
+                "explanation": "Out of scope фиксирует границы и позволяет вложиться в детали core domain за отведённое время.",
+                "example": "LPR — чёрный ящик возвращает строку; PaymentGateway — интерфейс с charge(amount); shuttle bus — отдельная задача.",
+                "when_to_apply": "Сразу после requirements (Q1) — пока scope не зафиксирован, можно увязнуть в деталях.",
+                "edge_cases": "Multi-tenant (сеть парковок) часто всплывает как «а если их 10?» — отрезаем явно: одна сущность ParkingLot.",
+                "related": "Q1 (functional), Q26 (extensions, что добавим потом)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно построить иерархию Vehicle?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один класс Vehicle с полем VehicleType enum — без подклассов вообще, всегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Когда у типа появляется специфичное поведение (например, ElectricCar.chargingPort), подкласс оправдан.",
+                "source_of_confusion": "Догматический «enum vs inheritance» без учёта будущей вариативности.",
+                "if_it_were_true": "При появлении ElectricCar пришлось бы рефакторить — все методы стали бы if-else по типу.",
+                "how_it_should_be": "Vehicle abstract + подклассы; пока поведение одинаково — enum, как появляется специфика — отдельный класс."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подкласс на каждый возможный модельный тип: HondaCivic, ToyotaCamry — для максимальной типизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Class explosion: тысячи подклассов без отличий в поведении парковки.",
+                "source_of_confusion": "Идея «больше типов — лучше OO» без учёта YAGNI.",
+                "if_it_were_true": "Каждая новая модель — релиз кода; абсурдная иерархия.",
+                "how_it_should_be": "Тип нужен только когда влияет на парковочное поведение (размер spot); модель — атрибут, не подкласс."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Vehicle abstract с полями licenseNumber и type; подклассы Motorcycle/Car/Truck появляются только при наличии специфичного поведения, иначе хватает enum VehicleType.",
+              "correct": true,
+              "sections": {
+                "explanation": "Подклассы оправданы, когда есть отличие в поведении; иначе enum — достаточная вариативность.",
+                "example": "Motorcycle/Car/Truck одинаковы по поведению — enum достаточен; ElectricCar с chargingPort — уже подкласс.",
+                "when_to_apply": "Проектируя иерархию: «есть ли отличие в методах между типами?»; нет — enum, да — подкласс.",
+                "edge_cases": "Двойная диспетчеризация (Visitor) нужна, если поведение зависит и от Vehicle, и от Spot одновременно.",
+                "related": "Q5 (ParkingSpot canFitVehicle), Q19 (LSP), Q26 (ElectricSpot)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Vehicle — interface с одним методом getType, без абстрактного класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Общие поля (licenseNumber) лучше выносить в abstract class — иначе дублирование в каждом подклассе.",
+                "source_of_confusion": "Догма «interface over class» без учёта общего состояния.",
+                "if_it_were_true": "Поле licenseNumber и его геттер дублировались бы в Motorcycle/Car/Truck.",
+                "how_it_should_be": "abstract class с общими полями + подклассы; interface — когда нет общего состояния."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно спроектировать иерархию ParkingSpot?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один класс ParkingSpot с полем size enum и одним методом canFit(type) с большим switch — без подклассов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Switch по типу — антипаттерн; полиморфизм через подклассы делает код расширяемым.",
+                "source_of_confusion": "Procedural-мышление: «один класс с if-else проще».",
+                "if_it_were_true": "При добавлении ElectricSpot пришлось бы менять switch — нарушение OCP.",
+                "how_it_should_be": "abstract ParkingSpot + подклассы; canFitVehicle — полиморфный метод."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ParkingSpot abstract с canFitVehicle переопределяемым в подклассах MotorcycleSpot/CompactSpot/LargeSpot/Handicapped — каждый знает, какие Vehicle принимает.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полиморфизм: spot знает свою совместимость без switch по типу транспорта.",
+                "example": "MotorcycleSpot.canFit принимает только MOTORCYCLE; CompactSpot — MOTORCYCLE+CAR; LargeSpot — все три.",
+                "when_to_apply": "Когда правила совместимости различаются между подклассами и могут эволюционировать.",
+                "edge_cases": "ElectricSpot добавляет проверку наличия зарядного порта у Vehicle — новый подкласс, без модификации старых.",
+                "related": "Q4 (Vehicle hierarchy), Q19 (OCP, LSP), Q16 (SpotFactory)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Иерархия по совместимости транспорта: MotorcycleSpotForMotorcycles, MotorcycleSpotForCars — комбинации в имени класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Class explosion — каждая комбинация = новый класс.",
+                "source_of_confusion": "Желание явно прописать совместимость в типе.",
+                "if_it_were_true": "При добавлении нового VehicleType — N×M новых классов; неэксплуатируемо.",
+                "how_it_should_be": "Совместимость — поведение метода canFitVehicle, а не часть имени класса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ParkingSpot — final класс без подклассов, конфигурация через enum SpotSize и поле compatibleTypes: Set<VehicleType>.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Data-driven подход работает, но теряет возможность специализации (ElectricSpot.startCharging).",
+                "source_of_confusion": "Минимализм данных vs расширяемость поведения.",
+                "if_it_were_true": "Электрические spots с зарядкой потребовали бы добавления полей в общий класс — God class.",
+                "how_it_should_be": "Полиморфизм через подклассы — каждый может иметь своё поведение, не только данные."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "За что отвечает ParkingFloor и какое его место в иерархии?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ParkingFloor хранит spots, отвечает за поиск и резервирование spot в одном атомарном шаге; группирует spots по SpotSize.",
+              "correct": true,
+              "sections": {
+                "explanation": "Floor — самая мелкая единица для блокировки; группировка по size ускоряет поиск кандидатов.",
+                "example": "assignVehicleToSpot под floorLock: цикл по candidateSpots(type) → assignVehicle → notify DisplayBoard.",
+                "when_to_apply": "Когда ParkingLot становится god class — выделить floor как зону ответственности.",
+                "edge_cases": "Закрытие этажа на ремонт: floor выставляет флаг closed, новые vehicle туда не попадают.",
+                "related": "Q7 (ParkingLot не знает деталей), Q21-Q22 (lock granularity), Q17 (DisplayBoard)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ParkingFloor хранит только id этажа без spots; spots хранятся в ParkingLot единым плоским списком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ParkingLot становится god class — содержит все spots и делает всю логику поиска.",
+                "source_of_confusion": "Желание «не плодить сущности» приводит к god class.",
+                "if_it_were_true": "Lock на весь lot блокирует параллельные въезды на разных этажах.",
+                "how_it_should_be": "Floor — самостоятельная единица с собственным lock и набором spots."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ParkingFloor отвечает за биллинг и оплату на этаже — каждый этаж имеет свой ParkingRate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Биллинг — отдельная ответственность ParkingRate; floor занимается только местами.",
+                "source_of_confusion": "Смешение SRP: floor + billing.",
+                "if_it_were_true": "Нарушение SRP — изменение тарифов меняет код floor.",
+                "how_it_should_be": "ParkingFloor — only spots; ParkingRate — billing."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ParkingFloor хранит Vehicle напрямую, без ParkingSpot — упрощение модели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spot имеет свой жизненный цикл (резервирование, ремонт, типы) — нужна отдельная сущность.",
+                "source_of_confusion": "Желание убрать «лишний» уровень индирекции.",
+                "if_it_were_true": "Невозможно различить типы spot, обработать handicapped/electric, делать reservations.",
+                "how_it_should_be": "Floor → Spot → Vehicle — три уровня агрегации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему именно Singleton оправдан для ParkingLot?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Singleton оправдан, потому что «удобно достать откуда угодно» без передачи через конструктор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Удобно достать откуда угодно» — глобальное состояние, антипаттерн.",
+                "source_of_confusion": "Singleton как замена DI — частая ошибка.",
+                "if_it_were_true": "Тесты ломались бы из-за shared state между ними; сложно мокать.",
+                "how_it_should_be": "Singleton оправдан реальным инвариантом «один физический объект», не удобством доступа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Singleton нужен для производительности — экономит память на повторных new ParkingLot().",
+              "correct": false,
+              "sections": {
+                "what_actually": "Singleton — про инвариант единственности, не про экономию памяти.",
+                "source_of_confusion": "Путаница с object pooling / flyweight.",
+                "if_it_were_true": "Тогда любой класс надо было бы делать Singleton ради экономии — это абсурдно.",
+                "how_it_should_be": "Singleton — про инвариант, а не оптимизация; для экономии — flyweight или object pool."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Singleton всегда антипаттерн в современной разработке — никогда не применять.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Singleton оправдан для реальных инвариантов единственности; критика касается случаев глобального состояния «для удобства».",
+                "source_of_confusion": "Догма «Singleton bad» без понимания контекста.",
+                "if_it_were_true": "Тогда не существовало бы Spring singleton scope, который используется массово.",
+                "how_it_should_be": "Singleton — инструмент с условиями применения; используем когда есть реальный инвариант."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Singleton оправдан инвариантом «один физический объект = одна сущность в памяти»; на практике лучше реализовать через Spring singleton scope (@Component), а не ручной double-checked locking.",
+              "correct": true,
+              "sections": {
+                "explanation": "Singleton имеет смысл, когда есть реальный инвариант единственности; DI-контейнер делает это чище.",
+                "example": "ParkingLot.getInstance() — корневая точка домена; в Spring — @Component, инжектится через DI.",
+                "when_to_apply": "Когда сущность отражает уникальный физический объект (parking lot, printer, file system root).",
+                "edge_cases": "Тестируемость улучшается, если за Singleton прячется интерфейс ParkingFacility — в тестах подкладывают mock.",
+                "related": "Q19 (DIP — ParkingFacility), Q25 (bootstrap с persistence)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Ticket и Payment должны быть двумя разными сущностями?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Payment — поле класса Ticket: ticket.setPaymentAmount(100); ticket.setPaymentMethod(CARD).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запихнуть оплату в Ticket — нарушение SRP; добавление нового способа оплаты меняет класс билета.",
+                "source_of_confusion": "Желание сэкономить на классах.",
+                "if_it_were_true": "Каждый новый PaymentMethod = модификация Ticket; нарушение OCP.",
+                "how_it_should_be": "Ticket и Payment — две сущности с разными жизненными циклами и Ticket-->Payment отношением."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Один общий класс TicketPayment c всеми полями — упрощает persistence.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Денормализация: один payment имеет одну транзакцию, но ticket может иметь несколько payments (refund + повторная оплата).",
+                "source_of_confusion": "Желание упростить ORM-маппинг.",
+                "if_it_were_true": "Невозможно моделировать refund, частичные возвраты, повторные оплаты после fail.",
+                "how_it_should_be": "Ticket 1→N Payment; persistence — две таблицы с FK."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ticket и Payment — две сущности с разными жизненными циклами: ticket живёт от въезда до выезда, payment имеет свой статус и историю (PENDING/COMPLETED/FAILED/REFUNDED).",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение по SRP: Ticket — факт парковки; Payment — финансовая операция с независимым статусом.",
+                "example": "Ticket.markPaid(exitAt) меняет TicketStatus; Payment.initiateTransaction() меняет PaymentStatus — независимо.",
+                "when_to_apply": "Когда сущности имеют разные жизненные циклы, статусы или модифицируются отдельно.",
+                "edge_cases": "REFUNDED Payment не меняет Ticket → обработка возвратов идёт отдельно; lost ticket → отдельный Payment со штрафом.",
+                "related": "Q15 (PaymentStrategy), Q13 (Ticket state), Q19 (SRP)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Payment — это просто метод в Ticket: ticket.pay(amount).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pay содержит сложную логику (выбор стратегии, gateway, retry) — это отдельная ответственность.",
+                "source_of_confusion": "Anemic model в обратную сторону — слишком много логики в одной сущности.",
+                "if_it_were_true": "Ticket знает про PaymentGateway, тестируется только с моками шлюза.",
+                "how_it_should_be": "Pay — отдельная стратегия/сервис; Ticket только знает статус оплаты."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно смоделировать ценообразование (ParkingRate) с многоуровневыми тарифами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Цепочка if/else в calculate: «если до 1 часа — 4, если до 3 — 3.50, иначе 2.50» — простой и читаемый код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "If-цепочка — hard-coded бизнес-правила; меняется тариф — деплой.",
+                "source_of_confusion": "Procedural-подход кажется проще.",
+                "if_it_were_true": "Каждое обновление тарифов = code change + release — недопустимо для бизнеса.",
+                "how_it_should_be": "Табличная структура List<Tier> + итерация; тарифы — конфиг, не код."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Список Tier (upToHourExclusive, hourlyRate) с итерацией по тиерам и грейс-периодом; тарифы — данные, не код, скидки добавляются Decorator-ом без модификации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Табличная структура отделяет правила (data) от логики; Decorator/Strategy позволяет расширять без правок.",
+                "example": "tiers = [(1, 4.00), (3, 3.50), (24, 2.50)]; DiscountedRate(standardRate, 0.8) — сезонная скидка без модификации.",
+                "when_to_apply": "Когда бизнес-правила (тарифы, скидки) могут меняться без релиза кода.",
+                "edge_cases": "Грейс-период < 15 мин = 0; lostTicketPenalty — отдельное поле; rounding HALF_UP для денег.",
+                "related": "Q20 (Decorator over inheritance), Q19 (OCP), Q26 (dynamic pricing)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один BigDecimal pricePerHour — flat rate без тиеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальные парковки используют тиеры: первый час дорого, далее дешевле.",
+                "source_of_confusion": "Желание упростить до игнорирования бизнес-требования.",
+                "if_it_were_true": "Не отражает реальный домен; в продакшене сразу пришлось бы переделывать.",
+                "how_it_should_be": "Тиеры — стандарт для коммерческих парковок; добавить структуру изначально."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Цена считается на стороне БД через хранимую процедуру — Java только вызывает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бизнес-логика в БД-процедурах сложно тестировать и эволюционировать.",
+                "source_of_confusion": "Старая школа «логика в БД».",
+                "if_it_were_true": "Невозможно протестировать unit-тестом; миграция между СУБД болезненна.",
+                "how_it_should_be": "Бизнес-правила в Java; в БД — только конфиг тиеров."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой подход к направленности связей в class diagram парковки правильный?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Двунаправленные ассоциации между всеми классами: ParkingFloor знает ParkingLot, ParkingSpot знает Floor — для удобства навигации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Двусторонние связи усложняют тесты и нарушают модульность; floor не должен знать lot.",
+                "source_of_confusion": "Желание «всегда иметь ссылку обратно» для удобства.",
+                "if_it_were_true": "Тест floor изолированно невозможен — нужен lot.",
+                "how_it_should_be": "Агрегация сверху вниз: lot→floor→spot; обратные ссылки только когда строго нужны."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Агрегация сверху вниз: ParkingLot знает Floor, Floor знает Spot, Spot знает Vehicle — обратные связи без необходимости не добавляем.",
+              "correct": true,
+              "sections": {
+                "explanation": "Однонаправленные связи упрощают тестирование и снижают coupling.",
+                "example": "ParkingLot *-- ParkingFloor; ParkingFloor *-- ParkingSpot; ParkingSpot --> Vehicle (current parked).",
+                "when_to_apply": "При проектировании class diagram — фиксируем направление связей до начала кода.",
+                "edge_cases": "Обратная ссылка нужна, когда дочерний объект должен уведомить родителя (Observer); тогда — listener interface.",
+                "related": "Q11-Q12 (sequence), Q17 (Observer для notify), Q19 (DIP)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все классы наследуются от одного базового Entity — простая иерархия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Общий Entity — антипаттерн «диктатор иерархии»; домен моделирует разные сущности с разной природой.",
+                "source_of_confusion": "Желание унификации через наследование.",
+                "if_it_were_true": "Любая фича Entity (например, ID) распространяется на всё — coupling.",
+                "how_it_should_be": "Каждая сущность моделируется по своей роли; общий ID — value object, не базовый класс."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Связь по композиции = по наследованию: ParkingLot extends ParkingFloor extends ParkingSpot.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это «has-a», а не «is-a»: lot has-a floor; наследование тут абсурдно.",
+                "source_of_confusion": "Путаница «is-a» и «has-a».",
+                "if_it_were_true": "ParkingLot был бы одним spot — не моделирует реальность.",
+                "how_it_should_be": "Композиция (has-a) — поля; наследование (is-a) — только для подтипов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать sequence въезда автомобиля, чтобы избежать гонок между двумя камерами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Floor поочерёдно проверяет каждый spot без lock, возвращает Optional<Spot> — клиент сам делает assignVehicle.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Между find и assign — окно гонки: два потока получают один и тот же spot.",
+                "source_of_confusion": "Желание разделить find и assign для гибкости.",
+                "if_it_were_true": "Два водителя получают один spot — критичный баг.",
+                "how_it_should_be": "find + assign — один атомарный шаг под floorLock или через CAS."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "EntrancePanel напрямую вызывает ParkingFloor, минуя ParkingLot — для производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EntrancePanel не должен знать про конкретный floor — ParkingLot выбирает floor по стратегии.",
+                "source_of_confusion": "Микро-оптимизация в ущерб инкапсуляции.",
+                "if_it_were_true": "Невозможно сменить стратегию выбора floor (nearest-first, distributed) без правки EntrancePanel.",
+                "how_it_should_be": "EntrancePanel → ParkingLot → выбирает floor → assign; стратегия инкапсулирована в lot."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Floor.assignVehicleToSpot атомарен под floorLock: lock → перебор candidates → spot.assignVehicle → notify board → unlock; ticket сохраняется в repo до возврата водителю.",
+              "correct": true,
+              "sections": {
+                "explanation": "Атомарный find+assign под одним lock устраняет окно гонки между потоками на разных въездах.",
+                "example": "EntrancePanel → ParkingLot.parkVehicle → ParkingFloor.assignVehicleToSpot (под lock) → Ticket → repo.save.",
+                "when_to_apply": "Каждый раз, когда поиск+резервирование должны быть видны как одно действие.",
+                "edge_cases": "Если ticketRepo.save упал — компенсация: spot.release; иначе spot занят, но билета нет.",
+                "related": "Q21 (race), Q22 (lock granularity), Q23 (optimistic locking)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Ticket создаётся ДО assign spot — а потом ищется свободное место.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ticket без spot — некорректное состояние: что писать в spotId?",
+                "source_of_confusion": "Желание сначала «выдать билет», потом разместить.",
+                "if_it_were_true": "Висели бы ticket без spot; full lot ловится поздно.",
+                "how_it_should_be": "Сначала assign spot, затем создать ticket с spotId; failure (full) — empty ticket."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каком порядке должны выполняться шаги при выезде и оплате?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "freeSpot вызывается ДО подтверждения платежа — чтобы быстрее освободить место.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если оплата провалилась, а spot уже свободен — водитель уехал бесплатно.",
+                "source_of_confusion": "Микро-оптимизация (latency) в ущерб корректности.",
+                "if_it_were_true": "Финансовый ущерб + рассинхрон состояния.",
+                "how_it_should_be": "freeSpot — строго после PaymentStatus.COMPLETED; до этого spot занят."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ExitPanel сразу пишет в БД ticket.status = PAID — даже без вызова PaymentGateway.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маркировка PAID без реальной оплаты — финансовый баг.",
+                "source_of_confusion": "Желание упростить и не вызывать внешний шлюз.",
+                "if_it_were_true": "Деньги не списаны, билет помечен оплаченным — потеря дохода.",
+                "how_it_should_be": "markPaid вызывается только после успешного charge через PaymentGateway."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один общий метод exitVehicle делает всё за раз без отдельной стратегии — switch по method.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Switch по типу оплаты — нарушение OCP; новый способ оплаты = модификация exitVehicle.",
+                "source_of_confusion": "Procedural-стиль.",
+                "if_it_were_true": "Добавление UPI / Apple Pay требует правки центрального метода.",
+                "how_it_should_be": "PaymentStrategy: каждый метод оплаты — свой класс; ExitController выбирает по PaymentMethod."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ExitPanel: scan → ratecalculate → выбор PaymentStrategy → charge → если COMPLETED: markPaid + freeSpot + barrier open; если FAILED — повторная попытка.",
+              "correct": true,
+              "sections": {
+                "explanation": "freeSpot строго после успешной оплаты — иначе платное место отдаётся даром при fail.",
+                "example": "scan ticket → 30 мин → 4.00 → CardPayment.charge → COMPLETED → ticket.markPaid → floor.freeSpot → barrier open.",
+                "when_to_apply": "Любой workflow с оплатой и физическим выпуском (товар, доступ, парковка).",
+                "edge_cases": "Gateway timeout: статус UNKNOWN → reconciliation job; lost ticket — отдельный flow с штрафом.",
+                "related": "Q15 (PaymentStrategy), Q24 (lost ticket), Q25 (outbox для recovery)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно построить state diagram для Ticket?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ACTIVE → PAID → ACTIVE → PAID — повторная оплата меняет статус туда-сюда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PAID — финальное состояние; повторная оплата невозможна или ведёт через REFUND.",
+                "source_of_confusion": "Желание «универсального» FSM без бизнес-правил.",
+                "if_it_were_true": "Можно оплатить один и тот же билет несколько раз → дублирующие списания.",
+                "how_it_should_be": "PAID — финальный state; для повторной операции — отдельный билет или REFUND flow."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ACTIVE → PAID (оплата) / LOST (утерян) / EXPIRED (> 30 дней); LOST → PAID после штрафа; PAID и EXPIRED — терминальные. Переходы — через методы markPaid/markLost, не setStatus.",
+              "correct": true,
+              "sections": {
+                "explanation": "Явные методы перехода защищают инвариант; терминальные состояния — never returning.",
+                "example": "ticket.markPaid(now) внутри проверяет, что текущий status == ACTIVE; иначе IllegalStateException.",
+                "when_to_apply": "Когда есть несколько состояний с разными бизнес-правилами и нужна защита от невалидных переходов.",
+                "edge_cases": "LOST → PAID разрешён (штраф оплачен); PAID → LOST запрещён (уже выехал).",
+                "related": "Q18 (State pattern), Q24 (lost ticket flow), Q8 (Ticket vs Payment)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все переходы через setStatus(status) — публичный setter без валидации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Setter ломает инвариант: можно вызвать setStatus(PAID) без реальной оплаты.",
+                "source_of_confusion": "Java Beans привычка к setter-ам.",
+                "if_it_were_true": "Финансовый баг через простой setStatus(PAID).",
+                "how_it_should_be": "Явные методы markPaid/markLost с проверкой текущего state."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Один статус ACTIVE — остальные не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без статусов нельзя различить оплаченный/утерянный/просроченный билет.",
+                "source_of_confusion": "Желание минимизировать модель.",
+                "if_it_were_true": "Невозможно понять, что делать с билетом на выезде.",
+                "how_it_should_be": "ACTIVE/PAID/LOST/EXPIRED — минимум для парковки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие паттерны GoF разумно применить в дизайне парковки и где?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только Singleton (ParkingLot) — остальные паттерны не нужны для LLD.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Парковка идеально подходит для демонстрации Strategy/Factory/Observer/State — это и оценивается интервью.",
+                "source_of_confusion": "Узкий взгляд на «классическое» применение Singleton.",
+                "if_it_were_true": "Дизайн получился бы procedural-стиля с switch по типу оплаты/spot.",
+                "how_it_should_be": "Применить 4-5 паттернов осознанно: Singleton, Strategy, Factory, Observer, State."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все 23 паттерна GoF — чем больше, тем лучше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Излишнее применение паттернов = over-engineering; интервьюер ценит обоснованный выбор.",
+                "source_of_confusion": "Желание «показать всё».",
+                "if_it_were_true": "Код был бы перегружен абстракциями без бизнес-смысла.",
+                "how_it_should_be": "Назвать 4-5 паттернов с конкретным применением и обоснованием."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Singleton (ParkingLot), Strategy (Payment, Allocation), Factory (SpotFactory), Observer (DisplayBoard), State (Ticket), Decorator (DiscountedRate) — каждый закрывает свою точку вариативности.",
+              "correct": true,
+              "sections": {
+                "explanation": "Парковка — учебный кейс множества GoF; называть 4-5 с конкретным применением — основа senior-ответа.",
+                "example": "Strategy = PaymentMethod; Factory = SpotFactory; Observer = DisplayBoard; State = TicketStatus.",
+                "when_to_apply": "Когда есть конкретная точка вариативности (новый способ оплаты, тип spot, реакция на событие).",
+                "edge_cases": "Не плодить паттерны ради паттернов — каждый должен закрывать вторую точку вариативности (YAGNI).",
+                "related": "Q15 (Strategy), Q16 (Factory), Q17 (Observer), Q18 (State), Q20 (Decorator)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Паттерны не используются — современный код их избегает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GoF-паттерны до сих пор основа OO дизайна; интервьюер именно их и проверяет.",
+                "source_of_confusion": "Радикальная антипаттерн-позиция.",
+                "if_it_were_true": "LLD-интервью провален — нет демонстрации знания паттернов.",
+                "how_it_should_be": "Применять паттерны осознанно к конкретным точкам вариативности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Strategy — правильный выбор для PaymentMethod?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один класс Payment с if (method == CARD) ... else if (method == CASH) ... — простая логика без интерфейсов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "If/else по методу — нарушение OCP; каждый новый способ оплаты меняет существующий код.",
+                "source_of_confusion": "Procedural-подход «короче строк».",
+                "if_it_were_true": "Добавление UPI/Apple Pay → modify Payment → риск регрессии.",
+                "how_it_should_be": "PaymentStrategy с реализациями CardPaymentStrategy/CashPaymentStrategy/UpiPaymentStrategy."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Каждая платёжная система — отдельный микросервис; на этом и заканчивается «дизайн».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это другой уровень (system design), а вопрос про LLD внутри одного процесса.",
+                "source_of_confusion": "Смешение уровней архитектуры.",
+                "if_it_were_true": "LLD-интервью на парковку превратилось бы в дискуссию о микросервисах.",
+                "how_it_should_be": "Внутри процесса — Strategy; внешний gateway — отдельная зависимость через интерфейс."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Strategy не нужен — наследование Payment ← CardPayment/CashPayment делает то же самое.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наследование смешивает данные платежа (amount, status) и алгоритм (charge); Strategy чище разделяет.",
+                "source_of_confusion": "«Inheritance == Strategy» — частая путаница.",
+                "if_it_were_true": "Данные платежа дублируются в каждом подклассе или зашиты в один; алгоритм нельзя подменить во время выполнения.",
+                "how_it_should_be": "Strategy: Payment — данные, PaymentStrategy — алгоритм; можно менять стратегию в рантайме."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "PaymentStrategy интерфейс с charge(amount, ctx); реализации Card/Cash/UPI; ExitController выбирает по Map<PaymentMethod, PaymentStrategy>.",
+              "correct": true,
+              "sections": {
+                "explanation": "Strategy инкапсулирует алгоритмы с одним интерфейсом — добавление нового способа = новый класс.",
+                "example": "strategies.get(CARD).charge(amount, ctx) → CardPaymentStrategy → gateway.charge; добавление UPI — без правок ExitController.",
+                "when_to_apply": "Когда есть несколько взаимозаменяемых алгоритмов с одинаковым внешним интерфейсом.",
+                "edge_cases": "Spring DI: каждая стратегия — @Component с qualifier; собрать в Map через PaymentStrategyResolver.",
+                "related": "Q14 (паттерны), Q19 (OCP), Q16 (Factory + Strategy)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно реализовать Factory для создания ParkingSpot?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "SpotFactory.create(SpotConfig) делает switch по SpotSize и возвращает соответствующий подкласс ParkingSpot; добавление ElectricSpot меняет только фабрику.",
+              "correct": true,
+              "sections": {
+                "explanation": "Factory локализует создание в одной точке — добавление нового типа не разносится по проекту.",
+                "example": "case ELECTRIC -> new ElectricSpot(cfg.id(), cfg.chargingPowerKw()); клиент работает с ParkingSpot.",
+                "when_to_apply": "Когда new ConcreteSpot встречается во многих местах кода и тип определяется конфигом/рантаймом.",
+                "edge_cases": "Стратегия выбора spot — отдельная сущность SpotAllocationStrategy (NearestFirst, SmallestFitting).",
+                "related": "Q5 (ParkingSpot hierarchy), Q14 (паттерны), Q19 (OCP)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "new MotorcycleSpot(id) вызывается прямо везде, где нужно — никакой фабрики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямые new во многих местах = добавление нового типа = правки в десятке файлов.",
+                "source_of_confusion": "Желание избежать «лишних» классов.",
+                "if_it_were_true": "Добавление ElectricSpot требует правок везде, где есть new SpotXxx.",
+                "how_it_should_be": "SpotFactory — единая точка создания; клиенты работают с ParkingSpot."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Reflection: Class.forName(spotType).newInstance() — гибче любого Factory.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reflection — медленно, не type-safe, ломает IDE refactoring.",
+                "source_of_confusion": "«Гибкость» через reflection без понимания costs.",
+                "if_it_were_true": "Переименование класса ломает рантайм; нет compile-time проверок.",
+                "how_it_should_be": "Явный switch в SpotFactory — type-safe, IDE-friendly, быстро."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подклассы ParkingSpot создают сами себя через статический фабричный метод each.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый подкласс знает только про себя — выбор подходящего по cfg остаётся проблемой.",
+                "source_of_confusion": "Idea: «каждый сам себя создаёт».",
+                "if_it_were_true": "Кто-то всё равно должен выбрать, какой подкласс вызвать — снова switch.",
+                "how_it_should_be": "Централизованная фабрика с одним switch — единственное место знания о всех подтипах."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать обновление DisplayBoard через Observer, не нарушая DIP?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ParkingSpot знает про DisplayBoard напрямую: spot.available = false; displayBoard.refresh() — простой код без интерфейсов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spot не должен знать про конкретный DisplayBoard (DIP); coupling сложно тестировать.",
+                "source_of_confusion": "Прямые вызовы кажутся проще.",
+                "if_it_were_true": "Любое изменение DisplayBoard ломает Spot; невозможно подменить board в тестах.",
+                "how_it_should_be": "Observer: ParkingFloor публикует события, DisplayBoard подписан через SpotListener."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SpotListener интерфейс с onSpotTaken/onSpotFreed; ParkingFloor поддерживает CopyOnWriteArrayList<SpotListener>; DisplayBoard subscribe-ится при создании. Publisher не знает про конкретного listener.",
+              "correct": true,
+              "sections": {
+                "explanation": "Observer развязывает publisher и subscriber через интерфейс; CopyOnWriteArrayList подходит для read-heavy подписки.",
+                "example": "floor.subscribe(displayBoard); board.onSpotTaken(s) → counters update; новый subscriber (Metrics) добавляется без правок floor.",
+                "when_to_apply": "Когда несколько потребителей должны реагировать на одно событие, а publisher не должен знать про них.",
+                "edge_cases": "CopyOnWriteArrayList — потому что подписчиков мало, чтения частые, изменения редкие; альтернатива — Reactor Flux.",
+                "related": "Q6 (ParkingFloor), Q19 (DIP), Q14 (паттерны)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DisplayBoard каждую секунду опрашивает все spots: пробегает по списку и считает available — pull-модель.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Polling неэффективен (CPU+lock на каждой итерации) и имеет задержку.",
+                "source_of_confusion": "Простота без масштабирования.",
+                "if_it_were_true": "На больших парковках — постоянная нагрузка на чтение всех spots каждую секунду.",
+                "how_it_should_be": "Push (Observer) — обновление только при изменении; счётчики держим в DisplayBoard."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Kafka топик — каждое изменение spot публикуется в Kafka, DisplayBoard consumer-ит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka — overkill для in-process Observer; добавляет latency и зависимость от Kafka.",
+                "source_of_confusion": "Перенос распределённого подхода на одну JVM.",
+                "if_it_were_true": "DisplayBoard рядом со Spot, но события идут через сетевой broker — абсурд.",
+                "how_it_should_be": "In-process Observer; Kafka — только если DisplayBoard в другом сервисе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда применение State pattern для Ticket оправдано?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Гигантский switch (status) в Ticket.process() — простое и понятное решение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Switch разрастается при добавлении состояний; разные методы дублируют switch.",
+                "source_of_confusion": "Procedural привычка.",
+                "if_it_were_true": "Каждое новое состояние — правки во всех методах с switch.",
+                "how_it_should_be": "State pattern: поведение в отдельных классах ActiveTicketState/PaidTicketState/LostTicketState."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Один булев флаг isPaid — простой подход.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Boolean не покрывает LOST/EXPIRED состояния; теряется бизнес-семантика.",
+                "source_of_confusion": "Желание свести к минимуму типов.",
+                "if_it_were_true": "Невозможно различить unpaid-active и unpaid-lost — разные бизнес-правила.",
+                "how_it_should_be": "Enum TicketStatus минимум; State pattern при росте логики."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Поведение в отдельных классах TicketState (ActiveTicketState/PaidTicketState/LostTicketState); ticket.changeState переключает; PaidTicketState.processPayment бросает IllegalStateException — инвариант защищён.",
+              "correct": true,
+              "sections": {
+                "explanation": "State pattern инкапсулирует поведение каждого состояния; невалидные переходы блокируются на уровне класса.",
+                "example": "PaidTicketState.processPayment → IllegalStateException (already paid); LostTicketState.processPayment с penalty.",
+                "when_to_apply": "Когда состояний 5+ и каждое имеет разную логику в нескольких методах.",
+                "edge_cases": "Для 2-3 состояний enum достаточен; State оправдан при обилии методов с разной логикой.",
+                "related": "Q13 (state diagram), Q14 (паттерны), Q24 (lost ticket flow)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Хранить состояние строкой: ticket.status = \"PAID\" — гибче enum.",
+              "correct": false,
+              "sections": {
+                "what_actually": "String-состояния не type-safe: typo → silent bug; IDE не помогает с refactoring.",
+                "source_of_confusion": "«Гибкость» строк vs строгость enum.",
+                "if_it_were_true": "ticket.status = \"Payed\" — рантайм-баг без compile-time проверки.",
+                "how_it_should_be": "Enum или State classes — type-safe; persistence — конвертация enum ↔ string."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как SOLID применяется в дизайне парковки по пунктам?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "SOLID применяется по пунктам: SRP (Ticket не считает деньги), OCP (новый PaymentStrategy без правки), LSP (LargeSpot подставляется вместо ParkingSpot), ISP (Bookable/Releasable), DIP (зависимость от TicketRepository интерфейса).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый принцип SOLID получает конкретное применение в парковке — это и есть демонстрация LLD.",
+                "example": "SRP: Ticket≠Payment; OCP: UpiPaymentStrategy без правок ExitController; DIP: ParkingLot → TicketRepository.",
+                "when_to_apply": "В LLD-интервью обязательно проговаривать SOLID с конкретными примерами в дизайне.",
+                "edge_cases": "LSP-антипример: MotorcycleSpot принимает Truck «ради оптимизации» — нарушение замены.",
+                "related": "Q20 (composition), Q14 (паттерны как реализация SOLID), Q8 (SRP Ticket vs Payment)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SRP = много классов с одинаковым именем; LSP = либо тип substring.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SRP — одна ответственность на класс; LSP — подтип подставляется без сюрпризов.",
+                "source_of_confusion": "Поверхностное знание SOLID.",
+                "if_it_were_true": "Нарушение основных принципов OO дизайна.",
+                "how_it_should_be": "Учить SOLID с конкретными примерами и применять в дизайне."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SOLID — теория из вуза, на интервью не спрашивают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SOLID — основа LLD-интервью на senior; интервьюеры явно просят применить принципы.",
+                "source_of_confusion": "Скепсис к академическим концепциям.",
+                "if_it_were_true": "Сорвать senior-уровень из-за непонимания базовых принципов.",
+                "how_it_should_be": "Знать SOLID наизусть с примерами; уметь критиковать дизайн в этих терминах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ISP всегда требует отдельный интерфейс на каждый метод — даже для Bookable.book().",
+              "correct": false,
+              "sections": {
+                "what_actually": "ISP требует не «один метод = один интерфейс», а «клиент не зависит от ненужных ему методов».",
+                "source_of_confusion": "Доведение принципа до абсурда.",
+                "if_it_were_true": "Каждый метод = интерфейс → class explosion.",
+                "how_it_should_be": "Разделять интерфейсы по ролям клиентов (Bookable для бронирования, Releasable для освобождения)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Где композиция (через Decorator) лучше наследования при моделировании скидок?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Скидки моделируются через наследование: DiscountedRate extends ParkingRate, SeniorDiscountedRate extends DiscountedRate, WeekendSeniorDiscountedRate extends SeniorDiscountedRate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Class explosion: каждая комбинация скидок = новый подкласс; невозможно поддерживать.",
+                "source_of_confusion": "Привычка к наследованию для расширения поведения.",
+                "if_it_were_true": "N разных скидок дают 2^N подклассов — комбинаторный взрыв.",
+                "how_it_should_be": "Decorator (composition): DiscountedRate wraps Rate; комбинация через wrapping."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Композиция всегда хуже наследования — extends короче в коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Краткость кода ≠ качество дизайна; наследование fragile при изменениях родителя.",
+                "source_of_confusion": "Поверхностный взгляд на «строчки кода».",
+                "if_it_were_true": "Joshua Bloch не писал бы «Favor composition over inheritance» в Effective Java.",
+                "how_it_should_be": "Композиция предпочтительнее, кроме случаев true is-a отношения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Композиция и наследование — одно и то же, нет разницы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Композиция (has-a) — поле с интерфейсом; наследование (is-a) — extends с фиксированной иерархией.",
+                "source_of_confusion": "Поверхностное понимание ОО.",
+                "if_it_were_true": "Невозможно осознанно выбирать между ними при дизайне.",
+                "how_it_should_be": "Композиция гибче (можно менять в рантайме); наследование фиксировано в compile-time."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Rate интерфейс с calculate(Duration); DiscountedRate implements Rate, держит inner Rate и multiplier; любые комбинации через wrapping (new DiscountedRate(new DiscountedRate(standard, 0.8), 0.5)).",
+              "correct": true,
+              "sections": {
+                "explanation": "Decorator через композицию допускает любые комбинации без class explosion.",
+                "example": "Rate weekend = new DiscountedRate(standard, 0.8); Rate seniorWeekend = new DiscountedRate(weekend, 0.5).",
+                "when_to_apply": "Когда поведение можно комбинировать произвольным образом (скидки, фильтры, middleware).",
+                "edge_cases": "Порядок wrapping важен: discount(tax(rate)) != tax(discount(rate)) — учитывать в финансовых расчётах.",
+                "related": "Q9 (ParkingRate), Q19 (OCP), Q14 (Decorator)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как защититься от гонки за один spot при двух одновременных въездах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Без защиты: проверяем available, потом записываем — компилятор и JVM сами разрулят.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Между check (available) и act (assign) — окно: два потока проходят check, оба делают assign.",
+                "source_of_confusion": "Незнание check-then-act race.",
+                "if_it_were_true": "Два водителя получают один spot — критичный баг в продакшене.",
+                "how_it_should_be": "Атомарная операция: synchronized/lock на найди-и-захвати, или CAS на spot."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Coarse lock на ParkingFloor (floorLock.lock()) обеспечивает атомарность find+assign; для high-load альтернатива — CAS через AtomicReference<Vehicle> на каждом spot (parked.compareAndSet(null, v)).",
+              "correct": true,
+              "sections": {
+                "explanation": "Lock или CAS закрывают check-then-act race; trade-off — простота против throughput.",
+                "example": "floor.assignVehicleToSpot под lock: цикл по candidates → spot.assignVehicle → release; CAS: tryAssign через CAS без lock.",
+                "when_to_apply": "Любая операция «найти свободный ресурс и захватить» в многопоточной среде.",
+                "edge_cases": "Lock — простой, но bottleneck при high RPS; CAS — lock-free, но сложнее тесты и debug.",
+                "related": "Q22 (granularity), Q23 (optimistic в БД), Q6 (ParkingFloor reentrantLock)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "volatile boolean available — достаточно для thread safety.",
+              "correct": false,
+              "sections": {
+                "what_actually": "volatile даёт visibility, но не атомарность check+set; гонка остаётся.",
+                "source_of_confusion": "Путаница volatile и synchronized.",
+                "if_it_were_true": "Гарантии видимости не покрывают гонку между потоками.",
+                "how_it_should_be": "volatile + synchronized для check-then-act, или AtomicReference с CAS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Глобальный лок на ParkingLot — самый простой подход для production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Глобальный lock — boттленек: все въезды на всех этажах сериализуются.",
+                "source_of_confusion": "Простота как единственный критерий.",
+                "if_it_were_true": "Парковка на 1000 мест с 5 въездами обслуживает по одному.",
+                "how_it_should_be": "Lock на floor — параллелизм между этажами; CAS — параллелизм между spots."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая гранулярность lock-ов сбалансированная для парковки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Уровень floor — золотая середина: throughput ≈ N этажей, тесты простые, реализация на ReentrantLock; при high-load мигрируем на CAS per spot.",
+              "correct": true,
+              "sections": {
+                "explanation": "Floor-level lock сбалансированный выбор: проще spot-CAS, шире чем глобальный lock.",
+                "example": "ParkingFloor.floorLock — параллельная работа на разных этажах; миграция на AtomicReference при > 1000 RPS на этаж.",
+                "when_to_apply": "Стандартный выбор для middle-load парковок; CAS — для high-load.",
+                "edge_cases": "Lock fairness: ReentrantLock(true) для FIFO порядка, false (по умолчанию) — быстрее, но возможен starvation.",
+                "related": "Q21 (race), Q23 (optimistic в БД), Q6 (ParkingFloor)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Lock на ParkingLot всегда — простое и надёжное решение для любой нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Глобальный lock сериализует все въезды/выезды → bottleneck на любой реальной парковке.",
+                "source_of_confusion": "Простота важнее производительности.",
+                "if_it_were_true": "Парковка работала бы single-threaded — конец масштабируемости.",
+                "how_it_should_be": "Глобальный lock — только для прототипа; продакшен — floor или spot уровень."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только CAS per spot — единственный правильный подход без lock-ов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CAS быстрее, но сложнее в тестах и debug; floor lock проще и часто достаточен.",
+                "source_of_confusion": "Догма «lock-free всегда лучше».",
+                "if_it_were_true": "Для нагрузки в 10 RPS добавлять CAS — over-engineering.",
+                "how_it_should_be": "Начинать с floor lock; миграция на CAS только при доказанном bottleneck."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все три уровня одновременно: lot+floor+spot lock → максимальная безопасность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Несколько lock одновременно → deadlock через нарушение порядка захвата.",
+                "source_of_confusion": "«Больше lock = безопаснее».",
+                "if_it_were_true": "Deadlock между потоками, захватывающими locks в разном порядке.",
+                "how_it_should_be": "Один уровень lock на операцию; иерархия lock через consistent order."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать optimistic locking для бронирования spot, когда состояние в БД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "UPDATE parking_spot SET vehicle_id = ?, version = version + 1 WHERE id = ? AND vehicle_id IS NULL — CAS на уровне БД; updated == 1 → захват, 0 → пробуем другой spot. JPA @Version делает то же через OptimisticLockException.",
+              "correct": true,
+              "sections": {
+                "explanation": "Optimistic locking через WHERE + version — стандартный паттерн для конкурентных обновлений в реляционной БД.",
+                "example": "Два потока вызывают UPDATE: один получает updated=1 (успех), другой 0 (конфликт) → retry на следующий spot.",
+                "when_to_apply": "Когда состояние spot персистится в БД и нужна защита от конкурентных update.",
+                "edge_cases": "JPA @Version бросает OptimisticLockException — обрабатываем как retry или fallback на другой spot.",
+                "related": "Q21 (CAS in memory), Q25 (persistence), Q22 (granularity)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pessimistic lock на всю таблицу parking_spot — SELECT ... FOR UPDATE.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pessimistic lock на всю таблицу сериализует все запросы → bottleneck.",
+                "source_of_confusion": "Pessimistic кажется «надёжнее».",
+                "if_it_were_true": "При тысяче запросов в секунду — таблица постоянно заблокирована.",
+                "how_it_should_be": "Optimistic locking с version или CAS-стилем WHERE; pessimistic — точечно (FOR UPDATE SKIP LOCKED)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Без всякого locking: «БД сама разрулит конкурентные UPDATE».",
+              "correct": false,
+              "sections": {
+                "what_actually": "БД защитит row-level (последний WIN), но не бизнес-инвариант (два захвата одного spot).",
+                "source_of_confusion": "Доверие «магии БД».",
+                "if_it_were_true": "Last-writer-wins → второй захват перезатёт первый, два билета на один spot.",
+                "how_it_should_be": "Бизнес-инвариант защищается WHERE-условием или @Version."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Distributed lock через Redis SETNX — даже если БД одна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Когда БД одна, optimistic locking в ней — самое простое и надёжное решение.",
+                "source_of_confusion": "Любой паттерн распределённых систем как панацея.",
+                "if_it_were_true": "Redis lock с TTL → riski split-brain при разрыве сети; зачем при одной БД?",
+                "how_it_should_be": "Один БД = optimistic в БД; distributed lock — для cross-database или cross-service."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно обработать edge cases: lost ticket, full lot, early exit?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Lost ticket: водитель уезжает бесплатно через service exit; full lot: ничего не показываем; early exit: всегда полная цена.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lost ticket — фиксированный штраф (MAX_LOST_PENALTY); full lot — display + queue/reject; early exit — грейс-период < 15 мин = 0.",
+                "source_of_confusion": "Игнорирование edge cases приводит к финансовым потерям.",
+                "if_it_were_true": "Систематическая потеря дохода и плохой UX.",
+                "how_it_should_be": "Lost: штраф; full: явный показ + опционально queue; early: грейс-период."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Любой edge case решается одним общим правилом: штраф $100.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разные edge cases имеют разную природу: lost vs early vs full — три разных правила.",
+                "source_of_confusion": "Желание унификации в ущерб корректности.",
+                "if_it_were_true": "Раннее ушедший водитель платит штраф $100 — UX disaster.",
+                "how_it_should_be": "Каждый edge case — отдельное бизнес-правило."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все edge cases — баги тестирования, не часть дизайна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Edge cases — часть бизнес-требований и проверяются на интервью как глубина мышления.",
+                "source_of_confusion": "«Edge cases = bugs» подход разработчика без бизнес-смысла.",
+                "if_it_were_true": "Severe LLD-интервью провален без обсуждения lost ticket и full lot.",
+                "how_it_should_be": "Edge cases — отдельная секция дизайна с конкретными правилами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Lost ticket: статус LOST, штраф MAX_LOST_PENALTY (~$50) + LPR проверка; full lot: Optional.empty + Display \"Full\" + опц. queue; early exit (< 15 мин): ParkingRate.freeGracePeriod → 0; monthly subscriber: флаг → 0.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый edge case — конкретное правило с фиксированным поведением; интервьюер ждёт 2-3 проработанных кейса.",
+                "example": "ticket.markLost; rate.lostTicket() → штраф; if (duration < gracePeriod) return ZERO; subscriber.isActive → 0.",
+                "when_to_apply": "После основного дизайна — проговорить edge cases для демонстрации полноты модели.",
+                "edge_cases": "30+ дней без выезда → EXPIRED; ticket превышение времени → алерт владельцу через 24h.",
+                "related": "Q13 (ticket states), Q9 (ParkingRate grace), Q18 (LostTicketState)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно организовать persistent state и восстановление после рестарта приложения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всё критичное состояние (spot.occupied, ticket, payment, rate) пишем в БД синхронно; при старте — load + reconciliation; для crash mid-transaction — outbox + reconciliation job.",
+              "correct": true,
+              "sections": {
+                "explanation": "Синхронная запись + outbox защищают от потери состояния при рестарте и от рассинхрона списания/освобождения.",
+                "example": "@PostConstruct bootstrap: load floors с spot.occupied → init ParkingLot → load active tickets в index.",
+                "when_to_apply": "Любая система с физическим состоянием (парковка, склад, бронирование), которое не должно теряться.",
+                "edge_cases": "Списали деньги, не освободили spot → outbox event «payment_completed» → reconciliation job освобождает.",
+                "related": "Q23 (optimistic), Q24 (edge cases), Q1 (availability NFR)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только in-memory: при рестарте всё начинается с нуля — это нормально для парковки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При рестарте теряется информация о припаркованных машинах — катастрофа.",
+                "source_of_confusion": "Желание упростить без учёта бизнес-требований.",
+                "if_it_were_true": "Все занятые spots при рестарте становятся «свободными» → хаос.",
+                "how_it_should_be": "Синхронная запись в БД для всего критичного состояния."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один JSON-файл на диске, перезаписываем при каждом изменении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JSON-файл не транзакционный, race на запись, нет concurrent access.",
+                "source_of_confusion": "Простота без production-готовности.",
+                "if_it_were_true": "Конкурентные write → corrupted JSON; crash в момент write → потеря данных.",
+                "how_it_should_be": "Транзакционная БД (Postgres / SQLite) с ACID гарантиями."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Записать всё в Redis — он быстрее БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redis — in-memory с риском потери данных; для критичного state нужна durable persistence.",
+                "source_of_confusion": "Скорость vs durability.",
+                "if_it_were_true": "Crash Redis без AOF/RDB sync → потеря всех ticket.",
+                "how_it_should_be": "Постоянное хранение — реляционная БД; Redis — кэш или leaderboard, не source of truth."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как эволюционно добавить EV charging, reservations и dynamic pricing без big rewrite?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "EV charging: ElectricSpot extends ParkingSpot + ChargingSession; reservation: новая сущность Reservation с проверкой в assignVehicleToSpot + cron на освобождение; dynamic pricing: DynamicRate implements Rate с OccupancyMetric — прозрачно для остальной системы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждое расширение реализуется через существующие точки расширения (подкласс Spot, новая Rate, новая Reservation) без модификации core.",
+                "example": "ElectricSpot.tariff = parking + electricity; DynamicRate.calculate проверяет occupancy → ×1.5 при > 80%.",
+                "when_to_apply": "Когда нужно показать эволюцию дизайна без big rewrite — OCP в действии.",
+                "edge_cases": "Reservation не пришёл за 15 мин → cron освобождает; tiered VIP — отдельный SpotSize.VIP.",
+                "related": "Q5 (ParkingSpot hierarchy), Q9 (Rate), Q19 (OCP)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все расширения требуют переписывания core домена с нуля — никаких точек расширения нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Грамотный OO дизайн закладывает точки расширения через интерфейсы и Strategy — расширения добавляются без переписывания.",
+                "source_of_confusion": "Незнание OCP.",
+                "if_it_were_true": "Любое расширение = big bang refactoring.",
+                "how_it_should_be": "Open/Closed: расширяем через новые классы, не модифицируем существующие."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "EV charging решается просто увеличением тарифа на 50% без новых классов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EV нуждается в зарядной сессии (kWh × rate); это новая сущность ChargingSession.",
+                "source_of_confusion": "Упрощение до игнорирования domain детали.",
+                "if_it_were_true": "Невозможно биллить за энергию, контролировать порт зарядки.",
+                "how_it_should_be": "ElectricSpot + ChargingSession; тариф — Decorator поверх parking rate."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reservation = простой UPDATE spot.reserved_until — без сущности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reservation имеет собственный жизненный цикл (created → confirmed → arrived → expired) и нужен отдельный объект.",
+                "source_of_confusion": "Желание сэкономить классы.",
+                "if_it_were_true": "Невозможно моделировать историю бронирований, отмены, частичные.",
+                "how_it_should_be": "Reservation — отдельная сущность с FK на Spot и Vehicle."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно выставить REST API наружу для парковки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один endpoint /api/v1/parking?action=park&...&action=exit&... — упрощает routing.",
+              "correct": false,
+              "sections": {
+                "what_actually": "REST = ресурсы, не действия; action-based URL ломает HTTP-семантику.",
+                "source_of_confusion": "RPC-стиль в REST-API.",
+                "if_it_were_true": "Невозможно использовать HTTP-кэширование, idempotent методы, статус-коды правильно.",
+                "how_it_should_be": "POST /park, POST /exit/{id}, GET /status, PUT /admin/rates — ресурсы и HTTP-методы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "POST /api/v1/park, POST /api/v1/exit/{id}, POST /api/v1/exit/{id}/payment, GET /api/v1/status, GET /api/v1/tickets/{id}; контроллер тонкий, логика в domain (ParkingLot/ExitService).",
+              "correct": true,
+              "sections": {
+                "explanation": "REST-style endpoints + thin controller + domain logic — стандартная архитектура Spring Boot для LLD.",
+                "example": "POST /park 200 → TicketDto; 409 при full lot; GET /status → free spots by floor/size.",
+                "when_to_apply": "Когда дизайн надо открыть наружу через HTTP API в Spring Boot / Quarkus.",
+                "edge_cases": "Idempotency-Key на POST /park для retry-safe вызовов; OAuth/JWT для admin endpoints.",
+                "related": "Q24 (full lot → 409), Q19 (DIP в controller), Q7 (ParkingFacility)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "GraphQL для всего — REST устарел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GraphQL хорош для read-heavy с гибкими запросами; для CRUD парковки REST проще.",
+                "source_of_confusion": "Hype-driven подход.",
+                "if_it_were_true": "Сложность GraphQL без выгоды на простом CRUD.",
+                "how_it_should_be": "REST для CRUD; GraphQL когда нужны гибкие запросы и nested fetching."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Логика в контроллере: parsing запроса, поиск spot, lock, save — всё в одном @PostMapping методе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fat controller — нарушение SRP; логику нельзя переиспользовать (CLI, batch).",
+                "source_of_confusion": "Anemic domain + fat controller — частая ошибка junior.",
+                "if_it_were_true": "Невозможно тестировать domain без HTTP-слоя; нет переиспользования.",
+                "how_it_should_be": "Thin controller → ParkingFacility → domain logic; тестируем domain отдельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие anti-patterns стоит избегать в дизайне парковки и как их лечить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "God class ParkingLot, anemic Ticket, hard-coded rates, switch по типу везде, mutable shared state без защиты, magic numbers — каждое исправляется конкретным рефактором (выделить service, методы в сущность, конфиг, полиморфизм, volatile/Atomic, named constants).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый anti-pattern имеет конкретный симптом и лечение — это must-know для senior LLD.",
+                "example": "God ParkingLot → EntryService/ExitService/BillingService; anemic Ticket → markPaid/duration в сущности; magic 15 → freeGracePeriod.",
+                "when_to_apply": "При code review LLD-решения — выявлять anti-pattern и предлагать лечение.",
+                "edge_cases": "Слишком много паттернов — тоже anti-pattern (over-engineering); YAGNI как баланс.",
+                "related": "Q7 (god class), Q8 (anemic), Q21 (mutable shared)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Anti-patterns — субъективное понятие, на интервью обсуждать не стоит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Anti-patterns — конкретные ошибки с симптомами; senior должен распознавать и предлагать рефакторинг.",
+                "source_of_confusion": "Релятивизм в инженерных практиках.",
+                "if_it_were_true": "Не было бы книг Refactoring, Clean Code, Effective Java.",
+                "how_it_should_be": "Anti-patterns — общепринятые ошибки; знать симптомы и решения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Лучший дизайн — без любых паттернов: «just write code».",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Just code» без паттернов = procedural-стиль с if/switch везде — антипаттерн.",
+                "source_of_confusion": "Радикальная анти-паттерн позиция.",
+                "if_it_were_true": "Невозможно поддерживать кодовую базу больше 10k строк.",
+                "how_it_should_be": "Паттерны осознанно к точкам вариативности; не паттерны ради паттернов, не отсутствие ради простоты."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Magic numbers — это про математику, не про код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Magic number в коде — литеральное значение без имени (if (mins < 15)); рефактор → named constant.",
+                "source_of_confusion": "Буквальное чтение термина.",
+                "if_it_were_true": "Нельзя изменить грейс-период без поиска по коду.",
+                "how_it_should_be": "Magic numbers выносим в конфиг или константы (freeGracePeriod)."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

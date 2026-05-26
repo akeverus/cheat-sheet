@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "llm-evaluation-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем оценивать LLM в проде, если модель и так показывает топовые метрики на MMLU?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MMLU мерит общую эрудицию на public датасете, а eval нужен для измерения качества именно на твоём трафике, ловли регрессий при апдейте промпта/модели и отслеживания drift.",
+              "correct": true,
+              "sections": {
+                "explanation": "LLM — недетерминированный компонент: один промпт даёт разные ответы. Без своих эвалов невозможно объективно сравнивать модели и промпты, ловить регрессию при `GPT-4o → GPT-4.1`, давать SLA по качеству (например, faithfulness ≥ 0.95) и отслеживать drift домена. Public benchmark показывает «средняя температура по больнице», а не качество на твоих тикетах.",
+                "example": "Команда заменила prompt версии v12 на v13, метрики на MMLU не двинулись, но на golden set из 300 тикетов поддержки faithfulness упал с 0.92 до 0.78 — без своего эвала это вскрылось бы через жалобы пользователей через неделю.",
+                "when_to_apply": "Всегда для любого prod LLM-приложения, особенно когда меняется prompt, модель, RAG-индекс или появляется новый сегмент пользователей.",
+                "edge_cases": "Для одноразового demo или PoC можно обойтись без формального эвала. Но как только система пошла в прод — без eval это «езда с закрытыми глазами».",
+                "related": "[[llm-evaluation-interview#Q2]] online vs offline; [[llm-evaluation-interview#Q19]] regression testing."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Если модель в топе MMLU, дополнительный eval не нужен — leaderboard уже доказывает качество.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MMLU мерит multiple-choice эрудицию, не качество на твоей задаче. Топ MMLU не гарантирует faithfulness в RAG, способность следовать твоему system prompt или отсутствие hallucination на твоих документах.",
+                "source_of_confusion": "Маркетинг моделей делает упор на public benchmarks, создаётся иллюзия что «90% MMLU = модель работает».",
+                "if_it_were_true": "Никто бы не делал golden datasets и не строил eval pipelines — все ограничивались бы выбором топ-модели с HuggingFace Leaderboard.",
+                "how_it_should_be": "Свой golden set + continuous eval — обязательный слой поверх public benchmarks."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Eval в проде нужен только для того, чтобы рассчитать инфра-стоимость и оптимизировать токены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost/token tracking — отдельный слой (FinOps), а eval — про измерение качества выхода. Это разные оси.",
+                "source_of_confusion": "Cost evaluation действительно часть LLM observability, но это узкий срез, а не основная цель eval.",
+                "if_it_were_true": "Тогда faithfulness, hallucination rate и accuracy не существовали бы как метрики, а только $/call.",
+                "how_it_should_be": "Cost — одна из метрик, но главное — качество (accuracy, faithfulness, relevancy), регрессия и drift."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Eval нужен только для compliance-аудита раз в квартал, в остальное время полезности не приносит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eval даёт ежедневную ценность: PR-гейт против регрессий, online drift detection, обоснование stakeholder-ам, A/B-сравнение вариантов.",
+                "source_of_confusion": "В регулируемых индустриях (медицина, финансы) есть compliance-аудит, но это не единственный use-case.",
+                "if_it_were_true": "Команды бы не интегрировали eval в CI и не делали continuous monitoring — а это уже индустриальный стандарт.",
+                "how_it_should_be": "Eval — непрерывный процесс, встроенный в dev loop и в прод-мониторинг, а не разовое мероприятие."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём принципиальная разница между online и offline evaluation для LLM-приложений?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Online — это про скорость инференса (latency), offline — про точность модели; обе категории измеряют одно и то же качество с разной стороны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Online vs offline — это про источник данных и timing: offline = static golden dataset до деплоя в CI, online = реальный трафик после деплоя. Latency — отдельная ось.",
+                "source_of_confusion": "Слово «online» в ML часто ассоциируется с inference time, но в eval-контексте это про прод-измерения.",
+                "if_it_were_true": "Тогда A/B-тесты и user feedback метрики (CSAT, thumb-up) не относились бы к eval, что неверно.",
+                "how_it_should_be": "Offline = до деплоя на golden set; online = на реальном трафике с прод-метриками (CTR, retention, thumb-up rate)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Offline эвал гоняется в CI на static golden dataset до деплоя (минуты feedback), online — на реальном трафике с прод-метриками типа CTR/CSAT (дни-недели).",
+              "correct": true,
+              "sections": {
+                "explanation": "Offline: фиксированный golden dataset, метрики типа faithfulness/accuracy/ROUGE, прогон в CI, фидбек минуты, нулевой риск проду. Online: реальные запросы, метрики типа CTR/retention/thumbs-up rate/CSAT, фидбек дни-недели, есть риск проду. Зрелая команда комбинирует offline gate (не пускает регрессии) + online monitoring (ловит непредвиденное).",
+                "example": "RAGAS на 200 вопросах в GitHub Actions — offline. A/B-тест нового промпта на 5% трафика с трекингом thumb-up rate — online. Первое блокирует merge, второе валидирует на живых пользователях.",
+                "when_to_apply": "Offline — для каждого PR с изменением промпта/модели. Online — после деплоя, для drift detection и валидации бизнес-метрик.",
+                "edge_cases": "Offline ≠ real prod (covered cases ограничены). Online ≠ controlled (есть конфаундеры). Нужны оба слоя для полной защиты.",
+                "related": "[[llm-evaluation-interview#Q19]] CI regression; [[llm-evaluation-interview#Q27]] continuous eval."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Online использует human eval, offline — только автоматические метрики; разница в том, кто оценивает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Human eval может использоваться и offline (на курируемом наборе экспертом), и online (через user feedback). Различие не в типе оценщика, а в timing и источнике данных.",
+                "source_of_confusion": "Online часто включает user thumbs-up, которые кажутся «human», но это implicit feedback от пользователей, а не expert-аннотация.",
+                "if_it_were_true": "Тогда LLM-as-Judge онлайн (Langfuse, LangSmith continuous eval) был бы невозможен — а это стандарт прод-мониторинга.",
+                "how_it_should_be": "Online = на реальном трафике, может быть и автомат (LLM-judge), и human (CSAT). Offline = на golden set до деплоя."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Online эвал заменяет offline — если есть прод-метрики, golden dataset не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Online не заменяет offline. Без offline gate каждая регрессия уходит в прод и обнаруживается через дни-недели по падению бизнес-метрик. Это слишком медленный feedback loop.",
+                "source_of_confusion": "Кажется, что «реальные пользователи» дают самый точный сигнал, и golden set избыточен.",
+                "if_it_were_true": "Тогда команды не строили бы PR-гейты с RAGAS/DeepEval — а они их строят, потому что это дешевле, чем catch регрессию в проде.",
+                "how_it_should_be": "Offline + online комплементарны: offline быстрый и контролируемый, online реалистичный и широкий."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое eval-driven development применительно к LLM-приложениям?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это методология автоматического fine-tuning'а модели на golden dataset без участия инженера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eval-driven development — про процесс итерации prompt/модели по метрикам, а не про автоматический fine-tune. Fine-tune — отдельный инструмент.",
+                "source_of_confusion": "В обоих случаях используется dataset с примерами, кажется что это одно и то же.",
+                "if_it_were_true": "Тогда eval-driven сводился бы к запуску training script, что не верно — основная работа в итерации prompts.",
+                "how_it_should_be": "Eval-driven = итеративное улучшение promp/конфига по метрикам на golden set. Fine-tune — опциональный шаг."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это синоним continuous evaluation в проде с алертингом на падение метрик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Continuous eval в проде — это online monitoring. Eval-driven development — это про процесс разработки (dev loop), где каждая итерация измеряется на golden set.",
+                "source_of_confusion": "Оба термина содержат «eval», и оба про измерения, но скоупы разные.",
+                "if_it_were_true": "Тогда eval-driven применялся бы только в проде, а до релиза изменения шли наугад — это противоречит смыслу методологии.",
+                "how_it_should_be": "Eval-driven dev = TDD-аналог для LLM на dev-этапе. Continuous eval = слой мониторинга в проде."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это TDD-аналог для LLM: фиксируем golden dataset → пишем evaluator → прогоняем baseline → меняем промпт/модель → перепрогон → оставляем лучшую версию.",
+              "correct": true,
+              "sections": {
+                "explanation": "По аналогии с TDD: цикл «зафиксировать ожидание → измерить текущее → улучшить → переизмерить». Главная польза — прекращаешь «промпт-инжинирить наугад», начинаешь делать измеримые улучшения. Каждый эксперимент = diff в метриках, можно сравнивать варианты объективно.",
+                "example": "1) Golden set из 100 customer support тикетов с rubric. 2) Baseline prompt v1 даёт faithfulness 0.78. 3) Добавляем few-shot → v2 даёт 0.83. 4) Меняем chunking → v3 даёт 0.86. Оставляем v3.",
+                "when_to_apply": "При разработке любого LLM-приложения, особенно когда промпт нетривиальный или меняется регулярно.",
+                "edge_cases": "Без хорошего golden set метрики мусорные — eval-driven превращается в overfit на маленький набор. Critical: качество датасета > сложность процесса.",
+                "related": "[[llm-evaluation-interview#Q18]] golden dataset; [[llm-evaluation-interview#Q19]] CI regression."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это паттерн, где LLM сама генерирует тесты для себя в runtime — self-evaluation loop.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Self-eval (SelfCheckGPT и подобные) — отдельная техника детектирования hallucination, не методология разработки.",
+                "source_of_confusion": "Слово «self» в self-eval похоже на «driven» — кажется что модель сама ведёт процесс.",
+                "if_it_were_true": "Тогда инженер бы только запускал loop, а в реальности — пишет prompts, evaluators, выбирает версии.",
+                "how_it_should_be": "Eval-driven dev — это процесс инженера с измеримыми итерациями. Self-eval — runtime техника, ортогональная."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные категории публичных LLM-бенчмарков существуют и для чего они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только два типа: general knowledge (MMLU) и code (HumanEval) — остальное варианты этих двух.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Категорий минимум 7: general knowledge, reasoning, code, instruction following, long context, multimodal, safety. Каждая мерит разные способности.",
+                "source_of_confusion": "MMLU и HumanEval самые известные, поэтому кажется что покрывают всё.",
+                "if_it_were_true": "Тогда не было бы IFEval (instruction following), RULER (long context), HarmBench (safety) — а они важны для отдельных аспектов.",
+                "how_it_should_be": "Знать все 7 категорий: knowledge, reasoning, code, instruction, long-context, multimodal, safety."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только академические (peer-reviewed) бенчмарки vs коммерческие (closed) — других категорий нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Открытость vs закрытость — отдельная характеристика. Категории бенчмарков организуются по типу задачи.",
+                "source_of_confusion": "Closed evals (Anthropic, OpenAI internal) действительно существуют, но это про доступность, а не про тип.",
+                "if_it_were_true": "Бенчмарки не разделялись бы на reasoning vs code, а это фундаментально разные срезы качества модели.",
+                "how_it_should_be": "Категоризировать по способности (knowledge/reasoning/code/...), а openness — отдельный axis."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Бенчмарки делятся только по языку: English benchmarks (MMLU) и multilingual (XGLUE) — остальное не категоризируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Язык — одно из измерений, но категоризация benchmarks идёт прежде всего по типу способности (knowledge, reasoning, code, etc.).",
+                "source_of_confusion": "Многоязычность важна для глобальных продуктов, поэтому может казаться основной осью.",
+                "if_it_were_true": "Тогда HumanEval (Python code) и MMLU (knowledge) попадали бы в одну категорию «English benchmarks», что бессмысленно.",
+                "how_it_should_be": "Главная ось — тип способности; язык — вторичное измерение внутри категорий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "General knowledge (MMLU/GPQA), reasoning (GSM8K/MATH/AIME), code (HumanEval/SWE-Bench), instruction following (IFEval/MT-Bench), long context (Needle/RULER), multimodal (MMMU), safety (HarmBench). Каждая мерит свою способность модели.",
+              "correct": true,
+              "sections": {
+                "explanation": "Семь категорий покрывают разные оси: эрудиция, логика, кодогенерация, следование инструкциям, работа с длинным контекстом, vision+reasoning, устойчивость к атакам. Эти бенчмарки сравнивают модели между собой, но почти не коррелируют с твоим конкретным use-case — не подменяй ими golden set.",
+                "example": "Сравнение GPT-4 vs Claude vs Gemini обычно делают на 5-10 бенчмарках из разных категорий (MMLU + GPQA + GSM8K + HumanEval + MT-Bench + Needle), чтобы получить multi-dimensional картину.",
+                "when_to_apply": "Для выбора foundation модели как стартовой точки и для marketing-сравнений. Не для прод-эвала твоего приложения.",
+                "edge_cases": "Многие бенчмарки saturated (MMLU > 90% у топов), контаминация исказила результаты, leaderboards могут быть устаревшими.",
+                "related": "[[llm-evaluation-interview#Q5]] MMLU/GPQA; [[llm-evaluation-interview#Q6]] code benchmarks."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое MMLU, MMLU-Pro и GPQA, и в чём их различия?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MMLU — 57 тем (право, история, медицина, математика), multiple-choice, saturated (топ >90%); MMLU-Pro — апгрейд с 10 вариантами ответа и упором на reasoning; GPQA — PhD-уровень в биологии/физике/химии, Google-proof.",
+              "correct": true,
+              "sections": {
+                "explanation": "MMLU (Massive Multitask Language Understanding) — классика 2020 года, multiple-choice по 57 темам. С 2024 года saturated, топ-модели > 90%. MMLU-Pro поднимает планку: 10 вариантов ответа вместо 4, более reasoning-heavy. GPQA (Graduate-level Google-Proof Q&A) — вопросы PhD-уровня, спроектированы так, чтобы Google-поиск не помог; меряют глубокое научное понимание.",
+                "example": "MMLU question: «What is the capital of France?» (level: undergrad). GPQA question: «Considering the Casimir effect at quantum level X, what is the energy density correction in Y geometry?» (level: PhD physics).",
+                "when_to_apply": "Для marketing-сравнений foundation моделей. Полезны как baseline сравнение, но для прод-эвала твоего приложения почти бесполезны.",
+                "edge_cases": "MMLU contaminated (попал в pretraining многих моделей). MMLU-Pro и GPQA свежее, контаминация меньше, но всё равно присутствует.",
+                "related": "[[llm-evaluation-interview#Q4]] категории benchmarks; [[llm-evaluation-interview#Q7]] contamination."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это три названия одного и того же бенчмарка от разных авторов; различаются только метаданными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это три разных бенчмарка с разной структурой, методологией и сложностью. MMLU (Hendrycks 2020), MMLU-Pro (TIGER-Lab 2024), GPQA (Rein et al. 2023).",
+                "source_of_confusion": "Похожие названия и одинаковая идея «multiple-choice knowledge» создают впечатление единого семейства.",
+                "if_it_were_true": "Тогда не имело бы смысла мерить все три, а команды специально включают их вместе для разных уровней сложности.",
+                "how_it_should_be": "MMLU — baseline, MMLU-Pro — harder version, GPQA — PhD-level — три разные точки на оси сложности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MMLU мерит код, MMLU-Pro — math, GPQA — instruction following.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три бенчмарка про general knowledge / reasoning, не про код/math/instructions. Для кода — HumanEval, для math — GSM8K/MATH, для instructions — IFEval.",
+                "source_of_confusion": "Названия не содержат явных указаний на домен, отсюда путаница.",
+                "if_it_were_true": "Тогда не было бы смысла в существовании HumanEval, MATH, IFEval — они существуют именно потому что MMLU-семейство покрывает knowledge, а не эти оси.",
+                "how_it_should_be": "MMLU/MMLU-Pro/GPQA — knowledge benchmarks разной глубины. Code/math/instruction following — другие семейства."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MMLU — для chat-моделей, MMLU-Pro — для base моделей, GPQA — для embedding моделей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три бенчмарка применимы к language моделям, не к embedding. Различение chat/base — артефакт того, как промптится модель, а не назначение бенчмарка.",
+                "source_of_confusion": "Eval embedding моделей идёт по MTEB, а не MMLU — это разные миры, но новички могут путать.",
+                "if_it_were_true": "Тогда нельзя было бы прогнать MMLU на base-модели и на chat-модели одинаково, что неверно — прогоняется и там и там.",
+                "how_it_should_be": "Embedding eval — MTEB. MMLU/MMLU-Pro/GPQA — для language моделей в режиме генерации/MC."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем различаются HumanEval, MBPP и SWE-Bench как бенчмарки для оценки кода?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это три названия одного датасета, отличаются только годом релиза.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Три разных бенчмарка с разной структурой: HumanEval — 164 Python функций (OpenAI 2021), MBPP — 974 задач, SWE-Bench — реальные GitHub issues.",
+                "source_of_confusion": "Все три про код, кажется родственными.",
+                "if_it_were_true": "Тогда команды бы публиковали результаты только на одном из них, но в реальности они меряются вместе как разные срезы coding-способности.",
+                "how_it_should_be": "Знать что HumanEval (atomic functions, pass@k), MBPP (basic Python), SWE-Bench (real-world issues с агентом)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "HumanEval (OpenAI, 2021) — 164 atomic Python функций, метрика pass@k, saturated. MBPP — 974 простые Python задачи. SWE-Bench — реальные GitHub-issue, агент читает репо/делает патч/прогоняет тесты — современный gold standard для coding-агентов.",
+              "correct": true,
+              "sections": {
+                "explanation": "HumanEval — простые функции типа «реализуй sort», метрика pass@k = доля корректных среди k сгенерированных. MBPP похож, но больше задач. SWE-Bench радикально другой: настоящие issues из популярных repo (Django, sympy и т.д.), агент должен прочитать кодовую базу, понять issue, сделать патч, прогнать тесты. Есть варианты SWE-Bench Verified (отфильтрованный людьми) и Multimodal.",
+                "example": "HumanEval: «Write a function to check if a number is prime». SWE-Bench: «Issue #1234 in django/django: User.objects.filter() crashes when called with X, fix it» — агенту даётся весь репозиторий.",
+                "when_to_apply": "HumanEval/MBPP — quick check атомарной кодогенерации. SWE-Bench — для оценки coding agents (Devin, Cursor agent, Cognition).",
+                "edge_cases": "HumanEval saturated (топ > 95%). LiveCodeBench добавляет задачи ежемесячно для борьбы с contamination. SWE-Bench дорогой — каждая задача = много шагов агента.",
+                "related": "[[llm-evaluation-interview#Q25]] agent eval; [[llm-evaluation-interview#Q26]] AgentBench/TauBench."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все три — closed datasets, доступны только partners OpenAI/Anthropic; публично нельзя использовать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три бенчмарка открыты. HumanEval, MBPP, SWE-Bench доступны на GitHub/HF, любая команда может прогнать.",
+                "source_of_confusion": "Некоторые eval-suite от OpenAI/Anthropic действительно closed, но эти конкретные — open.",
+                "if_it_were_true": "Тогда не появлялись бы публичные leaderboards с результатами разных open-source моделей.",
+                "how_it_should_be": "HumanEval/MBPP/SWE-Bench — открытые, есть leaderboards и paperswithcode."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HumanEval для Python, MBPP для JavaScript, SWE-Bench для Rust.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три ориентированы на Python (SWE-Bench — Python repos в первую очередь). Multi-language бенчмарки — HumanEval-X, MultiPL-E.",
+                "source_of_confusion": "Хочется верить что есть язык-специфичный бенчмарк для каждого популярного языка, но в реальности Python dominantly.",
+                "if_it_were_true": "Тогда сравнения моделей на code-задачах включали бы Rust/JS отдельно, но обычно репортят только Python (HumanEval).",
+                "how_it_should_be": "Все три — Python в первую очередь. Для multi-language — HumanEval-X, MultiPL-E."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое benchmark contamination в контексте LLM и как с ней бороться?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Contamination — это когда несколько компаний используют один и тот же бенчмарк, что обесценивает результаты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Contamination — это попадание данных бенчмарка в pretraining-корпус модели, что приводит к «запоминанию» ответов вместо реального reasoning.",
+                "source_of_confusion": "Слово contamination в общем смысле может значить «загрязнение», и распространение бенчмарка похоже на «загрязнение пула».",
+                "if_it_were_true": "Тогда борьба сводилась бы к non-disclosure, а на деле борются с pretraining contamination через held-out, canary strings, парафраз.",
+                "how_it_should_be": "Contamination = бенчмарк попал в pretrain → модель видела ответы → завышенные метрики."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это когда eval-датасет содержит токсичный контент, который надо отфильтровать перед использованием.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Contamination — про утечку benchmark в pretraining-данные модели, не про токсичный контент в датасете. Toxicity filtering — отдельная задача.",
+                "source_of_confusion": "Слово contamination в общем смысле может ассоциироваться с «грязью» в данных, в т.ч. токсичностью.",
+                "if_it_were_true": "Тогда борьба с contamination сводилась бы к moderation API, а реально — к live-benchmarks и canary strings.",
+                "how_it_should_be": "Contamination = data leakage в pretrain. Toxicity filtering = отдельный data prep шаг."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Бенчмарк попал в pretraining-данные модели → модель «запомнила» ответы вместо рассуждения. Борются live-бенчмарками (LiveBench/LiveCodeBench), held-out частями, парафразом, canary strings и собственным golden set.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pretraining-датасеты охватывают почти весь публичный интернет, поэтому популярные бенчмарки часто туда попадают. Симптом: модель показывает 95% на MMLU, но проваливается на похожих неизвестных вопросах. Контаминация — основная причина, почему «90% на MMLU» не означает, что модель умная.",
+                "example": "GPT-4 на релизе показывал ~96% на HumanEval, но при парафразе задач (тот же смысл, другие имена переменных) accuracy падал на 10-15% — классический симптом contamination. LiveCodeBench добавляет новые задачи каждый месяц как defense.",
+                "when_to_apply": "Всегда учитывать при интерпретации public-benchmark результатов. Особенно для моделей, обученных после публикации benchmark.",
+                "edge_cases": "Canary strings (секретные маркеры в датасете) помогают детектить contamination — если модель «знает» canary, значит видела датасет.",
+                "related": "[[llm-evaluation-interview#Q4]] категории benchmarks; [[llm-evaluation-interview#Q18]] golden dataset."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это юридический термин: contamination = бенчмарк использован коммерчески без лицензии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это технический термин про утечку данных в pretraining, не юридический.",
+                "source_of_confusion": "Слово contamination звучит официально, и license-вопросы для бенчмарков действительно существуют (отдельная тема).",
+                "if_it_were_true": "Тогда LiveBench и canary strings были бы legal-инструментами, а они технические.",
+                "how_it_should_be": "Contamination — про data leakage в pretrain, не про licensing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что измеряют long-context benchmarks типа Needle-in-a-Haystack и RULER?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Скорость токенизации длинного контекста — сколько токенов в секунду модель может прочитать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Throughput tokenization — отдельная метрика для inference, не для long-context eval. Needle/RULER мерят способность retrieve/reason на длинном контексте.",
+                "source_of_confusion": "Long-context часто ассоциируется с performance, но эти бенчмарки про качество, а не скорость.",
+                "if_it_were_true": "Тогда не было бы фокуса на multi-needle и variable tracking в RULER — это про reasoning, не throughput.",
+                "how_it_should_be": "Needle/RULER = качество retrieval и reasoning на длинном контексте; throughput = отдельная инфра-метрика."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сколько GPU памяти потребляет inference на длинном контексте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Memory consumption — это инфра-метрика для deployment. Needle/RULER мерят качество понимания длинного контекста моделью.",
+                "source_of_confusion": "Long context действительно жрёт память, но это побочный аспект, не цель benchmarks.",
+                "if_it_were_true": "Тогда Needle и RULER давали бы числа в GB, а они дают accuracy / recall.",
+                "how_it_should_be": "Память — отдельная axis. Needle/RULER — качество retrieval/reasoning."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Размер контекста, который модель формально может принять (max_tokens).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Max context size — техническая характеристика модели, а Needle/RULER мерят насколько модель эффективно использует этот контекст.",
+                "source_of_confusion": "В обоих случаях идёт речь о «long context», но max_tokens из docs vs effective context — разные вещи.",
+                "if_it_were_true": "Тогда не было бы смысла в benchmarks — достаточно было бы читать спеку модели.",
+                "how_it_should_be": "Max context = декларируется. Effective context = меряется Needle/RULER."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Способность модели найти/использовать конкретный факт в длинном контексте: Needle-in-a-Haystack — простой sanity-check (спрятать факт, спросить), RULER — 13 задач (multi-needle, variable tracking, aggregation), показывает реальный effective context.",
+              "correct": true,
+              "sections": {
+                "explanation": "Needle (Greg Kamradt) — простой тест: вставить факт типа «Sergey любит чай» в длинный текст и спросить про него. RULER (NVIDIA) — 13 задач для long-context включая multi-needle (несколько фактов в разных позициях), variable tracking, aggregation. Главный инсайт: «контекст 1M» в маркетинге часто = «работает на 32K, дальше деградация». Effective context часто в 2-10 раз меньше advertised.",
+                "example": "Модель advertised 200K context, на Needle с 50K держит recall 100%, на 150K — 60%, на 200K — 30%. Real effective context ~ 80K. RULER даст более полную картину чем единичный Needle.",
+                "when_to_apply": "При выборе модели для use-case с длинным контекстом (RAG поверх больших документов, conversation history, code-search в monorepo).",
+                "edge_cases": "Реальная задача (анализ контракта на 500 страниц) сложнее чем Needle. Делай свой benchmark на своих документах.",
+                "related": "[[llm-evaluation-interview#Q4]] категории; [[llm-evaluation-interview#Q22]] retrieval metrics."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Для чего нужны safety benchmarks типа HarmBench и JailbreakBench?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Стандартизированный набор harmful prompts + методология evaluator-а для измерения refusal rate и robustness к jailbreak-атакам, применяется при выпуске foundation-моделей и оценке safety-fine-tuning.",
+              "correct": true,
+              "sections": {
+                "explanation": "HarmBench — стандартизированный benchmark harmful prompts (CBRN, weapons, illegal activities) с методологией evaluator-а. JailbreakBench — открытый benchmark jailbreak-атак с reproducible baselines. Эти benchmarks нужны при выпуске foundation-модели (Anthropic, OpenAI, Google репортят результаты) и при оценке safety fine-tuning.",
+                "example": "Anthropic в release notes Claude 3.5 публикует результаты на HarmBench с разбивкой по категориям harm. JailbreakBench даёт reproducible test для AutoDAN/PAIR/GCG атак.",
+                "when_to_apply": "При выпуске foundation-модели или при fine-tuning safety. Для прикладной разработки чаще достаточно guardrails + специфичные red-team тесты.",
+                "edge_cases": "Эти бенчмарки покрывают категории harm, но не специфичные для твоего продукта (например, brand-related misuse). Дополни своими red-team scenarios.",
+                "related": "[[llm-evaluation-interview#Q4]] категории; [[ai-safety-guardrails-interview]] для глубокой safety."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Эти бенчмарки — детектор PII в выходе модели, проверяют что модель не утекает emails/phones из training data.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HarmBench/JailbreakBench — про harmful content и jailbreak, не про PII leakage. PII leakage — отдельная задача (extraction attacks, membership inference).",
+                "source_of_confusion": "Обе темы относятся к «AI safety» широко, и можно их смешать.",
+                "if_it_were_true": "Тогда эти бенчмарки содержали бы PII в тестовых данных, а они содержат harmful instructions.",
+                "how_it_should_be": "Harm = harmful content и jailbreak. PII leakage = отдельные tests (TrustEval и подобные)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Они мерят latency модели при отказе от ответа на сложные вопросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти бенчмарки мерят процент refuse и robustness к атакам, не latency.",
+                "source_of_confusion": "Refusal — поведенческий аспект, можно подумать что время реакции важно.",
+                "if_it_were_true": "Тогда метрики были бы в ms, а они в % (refusal rate, attack success rate).",
+                "how_it_should_be": "Метрики — refusal rate, attack success rate, severity scores; latency — отдельный аспект."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это бенчмарки для оценки качества модерации контента в социальных сетях (Twitter, Reddit).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Content moderation — отдельный domain. HarmBench/JailbreakBench мерят safety LLM (что модель не генерирует harmful, не поддаётся jailbreak), а не классификацию social media content.",
+                "source_of_confusion": "И modeling, и moderation про «вредный контент», но это разные задачи.",
+                "if_it_were_true": "Тогда benchmarks фокусировались бы на classification accuracy на Twitter dataset, а не на LLM behavior.",
+                "how_it_should_be": "HarmBench/JailbreakBench = LLM safety. Content moderation = отдельные benchmarks (Jigsaw Toxicity, etc.)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные типы метрик используются для оценки LLM-выхода?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только LLM-as-Judge — все остальные методы устарели и не используются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используются 5-7 типов метрик: exact match, string similarity (BLEU/ROUGE), semantic similarity (BERTScore), LLM-as-Judge, human eval, code-based (regex/schema), task-specific (pass@k).",
+                "source_of_confusion": "LLM-as-Judge самый модный и обсуждаемый, может казаться универсальным.",
+                "if_it_were_true": "Тогда не было бы exact match для structured extraction и pass@k для code, а они стандарт в своих доменах.",
+                "how_it_should_be": "Multi-metric: exact для structured, BLEU/ROUGE для legacy translation, BERTScore для semantic, judge для subjective, human для gold standard, code-based для format, pass@k для code."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Exact match (для classification/extraction), string similarity (BLEU/ROUGE для translation/summarization), semantic similarity (BERTScore/embedding cosine), LLM-as-Judge (subjective), human eval (gold standard), code-based (regex/JSON schema), task-specific (pass@k, ROC-AUC).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый тип метрики подходит под свою задачу. Exact match хорош для structured extraction, но проваливается на парафразе. BLEU/ROUGE — legacy для translation/summarization, плохо коррелируют с human на свободных текстах. BERTScore — semantic similarity через embeddings, лучше для парафраза. LLM-as-Judge — для subjective критериев. Human eval — gold standard. Лучшая практика — multi-metric dashboard.",
+                "example": "Для chatbot про FAQ: exact match на 30% вопросов с однозначным ответом, LLM-as-Judge на open-ended 60%, human eval на 10% critical-tier тикетов.",
+                "when_to_apply": "Выбирать метрики под тип задачи: structured → exact/schema; translation → BLEU + human; generation → BERTScore + judge; subjective → judge + human calibration.",
+                "edge_cases": "Ни одна метрика не покрывает всё — multi-metric dashboard. BLEU плохо коррелирует с human на LLM-выходах (legacy).",
+                "related": "[[llm-evaluation-interview#Q11]] LLM-as-Judge; [[llm-evaluation-interview#Q17]] кастомный evaluator."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только две: точность (accuracy) и полнота (recall) — других метрик в NLP нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Accuracy/recall — общие IR/classification метрики. Для LLM они частично применимы, но недостаточны для generation tasks (open-ended ответы).",
+                "source_of_confusion": "В classical ML accuracy/recall основные, и кажется что в LLM так же.",
+                "if_it_were_true": "Тогда нельзя было бы оценить summarization или generation — а они оцениваются BLEU/ROUGE/BERTScore/judge.",
+                "how_it_should_be": "Использовать разные типы метрик в зависимости от типа задачи."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только perplexity — единственная универсальная метрика для LLM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Perplexity мерит качество language modeling (насколько модель предсказывает следующий токен), но не качество в downstream task. Плохо коррелирует с user-perceived quality.",
+                "source_of_confusion": "Perplexity исторически центральная метрика в LM, может казаться универсальной.",
+                "if_it_were_true": "Тогда не было бы смысла в RAGAS/MT-Bench/HumanEval — все мерили бы perplexity и закрывали тему.",
+                "how_it_should_be": "Perplexity — pretraining метрика. Downstream tasks мерят своими метриками."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое LLM-as-Judge и зачем эту технику применяют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это техника, при которой LLM сама обновляет свой prompt в runtime на основе результатов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LLM-as-Judge — использование одной LLM для оценки выхода другой LLM. Это про измерение, не про self-improvement prompt.",
+                "source_of_confusion": "Звучит похоже на self-reflective patterns (Reflexion и т.д.), которые тоже используют LLM для self-eval.",
+                "if_it_were_true": "Тогда LLM-as-Judge была бы частью inference pipeline, а она часть eval pipeline.",
+                "how_it_should_be": "Judge — оценщик выхода другой модели; модификация промпта — отдельная задача."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это когда сильная LLM (GPT-4/Claude Opus) генерирует training data для слабой модели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это distillation/synthetic data generation, не LLM-as-Judge. Judge оценивает выходы, не генерирует training data.",
+                "source_of_confusion": "Distillation и judging оба используют сильную модель для weaker — концептуально похоже.",
+                "if_it_were_true": "Тогда LLM-as-Judge выдавала бы (question, answer) пары, а она выдаёт scores и reasoning.",
+                "how_it_should_be": "Judge = evaluation. Distillation/synthetic data = training. Разные пайплайны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использование сильной LLM (GPT-4/Claude Opus/Gemini Pro) для оценки выхода другой (обычно слабой/дешёвой) LLM. Компромисс между человеком (дорого) и exact match (не работает для open-ended), стал индустриальным стандартом scaling эвала.",
+              "correct": true,
+              "sections": {
+                "explanation": "Human eval дорогой (~$1-5/sample, минуты на оценку) и не масштабируется. Exact match не работает для open-ended текстов. LLM-as-Judge даёт компромисс: дешевле человека, гибче регулярки, scaleable. Стал индустриальным стандартом для evaluation в LangSmith/Langfuse/RAGAS/DeepEval.",
+                "example": "Judge prompt с rubric: «Оцени factual_accuracy (1-5), completeness (1-5), conciseness (1-5). Верни JSON.» Claude Opus судит ответы GPT-4o на 200 customer support тикетах — занимает 10 минут вместо 10 часов человеческой работы.",
+                "when_to_apply": "Для subjective критериев (helpfulness, tone, style), open-ended ответов, scalable continuous eval. Особенно когда exact match не применим.",
+                "edge_cases": "Judge bias-ы (position, verbosity, self-preference) требуют митигации (swap order, normalize, cross-judge). Calibration vs human (Cohen's kappa ≥ 0.6).",
+                "related": "[[llm-evaluation-interview#Q12]] biases LLM-as-Judge; [[llm-evaluation-interview#Q14]] MT-Bench."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это юридическое требование regulatory authority: LLM должна быть оценена ИИ перед deployment.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нет regulatory требования «LLM-as-Judge». EU AI Act и подобные требуют human oversight, не AI judge.",
+                "source_of_confusion": "Слово «judge» звучит legal, и regulation вокруг AI становится темой.",
+                "if_it_were_true": "Тогда был бы официальный standard (ISO/IEC) с требованием LLM-judge, а это техника индустрии.",
+                "how_it_should_be": "LLM-as-Judge — практика инженеров. Regulatory требует human oversight + documentation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типичные bias-ы есть у LLM-as-Judge и как их митигировать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Bias-ов нет — LLM как оценщик нейтрально применяет rubric.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bias-ов много: position bias (первый/последний ответ выигрывает), verbosity bias (длинные ответы выигрывают), self-preference (GPT-4 любит ответы GPT-4), style bias (markdown поднимает оценку), prompt sensitivity, anchoring, refusal bias.",
+                "source_of_confusion": "Хочется верить что LLM — объективный оценщик, но bias-ы воспроизводятся в paper-ах (Zheng et al. 2023, Liu et al. 2024).",
+                "if_it_were_true": "Тогда не нужны были бы swap-order, ensemble judges, normalization — а они стандартная практика.",
+                "how_it_should_be": "Признать bias-ы, использовать митигации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Bias случается, когда judge видит правильный ответ — поэтому правильный ответ нужно скрывать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reference-based eval с показом ground truth — норма (RAGAS Answer Correctness работает так). Bias-ы возникают по другим причинам: position, length, self-preference.",
+                "source_of_confusion": "В classical exams «показать ответ» = читерство, такая интуиция переносится на judge.",
+                "if_it_were_true": "Тогда reference-based metrics были бы невозможны, а они core часть RAGAS/DeepEval.",
+                "how_it_should_be": "Reference-based — OK; bias-ы — про position, verbosity, style, self-preference."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Единственный bias — это language bias: judge оценивает английские ответы выше русских.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Language bias реален, но это только один из многих. Position, verbosity, self-preference, style bias — все воспроизводятся в literature.",
+                "source_of_confusion": "Language bias заметен в multi-lingual eval и стал популярной темой.",
+                "if_it_were_true": "Тогда swap-order и self-preference не были бы стандартными митигациями, а они таковы.",
+                "how_it_should_be": "Language bias — один из многих. Полный список включает position/verbosity/self-pref/style/etc."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Position bias (порядок ответов), verbosity bias (длинные выигрывают), self-preference (judge любит свою «семью»), style bias (markdown поднимает), prompt sensitivity, anchoring, refusal bias. Митигация: swap order + ensemble + rubric с CoT + калибровка по human labels (Cohen's kappa ≥ 0.6).",
+              "correct": true,
+              "sections": {
+                "explanation": "Bias-ы воспроизводимы в paper-ах (Zheng 2023, Liu 2024). Position bias — Chatbot Arena использует swap-order и усреднение. Verbosity bias — добавляют explicit penalty или нормализуют. Self-preference — Claude судит GPT и наоборот, ensemble. Style bias — указывают в rubric что стиль не важен. Prompt sensitivity — версионируют judge prompt как код. Калибровка vs human (Cohen's kappa ≥ 0.6) — обязательный шаг.",
+                "example": "Position bias: GPT-4 ставит первый ответ выше в 60% случаев — фиксят swap (прогоняют дважды с разным порядком и усредняют). Self-preference: GPT-4 завышает GPT-4-ответы на 15% — фиксят ensemble judges (Claude + Gemini).",
+                "when_to_apply": "Всегда при использовании LLM-as-Judge в проде, особенно для pairwise comparisons и subjective rubrics.",
+                "edge_cases": "Малое изменение rubric → другие оценки — поэтому judge-prompt версионируется как код (semver).",
+                "related": "[[llm-evaluation-interview#Q11]] LLM-as-Judge; [[llm-evaluation-interview#Q13]] pairwise vs single-point."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём различие pairwise vs single-point scoring и когда какой применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pairwise («A или B?») даёт высокую корреляцию с human (Chatbot Arena ~0.95) и низкий noise (бинарный выбор), стоимость O(N²) или O(N log N) с турниром. Single-point («оцени 1-10») дёшев O(N), но noise высокий (модель плохо различает 7 vs 8). Гибрид: pairwise для регрессий, single-point для дашбордов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pairwise — модель выбирает между двумя вариантами, бинарный выбор низкий noise. Используется в Chatbot Arena (Elo). Single-point — модель ставит абсолютную оценку 1-10, удобно для tracking, но высокий noise (модель плохо различает близкие оценки). Гибрид типичен: pairwise для регрессионного тестирования (новая версия vs baseline), single-point для continuous metrics в дашбордах.",
+                "example": "Chatbot Arena: миллионы pairwise голосов → Elo-рейтинг. Continuous eval в Langfuse: single-point faithfulness score 0-1 за каждый запрос → trend chart.",
+                "when_to_apply": "Pairwise: сравнение моделей/промптов, регрессии, leaderboards. Single-point: continuous monitoring, dashboards, per-sample metrics.",
+                "edge_cases": "Pairwise дорогой при большом N (O(N²) или нужны турниры). Single-point чувствителен к prompt sensitivity и anchoring.",
+                "related": "[[llm-evaluation-interview#Q11]] LLM-as-Judge; [[llm-evaluation-interview#Q14]] MT-Bench/Arena."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pairwise всегда лучше single-point — это устаревший подход, который больше не используют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Single-point активно используется в проде для continuous metrics (RAGAS faithfulness, Langfuse scores). Не устарел — комплементарный подход.",
+                "source_of_confusion": "Pairwise модный из-за Chatbot Arena, но это не отменяет single-point.",
+                "if_it_were_true": "Тогда RAGAS и continuous eval работали бы только в pairwise режиме, а они работают в single-point.",
+                "how_it_should_be": "Оба подхода живы; pairwise для compare, single-point для track."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Single-point — это про оценку latency, pairwise — про оценку качества.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба подхода про качество. Single-point = абсолютная оценка одного выхода, pairwise = сравнение двух выходов. Latency — отдельная axis.",
+                "source_of_confusion": "Слово «point» можно связать с «точкой во времени», что напоминает latency.",
+                "if_it_were_true": "Тогда single-point и pairwise не сравнивались бы как методы scoring quality.",
+                "how_it_should_be": "Single-point = абсолютная оценка; pairwise = сравнение. Оба про качество."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Pairwise применим только для chat-моделей, single-point — для completion-моделей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба подхода применимы к любым моделям. Различие в задаче scoring, не в типе модели.",
+                "source_of_confusion": "Chatbot Arena ассоциируется с pairwise и chat, но это связь use-case, не fundamental.",
+                "if_it_were_true": "Тогда pairwise был бы неприменим к code generation, а в HumanEval / SWE-Bench его используют через head-to-head сравнения.",
+                "how_it_should_be": "Pairwise и single-point — независимы от типа модели."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроены MT-Bench и Chatbot Arena как benchmarks для chat-моделей?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MT-Bench и Chatbot Arena — это синонимы одного и того же бенчмарка, который ведёт LMSYS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два разных бенчмарка от одной команды (LMSYS). MT-Bench — 80 prompts с GPT-4 judge. Chatbot Arena — crowd-sourced Elo на реальных пользовательских голосах.",
+                "source_of_confusion": "Оба от LMSYS, оба про chat-модели — путаница частая.",
+                "if_it_were_true": "Тогда нельзя было бы публиковать результаты на обоих отдельно, но это делают всегда.",
+                "how_it_should_be": "MT-Bench = 80 prompts + GPT-4 judge. Arena = crowd Elo."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MT-Bench (Zheng 2023): 80 prompts, 8 категорий, multi-turn (2-й ход = follow-up), GPT-4 judge даёт 1-10. Chatbot Arena (LMSYS): анонимные ответы двух моделей, юзер голосует, Elo-рейтинг как в шахматах, миллионы голосов — самый авторитетный «по живому восприятию».",
+              "correct": true,
+              "sections": {
+                "explanation": "MT-Bench — 80 prompts в 8 категориях (writing, roleplay, reasoning, math, coding, extraction, STEM, humanities), multi-turn (вопрос + follow-up), судит GPT-4. Используется для сравнения чат-моделей. Chatbot Arena — пользователь видит ответы двух анонимных моделей, голосует за лучший, Elo-рейтинг обновляется онлайн. Миллионы голосов делают его самым авторитетным leaderboard «по живому» восприятию. Минус: голосуют энтузиасты, bias к красивому форматированию.",
+                "example": "MT-Bench писательский prompt: «Напиши короткий рассказ про детектива в Москве» → GPT-4 даёт 8/10 за креативность + объяснение. Arena: пользователь вводит свой prompt → видит два анонимных ответа → выбирает «A лучше» → Elo обновляется.",
+                "when_to_apply": "MT-Bench — для измерения chat-качества при выпуске модели. Arena — как референс «что думают люди».",
+                "edge_cases": "MT-Bench saturated (топ-модели > 9/10). Arena bias к энтузиастам и красивым ответам (markdown, emoji).",
+                "related": "[[llm-evaluation-interview#Q11]] judge; [[llm-evaluation-interview#Q13]] pairwise scoring."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MT-Bench = автоматизированный machine translation benchmark; Chatbot Arena = symbolic AI arena.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MT-Bench = Multi-Turn Bench (не machine translation), про многошаговые chat-беседы. Chatbot Arena — про LLM, не про symbolic AI.",
+                "source_of_confusion": "MT часто = machine translation в NLP, отсюда путаница.",
+                "if_it_were_true": "Тогда MT-Bench содержал бы переводческие задачи, а он содержит chat prompts в 8 категориях.",
+                "how_it_should_be": "MT-Bench = Multi-Turn Bench для chat. Machine translation benchmarks — отдельно (WMT, FLORES)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MT-Bench — closed Anthropic benchmark; Chatbot Arena — closed OpenAI benchmark.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба бенчмарка от LMSYS (Berkeley/CMU академический проект), открытые. Не Anthropic, не OpenAI.",
+                "source_of_confusion": "AI labs делают свои eval-suites, но эти два — open academic.",
+                "if_it_were_true": "Тогда они не были бы доступны для воспроизведения, а они открытые.",
+                "how_it_should_be": "Оба — LMSYS, open academic projects."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое rubric-based / constitutional evaluation и чем они полезны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Rubric-based — это когда judge оценивает ответ генетическим алгоритмом, constitutional — символическими правилами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никаких генетических алгоритмов или символических правил. Rubric — детальный текстовый набор критериев и якорных примеров для judge. Constitutional — judge применяет конституцию (набор принципов).",
+                "source_of_confusion": "Слова «rubric» и «constitutional» звучат формально-системно, могут навевать ассоциации с classical AI.",
+                "if_it_were_true": "Тогда rubric eval требовал бы спецсофта типа GA-framework, а он реализуется обычным LLM prompt-ом.",
+                "how_it_should_be": "Rubric = детальные критерии в prompt judge; Constitutional = принципы Anthropic-style."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это два названия одного и того же подхода — оценки по чётким критериям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rubric и constitutional похожи (оба структурируют оценку), но это разные подходы. Constitutional специфично связан с Anthropic principles и RLAIF.",
+                "source_of_confusion": "И rubric, и constitutional содержат «критерии», поэтому могут казаться синонимами.",
+                "if_it_were_true": "Тогда не было бы смысла различать их в literature, а они различаются (constitutional — RLAIF context).",
+                "how_it_should_be": "Rubric — общий термин (детальные критерии); Constitutional — Anthropic-specific (принципы)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Rubric-based judge получает детальный rubric с критериями (factual_accuracy, completeness, coherence) и anchor-примерами для каждого уровня (1-4); constitutional eval (Anthropic) применяет конституцию принципов («помогает ли пользователю?», «уважителен ли?»). Снижает variance оценок vs «оцени 1-10 общим качеством».",
+              "correct": true,
+              "sections": {
+                "explanation": "Rubric-based — judge получает explicit критерии (Factual accuracy: 4 — все точно, 3 — мелкие неточности, 2 — серьёзные ошибки, 1 — полностью неверно) и якорные примеры. Constitutional eval (Anthropic) — judge применяет конституцию (набор принципов: «помогает ли пользователю?», «уважителен ли?», «не вреден ли?»). Используется в RLAIF (Reinforcement Learning from AI Feedback). Rubric существенно снижает variance оценок по сравнению с «оцени 1-10».",
+                "example": "Rubric для customer support: 5 критериев (factual accuracy, completeness, coherence, tone, safety) × 4 уровня каждый с anchor-примерами. Constitutional: judge применяет 10 принципов вроде «отвечает ли на вопрос пользователя?», «уважителен ли тон?».",
+                "when_to_apply": "Rubric — для consistent eval на multi-dimensional rubric. Constitutional — для safety-aligned оценки, RLAIF training.",
+                "edge_cases": "Rubric с CoT перед оценкой ещё сильнее снижает variance. Constitutional требует тщательной формулировки принципов.",
+                "related": "[[llm-evaluation-interview#Q11]] LLM-as-Judge; [[llm-evaluation-interview#Q12]] biases."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Rubric — это оценка длины ответа; constitutional — оценка соответствия US Constitution.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rubric — детальный набор критериев качества, не оценка длины. Constitutional — про набор принципов AI safety (Anthropic constitutional AI), не про US Constitution.",
+                "source_of_confusion": "Слово «constitutional» одинаковое, но context другой.",
+                "if_it_were_true": "Тогда eval имел бы юридический фокус, а это техника AI alignment.",
+                "how_it_should_be": "Rubric — критерии качества; Constitutional AI — Anthropic alignment approach."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем различаются RAGAS, DeepEval, Promptfoo и OpenAI Evals как фреймворки eval?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все четыре — клоны одного исходного фреймворка, отличаются только бэйджем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это четыре независимых фреймворка с разной философией: RAGAS — RAG focus, DeepEval — pytest-style, Promptfoo — visual comparison, OpenAI Evals — шаблоны для OpenAI stack.",
+                "source_of_confusion": "Все про eval, могут казаться родственными.",
+                "if_it_were_true": "Тогда их API были бы одинаковыми, а они различаются принципиально.",
+                "how_it_should_be": "Знать различия: RAG vs pytest vs visual vs templates."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "RAGAS только для русского языка, остальные для английского.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все фреймворки language-agnostic; работают на любом языке через выбор LLM/embeddings. RAGAS не специфичен для русского.",
+                "source_of_confusion": "Названия могут наводить на ассоциации, но они random.",
+                "if_it_were_true": "Тогда RAGAS не использовался бы в US/EU команд, а он используется глобально.",
+                "how_it_should_be": "Все language-agnostic; language depending on chosen LLM/embeddings."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "RAGAS — для оценки latency, DeepEval — для оценки cost, Promptfoo — для оценки accuracy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все четыре фреймворка про оценку качества (хотя могут опционально логировать cost/latency). Не существует разделения по axis quality/cost/latency.",
+                "source_of_confusion": "В eval часто учитываются все три оси, может казаться что каждый framework специализирован.",
+                "if_it_were_true": "Тогда нельзя было бы мерить faithfulness в RAGAS — а это его core метрика.",
+                "how_it_should_be": "Все про качество; cost/latency — опциональные дополнения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "RAGAS — RAG (faithfulness, context precision/recall, synthetic gen); DeepEval — pytest-style assert_test() с 14+ метриками; Promptfoo — YAML config с side-by-side UI и redteaming; OpenAI Evals — шаблоны (model-graded, match) для OpenAI стека. Выбирай по use-case.",
+              "correct": true,
+              "sections": {
+                "explanation": "RAGAS специализирован на RAG: Faithfulness, Answer Relevancy, Context Precision/Recall, synthetic test generation. DeepEval — pytest-style API (assert_test, метрики Hallucination/AnswerRelevancy), удобно для CI. Promptfoo — YAML config + visual side-by-side UI для сравнения промптов, плюс redteaming. OpenAI Evals — шаблоны (model-graded, match) удобны если ты на OpenAI стеке. LM Eval Harness — для academic benchmarks (MMLU, GSM8K). LangSmith/Langfuse — tracing + online evals.",
+                "example": "RAG приложение → RAGAS (готовые метрики). CI с pytest культурой → DeepEval (assert_test). Сравнение 10 промптов визуально → Promptfoo (side-by-side UI). Воспроизведение paper-результатов → LM Eval Harness.",
+                "when_to_apply": "Выбирать по use-case и stack: RAG → RAGAS; CI/pytest → DeepEval; visual prompt comparison → Promptfoo; tracing + online → Langfuse/LangSmith.",
+                "edge_cases": "Можно комбинировать: RAGAS для RAG-специфичных метрик + DeepEval для CI integration + Langfuse для prod tracing.",
+                "related": "[[llm-evaluation-interview#Q17]] кастомный evaluator; [[llm-evaluation-interview#Q21]] RAGAS метрики."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как написать кастомный evaluator и какие подходы есть для разных типов проверок?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подходы: code-based (regex, JSON schema, deterministic — дёшево и надёжно), embedding distance (cosine между output и reference), LLM-judge с кастомным rubric (для subjective), гибрид (code-check на формат → judge на содержание). Всегда логировать `reason` для дебага.",
+              "correct": true,
+              "sections": {
+                "explanation": "Готовых метрик не хватает в 80% случаев — нужны кастомные. Подходы: (1) code-based — regex, JSON schema, deterministic checks; дёшево, надёжно, для формата. (2) embedding distance — `cosine(embed(output), embed(reference)) > threshold` для парафраза. (3) LLM-judge с rubric — для subjective критериев. (4) Гибрид — сначала code-check формата, потом judge содержания. Всегда логируй `reason`, иначе дебаг будет адом.",
+                "example": "JsonSchemaEvaluator: парсит output через json.loads → валидирует через jsonschema → возвращает `{score: 0/1, passed: bool, reason: str}`. Если schema mismatch — score 0, reason = «schema mismatch at field X».",
+                "when_to_apply": "Всегда при выходе за рамки готовых метрик. Особенно для structured extraction (JSON schema), domain-specific критериев, custom rubrics.",
+                "edge_cases": "LLM-judge без human calibration → bias. Всегда сверять с human labels периодически (Cohen's kappa).",
+                "related": "[[llm-evaluation-interview#Q11]] LLM-as-Judge; [[llm-evaluation-interview#Q16]] frameworks."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Кастомных evaluators не существует — нужно использовать только built-in метрики из RAGAS/DeepEval.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все frameworks (RAGAS, DeepEval, LangSmith) дают API для кастомных evaluators именно потому что built-in метрики не покрывают всё.",
+                "source_of_confusion": "Built-in метрик много, может казаться что покрытие полное.",
+                "if_it_were_true": "Тогда не было бы DeepEval @evaluator декораторов и RAGAS custom metrics — а они есть.",
+                "how_it_should_be": "Built-in метрики — старт. Кастомные — для специфики твоего use-case."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Единственный правильный подход — это всегда LLM-judge, regex и schema устарели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Code-based checks (regex, schema) часто лучше LLM-judge: дешевле (нет LLM call), детерминированы (нет шума), быстрее. Для validation формата — обязательны.",
+                "source_of_confusion": "LLM-judge модный и универсальный, может казаться единственным подходом.",
+                "if_it_were_true": "Тогда JSON schema validation в structured extraction делалась бы через LLM, что излишне дорого и шумно.",
+                "how_it_should_be": "Гибрид: code-checks для формата, LLM-judge для содержания."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кастомный evaluator пишется только на TypeScript, Python не поддерживается ни одним фреймворком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все основные фреймворки (RAGAS, DeepEval, Promptfoo, OpenAI Evals, LM Eval Harness) — Python. TypeScript SDK есть у Promptfoo и LangSmith, но Python — основной язык.",
+                "source_of_confusion": "Frontend часто TS, может казаться что и eval-tools тоже.",
+                "if_it_were_true": "Тогда RAGAS и DeepEval не существовали бы на Python, а они исключительно Python.",
+                "how_it_should_be": "Python — основной язык ecosystem. TS есть в нескольких frameworks как secondary."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое golden dataset и какой чек-лист его подготовки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это любой случайный sample из прод-логов размером 1000+, без дополнительной курации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Golden dataset — это курируемый набор с representativность для use-case, expert аннотацией expected output или rubric, стратификацией по сегментам.",
+                "source_of_confusion": "Прод-логи действительно один из источников, но без курации это просто sample, не golden.",
+                "if_it_were_true": "Тогда eval сводился бы к scrape логов, а курация — критический шаг.",
+                "how_it_should_be": "Курировать: распределение, аннотация, версионирование, holdout."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Курируемый набор `(input, expected_output | rubric)`, представительный для use-case. Чек-лист: реальные источники (logs + tickets + synthetic + expert), 100-1000+ примеров, head/tail/edge distribution, expert annotation, версионирование (git/DVC), стратификация по сегментам, holdout часть, continuous refresh из прод-инцидентов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Golden dataset — основа eval. Чек-лист: (1) источники — прод-логи с PII-чисткой, customer support tickets, синтетика, експертные кейсы. (2) размер — минимум 50-100 для smoke, 300-1000+ для надёжных метрик. (3) распределение — head (частые кейсы), tail (редкие), edge (ошибки, jailbreak). (4) аннотация — expert пишет expected output или multi-dimensional rubric. (5) версионирование — git/DVC, каждая версия фиксируется к версии модели. (6) стратификация — по типу задачи/сложности/сегменту, метрики по сегментам не только overall. (7) holdout — часть не показывать prompt-инженерам. (8) continuous refresh — добавлять кейсы из прод-инцидентов.",
+                "example": "Customer support golden set: 500 тикетов из прод-логов (PII-вычищенные) + 100 synthetic edge cases (jailbreak попытки) + 50 expert-добавленных critical scenarios. Метрики считаем по сегментам (refund / shipping / technical) отдельно.",
+                "when_to_apply": "Для любого LLM-приложения в проде. Качество golden set — потолок качества eval.",
+                "edge_cases": "Без holdout — overfitting на prompt-инженерных правок. Без continuous refresh — drift от реального трафика.",
+                "related": "[[llm-evaluation-interview#Q19]] CI regression; [[llm-evaluation-interview#Q24]] synthetic gen."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это закрытый бенчмарк от OpenAI с 10000 примеров, доступный только enterprise клиентам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Golden dataset — твой собственный курируемый набор. Не closed OpenAI benchmark.",
+                "source_of_confusion": "Слово «golden» может звучать как proprietary, но это общий термин.",
+                "if_it_were_true": "Тогда команды без OpenAI enterprise не могли бы делать eval, а это базовая практика.",
+                "how_it_should_be": "Golden = свой набор под use-case, курируется командой."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это автоматически генерируемый dataset через GPT-4, не требует human review.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Synthetic gen может быть стартом, но обязателен expert review (10-20% минимум) и реальные кейсы из прода. Pure synthetic ≠ golden.",
+                "source_of_confusion": "Synthetic test generation популярна, может казаться заменой курации.",
+                "if_it_were_true": "Тогда RAGAS testset generator + 0 review = golden, а это создаёт шум и низкокачественные кейсы.",
+                "how_it_should_be": "Synthetic как стартовый набор + human review + реальные логи + edge cases."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать regression testing для LLM в CI?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно одного manual прогона eval перед релизом раз в спринт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Manual прогон раз в спринт даёт слишком долгий feedback loop. Регрессии накапливаются, дебаг становится сложнее. Стандарт — автоматический CI gate на каждый PR.",
+                "source_of_confusion": "Может казаться что eval — это финальный шаг перед релизом, а не CI gate.",
+                "if_it_were_true": "Тогда не было бы GitHub Actions workflows для eval — а они стандарт.",
+                "how_it_should_be": "CI gate на каждый PR с изменениями prompts/models."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CI для LLM невозможен — eval работает только локально, в CI слишком долго.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CI для LLM eval — индустриальный стандарт. GitHub Actions, GitLab CI, Jenkins, CircleCI — все поддерживают. Время прогона 5-30 мин на сотни примеров — приемлемо.",
+                "source_of_confusion": "LLM-вызовы медленные, может казаться что в CI не уложиться.",
+                "if_it_were_true": "Тогда не существовало бы DeepEval с CI integration и Langfuse CI evals — а они есть.",
+                "how_it_should_be": "CI для LLM — стандарт. Кеширование + параллелизм решают вопрос времени."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "GitHub Actions / GitLab CI на PR с изменениями prompts/models: устанавливает deps → прогоняет eval suite (baseline vs candidate) → регрессионный гейт (`metric_new < metric_baseline - delta` → fail) + cost gate → bot-комментарий с diff метрик в PR. Кешировать eval по `input+model+prompt hash`.",
+              "correct": true,
+              "sections": {
+                "explanation": "CI workflow: trigger на PR с изменениями prompts/models. Шаги: checkout → install deps → run eval suite с baseline=main и candidate=PR sha → compare метрики → fail если регрессия (`metric_new < metric_baseline - delta`) или cost скачок. Bot-комментарий в PR с diff метрик и примерами регрессий. Кеширование eval-результатов (`input + model + prompt hash → result`) ускоряет повторные прогоны.",
+                "example": "GitHub Actions: `python eval/run.py --baseline main --candidate ${{ github.sha }} --dataset eval/golden.jsonl --threshold-faithfulness 0.85 --threshold-relevancy 0.80`. Если faithfulness падает с 0.88 до 0.82 → CI fails, merge blocked.",
+                "when_to_apply": "Для любого LLM-приложения в проде с активной разработкой prompts/models.",
+                "edge_cases": "Cost gate важен — «лучший» промпт может оказаться в 5× дороже. Параллельный прогон baseline/candidate — честное сравнение (избегаем дрейфа модели между прогонами).",
+                "related": "[[llm-evaluation-interview#Q18]] golden dataset; [[llm-evaluation-interview#Q20]] статзначимость."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно прогонять eval только на main branch после merge — на PR не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Post-merge eval = регрессия уже в main, нужен hotfix. Pre-merge gate на PR ловит регрессию до integration — это правильный шаблон.",
+                "source_of_confusion": "Может казаться что merge всё равно нужен, а eval — финальная проверка.",
+                "if_it_were_true": "Тогда regressions попадали бы в main и нужны были бы revert PRs — feedback loop хуже.",
+                "how_it_should_be": "Pre-merge gate на PR + дополнительно post-merge для долгих eval."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить статистическую значимость при оценке LLM на малых eval-сетах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно если accuracy выросла хоть на 1% — это всегда значимо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без CI и тестов статзначимости рост на 1-5% часто в пределах шума. Особенно при N < 100.",
+                "source_of_confusion": "В обычной разработке любое улучшение метрики кажется прогрессом.",
+                "if_it_were_true": "Тогда не нужны были бы Wilson CI и bootstrap — а они стандарт.",
+                "how_it_should_be": "Всегда CI или statistical test, особенно при N < 300."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно прогнать eval 3 раза и взять среднее — это даёт значимость.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прогон 3 раза мерит variance модели на одном датасете, но не статзначимость разницы между моделями/промптами. Нужны CI или тесты.",
+                "source_of_confusion": "Multiple runs действительно дают сигнал о variance, но это не замена statistical test.",
+                "if_it_were_true": "Тогда не нужны были бы Wilson CI и bootstrap — а они стандарт.",
+                "how_it_should_be": "Multiple runs + statistical test (CI, bootstrap, paired test)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Статзначимость в LLM-eval не применима — LLM-выходы не подчиняются распределениям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бинарные метрики (passed/failed) и численные scores подчиняются стандартным статистическим тестам. Wilson, bootstrap, paired tests — все применимы.",
+                "source_of_confusion": "LLM генерация недетерминирована, может казаться что классические статистики не работают.",
+                "if_it_were_true": "Тогда A/B-тесты LLM-фичей были бы невозможны, а они стандарт в индустрии.",
+                "how_it_should_be": "Статистика применима — выбирать правильный тест под тип метрики."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Wilson CI для пропорций (на N=50, 80% accuracy → CI ≈ ±11%); bootstrap (resample 1000 раз, distribution diff); paired tests (paired t-test или McNemar для бинарных); минимальный N ~500 для детекта 5% эффекта при baseline 80%; sequential testing (mSPRT) для online A/B. Правило: не делать выводы с N<30 и показывать CI на дашбордах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Если golden set = 50 примеров и accuracy выросла с 80% до 84% — это шум или улучшение? Без статистики не понять. Подходы: (1) Wilson confidence interval для пропорции — N=50, 80% → CI ≈ ±11%, значит «84%» в пределах шума. (2) Bootstrap — ресемплируем 1000 раз, считаем метрику, смотрим 95-й перцентиль diff. (3) Paired tests — одни inputs для baseline и candidate → paired t-test или McNemar для бинарных метрик, гораздо мощнее unpaired. (4) Минимальный размер выборки — для детекта 5% эффекта при baseline 80% ~500. (5) Sequential testing (mSPRT) для online A/B без inflation alpha.",
+                "example": "Eval на 50 примерах: baseline 80%, candidate 84%. Wilson CI(80%) = [69%, 89%]. CI overlap → не значимо. Нужно расширить eval до 500+ примеров.",
+                "when_to_apply": "Всегда при сравнении метрик, особенно при N < 300. Показывать CI на дашбордах, не только point estimate.",
+                "edge_cases": "Paired tests мощнее unpaired при одинаковых inputs — используй их когда возможно. Sequential testing нужен для online без alpha inflation.",
+                "related": "[[llm-evaluation-interview#Q18]] golden dataset; [[llm-evaluation-interview#Q28]] A/B testing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные метрики предоставляет RAGAS для оценки RAG-приложений?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Faithfulness (no hallucination, reference-free), Answer Relevancy (релевантность вопросу, reference-free), Context Precision (релевантные чанки на топ позициях), Context Recall (все нужные факты есть в context), Context Entity Recall, Answer Correctness, Noise Sensitivity. Reference-free метрики можно крутить в проде без аннотации.",
+              "correct": true,
+              "sections": {
+                "explanation": "RAGAS делит RAG на retrieval и generation, метрики покрывают оба слоя. Faithfulness — каждое утверждение в answer выводимо из retrieved context (нет галлюцинаций), reference-free. Answer Relevancy — ответ релевантен вопросу (cosine между вопросом и «зеркальным» вопросом), reference-free. Context Precision — релевантные чанки на топ позициях retrieval (нужен ground truth). Context Recall — все нужные факты из ground truth есть в context. Context Entity Recall — покрытие named entities. Answer Correctness — фактическая близость к reference. Noise Sensitivity — меняется ли ответ при нерелевантных чанках.",
+                "example": "RAG для FAQ: Faithfulness 0.92 (мало hallucination), Answer Relevancy 0.88 (на тему), Context Precision 0.75 (топ-чанки релевантны), Context Recall 0.82 (большинство фактов в контексте), Answer Correctness 0.85.",
+                "when_to_apply": "Для любого RAG-приложения. Reference-free (Faithfulness, Relevancy) — для prod monitoring без аннотации. Reference-based — для offline eval на golden set.",
+                "edge_cases": "Reference-free дешевле, но менее точны. Context Precision/Recall требуют ground truth с разметкой релевантных чанков — трудоёмко.",
+                "related": "[[llm-evaluation-interview#Q22]] retrieval metrics; [[llm-evaluation-interview#Q23]] hallucination."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только одна метрика — accuracy на golden set; остальное маркетинг.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RAGAS даёт минимум 7 разных метрик, каждая мерит свой аспект RAG (retrieval quality, generation quality, hallucination, noise sensitivity).",
+                "source_of_confusion": "Accuracy простая и универсальная, может казаться достаточной.",
+                "if_it_were_true": "Тогда RAGAS был бы тривиальным wrapper, а это полноценная multi-metric library.",
+                "how_it_should_be": "Multi-metric: Faithfulness, Relevancy, Context Precision/Recall, Correctness, etc."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "RAGAS мерит только latency запросов в RAG pipeline.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RAGAS — про качество ответов и retrieval, не про latency. Latency мерят APM-инструменты (Prometheus, OpenTelemetry).",
+                "source_of_confusion": "RAG performance в общем смысле может включать latency, но RAGAS специализирован на quality.",
+                "if_it_were_true": "Тогда метрики были бы в ms, а они в [0, 1] для quality.",
+                "how_it_should_be": "RAGAS = quality metrics. Latency = APM tools."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "RAGAS даёт только embedding similarity между question и answer, других метрик нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Embedding cosine — часть Answer Relevancy, но RAGAS гораздо шире: Faithfulness через LLM-judge, Context Precision через ground truth, Noise Sensitivity через perturbation.",
+                "source_of_confusion": "Answer Relevancy через cosine — известная метрика, может казаться единственной.",
+                "if_it_were_true": "Тогда RAGAS был бы тривиальной cosine-обёрткой, а это богатая library с LLM-judge внутри.",
+                "how_it_should_be": "RAGAS — 7+ метрик с разными подходами (cosine, LLM-judge, perturbation)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие retrieval-метрики (Recall@K, nDCG, MRR) и для чего применяются в RAG?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это метрики latency retrieval'а — сколько ms занимает поиск.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это IR-метрики качества ранжирования, не latency. Recall@K, nDCG, MRR мерят насколько релевантные документы в топ-K.",
+                "source_of_confusion": "Все они про retrieval, performance retrieval часто ассоциируется с latency.",
+                "if_it_were_true": "Тогда метрики измерялись бы в ms, а они в [0, 1].",
+                "how_it_should_be": "Recall@K/nDCG/MRR = quality ranking. Latency = APM."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Recall@K = доля релевантных в топ-K; Precision@K = доля релевантных среди топ-K; MRR = mean(1/rank первого релевантного); nDCG@K = учитывает позицию И градации релевантности; Hit Rate = «есть ли релевантный в топ-K». Для RAG обычно Recall@5 + MRR. Если low recall → чини retriever (embeddings/chunking), не generation.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чистая IR-математика, применима к ретриверу до подачи в LLM. Recall@K = доля релевантных документов, попавших в топ-K (простой, интерпретируемый). Precision@K = доля релевантных среди топ-K. MRR (Mean Reciprocal Rank) = mean(1/rank_of_first_relevant), чувствителен к позиции первого. nDCG@K (normalized Discounted Cumulative Gain) = учитывает позицию И градации релевантности (0/1/2/3), стандарт в IR/recsys. Hit Rate = 1 если хоть один релевантный в топ-K. Для RAG обычно достаточно Recall@5 и MRR.",
+                "example": "Retrieval на 100 вопросах, K=5. Recall@5 = 0.6 (60% вопросов имеют хоть один релевантный документ в топ-5). MRR = 0.45 (среднее обратное rank первого релевантного). Если Recall@5 низкий → проблема в embedding модели или chunking, не в LLM-generator.",
+                "when_to_apply": "Всегда для RAG до подачи контекста в LLM. Чинить retrieval перед generation — recall — потолок качества всего RAG.",
+                "edge_cases": "Сначала retrieval, потом generation — если recall низкий, никакой prompt-инженерия generator-у не поможет. Нужен ground truth для расчёта (relevant docs per query).",
+                "related": "[[llm-evaluation-interview#Q21]] RAGAS Context Precision/Recall; [[rag-interview]] глубже."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это три названия одной метрики, разные авторы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это три разных метрики с разными формулами: Recall@K — доля релевантных в топ-K; MRR — позиция первого релевантного; nDCG — учитывает позицию + градации.",
+                "source_of_confusion": "Все три IR-метрики, могут казаться родственными.",
+                "if_it_were_true": "Тогда RAGAS не сообщал бы их отдельно — а в IR/recsys они стандартно отчитываются вместе.",
+                "how_it_should_be": "Три разные метрики с разными формулами и use-cases."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "nDCG используется только в рекомендательных системах, к RAG неприменим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "nDCG — общая IR-метрика, применима везде, где есть ranking и градации релевантности. В RAG используется когда есть разметка релевантности по градациям (0/1/2/3).",
+                "source_of_confusion": "nDCG родом из IR и рекомендаций, может казаться domain-specific.",
+                "if_it_were_true": "Тогда RAG-eval библиотеки не упоминали бы nDCG — а они упоминают (LlamaIndex, BEIR).",
+                "how_it_should_be": "nDCG применим к RAG если есть градации релевантности; для бинарной — достаточно Recall@K/MRR."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие методы детектирования hallucination применяются (SelfCheckGPT, NLI, FActScore)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Единственный надёжный метод — manual human review всех ответов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Manual review не масштабируется. Есть автоматические методы: SelfCheckGPT (consistency), NLI-based, FActScore, G-Eval, citation-based.",
+                "source_of_confusion": "Human eval — gold standard, может казаться единственно надёжным.",
+                "if_it_were_true": "Тогда continuous monitoring в проде был бы невозможен, а он реализуется через автоматические методы.",
+                "how_it_should_be": "Гибрид: автоматические методы (scale) + human review на small sample (calibration)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hallucination нельзя детектировать — LLM непредсказуемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hallucination детектируется множеством методов с разной точностью. Реальная проблема — не «нельзя», а «дорого».",
+                "source_of_confusion": "LLM действительно непредсказуемы для пользователя, но automated detection методы работают.",
+                "if_it_were_true": "Тогда RAGAS Faithfulness, SelfCheckGPT и FActScore не существовали бы — а они есть и работают.",
+                "how_it_should_be": "Hallucination детектируется; выбирать метод по точности/cost."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SelfCheckGPT (генерируем N ответов с temp>0, consistency → no hallucination, reference-free но дорого); NLI-based (DeBERTa entail-ит ли context каждое claim, дёшево); FActScore (atomic facts → verify по Wikipedia, точно но сложно); G-Eval (judge с CoT); citation-based (модель цитирует, проверяем что цитата в context).",
+              "correct": true,
+              "sections": {
+                "explanation": "SelfCheckGPT — генерируем N ответов с temp>0, сравниваем consistency; несогласованность ≈ галлюцинация; reference-free, но дорого (N вызовов). NLI-based — маленькая NLI-модель (DeBERTa) проверяет, entail-ит ли context каждое claim; дёшево, быстро, зависит от качества NLI. FActScore — разбить ответ на atomic facts, каждый verify по Википедии/источнику; очень точно, но сложная пайплайна. G-Eval — LLM-judge с CoT оценивает faithfulness; гибко, но bias-ы judge. Citation-based — заставить модель цитировать источник, проверять что цитата реально в context; просто, надёжно, требует prompt-design.",
+                "example": "В проде гибрид: NLI как fast filter на всех ответах → подозрительные кейсы уходят на LLM-judge для глубокой проверки. Это даёт scale + точность.",
+                "when_to_apply": "Faithfulness/hallucination critical use-cases (медицина, юриспруденция, finance) — обязательны. Для casual chatbot — лёгкие методы (NLI).",
+                "edge_cases": "SelfCheckGPT дорогой (N вызовов на каждый sample). FActScore требует knowledge base (Wikipedia или твоя). Citation-based — самый простой, но требует промпт-инженерии чтобы модель цитировала.",
+                "related": "[[llm-evaluation-interview#Q21]] RAGAS Faithfulness; [[llm-evaluation-interview#Q11]] LLM-judge."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно проверки grammar — если ответ грамматически правильный, hallucination нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Grammar никак не связан с фактической корректностью. Hallucination = неверные факты, не grammar errors. Модель может сгенерировать grammatically perfect false claim.",
+                "source_of_confusion": "Quality check может включать grammar, может казаться частью fact-check.",
+                "if_it_were_true": "Тогда LLM с grammar-checker не делали бы hallucination, а они делают часто.",
+                "how_it_should_be": "Grammar и factuality — независимы. Использовать SelfCheckGPT/NLI/FActScore для factuality."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое synthetic test generation для RAG и как организовать pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Synthetic gen означает копирование готовых датасетов из HuggingFace.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Synthetic gen = генерация новых тестов LLM-моделью на основе твоих документов. Копирование из HF — это re-use, не synthesis.",
+                "source_of_confusion": "Слово synthetic иногда применяется широко, в т.ч. к augmented data.",
+                "if_it_were_true": "Тогда RAGAS testset generator был бы тривиальным download, а это LLM-pipeline.",
+                "how_it_should_be": "Synthetic gen = LLM генерирует (question, answer, context) на основе твоих документов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Synthetic gen возможен только для классификации, для RAG не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Synthetic gen активно используется для RAG (RAGAS testset, Giskard, DeepEval). Для классификации тоже возможен (label expansion).",
+                "source_of_confusion": "Синтетика в classical ML чаще про balanced classes, может казаться domain-specific.",
+                "if_it_were_true": "Тогда RAGAS testset generator не существовал бы, а это core feature RAGAS.",
+                "how_it_should_be": "Synthetic gen применим к RAG, classification, generation; универсальный подход."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Synthetic gen полностью заменяет реальные тестовые случаи — нужно отказаться от прод-логов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Synthetic — стартовый набор, не замена реальным данным. Real distribution всегда отличается; synthetic как exclusive eval — overfitting.",
+                "source_of_confusion": "Synthetic дешевле и быстрее, может казаться универсальным решением.",
+                "if_it_were_true": "Тогда команды отказались бы от прод-логов, а они стандартный источник golden set.",
+                "how_it_should_be": "Synthetic + real logs + edge cases = balanced golden set."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "LLM генерирует пары `(question, ground_truth_answer, context)` на основе твоих документов. Инструменты: RAGAS testset generator (поддерживает evolutions: simple, reasoning, multi-context), Giskard (adversarial), DeepEval Synthesizer. Pipeline: sample docs → LLM генерит Q+A → reverse check → human review 10-20%. Caveat: synthetic ≠ real prod.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотация датасета вручную — узкое место. Synthetic gen решает: даём документы → LLM генерирует пары `(question, ground_truth_answer, context)`. Инструменты: RAGAS testset generator (поддерживает evolutions — simple, reasoning, multi-context), Giskard (adversarial — jailbreak, ambiguity, edge cases), DeepEval Synthesizer. Pipeline: (1) sample N документов из корпуса, (2) для каждого LLM генерирует Q+A, (3) reverse check — ответ модели на сгенерированный Q должен быть близок к ground truth, (4) human review 10-20% для фильтрации мусора. Caveat: synthetic ≠ real prod — используй как стартовый набор + дополняй реальными логами.",
+                "example": "1000 internal docs → RAGAS testset generator → 500 (Q, A, context) тройки → human review 100 (filter 20% мусора) → 400 high-quality synthetic test cases → дополняем 200 реальными прод-вопросами.",
+                "when_to_apply": "Для bootstrap golden set на новом приложении (когда прод-логов мало). Для расширения coverage редких сценариев.",
+                "edge_cases": "Synthetic ≠ real distribution. Модель может генерировать «удобные» вопросы. Reverse check + human review критичны.",
+                "related": "[[llm-evaluation-interview#Q18]] golden dataset; [[llm-evaluation-interview#Q21]] RAGAS."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как оценивать LLM-агентов и какие метрики применимы к trajectory?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Иерархические метрики: end-to-end (task success rate), trajectory (step success rate, trajectory similarity), tool (tool selection accuracy, tool args accuracy), resource (cost/latency/tokens/steps), robustness (recovery rate). Agent = trajectory, не single output — нужны метрики на каждом уровне.",
+              "correct": true,
+              "sections": {
+                "explanation": "Агент — это не single output, а trajectory (серия thought → tool call → observation). Метрики иерархичны: (1) End-to-end — task success rate (решил ли задачу). (2) Trajectory — step success rate (доля корректных шагов), trajectory similarity (близость к expert trajectory). (3) Tool — tool selection accuracy (правильно ли выбран tool), tool args accuracy (корректные аргументы). (4) Resource — cost per task, latency, steps count, tokens consumed (бюджет контекста). (5) Robustness — recovery rate (восстанавливается ли после ошибок). Нужны метрики на каждом уровне, иначе скрытые проблемы.",
+                "example": "Agent eval: task_success = 0.75 (75% задач решены), step_success_rate = 0.85 (85% шагов корректны), tool_selection_acc = 0.90, total_cost_usd = 0.42, steps_count = 8 (medium efficiency), recovery_rate = 0.6 (60% errors recovered).",
+                "when_to_apply": "Для любого LLM-агента (ReAct, multi-step, tool-using). Без trajectory-level метрик невозможно дебажить «где ломается».",
+                "edge_cases": "Trajectory similarity сложна — нет единственного «правильного» пути. Tool args accuracy требует ground truth args.",
+                "related": "[[llm-evaluation-interview#Q26]] AgentBench/TauBench; [[ai-agents-interview]] глубже."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно одной метрики — task success rate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Task success rate скрывает все проблемы внутри trajectory: cost, steps, tool errors, recovery. Не позволяет дебажить.",
+                "source_of_confusion": "Task success — самая интерпретируемая метрика, может казаться достаточной.",
+                "if_it_were_true": "Тогда нельзя было бы понять «решил, но за 50 steps и $5» vs «решил за 5 steps и $0.10».",
+                "how_it_should_be": "Multi-level: success + trajectory + tool + resource + robustness."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Агентов нельзя оценивать — слишком много вариативности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Агенты оцениваются стандартными метриками. TauBench, AgentBench, SWE-Bench — индустриальные стандарты для agent eval.",
+                "source_of_confusion": "Trajectory сложнее single output, кажется неоцениваемой.",
+                "if_it_were_true": "Тогда не было бы leaderboards для агентов (SWE-Bench, AgentBench), а они есть.",
+                "how_it_should_be": "Агенты оцениваются; нужны иерархические метрики."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Eval агентов = eval каждого LLM-вызова отдельно exact match.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Per-call exact match не учитывает trajectory: правильные шаги могут вести к неправильному результату и наоборот.",
+                "source_of_confusion": "Кажется логичным «оценить каждый шаг», но это не покрывает emergence.",
+                "if_it_were_true": "Тогда trajectory similarity и task success были бы излишни, а они core agent metrics.",
+                "how_it_should_be": "End-to-end + per-step метрики; trajectory целиком имеет значение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое AgentBench, TauBench, AppWorld и для чего они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это benchmarks для оценки production-ready agents с реальными API в проде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это benchmarks с simulated environments, не реальные production API. Симуляция позволяет controlled eval без побочных эффектов на реальные системы.",
+                "source_of_confusion": "TauBench симулирует customer service scenarios реалистично, может казаться prod.",
+                "if_it_were_true": "Тогда любой запуск benchmark мог бы навредить реальным customer accounts, а они sandbox.",
+                "how_it_should_be": "Все три — simulated environments для controlled agent eval."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "AgentBench (8 окружений: OS, DB, web shop, code), TauBench (Anthropic/Sierra — customer service: retail/airline с симулированным пользователем), AppWorld (9 приложений: email/calendar/shopping с cross-app задачами). Тренд: multi-turn, multi-tool, realistic simulation. Также: WebArena, GAIA, SWE-Bench.",
+              "correct": true,
+              "sections": {
+                "explanation": "AgentBench — 8 окружений (OS, DB, web shop, code), общий leaderboard агентов. TauBench (Anthropic / Sierra) — реалистичные customer service scenarios (retail, airline), симулированный пользователь общается с агентом, метрика — task completion; очень близко к проду. AppWorld — агенты работают в симуляции 9 приложений (email, calendar, shopping), сложные cross-app задачи. WebArena / VisualWebArena — агенты в реалистичных веб-средах. SWE-Bench — coding-агенты. GAIA — General AI Assistant benchmark, multi-step reasoning + tools. Тренд: multi-turn, multi-tool, realistic simulation.",
+                "example": "TauBench airline scenario: пользователь (симулированный) хочет отменить flight и получить refund, агент должен использовать tools (search booking, cancel, process refund), задача — успешно завершить весь workflow. Сравнение agents: Claude Opus 60% success vs GPT-4 45%.",
+                "when_to_apply": "Для выбора agent framework, для академических сравнений, для marketing своего agent product.",
+                "edge_cases": "Sim ≠ real prod. Agent на TauBench 90% может проваливаться в реальной customer support из-за edge cases.",
+                "related": "[[llm-evaluation-interview#Q25]] agent eval; [[ai-agents-interview]]."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это три названия одного бенчмарка от Anthropic.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Три разных бенчмарка от разных команд. AgentBench — Tsinghua. TauBench — Anthropic/Sierra. AppWorld — academia (USC/CMU). Разные scopes и methodologies.",
+                "source_of_confusion": "Все три про agents, могут казаться родственными.",
+                "if_it_were_true": "Тогда leaderboards публиковались бы вместе, а они отдельны.",
+                "how_it_should_be": "Три разных бенчмарка от разных команд с разными scopes."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Они мерят latency агентов (response time).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти benchmarks мерят task success и trajectory quality, не latency. Latency — отдельная axis.",
+                "source_of_confusion": "Performance в agent context может ассоциироваться с скоростью.",
+                "if_it_were_true": "Тогда метрики были бы в ms, а они в % task completion.",
+                "how_it_should_be": "Task completion и quality, не latency."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать continuous evaluation LLM в проде?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Continuous eval не нужен — offline gate в CI покрывает всё.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Offline gate не ловит drift и edge-кейсы реального трафика. Online continuous eval — обязательный второй слой.",
+                "source_of_confusion": "Pre-deploy gate может казаться достаточным.",
+                "if_it_were_true": "Тогда Langfuse/LangSmith continuous eval не существовали бы — а они стандарт.",
+                "how_it_should_be": "Offline + online continuous = два комплементарных слоя."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Гонять полный eval suite на 100% трафика в реальном времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100% sampling = удвоение или утроение бюджета (каждый запрос дополнительно judge'ится). Стандарт — 1-5% sampling.",
+                "source_of_confusion": "Кажется что больше data = лучше, но cost vs benefit.",
+                "if_it_were_true": "Тогда eval cost равнялся бы inference cost, что неприемлемо в большинстве случаев.",
+                "how_it_should_be": "Sample 1-5% (больше для critical flows), async judge."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sampling 1-5% запросов (больше для критичных flow); async LLM-judge в background (не блокирует ответ юзеру); метрики в time-series базе (Prometheus, ClickHouse) с тегами model/prompt_version/user_segment; alerts на падения (faithfulness < 0.8 → PagerDuty); auto-curation плохих кейсов в golden dataset; trace linking (Langfuse, LangSmith, OpenTelemetry).",
+              "correct": true,
+              "sections": {
+                "explanation": "Offline-эвал не ловит drift и edge-кейсы реального трафика. Решение — online continuous eval. Шаги: (1) Sampling 1-5% запросов (можно больше для критичных flow). (2) Async LLM-judge — judge в background, не блокирует ответ пользователю. (3) Metrics в time-series базе (Prometheus, ClickHouse) с тегами model, prompt_version, user_segment. (4) Alerts на падения (faithfulness < 0.8 за 1 час → PagerDuty). (5) Auto-curation — кейсы с низкими scores → ревью человеком → в golden dataset. (6) Trace linking — каждая оценка связана с request trace (Langfuse, LangSmith, OpenTelemetry). Online eval + offline gate = полная защита от регрессии.",
+                "example": "Langfuse setup: sample 3% prod requests → async eval с RAGAS Faithfulness/AnswerRelevancy → store в ClickHouse с user_segment tag → Grafana dashboard → alert если faithfulness < 0.85 за 1 час на любом сегменте → PagerDuty.",
+                "when_to_apply": "Для любого critical LLM-приложения в проде. Особенно для RAG (drift корпуса) и agents (env changes).",
+                "edge_cases": "Async judge добавляет latency на eval pipeline (не на user response). Auto-curation требует human review loop, иначе мусор накапливается.",
+                "related": "[[llm-evaluation-interview#Q19]] CI gate; [[llm-evaluation-interview#Q28]] A/B testing."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно собирать user feedback (thumbs up/down) — это и есть continuous eval.",
+              "correct": false,
+              "sections": {
+                "what_actually": "User feedback — один из сигналов, но sparse (мало кто голосует) и biased (голосуют чаще недовольные). Дополняй LLM-judge + offline metrics.",
+                "source_of_confusion": "Thumbs up/down простой и дешёвый сигнал, может казаться достаточным.",
+                "if_it_were_true": "Тогда не было бы Langfuse/LangSmith automated continuous evals — а они стандарт.",
+                "how_it_should_be": "User feedback + LLM-judge + business metrics = complete picture."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать A/B-тестирование промптов и моделей в проде?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно деплоить новый prompt на 100% сразу и смотреть метрики на следующий день.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не A/B-тест, а full rollout. Если регрессия — пострадают все. A/B = controlled comparison на subset.",
+                "source_of_confusion": "Может казаться что быстрее всего деплоить всем сразу.",
+                "if_it_were_true": "Тогда A/B-testing не нужен бы как практика, а это core release management.",
+                "how_it_should_be": "Split traffic (10%/90% или 50%/50%), сравнить метрики, ramp up при success."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно сравнить avg score на одном сэмпле без статистики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без статистики разница в avg score может быть шумом. Нужны CI, statistical tests, power analysis.",
+                "source_of_confusion": "Avg удобно показать stakeholder-ам, может казаться достаточным.",
+                "if_it_were_true": "Тогда A/B-тесты не требовали бы power analysis и sample size, а это core.",
+                "how_it_should_be": "Avg + CI + statistical test + business validation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "A/B-тест для LLM невозможен — варианты ответов слишком разные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "A/B для LLM — стандарт. Метрики типа thumb-up rate, task completion, CSAT работают независимо от вариативности ответов.",
+                "source_of_confusion": "LLM ответы недетерминированы, может казаться что A/B не имеет смысла.",
+                "if_it_were_true": "Тогда OpenAI/Anthropic/Google не A/B-тестировали бы свои модели, а они делают это постоянно.",
+                "how_it_should_be": "A/B применим к LLM через aggregate метрики (rates, scores)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Pipeline: hypothesis («новый промпт повысит CSAT на 3 пп») → split рандомизация по user_id → метрики (primary: thumb-up/task completion/CSAT; secondary: latency/cost; guardrail: refusal/hallucination/churn) → sample size через power analysis → stat tests (chi-square/t-test/Bayesian) → sequential testing (mSPRT) → holdout group 5-10% для долгосрочного tracking.",
+              "correct": true,
+              "sections": {
+                "explanation": "Финальный судья — реальный пользователь. Pipeline: (1) Hypothesis с конкретным эффектом и метрикой. (2) Split рандомизация по user_id (стабильно для одного пользователя). (3) Метрики: primary (thumb-up rate, task completion, CSAT), secondary (latency, tokens cost), guardrail (refusal rate, hallucination rate, churn). (4) Sample size — power analysis заранее (часто тысячи пользователей). (5) Stat tests — chi-square для бинарных, t-test для continuous, Bayesian если хочешь stop early. (6) Sequential testing (mSPRT) или peeking-safe методы. (7) Holdout group (5-10%) — постоянный baseline для долгосрочного tracking.",
+                "example": "Hypothesis: «prompt v2 повысит thumb-up rate с 0.65 до 0.70». Split 50/50 по user_id, sample size 5000 на ветку, p < 0.05. Запуск 2 недели → measured effect +4pp (v2: 0.69 vs v1: 0.65), значимо → ramp up до 100%.",
+                "when_to_apply": "Для значимых изменений prompts/models в проде. Не для каждой мелочи (накладные).",
+                "edge_cases": "Антипаттерн — смотреть только LLM-метрики, игнорируя business. Модель может быть «правильнее», но пользователю менее полезной.",
+                "related": "[[llm-evaluation-interview#Q20]] статзначимость; [[llm-evaluation-interview#Q27]] continuous eval."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно мерить cost и latency LLM-приложения в evaluation?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Метрики: `tokens_in/tokens_out` из API response usage; `cost_per_call_usd = tokens_in*price_in + tokens_out*price_out`; `cost_per_task` = сумма по всем вызовам в задаче (важно для агентов); `latency_p50/p95/p99` histogram; `time_to_first_token` (critical для streaming); `cache_hit_rate` для prompt caching. В CI публиковать diff tokens и cost рядом с метриками качества.",
+              "correct": true,
+              "sections": {
+                "explanation": "Качество — только одна ось. Cost/latency — другая. Метрики: `tokens_in/tokens_out` из API response (usage field). `cost_per_call_usd = tokens_in*price_in + tokens_out*price_out`. `cost_per_task` — сумма по всем вызовам в задаче (важно для агентов). `latency_p50/p95/p99` — histogram по времени ответа. `time_to_first_token` — для streaming-UX критично. `cache_hit_rate` — для Anthropic prompt caching / Gemini context cache. Trade-offs: GPT-4o vs GPT-4o-mini (10× цена), few-shot (больше токенов → cache prefix), LLM-judge на 100% трафика (удвоение бюджета → сэмплируй). В CI обязательно diff tokens и cost рядом с качеством — иначе «лучший промпт» окажется в 5× дороже.",
+                "example": "PR с новым prompt v2: faithfulness +3% (хорошо!), но tokens_in +250% (system prompt вырос), cost_per_call $0.012 → $0.038 (3.2×). Решение: рассмотреть prompt caching для постоянной части.",
+                "when_to_apply": "Всегда вместе с quality metrics. Cost gate в CI: warning если cost > X, fail если cost > 2× baseline.",
+                "edge_cases": "TTFT критичен для chat UX. p95/p99 важнее avg latency. Cache hit rate можно улучшить через стабильный system prompt prefix.",
+                "related": "[[llm-evaluation-interview#Q19]] CI regression; [[llm-evaluation-interview#Q30]] pitfalls."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cost мерить не нужно — главное качество.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost vs quality — фундаментальный trade-off. GPT-4o vs GPT-4o-mini — 10× разница в цене при ≤ 20% разнице в качестве на многих задачах.",
+                "source_of_confusion": "В академии часто фокус на качестве, в индустрии cost критичен.",
+                "if_it_were_true": "Тогда команды не использовали бы GPT-4o-mini, а они выбирают по cost/quality balance.",
+                "how_it_should_be": "Cost — обязательная axis вместе с quality."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно мерить avg latency и total cost за месяц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Avg скрывает tail (p95/p99). User experience определяется percentile, не avg. Total cost за месяц не помогает оптимизировать конкретный call.",
+                "source_of_confusion": "Avg/total самые простые метрики, могут казаться достаточными.",
+                "if_it_were_true": "Тогда SLO определялся бы avg, а в реальности — p95/p99.",
+                "how_it_should_be": "p50/p95/p99 + per-call cost + per-task cost."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все LLM провайдеры считают cost одинаково, формула не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый провайдер имеет свои цены (per 1M tokens) и разные prices для input/output. Anthropic, OpenAI, Google — все разные.",
+                "source_of_confusion": "Может казаться что pricing стандартизирован, но он сильно варьируется.",
+                "if_it_were_true": "Тогда не было бы tools типа openrouter с price comparison, а они есть.",
+                "how_it_should_be": "Учитывать tokens_in*price_in + tokens_out*price_out с актуальными prices."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные pitfalls и антипаттерны LLM evaluation?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главный антипаттерн — использовать LLM-as-Judge вместо human eval; всё остальное приемлемо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LLM-as-Judge с правильной calibration — индустриальный стандарт, не антипаттерн. Антипаттернов много других (single metric, small N, contamination, no baseline, etc.).",
+                "source_of_confusion": "LLM-judge действительно требует митигации bias-ов, может казаться полностью плохим.",
+                "if_it_were_true": "Тогда RAGAS/DeepEval/LangSmith continuous evals были бы антипаттернами.",
+                "how_it_should_be": "LLM-judge — OK с calibration vs human. Антипаттерны — другие."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Один global metric (скрывает сегменты), N=20 в golden set (шум>>сигнал), optimizing на public benchmark (contamination), один judge что и модель (self-preference), eval только перед релизом (drift), игнор cost/latency, прогон без baseline, hardcoded answers для open-ended, LLM-judge без human calibration, eval только в проде, weighted scoring отсутствует, не версионировать judge-prompt.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полный список антипаттернов: (1) Один global metric — скрывает сегменты, → multi-metric + сегментация. (2) N=20 в golden set — шум>>сигнал, → минимум 100-300 + CI на дашборде. (3) Optimizing на public benchmark — contamination, far from task, → свой golden set. (4) Один judge что и модель — self-preference bias, → cross-judge, ensemble. (5) Eval только перед релизом — drift, → online continuous eval. (6) Игнор cost/latency — «лучше» = 10× дороже, → track tokens + $$. (7) Прогон без baseline, → всегда baseline run. (8) Hardcoded answers для open-ended — парафраз провалится, → rubric/judge/multi-reference. (9) LLM-judge без human calibration — galaxy-brain метрика, → Cohen's kappa ≥ 0.6. (10) Eval только в проде — долгий feedback loop, → offline + online. (11) «Все вопросы одинаково важны» — бизнес-критичные top priority, → weighted scoring. (12) Не версионировать judge-prompt — метрика «дрейфует», → semver judge-prompt в git.",
+                "example": "Команда показывает «accuracy выросла на 5%» на дашборде. Реальность: global avg на 1000 примерах = шум 3%, в critical segment «refund requests» accuracy упала на 8%. Segment-level + CI сразу показывают проблему.",
+                "when_to_apply": "Регулярно проверять чек-лист антипаттернов при настройке eval-инфраструктуры. Особенно при онбординге новой команды.",
+                "edge_cases": "Многие антипаттерны накапливаются незаметно — особенно contamination и lack of calibration. Периодический аудит eval-пайплайна обязателен.",
+                "related": "[[llm-evaluation-interview#Q7]] contamination; [[llm-evaluation-interview#Q12]] judge biases; [[llm-evaluation-interview#Q18]] golden dataset."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pitfalls нет — современные frameworks (RAGAS, DeepEval) автоматически защищают от ошибок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Frameworks дают tooling, но не защищают от методологических ошибок (плохой golden set, contamination, no baseline). Это ответственность инженера.",
+                "source_of_confusion": "Удобные frameworks могут создавать иллюзию полной защиты.",
+                "if_it_were_true": "Тогда не было бы дискуссий про LLM-judge calibration и contamination — а они активные.",
+                "how_it_should_be": "Frameworks — инструменты; методология — задача инженера."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главный pitfall — это использование Python вместо Go для eval pipeline.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Язык реализации не имеет отношения к качеству eval. Антипаттерны — методологические (small N, contamination, no baseline).",
+                "source_of_confusion": "Performance Python vs Go — реальный topic, но не релевантен eval methodology.",
+                "if_it_were_true": "Тогда переход на Go магически решал бы eval проблемы, а они про content/methodology.",
+                "how_it_should_be": "Язык — секондари. Methodology — primary."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

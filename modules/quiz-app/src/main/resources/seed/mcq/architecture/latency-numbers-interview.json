@@ -1,0 +1,1445 @@
+{
+  "topic_slug": "latency-numbers-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каково примерное соотношение между Main memory reference и Round-trip CA→Netherlands в канонической таблице Jeff Dean?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Round-trip между континентами примерно в 1 000 раз медленнее memory reference.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Memory reference ~100 ns, cross-continent RTT ~150 ms = 150 000 000 ns. Реальное соотношение 1 500 000×, а не 1 000×.",
+                "source_of_confusion": "1 000× — это типичное соотношение между memory и SSD random read (100 ns → 100 μs), его часто путают с cross-DC RTT.",
+                "if_it_were_true": "Если бы cross-DC был всего 100 μs, multi-region active-active работал бы синхронно без compromises — но фактически это 90 ms физический минимум.",
+                "how_it_should_be": "Memory → SSD ~1000×, SSD → cross-continent ещё ~1500×, итого memory → cross-continent ~1 500 000× (≈300 000× если округлять до порядков)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cross-continent RTT (150 ms) примерно в 1.5 миллиона раз медленнее main memory reference (100 ns), то есть ~6 порядков разницы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Memory reference в таблице Dean'а — 100 ns = 10⁻⁷ s, cross-continent RTT (CA → Netherlands) — 150 ms = 1.5×10⁻¹ s. Соотношение 1.5×10⁶, то есть шесть порядков. Это число — главный аргумент почему «положить в кеш или сходить в БД через сеть в другом регионе» — не вопрос микрооптимизации, а архитектурное решение, меняющее throughput на 6 порядков.",
+                "example": "Spring Boot endpoint, который читает balance из Redis (local DC, ~500 μs) vs cross-region replica DynamoDB (~150 ms): на 10K RPS Redis даёт суммарно 5 секунд CPU-time/sec, cross-region — 1500 секунд (нужно 1500 параллельных потоков). На том же железе разница в throughput — 300×.",
+                "when_to_apply": "Когда интервьюер просит «оцени feasibility архитектуры» с RPC между регионами — сразу умножай RTT 150 ms на число последовательных вызовов, и сравнивай с SLO. Любой sync cross-region call в hot path = SLO killer.",
+                "edge_cases": "Дамп цифр в стиле Dean — порядки величин 2009 года; современные NVMe и 100Gbps internal links сместили вверх некоторые числа на 3-10×, но cross-continent RTT не изменилось (закон физики).",
+                "related": "[[latency-numbers-interview#Q2]] физика 150 ms RTT; [[latency-numbers-interview#Q5]] правило 100ns/μs/ms; [[latency-numbers-interview#Q22]] следствия для multi-region архитектуры."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cross-continent RTT примерно в 300 раз медленнее memory reference, то есть на 2.5 порядка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "300× — это соотношение между intra-DC RTT (500 μs) и cross-continent RTT (150 ms), а не memory → cross-continent.",
+                "source_of_confusion": "В шпаргалке упоминается «Same DC → cross-continent: ~300×», человек запоминает 300× и применяет не к тому baseline'у.",
+                "if_it_were_true": "Если бы RTT был 30 μs (100 ns × 300), это противоречило бы скорости света в оптоволокне — 9000 km минимум требуют 90 ms.",
+                "how_it_should_be": "Связку 300× применять только в паре (intra-DC RTT vs cross-continent RTT). От memory до cross-continent — это произведение memory→intra-DC (5000×) × intra-DC→cross-DC (300×) ≈ 1.5×10⁶."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cross-continent RTT примерно в 100 раз медленнее memory reference, разница в 2 порядка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100× — это соотношение SSD random read → HDD seek (≈100 μs vs ≈10 ms), а не memory vs cross-continent.",
+                "source_of_confusion": "Кто запоминает числа таблицы Dean'а как «×100 на каждом шаге» — упускает что между memory (100 ns) и cross-continent (150 ms) шагов восемь, а не два.",
+                "if_it_were_true": "100× от 100 ns — это 10 μs, типичный context switch. Если бы такой RTT был достижим, не нужны были бы ни CDN, ни edge POPs.",
+                "how_it_should_be": "Запоминать таблицу Dean'а тройками порядков: ns (in-process) → μs (local I/O) → ms (network), между крайними тремя классами разница 10⁶."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему round-trip между датацентрами на разных континентах не опускается ниже ~90 ms, даже на идеальной инфраструктуре?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Потому что TCP three-way handshake требует минимум 3 пакета, каждый по 30 ms, что в сумме даёт 90 ms.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TCP handshake действительно занимает 1 RTT для установки connection, но это не объясняет минимум — handshake амортизируется на persistent connections (HTTP/2 keep-alive), а RTT в 90 ms остаётся всё равно.",
+                "source_of_confusion": "Junior-инженеры путают «время на handshake» с «физический минимум RTT»; первое — software overhead, второе — закон физики.",
+                "if_it_were_true": "Тогда после первого handshake'а cross-continent latency должна была бы стать 30 ms, что противоречит измерениям (Cloudflare Radar показывает медиану 130-180 ms на trans-Atlantic).",
+                "how_it_should_be": "Минимум RTT определяется скоростью света в оптоволокне (≈200 000 km/s) и расстоянием. 9000 km × 2 / 200 000 = 90 ms — физический предел вне зависимости от протокола."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Из-за queueing в роутерах на пути: 30-40 промежуточных хопов добавляют по 2-3 ms задержки каждый.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современные backbone-роутеры обрабатывают пакет за десятки наносекунд (cut-through switching). Queueing на untainted backbone — единицы ms суммарно, не 60-90 ms.",
+                "source_of_confusion": "Картинка из learn-networking курсов с длинной цепочкой роутеров создаёт впечатление, что каждый «отъедает» миллисекунды; реальный bottleneck — расстояние, а не роутеры.",
+                "if_it_were_true": "Тогда можно было бы убрать 90 ms через peering и shortest-path BGP routing. Cloudflare/AWS Global Accelerator действительно режут лишние хопы, но floor всё равно ~90 ms.",
+                "how_it_should_be": "Роутинг добавляет 10-50 ms к физическому минимуму, но не определяет его. Floor — это distance / speed_of_light_in_fiber."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это физический предел: свет в оптоволокне идёт ~200 000 km/s, и для расстояния 9000 km между CA и Netherlands round-trip = 2 × 9000 / 200000 = 90 ms, никакая технология это не ускорит.",
+              "correct": true,
+              "sections": {
+                "explanation": "Скорость света в вакууме 300 000 km/s, в оптоволокне ~200 000 km/s из-за refractive index стекла (~1.5). CA → Netherlands ≈ 9000 km по великому кругу. Одностороннее минимальное время 45 ms, round-trip 90 ms. Реальные ~150 ms = 90 ms (физика) + ~60 ms (роутинг, queueing, TCP/TLS). Никакая компрессия, никакая оптимизация протокола не сократит 90 ms — это закон физики, единственное решение для глобального low-latency — CDN/edge.",
+                "example": "AWS us-west-2 (Oregon) → eu-west-1 (Ireland): ping медиана 130-150 ms (CloudPing.co), из них 90 ms — чистая физика, остальное — роутинг и BGP. DynamoDB Global Tables использует async replication именно по этой причине; синхронная мульти-региональная транзакция добавила бы 150 ms к каждой операции.",
+                "when_to_apply": "При проектировании multi-region системы — всегда закладывать минимум 100 ms на любой cross-region call, не пытаться оптимизировать ниже. Если SLO < 100 ms p99, нельзя делать sync cross-region — только CDN, edge-compute или active-active с conflict resolution.",
+                "edge_cases": "Hollow-core fiber (исследовательский) поднимает скорость света до ~99% вакуумной (≈298 000 km/s), сократив RTT до ~60 ms — но это лабораторная технология, не массовая. Спутниковая связь (Starlink LEO) даёт ~600 km вверх+вниз, что добавляет ~6 ms к ground RTT.",
+                "related": "[[latency-numbers-interview#Q1]] таблица Dean'а; [[latency-numbers-interview#Q5]] класс network 100 ms; [[latency-numbers-interview#Q22]] почему multi-region active-active требует async."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Из-за encryption overhead (TLS handshake + AES) на trans-Atlantic трафике, что добавляет ~60 ms к каждому пакету.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TLS handshake — 1-2 RTT при установке, но AES шифрование само по себе занимает микросекунды на пакет (AES-NI в CPU). Это не объясняет постоянный 90 ms floor.",
+                "source_of_confusion": "Slow HTTPS pages на старых телефонах создавали миф «encryption = slow». В backend серверах AES-256 идёт ~3 GB/s/core.",
+                "if_it_were_true": "Plain TCP без TLS показал бы RTT 30-60 ms cross-Atlantic — но измерения (mtr, ping без TLS) дают те же 130-150 ms.",
+                "how_it_should_be": "TLS добавляет 1 RTT на handshake (~150 ms cold), но не меняет per-packet latency. Floor задаётся физикой расстояния."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сколько примерно занимает sequential чтение 1MB с разных носителей по канонической таблице?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Memory ~30 μs, SSD ~10 ms, HDD ~200 ms — разница в 7 раз между соседними уровнями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цифры завышены примерно в 10× относительно таблицы Dean'а: memory ~3 μs, SSD ~1 ms, HDD ~20 ms.",
+                "source_of_confusion": "Кто запоминает «3-5-1» как мнемонику, легко ошибается на порядок при восстановлении.",
+                "if_it_were_true": "Тогда memory bandwidth был бы ~33 MB/s, что меньше HDD throughput (~100 MB/s) — это противоречит факту что DDR4 даёт ~25 GB/s.",
+                "how_it_should_be": "Mnemonic: memory 3 μs — SSD 1 ms (300×) — HDD 20 ms (20×). Memory чтение MB укладывается в микросекунды, а не десятки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Memory ~300 ns, SSD ~100 μs, HDD ~2 ms — каждый уровень в 300 раз медленнее предыдущего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это цифры для 4KB random read, а не sequential 1MB. Sequential 1MB требует MB-throughput: memory ~3 μs, SSD ~1 ms, HDD ~20 ms.",
+                "source_of_confusion": "Memory random access (100 ns) и memory sequential throughput (1 MB за ~3 μs) — разные метрики, их часто смешивают.",
+                "if_it_were_true": "Тогда HDD 1MB читался бы за 2 ms, что требует throughput ~500 MB/s — а реальный HDD ~100-200 MB/s.",
+                "how_it_should_be": "Sequential 1MB: memory ~3 μs (1MB ÷ ~25 GB/s × overhead), SSD ~1 ms, HDD ~20 ms (~100 MB/s + seek)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Memory ~3 μs, SSD ~1 ms, HDD ~20 ms — SSD примерно в 300 раз медленнее памяти, HDD в 20 раз медленнее SSD.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sequential MB-чтение определяется throughput: DDR4 ~25 GB/s → 1MB за ~3 μs (с overhead на cache misses); современный NVMe Gen3 ~3 GB/s → 1MB за ~300-1000 μs (Dean писал 1 ms для типичного SSD 2009 года); HDD ~100 MB/s + seek ~10 ms → 1MB за ~20 ms суммарно. Соотношения: memory→SSD ~300×, SSD→HDD ~20×, memory→HDD ~6 600×. Эти три числа — основа решения «класть hot data в Redis или жить с DB».",
+                "example": "PostgreSQL `shared_buffers` 8GB на сервере с 32GB RAM: если working set 10GB, ~80% запросов попадают в buffer cache (3 μs/MB), 20% идут на NVMe (1 ms/MB). Effective latency average ~200 μs, что в 100× быстрее all-disk сценария. Это объясняет почему database tuning — это в основном «сделай так, чтобы working set влез в RAM».",
+                "when_to_apply": "При оценке throughput системы — определи, в какой класс попадает hot data. Redis/in-memory cache даёт 3 μs/MB, NVMe DB ~1 ms/MB, HDD ~20 ms/MB. Между memory и HDD разница в 6 600× — это решение об уровне инфраструктуры, не оптимизация.",
+                "edge_cases": "NVMe Gen4 даёт ~7 GB/s sequential, читает 1MB за ~150 μs — в 6× быстрее «classic SSD» из таблицы Dean'а 2009. SATA SSD остался на ~500 MB/s, его 1MB читается за ~2 ms. Random 4KB IOPS — отдельная метрика, не пересчитывается напрямую из sequential throughput.",
+                "related": "[[latency-numbers-interview#Q1]] таблица Dean'а полностью; [[latency-numbers-interview#Q16]] NVMe vs HDD throughput по порядкам; [[latency-numbers-interview#Q15]] capacity DB-нод в RPS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Memory ~30 μs, SSD ~100 μs, HDD ~1 ms — разница максимум в 30 раз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цифры памяти и HDD занижены: memory быстрее (3 μs/MB), HDD намного медленнее (20 ms/MB). Реальный спред memory→HDD — 6 600×, а не 30×.",
+                "source_of_confusion": "Sequential 4KB и 1MB latencies путают; для 4KB цифры могли бы быть похожи, для 1MB — расходятся на порядки.",
+                "if_it_were_true": "Тогда не было бы смысла в кешировании — экономия 1 ms за DB call не оправдывала бы Redis-инфраструктуру.",
+                "how_it_should_be": "Memory → HDD — три порядка разницы (3 μs → 20 ms). Именно эта дельта оправдывает существование Redis/Memcached как архитектурных решений, не «маленьких оптимизаций»."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие латентности типичны для L1 cache hit, L2 hit, branch mispredict и uncontended mutex lock?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "L1 ~0.5 ns (1-2 cycles), L2 ~7 ns (~15 cycles), branch mispredict ~5 ns (~10 cycles flush), uncontended mutex ~25 ns.",
+              "correct": true,
+              "sections": {
+                "explanation": "L1 cache hit — 1-2 CPU cycles, на 3 GHz это ~0.5 ns. L2 — ~15 cycles ~7 ns. Branch mispredict сбрасывает pipeline (~10 stages) ~5 ns. Uncontended mutex (futex fast path) — пара atomic CAS + memory barrier ~25 ns. Все эти числа критичны для HFT, column DBs, game engines — там 1 cache miss на hot loop стоит 10K операций.",
+                "example": "Java tight loop с `volatile long counter` vs обычным `long`: volatile добавляет memory barrier (~10 ns/inc) — на 10⁹ increments разница ~10 sec. ClickHouse vectorized execution специально пишет код так, чтобы вся inner loop помещалась в L1 (32 KB) — это даёт throughput ~10⁹ rows/sec/core.",
+                "when_to_apply": "Когда обсуждаются micro-optimizations: HFT, game engines, OLAP databases, kernel internals. Если ваш hot path делает >10⁹ ops/sec/core, разница между L1 hit и L2 hit (14×) уже видна в throughput. На уровне обычных Spring Boot endpoints — эти числа не релевантны.",
+                "edge_cases": "L3 cache hit (~20-40 ns) Dean не упоминает, но он критичен — для shared cache между cores на современных CPU. Mutex `contended` (с context switch) — 1-100 μs, что в 400× медленнее uncontended; это объясняет почему `perf lock` показывает 80% всего времени в одной hot mutex.",
+                "related": "[[latency-numbers-interview#Q1]] полная таблица Dean'а; [[latency-numbers-interview#Q5]] класс in-process 100 ns; [[concurrency-interview#Q12]] lock contention в Java."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "L1 ~5 ns, L2 ~50 ns, branch mispredict ~50 ns, uncontended mutex ~500 ns.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цифры завышены в 10×. L1 — 0.5 ns (1-2 cycles на 3GHz), L2 — 7 ns, mispredict ~5 ns, mutex ~25 ns.",
+                "source_of_confusion": "5 ns — это branch mispredict, его путают с L1 hit; 50 ns — близко к main memory ref (100 ns), путают с L2.",
+                "if_it_were_true": "L1 в 5 ns означал бы что CPU делает 200M операций/sec — реальная скорость 1-2 GHz instruction throughput, не 200 MHz.",
+                "how_it_should_be": "L1 = 1-2 cycles = sub-nanosecond. На 3GHz это ~0.5 ns. Это самая быстрая операция CPU после регистров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "L1 ~0.5 ns, L2 ~7 ns, branch mispredict ~100 ns, uncontended mutex ~1 μs.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Branch mispredict ~5 ns (pipeline flush 10 stages × ~0.5 ns/stage), а не 100 ns. Uncontended mutex ~25 ns, а не 1 μs.",
+                "source_of_confusion": "Contended mutex (с syscall и context switch) действительно занимает ~1 μs — кто-то запоминает эту цифру как «mutex», теряя различие contended/uncontended.",
+                "if_it_were_true": "1 μs на mutex означал бы что concurrent counter с lock тянет ~1M ops/sec на ядро — реальная скорость на uncontended path 40M+ ops/sec.",
+                "how_it_should_be": "Uncontended mutex = atomic CAS + memory barrier ~25 ns. Contended (со sleep) = 1-100 μs. Разница в 400×, поэтому профайлер всегда показывает contention."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "L1 ~1 ns, L2 ~10 ns, branch mispredict ~1 ns (он быстрее L2!), uncontended mutex ~100 ns.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Branch mispredict ~5 ns — pipeline flush, требующий перезапуска нескольких instructions. Он не быстрее L2 (~7 ns), а сравним.",
+                "source_of_confusion": "Современные predictors (Intel TAGE, AMD perceptron) точны на >95% — кажется, что mispredict ничего не стоит, и его латентность забывается.",
+                "if_it_were_true": "Если бы mispredict стоил 1 ns, не было бы смысла в branch-free code и SIMD vectorization. Реально mispredict-heavy код в 3-5× медленнее.",
+                "how_it_should_be": "Mispredict ~5 ns = 10 cycles на 3GHz — pipeline flush после wrong path. Это в 10× больше L1 hit и сравнимо с L2 hit."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как «правило 100ns/100μs/100ms» помогает быстро оценить максимальный throughput одного потока в разных классах операций?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "100ns соответствует ~10M ops/sec, 100μs — ~100K ops/sec, 100ms — ~100 ops/sec на один поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "1 sec / 100 ns = 10⁷ = 10M ops/sec (близко, OK), но 100 μs = 10⁴ = 10K ops/sec (не 100K), 100 ms = 10 ops/sec (не 100).",
+                "source_of_confusion": "Цифры близки по форме, ошибка на порядок — типичная mental-arithmetic ошибка под давлением интервью.",
+                "if_it_were_true": "Тогда intra-DC RTT (~500 μs) позволял бы 2K RPS/thread sync — а реальный потолок Spring Boot с DB ~50 RPS/thread без async.",
+                "how_it_should_be": "Mnemonic: 1 sec / latency = throughput. 100 ns → 10M, 100 μs → 10K, 100 ms → 10. Каждый порядок latency = три порядка throughput (нет, один порядок), но классы соседние различаются 1000×."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "In-process (100 ns) → ~10M ops/sec, local I/O (100 μs) → ~10K ops/sec, network cross-region (100 ms) → ~10 ops/sec последовательно на одно ядро/поток.",
+              "correct": true,
+              "sections": {
+                "explanation": "1 sec / 100 ns = 10⁷ ops/sec = 10M ops/sec — что-то близкое к memory bandwidth bound. 1 sec / 100 μs = 10⁴ = 10K ops/sec — typical для DB query или SSD random read. 1 sec / 100 ms = 10 ops/sec — для cross-region call. Это даёт мгновенную оценку максимального sync throughput одного потока: ~10M/10K/10 в зависимости от класса операций. Для масштабирования: либо параллелизуй (N threads × 10K = N×10K RPS), либо переведи операции в более быстрый класс (cache, batching).",
+                "example": "Spring Boot endpoint: 3 DB queries (3 × 5 ms intra-DC = 15 ms) + 1 HTTP call (2 ms) + JSON serialization (1 ms) ≈ 20 ms/request. Один поток = 50 RPS. 200 threads × 50 = 10K RPS теоретически; реально contention + GC ограничивают на 2-5K RPS. Если бы один из DB-запросов был cross-region (100 ms), throughput упал бы до 10 RPS/thread = 2K RPS на 200 потоках.",
+                "when_to_apply": "Когда нужно за 30 секунд классифицировать operation pipeline на интервью — посчитай число операций каждого класса в одном запросе, умножь на их latency, получи total latency и throughput. Это базовый skill для system design Q&A.",
+                "edge_cases": "Async/non-blocking I/O меняет правила: один поток может ждать 1000 параллельных I/O операций (100 ms каждая) и выдавать 10K «RPS» — но это не «sync 10 RPS», это другой режим. CPU-bound операции (100 ns class) не масштабируются через async, только через ядра.",
+                "related": "[[latency-numbers-interview#Q1]] откуда берутся 100ns/μs/ms; [[latency-numbers-interview#Q9]] формула DAU → peak RPS; [[latency-numbers-interview#Q15]] capacity reference points web/DB."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все три класса дают примерно одинаковый throughput ~1K RPS/thread, разница только в качестве операций (CPU/IO/network), не в количестве.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Throughput напрямую обратен latency: 100 ns → 10M ops/sec, 100 ms → 10 ops/sec. Разница в throughput — миллион раз, а не «одинаковые 1K».",
+                "source_of_confusion": "1K RPS — типичная цифра для middle-loaded production Spring Boot endpoint, её обобщают на все классы операций.",
+                "if_it_were_true": "Тогда in-memory hash lookup и cross-region call имели бы одинаковый throughput, и кеши не имели бы смысла.",
+                "how_it_should_be": "Throughput одного потока = 1 / latency. В трёх классах разница 10⁶× — отсюда вся архитектура кеширования и async I/O."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "100ns → 1K ops/sec, 100μs → 100 ops/sec, 100ms → 1 op/sec — каждый класс в 10 раз ниже предыдущего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Throughput 1 sec / latency: 100ns → 10M (не 1K), 100μs → 10K, 100ms → 10. Разница между классами не 10×, а 1000×.",
+                "source_of_confusion": "Кажется, что «10×» — естественное соотношение между соседними порядками, но 100 ns и 100 μs — это разница в 1000×, не 10×.",
+                "if_it_were_true": "Тогда in-process function call мог бы делать только 1K вызовов/sec — это бы означало, что современные JVMs работают на скорости 286 1992 года.",
+                "how_it_should_be": "ns vs μs vs ms — это три порядка между соседними классами. 100ns → 10M ops, 100μs → 10K, 100ms → 10 — три порядка между ними."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какому SI-префиксу соответствует степень 2^40 в таблице powers of two?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "2^40 ≈ 1.1 × 10^9 — gigabyte (миллиард).",
+              "correct": false,
+              "sections": {
+                "what_actually": "2^40 ≈ 1.1 × 10^12 — terabyte (триллион), не giga. 2^30 — это giga (10⁹).",
+                "source_of_confusion": "Сдвиг на одну позицию в таблице powers of two — типичная ошибка под давлением. Запоминать тройками: 2^10 → K, 2^20 → M, 2^30 → G, 2^40 → T.",
+                "if_it_were_true": "1.1 TB SSD маркировался бы как «1.1 GB» — это бы означало, что современные ноутбуки имеют ~1 GB RAM, что 20-летней давности.",
+                "how_it_should_be": "2^10 ≈ 10³ K, 2^20 ≈ 10⁶ M, 2^30 ≈ 10⁹ G, 2^40 ≈ 10¹² T. Каждые 10 степеней добавляют префикс."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "2^40 ≈ 1.1 × 10^15 — petabyte (квадриллион).",
+              "correct": false,
+              "sections": {
+                "what_actually": "2^40 — это tera (10¹²), peta = 2^50 (10¹⁵). Сдвиг на 10 степеней.",
+                "source_of_confusion": "Кто помнит мнемонику «K-M-G-T-P-E», но забывает что между ними по 10 степеней двойки, может промахнуться на одну позицию.",
+                "if_it_were_true": "Тогда стандартный 1TB SSD на ноутбуке имел бы ёмкость 2^40 байт = 1 PB — это сопоставимо со storage всего Instagram.",
+                "how_it_should_be": "2^40 = 1 TiB (tebibyte) ≈ 1.1 TB (terabyte SI). Peta — это 2^50, на одну тройку выше."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "2^40 ≈ 1.1 × 10^12 — terabyte (триллион байт).",
+              "correct": true,
+              "sections": {
+                "explanation": "Базовая таблица powers of two: 2^10 = 1024 ≈ 10³ (kilo), 2^20 ≈ 10⁶ (mega), 2^30 ≈ 10⁹ (giga), 2^40 ≈ 10¹² (tera), 2^50 ≈ 10¹⁵ (peta), 2^60 ≈ 10¹⁸ (exa). Каждые 10 степеней — следующий SI-префикс. Точно: 2^40 = 1 099 511 627 776 ≈ 1.0995 × 10¹². Это база для любой storage estimation на интервью: «10 TB логов в месяц» = 10 × 2^40 байт.",
+                "example": "Корпоративный data lake типичного банка хранит 50-500 TB структурированных транзакционных данных за 7 лет retention. Snowflake/BigQuery счета считаются именно в TB stored × month — понимание что 1 TB = 2^40 байт = ~10¹² критично для оценки счетов.",
+                "when_to_apply": "На любом system design вопросе про storage — мысленно переводи числа в степени двойки. «1 PB» = 2^50 байт = 10¹⁵. «100M фото × 2MB» = 200 × 2^40 = 200 TB. Это позволяет сразу сравнивать с известными baselines (Instagram ~50 PB, S3 ~exa-scale).",
+                "edge_cases": "Производители HDD используют SI-decimal (1 TB = 10¹² байт), ОС показывает TiB (1 TiB = 2^40 байт = 1.0995 × 10¹²) — отсюда «1 TB диск показывает 931 GiB». На интервью эту разницу обычно игнорируют (~7% ошибка), но в финансовых отчётах AWS она существенна.",
+                "related": "[[latency-numbers-interview#Q8]] конкретные степени 2^32/2^53/2^63; [[latency-numbers-interview#Q10]] storage estimation с replication; [[latency-numbers-interview#Q13]] петабайтные масштабы Instagram."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "2^40 ≈ 4.3 × 10^9 — то же, что 2^32, потому что 40 и 32 близки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "2^32 ≈ 4.3 × 10⁹ (IPv4 address space). 2^40 в 256× больше: ≈ 1.1 × 10¹².",
+                "source_of_confusion": "Кто запоминает «2^32 = 4.3B» как универсальную «большую» цифру, может ошибиться когда вопрос про 2^40.",
+                "if_it_were_true": "Тогда `long` в Java (64 bits) был бы всего в 2× больше `int` (32 bits) — реальная разница 2^32 = 4.3 миллиарда раз.",
+                "how_it_should_be": "Каждая степень удваивает: 2^32 = 4.3B, 2^40 = 2^32 × 2^8 = 4.3B × 256 ≈ 1.1T. Восемь степеней — это умножение на 256, а не близкое значение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чему примерно равно количество секунд в году, и как это использовать в QPS-расчётах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В году ~10^6 секунд, поэтому DAU 1B × 10 actions = 10^10 / 10^6 = 10K RPS average.",
+              "correct": false,
+              "sections": {
+                "what_actually": "10^6 секунд = 11.5 дней, а не год. В году ~3.15 × 10⁷ (π × 10⁷). В сутках ~10⁵ (86 400).",
+                "source_of_confusion": "10^6 sec удобно произнести и оно близко к «миллиону» — но это период измерения retention/long jobs, не год.",
+                "if_it_were_true": "Тогда годовой uptime SLO в секундах считался бы за 10^6, и 99.9% даунтайма было бы 1000 sec = 17 минут (вместо реальных 8.76 hours).",
+                "how_it_should_be": "Запомнить: 1 day ≈ 10⁵ sec, 1 month ≈ 2.5 × 10⁶ sec, 1 year ≈ π × 10⁷ ≈ 3 × 10⁷. DAU считается через 10⁵."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В году ~3.15 × 10^7 секунд (π × 10^7), а в сутках ~86 400 ≈ 10^5; формула average RPS = daily_count / 10^5.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Формула правильная по сути (mnemonic «3.15 × 10⁷ ≈ π × 10⁷» — авторства Льюиса Кэрролла), но вопрос про использование «в году» — а формула RPS использует «в сутках» (10⁵).",
+                "source_of_confusion": "Цифры точные, но answer объединяет два правила в один пункт — нужно различать какое использовать когда.",
+                "if_it_were_true": "Сама по себе цифра годовая верна, но для RPS надо делить именно на 86 400 (день), а не на 3.15 × 10⁷ (год) — это даёт average per second, а не per year.",
+                "how_it_should_be": "Этот вариант почти правильный, но нужно правильно сформулировать: RPS = daily / 10⁵ (сутки), а годовая цифра используется для retention/storage. См. правильный вариант ниже."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В году ~10^8 секунд, поэтому 5 лет retention = 5 × 10^8 sec для long-running calculations.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В году ~3 × 10⁷ (тридцать миллионов), не 10⁸ (сто миллионов). Ошибка на порядок.",
+                "source_of_confusion": "10⁸ ≈ 100M «больших единиц» удобно запомнить, но это даёт ~3 года, а не 1 год.",
+                "if_it_were_true": "Тогда годовой Twitter throughput 1B events/day × 365 = 3.65 × 10¹¹ events/year соответствовал бы ~3 600 events/sec — реально ~10 000 events/sec average.",
+                "how_it_should_be": "Mnemonic: π × 10⁷ секунд в году (Carroll). 1B sec ≈ 31.7 years. 10⁸ sec ≈ 3.17 years."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В сутках ~10^5 секунд (86 400), в году ~π × 10^7 (3.15 × 10^7); average RPS = daily_count / 10^5, storage за N лет считается через N × π × 10^7.",
+              "correct": true,
+              "sections": {
+                "explanation": "86 400 sec/day ≈ 10⁵ — главная цифра для перевода DAU × actions в average RPS. Lewis Carroll mnemonic: в году ровно π × 10⁷ секунд (точно 3.1536 × 10⁷). Это даёт мгновенный расчёт: 1B events/day = 10⁹ / 10⁵ = 10⁴ = 10K events/sec; 5 years storage = 5 × π × 10⁷ ≈ 1.6 × 10⁸ sec для расчёта growth × bytes/sec. 1M sec ≈ 11.5 days, 1B sec ≈ 31.7 years — полезно для проверки разумности.",
+                "example": "Twitter: 300M DAU × 10 timeline views/day = 3 × 10⁹ / 86400 = ~35K reads/sec average; peak ×5 = 175K RPS. Storage 5 лет: 30M tweets/day × 2KB × 5 × 3.15 × 10⁷ / 86 400 ≈ 110 TB raw (до replication). Без знания «10⁵ sec/day» эти расчёты неподъёмны на доске.",
+                "when_to_apply": "В каждом system design вопросе про DAU → RPS — первая операция: daily count / 10⁵. Для retention/storage growth — N × π × 10⁷ × bytes/sec. Эти две формулы покрывают 80% capacity-вопросов.",
+                "edge_cases": "Високосный год — 366 дней (3.16 × 10⁷ sec), разница 0.3%, на интервью игнорируется. Месяцы разной длины: для биллинга AWS считается 730 hours/month (30.42 days × 24h) — это часто всплывает в cost estimation.",
+                "related": "[[latency-numbers-interview#Q9]] формула DAU → peak RPS; [[latency-numbers-interview#Q10]] retention в storage estimate; [[latency-numbers-interview#Q21]] SLO downtime per year."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие практические границы соответствуют 2^32, 2^53 и 2^63 в реальных системах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "2^32 ≈ 4.3 × 10^9 — IPv4 address space и uint32 max; 2^53 ≈ 9 × 10^15 — точность JavaScript Number (safe integer); 2^63 - 1 ≈ 9.2 × 10^18 — Java long max.",
+              "correct": true,
+              "sections": {
+                "explanation": "2^32 = 4 294 967 296 — это полная ёмкость IPv4 (4.3 миллиарда адресов, на 8B людей planet — exhaustion!), также unix timestamp 32-bit переполняется в 2038. 2^53 — float64 точно представляет integers только до 2^53, дальше lossy — отсюда JavaScript `Number.MAX_SAFE_INTEGER`, проблема при передаче long ID из Java в JS (Snowflake ID 64-bit нельзя как-is). 2^63 - 1 — max положительный signed 64-bit = Java `long` = nanoseconds с 1970 до 2262 года.",
+                "example": "Twitter Snowflake ID — 64-bit integer (41 timestamp + 10 machine + 12 sequence). Сериализованный в JSON Number, в браузере теряет точность последних бит после 2^53 — Twitter API отдаёт `id_str` как backup. Аналогично Discord Snowflake. PostgreSQL `bigserial` (long) безопасен на бэкенде, но при отдаче в frontend оборачивают в строку.",
+                "when_to_apply": "Дизайн ID-схемы: если backend Java/Postgres использует long (2^63), а frontend — JavaScript, всегда отдавай ID как строку. Дизайн IPv4-based системы: при scale >10⁹ unique IP — переход на IPv6 или NAT обязателен. Подсчёт коллизий хеша: birthday paradox даёт ~50% collision вероятность при N = √M, где M — address space.",
+                "edge_cases": "Java `long` подписан, max = 2^63 - 1 ≈ 9.2 × 10¹⁸ — `System.nanoTime()` исчерпает long через 292 года. `Instant.EPOCH_NANOS` оборачивается двумя long. PostgreSQL `bigint` тот же `signed 64-bit`. Если нужен unsigned 64 — придётся `BigInteger` (Java) или `numeric` (Postgres).",
+                "related": "[[latency-numbers-interview#Q6]] таблица powers of two; [[latency-numbers-interview#Q14]] коллизии хешей и URL shortener; [[snowflake-id-interview#Q1]] структура Twitter Snowflake."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "2^32 — Java int max, 2^53 — IPv6 address space, 2^63 — точность JavaScript Number.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java int (signed 32-bit) max = 2^31 - 1 ≈ 2.1B, не 2^32. IPv6 — 128 bit (2^128), не 53. JavaScript safe integer — 2^53, не 2^63.",
+                "source_of_confusion": "Все три числа правильные сами по себе, но они присвоены неправильным практикам. Типичная ошибка перетасовки фактов.",
+                "if_it_were_true": "Если бы IPv6 был 2^53, его уже исчерпали бы — современный IPv6 даёт 2^128, что хватит на каждый атом во Вселенной получить адрес.",
+                "how_it_should_be": "2^31 → Java int (~2.1B), 2^32 → IPv4 / uint32 (~4.3B), 2^53 → JS safe integer (~9×10¹⁵), 2^63 → Java long max (~9×10¹⁸)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "2^32 ≈ 4 миллиона — uint16 max; 2^53 — Java `int` overflow; 2^63 — UUID-длина в битах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "2^16 = 65 536 — это uint16 max (не 2^32). 2^53 — JS safe integer, не Java int (Java int = 2^31). UUID — 128 bit (2^128), не 63.",
+                "source_of_confusion": "Случайная подстановка чисел друг к другу — частая ошибка при заучивании наизусть без понимания.",
+                "if_it_were_true": "Если бы Java int был 2^53 = 9×10¹⁵, не было бы overflow-проблем — реальный 2^31 ≈ 2.1B регулярно переполняется в логах (overflow timestamps).",
+                "how_it_should_be": "Запомнить пары: 16→ports, 31→Java int, 32→IPv4/uint32, 53→JS Number, 63→Java long, 64→uint64/UUID-half, 128→UUID."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "2^32 — secondes в году, 2^53 — кол-во звёзд в галактике, 2^63 — атомов в Земле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сек в году ~3 × 10⁷ (π × 10⁷), не 2^32 (4 × 10⁹). Звёзд в Млечном пути ~10¹¹, не 10¹⁶. Атомов в Земле ~10⁵⁰.",
+                "source_of_confusion": "Случайные большие числа из научпопа путают с инженерными константами.",
+                "if_it_were_true": "Тогда нечего было бы обсуждать на интервью про IPv4 exhaustion (4B адресов уже исчерпаны в 2011 на IANA уровне).",
+                "how_it_should_be": "Эти степени — про practical bit-widths в коде: 32-bit, 53-bit float mantissa, 63-bit signed long. Привязка к astronomy — мнемонически удобна для масштаба, но не точна."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "По канонической формуле, сколько peak RPS даст Twitter timeline для 300M DAU и 10 actions/day с peak factor 5?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Average ~3.5K RPS, peak ~17K RPS — peak factor применяется к monthly traffic, не daily.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Average RPS = DAU × actions / 86400 = 3 × 10⁹ / 86 400 ≈ 35K (не 3.5K). Ошибка на порядок — забыли что DAU 300M, не 30M.",
+                "source_of_confusion": "Под давлением интервью легко промахнуться с количеством нулей; 300M часто становится «300 миллионов = 3 × 10⁸», но multiplied by 10 = 3 × 10⁹, не 3 × 10⁸.",
+                "if_it_were_true": "Twitter с 17K peak RPS обошёлся бы 1-2 серверами — реально Twitter тратит на feed десятки тысяч серверов.",
+                "how_it_should_be": "300M × 10 / 86 400 = 3 × 10⁹ / 8.64 × 10⁴ ≈ 35K avg RPS; peak ×5 = 175K RPS."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Average ~35K RPS (3 × 10^9 / 86 400), peak ~175K RPS (×5), требует архитектуру под 200K+ RPS с запасом.",
+              "correct": true,
+              "sections": {
+                "explanation": "Формула average RPS = DAU × actions_per_day / 86 400. 300M × 10 = 3 × 10⁹ daily reads. 3 × 10⁹ / 86 400 ≈ 34 722 ≈ 35K RPS average. Peak factor для social media принимается 5× (вирусные события), что даёт 175K RPS peak. На капасити-планировании всегда добавляется ещё ×1.5-2 на geographic skew и unexpected spikes — итого инфра должна тянуть 250-350K RPS. 86 400 ≈ 10⁵ позволяет считать «daily ÷ 100K = average RPS» в уме.",
+                "example": "Twitter inverse-fan-out 2013: при ~150M DAU read peak составлял ~150K RPS на timeline-чтении, что обслуживалось ~10K серверов Redis + ~1K Manhattan storage backend (NLT for graph). При росте до 300M+ DAU перешли на гибридный fan-out — для celebrities pull-based, для остальных push-based (precompute). Read:write ratio 100:1 объясняет почему write path может быть синхронным DB, а read — обязательно cached.",
+                "when_to_apply": "В каждом social-app system design — стартуй с этой формулы. После average RPS считай peak ×3-10 в зависимости от типа контента, и инфра-capacity ×1.5-2 на запас. Без peak factor любая capacity estimation бесполезна — серверы строят под пик, не среднее.",
+                "edge_cases": "Peak factor сильно зависит от geography: глобальный сервис имеет 24-часовое распределение нагрузки и peak factor 2-3×, regional (US-only) — 5-10×. Виральные события (Super Bowl, K-pop releases) — 50-100× spike на минуты-часы, под них автоскейл обязателен. MAU vs DAU: DAU обычно 25-40% от MAU.",
+                "related": "[[latency-numbers-interview#Q12]] полный расчёт Twitter timeline; [[latency-numbers-interview#Q7]] откуда 10⁵ sec/day; [[latency-numbers-interview#Q15]] capacity per server для 175K RPS."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Average ~350K RPS, peak ~1.75M RPS — нужно умножить на peak factor сначала, потом делить на секунды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DAU × actions = 3 × 10⁹ events/day; делим на 86 400 = 35K RPS, не 350K. Ошибка на порядок — возможно посчитали по 100 actions/day вместо 10.",
+                "source_of_confusion": "Порядок операций (умножить на peak factor → разделить или наоборот) не влияет на результат, но цифры могут запутаться.",
+                "if_it_were_true": "1.75M peak RPS — это масштаб Google Search globally, не один endpoint Twitter timeline. Это бы потребовало 200+ серверов Spring Boot.",
+                "how_it_should_be": "Двух-шаговая формула: avg = DAU × actions / 86 400 ≈ 35K; peak = avg × 5 ≈ 175K. Не путать ×10 actions с ×100."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Average ~175K RPS, peak ~875K RPS — peak factor 5 относится к hourly, а не daily average.",
+              "correct": false,
+              "sections": {
+                "what_actually": "175K — это уже peak RPS из расчёта 35K avg × 5. Кто-то перемножил ещё раз на 5 — двойной peak factor.",
+                "source_of_confusion": "Peak factor определён относительно average RPS, не относительно hourly average — оба показывают «вечерний пик».",
+                "if_it_were_true": "875K RPS на один Twitter endpoint требовал бы инфраструктуры на уровне всего AWS region — нереалистично для одного use-case.",
+                "how_it_should_be": "Peak factor — это коэффициент `peak / average daily RPS`, обычно 2-10× для consumer apps. Применяется один раз."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие компоненты обязательно учитывать в storage estimation для production OLTP базы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только raw data и retention — replication факт инфраструктуры, не storage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Replication factor — это умножитель именно storage (физически хранится N копий данных), не infrastructure-only концепт. Без него оценка занижает storage в 2-3×.",
+                "source_of_confusion": "Логически кажется, что «данные одни», и replication — про reliability, не объём. Но физический disk usage = raw × RF.",
+                "if_it_were_true": "Тогда Cassandra с RF=3 требовала бы столько же дисков как single-node DB — реально занимает 3× больше.",
+                "how_it_should_be": "Storage estimation обязательно включает: raw × indexes × replication × snapshots. Игнорирование RF — самая частая ошибка интервьюера на follow-up."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Raw data × retention × compression — индексы создаются автоматически, их размер ничтожен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BTree indexes (PostgreSQL) добавляют +30-100% к raw size; inverted indexes (Elasticsearch) — ×2-5; compaction overhead LSM-tree — ×2-3 peak. Это не «ничтожно», а часто доминирует.",
+                "source_of_confusion": "Индексы обычно невидимы в `df -h`, отображаются в одном файле с данными — кажется что «их нет».",
+                "if_it_were_true": "Тогда `pg_size_pretty` показывал бы только размер таблиц без `pg_indexes_size()` — реально index size на OLTP базе часто 30-50% от table size.",
+                "how_it_should_be": "Включай index overhead +30-100% явно. Запрашивай в production `SELECT pg_size_pretty(pg_total_relation_size('table'))` чтобы увидеть полный размер с indexes."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Records/day × bytes/record × retention × replication × (1 + index overhead) — минимум 4 компонента, обычно +snapshots и +WAL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каноническая формула storage estimation для OLTP: `Storage = Records/day × Bytes_per_record × Retention_days × RF × (1 + Index_overhead)`. Replication factor — типично 3 для distributed DBs (Cassandra, Kafka, HDFS), 2 для PostgreSQL (primary + replica), 6 для S3 (across AZ). Index overhead +30-100% для BTree, ×2-5 для inverted indexes. Дополнительно: WAL +10-30%, snapshots ×2-7 (7 daily = 7×), compaction peak overhead ×2-3 для LSM. Итого production multiplier ~10-15× от raw для OLTP.",
+                "example": "PostgreSQL OLTP: 1 TB user data. Indexes +50% = 1.5 TB. RF=2 (primary+replica) = 3 TB. WAL buffer +20% = 3.6 TB. 7 daily snapshots = +5 TB = ~8.6 TB. + compaction overhead ×1.2 = ~10 TB. Так из «1 TB user data» получаются ~10 TB production storage. Это объясняет почему AWS RDS storage всегда заказывают с большим запасом.",
+                "when_to_apply": "В любом system design про БД — после raw estimation сразу спрашивай «что забыл?». Стандартные follow-ups интервьюера: «а replication?», «а индексы?», «а backups?». Лучше озвучить все факторы сразу.",
+                "edge_cases": "Compression может вернуть часть: gzipped logs ×0.2-0.5, columnar (Parquet/ClickHouse) ×0.1-0.3. Для OLAP формула другая: raw × 0.3 (compression) × 1.5 (materializations) ≈ 2× raw vs ~10× для OLTP. Time-series (Prometheus, VictoriaMetrics) с агрессивной компрессией дают ×0.1, могут хранить 5 лет в 1 TB.",
+                "related": "[[latency-numbers-interview#Q12]] storage Twitter с replication; [[latency-numbers-interview#Q13]] Instagram петабайты; [[latency-numbers-interview#Q24]] anti-pattern игнорирования replication/индексов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Daily growth × retention — replication и indexes покрываются 20% запасом на диске, не требуют отдельной оценки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "20% запас не покрывает ×3 replication. Реальный production multiplier для OLTP — ~10×, заклад 20% даёт типичный over-provision на 1 неделю работы.",
+                "source_of_confusion": "Подход «возьмём с запасом» работает для small-scale (single-server homelab) и совершенно ломается на enterprise scale.",
+                "if_it_were_true": "Тогда любая Cassandra с RF=3 и retention 1 год исчерпала бы 20% запас за пару дней.",
+                "how_it_should_be": "Считай явно: raw × indexes (1.5×) × RF (3×) × snapshots (1.5×) = ~7-10× от raw. И 20% over-provision на top."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "При оценке bandwidth для чат-системы 100K msg/sec по 200 bytes каждое, какой главный подвох легко упустить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Конверсия из bytes в bits — 100K × 200 = 20 MB/s, но 1 Gbps канал даёт 1000 MB/s, поэтому 20 MB/s легко влезает без оверхеда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конверсия 1 byte = 8 bits — это базовая арифметика. Главный подвох — это **overhead на короткие payloads**: TCP/TLS/HTTP заголовки добавляют 300-500 bytes на запрос, что делает 200-byte payload фактически 500-700 bytes на проводе (×2.5-3 overhead).",
+                "source_of_confusion": "Bytes-bits конверсия упоминается часто и кажется «очевидным подвохом», но реальный bottleneck — overhead для коротких payloads.",
+                "if_it_were_true": "Тогда оптимизация bandwidth сводилась бы к compression payload — но для 200 bytes сжимать нечего, узким местом остаётся overhead.",
+                "how_it_should_be": "Bytes×8 — это арифметика, не подвох. Реальный подвох: overhead × 1.3-3 для коротких сообщений + replication traffic между брокерами Kafka."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Replication traffic между serverами — для chat с RF=3 internal traffic = 3 × producer traffic, что утраивает внутреннюю нагрузку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Replication traffic — реальный подвох, но **не главный для чата** где producer→broker — короткий путь. Главный подвох — overhead на коротких payload, который доминирует.",
+                "source_of_confusion": "Replication factor — большая тема в storage estimation, её ассоциируют и с bandwidth, что правильно для streaming systems но не первичный pitfall здесь.",
+                "if_it_were_true": "Если бы это был главный подвох, изменение RF=1 → RF=3 утраивало бы egress на каждом сервере — но Kafka inter-broker traffic считается отдельно от client bandwidth.",
+                "how_it_should_be": "Replication traffic учитывается отдельно для streaming clusters (Kafka inter-broker, Cassandra repair). Для front-facing chat — основной подвох overhead на коротких pакетах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Peak factor для real-time чата — нужно умножить average на 10× потому что пользователи спят 8 часов из 24.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Peak factor влияет на cap-планирование, но это применяется на уровне RPS, а сам bandwidth-расчёт уже учитывает peak. Подвох — overhead per packet, не peak factor.",
+                "source_of_confusion": "Peak factor часто упоминается в QPS-расчётах, его перепутывают с bandwidth-расчётами.",
+                "if_it_were_true": "100K msg/sec ×10 = 1M msg/sec — это всё ещё 200 MB/s «raw», что 1.6 Gbps. На 10Gbps канале легко влезает.",
+                "how_it_should_be": "Peak factor для chat обычно 2-3× (вечерний пик), не 10×. Главный подвох — overhead, не peak."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TCP/TLS/HTTP overhead для коротких payloads: 200 byte JSON по HTTPS становится ~500-600 byte на проводе, игнорирование оверхеда даёт 2.5-3× недооценку bandwidth.",
+              "correct": true,
+              "sections": {
+                "explanation": "Overhead per packet — фиксированная стоимость, которая доминирует для small payloads. TCP header — 20 bytes, IP header — 20 bytes, TLS record overhead — 25-50 bytes, HTTP/2 frame header + HPACK overhead — 50-100 bytes. Для 200-byte JSON суммарный wire size ~400-600 bytes (×2-3). Игнорирование overhead даёт критическую недооценку: запрашиваем 160 Mbps, реально нужно 400-500 Mbps. Также важно: HTTP/2 multiplexing амортизирует часть overhead через persistent connections.",
+                "example": "Stripe 2018 bandwidth incident — webhook delivery system был спроектирован под 100K req/sec × 500 byte payload = 400 Mbps. После TLS+HTTP overhead реальный bandwidth требовался 1.2 Gbps. Network team предоставил 1 Gbps канал, который начал дропать пакеты на peak — выяснилось через customer complaints. Решение: переход на HTTP/2 с multiplexing + batch endpoints для группировки.",
+                "when_to_apply": "Для любых high-frequency коротких сообщений (chat, IoT telemetry, metrics): chat (~200 bytes), trade events (~50-100 bytes), metric samples (~50 bytes). Закладывай overhead ×1.5-3 поверх payload. Для больших payloads (>10KB) overhead становится несущественным <5%.",
+                "edge_cases": "Egress vs ingress: в AWS ingress бесплатный, egress $0.09/GB — для media-heavy системы это dominant cost (Instagram egress 60+ Gbps означает миллионы $/month). Persistent WebSocket connections амортизируют overhead на handshake, но per-message frame overhead (2-14 bytes) остаётся. Compression (deflate) экономит только на текстовых payloads >1KB.",
+                "related": "[[latency-numbers-interview#Q12]] Twitter timeline bandwidth; [[latency-numbers-interview#Q17]] YouTube 250 Tbps egress; [[latency-numbers-interview#Q24]] что забывают в estimation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Для Twitter с 300M DAU и 100:1 read:write ratio, какие основные числа capacity-планирования?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "~350 writes/sec, ~35K reads/sec average, peak ~175K reads/sec; storage 5 лет ~500 TB с RF=3 и indexes — read-heavy архитектура с fan-out на запись.",
+              "correct": true,
+              "sections": {
+                "explanation": "Twitter classic numbers: 300M DAU × 0.1 tweets/user/day = 30M writes/day = ~350 writes/sec average; peak ×5 = ~1750 writes/sec. Reads: 300M × 10 timeline views/day = 3 × 10⁹ / 86 400 = ~35K reads/sec; peak ~175K. Storage: 30M tweets/day × 2 KB (tweet + metadata) × 365 × 5 years × RF=3 × 1.5 (indexes) ≈ 500 TB. Read:write ratio 100:1 диктует архитектуру: fan-out on write (precompute timeline в Redis для каждого user'а) → reads дешёвые. Альтернатива fan-out on read (compute at query time) ломается на read peak.",
+                "example": "Twitter Manhattan + Redis Cluster + Heron stream processing — фактическая архитектура 2015-2020: при tweet'е от пользователя с N followers, запись distribute'ится в N Redis lists (timelines followers). Для celebrity (1M+ followers) — hybrid: pull at query time, чтобы не fan-out 1M writes. Read path: lookup timeline в Redis (O(1)) + hydrate tweets из Manhattan (Cassandra-like). Storage tweets — ~100s TB, timelines в Redis — ~50 TB hot.",
+                "when_to_apply": "Любая social app с heavy read pattern (Twitter, Instagram feed, LinkedIn): сначала определи read:write ratio. Если >50:1 — fan-out on write обязателен. Если ~10:1 — можно жить с fan-out on read + heavy cache. Storage planning всегда умножает на RF (3) и indexes (1.5) поверх raw.",
+                "edge_cases": "Media (фото, видео) считается отдельно: 30M tweets × 0.2 с медиа × 1MB = 6 TB/day media → 5 years × RF=3 ≈ 33 PB только медиа. Это в 60× больше чем text content. Celebrity fan-out: 1 tweet от Justin Bieber → 100M writes — hybrid push-pull обязателен. Account deletion — cascade across millions of timelines, async job.",
+                "related": "[[latency-numbers-interview#Q9]] формула DAU → RPS; [[latency-numbers-interview#Q10]] storage formula; [[latency-numbers-interview#Q22]] hot keys для celebrity."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "~3.5K writes/sec, ~3.5K reads/sec (примерно равные), storage 5 лет ~50 TB — стандартная архитектура single PostgreSQL primary + read replicas.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reads намного больше writes (100:1 ratio), а не равные. 35K reads/sec и 350 writes/sec в average. 50 TB storage сильно занижено: 5 лет × 30M tweets/day × 2KB × RF=3 = ~330 TB.",
+                "source_of_confusion": "Без понимания read:write ratio кажется что «300M DAU создаёт 300M actions/day одного типа» — реально 90%+ юзеров читают, не пишут.",
+                "if_it_were_true": "Тогда Twitter обошёлся бы single Postgres primary + 2-3 replicas — реально использует Manhattan/Cassandra cluster из тысяч нод.",
+                "how_it_should_be": "Read:write 100:1 — следствие social network nature (writer one, readers many). 35K reads и 350 writes — order-of-magnitude точно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "~30K writes/sec, ~3M reads/sec — write-heavy архитектура, нужен Cassandra cluster.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Writes 350/sec (не 30K), reads 35K/sec (не 3M). Ошибка на два порядка — возможно посчитали по 1 tweet/user/day вместо 0.1.",
+                "source_of_confusion": "Цифры «30K, 3M» звучат впечатляюще и могут показаться правильными для Big Tech масштаба, но они отражают неверную модель user behavior.",
+                "if_it_were_true": "30K writes/sec × 5 years = 5 × 10¹² tweets — Twitter за свою историю накопил ~10¹² постов, что соответствует ~6K writes/sec average.",
+                "how_it_should_be": "Стартуй с tweets/user/day = ~0.1 (большинство readers). Это даёт 30M tweets/day = 350 writes/sec average, peak ×5 ~ 1.75K writes/sec."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "~350K writes/sec, ~350K reads/sec — write и read equally heavy потому что каждый tweet вызывает immediate fan-out на 1000 followers.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fan-out writes — это internal, не client writes. Client writes 350/sec average. Internal fan-out может быть 350M operations/sec (350 × 1M avg followers), но это другая метрика.",
+                "source_of_confusion": "Fan-out amplification — реальный эффект, но он не отображается как «client write QPS», это internal queue throughput.",
+                "if_it_were_true": "350K client writes/sec означал бы что Twitter получает 30 миллиардов tweets/day — реальное число ~500M tweets/day.",
+                "how_it_should_be": "Client metrics (writes from users, reads from timelines) ≠ internal fan-out operations. Considering separately."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Для Instagram с 500M DAU, 0.2 фото/user/день и 2MB средний размер, какие основные числа storage и серверов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "200 GB фото/день, 73 TB/год, ~220 TB/год с replication — обходится 5-10 серверами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "500M × 0.2 × 2MB = **200 TB/day** (не 200 GB). Ошибка на 1000× — забыто что 200MB × миллион = 200TB.",
+                "source_of_confusion": "Под давлением мнемоника MB→GB может сбиться: 100M photos × 2MB = 200M MB = 200K GB = 200 TB.",
+                "if_it_were_true": "200 GB/day = 73 TB/year, Instagram обошёлся бы парой storage серверов — реально занимает порядка эксабайтов глобально.",
+                "how_it_should_be": "100M photos/day × 2MB = 200 TB/day; 73 PB/year; ×3 replication = 220 PB/year; ~1500 storage servers/year (160TB usable per node)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "200 TB/день фото, ~73 PB/год raw, ~250 PB/год с RF=3 и thumbnails, требует ~1500 storage серверов/год; egress 60-175 Gbps на peak — доминирующий cost.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каноничные числа: 500M DAU × 0.2 uploads/day = 100M photos/day. 100M × 2MB = 200 TB/day = 73 PB/year raw. Replication ×3 (multi-AZ) = 220 PB/year + thumbnails (3 sizes × ~100KB) +15% = ~250 PB/year. Storage servers: 10×16TB HDD = 160TB usable per node; 250PB / 160TB = ~1500 nodes/year. Photo views: 500M users × 50 views/day = 25B views/day; 25B × 200KB (mobile-sized) / 86 400 = ~58 Gbps average; peak ×3 = ~175 Gbps. Egress является **главным cost driver** — в media-heavy системах bandwidth дороже storage.",
+                "example": "Facebook Open Connect (CDN) обслуживает Instagram + Facebook photo/video traffic. По публичным данным Facebook 2020 — ~150 PB photo storage суммарно, ежедневный egress ~125+ Tbps глобально через CDN edge POPs. Stored compute (resize, thumbnails) — отдельный pool. Cold storage для старых фото — Cold S3 / Glacier-like с 24h retrieval.",
+                "when_to_apply": "Media-heavy системы (photo, video, audio): начни с storage growth × retention, потом ×replication ×thumbnails. Затем считай **egress отдельно** — он часто больше storage cost. Для photo apps closer to user — CDN-first архитектура (Facebook Open Connect, CloudFlare CDN, AWS CloudFront).",
+                "edge_cases": "Старые фото редко смотрят — hot/warm/cold tiering (S3 IA, Glacier) экономит 70%+ storage cost. Hot set обычно <5% catalog по photo views. EXIF metadata + ML features (face detection, object recognition) добавляют ~10-30% к photo storage. Video всегда дороже: 5-50× больше storage и egress на каждую минуту.",
+                "related": "[[latency-numbers-interview#Q11]] почему egress dominates; [[latency-numbers-interview#Q17]] YouTube 1 EB/year + 250 Tbps; [[latency-numbers-interview#Q24]] storage estimation factors."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "2 PB/день, ~700 PB/год — невозможно для одной компании, поэтому Instagram использует только client-side storage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Daily growth 200 TB (не 2 PB). 700 PB/year — ошибка в 10×. Instagram хранит фото в Facebook's media-stack, не на устройствах юзеров.",
+                "source_of_confusion": "Цифра «петабайт» звучит как порог невозможного, и инженеры могут запаниковать ошибившись на порядок вверх.",
+                "if_it_were_true": "700 PB/year требовал бы 7K storage серверов/year только под Instagram — это меньше всей Facebook fleet, физически реализуемо.",
+                "how_it_should_be": "100M × 2MB = 200TB/day = 73 PB/year (не 700). Запоминать через 100M photos = 100×10⁶, 2MB = 2×10⁶ → 200×10¹² = 200 TB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "20 TB/день, ~7 PB/год — достаточно одного S3 bucket без replication, потому что S3 сам реплицирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "200 TB/day (не 20). S3 действительно реплицирует автоматически (11 девяток через 6 копий внутренне), но это **уже учтено в цене storage** — за каждый GB платишь × 1, не × 6. Однако raw storage estimation должна включать RF.",
+                "source_of_confusion": "Перепутана модель «S3 сам реплицирует → нам не считать RF» с моделью «S3 хранит и считает на свою сторону, поэтому в нашем оценочном `× 1 GB` уже учтено».",
+                "if_it_were_true": "20 TB/day × 365 = 7 PB/year, что соответствовало бы 50M DAU при 0.2 photos × 2MB. Реально Instagram 500M DAU — в 10× больше.",
+                "how_it_should_be": "100M × 2MB = 200 TB/day. S3 pricing учитывает реплику внутри service, но при self-hosted storage estimation × RF обязательна."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Для URL shortener с 100M URLs/day за 5 лет, какой выбор Base62 length безопасен по коллизиям?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "6 chars Base62 (62^6 ≈ 57B) — хватит, потому что 5 лет = 1.8 × 10^11 URLs меньше чем 57B × 3 = безопасность по birthday paradox.",
+              "correct": false,
+              "sections": {
+                "what_actually": "62^6 = 5.7 × 10¹⁰ = 57B. За 5 лет генерится 180B URLs (100M × 365 × 5 = 1.8 × 10¹¹) — это **больше** address space. Просто не хватит места, не говоря о collisions.",
+                "source_of_confusion": "57B звучит «много», и кажется что 180B URLs влезут — но 180 > 57, math fails.",
+                "if_it_were_true": "Если 6 chars хватало бы — рынок URL shorteners (bit.ly, t.co) использовал бы 6 chars; реально все мигрировали на 7-8 chars при росте traffic.",
+                "how_it_should_be": "Минимум 7 chars (62^7 = 3.5 × 10¹²), но с birthday paradox collision risk при random gen. Counter-based (auto-increment → Base62) безопаснее."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "8 chars Base62 random hash — даёт 62^8 = 2.2 × 10^14 space, P(collision) при 180B URLs пренебрежимо мала.",
+              "correct": false,
+              "sections": {
+                "what_actually": "62^8 = 2.18 × 10¹⁴. Birthday paradox: P ≈ N²/(2M) = (1.8 × 10¹¹)² / (2 × 2.18 × 10¹⁴) ≈ 7.4 × 10⁷. Это **expected number of collisions**, не вероятность — означает 74 миллиона коллизий за 5 лет, не «пренебрежимо мала».",
+                "source_of_confusion": "Кажется что 220 trillion space >> 180 billion URLs, поэтому всё ок. Но birthday paradox даёт collision вероятность ~50% уже при N = √M ≈ √(2.2 × 10¹⁴) ≈ 1.5 × 10⁷ — то есть после 15M URLs!",
+                "if_it_were_true": "При 8 chars random gen без retry все 100M+ URLs/day начали бы возвращать «короткий уже занят» — пользовательский UX сломался бы.",
+                "how_it_should_be": "Random hash + retry-on-collision работает, но дорого. Counter-based ID → Base62 — гарантия uniqueness без коллизий вообще."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Counter-based (auto-increment ID → Base62) с 7-char output — гарантирует уникальность без коллизий, для 180B нужно 38 bits, влезает в 7 chars (62^7 ≈ 3.5T = 41 bits).",
+              "correct": true,
+              "sections": {
+                "explanation": "Counter-based генерация — auto-increment integer (PostgreSQL `bigserial`, MySQL `AUTO_INCREMENT`, Redis `INCR`) затем конвертация в Base62. Уникальность гарантирована самой природой incrementing counter (никаких коллизий by design). 7 chars Base62 = 62⁷ ≈ 3.5 × 10¹² = ~41 bits — хватит на 3.5 trillion URLs. 180B URLs за 5 лет = 38 bits, влезает в 7 chars с запасом. Альтернатива — distributed counter (Snowflake-like) для multi-region: timestamp + machine + sequence чтобы избежать single counter bottleneck.",
+                "example": "Bitly использует counter-based Base62 + soup of vanity URLs. TinyURL, goo.gl (rip), Twitter t.co — все эволюционировали в counter-based после столкновения с hash collisions на random gen. YouTube videoID — 11 chars Base64 (более широкий alphabet) = 64¹¹ ≈ 7 × 10¹⁹ — counter-based но в большем space для будущего роста.",
+                "when_to_apply": "Любой short ID system при scale: URL shorteners, social media post IDs, video IDs, message IDs. Counter-based для single-region simplicity; distributed counter (Snowflake) для multi-region active-active без conflict.",
+                "edge_cases": "Counter-based раскрывает order of creation (URL №100 создан перед №101) — это может быть **privacy/security проблема** (счётчик показывает roughly how busy service). Решение: scramble counter через encryption (AES в counter mode) или Sqids/Hashids. Counter-based не подходит когда нужно distributed write без coordinator.",
+                "related": "[[latency-numbers-interview#Q8]] почему 2^53 limit для JS клиента; [[snowflake-id-interview#Q1]] distributed counter; [[hashing-interview#Q5]] birthday paradox в general."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MD5 hash → Base62 first 6 chars — collision вероятность 2^-128, идеально для любых масштабов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MD5 даёт 128 bits = ~2^128 space. Но взяв **первые 6 chars Base62**, ты обрезаешь до 2^36 ≈ 7 × 10¹⁰ — не 2^128. Collision вероятность считается по truncated output.",
+                "source_of_confusion": "Полный MD5 имеет огромную collision resistance, но usage в shorteners — это truncation. После truncation остаётся только труляля битов в зависимости от output length.",
+                "if_it_were_true": "Тогда любой 6-char Base62 short URL был бы collision-free — реально 6 chars (62^6 = 57B) не хватает на 180B URLs.",
+                "how_it_should_be": "Collision resistance зависит от **output length**, не от input function. 6 chars = 36 bits = birthday paradox при ~250K URLs. Hash function — не магия, важна длина output."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие реалистичные baselines RPS для Spring Boot web-сервера, PostgreSQL и Redis на типичной production-машине?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring Boot ~100 RPS/core, PostgreSQL ~1K reads/sec, Redis ~10K ops/sec — small-scale-системы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цифры занижены на порядок-два. Spring Boot ~5-10K RPS/core (без heavy I/O), PostgreSQL ~10-20K reads/sec на ноду, Redis ~100K ops/sec single-thread.",
+                "source_of_confusion": "Цифры из Java-приложений 2010 года (без G1GC, без HTTP/2, без virtual threads) — современный stack в 10-50× быстрее.",
+                "if_it_were_true": "Тогда Twitter обслуживал бы 175K peak RPS с 1750 серверами (по 100 RPS each) — реально ~150-200 серверов хватает.",
+                "how_it_should_be": "Современный baseline: Spring Boot ~10K RPS на 8-core машине, Postgres ~15K reads/sec, Redis ~100K ops/sec single-node."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring Boot ~10M RPS/server, PostgreSQL ~1M reads/sec, Redis ~10M ops/sec — masive scale.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цифры завышены на 3 порядка. Spring Boot ~10K RPS/server (Spring Boot 3 + virtual threads ~50K), Postgres ~10-20K reads/sec, Redis ~100K ops/sec single-thread.",
+                "source_of_confusion": "10M RPS — это масштаб целого Google Search globally, не один Spring Boot сервер.",
+                "if_it_were_true": "Один Spring Boot сервер обслуживал бы весь Twitter (175K peak RPS) с запасом — реально нужно 20-30 серверов.",
+                "how_it_should_be": "Realistic baselines: 10K RPS/server Spring Boot, 100K RPS/server Nginx (без logic), 500K-1M RPS/server для специализированного Go/Rust."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring Boot ~10K RPS/server, PostgreSQL ~10K reads/sec / 5K writes/sec single-node, Redis ~100K ops/sec single-thread — стандартные baselines на 16-core машине.",
+              "correct": false,
+              "sections": {
+                "what_actually": "**Этот ответ почти правильный!** Цифры близки к реальности, но Spring Boot ~10K RPS обычно на 16 core (10K RPS / 16 cores = ~600 RPS/core с heavy I/O). Базовый ответ должен подчёркивать **per-core** vs **per-server** различие.",
+                "source_of_confusion": "Цифры сами по себе верные — но интервьюер часто проверяет понимание что это per-server (16 cores), не absolute. Если развернуть на 32 cores — будет ~20K RPS.",
+                "if_it_were_true": "Этот ответ работает на 95% интервью, но более точная формулировка — different per-core/per-server подчёркивает horizontal scaling logic.",
+                "how_it_should_be": "Spring Boot ~5-10K RPS на 16 core (~500-1K per core с I/O), Postgres ~10-20K reads/sec, Redis ~100K ops/sec — корректнее с уточнением масштаба."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring Boot ~5-10K RPS/16-core server (~500-1K/core с heavy I/O), PostgreSQL single-node ~10-20K reads/sec и ~5K writes/sec, Redis single-thread ~100K ops/sec — это стандартный baseline для system design.",
+              "correct": true,
+              "sections": {
+                "explanation": "Realistic capacity reference points 2024: **Spring Boot/Java** ~5-10K RPS на 16-core сервере с JSON serialization + validation + light DB calls; ~500-1K RPS/core с heavy I/O. **PostgreSQL single-node** OLTP: ~10-20K reads/sec, ~5K writes/sec при tuned shared_buffers + WAL settings. **Redis single-thread** ~100K ops/sec для GET/SET — bottleneck CPU (single-threaded). Cluster + replicas масштабируют дальше. **Nginx** ~50K RPS/core для proxy/static. **Go/Rust HTTP** ~20-50K RPS/core без JVM overhead. Эти baselines — основа `Servers = Peak_RPS / RPS_per_server / utilization` формулы.",
+                "example": "Capacity formula: Peak 100K RPS Spring Boot, 10K/server, 70% utilization = 100K / 10K / 0.7 ≈ **15 servers** + replication buffer. Для DB: 100K reads / 15K reads/node = 7 read replicas. Эти расчёты — стандарт system design ответа. Netflix, Uber, Spotify публикуют capacity-цифры близкие к этим baselines.",
+                "when_to_apply": "При любом capacity-планировании: начни с baseline RPS/сервер, раздели peak RPS на baseline × utilization (70%), получи количество серверов. Не забудь добавить replica pool для HA (×1.5 минимум).",
+                "edge_cases": "Spring Boot 3 + virtual threads (Project Loom) — поднимает baseline до 30-50K RPS/server для I/O-bound endpoints (был bottleneck thread-per-request). Async/non-blocking (WebFlux) ещё быстрее но сложнее в коде. PostgreSQL connection pool — обычно bottleneck (HikariCP recommends pool_size = (cores × 2) + spindles ≈ 10-30 connections).",
+                "related": "[[latency-numbers-interview#Q5]] 100ns/μs/ms throughput; [[latency-numbers-interview#Q9]] DAU → RPS; [[latency-numbers-interview#Q12]] Twitter 175K peak RPS на скольких серверах."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как соотносятся throughput NVMe Gen4 SSD, 10 Gbps Ethernet и обычного HDD?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "NVMe Gen4 ~7 GB/s, 10 Gbps Ethernet ~1.25 GB/s, HDD ~100-200 MB/s — NVMe в 5× быстрее 10Gbps сети, HDD в 10× медленнее 10Gbps.",
+              "correct": true,
+              "sections": {
+                "explanation": "NVMe Gen4: ~7 GB/s sequential, NVMe Gen3: ~3 GB/s, SATA SSD: ~500 MB/s. 10 Gbps Ethernet = 10⁹ × 10 / 8 = 1.25 GB/s. HDD 7200 RPM: ~100-200 MB/s sequential, ~75-150 IOPS random. Соотношения: NVMe Gen4 в 5× быстрее 10Gbps (диск может «опережать» сеть, что меняет архитектурные допущения), HDD в 8-10× медленнее 10Gbps (нет смысла в 10Gbps для HDD-backed storage). DDR4 ~25 GB/s — в 3.5× быстрее NVMe, в 20× быстрее 10Gbps.",
+                "example": "Cassandra cluster на NVMe нодах: чтобы saturate disk throughput (~7 GB/s × 4 nodes = 28 GB/s total), сеть 10Gbps между нодами становится bottleneck (1.25 GB/s × 4 nodes = 5 GB/s). Решение: 25Gbps DC backbone (3.125 GB/s) или 100Gbps core (12.5 GB/s). Это объясняет почему high-perf storage clusters (Pure Storage, Vast Data) используют 100Gbps Infiniband, не Ethernet 10G.",
+                "when_to_apply": "Дизайн storage cluster: если NVMe + только 10Gbps, ты bottleneck'нут сетью. Если HDD + 10Gbps — диск bottleneck. Match storage speed × network speed. Database tuning: для PostgreSQL на NVMe увеличь shared_buffers (cached, не disk) — disk быстрее сети, кешировать в RAM не критично.",
+                "edge_cases": "IOPS — отдельная метрика, не пересчитывается из throughput. NVMe Gen4 даёт ~1M IOPS (4K random), HDD ~75-150 IOPS — это **6 порядков разницы**, важнее throughput для random workloads (PostgreSQL random page reads). Latency: NVMe ~50-100 μs random, HDD ~5-10 ms — 100× разница.",
+                "related": "[[latency-numbers-interview#Q1]] таблица Dean'а с SSD/HDD; [[latency-numbers-interview#Q3]] sequential 1MB чтение; [[latency-numbers-interview#Q17]] YouTube bandwidth scale."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "NVMe ~1 GB/s, 10 Gbps ~1.25 GB/s, HDD ~300 MB/s — все на одном порядке, выбор не критичен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "NVMe Gen3 ~3 GB/s, Gen4 ~7 GB/s (не 1 GB/s). HDD ~100-200 MB/s (не 300). Разница в 30-50× между NVMe и HDD, не «одинаковые».",
+                "source_of_confusion": "SATA SSD (~500 MB/s) и NVMe смешивают — SATA действительно близок к 10Gbps, NVMe сильно быстрее.",
+                "if_it_were_true": "Тогда не было бы смысла платить за NVMe vs HDD — реально NVMe в 30-50× быстрее на throughput и 1000× на IOPS.",
+                "how_it_should_be": "NVMe Gen4 7 GB/s, SATA SSD 500 MB/s, HDD 150 MB/s, 10Gbps 1.25 GB/s — четыре разных порядка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "NVMe Gen4 ~70 GB/s, 10 Gbps ~10 GB/s, HDD ~1 GB/s — современные технологии быстрее старых таблиц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "NVMe Gen4 ~7 GB/s (не 70). 10 Gbps = 1.25 GB/s (не 10 GB/s — путаница Gbps vs GB/s). HDD ~150 MB/s (не 1 GB/s).",
+                "source_of_confusion": "Конверсия Gbps → GB/s: 10 Gbps / 8 = 1.25 GB/s. Многие путают эти единицы и получают 10× ошибку.",
+                "if_it_were_true": "Если HDD действительно 1 GB/s, не было бы смысла в SSD — реально HDD физически ограничен 200 MB/s (limit of platter rotation).",
+                "how_it_should_be": "1 Gbps = 125 MB/s. 10 Gbps = 1.25 GB/s. 100 Gbps = 12.5 GB/s. Помнить через делить на 8."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "NVMe ~700 MB/s, 10 Gbps ~125 MB/s, HDD ~10 MB/s — диски всегда быстрее сети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "1 Gbps = 125 MB/s, 10 Gbps = 1.25 GB/s (не 125 MB/s). NVMe Gen4 ~7 GB/s (не 700 MB/s — это SATA SSD упрощённо).",
+                "source_of_confusion": "Конверсия Gbps → MB/s через 8: 1Gbps / 8 = 125 MB/s. Но 10Gbps / 8 = 1250 MB/s = 1.25 GB/s, не 125 MB/s.",
+                "if_it_were_true": "Тогда 10G Ethernet был бы медленнее обычной 1G сети — а 10G стоит дороже именно за 10× прирост.",
+                "how_it_should_be": "10 Gbps = 10× больше 1 Gbps = 10 × 125 MB/s = 1.25 GB/s. NVMe Gen4 в 5× быстрее 10Gbps."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Для YouTube с 500 hours видео/минуту upload и 1B hours watch/day, какие основные числа storage и bandwidth?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Storage growth ~30 TB/day, ~10 PB/year — стандартный enterprise scale, обходится одним data-центром.",
+              "correct": false,
+              "sections": {
+                "what_actually": "500h/min × 60min × 24h = 720K hours/day. 720K × 500 MB ≈ 360 TB/day (не 30 TB). 130 PB/year raw. С RF=3 и transcoding overhead — ~1 EB/year.",
+                "source_of_confusion": "30 TB/day звучит как «средняя компания» и легко запоминается, но 500h/min — это огромный объём, дающий 360 TB/day.",
+                "if_it_were_true": "10 PB/year для всего YouTube за 20 лет = 200 PB total — это меньше чем Instagram catalog. YouTube ~exabyte+ scale.",
+                "how_it_should_be": "720K hours/day × 500 MB = 360 TB/day raw; × 365 = 130 PB/year; × RF=3 + transcoding (6 quality variants ×2-3) = ~1 EB/year."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Storage ~360 TB/day, ~130 PB/year raw, ~1 EB/year с replication и transcoding (6 variants 144p-4K); egress ~125 Tbps average, ~250 Tbps peak (~10% всего internet traffic).",
+              "correct": true,
+              "sections": {
+                "explanation": "Upload: 500 hours/min × 60 × 24 = 720K hours/day. Avg ~500 MB/hour (1-2 Mbps avg). Daily growth: 720K × 500 MB = 360 TB/day raw. Annual: 130 PB/year. С replication ×3 и transcoding ×2-3 (6 quality variants 144p-4K) суммарный storage ~1 EB/year of new content. Watch bandwidth: 1B hours/day × 3600 sec × 3 Mbps avg / 86 400 = 125 Tbps average; peak ×2 = 250 Tbps. Это ~10% всего global internet egress. Архитектурное следствие: **YouTube — CDN-first архитектура**, stored bytes малозначимы по сравнению с egress capacity. Google Edge Network — >100 локаций.",
+                "example": "Google's Edge POPs serve ~80% video traffic локально (не через core), что критично для cost — egress от backbone дороже edge cache. 5K storage nodes/year — раздел between hot (recent uploads, viewed many times), warm (older popular), cold (rarely-viewed long tail в Cold Storage / Tape). Transcoding compute ~2500 cores непрерывно (~60K CPU-hours/day), что отдельный pool отдельно от storage.",
+                "when_to_apply": "Video/streaming платформы: считай **отдельно storage growth и egress**, потому что они масштабируются по-разному. Storage растёт линейно с uploads, egress — с views (нелинейно, ramps up на peaks). Архитектура: 70-90% bandwidth должна идти через CDN edge, иначе backbone заперт.",
+                "edge_cases": "Видео имеет heavy-tailed popularity: top 1% videos дают 70% views, нижние 50% — <1%. Это позволяет агрессивно кешировать только hot content. Cold storage (tape/Glacier) — для 5+ year old rarely-viewed videos. Resolution ladder: 144p/240p/360p/480p/720p/1080p/4K — каждый transcoded, multiplied storage.",
+                "related": "[[latency-numbers-interview#Q11]] почему egress dominates cost; [[latency-numbers-interview#Q13]] Instagram петабайты; [[latency-numbers-interview#Q22]] hot keys для celebrity content."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Storage ~36 PB/day, ~13 EB/year — невозможно физически, поэтому YouTube хранит только metadata, видео downloads через P2P от пользователей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "36 PB/day — это ошибка в 100×. 360 TB/day raw. YouTube хранит все видео центрально на Google's infrastructure, не P2P.",
+                "source_of_confusion": "Цифра «петабайт» звучит шокирующее и масштабируется неправильно в голове — 720K hours × 500 MB = 360 TB, не 360 PB.",
+                "if_it_were_true": "13 EB/year — это в 10× больше всего размера Internet Archive. Физически достижимо, но не у YouTube.",
+                "how_it_should_be": "720K hours × 500 MB = 360 TB/day = 0.36 PB/day. Запоминать через rough: 1M hours/day × 0.5GB ≈ 0.5 PB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Egress ~12.5 Tbps — типичный AWS region capacity, YouTube использует AWS как primary CDN.",
+              "correct": false,
+              "sections": {
+                "what_actually": "YouTube egress ~125 Tbps average (на порядок больше). YouTube использует **Google's Edge Network**, не AWS — это собственная глобальная CDN с >100 POPs.",
+                "source_of_confusion": "AWS CloudFront — известная CDN, и YouTube путают с companies использующими AWS. Google имеет собственную сеть, конкурирующую с AWS.",
+                "if_it_were_true": "12.5 Tbps хватило бы только на 4M concurrent HD viewers — у YouTube peak concurrent viewers порядка 100M+.",
+                "how_it_should_be": "YouTube ~125 Tbps average global egress = ~10% всего internet. Через Google Edge Network с собственным peering."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему на интервью FAANG смотрят на p99 и p99.9 latency, а не на mean (среднее)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Потому что p99 проще считать без сортировки — это quantile, требующий только sum и count.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mean (среднее) — самое простое: sum / count, O(N) без сортировки. P99 требует sorting или approximate algorithms (t-digest, HDR Histogram) — **сложнее** считать, не проще.",
+                "source_of_confusion": "Кто не работал с metrics, путает «легко считать» с «легко интерпретировать». Mean легче считать, p99 проще понять как UX-метрику.",
+                "if_it_were_true": "Тогда все бы вычисляли p99, а не mean — реально многие системы по умолчанию шлют только mean, добавление p99 — намеренный выбор для production observability.",
+                "how_it_should_be": "P99 сложнее в вычислении (нужен histogram / sorting), но **отражает реальный пользовательский опыт** — это основная причина."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Mean скрывает long-tail и bimodal распределения: при cache hit ratio 90% и 10% slow DB calls mean показывает «5ms всё хорошо», а p99 раскрывает что 10% юзеров видят 50ms.",
+              "correct": false,
+              "sections": {
+                "what_actually": "**Этот ответ почти правильный**, но fokus на bimodal — частный случай. Главное — что 1% slow requests на масштабе 1B requests/day = 10M slow requests/day = реальные жалобы пользователей.",
+                "source_of_confusion": "Bimodal distribution — классический пример, его часто приводят. Но FAANG главная причина — **масштаб** (1% × миллиарды = миллионы UX-violations).",
+                "if_it_were_true": "Этот ответ работает на 90% интервью, но более точная формулировка подчёркивает scale impact: при 1B req/day p99 = 10M slow requests = серьёзная UX-проблема.",
+                "how_it_should_be": "Mean скрывает long-tail, p99/p99.9 отражают **percentage пользователей с bad experience**. На FAANG scale 0.1% bad = 1M users/day = unacceptable."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Mean скрывает long-tail и bimodal distributions; на FAANG масштабе 1B req/day p99 = 10M slow requests/day = миллионы реальных пользователей с bad UX. P99 и p99.9 — основные SLO targets именно потому что отражают % недовольных юзеров.",
+              "correct": true,
+              "sections": {
+                "explanation": "Latency обычно имеет **long-tail distribution** (Pareto-like) или **bimodal** (cache hit fast / cache miss slow). Mean = `sum/count` сглаживает hump'ы и tail. Пример: 90% cache hits (1ms) + 10% DB miss (50ms) → mean 5.9ms, но 10% юзеров видят 50ms — это критично. На FAANG scale: 1B req/day → p99 = 1% = 10M slow requests/day = миллионы недовольных пользователей. P99.9 = 0.1% = 1M reqs = всё ещё значимо. P99.99 = 0.01% = 100K reqs — становится приемлемым. Google SRE Book: SLO target обычно p99 < 300 ms для user-facing, p99 < 50 ms для internal microservices.",
+                "example": "Stripe 2018 incident — payment API mean latency 100ms (OK по SLO), p99 — 5 секунд из-за occasional cross-region replication stall. Mean показывал «всё ок», но 1% merchants испытывали 5-секундные задержки на checkout — конверсия упала на ~3%. После switch на p99 SLO + auto-scaling по p99 latency — проблема найдена и исправлена за неделю.",
+                "when_to_apply": "Любой production observability: настраивай alerts на p95/p99/p99.9, не на mean. Sla с клиентами — формулируй в перцентилях («p99 < 200ms» вместо «average < 100ms»). Capacity planning по p99 — закладываешь под worst-case experience.",
+                "edge_cases": "P99 в системе fan-out на 100 microservices — tail amplification (см. Q20). Mean и p99 — оба нужны: mean для cost/throughput, p99 для UX. P99.9/p50 > 100 — flag systematic stalls (GC pauses, lock contention, DB slow queries). Histogram-based metrics (Prometheus, t-digest) — accurate computation.",
+                "related": "[[latency-numbers-interview#Q19]] error budget из p99 SLO; [[latency-numbers-interview#Q20]] tail amplification на fan-out; [[latency-numbers-interview#Q21]] SLO downtime по уровням."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "P99 быстрее обновляется в реальном времени, чем mean — quantiles streaming-friendly.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mean — O(1) update (sum += value, count += 1) — самая streaming-friendly метрика. P99 требует sliding window + sorting/histogram — **дороже**.",
+                "source_of_confusion": "Современные метрики системы (HDR Histogram, t-digest) делают p99 fast, но всё равно дороже mean.",
+                "if_it_were_true": "Тогда Prometheus и Grafana по умолчанию давали бы p99 — реально стандарт по умолчанию это mean + rate.",
+                "how_it_should_be": "P99 не быстрее в computation; он **важнее для production**, потому что отражает реальную UX боль на large scale."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как рассчитать error budget из SLO 99.9% availability и месячного трафика 100M requests?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Error budget = SLO × total = 0.999 × 100M = 99.9M успешных запросов/месяц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Error budget — это **failed** запросы, не successful. Formula: `(1 - SLO) × total = 0.001 × 100M = 100 000 failed reqs/month`.",
+                "source_of_confusion": "Английское «budget» подразумевает «остаток на расход», но в SRE это именно бюджет на **failures/incidents**.",
+                "if_it_were_true": "Тогда 99.9M успешных запросов = разрешённый объём, и компания должна была бы ограничивать рост — реально error budget про допустимые failures.",
+                "how_it_should_be": "Error budget = (1 - SLO) × total. Это сколько failures допустимо, не сколько successes ожидается."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Error budget = 99.9 / 100 = 0.999, поэтому 0.999 × revenue должна сохраниться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "0.999 — это просто SLO в десятичной форме. Error budget — это (1 - SLO) × total requests = допустимое количество failures, не доля revenue.",
+                "source_of_confusion": "SLO иногда обсуждают вместе с revenue impact, но это разные расчёты. Error budget — про technical failures, не business KPIs.",
+                "if_it_were_true": "Тогда 0.999 revenue maintained = 0.1% revenue loss = $1M из $1B — но это не error budget, это business loss estimation.",
+                "how_it_should_be": "Error budget = (1 - SLO) × total events. Business impact считается отдельно через revenue per request × failures."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Error budget = N девяток × 60 sec = 540 секунд downtime в месяц для 99.9% SLO.",
+              "correct": false,
+              "sections": {
+                "what_actually": "99.9% SLO даёт 43.8 minutes/month downtime (для time-based SLO), но это не «N девяток × 60 sec». Правильно: (1 - 0.999) × 30 × 24 × 60 = 43.2 min/month.",
+                "source_of_confusion": "Магическая формула «9 × 60 = 540» звучит правдоподобно, но не имеет физического смысла.",
+                "if_it_were_true": "540 sec = 9 минут — это для 99.99% (4 девятки) в месяц, не 99.9%.",
+                "how_it_should_be": "99.9% downtime/month = (1 - 0.999) × 43200 min = 43.2 min. Запомнить: 99.9% → 43 min/month, 99.99% → 4.3 min/month."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Error budget = 100M / 1000 = 100K failed reqs/month, всё что свыше — SLO violation, триггер для release freeze.",
+              "correct": true,
+              "sections": {
+                "explanation": "Формула: `error budget = (1 - SLO) × total_requests = (1 - 0.999) × 100M = 0.001 × 100M = 100 000 failed reqs/month`. Это допустимое количество failures за период. Если за неделю исчерпали 80K — freeze releases до восстановления budget. Daily: 100K / 30 ≈ 3 300 failures/day allowed. Burn rate = (actual failures / time elapsed) / (budget / total time) — если burn rate > 1, исчерпание раньше срока. SRE использует error budget как **objective trigger**: не «менеджер сказал stop», а «исчерпан budget per metric».",
+                "example": "Google SRE practices: error budget alerts на 5%/10%/25%/50%/100% усугубления. На 50% burn — freeze deploys, focus на reliability. На 100% — emergency response. Stripe public SLA — 99.99% monthly = 4.32 min/month downtime allowance; превышение — SLA credits возвращаются клиентам. Это **финансово измеримый contract**, не просто technical metric.",
+                "when_to_apply": "Любой production service с SLO: считай error budget раз в неделю + per-incident. Алерт настраивай на burn rate, не на raw failures (slow burn vs spike — разные responses). Trade-off velocity vs reliability — оставшийся budget = бюджет на эксперименты/agresivnye releases.",
+                "edge_cases": "Latency SLO (p99 < 100ms) считается аналогично: error budget = % requests above threshold. Multi-window burn rate alerts — fast burn (1h: 5%) и slow burn (24h: 10%) — разные severity. Backwards-looking vs forward-looking budget — rolling 30-day window vs calendar month.",
+                "related": "[[latency-numbers-interview#Q18]] почему перцентили; [[latency-numbers-interview#Q21]] SLO downtime таблица; [[latency-numbers-interview#Q22]] anti-pattern идеального распределения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему запрос, fan-out'нутый в 100 microservices с p99=100ms каждый, имеет user-facing p99 хуже 100ms?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Эффект tail amplification: P(хотя бы один из 100 медленный) = 1 - (0.99)^100 ≈ 0.634, поэтому ~63% user requests видят >100ms, не 1%. Решения: hedged requests, p99.99 для internal services, deadline propagation.",
+              "correct": true,
+              "sections": {
+                "explanation": "Math: каждый service p99=100ms означает P(slow) = 0.01. Для fan-out N parallel calls P(хотя бы один slow) = 1 - (0.99)^N. Для N=100: 1 - 0.99^100 = 1 - 0.366 = 0.634 → **63% user requests медленные**. Для N=10: 1 - 0.99^10 = 0.096 → 9.6%. Solution patterns: **hedged requests** (Dean & Barroso 2013) — посылаешь дублирующий запрос если первый не ответил за p95, берёшь первый ответ. **Tighter SLO on internal services** — Big Tech целит p99.99 для internal, чтобы fan-out не лестничил slow requests. **Circuit breakers** (Hystrix, Resilience4j). **gRPC deadline propagation** — фиксированный budget на весь call tree.",
+                "example": "Google Search query — fan-out 50-100 services (web index, image, news, knowledge graph, ads, spell check, query rewriter, и т.д.). Без mitigation 60%+ запросов были бы slow. Используют backup requests (отправляют дубль на 2 replicas если первый > p95) + tight SLO p99.99 on each. Это даёт user-facing p99 ~300ms vs theoretical worst-case 5+ sec.",
+                "when_to_apply": "Любая microservices архитектура с fan-out >10 services: считай effective p99 = 1 - (1 - p99_each)^N. Если N=100 и хочешь p99 user-facing 99%, нужно p99 каждого = 99.99%. Используй hedged requests для critical paths. Set tight timeouts с propagation.",
+                "edge_cases": "Hedged requests удваивают load (×2 internal traffic), оправдано только для critical/user-facing. Backup requests timing — посылать на p95, не p50 (на p50 — too eager, удваивает на каждый second request). Cancel original after backup completes (gRPC `cancel`). Cassandra `speculative_retry`, Apache HBase backup reads — встроенные механизмы.",
+                "related": "[[latency-numbers-interview#Q18]] перцентили зачем; [[latency-numbers-interview#Q22]] hot keys и uneven load; [[resilience-patterns-interview#Q5]] hedged requests + circuit breakers."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Network latency между services добавляется linearly: 100 services × 1 ms RTT = 100 ms additional, поэтому total p99 = 200 ms.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fan-out обычно **parallel** (не sequential), поэтому network latency не linearly складывается. Главный эффект — **probability of at least one slow** среди parallel calls.",
+                "source_of_confusion": "Логика «N requests × N latency» работает для sequential pipeline, не для parallel fan-out.",
+                "if_it_were_true": "Тогда тюнинг network latency решал бы проблему — но даже с zero network latency tail amplification остаётся (probability of slow service).",
+                "how_it_should_be": "Parallel fan-out: total p99 определяется max(individual latencies), а max'у подвержен tail amplification (probability of slow grows with N)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "API Gateway становится bottleneck при fan-out — это его CPU/memory ограничения, не свойство fan-out.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API Gateway может быть bottleneck, но это **отдельная** проблема (capacity planning). Tail amplification — фундаментальный probabilistic effect, существует **даже при zero-cost gateway**.",
+                "source_of_confusion": "Любой single point in архитектуре — потенциальный bottleneck, gateway хорошо известный example. Но tail amplification работает на любом fan-out паттерне.",
+                "if_it_were_true": "Решение: больше gateways. Но даже с бесконечными gateways tail amplification остаётся.",
+                "how_it_should_be": "Tail amplification — probabilistic, не resource-bound. Решается через probability reduction (tighter SLOs, hedged requests), не через gateway scaling."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Serialization/deserialization overhead на каждом hop складывается, давая overall p99 ~5× от individual.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Serialization overhead — реальный fact (~1-5 ms на JSON parsing), но для parallel fan-out не складывается linearly. Tail amplification — главный эффект.",
+                "source_of_confusion": "JSON parsing — известный bottleneck, его легко вспомнить как «всё ломает». Но эффект fan-out tail latency — другой механизм.",
+                "if_it_were_true": "Тогда замена JSON на Protobuf решала бы проблему — реально tail amplification остаётся независимо от serialization format.",
+                "how_it_should_be": "Serialization — overhead per call (constant), tail amplification — probabilistic effect at scale. Разные mechanisms, разные решения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сколько примерно minutes downtime в год соответствует SLO 99.9%, 99.99% и 99.999%?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "99.9% ~36 min/year, 99.99% ~3.6 min/year, 99.999% ~22 sec/year — каждая 9-ка уменьшает downtime в 10×.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цифры занижены на ~14×. 99.9% = 525.6 min/year (8.76 hours), 99.99% = 52.6 min/year, 99.999% = 5.26 min/year. Mnemonic «×10 на каждую девятку» — правильное правило, но baseline 99.9% — это hours, не minutes.",
+                "source_of_confusion": "Кто помнит «99.9% = 1 hour», ошибается в 10× — реально 8.76 hours, не 1 hour. 1 hour — это 99.99%.",
+                "if_it_were_true": "36 min/year для 99.9% — означало бы доступность 99.993% реально, что выше 99.9% SLA.",
+                "how_it_should_be": "Three nines (99.9%) = 8.76 hours/year ≈ 525 min. Four nines = 52.6 min. Five nines = 5.26 min. Mnemonic: год ≈ 525 600 minutes; 0.1% = 525 min, 0.01% = 52 min, 0.001% = 5 min."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "99.9% ~8.76 hours/year (~526 min), 99.99% ~52.6 min/year, 99.999% ~5.26 min/year — каждая дополнительная 9-ка уменьшает downtime в 10×.",
+              "correct": true,
+              "sections": {
+                "explanation": "Год = 525 600 minutes. SLO downtime = (1 - SLO) × year. **99% = 5256 min = 87.6 hours = 3.65 days/year**. **99.9% (three nines) = 525.6 min = 8.76 hours/year**. **99.99% (four nines) = 52.56 min/year**. **99.999% (five nines) = 5.26 min/year**. **99.9999% (six nines) = 31.5 sec/year**. Mnemonic: каждая «9» уменьшает downtime в 10×. Запоминать с baseline 99.9% = ~9 hours/year (three nines → 9 hours = простая ассоциация).",
+                "example": "AWS S3 SLA — 99.9% monthly availability (43.8 min/month), credits если ниже. AWS DynamoDB Global Tables — 99.999% multi-region (5.26 min/year). Banking core services typical 99.99% (Goldman Sachs SLA на trading platforms). Telecom carriers — 99.999% legacy, но это для voice circuits, не data services. Consumer apps — 99.9-99.95% обычно (Slack, Stripe).",
+                "when_to_apply": "При обсуждении SLO с product/sales: переведи % в minutes/hours чтобы все понимали. «99.9% звучит хорошо, но это 9 hours downtime/year — для платёжной системы много». Стоимость per «9»: каждая следующая стоит ~10× больше инфраструктуры (multi-AZ → multi-region → chaos engineering).",
+                "edge_cases": "Composite SLO для microservices: total = product(individual SLOs). Если у тебя 10 services, каждый 99.99%, total ≈ 99.9% (4 nines × 10 ≈ 3 nines). Поэтому microservices архитектура требует более tight SLOs на components. Maintenance windows — обычно exclude'нуты из SLO (planned downtime ≠ violation).",
+                "related": "[[latency-numbers-interview#Q19]] error budget calculation; [[latency-numbers-interview#Q20]] composite SLO для fan-out; [[latency-numbers-interview#Q24]] cost per nine."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "99.9% ~3.65 days/year (88 hours), 99.99% ~9 hours/year, 99.999% ~52 min/year — каждая 9-ка делит downtime в 10×.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сдвиг на одну позицию: 3.65 days = 99% (two nines), не 99.9%. 9 hours = 99.9%. Цифры верные, но привязаны к неправильным SLO levels.",
+                "source_of_confusion": "Mnemonic «10× на девятку» правильный, но baseline'у смещён — кто-то начинает с 99% = 88 hours и приписывает это к 99.9%.",
+                "if_it_were_true": "Тогда AWS S3 SLA 99.9% позволял бы 88 hours downtime/month — реально позволяет 43 min/month.",
+                "how_it_should_be": "99% = 88 hours/year (3.65 days), 99.9% = 9 hours/year, 99.99% = 52 min, 99.999% = 5 min. Baseline — два девятки = days."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "99.9% ~9 days/year, 99.99% ~1 day/year, 99.999% ~1 hour/year — стандартная SLA enterprise.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цифры завышены на ~25× для всех уровней. 99.9% = 9 hours/year, не 9 days. 9 days/year = 97.5% SLA (доступность ~98%).",
+                "source_of_confusion": "«Days vs hours» — типичная ошибка единиц измерения. Многие путают month vs year.",
+                "if_it_were_true": "Тогда 99.9% означало бы что компания может быть down 1.5% времени — никакой бизнес такое не принимает.",
+                "how_it_should_be": "Memorable scale: year = ~9000 hours (525K minutes). 99.9% (0.1%) = 9 hours/year. Каждая девятка делит в 10×."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему на интервью утверждение «у меня будет идеальное равномерное распределение нагрузки между серверами» — красный флаг?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Идеальное распределение — теоретический максимум для system design intervi, при правильной архитектуре всегда достигается на 95%+.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Идеальное распределение **никогда не достигается** в production — даже при perfect hashing celebrity keys, traffic patterns, geographic concentration ломают it.",
+                "source_of_confusion": "Idealistic system design education учит «perfect distribution» как goal, real-world забывая о hot keys.",
+                "if_it_were_true": "Не было бы целой области research'а на distributed systems hot key mitigation.",
+                "how_it_should_be": "Production assumption: CoV 1-2× для general traffic, 10-100× для celebrity/viral events. Spec capacity под worst-case, не average."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Идеальное распределение возможно только при перфектном hashing — нужно использовать SHA-256 везде вместо MD5.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hash function (MD5, SHA-256) не решает проблему unequal load — даже идеальный uniform hash не помогает если keys имеют неровную popularity (hot key effect).",
+                "source_of_confusion": "Hashing — known способ smooth distribution, но он применяется только к **keys**, не к **request frequency per key**. Если key 'celebrity_X' получает 100K RPS, никакой hash function его не сгладит.",
+                "if_it_were_true": "SHA-256 действительно более uniform чем MD5, но обе функции 'crypto-strong' — на практике это roundoff difference, не решение hot keys.",
+                "how_it_should_be": "Hash function только distribute keys uniformly. Hot key problem решается на другом уровне: dedicated cache для top keys, sharding by composite (user_id + tweet_id), read replicas."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Идеальное распределение требует точно равного количества серверов и партиций — если 10 серверов и 100 партиций, то на каждый по 10, идеально.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Равное количество партиций per server — это **idle assumption**, не решение. Hot keys в одной partition делает её namespace 'hot' независимо от количества partitions per server.",
+                "source_of_confusion": "Math'мaтически 100 / 10 = 10 — выглядит ровно, но real-world load skew работает на уровне keys, не partition counts.",
+                "if_it_were_true": "Тогда rebalancing был бы тривиальной задачей — переместил partitions для равного counts. Реально проблема в **per-key load**, не per-partition count.",
+                "how_it_should_be": "Virtual nodes (256 per server в consistent hashing) сглаживают partition imbalance, но hot keys остаются проблемой отдельной."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Реальное распределение всегда имеет hot keys, geographic skew, sticky sessions и cold cache effects — coefficient of variation 0.5-2×, нужно закладывать peak per server ×2-3 от average, не average / N.",
+              "correct": true,
+              "sections": {
+                "explanation": "В реальности нагрузка распределяется неравномерно по нескольким причинам: **Hot keys** — celebrity tweets (Justin Bieber генерил 100K RPS на одну partition, соседние ~10 RPS). **Geographic skew** — US East и Asia дают разную нагрузку на ближайшие регионы (5-10× разница). **Sticky sessions** — load balancer hash by IP/cookie концентрирует нагрузку (Spotify 2018: один сервер 15% traffic из-за popular ISP IP range). **Cold cache** — fresh server has 0% cache hit, DB load ×10. Coefficient of variation (CoV) типично 0.5-2.0, иногда 10-100× (celebrity hot keys). Производственный план: закладывай peak RPS per server = 2-3× average, autoscale по p99 latency (не avg CPU), используй consistent hashing с virtual nodes для smooth distribution.",
+                "example": "Twitter 2021 — Justin Bieber tweet о новом альбоме генерил >100K RPS на одну Redis partition (его timeline cache), соседние partitions ~10 RPS. CoV = ~10K. Решение: dedicated cache layer для top-1000 celebrities (Twitter Snowflake-derived path), консистентный хэш с virtual nodes (256 per node). Spotify 2018 — single backend node обслуживал 15% total traffic из-за sticky sessions на popular consumer ISP IP range; решили через random hash отказом от sticky.",
+                "when_to_apply": "В каждом capacity planning: после «average RPS / N servers» сразу добавь «но реально CoV 1-2, поэтому peak per server ×2-3». Auto-scaling на p99 latency (или queue depth), не avg CPU — реактивнее к hot keys. Consistent hashing + virtual nodes — стандарт для каждого distributed cache (Cassandra, DynamoDB, Memcached).",
+                "edge_cases": "Hot key detection runtime: Twitter Snowflake пишет в отдельный path для top-N users, Redis Cluster `CLUSTER COUNTKEYSINSLOT` для monitoring. Adaptive load shedding (drop requests при overload, не fail весь сервер) — last-resort defense. Read replicas + adaptive routing — для read-heavy hot keys (Cassandra speculative_retry).",
+                "related": "[[latency-numbers-interview#Q12]] Twitter celebrity fan-out; [[latency-numbers-interview#Q20]] tail amplification; [[latency-numbers-interview#Q23]] cache thundering herd."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие гарантии кеш (Redis/Memcached) НЕ даёт, и в каких сценариях он ломается?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Кеш не даёт ACID, не гарантирует consistency, не уменьшает worst-case latency и не помогает write-heavy workload — ломается на cache miss storm, penetration, cold start, stale data, hot keys.",
+              "correct": true,
+              "sections": {
+                "explanation": "Кеш — performance optimization, не correctness mechanism. **Не даёт ACID** — нет транзакций между cache и DB; **не гарантирует consistency** — кроме write-through (со staleness 1-100 ms); **не уменьшает worst-case latency** — на cache miss latency = DB latency + cache lookup overhead; **не помогает write-heavy** — cache invalidation на каждом write становится дороже самого write. **Failure modes**: (1) **Cache miss storm/thundering herd** — TTL expired у 1000 keys одновременно, 1000 параллельных DB hits; Stripe 2019 incident. (2) **Cache penetration** — запросы на несуществующие keys минуют cache; решение Bloom filter. (3) **Cold start** — fresh server с пустым cache, 100% misses → DB load ×10. (4) **Stale data** — eventually consistent cache не подходит для финансов. (5) **Hot key** — один key получает 100K RPS, Redis single-thread bottleneck.",
+                "example": "Stripe 2019 — batch job очистил 50K cached payment status entries одновременно (TTL alignment). 50K параллельных DB hits в 5 минут окно → DB CPU 100%, p99 jumped с 50ms до 5000ms. Affected ~10% checkout sessions. Fix: random TTL jitter (`TTL ± random(10%)`), request coalescing через `singleflight` pattern в Go.",
+                "when_to_apply": "Cache работает реально для: read:write ratio > 10:1, data tolerates staleness (seconds-minutes), hot set fits in memory (>80% requests hit <20% data — Pareto). Не используй cache для: финансовых balances (strict consistency required), write-heavy patterns, unique-per-user data with no overlap.",
+                "edge_cases": "Cache replication для cold start — pre-warm fresh server с snapshot existing cache. Probabilistic early refresh (XFetch algorithm) — refresh TTL before expiry с probability proportional to time-to-expire. Write-through vs write-behind vs cache-aside — каждая pattern имеет свои consistency trade-offs.",
+                "related": "[[latency-numbers-interview#Q22]] hot keys общая проблема; [[caching-strategies-interview#Q3]] cache patterns; [[latency-numbers-interview#Q24]] anti-patterns в estimation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Кеш гарантирует consistency через write-through, ACID через Redis MULTI/EXEC, уменьшает latency для всех запросов включая miss.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Write-through reduces staleness, но не гарантирует consistency (network partition between cache and DB → split brain). MULTI/EXEC — Redis only transactions, не между Redis и DB. Cache miss = DB latency, не reduce.",
+                "source_of_confusion": "Redis имеет некоторые ACID-подобные features (MULTI/EXEC, scripts), их часто переоценивают как cross-system consistency.",
+                "if_it_were_true": "Тогда любая система могла бы заменить DB на cache без потери guarantees — а реально cache всегда secondary к authoritative DB.",
+                "how_it_should_be": "Cache даёт **best-effort consistency**, не strict. Worst-case latency = miss latency = full DB roundtrip + cache overhead."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Кеш ломается только на DB outage — пока DB жив, cache всегда корректен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cache ломается на 5+ независимых сценариях даже при healthy DB: thundering herd, penetration, cold start, stale data, hot keys, eviction storms.",
+                "source_of_confusion": "Cache часто рассматривают как «proxy для DB» — пока DB OK, cache OK. Реальные failure modes гораздо разнообразнее.",
+                "if_it_were_true": "Тогда production cache incidents случались бы только при DB downtime — реально 80% cache incidents происходят при healthy DB.",
+                "how_it_should_be": "Cache имеет свои failure modes независимо от DB: TTL alignment, eviction policy, replication lag, network partition cache↔DB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кеш помогает write-heavy workload через write-behind queuing — записи накапливаются в Redis и периодически flush'атся в DB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Write-behind — реальный pattern, но он **не решает write-heavy throughput problem** — он просто buffers writes; DB всё равно должна handle всех writes eventually, plus risk of data loss при cache crash.",
+                "source_of_confusion": "Write-behind звучит как «cache absorbs writes», но это just buffering — total throughput limited by DB.",
+                "if_it_were_true": "Тогда любая write-heavy система решалась бы добавлением Redis layer — реально write-heavy требует DB-level scaling (sharding, write-optimized stores как Cassandra).",
+                "how_it_should_be": "Cache для read-heavy. Write-heavy → write-optimized DB (Cassandra, ScyllaDB LSM-trees) или sharding writes across multiple primaries."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой реальный production multiplier для OLTP storage поверх raw user data, и что забывают в оценке?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Production multiplier ~50× — каждый layer (caching, replication, multi-region, indexes, snapshots, multiple env) утяжеляет storage в 50×.",
+              "correct": false,
+              "sections": {
+                "what_actually": "50× — overestimation. Real production OLTP ~10-15×. Caches не считаются в storage estimation (separate Redis/Memcached layer). Multi-env (dev/staging) тоже отдельно.",
+                "source_of_confusion": "Из «осторожности» multipliers могут добавляться без разбора — но 50× слишком много для standard OLTP.",
+                "if_it_were_true": "1TB user data → 50TB physical — это бы означало $50K/month AWS storage для базы из 1TB user records. Реально ~$1-2K/month для production OLTP.",
+                "how_it_should_be": "Конкретный multiplier: ×3 RF + ×1.5 indexes + ×1.2 WAL + ×2-3 snapshots = ×10-15. Не накатывать без необходимости."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Production multiplier ~2× — replication уже учтена, indexes minimal, snapshots compressed.",
+              "correct": false,
+              "sections": {
+                "what_actually": "2× — это OLAP multiplier (columnar + compression), не OLTP. Real OLTP multiplier ~10-15× из-за non-compressed BTree indexes, replication, snapshots.",
+                "source_of_confusion": "Modern databases с aggressive compression (например, ClickHouse, BigQuery) действительно дают ×2 multiplier — но для analytics, не OLTP.",
+                "if_it_were_true": "Тогда AWS RDS storage cost был бы 2× от raw — реально DB managers биллят за 10-15× underlying storage.",
+                "how_it_should_be": "OLTP ~10-15× (indexes uncompressed, RF=3, snapshots), OLAP ~2× (columnar compression, less replication для analytics)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Production multiplier ~1.5× — современные DB используют compaction и compression, raw data занимает почти столько же на disk.",
+              "correct": false,
+              "sections": {
+                "what_actually": "1.5× игнорирует replication (×3) и snapshots (×2-7). Compaction/compression снижает multiplier для **same data**, но не убирает replication overhead.",
+                "source_of_confusion": "Junior engineers видят что modern DB efficient и assume «raw ~= stored» — забывая infrastructure-level multipliers (RF, backups).",
+                "if_it_were_true": "Тогда self-managed Cassandra с RF=3 требовала бы 1.5× raw storage — реально 4-5× минимум.",
+                "how_it_should_be": "OLTP production: minimum ×3 RF + ×1.5 indexes = ×4.5 baseline. Plus WAL, snapshots, compaction = ×10-15 typical."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Production OLTP multiplier ~10-12× от raw: indexes ×1.5, replication ×3, WAL ×1.2, snapshots ×2-7, compaction peak ×1.2 — итого ~12.5× для 1TB user data → ~12.5TB реальный storage.",
+              "correct": true,
+              "sections": {
+                "explanation": "Real OLTP storage estimation: **Raw 1TB** → **+ Indexes (BTree, OLTP) +50%** = 1.5TB → **× Replication (RF=3 для Cassandra/Kafka/HDFS, RF=2 для Postgres primary+replica)** = 4.5TB → **+ WAL/transaction log +20%** = 5.4TB → **+ Snapshots (7 daily = +5TB)** = 10.4TB → **+ Compaction peak overhead +20%** = ~12.5TB. **Total multiplier ~12.5× от raw**. Для OLAP (analytics) формула другая: columnar compression ×0.3, materializations ×1.5, total ~2× raw (vs ~12× для OLTP). На интервью: «Raw 1TB × 3 RF × 1.5 indexes × 1.2 (WAL+snapshots) ≈ 5-6TB минимум для OLTP, ~2-3TB для OLAP».",
+                "example": "PostgreSQL production deployment: customer table 1TB raw → `pg_total_relation_size` показывает 1.6TB (indexes); streaming replication ×2 = 3.2TB; pgBackRest 7 daily snapshots + 2 weekly = +6TB = ~9TB. AWS RDS с Multi-AZ + 7-day backups для 1TB user data сразу резервирует ~12TB underlying storage. Это объясняет почему «1 TB DB» биллится за gigantic storage on cloud.",
+                "when_to_apply": "Любой capacity planning для production DB: после raw estimation сразу умножай на 10-15× для OLTP, 2-3× для OLAP. Spec disk size с запасом ×1.5 поверх этого (на growth + emergency). Для cloud-managed DB (RDS, Aurora, Cloud SQL) — backups обычно считаются отдельно от storage в billing.",
+                "edge_cases": "Снапшоты могут быть **incremental** — после первого full, последующие хранят только changes (~5-10% size). Это снижает snapshot multiplier с ×7 до ×2-3. Compaction overhead temporary — может вернуться к baseline после rewriting (LSM-trees: Cassandra, RocksDB). Compression (PostgreSQL TOAST для text, JSONB compression) — может вернуть 20-50%, но обычно не учитывается в conservative estimation.",
+                "related": "[[latency-numbers-interview#Q10]] formula storage estimation; [[latency-numbers-interview#Q13]] Instagram петабайты с RF=3; [[latency-numbers-interview#Q22]] capacity planning anti-patterns."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

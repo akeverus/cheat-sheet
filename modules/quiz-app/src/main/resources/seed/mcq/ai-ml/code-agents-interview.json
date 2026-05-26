@@ -1,0 +1,1865 @@
+{
+  "topic_slug": "code-agents-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем code agent принципиально отличается от обычного chat-ассистента вроде ChatGPT в браузере?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "У code agent есть набор tools (read/write/shell/git) и цикл «подумал → вызвал tool → посмотрел результат», тогда как chat-ассистент только генерирует текст в ответ.",
+              "correct": true,
+              "sections": {
+                "explanation": "Code agent — это LLM плюс tool-layer и orchestrator-loop: модель не просто отвечает, она читает файлы, редактирует код, запускает тесты и итерирует до результата. Обычный чат живёт в одном turn-е и не имеет доступа к файловой системе.",
+                "example": "Claude Code вызывает Bash/Read/Edit/Grep в цикле, пока не пройдут pytest; Aider commit-ит каждое успешное изменение в git.",
+                "when_to_apply": "Когда задача требует не совета, а реальной правки кода в репозитории с обратной связью от тестов или линтеров.",
+                "edge_cases": "Спектр зрелости огромен — от inline-автокомплита (Copilot) без агентности до полностью автономных SWE-агентов в VM (Devin); граница «agent vs assistant» нечёткая.",
+                "related": "См. категории: in-editor inline → chat-in-editor → agentic in-editor → agentic CLI → autonomous SWE."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Code agent использует другую LLM-архитектуру с decoder, специально дообученным под код, тогда как chat-ассистент работает на универсальной модели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cursor, Aider, Claude Code используют те же универсальные модели (Claude Sonnet, GPT-4, DeepSeek) — разница в обвязке, а не в архитектуре нейросети.",
+                "source_of_confusion": "Путаница со специализированными code-моделями вроде CodeLlama или StarCoder, которые действительно дообучены на коде.",
+                "if_it_were_true": "Тогда Claude Code и обычный Claude в браузере давали бы разное качество на коде; на практике это одна и та же модель.",
+                "how_it_should_be": "Правильно: отличает не модель, а наличие tools, sandbox и orchestrator-loop."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Code agent работает только на специально подготовленных репозиториях с pre-built embeddings, а chat-ассистент — на любом тексте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Многие code-агенты (Aider, Claude Code) вообще не строят embeddings — они навигируют через tree-sitter repo map или on-demand grep/read.",
+                "source_of_confusion": "Embeddings-индекс есть у Cursor и Cody, но это лишь одна из стратегий context retrieval, а не обязательное условие.",
+                "if_it_were_true": "Тогда Claude Code не работал бы в свежем clone без предварительной индексации, что неправда.",
+                "how_it_should_be": "Правильно: индексация — опциональная стратегия context selection, а не определяющая черта code agent."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Code agent — это просто chat-ассистент с включённым system prompt про код; никакой технической разницы нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без tool-layer и loop модель не может прочитать файл, запустить тест или сделать commit — она остаётся текстовым генератором.",
+                "source_of_confusion": "На уровне prompt-engineering граница размывается, и поверхностно «расскажи как починить» похоже на «почини».",
+                "if_it_were_true": "Тогда любой чат с system prompt про код решал бы SWE-Bench задачи, чего не происходит.",
+                "how_it_should_be": "Правильно: tools + sandbox + orchestrator делают агент агентом, system prompt — лишь оболочка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно описать спектр зрелости code-агентов от пассивных к автономным?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все code-агенты сейчас работают одинаково — это маркетинг создаёт иллюзию разных категорий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уровень контроля человека, набор tools и длительность задачи реально отличаются на порядки: от секунд (Copilot) до дней (Devin).",
+                "source_of_confusion": "Поверхностно «всё это AI для кода» — но архитектурно это разные системы.",
+                "if_it_were_true": "Тогда Copilot и Devin стоили бы одинаково и подходили под одни и те же задачи; на практике диапазон цен $10/мес до $30/задача.",
+                "how_it_should_be": "Правильно различать inline → chat → agentic in-editor → agentic CLI → autonomous SWE по уровню агентности и контроля."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Inline (Copilot) — без tools, чат-в-редакторе — read-only, agentic in-editor (Composer/Cline) — read/write с подтверждением, agentic CLI (Aider/Claude Code) — длинные сессии с git-чекпоинтами, autonomous SWE (Devin/OpenHands) — задача в VM на часы-дни.",
+              "correct": true,
+              "sections": {
+                "explanation": "Категории отличаются по трём осям: уровень контроля человека (каждая клавиша → ревью PR), набор tools (нет → full VM), длительность задачи (секунды → дни). Это влияет на цену, риски и human-in-the-loop.",
+                "example": "Copilot предлагает completions в редакторе; Cursor Composer делает многофайловую правку с подтверждением; Devin берёт issue и работает часами в браузерной VM.",
+                "when_to_apply": "При выборе инструмента под задачу: быстрая правка → inline, рефакторинг фичи → agentic, «реши issue пока сплю» → autonomous.",
+                "edge_cases": "Cursor сочетает inline-Tab, чат и Composer; Claude Code работает как короткий ответ и как многочасовой агент — важно понимать какой режим запускаете.",
+                "related": "От категории зависит стоимость (от $10/мес до $30/задача) и риск-профиль (от опечатки до развёрнутого деплоя)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главная ось — это размер контекста модели: Copilot 8K, Cursor 128K, Devin 1M+. Длительность задачи определяется только окном контекста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекст важен, но категории определяются tool-layer, sandbox и циклом, а не размером окна. Devin работает в VM не из-за контекста, а из-за нужды в долгой автономии.",
+                "source_of_confusion": "Расширение контекста — реальная тенденция, но это ортогональная характеристика к агентности.",
+                "if_it_were_true": "Тогда Claude в браузере с 200K контекста был бы autonomous SWE — но без tools он остаётся чат-ассистентом.",
+                "how_it_should_be": "Правильно: оси — контроль человека, tools, длительность задачи; контекст — отдельный параметр модели."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все agentic-агенты (Cursor, Aider, Claude Code) одинаковы, а единственный «настоящий» autonomous — это Devin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cursor, Aider и Claude Code различаются принципиально: IDE-форк vs CLI, embeddings vs repo map vs on-demand read, bundled tokens vs per-token API.",
+                "source_of_confusion": "Маркетинг Cognition сделал Devin синонимом «autonomous», но OpenHands, SWE-agent и Plandex — тоже autonomous SWE.",
+                "if_it_were_true": "Тогда не было бы смысла обсуждать сравнительную таблицу Cursor/Aider/Claude Code в интервью.",
+                "how_it_should_be": "Правильно: agentic-сегмент богат, autonomous — отдельный класс с несколькими игроками."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие три уровня обычно выделяют в архитектуре code agent?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Frontend (UI), backend (API gateway) и database (PostgreSQL для хранения истории) — стандартная веб-архитектура.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это деление подходит для web-приложений, но не описывает специфику code agent: orchestrator, LLM, sandbox.",
+                "source_of_confusion": "Перенос трёхзвенной архитектуры из общего web-development в нишу LLM-агентов.",
+                "if_it_were_true": "Тогда CLI-агенты вроде Aider или Claude Code не существовали бы — у них нет «frontend».",
+                "how_it_should_be": "Правильно: Orchestrator (цикл, токены, scratchpad) + LLM (генератор tool-calls) + Sandbox (где живут файлы и shell)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tokenizer (BPE), embedder (sentence-transformers) и vector store (Pinecone) — RAG-pipeline для кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это компоненты RAG, но они опциональны для code agent — Aider и Claude Code работают вообще без embeddings.",
+                "source_of_confusion": "Embeddings-based retrieval (Cursor, Cody) — лишь одна из стратегий context selection.",
+                "if_it_were_true": "Тогда каждый code-агент требовал бы pre-built vector index, что неверно.",
+                "how_it_should_be": "Правильно: Orchestrator + LLM + Sandbox; retrieval — это стратегия внутри orchestrator, не отдельный уровень."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Orchestrator (управляет циклом, токенами, scratchpad) + LLM (генерирует tool-calls в формате провайдера) + Sandbox (где живут файлы и shell: локальный FS, Docker или VM).",
+              "correct": true,
+              "sections": {
+                "explanation": "Orchestrator держит agent-loop, считает токены, ловит ошибки tool-вызовов. LLM генерирует решения и tool-calls в формате провайдера (Anthropic tool_use, OpenAI function calling, кастомный XML). Sandbox — изолированная среда выполнения: локальный FS (Aider, Claude Code), Docker (OpenHands), удалённая VM с браузером (Devin).",
+                "example": "Claude Code: orchestrator — это claude-cli, LLM — Anthropic API с tool_use, sandbox — локальный FS пользователя плюс bash-tool с confirmation.",
+                "when_to_apply": "Когда проектируете собственный code-agent или выбираете между готовыми решениями по критериям изоляции и контроля.",
+                "edge_cases": "Devin использует full VM с браузером — изоляция максимальная, но сложно отлаживать; локальный shell — удобно, но опасно без confirmation.",
+                "related": "От выбора sandbox зависит profile рисков: rm -rf в локальном FS vs в Docker per task vs в одноразовой VM."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Plan layer (планировщик), execute layer (исполнитель действий) и memory layer (vector-память истории) — стандартный multi-agent dispatch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание Plan-Execute паттерна (одного из orchestration-стилей), а не общая архитектура code agent. Многие агенты обходятся без явной memory.",
+                "source_of_confusion": "Plan-Execute — популярный паттерн в literature (LangChain, AutoGPT), но это деталь оркестрации.",
+                "if_it_were_true": "Тогда Aider, который не имеет явного planner-а, не считался бы code-агентом.",
+                "how_it_should_be": "Правильно: общие три уровня — Orchestrator, LLM, Sandbox; Plan-Execute — частный паттерн orchestrator."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое SWE-Bench и почему он считается более честным бенчмарком для code-агентов, чем «генерация функции по docstring»?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "SWE-Bench — это набор задач LeetCode, на котором модели решают алгоритмические задачи на скорость.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SWE-Bench — это реальные GitHub issues из крупных Python-проектов (django, sympy, scikit-learn), а не алгоритмические задачи.",
+                "source_of_confusion": "Путаница с HumanEval/MBPP/LeetCode-style бенчмарками, которые действительно про алгоритмы.",
+                "if_it_were_true": "Тогда SWE-Bench не давал бы информации о работе с большим кодbase и навигации в проекте.",
+                "how_it_should_be": "Правильно: SWE-Bench — issues в реальных репозиториях с fail-to-pass тестами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SWE-Bench — это бенчмарк-харнесс с unit-тестами для проверки качества автокомплита; измеряет accuracy на 1-character completions.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SWE-Bench не про автокомплит, а про закрытие issue целиком с многофайловыми правками.",
+                "source_of_confusion": "Путаница с inline-completion benchmarks (CodeXGLUE и др.).",
+                "if_it_were_true": "Тогда Copilot был бы лидером SWE-Bench, но на лидерборде доминируют agentic-системы.",
+                "how_it_should_be": "Правильно: задача SWE-Bench — issue → patch → fail-to-pass tests."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SWE-Bench — это набор синтетических задач, которые OpenAI генерирует на лету для тестирования новых моделей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Задачи реальные, из существующих GitHub-репозиториев; собраны и опубликованы Princeton в 2023, OpenAI лишь сделал Verified-subset.",
+                "source_of_confusion": "Путаница с синтетическими evaluation suites вроде GSM8K-Plus.",
+                "if_it_were_true": "Тогда бенчмарк не имел бы реалистичности и не отражал реальный workflow разработчика.",
+                "how_it_should_be": "Правильно: real-world GitHub issues, человеческие PR-фиксы как ground truth."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "SWE-Bench (Princeton, 2023) — бенчмарк, где агенту дают issue и полный репозиторий, и патч засчитывается только если проходит fail-to-pass тесты (упавшие до фикса) и не ломает pass-to-pass; задачи разбросаны по большому кодbase, и надо ещё найти место для правки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для каждой задачи известны issue, PR-фикс, изменённые файлы и набор тестов, который проваливался до фикса и проходит после. Модели/агенту дают только issue и полный репозиторий. Это честнее чем «угадай функцию по docstring», потому что задачи разбросаны по большому кодbase (надо найти место), тесты — реальные регрессии от мейнтейнеров, успех означает «PR прошёл бы CI».",
+                "example": "Задача django__django-12345: issue про bug в ORM → patch должен пройти test_orm_regression_12345.py и не сломать остальные.",
+                "when_to_apply": "Когда нужно объективно сравнить code-агентов на репрезентативных задачах из реальных Python OSS-проектов.",
+                "edge_cases": "SWE-Bench — нижняя оценка способности «закрывать описанные issues в Python OSS»; не предсказатель работы на вашем легаси.",
+                "related": "Принцип fail-to-pass + pass-to-pass даёт защиту от «случайно прошёл из-за упрощения кода»."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем SWE-Bench Verified отличается от исходного полного SWE-Bench и почему индустрия сейчас меряется именно на Verified?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Verified — 500 задач, прошедших human-validation от OpenAI и авторов: каждая однозначно сформулирована, решаема в пределах контекста, тесты стабильны. Индустрия выбирает Verified, потому что исходный SWE-Bench шумный (нерешаемые задачи, flaky-тесты, двусмысленные issues).",
+              "correct": true,
+              "sections": {
+                "explanation": "Изначальный SWE-Bench (~2294 задачи) оказался шумным: часть проблем нерешаема без приватных данных, часть тестов flaky, часть issue двусмысленны. OpenAI вместе с авторами провели human-валидацию и опубликовали 500-задач subset Verified. Грубая шкала: 2023 GPT-4+RAG — единицы процентов; 2024 SWE-agent/Devin — 10-15%; 2025 Claude 3.5+Claude Code — ~50%; начало 2026 ~65-70%.",
+                "example": "Если задача требует знания внутренней wiki проекта или внешнего API без авторизации — Verified её отфильтрует, чтобы не штрафовать модель за нерешаемое.",
+                "when_to_apply": "При публикации/чтении SWE-Bench-результатов всегда уточнять Verified vs Full vs Lite — числа сильно отличаются.",
+                "edge_cases": "Тренд (прирост в разы за два года) важнее точной цифры; потолок «100% без помощи человека» вряд ли реально достижим — часть PR требует контекста, которого нет в репо.",
+                "related": "Lite (300 задач) даёт ещё более высокие числа за счёт упрощённой постановки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Verified — это «детская» версия с 100 простыми задачами; индустрия меряется на ней, потому что Full слишком сложен для современных моделей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Verified содержит 500 задач (не 100) и сложность сопоставима с полным SWE-Bench — отличие в качестве, не в простоте.",
+                "source_of_confusion": "Путаница с SWE-Bench Lite (300 задач), который действительно проще.",
+                "if_it_were_true": "Тогда переход на Verified давал бы заметный рост числа, но в реальности он лишь убирает шум.",
+                "how_it_should_be": "Правильно: Verified — 500 human-validated задач из исходных ~2294."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Verified — это просто переименование Full, отличий в составе задач нет; смена названия — маркетинговый ход OpenAI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Verified — отдельный subset 500/2294 с human-validation; задачи действительно отфильтрованы.",
+                "source_of_confusion": "Скептицизм относительно маркетинга компаний.",
+                "if_it_were_true": "Тогда результаты на Full и Verified совпадали бы; на практике они различаются на десятки процентных пунктов.",
+                "how_it_should_be": "Правильно: Verified — это качественно отфильтрованное подмножество, не переименование."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Verified отличается тем, что в нём разрешено использовать интернет и MCP-серверы; Full запрещает любые внешние tools.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие — в качестве задач, а не в правилах использования tools; harness и tool-availability задаются отдельно.",
+                "source_of_confusion": "Путаница между составом задач (Verified) и evaluation harness (SWE-agent/Bash-only/web).",
+                "if_it_were_true": "Тогда метрики на Verified для closed-task setup были бы недостижимы, что не так.",
+                "how_it_should_be": "Правильно: Verified — это набор задач, политика tools — отдельная характеристика harness."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные подвохи возникают при чтении лидерборда SWE-Bench и сравнении заявленных цифр?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главный подвох — нерепрезентативная выборка задач: SWE-Bench содержит только React-фичи и не отражает backend-разработку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SWE-Bench построен на Python-репозиториях (django, sympy, scikit-learn, astropy), не на React. Это нерепрезентативно для других языков, но не для backend.",
+                "source_of_confusion": "Поверхностное знакомство с бенчмарком без проверки состава задач.",
+                "if_it_were_true": "Тогда React-агенты были бы топ-1, чего не наблюдается.",
+                "how_it_should_be": "Правильно: SWE-Bench — Python-focused; для других языков есть отдельные бенчмарки (Multi-SWE-Bench и др.)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Verified vs Full vs Lite (всегда смотрите редакцию — на Lite 300 задач числа выше); agent vs model (лидерборд оценивает связку, один Claude в SWE-agent и в Claude Code даст разные цифры); Pass@k vs Pass@1 (иногда заявляют «лучший из N запусков» — завышает реальную полезность); внутренний vs воспроизводимый harness (у Cognition/Devin долго не было воспроизводимого, маркетинговые цифры отличались от независимых тестов); утечка в обучении (задачи известны, часть фиксов могла попасть в pretraining). SWE-Bench — не предсказатель работы на вашем легаси, а нижняя оценка способности «закрывать описанные issue в Python OSS».",
+              "correct": true,
+              "sections": {
+                "explanation": "На практике подвохов несколько ключевых: Verified vs Full vs Lite дают разные числа (Lite — самые высокие); лидерборд оценивает связку agent+model, а не модель отдельно; Pass@k vs Pass@1 завышает реальную полезность; внутренний vs воспроизводимый harness (у Devin долго не было воспроизводимого, маркетинг расходился с независимыми тестами); утечка в обучении (задачи известны, и часть фиксов могла попасть в pretraining). SWE-Bench — нижняя оценка способности «закрывать описанные issues в Python OSS», не предсказатель работы на вашем легаси.",
+                "example": "Cognition (Devin) долго не публиковали воспроизводимый harness, и независимые проверки Princeton/Stanford в первой публичной оценке дали ~14% — заметно ниже маркетинговых цифр.",
+                "when_to_apply": "При чтении любого SWE-Bench-результата — уточняйте Verified vs Full vs Lite, agent vs model, Pass@k vs Pass@1, харнесс.",
+                "edge_cases": "Утечка задач в pretraining — фундаментальная проблема публичных бенчмарков, частично объясняет «магию» резкого роста чисел.",
+                "related": "Полезное правило: SWE-Bench — это не предсказатель, как агент справится с вашим легаси; для production-оценки нужны внутренние бенчмарки на репрезентативных задачах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Единственный подвох — что некоторые компании добавляют свои задачи в SWE-Bench; в остальном лидерборд честный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Состав задач фиксирован Princeton; добавлять свои нельзя. Подвохи лежат в другом: Verified vs Full vs Lite, Pass@k, воспроизводимость, утечка в pretraining.",
+                "source_of_confusion": "Путаница с benchmark contamination (общая проблема), но в SWE-Bench состав фиксирован.",
+                "if_it_were_true": "Тогда лидерборд был бы непригоден для сравнения, и его бы не цитировали.",
+                "how_it_should_be": "Правильно: подвохи — Verified vs Full vs Lite, agent+model coupling, Pass@k, утечка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подвох в том, что задачи слишком маленькие (один файл), поэтому реальные многофайловые рефакторинги SWE-Bench не покрывает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Многие SWE-Bench задачи требуют многофайловых правок — это часть challenge: найти все файлы и связно их изменить.",
+                "source_of_confusion": "Неправильное представление о структуре задач.",
+                "if_it_were_true": "Тогда бенчмарк был бы тривиальным; в реальности median разница между моделями значительная.",
+                "how_it_should_be": "Правильно: задачи разные по размеру, многие — многофайловые; подвохи лежат в другой плоскости."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор tools считается «джентльменским минимумом» для современного code-агента в 2025-2026?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только chat — модель просит пользователя самому прочитать и применить правки; tools не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без tools модель не является агентом — это chat-ассистент. Минимум — file ops, shell, search, VCS.",
+                "source_of_confusion": "Перенос из эпохи ChatGPT-3.5 в браузере, когда tools ещё не были стандартом.",
+                "if_it_were_true": "Тогда Cursor и Claude Code не отличались бы от копирования в браузерный чат.",
+                "how_it_should_be": "Правильно: минимум — read/write/edit file, glob/grep, shell exec, git, иногда LSP/web/MCP."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только один универсальный execute_action с гигантской схемой, в которой LLM сам выбирает что делать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это известный антипаттерн — LLM теряется в большой схеме и хуже выбирает действие. Хороший дизайн — узкие и явные tools по принципу Unix.",
+                "source_of_confusion": "Иллюзия гибкости от «одного tool на всё».",
+                "if_it_were_true": "Тогда лучшие агенты имели бы один tool, но Claude Code/Aider/Cursor — все имеют десяток узких tools.",
+                "how_it_should_be": "Правильно: узкие явные tools — read_file делает одно, edit_file другое, bash третье."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "File ops (read/write/edit/list_dir/glob), code search (grep/ripgrep, иногда AST/LSP), shell exec с таймаутом (pytest/npm/gradle), VCS (status/diff/log/commit), navigation (go-to-def через LSP/tree-sitter), web fetch/search, task management, MCP-серверы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Хороший дизайн — tools узкие и явные, по принципу Unix. File ops, code search, shell exec, VCS — обязательный минимум. Navigation, web fetch, task management, MCP — расширения. Антипаттерн — один execute_action с гигантской схемой, в которой LLM теряется.",
+                "example": "Claude Code: Bash, Read, Edit, Write, Glob, Grep, WebFetch, WebSearch + MCP-серверы (postgres, github). Aider: edit (search/replace), git, shell, repo-map. Cursor: edit (apply-model), search, terminal, web.",
+                "when_to_apply": "При проектировании собственного агента или оценке готовых решений по покрытию задач.",
+                "edge_cases": "Слишком много tools — LLM теряется; слишком мало — задачи становятся невозможными. Баланс достигается итеративно.",
+                "related": "MCP-серверы стандартизируют tool-layer и позволяют переиспользовать инструменты между Cursor/Claude Code/Cline."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только browser-tool — агент должен делать всё через GitHub UI и веб-консоль; локальный shell запрещён по соображениям безопасности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Browser-tool — лишь часть набора Devin/Copilot Workspace; локальные code-агенты (Aider, Claude Code) активно используют shell и git напрямую.",
+                "source_of_confusion": "Перенос «всё через UI» из мира SaaS-продуктов.",
+                "if_it_were_true": "Тогда CLI-агенты не работали бы offline и были бы медленными — на практике они эффективны именно из-за прямого shell access.",
+                "how_it_should_be": "Правильно: shell — ядро минимума, browser — опциональный extra для autonomous SWE."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая edit strategy доминирует в современных code-агентах и почему именно она победила full replace, unified diff и AST-aware подходы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Full replace — самый надёжный: модель всегда выдаёт файл целиком, и никаких ошибок с позициями нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Full replace дорог по токенам, рискует переписать чужие правки, и сейчас используется только базовыми ассистентами.",
+                "source_of_confusion": "Логично думать «целое надёжнее частей», но на практике токен-цена и риск перезаписи делают full replace непрактичным.",
+                "if_it_were_true": "Тогда сессии Claude Code/Aider стоили бы в разы дороже за счёт токенов на выходные файлы.",
+                "how_it_should_be": "Правильно: доминируют search/replace blocks — дёшево, локально, легко применять."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Unified diff с @@-hunks — стандарт patch-утилит, модели хорошо его генерируют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LLM плохо считает номера строк, чувствительна к whitespace в context-строках и регулярно ломает hunks; именно поэтому Aider специально перешёл с unified diff на search/replace.",
+                "source_of_confusion": "Unified diff — стандарт для людей и patch, что вводит в заблуждение про «формат для машин».",
+                "if_it_were_true": "Тогда Paul Gauthier не описывал бы переход Aider от diff к search/replace как ключевой шаг роста success rate.",
+                "how_it_should_be": "Правильно: unified diff — для людей, для LLM лучше search/replace."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "AST-aware edits через tree-sitter — самый правильный подход, его и используют все продвинутые агенты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AST-aware edits сложно реализовать на каждый язык и для каждой LLM; они есть в специализированных refactor-tools, но не доминируют в general-purpose агентах.",
+                "source_of_confusion": "AST действительно «понимает структуру», и логично думать что это победит — но цена реализации высока.",
+                "if_it_were_true": "Тогда Aider и Claude Code использовали бы AST-aware edits, но они работают через search/replace.",
+                "how_it_should_be": "Правильно: AST — для refactoring-tools (jscodeshift, retrie); для агентов — search/replace."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Search/Replace blocks вида <<<<<<< SEARCH ... ======= ... >>>>>>> REPLACE — доминируют, потому что LLM лучше воспроизводит локальный фрагмент (несколько строк целиком), чем правильную мета-информацию о позиции; система ищет точное совпадение и применяет, при ошибке агент пробует снова.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная боль агента — как сказать «измени файл». Полная замена дорога, генерация diff хрупка, AST сложен. Search/replace выиграл, потому что: дёшево по токенам, легко проверить, легко применить, требует только уникального SEARCH-блока. Aider специально перешёл с unified diff на search/replace, и проценты успеха выросли значительно.",
+                "example": "Aider/Claude Code: модель пишет SEARCH-блок (точная копия 5-15 строк) и REPLACE-блок; если SEARCH не уникален или не найден — tool возвращает ошибку, агент пробует снова.",
+                "when_to_apply": "Когда выбираете формат edit-операций для собственного агента или объясняете коллегам почему Aider/Claude Code «просто работают».",
+                "edge_cases": "Если SEARCH не уникален в файле — нужен расширенный context; если файл изменился между поиском и применением — конфликт.",
+                "related": "Cursor использует apply-model: большая модель пишет intent, маленькая превращает в diff — альтернативный путь."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему unified diff с @@-hunks плохо работает у LLM, и какой опыт Aider это подтверждает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "LLM плохо считает номера строк (@@ -120,7 +120,9 @@), чувствительна к whitespace в context-строках, на больших файлах забывает что выше и придумывает hunk, не подходящий ни к одной части; Aider специально перешёл с diff на search/replace, и success rate вырос значительно (Paul Gauthier описал это в постах про Aider).",
+              "correct": true,
+              "sections": {
+                "explanation": "Unified diff — формат для людей и patch-утилиты, а не для LLM. Проблемы: модель плохо считает номера строк, особенно после предыдущих правок; whitespace-чувствительность (лишний пробел — patch refuses); большие файлы — LLM забывает что выше и придумывает hunk; несколько hunks в файле — корреляция ошибок (один сломанный ломает всё). LLM гораздо лучше воспроизводит локальный фрагмент целиком, чем мета-позицию.",
+                "example": "Aider стартовал с unified diff и страдал от низкого success rate; переход на search/replace дал заметный прирост — Paul Gauthier подробно описал это в блоге aider.chat.",
+                "when_to_apply": "При выборе edit-формата для собственного агента: для LLM — search/replace; unified diff оставить для интеграции с git apply.",
+                "edge_cases": "На очень коротких файлах (10-20 строк) unified diff работает приемлемо — но в реальных проектах файлы большие.",
+                "related": "См. Q8 — таблица стратегий с плюсами и минусами; Aider stop-and-start exposure history."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Unified diff не работает, потому что современные LLM вообще не видели его в обучающих данных — формат был отброшен в 2010-х.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unified diff — повсеместно в git и присутствует во всех code-корпусах. Проблема не в незнании формата, а в трудности генерации.",
+                "source_of_confusion": "Спекуляция о составе обучающих данных без оснований.",
+                "if_it_were_true": "Тогда модели не могли бы читать git diff, что неправда — они отлично его интерпретируют.",
+                "how_it_should_be": "Правильно: модель умеет читать diff, но плохо его генерировать с правильными номерами строк."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Unified diff требует bash доступа для применения; в sandboxed-агентах его нельзя использовать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Применить diff можно программно (git apply, библиотеки patch); это не блокер для sandbox.",
+                "source_of_confusion": "Путаница между «формат diff» и «команда patch».",
+                "if_it_were_true": "Тогда browser-based агенты не использовали бы diff вообще, но проблема не в этом.",
+                "how_it_should_be": "Правильно: проблема в генерации diff моделью, а не в его применении системой."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Unified diff слишком длинный и съедает контекст; современные LLM с 200K окном решают эту проблему, поэтому формат снова стал популярным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unified diff обычно короче full replace, но длиннее search/replace. Проблема не в длине, а в точности генерации.",
+                "source_of_confusion": "Логика «больше контекста — лучше» применяется не к месту.",
+                "if_it_were_true": "Тогда Claude Code с 200K вернулся бы к unified diff, но он использует Edit tool с search/replace-семантикой.",
+                "how_it_should_be": "Правильно: 200K контекст не решает проблему точной генерации позиционных hunks."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое apply-model в Cursor и зачем нужен такой двухмодельный подход?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Apply-model — это плагин, который применяет diff из clipboard в редактор; никакой LLM в нём нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Apply-model в Cursor — это специализированная маленькая LLM, дообученная на edit-задачах, а не plugin без модели.",
+                "source_of_confusion": "Путаница с IDE-плагинами вроде «paste as diff».",
+                "if_it_were_true": "Тогда apply работал бы offline, но он требует Cursor backend.",
+                "how_it_should_be": "Правильно: apply-model — это вторая, маленькая, fine-tuned модель в pipeline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В Cursor большая модель (Claude/GPT) пишет фрагмент «как должно стать», иногда с маркерами «// …existing code…». Отдельная специализированная маленькая модель (apply-model, fine-tuned на edit) аккуратно соединяет это с реальным файлом и выдаёт точный diff. Большая модель не тратит токены на дотошное копирование контекста, маленькая дешёвая и быстрая, качество edit-применения растёт.",
+              "correct": true,
+              "sections": {
+                "explanation": "Двухмодельный подход — separation of concerns: большая модель думает на высоком уровне «вот как должно стать», маленькая специализированная превращает intent в точный патч. Большая модель экономит токены/внимание на копировании контекста, маленькую можно гонять часто. Аналогично работает apply button в Continue и в части OSS-форков.",
+                "example": "В Cursor вы видите ответ от Claude с маркерами «// …existing code…» и точками вставки, потом жмёте Apply — за секунду маленькая модель превращает это в реальные правки файла.",
+                "when_to_apply": "Когда хотите снизить расход токенов на edit-операции и улучшить качество применения патчей.",
+                "edge_cases": "Apply-model — проприетарный компонент Cursor; локально его не воспроизвести. Аналог Architect+Editor в Aider — тот же паттерн на двух моделях.",
+                "related": "Тот же паттерн separation of concerns — Architect+Editor в Aider, planner+executor в multi-agent."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Apply-model — это название Claude API метода apply_edit; никакого fine-tuning не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Anthropic API нет метода apply_edit; apply-model — это компонент Cursor, не API-эндпоинт.",
+                "source_of_confusion": "Путаница с другими специализированными API-вызовами.",
+                "if_it_were_true": "Тогда любой агент мог бы использовать apply-model через Claude API, но это Cursor-only feature.",
+                "how_it_should_be": "Правильно: apply-model — внутренняя fine-tuned модель Cursor, не часть публичного API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Apply-model — это отдельный VS Code extension, который заменяет встроенный diff-viewer на AI-powered.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Apply-model — модель в pipeline Cursor, не extension и не diff-viewer.",
+                "source_of_confusion": "Терминологическая путаница apply (применить) → viewer (показать).",
+                "if_it_were_true": "Тогда его можно было бы установить в обычный VS Code, но Cursor — это форк, а apply-model — внутренний компонент.",
+                "how_it_should_be": "Правильно: apply-model — backend-LLM в pipeline edit-операций Cursor."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие компоненты составляют ядро Cursor как code-агента, и какие из них killer-фичи относительно конкурентов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cursor — это VS Code с подключённым ChatGPT через REST API; никаких собственных компонентов нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cursor — это форк VS Code с собственными компонентами: Cursor Tab (своя модель), Composer (multi-file agent), apply-model, embeddings index, bug finder.",
+                "source_of_confusion": "Поверхностное восприятие Cursor как «VS Code + chat».",
+                "if_it_were_true": "Тогда не было бы смысла в подписке Cursor — хватало бы плагина к ванильному VS Code.",
+                "how_it_should_be": "Правильно: Cursor — отдельный продукт с собственным backend и моделями."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cursor — это просто wrapper над OpenAI API с улучшенным UI; вся логика выполняется на OpenAI-серверах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cursor использует свои модели (Cursor Tab), собственный apply-model и embeddings index — это не просто wrapper.",
+                "source_of_confusion": "Раннее восприятие Cursor (2022-2023) как chat-обёртки.",
+                "if_it_were_true": "Тогда отключение OpenAI ломало бы Cursor целиком, но он поддерживает Claude/GPT/локальные модели.",
+                "how_it_should_be": "Правильно: Cursor имеет собственный backend и набор моделей в pipeline."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cursor — форк VS Code: Cursor Tab (собственная маленькая модель для inline-предсказаний, умнее Copilot на больших правках), Cursor Chat (chat-in-editor с @-меншенами), Composer (многофайловый агент с планом и тестами), Bug Finder/PR review, embeddings index репозитория, apply-model для точного применения правок; платная модель — bundled tokens (фиксированная подписка).",
+              "correct": true,
+              "sections": {
+                "explanation": "Cursor — форк VS Code, выстроенный вокруг агентов. Killer-фичи: Cursor Tab (своя модель inline-предсказаний, лучше Copilot на больших правках/перемещениях кода); Composer (многофайловый агент с планом); apply-model (двухмодельный подход для дешёвого и точного edit). Embeddings-индекс репозитория даёт быстрый retrieval. Bundled tokens — удобно как один кошелёк, но потолки кусаются на больших агентских сессиях.",
+                "example": "Project layout: .cursor/rules/backend.mdc (правила для backend через glob: src/backend/**), .cursor/rules/frontend.mdc (для frontend), .cursorrules (legacy single-file).",
+                "when_to_apply": "Когда нужна интерактивная разработка в IDE с inline-completion, multi-file edit и быстрым chat.",
+                "edge_cases": "Bundled tokens — удобно, но потолки могут кусаться на больших агентских сессиях; в этом случае Aider/Claude Code с per-token API могут быть прозрачнее по cost.",
+                "related": "См. Q12 про .cursorrules как project-level контекст и Q16 про сравнение с Claude Code/Aider."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cursor работает только в облаке через web-интерфейс; локальная установка не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cursor — desktop-приложение (macOS/Windows/Linux), форк VS Code; основная инсталляция локальная.",
+                "source_of_confusion": "Путаница с GitHub Copilot Workspace, который действительно web-only.",
+                "if_it_were_true": "Тогда не было бы offline-режима и интеграции с локальными файлами.",
+                "how_it_should_be": "Правильно: Cursor — desktop, требует установки, как обычная IDE."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое .cursorrules (и новые .cursor/rules/*.mdc) и какую функцию они выполняют в Cursor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": ".cursorrules — это список запрещённых файлов, аналог .gitignore для AI; никакого другого содержимого там быть не может.",
+              "correct": false,
+              "sections": {
+                "what_actually": ".cursorrules — это системный промпт уровня проекта; запреты на файлы — лишь одна из его функций, наряду со стеком, стилевыми правилами и workflow.",
+                "source_of_confusion": "Путаница с .gitignore по аналогии «dotfile в корне».",
+                "if_it_were_true": "Тогда нельзя было бы записать «не используй var в Java» в .cursorrules, но это типичный пример содержимого.",
+                "how_it_should_be": "Правильно: .cursorrules — system prompt проекта; запреты — часть, не вся функция."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это конфиг для линтера ESLint/Prettier, который Cursor использует при автоформатировании.",
+              "correct": false,
+              "sections": {
+                "what_actually": ".cursorrules не имеет отношения к линтерам; это инструкции для LLM, а не правила форматирования.",
+                "source_of_confusion": "Путаница с .eslintrc/.prettierrc.",
+                "if_it_were_true": "Тогда Cursor читал бы .cursorrules как ESLint-конфиг, что не так.",
+                "how_it_should_be": "Правильно: .cursorrules — system prompt для LLM; линтеры конфигурируются отдельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": ".cursorrules — это устаревший формат лицензионных условий Cursor; в новых версиях он больше не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": ".cursorrules — активный механизм project-level context, не лицензия. Новые .cursor/rules/*.mdc расширяют его, а не заменяют.",
+                "source_of_confusion": "Слово rules может ассоциироваться с лицензией или ToS.",
+                "if_it_were_true": "Тогда не было бы документации по .cursorrules в актуальных версиях, но она есть.",
+                "how_it_should_be": "Правильно: .cursorrules — активный механизм, .cursor/rules/*.mdc — его эволюция."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": ".cursorrules (и новые .cursor/rules/*.mdc с glob-таргетингом) — это системный промпт уровня проекта: стек (Kotlin+Spring Boot 3, React+TS), стилевые правила (no var, prefer record), запреты (не править generated/, не трогать миграции старше N), workflow (запускать ./gradlew test перед коммитом). Без проектного контекста агент выдаёт generic-код, не вписывающийся в кодовую базу. Аналоги: CONVENTIONS.md в Aider, CLAUDE.md в Claude Code, .clinerules в Cline.",
+              "correct": true,
+              "sections": {
+                "explanation": ".cursorrules — это «всегда-в-промпте» инструкции для проекта. Туда кладут вещи, которые модель должна знать всегда: стек, стилевые правила, запреты, workflow. Новый формат .cursor/rules/*.mdc позволяет таргетить правила по glob-паттернам (например, backend.mdc применяется только к src/backend/**). Без проектного контекста агент стабильно выдаёт «среднеинтернетный» код.",
+                "example": "В .cursorrules: «Используй Mockk + JUnit 5 в новых тестах, не Mockito»; «Контроллеры тонкие, бизнес-логика в сервисах»; «Миграции в src/main/resources/db/migration/ как V{дата}__описание.sql»; «Не редактируй generated/, build/, node_modules/».",
+                "when_to_apply": "Всегда в командных проектах с устоявшимися конвенциями; без них агент изобретает свой стиль каждый раз.",
+                "edge_cases": "Слишком длинные правила — модель устаёт и хуже их следует; разумно держать .cursorrules в пределах одной-двух страниц.",
+                "related": "Аналоги: Aider — CONVENTIONS.md + --read; Claude Code — CLAUDE.md (project+user) + skills; Cline — .clinerules."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ключевые особенности делают Aider характерным «git-first CLI»-агентом, и как работает его repo map?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Aider — CLI-агент на Python, жёстко завязан на git: каждое успешное изменение → auto-commit с осмысленным сообщением (откат — обычный git reset). Repo map: при старте Aider сканирует репозиторий через tree-sitter, строит граф «какие символы где определены и кто их зовёт», и кладёт в контекст сжатую карту (имена классов/функций/публичных API без тел). /add file.py — явно в read/write, --read file.md — read-only-контекст. Поддерживает любые модели через LiteLLM.",
+              "correct": true,
+              "sections": {
+                "explanation": "Aider — CLI-агент на Python, ориентированный на git: auto-commit после каждой успешной правки делает историю работы агента видимой как обычные коммиты (ревью идёт привычными инструментами, откат — git reset). Repo map через tree-sitter даёт LLM сжатое «оглавление» репо: символы и их связи без тел функций — модель сразу видит структуру, не тратя контекст на полный код. Через LiteLLM подключается любая модель, включая локальные.",
+                "example": "Конфиг .aider.conf.yml: model: anthropic/claude-3-7-sonnet-latest, auto-commits: true, test-cmd: \"./gradlew test\", auto-test: true, read: [CONVENTIONS.md, docs/architecture.md]. Команды /add src/main.py, --read CONVENTIONS.md.",
+                "when_to_apply": "Когда нужна дисциплинированная пошаговая работа с явной git-историей агента и контролем над контекстом (что в read/write, что в read-only).",
+                "edge_cases": "Auto-commit можно отключить (dirty-commits: false); --read файлы участвуют в промпте, но Aider их не редактирует, что хорошо для CONVENTIONS.md или спецификаций.",
+                "related": "Architect+Editor mode (Q14) — двухмодельный pipeline в Aider; CONVENTIONS.md — аналог CLAUDE.md в Claude Code."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Aider — это VS Code extension, который встраивается в gitlens; никакого CLI нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Aider — самостоятельный CLI на Python, а не VS Code extension; команды запускаются в терминале.",
+                "source_of_confusion": "Путаница с другими git-ориентированными tools (GitLens).",
+                "if_it_were_true": "Тогда не было бы headless-режима для серверных сценариев.",
+                "how_it_should_be": "Правильно: Aider — pip install aider-chat, запуск из терминала."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Aider индексирует репозиторий через embeddings (как Cursor) и хранит индекс в Pinecone; tree-sitter не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Aider использует tree-sitter для построения структурного repo map, а не embeddings + vector store. Это сознательный дизайн-выбор (быстрее, не требует embedding API).",
+                "source_of_confusion": "Embeddings — популярный подход у других агентов (Cursor, Cody).",
+                "if_it_were_true": "Тогда Aider требовал бы внешний vector store или embedding API, но он работает чисто локально.",
+                "how_it_should_be": "Правильно: Aider — tree-sitter repo map, локально, без embeddings."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Aider работает только с GPT-4 от OpenAI; другие модели не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Aider поддерживает любые модели через LiteLLM: Claude, GPT, DeepSeek, Gemini, локальные через Ollama.",
+                "source_of_confusion": "Изначально Aider популяризировался с GPT-4, что создало иллюзию vendor lock-in.",
+                "if_it_were_true": "Тогда невозможно было бы использовать Aider с Claude или DeepSeek, что неправда.",
+                "how_it_should_be": "Правильно: model: anthropic/claude-3-7-sonnet-latest или любой LiteLLM-совместимый провайдер."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём суть режима Architect + Editor в Aider, и какой общий паттерн он реализует?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Architect+Editor — это разделение на pre-commit hook (architect) и post-commit hook (editor); никаких моделей в этом нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Architect+Editor — это две LLM-роли в pipeline Aider, не git hooks.",
+                "source_of_confusion": "Слова Architect/Editor могут ассоциироваться с workflow-хуками.",
+                "if_it_were_true": "Тогда режим был бы про git workflow, а не про cost optimization.",
+                "how_it_should_be": "Правильно: Architect и Editor — две модели в pipeline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В Aider есть режим Architect: умная (но дорогая) модель играет роль архитектора и пишет план + указания на естественном языке, вторая модель (быстрая, дешёвая) роль Editor — превращает указания в конкретные search/replace-блоки. Архитектор — o1/Claude Opus (дорог, хорош в reasoning), Editor — Sonnet/Haiku/DeepSeek (дёшев, точен в форматировании). В сумме дешевле и часто качественнее, чем одной большой моделью. Это паттерн separation of concerns в агентах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Architect (умная, дорогая модель — o1, Claude Opus) пишет план и указания на естественном языке. Editor (быстрая, дешёвая — Sonnet, Haiku, DeepSeek) превращает указания в конкретные search/replace-блоки. В сумме дешевле и часто качественнее, чем одной большой моделью: умная думает на высоком уровне, дешёвая аккуратно форматирует.",
+                "example": "aider --architect --model openai/o1 --editor-model anthropic/claude-3-7-sonnet — o1 планирует, Sonnet реализует search/replace-блоки.",
+                "when_to_apply": "Когда задача требует тяжёлого reasoning (рефакторинг архитектуры, нетривиальный bug), но не хочется платить токены reasoning-модели за дотошное форматирование edit-блоков.",
+                "edge_cases": "Если задача простая — overhead от двух моделей не оправдан; режим включают для нетривиальных задач.",
+                "related": "Тот же паттерн — apply-model в Cursor, planner+executor в multi-agent системах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Architect+Editor — это режим, в котором Aider открывает второй редактор для human-in-the-loop ревью каждой правки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Architect+Editor — про разделение ролей между двумя LLM, не про второй редактор.",
+                "source_of_confusion": "Слово Editor может ассоциироваться с UI-редактором.",
+                "if_it_were_true": "Тогда режим требовал бы GUI, но Aider — CLI-tool.",
+                "how_it_should_be": "Правильно: Editor — это вторая LLM в pipeline, не редактор кода."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Architect-режиме Aider использует только GPT-4 для генерации архитектурных диаграмм в формате PlantUML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Architect-режим не привязан к GPT-4 и не про диаграммы — это режим для распределения ролей в edit-pipeline.",
+                "source_of_confusion": "Слово Architect ассоциируется с диаграммами архитектуры.",
+                "if_it_were_true": "Тогда Architect-mode был бы специализированной фичей diagram generation, что неверно.",
+                "how_it_should_be": "Правильно: Architect-mode = умная модель планирует, дешёвая исполняет; модели любые, никаких диаграмм."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что характеризует Claude Code как terminal-first code agent от Anthropic и какой набор tools у него «из коробки»?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Claude Code — это IDE-форк VS Code от Anthropic; запуск только через GUI, CLI не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Claude Code — официальный CLI Anthropic, ориентированный на терминал; не IDE-форк.",
+                "source_of_confusion": "Путаница с Cursor (форк VS Code) — это другой продукт.",
+                "if_it_were_true": "Тогда не было бы headless-режима для серверных сценариев и интеграций.",
+                "how_it_should_be": "Правильно: claude — CLI на Node, запускается из терминала."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Claude Code — это VS Code extension от Anthropic; не использует терминал и не имеет CLI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Claude Code — официальный CLI Anthropic для терминала; VS Code extension Claude Dev/Cline — отдельный продукт от другой команды.",
+                "source_of_confusion": "Путаница с Cline (Claude Dev), который действительно VS Code extension.",
+                "if_it_were_true": "Тогда headless-сценарии и интеграция с другими CLI были бы невозможны.",
+                "how_it_should_be": "Правильно: Claude Code — CLI Anthropic; Cline — VS Code extension от другой команды."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Claude Code — официальный CLI Anthropic, ориентированный на терминал. Tools на базе Anthropic tool_use: Bash, Read, Edit, Write, Glob, Grep, WebFetch, WebSearch. Длительные agentic-сессии с планом, scratchpad, периодическими компакциями истории. MCP-интеграция из коробки (~/.claude.json и .mcp.json). CLAUDE.md — иерархия инструкций (global + project + локальная). Skills — пакеты инструкций по триггеру. Hooks (PreToolUse/PostToolUse/Stop) — программные перехваты. Стоимость pay-per-token (Anthropic API).",
+              "correct": true,
+              "sections": {
+                "explanation": "Claude Code ориентирован на терминал и длинные agentic-сессии. Tool-set минимальный, но мощный: Bash для shell, Read/Edit/Write для файлов, Glob/Grep для поиска, WebFetch/WebSearch для интернета, плюс MCP. CLAUDE.md иерархически (global ~/.claude/CLAUDE.md, project ./CLAUDE.md, локальная папка) задаёт контекст. Skills — пакеты инструкций, активируемые по триггеру. Hooks — программные перехваты до/после tool calls.",
+                "example": "Регистрация MCP: claude mcp add postgres -- npx -y @modelcontextprotocol/server-postgres postgresql://localhost/mydb. Запуск задачи: claude \"Реши issue #1234: добавь поле lastLoginAt в Customer и миграцию\".",
+                "when_to_apply": "Для длинных автономных задач в терминале, ops-сценариев, рефакторинга, интеграции с CI/CD и MCP-серверами.",
+                "edge_cases": "Pay-per-token без bundled-подписки даёт честную картину расхода, но дисциплинирует — длинные сессии стоят дорого; нужна компакция истории.",
+                "related": "См. Q16 — сравнение с Cursor и Aider; Q26 — стоимость сессий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Claude Code работает только в облаке Anthropic; запуск локально невозможен по security-причинам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Claude Code — локальный CLI, работает с локальной файловой системой; backend только LLM-вызовы идут в Anthropic API.",
+                "source_of_confusion": "Путаница с Devin, который действительно работает в cloud VM.",
+                "if_it_were_true": "Тогда нельзя было бы редактировать локальные файлы и запускать локальные команды.",
+                "how_it_should_be": "Правильно: Claude Code — локальный CLI с прямым доступом к FS и shell."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ключевые отличия Claude Code от Cursor и Aider по UI, контексту, edit-стратегии, MCP-интеграции и лучшему применению?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Claude Code дублирует функциональность Cursor; разница только в брендинге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Claude Code (CLI Anthropic) и Cursor (IDE-форк VS Code) — принципиально разные продукты по UI и подходу к контексту.",
+                "source_of_confusion": "Оба используют LLM для кода, что создаёт иллюзию идентичности.",
+                "if_it_were_true": "Тогда не имело бы смысла обсуждать сравнительную таблицу.",
+                "how_it_should_be": "Правильно: Cursor — IDE с embeddings index, Claude Code — CLI с on-demand read и CLAUDE.md."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Claude Code и Aider — одно и то же, только Claude Code на Node, а Aider на Python.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различия глубже языка: Aider git-first с auto-commit и tree-sitter repo map, Claude Code — on-demand read + CLAUDE.md + first-class MCP, любая модель через LiteLLM vs только Anthropic.",
+                "source_of_confusion": "Оба CLI-tools, что создаёт иллюзию похожести.",
+                "if_it_were_true": "Тогда не было бы смысла иметь оба в одном workflow, но многие команды используют связку.",
+                "how_it_should_be": "Правильно: Aider — git-first и multi-model, Claude Code — Anthropic-only с MCP и skills."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Claude Code работает только с локальными моделями (Ollama, llama.cpp); Anthropic API не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Claude Code работает только с Anthropic API (Claude Sonnet/Opus); локальные модели не поддерживаются.",
+                "source_of_confusion": "Путаница с Aider или Continue, которые поддерживают локальные модели.",
+                "if_it_were_true": "Тогда Claude Code работал бы offline, что не так.",
+                "how_it_should_be": "Правильно: Claude Code — Anthropic API only; для локальных моделей берут Aider или Continue."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cursor — IDE (форк VS Code) с embeddings index и apply-model, bundled tokens, лучшее для живой разработки в IDE. Aider — CLI с tree-sitter repo map, git-first (встроен, auto-commit), любая модель через LiteLLM, лучшее для git-чётких пошаговых правок. Claude Code — CLI/terminal с on-demand read + CLAUDE.md, search/replace + Edit tool, Anthropic only, first-class MCP, skills + hooks, лучшее для длинных автономных задач, ops, рефакторинга.",
+              "correct": true,
+              "sections": {
+                "explanation": "Различия по осям: UI (IDE-форк vs CLI vs CLI/terminal), модель (bundled vs любая через LiteLLM vs только Anthropic), git (optional vs встроен auto-commit vs optional через bash-tool), контекст (embeddings index vs tree-sitter repo map vs on-demand read + CLAUDE.md), edit (apply-model vs search/replace vs search/replace + Edit tool), MCP (есть vs через расширения vs первоклассный), скиллы/hooks (rules vs conventions vs CLAUDE.md+skills+hooks).",
+                "example": "Связка в команде: Cursor для живой разработки в IDE; Aider для дисциплинированных пошаговых правок с git-history; Claude Code для длинных ops/refactor-сессий и MCP-интеграций.",
+                "when_to_apply": "При выборе инструмента под конкретный сценарий или построении командного workflow.",
+                "edge_cases": "Инструменты не конкурируют 1:1 — многие команды используют связку Cursor + Aider/Claude Code для разных задач.",
+                "related": "См. Q21 — расширенная сравнительная таблица включая Cline и Devin."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Plan/Act-тоггл в Cline (Claude Dev) и как работает auto-approve?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cline (раньше Claude Dev) — open-source VS Code-extension, агент с явным Plan/Act-тогглом: Plan mode — модель только обсуждает план, ничего не делает; Act mode — выполняет tools, пишет файлы, гоняет команды. Каждое действие требует подтверждения, кроме включённого в auto-approve (read-only команды, edit без удаления). Это удобный middle-ground: автоматизация рутины без потери контроля. Похожие: Roo Code, Continue Agent, Cody Agentic Chat.",
+              "correct": true,
+              "sections": {
+                "explanation": "Plan/Act-тоггл явно разделяет два режима. В Plan mode модель только обсуждает план, не делая действий — удобно проверить замысел до запуска. В Act mode выполняется план: каждое действие требует подтверждения, кроме разрешённого в auto-approve (обычно read-only команды, edit без удаления — то есть «безопасные» операции). Это middle-ground между «всё руками» и «полная автономия».",
+                "example": "Cline UI: переключатель Plan/Act вверху; список Auto-Approve: Read Files, Edit Without Delete, Run Read-Only Commands. Деструктивные операции (delete, git reset) всегда требуют подтверждения.",
+                "when_to_apply": "Когда хочется автоматизировать рутину (читать, искать, мелкие правки) но контролировать опасные действия (удаление, git rewrite, shell с побочными эффектами).",
+                "edge_cases": "Слишком широкий auto-approve превращает Cline в vibe coding; слишком узкий — постоянные prompts замедляют работу.",
+                "related": "Похожие: Roo Code (форк Cline), Continue Agent, Cody Agentic Chat — все дают цикл план → подтверждение → действие → следующий шаг."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Plan/Act — это два отдельных Claude API ключа: один для планирования, другой для исполнения; никаких UI-переключателей нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Plan/Act — режимы работы в UI Cline, не разделение API ключей.",
+                "source_of_confusion": "Параллель с разделением окружений dev/prod через разные ключи.",
+                "if_it_were_true": "Тогда переключение между планированием и исполнением требовало бы reconfigure, что неудобно.",
+                "how_it_should_be": "Правильно: Plan/Act — UI-режимы внутри одной сессии."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Auto-approve в Cline по умолчанию включён для всех действий, включая удаление файлов и shell-команды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию auto-approve включён для безопасных операций (read, edit без delete); деструктивные требуют подтверждения.",
+                "source_of_confusion": "Поверхностное восприятие auto-approve как «всё автоматически».",
+                "if_it_were_true": "Тогда Cline был бы опасным по дефолту и не пользовался бы доверием.",
+                "how_it_should_be": "Правильно: auto-approve конфигурируется по типам действий; деструктивные защищены."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cline — это коммерческий closed-source продукт от Anthropic; open-source форков нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cline — open-source VS Code extension (github.com/cline/cline), не Anthropic-product; есть форки вроде Roo Code.",
+                "source_of_confusion": "Прежнее название Claude Dev и работа с Claude API создают иллюзию связи с Anthropic.",
+                "if_it_were_true": "Тогда нельзя было бы форкнуть в Roo Code, что произошло.",
+                "how_it_should_be": "Правильно: Cline — open-source, MIT License, отдельная команда."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каково устройство Devin от Cognition, что показало демо и каковы реальные результаты по независимым проверкам?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Devin — это open-source CLI агент, работающий локально; никакой VM или браузера у него нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Devin — закрытый SaaS от Cognition Labs, работает в браузерной VM, не open-source CLI.",
+                "source_of_confusion": "Путаница с OpenHands (open-source альтернатива Devin).",
+                "if_it_were_true": "Тогда можно было бы установить Devin локально, что невозможно.",
+                "how_it_should_be": "Правильно: Devin — proprietary cloud SaaS; open-source — OpenHands."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Devin от Cognition Labs — первый громкий autonomous SWE (март 2024), полностью в браузерной VM (план-панель, редактор, шелл, браузер); получает задачу типа «возьми bug из issue tracker и почини», работает часами автономно, может искать в интернете и ставить зависимости. Маркетинг показал «решает SWE-Bench Verified лучше всех», но независимые проверки (Princeton/Stanford) показали ~14% на SWE-Bench в первой публичной оценке. К 2026 цифры подросли, но Devin остаётся закрытым SaaS и стоит дорого. Главный вклад — формат «full-VM autonomous SWE» как жанр.",
+              "correct": true,
+              "sections": {
+                "explanation": "Devin (Cognition, март 2024) — первый громкий autonomous SWE. Полностью в браузерной VM: план-панель, редактор кода, shell, браузер. Получает задачу из issue tracker, работает часами автономно. Может искать в интернете, ставить зависимости, дебажить. Маркетинг показал лидерство на SWE-Bench, но независимые проверки Princeton/Stanford в первой публичной оценке дали ~14% — заметно меньше заявленного. К 2026 цифры подросли, но Devin — закрытый SaaS, стоит дорого. Главный вклад — формат «full-VM autonomous SWE» как жанр, который потом подхватили open-source решения (OpenHands).",
+                "example": "Пользователь даёт Devin задачу «закрой issue #4567 в нашем репо»; Devin открывает план в UI, делает commit-ы, прогоняет тесты, итерирует часами; в конце выдаёт PR.",
+                "when_to_apply": "Когда задача допускает многочасовую автономию (рутинный bug-fix, рефакторинг), бюджет позволяет $5-30+ за задачу, и есть готовность доверять закрытому SaaS с внешним кодом.",
+                "edge_cases": "Главное противоречие — заявленные SWE-Bench числа vs независимые ~14% при первом запуске; маркетинг нужно фильтровать через воспроизводимые harness.",
+                "related": "Open-source аналоги — OpenHands (Q19), SWE-agent (Princeton), Plandex; формат full-VM autonomous SWE стал индустриальным."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Devin показал на независимых проверках ровно те же результаты, что в маркетинге Cognition; controversy была раздута журналистами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Princeton/Stanford в первой публичной оценке получили ~14% на SWE-Bench, что заметно ниже маркетинговых цифр Cognition.",
+                "source_of_confusion": "Желание защитить Cognition от критики.",
+                "if_it_were_true": "Тогда не было бы публичных дискуссий о voспроизводимости harness и видео-демо.",
+                "how_it_should_be": "Правильно: расхождение между маркетингом и независимой проверкой — задокументированный факт первой волны оценки Devin."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Devin работает в обычной локальной shell, без браузера; всё что показывали в демо — это просто красивый UI поверх Aider.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Devin использует собственную browser-based VM с интернет-доступом и встроенным браузером; это не wrapper над Aider.",
+                "source_of_confusion": "Скептицизм в стиле «всё это Aider в красивой упаковке».",
+                "if_it_were_true": "Тогда Devin не отличался бы от CLI-агентов, и не было бы смысла в подписке.",
+                "how_it_should_be": "Правильно: Devin — own product Cognition с full-VM и browser, отдельная архитектура."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ключевые особенности делают OpenHands открытой альтернативой Devin?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "OpenHands — это форк Cursor, переименованный для open-source community; работает в IDE, не в Docker.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenHands (раньше OpenDevin) — самостоятельный open-source-фреймворк, работает в Docker-контейнерах; не форк Cursor.",
+                "source_of_confusion": "Похожесть названий и фокус на code-agent.",
+                "if_it_were_true": "Тогда OpenHands был бы IDE-продуктом, но он — web UI + Docker backend.",
+                "how_it_should_be": "Правильно: OpenHands — open-source фреймворк autonomous SWE с Docker isolation, не форк IDE."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "OpenHands работает только с GPT-4 и не поддерживает Claude или локальные модели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenHands поддерживает любой LLM backend: Claude, GPT, Gemini, DeepSeek, локальные через Ollama.",
+                "source_of_confusion": "Изначальные демо OpenDevin часто на GPT-4, что создало иллюзию vendor lock-in.",
+                "if_it_were_true": "Тогда OpenHands был бы менее привлекательным для self-hosting сценариев.",
+                "how_it_should_be": "Правильно: multi-provider LLM backend — ключевое преимущество OpenHands."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "OpenHands (изначально OpenDevin, переименован) — open-source-фреймворк autonomous SWE: каждая задача в собственном Docker-контейнере (изоляция от хоста); multi-agent (coder + reviewer + tester); backend-LLM любой (Claude, GPT, Gemini, DeepSeek, локальные через Ollama); web UI похожий на Devin (чат + редактор + терминал + браузер); активно публикует SWE-Bench-результаты и публичный benchmark suite. Похожие: SWE-agent (Princeton, ACI), AutoCodeRover (AST), Magenta, Aider в roo-mode, Plandex.",
+              "correct": true,
+              "sections": {
+                "explanation": "OpenHands переименован из OpenDevin как первая попытка open-source-альтернативы Devin. Особенности: Docker per task для изоляции от хоста, multi-agent (coder+reviewer+tester) с компонуемыми ролями, любой LLM backend (Claude/GPT/Gemini/DeepSeek/локальные через Ollama), web UI как у Devin. Главный плюс — можно запускать локально, ставить свои tools, аудитить логи.",
+                "example": "docker run -e LLM_API_KEY=... -p 3000:3000 docker.all-hands.dev/all-hands-ai/openhands; UI на localhost:3000, выбор модели и task definition через web.",
+                "when_to_apply": "Когда нужна autonomous SWE возможности с self-hosting, control над окружением, выбором модели, аудитом логов; или когда нельзя слать код во внешний SaaS.",
+                "edge_cases": "Multi-agent — мощно, но cost и orchestration overhead выше; одна задача может стоить $1-10 в LLM-токенах.",
+                "related": "Семейство open-source autonomous SWE: SWE-agent (Princeton с ACI — Agent-Computer Interface, оптимизирован под SWE-Bench), AutoCodeRover (AST-структурированный поиск), Plandex."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "OpenHands не использует Docker, потому что это медленно; все задачи выполняются в native shell хоста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenHands использует Docker per task как ключевую feature для изоляции от хоста и воспроизводимости.",
+                "source_of_confusion": "Логика «native быстрее» применима не к security-критичным сценариям.",
+                "if_it_were_true": "Тогда autonomous SWE на хосте был бы опасен (rm -rf, утечка ключей).",
+                "how_it_should_be": "Правильно: Docker per task — обязательный sandboxing уровень в OpenHands."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что представляют собой GitHub Copilot Workspace и Continue как альтернативы коммерческим code-агентам?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "GitHub Copilot Workspace — это просто новое название старого Copilot; принципиальных отличий нет. Continue — заброшенный проект.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Copilot Workspace — отдельный end-to-end agentic-workflow на базе issue (план → спецификация → правки → PR), интегрированный в GitHub UI, не переименование. Continue — активный open-source проект с регулярными релизами.",
+                "source_of_confusion": "Поверхностное знание product line.",
+                "if_it_were_true": "Тогда не было бы анонса 2024 и отдельной документации.",
+                "how_it_should_be": "Правильно: Copilot Workspace — agentic эволюция Copilot; Continue — активный OSS-аналог Cursor/Cline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Copilot Workspace и Continue — это один и тот же продукт от GitHub; отличается только название для разных регионов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Continue (continue.dev) — independent open-source проект, не GitHub-продукт. Copilot Workspace — GitHub-сервис.",
+                "source_of_confusion": "Поверхностное смешение продуктов в области code-agents.",
+                "if_it_were_true": "Тогда Continue не было бы как отдельного OSS-проекта.",
+                "how_it_should_be": "Правильно: Continue — independent OSS, Copilot Workspace — GitHub commercial."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Continue работает только с локальными моделями (Ollama, llama.cpp); cloud LLM (Claude, GPT) не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Continue поддерживает любую модель: Claude/GPT/Ollama/кастомные провайдеры. Локальные модели — одна из опций, не единственная.",
+                "source_of_confusion": "Continue часто демонстрируется с локальными моделями, что создаёт иллюзию exclusively-local.",
+                "if_it_were_true": "Тогда Continue был бы непривлекательным для cloud-first команд.",
+                "how_it_should_be": "Правильно: multi-provider, в том числе локальные."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "GitHub Copilot Workspace (анонс 2024) — попытка GitHub сделать end-to-end agentic-workflow на базе issue: issue → план → спецификация → правки → PR, всё интегрировано в GitHub UI, модель — GPT-семейство, human-in-the-loop на каждом шаге (вот план — поправь — поехали править файлы). Continue (continue.dev) — open-source-аналог Cursor/Cline, VS Code+JetBrains-extension, любая модель (Claude/GPT/Ollama/кастомные), edit-actions, чат, agent-mode, бесплатная альтернатива Copilot. Cody (Sourcegraph) — давний игрок с фокусом на поиск по очень большим кодовым базам, тоже движется в сторону agentic.",
+              "correct": true,
+              "sections": {
+                "explanation": "Copilot Workspace — попытка GitHub сделать end-to-end agentic workflow внутри GitHub UI: issue превращается в план, спецификацию, правки, PR — с human-in-the-loop на каждом шаге. Continue — open-source расширение VS Code/JetBrains с поддержкой любых моделей (включая локальные через Ollama), edit/chat/agent-mode. Cody от Sourcegraph фокусируется на поиске по очень большим кодовым базам.",
+                "example": "Copilot Workspace: открыл issue в GitHub, нажал Create Plan; UI показал план, дал отредактировать; нажал Generate Files; модель сделала правки; create PR.",
+                "when_to_apply": "Copilot Workspace — когда workflow внутри GitHub UI и платный Copilot уже куплен; Continue — когда хочется OSS и поддержку локальных моделей; Cody — когда репо очень большой.",
+                "edge_cases": "Copilot Workspace интегрирован с GitHub Actions для CI; Continue требует ручной настройки моделей.",
+                "related": "См. сравнительную таблицу (Q21) — Continue в одной нише с Cursor/Cline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "По каким осям различаются Cursor / Aider / Claude Code / Cline / Devin в сравнительной таблице?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cursor — IDE с bundled subscription и embeddings index, лучшее для ежедневного coding. Aider — open-source CLI, git-first (auto-commit), любая модель через LiteLLM, лучшее для дисциплинированных пошаговых правок. Claude Code — CLI Anthropic, per-token API, on-demand read + CLAUDE.md + first-class MCP, лучшее для длинных ops/refactor. Cline — open-source VS Code extension, Plan/Act явно, любая модель, лучшее для контролируемой автоматизации. Devin — закрытый SaaS, full VM, подписка $$$, лучшее для «реши задачу пока я сплю». Различия по: типу UI, открытости кода, длительности задачи, sandbox, git-first, plan/act, multi-model, цене.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оси сравнения: тип (IDE/CLI/extension/Cloud VM), открытый код (Aider/Cline — да, остальные — нет), длительность задачи (минуты-дни), sandbox (локальный FS / + bash / full VM), git-first (только Aider), plan/act явно (Cline, Architect+Editor в Aider), multi-model (Aider/Cline — да, Cursor — bundled, Claude Code — только Anthropic), цена (подписка / per-token / премиум подписка).",
+                "example": "Команда выбирает: Cursor для интерактивной работы в IDE; Aider для дисциплинированных пошаговых правок; Claude Code для длинных автономных задач и MCP; Cline для VS Code с явным plan/act; Devin когда задачу можно отдать «на ночь».",
+                "when_to_apply": "При выборе инструмента под workflow или объяснении коллегам/intervieweru различий.",
+                "edge_cases": "Инструменты часто комбинируются в одной команде; «лучшее применение» — это сценарий, в котором инструмент сильнее всего.",
+                "related": "См. Q16 — более узкое сравнение Claude Code/Cursor/Aider."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все пять инструментов одинаковы по архитектуре и возможностям; различаются только маркетингом и ценой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различия принципиальные: тип UI (IDE/CLI/extension/VM), open-source vs closed, sandbox, длительность задачи, multi-model — всё реально отличается.",
+                "source_of_confusion": "Поверхностное восприятие «все agentic code tools».",
+                "if_it_were_true": "Тогда не было бы смысла в сравнительных таблицах в технических обзорах.",
+                "how_it_should_be": "Правильно: различия по 6-8 осям, каждый инструмент сильнее в своей нише."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главная ось различия — поддержка Python: Cursor и Devin работают только с Python, остальные — со всеми языками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все пять инструментов работают с любыми языками; различия — в архитектуре и UI, не в языках.",
+                "source_of_confusion": "SWE-Bench построен на Python, что создаёт иллюзию Python-only.",
+                "if_it_were_true": "Тогда Cursor не использовался бы для TypeScript/Kotlin/Go проектов, что неправда.",
+                "how_it_should_be": "Правильно: язык — не ось различия; различаются UI, sandbox, model coupling, cost model."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cline и Devin — это одно и то же; только Cline — open-source реимплементация.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cline — VS Code extension с локальным sandbox, Devin — closed SaaS с full VM в браузере. Это разные категории по архитектуре и применению.",
+                "source_of_confusion": "Раннее название Claude Dev может ассоциироваться с Devin.",
+                "if_it_were_true": "Тогда Cline тоже работал бы в browser-VM, чего нет.",
+                "how_it_should_be": "Правильно: Cline — agentic extension с локальным sandbox, не autonomous SWE."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие стратегии выбора релевантного контекста используются в современных code-агентах, и почему ни одна из них не «идеальна» в одиночку?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Единственная разумная стратегия — embeddings index всего репозитория; все другие подходы устарели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Aider и Claude Code обходятся без embeddings; AST-индекс через tree-sitter и on-demand read дают сопоставимое качество без embedding API.",
+                "source_of_confusion": "Embeddings — популярный подход у Cursor/Cody, что создаёт иллюзию универсальной правильности.",
+                "if_it_were_true": "Тогда Aider и Claude Code не были бы успешными.",
+                "how_it_should_be": "Правильно: стратегии разные, и они сочетаются в зависимости от агента."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Embeddings index (Cursor, Cody, Continue) — vector-поиск по cosine similarity, хорошо для семантического «где это про X», слабо для точных API. AST/tree-sitter repo map (Aider) — структурное оглавление символов и связей без тел, быстро, без embedding API. LSP symbol index — точно, но сложно поднять для всех языков. On-demand read (Claude Code) — модель сама вызывает Glob/Grep/Read по CLAUDE.md. Граф знаний (graphify) — pre-built структурный+semantic граф. В реальных агентах стратегии сочетаются: грубый поиск через embeddings/repo map → точное чтение нужных файлов → повторный поиск по результатам.",
+              "correct": true,
+              "sections": {
+                "explanation": "Большой репозиторий не влезает в контекст ни одной модели. Стратегии: embeddings (семантически, но слабо на точных API), AST/tree-sitter (структура, быстро, без embedding API), LSP (точно, сложно для всех языков), on-demand read (модель сама ищет через Glob/Grep), граф знаний (pre-built structural+semantic). В реальных агентах эти стратегии сочетаются.",
+                "example": "Cursor: embeddings index + open files + @-mentions. Aider: tree-sitter repo map + /add для read/write. Claude Code: CLAUDE.md + on-demand Glob/Grep/Read. В этом проекте есть graphify-out/ — pre-built knowledge graph, по которому навигация идёт раньше grep.",
+                "when_to_apply": "При проектировании собственного агента или оценке готовых под ваш кодbase (язык, размер, частота изменений).",
+                "edge_cases": "Embeddings отстают на свежих файлах (требуют переиндексации); LSP может не работать на нестандартных tooling chains.",
+                "related": "Граф знаний (graphify) — пример pre-built structural index, по которому навигация эффективнее raw grep."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все агенты используют только LSP — это единственный надёжный способ навигации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LSP даёт точную навигацию, но сложно поднять для всех языков и tooling chains; многие агенты используют tree-sitter или embeddings вместо LSP.",
+                "source_of_confusion": "LSP — индустриальный стандарт для IDE-навигации.",
+                "if_it_were_true": "Тогда CLI-агенты вроде Aider не работали бы — но они используют tree-sitter.",
+                "how_it_should_be": "Правильно: LSP — одна из опций, не единственная; tree-sitter и on-demand search распространены."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все агенты загружают весь репозиторий в контекст 200K+ Claude/Gemini 1M; никаких стратегий выбора контекста не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Long context (200K+) не отменяет retrieval — стоимость и latency растут линейно/хуже, lost-in-the-middle ухудшает качество (см. Q23).",
+                "source_of_confusion": "Иллюзия «больше окно = можно засунуть всё».",
+                "if_it_were_true": "Тогда стоимость одной сессии Claude Code на большом репо была бы катастрофической.",
+                "how_it_should_be": "Правильно: даже у 200K моделей агенты используют retrieval — загружают минимально необходимое."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему long context (200K+ у Claude, 1M у Gemini) не отменяет indexing и retrieval в code-агентах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Long context уже отменил retrieval — все современные агенты загружают весь проект и не делают никакого indexing.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Claude Code, Cursor, Aider — все делают retrieval даже при 200K окне; полная загрузка проекта непрактична.",
+                "source_of_confusion": "Маркетинг long context создал иллюзию «retrieval мёртв».",
+                "if_it_were_true": "Тогда стоимость сессии на большом проекте была бы катастрофической ($5-50 за один turn).",
+                "how_it_should_be": "Правильно: long context не отменил retrieval, агенты по-прежнему загружают минимально необходимое."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Long context работает только для текста, не для кода; модели не умеют находить файлы в большом контексте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Long context работает и для кода, но «lost in the middle» бьёт по качеству, а стоимость и latency растут линейно/хуже.",
+                "source_of_confusion": "Желание упростить объяснение до «не работает».",
+                "if_it_were_true": "Тогда long context был бы бесполезен для кода полностью, что неправда.",
+                "how_it_should_be": "Правильно: long context работает, но цена/латенси/lost-in-the-middle делают полную загрузку нерациональной."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "С появлением Claude 200K/Gemini 1M возникла иллюзия «можно засунуть весь проект». На практике это не работает: (1) стоимость линейна (или хуже) от длины контекста — 1M токенов на каждый запрос — это разорение; (2) latency растёт — time-to-first-token при больших контекстах ощутимо; (3) lost-in-the-middle — модели хуже находят факт в середине длинного контекста, качество ответа падает; (4) дублирование шума — много нерелевантного кода заставляет модель ошибаться. Поэтому даже у моделей с гигантским окном агенты делают retrieval: загружают минимально необходимый контекст и подгружают новый когда нужно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Long context звучит как «загрузим всё и забудем про retrieval», но реальность сложнее. Стоимость линейна (или хуже) от длины — 1M токенов на каждый запрос экономически непрактично. Latency: TTFT при больших контекстах заметно выше. Lost-in-the-middle (Liu et al., 2023) — модели хуже находят факт в середине длинного контекста, качество падает. Дублирование шума — много нерелевантного кода ухудшает решения. Поэтому даже у Claude 200K и Gemini 1M агенты делают retrieval — грузят минимально необходимое.",
+                "example": "Claude Code с 200K окном загружает только нужные файлы через Read/Glob/Grep, не весь проект; иначе одна сессия стоила бы $20-50 на токенах.",
+                "when_to_apply": "Когда хочется «просто засунуть весь проект» — остановиться и оценить cost, latency и lost-in-the-middle.",
+                "edge_cases": "На маленьких проектах (<50K токенов) full-load может быть оправдан; на больших — retrieval обязателен.",
+                "related": "См. Q22 про стратегии retrieval; лучшая практика — комбинация большого окна + умной загрузки минимума."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Long context не используется, потому что Anthropic запретил его для code-задач из соображений безопасности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Anthropic не запрещал long context для кода; он активно используется агентами, но с retrieval.",
+                "source_of_confusion": "Перенос несуществующих ограничений из других сценариев.",
+                "if_it_were_true": "Тогда Claude 200K был бы недоступен через Claude Code API.",
+                "how_it_should_be": "Правильно: long context разрешён и используется, но retrieval остаётся практичной необходимостью."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие подходы к sandboxing использует современный code agent, и какие минимальные меры безопасности нужны при локальном shell с confirmation?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Локальный shell с confirmation абсолютно безопасен; никаких дополнительных мер не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Confirmation — только одна из мер; нужны также блокировка чтения секретов, audit log, git как revert, ограничение команд.",
+                "source_of_confusion": "Иллюзия «человек подтвердит — значит безопасно»; на практике человек устаёт и accept-all.",
+                "if_it_were_true": "Тогда не было бы инцидентов с rm -rf и утечкой ключей через code-агентов.",
+                "how_it_should_be": "Правильно: confirmation + secret blocklist + audit log + git revert + bounded budget."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Sandboxing на самом деле не критичен — современные модели сами не выполняют опасных команд без причины; достаточно дать им полный shell-доступ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Зафиксированные инциденты (Cursor agent с rm -rf, утечки OPENAI_API_KEY в логи) показывают: LLM регулярно выполняет деструктивные команды без злого умысла, просто по ошибке или галлюцинации.",
+                "source_of_confusion": "Оптимизм относительно reasoning возможностей LLM и недооценка hallucinations.",
+                "if_it_were_true": "Тогда не было бы постоянных публичных инцидентов с agent-ами, удаляющими файлы или утечкой ключей.",
+                "how_it_should_be": "Правильно: sandbox + confirmation + secret blocklist + audit log — обязательный минимум независимо от «надёжности» модели."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sandboxing — это исключительно Kubernetes namespace; всё остальное — устаревшие подходы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "K8s namespace — лишь один из подходов, и для одиночного code-агента overkill; локальный shell с confirmation, Docker per task, full VM — все актуальные альтернативы.",
+                "source_of_confusion": "Перенос K8s-практик из production deployment в локальную разработку.",
+                "if_it_were_true": "Тогда Aider/Claude Code не работали бы без K8s, что неправда.",
+                "how_it_should_be": "Правильно: спектр подходов от no-isolation до full VM, K8s — частный случай."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подходы: локальный shell без ограничений (базовые ассистенты, нулевая изоляция, максимум удобства); локальный shell с confirmation (Claude Code, Cline, Cursor Composer — человек как гард); read-only по умолчанию + allowlist команд (продвинутые setup, средняя изоляция); Docker-контейнер per task (OpenHands, серверные сценарии, хорошая изоляция); полная VM (microVM/Firecracker/QEMU — Devin, enterprise, максимальная изоляция, сложно поднять). Минимум: не давать rm -rf без подтверждения; запретить чтение секретов (.env, ~/.ssh, ~/.aws) через tool или прокси; логировать все shell-команды; использовать git как revert-инструмент — даже плохая правка отменяется коммитом.",
+              "correct": true,
+              "sections": {
+                "explanation": "Code agent умеет запускать произвольные команды — значит нужен sandbox. Спектр: локальный shell без ограничений (нулевая изоляция, максимум удобства, базовые ассистенты); локальный shell с confirmation (Claude Code, Cline, Cursor Composer — человек как гард, средняя удобство); read-only по умолчанию + allowlist (продвинутые setup); Docker per task (OpenHands, серверные сценарии, хорошая изоляция); full VM (microVM/Firecracker/QEMU — Devin, enterprise, максимум изоляции). Минимум: rm -rf только с подтверждением; блокировка чтения секретов (.env, ~/.ssh, ~/.aws); audit log всех команд; git как revert-инструмент.",
+                "example": "Cursor Composer показывает каждую shell-команду с кнопкой Approve/Reject; OpenHands запускает task в изолированном Docker и не имеет доступа к хост-FS; Devin работает в browser-VM где даже rm -rf не повредит хосту.",
+                "when_to_apply": "Всегда — нет ни одного сценария, где code-agent можно безопасно запускать без хоть какой-то изоляции и audit log.",
+                "edge_cases": "Локальный shell с confirmation — самый распространённый вариант для CLI-агентов, но требует дисциплины: усталость пользователя ведёт к accept-all и фактически отменяет confirmation.",
+                "related": "См. Q28 — anti-patterns про утечку ключей и vibe coding; Q27 — production patterns с audit log и case-bound role."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен test-driven loop в code-агентах и какие ключевые практики делают его надёжным?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Базовый цикл: план правки → edit файлов → запуск тестов → парсинг вывода → если зелёные, commit + следующая задача; если красные, диагностика по stack trace → новый план. Ключевые практики: test gating (нельзя коммитить с красными тестами); tight tests first (агент пишет/обновляет тест, потом меняет код — TDD-lite, чтобы по выводу было понятно что ломается); reflexion/самокоррекция (после неудачи модель явно записывает что думал → что произошло → что попробует дальше); bounded retries (3-5 итераций, иначе агент уходит в петлю и тратит токены).",
+              "correct": true,
+              "sections": {
+                "explanation": "Хороший code-agent сам прогоняет тесты и итерирует: план → edit → run → parse → если зелёные, commit; если красные, диагностика по stack trace → новый план. Ключевые практики: test gating (нельзя коммитить с красными тестами); tight tests first (TDD-lite — агент обновляет тест, потом код, чтобы по выводу было понятно что ломается); reflexion/самокоррекция (после неудачи модель явно фиксирует что думал → что произошло → что попробует дальше); bounded retries (3-5 итераций, иначе агент уходит в петлю, тратит токены, и качество падает).",
+                "example": "Aider с auto-test: test-cmd: \"./gradlew test\", auto-test: true — после каждого edit запускает тесты; если красные, добавляет вывод в промпт и просит другую правку. Reflexion (Shinn et al., NeurIPS 2023) — отдельная исследовательская тема, но в code-agent реализуется простыми эвристиками.",
+                "when_to_apply": "Когда у вас есть быстрые тесты (< 1-2 минут) и предметная область с чёткой обратной связью через assertion failures.",
+                "edge_cases": "Если тесты flaky — bounded retries важно ограничить, иначе агент будет «исправлять flaky» бесконечно; если тесты долгие (10+ минут) — test-driven loop становится экономически непрактичным.",
+                "related": "Reflexion: Language Agents with Verbal Reinforcement Learning (Shinn et al., NeurIPS 2023) — формальное обоснование самокоррекции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Code-агенты не запускают тесты сами — это всегда делает человек после ревью PR.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большинство современных code-агентов (Aider auto-test, Claude Code с bash, OpenHands) умеют сами прогонять тесты и итерировать.",
+                "source_of_confusion": "Параллель с традиционным workflow где CI запускает тесты после push.",
+                "if_it_were_true": "Тогда автономный SWE (Devin, OpenHands) был бы невозможен — без обратной связи от тестов агент не итерирует.",
+                "how_it_should_be": "Правильно: agent сам запускает тесты, итерирует до зелёного, человек делает финальное ревью."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Bounded retries не нужны — современные LLM достаточно умные, чтобы не уходить в петлю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bounded retries (обычно 3-5 итераций) — обязательный паттерн; без него агент тратит токены на бесконечную циклическую правку и качество падает.",
+                "source_of_confusion": "Оптимизм относительно reasoning возможностей LLM.",
+                "if_it_were_true": "Тогда не было бы инцидентов с «agent сжёг $500 на одну задачу».",
+                "how_it_should_be": "Правильно: bounded retries обязательны как safety net против циклов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Test-driven loop — это академическая концепция из 1990-х; в реальных code-агентах не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TDD-loop активно используется в Aider (auto-test), Claude Code (bash + Read), OpenHands (multi-agent с tester) — современный mainstream.",
+                "source_of_confusion": "Путаница исторического TDD-движения (Kent Beck) и применения цикла в агентах.",
+                "if_it_were_true": "Тогда code-агенты не доходили бы до зелёного автоматически.",
+                "how_it_should_be": "Правильно: test-driven loop — ядро современного code-agent, не наследие 90-х."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каковы порядки стоимости code-агентов за задачу, сессию и активный месяц, и что разоряет/экономит бюджет?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Code-агенты бесплатны для всех пользователей; OpenAI и Anthropic покрывают расходы из венчурных инвестиций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Code-агенты pay-per-token (Claude Code, Aider) или bundled subscription (Cursor); стоимость реальна и измеряется в десятках-сотнях долларов в месяц для heavy users.",
+                "source_of_confusion": "Free tiers (Cursor free, GitHub Copilot trial) создают иллюзию бесплатности.",
+                "if_it_were_true": "Тогда не существовало бы дискуссии про cost optimization и bounded budget.",
+                "how_it_should_be": "Правильно: реальная стоимость — от единиц центов за chat до $30+ за autonomous task; heavy user тратит $200-1000/мес."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Грубые порядки (Claude 3.7 Sonnet, начало 2026): inline-автокомплит (Copilot, Cursor Tab) — фиксированная подписка $10-20/мес; chat-in-editor — единицы центов за вопрос; agentic короткая задача — $0.05-1; agentic длинная задача (многофайловая фича с тестами) — $1-5; autonomous SWE (Devin/OpenHands на сложной задаче) — $5-30+; активный месяц heavy user — $200-1000+ (Claude Code/Cursor Pro+). Разоряет: длинные сессии без компакции истории, циклы без bounded retries, тяжёлые tools (полные логи, большие файлы). Экономит: prompt caching (Anthropic, OpenAI), подбор модели под задачу (апликатор/линтер — маленькая модель), чёткие задачи и хорошие тесты (меньше итераций).",
+              "correct": true,
+              "sections": {
+                "explanation": "Стоимость растёт на 4 порядка от inline ($10-20/мес фикс) до autonomous SWE ($30+ за задачу). Разоряют: длинные сессии без компакции истории (контекст растёт, каждый шаг платится за весь), циклы без bounded retries, тяжёлые tools (полные логи, большие файлы). Экономят: prompt caching (повторяющиеся system prompt/CLAUDE.md/repo map), подбор модели под задачу (апликатор/линтер на маленькой), чёткие задачи и хорошие тесты (меньше итераций).",
+                "example": "Heavy user Claude Code с большим репо без caching и компакции может за день нагенерировать $50-100 в токенах; с caching, компакцией и Sonnet на edit-задачах — снизить до $5-15/день.",
+                "when_to_apply": "При планировании бюджета на команду или оценке стоимости автономного workflow.",
+                "edge_cases": "Цены меняются — это grube ориентиры для начала 2026; reasoning models (o1, Opus с thinking) дороже Sonnet в разы.",
+                "related": "См. Q27 — production patterns включая bounded budget; Q28 — anti-patterns бесконтрольных сессий."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Стоимость одинакова для всех агентов и фиксирована Anthropic; различия только в UI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стоимость различается в разы между категориями (inline vs autonomous) и провайдерами (Cursor bundled vs Claude Code per-token).",
+                "source_of_confusion": "Поверхностное знание pricing.",
+                "if_it_were_true": "Тогда не было бы смысла обсуждать cost optimization.",
+                "how_it_should_be": "Правильно: спектр стоимости от $10/мес до $30+/задача в зависимости от категории."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Самый дешёвый сценарий — autonomous SWE в VM, потому что модель работает без участия человека.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Autonomous SWE — наоборот, самый дорогой: $5-30+ за задачу из-за длинных сессий и full tooling.",
+                "source_of_confusion": "Логика «без человека = дешевле» применима не к LLM-стоимости.",
+                "if_it_were_true": "Тогда все переключились бы на Devin/OpenHands вместо Aider.",
+                "how_it_should_be": "Правильно: chat-in-editor (центы за вопрос) дешевле всего; autonomous SWE — премиум-сегмент."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие production-патерны обязательны при встраивании code-агента в реальный workflow команды?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Bounded budget не нужен — Claude/OpenAI имеют встроенные лимиты, и пользователь не может потратить больше подписки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API-провайдеры дают raw billing без лимитов per-task; bounded budget на уровне приложения обязателен, иначе одна петля выжжет $50-100.",
+                "source_of_confusion": "Путаница с месячными лимитами подписок (Cursor Pro) и raw API.",
+                "if_it_were_true": "Тогда не было бы инцидентов с «agent потратил $500 за ночь».",
+                "how_it_should_be": "Правильно: bounded budget на уровне приложения с hard stop — обязательный паттерн."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Diff review перед merge можно пропустить — если агент уверен в правке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Diff review человеком — обязательный шаг даже если agent confident; vibe coding ломает прод именно из-за «accept-all без чтения».",
+                "source_of_confusion": "Оптимизм относительно качества современных моделей.",
+                "if_it_were_true": "Тогда не было бы инцидентов с production bugs из AI-generated code.",
+                "how_it_should_be": "Правильно: human diff review перед merge — обязательный gate."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Bounded token/$ budget на задачу с hard stop. Checkpoints — git-коммит после каждого осмысленного шага. Diff review перед merge даже если agent уверен. Test gating в CI — никакого «agent сказал зелёное» без CI-подтверждения. Static analysis + linters — стандартные gates остаются. Audit log — что читал, какие команды запускал, какие edit делал. Case-bound role — отдельный API key с минимальными правами (без доступа в production-БД). Rollout по командам — сначала пилотная команда, потом масштабирование.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда code agent встроен в реальный workflow, обязательны 8 паттернов: bounded budget с hard stop (иначе петля выжжет деньги); checkpoints (git-коммит после шага); diff review человеком; test gating в CI (не доверять agent self-report); static analysis + linters как обычные gates; audit log всех действий; case-bound role с минимальными правами; постепенный rollout сначала на пилотной команде.",
+                "example": "Пилот в команде A: Cursor с .cursorrules + budget $50/неделя на user; все PR от agent помечаются label ai-assisted; CI обязателен; затем rollout в команды B, C с накопленным опытом.",
+                "when_to_apply": "При первом внедрении code-agent в командный workflow или при масштабировании на компанию.",
+                "edge_cases": "Slack-чаты команды быстро становятся audit-log de facto; нужен формальный лог отдельно. Case-bound role — отдельный API key с правами только на dev/staging, не на prod-БД.",
+                "related": "См. Q28 — anti-patterns которые нарушаются если эти паттерны не соблюдены."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Audit log — это нарушение privacy разработчика; от него надо отказаться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Audit log — стандартный compliance-паттерн в enterprise; логируются tool calls и команды agent-а, а не keystrokes разработчика.",
+                "source_of_confusion": "Путаница с employee monitoring software.",
+                "if_it_were_true": "Тогда невозможно было бы внедрить code-agent в регулируемых отраслях (banking, healthcare).",
+                "how_it_should_be": "Правильно: audit log агента — обязательно; privacy разработчика не затрагивается."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие главные anti-patterns первой волны массового использования code-агентов и почему они опасны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главный anti-pattern — медленная скорость работы; чтобы исправить, нужно полностью довериться agent и пропускать ревью.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полное доверие без ревью — это и есть vibe coding, один из главных anti-patterns; скорость не оправдывает риск.",
+                "source_of_confusion": "Желание оптимизировать скорость в ущерб качеству.",
+                "if_it_were_true": "Тогда production-инциденты от AI-кода не считались бы проблемой.",
+                "how_it_should_be": "Правильно: ревью и test gating нельзя пропускать ради скорости."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтение .env и ключей не опасно — современные LLM-провайдеры не сохраняют ввод в логах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Многие провайдеры сохраняют запросы для debugging/safety review; даже если zero-retention API, agent может случайно вернуть ключ в commit message или PR description.",
+                "source_of_confusion": "Маркетинг zero-retention API создаёт ложное чувство безопасности.",
+                "if_it_were_true": "Тогда secret scanning в репозиториях был бы не нужен.",
+                "how_it_should_be": "Правильно: блокировать чтение секретов в sandbox; иметь secret scanning в CI как защитный слой."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Auto-merge без CI — это нормально, если agent написал тесты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тесты, написанные agent-ом, могут быть некорректны или специально под текущую реализацию; CI должен оставаться независимым gate.",
+                "source_of_confusion": "Иллюзия «agent проверил себя — этого хватит».",
+                "if_it_were_true": "Тогда не было бы инцидентов «зелёные тесты не покрывали баг».",
+                "how_it_should_be": "Правильно: CI обязателен как независимый gate, даже если agent написал и прогнал тесты."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Vibe coding (accept-all не читая — работает на хобби, ломает прод в команде). Auto-merge без CI — фатально, CI должен оставаться единственным источником истины. Чтение .env/~/.ssh/ключей — agent может утащить секрет в логи провайдера; sandbox + ignore-листы обязательны. Запуск миграций/деплоя как tool без подтверждения — катастрофично, всегда human-in-the-loop. Долгие автономные сессии без бюджета — деньги/токены сгорают, качество падает. Слепая вера в SWE-Bench — реальный легаси сложнее, цифры не переносятся 1:1. Отсутствие проектного контекста (CLAUDE.md, .cursorrules, CONVENTIONS.md) — agent выдаёт «среднеинтернетный» код. Pin to latest для модели — резкое изменение поведения после обновления ломает workflow; разумно фиксировать конкретные версии моделей.",
+              "correct": true,
+              "sections": {
+                "explanation": "8 главных anti-patterns: (1) vibe coding (accept-all без чтения); (2) auto-merge без CI (фатально, CI = единственный источник истины); (3) чтение .env/~/.ssh/keys (агент утащит секрет в провайдер); (4) миграции/деплой без подтверждения (катастрофично); (5) долгие сессии без бюджета; (6) слепая вера в SWE-Bench (legacy сложнее); (7) отсутствие проектного контекста (CLAUDE.md/.cursorrules/CONVENTIONS.md); (8) pin to latest для модели (новый release ломает workflow).",
+                "example": "Зафиксированные инциденты: Cursor agent с rm -rf без confirmation; утечка OPENAI_API_KEY через bash-tool в логи; auto-merge ai-PR без CI приводил к production rollback. Pin to latest: после major-update Sonnet поведение менялось — лучше фиксировать конкретную версию.",
+                "when_to_apply": "Как checklist при внедрении code-агента в командный workflow.",
+                "edge_cases": "Vibe coding допустим на хобби-проектах одного человека; в команде — катастрофа. Slepая вера в SWE-Bench убирается через дополнительные внутренние бенчмарки на репрезентативных задачах.",
+                "related": "См. Q27 — production patterns которые предотвращают эти anti-patterns; Q24 про sandboxing для secret protection."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как MCP-серверы становятся универсальным tool layer для code-агентов, и какие типовые MCP-серверы полезны для разработчика?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MCP (Model Context Protocol) решает N×M-проблему интеграций: вместо обучения каждого агента каждому внешнему инструменту — стандартный протокол между host (агент) и server (Postgres, GitHub, Slack, Jira, FS). Типовые MCP-серверы для code-agent: filesystem (расширенные файловые операции), github (issues, PRs, comments, releases), postgres/sqlite (SQL к dev-БД), playwright/chrome-devtools (браузерные e2e), atlassian (Jira/Confluence для контекста задачи), кастомные (внутренний поиск, мониторинг, фиче-флаги). Claude Code, Cursor, Cline подключают MCP декларативно — серверы становятся общим набором tools. Это разделяет «что умеет инструмент» и «какая модель его использует».",
+              "correct": true,
+              "sections": {
+                "explanation": "MCP решает N×M-проблему интеграций: N агентов × M систем = N×M коннекторов; с MCP — N + M реализаций. Типовые серверы для code-agent: filesystem (расширенные FS-операции), github (issues/PRs), postgres/sqlite (SQL к dev-БД), playwright/chrome-devtools (e2e), atlassian (Jira/Confluence для контекста), кастомные (внутренний поиск, мониторинг, флаги). Декларативное подключение — серверы становятся общим tool-набором между Claude Code, Cursor, Cline.",
+                "example": "Claude Code: claude mcp add postgres -- npx -y @modelcontextprotocol/server-postgres postgresql://localhost/mydb. Теперь LLM может выполнять SQL-запросы к dev-БД через postgres-сервер без специальной интеграции.",
+                "when_to_apply": "Когда нужно дать agent-у доступ к внешним системам (БД, issue tracker, мониторинг) без написания custom tool для каждого провайдера.",
+                "edge_cases": "MCP-сервер сам должен быть надёжным — падение, slow response, security issue в сервере ударит по агенту; нужно держать allowlist проверенных серверов.",
+                "related": "См. шпаргалку MCP (mcp-interview.md); MCP — это «USB-C для LLM-приложений», аналог LSP для IDE."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MCP-серверы — это устаревший протокол, который никто не использует; современные агенты подключают tools напрямую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MCP (Anthropic, ноябрь 2024) — активно растущий стандарт; Claude Code, Cursor, Cline и многие другие подключают MCP-серверы как первоклассный механизм.",
+                "source_of_confusion": "Возможная путаница с другими протоколами или скептицизм относительно молодого стандарта.",
+                "if_it_were_true": "Тогда не было бы экосистемы MCP-серверов (postgres, github, playwright, atlassian).",
+                "how_it_should_be": "Правильно: MCP — активный mainstream-стандарт, поддерживается всеми основными агентами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MCP-серверы работают только с Claude; OpenAI и Google не поддерживают этот протокол.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MCP — открытый протокол; хотя Anthropic его инициировал, реализации работают с любым LLM-host; OpenAI и Google прорабатывают поддержку.",
+                "source_of_confusion": "Раннее восприятие MCP как Anthropic-only из-за источника.",
+                "if_it_were_true": "Тогда Cursor (использующий разные модели) не имел бы first-class MCP-support.",
+                "how_it_should_be": "Правильно: MCP — открытый протокол, host-agnostic."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MCP — это синоним function calling в OpenAI API; никакого отдельного протокола нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MCP — отдельный wire-протокол между host и server (JSON-RPC), function calling — формат tool-описания в LLM-запросе. Это разные уровни абстракции.",
+                "source_of_confusion": "Оба механизма про tools, что создаёт путаницу.",
+                "if_it_were_true": "Тогда MCP не существовал бы как отдельный стандарт.",
+                "how_it_should_be": "Правильно: function calling — про формат tool-описания в LLM-запросе; MCP — про транспорт между агентом и внешними системами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему AI code review (CodeRabbit, Codacy AI, Cursor PR review) считается отдельным классом code-агентов, и какая его главная метрика?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "AI code review — это синоним обычного линтера; никакой LLM в нём не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AI code review использует LLM поверх классических линтеров; добавляет понимание контекста, объяснения, предложения фикса.",
+                "source_of_confusion": "Поверхностное восприятие как «ещё один static checker».",
+                "if_it_were_true": "Тогда CodeRabbit/Codacy AI не отличались бы от ESLint/SonarQube.",
+                "how_it_should_be": "Правильно: AI code review — LLM-обзор PR, добавляет contextual reasoning over классические линтеры."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "AI code review — специализация code-agent под одну задачу: получить diff/PR, выдать комментарии «потенциальный bug / стиль / производительность / безопасность». Игроки: CodeRabbit (глубокий PR-ревью, контекст из истории PR, авто-summary, conversation в комментариях), Codacy AI/Sonar AI (поверх классических линтеров, LLM-объяснения и предложения фикса), Cursor BugBot/Cursor PR review, GitHub Copilot for PR. Отличия от agentic-coding: цикл короткий (один прогон по diff, без длинной автономии), tools минимальны (чтение файлов в окрестности правки, иногда тесты), главная метрика — сигнал-шум (слишком много false-positives = люди игнорируют). Это дополнение к code-агенту, не замена: agent пишет → CI прогоняет тесты + AI-ревью → человек смотрит сводку.",
+              "correct": true,
+              "sections": {
+                "explanation": "AI code review — это специализация на одной задаче (review PR), а не general-purpose agent. Tools минимальны (чтение окрестности правки, иногда тесты), цикл короткий. Главная метрика — сигнал-шум: слишком много false-positives → люди начинают игнорировать комментарии, и польза от ревью исчезает. Это complement, а не replacement: agent пишет → CI прогоняет тесты + AI-ревью → человек смотрит сводку.",
+                "example": "CodeRabbit на PR: выдаёт auto-summary, помечает потенциальные bugs построчно, предлагает фиксы, ведёт диалог в comments; разработчик принимает/отклоняет. Codacy AI добавляет LLM-объяснение к классическим линтер-warnings.",
+                "when_to_apply": "Когда команда уже использует CI с тестами и хочет добавить дополнительный AI-слой обзора без замены человеческого ревью.",
+                "edge_cases": "Если сигнал-шум плохой (много false-positives) — команда выключает интеграцию; нужно tuning rules и thresholds. Cursor BugBot и Cursor PR review — расширение Cursor на GitHub.",
+                "related": "AI code review — дополнение к agentic coding и CI test gating, не замена; см. Q27 про production patterns с CI как обязательным слоем."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "AI code review — это полностью autonomous SWE; он сам пишет код, а не просто ревьюит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AI code review — это специализация под одну задачу: получить diff/PR, выдать комментарии; он не пишет код самостоятельно.",
+                "source_of_confusion": "Желание объединить категории в одну.",
+                "if_it_were_true": "Тогда CodeRabbit конкурировал бы с Devin, чего нет.",
+                "how_it_should_be": "Правильно: AI code review — ревью diff/PR, дополнение к agent-у, не autonomous SWE."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главная метрика AI code review — это скорость генерации комментариев; чем быстрее, тем лучше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная метрика — сигнал-шум (precision/recall); скорость второстепенна, потому что review происходит асинхронно после push.",
+                "source_of_confusion": "Перенос UI-метрик (latency) на content-метрики (quality).",
+                "if_it_were_true": "Тогда быстрые но шумные AI-ревьюры были бы лидерами, что не так.",
+                "how_it_should_be": "Правильно: главная метрика — сигнал-шум; скорость — секундная важность для async ревью."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Куда направляются code-агенты в горизонте 2026-2027, и какой главный сдвиг ожидается в роли человека-разработчика?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Code-агенты вытеснят разработчиков полностью; программирование как профессия исчезнет к 2027.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прогнозы говорят о сдвиге роли (от написания кода к спецификации/ревью), а не о полном вытеснении; человек остаётся ответственным за продукт.",
+                "source_of_confusion": "Сенсационные заголовки в маркетинге AI-companies.",
+                "if_it_were_true": "Тогда команды уже сейчас увольняли бы разработчиков массово.",
+                "how_it_should_be": "Правильно: сдвиг ролей, не вытеснение; формулирование задач + ревью становятся ключевыми навыками."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Code-агенты останутся на текущем уровне без значимого развития; SWE-Bench уже достиг плато ~70% и дальше не вырастет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прогресс продолжается: full SDLC-агенты, multi-agent в команде, MCP-стандартизация, локальные модели для рутины — активные направления.",
+                "source_of_confusion": "Скептицизм относительно ускорения прогресса.",
+                "if_it_were_true": "Тогда не было бы инвестиций в новые модели, MCP, multi-agent.",
+                "how_it_should_be": "Правильно: значительное развитие ожидается по нескольким векторам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Прогнозы 2026-2027: Full SDLC-агенты (issue → план → реализация → тесты → PR → ревью → деплой; частично реализовано — Devin, Copilot Workspace, Plandex). 24/7 коллаборация (агент работает ночью, утром у команды стопка PR; роль людей сдвигается в спецификацию и ревью). Multi-agent в команде (coder, reviewer, tester, ops — разные специализации, общая память через MCP). Глубокая интеграция с LSP/IDE-семантикой (отказ от текстовых правок в пользу AST-операций). Локальные модели для рутины (апплай, форматирование, поиск — на маленьких локальных; большие — для тяжёлого reasoning). Регуляторика (AI-generated code маркируется, отдельный gate, audit-logs обязательны). Skill-based agents (портативные пакеты инструкций — Claude Skills, Cursor Rules, Aider conventions). Стандартизация tool-layer через MCP (как HTTP в своё время для веба). Главный сдвиг — роль человека: меньше «писать код руками», больше «формулировать задачу + ревью + отвечать за продукт».",
+              "correct": true,
+              "sections": {
+                "explanation": "Восемь основных направлений 2026-2027: full SDLC-агенты (issue→deploy), 24/7 коллаборация (агент работает ночью), multi-agent в команде с общей памятью через MCP, AST-aware refactoring (вместо текстовых правок), локальные модели для рутины (большие — для тяжёлого reasoning), регуляторика (маркировка AI-кода, отдельный gate, audit-logs), skill-based portable instructions, MCP-стандартизация как HTTP для веба. Главный сдвиг — роль человека: от «писать код руками» к «формулировать задачу + ревью + отвечать за продукт».",
+                "example": "Команда 2027: задаёт agent-у спецификацию на ночь; утром получает несколько вариантов PR с тестами и AI-ревью; разработчик выбирает, дорабатывает, мерджит. Roles: больше product/architect, меньше typing.",
+                "when_to_apply": "При планировании командной стратегии адаптации к agentic workflow; при выборе skills, которые останутся востребованными.",
+                "edge_cases": "Команды, которые научатся работать в этом режиме раньше, получат большое преимущество в скорости; отстающие — наоборот, рискуют оказаться менее конкурентоспособными.",
+                "related": "Skill-based portable instructions — Claude Skills, Cursor Rules, Aider conventions станут переносимыми между инструментами; стандартизация tool-layer через MCP."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главный сдвиг — отказ от любых стандартов и протоколов в пользу custom-интеграций; MCP не получит распространения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тренд противоположный: MCP активно растёт как стандарт tool-layer, аналог HTTP для веба или LSP для IDE.",
+                "source_of_confusion": "Желание противопоставить «индивидуальность» стандартизации.",
+                "if_it_were_true": "Тогда не было бы N+M-сокращения интеграций, и каждый агент писал бы свои коннекторы.",
+                "how_it_should_be": "Правильно: стандартизация через MCP — главная инфраструктурная ставка ближайших лет."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

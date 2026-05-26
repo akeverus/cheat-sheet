@@ -140,7 +140,22 @@ public class GlobalExceptionHandler {
             // Не зашумляем логи на стандартный запрос браузера к favicon.
             return ResponseEntity.noContent().build();
         }
-        return handleGenericException(ex, request);
+        // 404 (не 500) для несуществующих routes/ресурсов. Без явного маппинга
+        // handleGenericException возвращал 500 — это давало false alarm в
+        // мониторинге на любую опечатку в URL и сбивало с толку при
+        // диагностике реальных 500.
+        if (isApiRequest(request)) {
+            return apiErrorResponse(
+                    HttpStatus.NOT_FOUND,
+                    ApiErrorTypes.RESOURCE_NOT_FOUND,
+                    "Ресурс не найден: " + uri,
+                    null
+            );
+        }
+        ModelAndView mav = new ModelAndView("error");
+        mav.addObject("status", 404);
+        mav.setStatus(HttpStatus.NOT_FOUND);
+        return mav;
     }
 
     @ExceptionHandler(Exception.class)

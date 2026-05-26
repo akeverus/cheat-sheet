@@ -1,0 +1,2105 @@
+{
+  "topic_slug": "fine-tuning-llm-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой сценарий — наиболее уместный повод для fine-tuning, а не для prompting или RAG?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Нужен фиксированный стиль / формат вывода (например, строгий JSON в фирменном tone-of-voice), который раздувает prompt до тысяч токенов",
+              "correct": true,
+              "sections": {
+                "explanation": "Fine-tuning сдвигает распределение модели в сторону нужного стиля или формата — поведенческие правила переезжают из prompt в веса, prompt укорачивается, latency и стоимость падают.",
+                "example": "Вместо 3000-токенового few-shot prompt с примерами JSON-схемы и tone-of-voice — fine-tuned 7B модель, которая возвращает нужный формат на сухой инструкции.",
+                "when_to_apply": "Стиль/формат фиксированный, поведенческих правил много, есть 1000+ качественных примеров, метрики определены.",
+                "edge_cases": "Если задача меняется каждую неделю — fine-tune устаревает быстрее, чем окупается; лучше остаться на prompts.",
+                "related": "Q2 лестница prompting→RAG→FT, Q3 когда FT не поможет, Q23 LIMA-эффект."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Знания обновляются каждые несколько часов и должны быть свежими",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fine-tune замораживает знания на момент обучения; каждое обновление требует нового train run.",
+                "source_of_confusion": "Кажется, что «больше тренировки = свежее знания», но fine-tune не делает модель самообновляющейся.",
+                "if_it_were_true": "Тогда не нужны были бы RAG-системы и vector DB — но именно они доминируют для свежих фактов.",
+                "how_it_should_be": "Для часто обновляющихся знаний — RAG (re-index дешевле и быстрее, чем перетренировка)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Нужно добавить редкие факты, которых модель раньше не знала",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fine-tune плохо учит новым редким фактам — LM «размажет» их между похожими и продолжит галлюцинировать.",
+                "source_of_confusion": "Интуитивно «обучить на фактах» звучит как способ их запомнить, но это языковое моделирование, а не key-value память.",
+                "if_it_were_true": "Тогда любой документ можно было бы превратить в надёжный ответ через 1 epoch SFT, и RAG никому бы не понадобился.",
+                "how_it_should_be": "Фактологию подавать через RAG; FT использовать для стиля и формата."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Метрики качества задачи ещё не определены, но «хочется попробовать»",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без метрик нечем мерить успех fine-tune — потратите бюджет, не зная, стало ли лучше.",
+                "source_of_confusion": "FT воспринимается как «волшебная кнопка качества», что подталкивает запускать его раньше времени.",
+                "if_it_were_true": "Тогда любая FT-итерация была бы прогрессом, но без eval она часто оказывается регрессом (catastrophic forgetting).",
+                "how_it_should_be": "Сначала определить метрики и собрать eval set; FT — только когда есть на чём измерить."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В лестнице prompting → RAG → fine-tuning какой принцип выбора корректен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Fine-tuning всегда даёт наилучшее качество, поэтому начинать стоит с него",
+              "correct": false,
+              "sections": {
+                "what_actually": "FT не всегда лучшее качество — на свежих фактах он проигрывает RAG, а на коротких задачах — хорошему prompt.",
+                "source_of_confusion": "Каждый дополнительный «инженерный» слой воспринимается как улучшение, хотя цена и риски растут.",
+                "if_it_were_true": "Тогда prompt engineering и RAG исчезли бы как практики — но на 2026 они доминируют у новых задач.",
+                "how_it_should_be": "Двигаться по лестнице снизу вверх: prompting → RAG → FT, останавливаясь когда задача решена."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Идти снизу вверх: prompting → RAG → fine-tuning, не перепрыгивая ступени; часто FT + RAG комбинируются",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая ступень дешевле и быстрее предыдущей в итерации; перепрыгивая, легко потратить недели на FT там, где хватало 50-токенового prompt.",
+                "example": "Стартап делает support-бота: сначала GPT-4 + few-shot (часы); потом RAG по docs (дни); потом FT 8B для стиля + RAG для фактов (недели).",
+                "when_to_apply": "Любая новая задача с LLM — выбирать минимально достаточный уровень.",
+                "edge_cases": "Если уже точно известен формат и есть готовый датасет 100K+ примеров — можно сразу к FT.",
+                "related": "Q1 когда FT нужен, Q3 когда FT не поможет, Q19 какой preference-метод выбрать."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "RAG всегда лучше fine-tuning, поэтому FT можно полностью игнорировать",
+              "correct": false,
+              "sections": {
+                "what_actually": "RAG силён в фактах, но плох для стиля/формата и не уменьшает длину prompt — FT остаётся незаменимым для стилистических и поведенческих задач.",
+                "source_of_confusion": "Маркетинг RAG-вендоров часто преподносит RAG как универсальную замену FT.",
+                "if_it_were_true": "Тогда не было бы коммерческих FT-API (OpenAI SFT, Vertex Tuning) и open-source fine-tunes на HF.",
+                "how_it_should_be": "RAG для свежих фактов; FT для стиля/формата/поведения; часто комбинируются."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Prompting и RAG взаимоисключающие, выбирать можно только что-то одно",
+              "correct": false,
+              "sections": {
+                "what_actually": "RAG — частный случай prompting: retrieved chunks подставляются в prompt, добавляются instructions и few-shot.",
+                "source_of_confusion": "Слова «retrieval» и «prompting» в маркетинге противопоставляют, хотя на уровне реализации RAG = retrieval + prompt assembly.",
+                "if_it_were_true": "Тогда нельзя было бы делать few-shot внутри RAG-промпта, но это стандартная практика.",
+                "how_it_should_be": "RAG и prompting сочетаются; FT добавляется поверх, если стиль или объём prompt становится проблемой."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему fine-tuning плохо подходит для добавления новых редких фактов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Файнтюн требует, чтобы каждый факт повторялся в датасете минимум 1000 раз, иначе он игнорируется",
+              "correct": false,
+              "sections": {
+                "what_actually": "Жёсткого порога «1000 повторений» не существует; проблема не в магическом числе, а в природе LM как вероятностной модели.",
+                "source_of_confusion": "Folk-знание про «N повторений» от старых рекомендательных систем; для LLM таких порогов в литературе не зафиксировано.",
+                "if_it_were_true": "Тогда LIMA-эффект (1000 примеров достаточно для alignment) был бы невозможен — но он подтверждён.",
+                "how_it_should_be": "Проблема в том, что LM усредняет редкие факты с похожими, а не в количестве повторений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Файнтюн стирает токенайзер и редкие слова из словаря модели",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fine-tune не меняет токенайзер и словарь — они остаются от base-модели.",
+                "source_of_confusion": "Путают с расширением vocab при добавлении новых tokenов (это редкая отдельная процедура).",
+                "if_it_were_true": "Тогда после FT модель не могла бы прочитать собственный pretraining-корпус.",
+                "how_it_should_be": "Vocab и tokenizer фиксированы; проблема в том, что LM не запоминает факты как key-value, а сглаживает."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Модель — вероятностная LM, которая «размазывает» редкий факт между похожими и продолжает галлюцинировать; для фактов лучше RAG",
+              "correct": true,
+              "sections": {
+                "explanation": "LLM при дообучении сдвигает распределение, а не запоминает факты дословно; редкий факт смешивается с соседями по смыслу, и модель уверенно генерирует правдоподобный, но неверный ответ.",
+                "example": "FT на 10 биографиях с датами рождения — модель часто путает года между похожими персонами вместо точного запоминания.",
+                "when_to_apply": "Нужны точные факты, особенно меняющиеся → RAG с retrieval из источника правды.",
+                "edge_cases": "Очень частотные факты, повторяющиеся в датасете тысячи раз (имена, общие термины), модель таки выучивает — но для редких это ненадёжно.",
+                "related": "Q1 когда FT нужен, Q2 лестница, Q28 catastrophic forgetting."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Файнтюн принципиально запрещает изменение знаний — обновляются только attention-веса, а не FFN",
+              "correct": false,
+              "sections": {
+                "what_actually": "При full FT обновляются все веса, включая FFN; в LoRA выбор слоёв (q/k/v/o, gate/up/down) контролируется конфигом.",
+                "source_of_confusion": "Слышали, что «знания живут в FFN», и сделали ложный вывод о запретах.",
+                "if_it_were_true": "Тогда continued pretraining (DAPT) был бы невозможен — но это рабочая практика для домена.",
+                "how_it_should_be": "Технических запретов нет; проблема в природе обучения LM, а не в архитектурном правиле."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему full fine-tuning 70B-модели требует ~800 GB VRAM с AdamW в FP16?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Потому что каждый слой загружается дважды для прямого и обратного прохода",
+              "correct": false,
+              "sections": {
+                "what_actually": "Слои не дублируются — gradient checkpointing наоборот пересчитывает activations, чтобы экономить, а не задваивать.",
+                "source_of_confusion": "Идея «прямой + обратный = ×2» путает с реальной структурой памяти (weights + grads + optimizer + activations).",
+                "if_it_were_true": "Тогда 70B FP16 занимал бы 280 GB только под веса — но это 140 GB.",
+                "how_it_should_be": "Бюджет = weights (140) + grads (140) + AdamW optimizer state в FP32 (560) + activations."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Потому что AdamW хранит m и v в FP32 по 8 байт на параметр — это в 4 раза больше самих весов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это часть правды, но не полная картина: optimizer state ~560 GB — это лишь один из четырёх компонентов.",
+                "source_of_confusion": "Опускают grads и activations и приписывают весь оверхед только AdamW.",
+                "if_it_were_true": "Тогда 70B SGD без momentum обучался бы в ~140 GB — но и с ним нужны grads и activations.",
+                "how_it_should_be": "Полный бюджет: weights 140 + grads 140 + AdamW state 560 + activations 50-200."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Потому что HuggingFace transformers не поддерживает sharded хранение весов",
+              "correct": false,
+              "sections": {
+                "what_actually": "FSDP и DeepSpeed ZeRO-3 как раз шардируют weights/grads/optimizer state между GPU — это стандарт.",
+                "source_of_confusion": "Путают «требуется ~800 GB суммарно» с «должно быть на одной GPU».",
+                "if_it_were_true": "Тогда обучение 70B было бы невозможно вообще — но 8×H100 + FSDP справляется.",
+                "how_it_should_be": "Цифра 800 GB — суммарная по кластеру; sharding распределяет её между нодами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Нужно держать одновременно weights (140) + gradients (140) + AdamW optimizer state в FP32 (560) + activations — суммарно ~800 GB",
+              "correct": true,
+              "sections": {
+                "explanation": "Для 70B FP16: weights 2 байта × 70B = 140 GB; gradients столько же; AdamW хранит первый и второй моменты в FP32 (по 4 байта на параметр × 2 = 8 байт) = 560 GB; плюс activations.",
+                "example": "70B full FT на 8×80GB H100 (640 GB) едва вмещается с FSDP + activation checkpointing; без них — OOM.",
+                "when_to_apply": "Прикидываем железо: 7B full FT ≈ 80 GB (1×H100), 70B ≈ 800 GB (8×H100), 405B — датацентр.",
+                "edge_cases": "8-bit optimizer (bitsandbytes Adam8bit) ужимает state в 2-4 раза; ZeRO-3 шардирует между GPU, снижая per-GPU.",
+                "related": "Q5 PEFT решает эту проблему, Q7 QLoRA, Q25 hardware tiers."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что объединяет методы PEFT (LoRA, QLoRA, DoRA, IA³, BitFit)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все они обучают малую долю параметров (0.01-1%) при заморозке остальных, опираясь на наблюдение, что fine-tuning живёт в low-rank подпространстве",
+              "correct": true,
+              "sections": {
+                "explanation": "PEFT (Parameter-Efficient Fine-Tuning) — семейство методов, замораживающих основную массу весов и обучающих маленькую добавку; работает потому, что реальное изменение fine-tune помещается в низкоранговое подпространство.",
+                "example": "LoRA r=16 на 7B даёт ~0.5% обучаемых параметров (~35M из 7B), которые легко сохранить и доставлять отдельно.",
+                "when_to_apply": "Когда нужен fine-tune, но нет бюджета на full FT — почти всегда в open-source в 2024-2026.",
+                "edge_cases": "На очень большом и разнообразном датасете full FT может выиграть пару процентов качества; в production такие случаи редки.",
+                "related": "Q6 LoRA, Q7 QLoRA, Q8 DoRA, Q25 hardware."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все они полностью заменяют attention-слои базовой модели на свои реализации",
+              "correct": false,
+              "sections": {
+                "what_actually": "PEFT не заменяет attention-слои; они оборачиваются или к ним добавляются маленькие модули (LoRA-адаптеры, IA³-векторы).",
+                "source_of_confusion": "Путают с архитектурными модификациями (Mixture-of-Experts, Mamba) или с adapter-блоками внутри FFN.",
+                "if_it_were_true": "Тогда базовая модель потеряла бы качество и не сохранила бы свои pretrained-способности.",
+                "how_it_should_be": "Base заморожена и работает as-is; добавляется лёгкая параметрическая «прибавка»."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все они требуют не менее 4 GPU и multi-node distributed training",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главное преимущество PEFT — это возможность тренироваться на 1 потребительской GPU (QLoRA 7B на RTX 4090 24 GB).",
+                "source_of_confusion": "Путают требования full FT 70B с PEFT того же размера.",
+                "if_it_were_true": "Тогда народные туториалы «fine-tune Llama на Colab T4» не существовали бы.",
+                "how_it_should_be": "PEFT масштабируется вниз до одной GPU; multi-GPU нужен только для очень больших моделей или больших batch."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все они увеличивают inference latency в 5-10 раз по сравнению с base",
+              "correct": false,
+              "sections": {
+                "what_actually": "LoRA/DoRA можно merge в base — нулевой overhead; даже без merge оверхед обычно <10%.",
+                "source_of_confusion": "Путают с adapter-блоками (Houlsby), которые действительно добавляют forward pass через bottleneck.",
+                "if_it_were_true": "Тогда multi-LoRA serving (vLLM, LoRAX) был бы непригоден в production — но он рутинно работает.",
+                "how_it_should_be": "LoRA после merge = 0 overhead; runtime composition даёт ~5-15% — приемлемо."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена LoRA математически — формула обновления и инициализация?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "W_new = W · B · A; A и B обе инициализируются случайно, чтобы сразу обучаться",
+              "correct": false,
+              "sections": {
+                "what_actually": "Операция аддитивная (W + ΔW), а не мультипликативная; и B инициализируется нулями, иначе на первом шаге модель уже не равна base.",
+                "source_of_confusion": "Путают форму low-rank decomposition в SVD (W = UΣV^T) с adapter-обновлением.",
+                "if_it_were_true": "Тогда инициализация ломала бы поведение базы и обучение стартовало бы из чужой точки.",
+                "how_it_should_be": "W_new = W + (α/r) · B · A; A ~ small Gaussian, B = 0 → ΔW = 0 на старте."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "W_new = W + (α/r) · B · A, где A ∈ R^(r×d), B ∈ R^(d×r), r << d; A инициализируется Gaussian (small), B — нулями, поэтому в начале ΔW = 0",
+              "correct": true,
+              "sections": {
+                "explanation": "LoRA представляет дельту весов как произведение двух low-rank матриц B·A; масштабирующий коэффициент α/r позволяет регулировать «силу» адаптера; нулевая инициализация B гарантирует ΔW=0 на первом шаге.",
+                "example": "Для d=4096, r=16: вместо 16.7M параметров (d²) обучаем 2·d·r = 131K — в 128 раз меньше.",
+                "when_to_apply": "Все PEFT-туториалы 2024-2026 для Llama/Mistral/Qwen используют именно эту схему с дефолтом α=2r.",
+                "edge_cases": "При merge финальный scale = α/r фиксируется; можно играть с α без переобучения, чтобы слабее/сильнее применить адаптер.",
+                "related": "Q7 QLoRA, Q9 какие слои, Q10 rank и alpha."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "W_new = W ⊕ A (concatenation), A — новая matrix, добавляемая к hidden state",
+              "correct": false,
+              "sections": {
+                "what_actually": "LoRA не делает concatenation и не расширяет hidden state; это in-place добавка к существующей матрице того же shape.",
+                "source_of_confusion": "Путают с prefix tuning или adapter-блоками, которые меняют размерность.",
+                "if_it_were_true": "Тогда менялся бы shape всех downstream-слоёв, и base не работала бы без переобучения.",
+                "how_it_should_be": "Shape сохраняется; ΔW = B·A имеет тот же размер, что и W."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "W_new = SVD(W)[:r] — берём первые r сингулярных значений и обучаем только их",
+              "correct": false,
+              "sections": {
+                "what_actually": "LoRA не делает SVD от W и не отбрасывает компоненты исходной матрицы; base полностью сохраняется как W.",
+                "source_of_confusion": "Low-rank decomposition по интуиции напоминает SVD, но это разные операции: SVD режет существующее, LoRA добавляет новое.",
+                "if_it_were_true": "Тогда LoRA уже на старте ломала бы base модель, выкидывая большую часть её информации.",
+                "how_it_should_be": "W не трогается; добавляется отдельная low-rank ΔW = B·A."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что именно QLoRA добавила к LoRA, чтобы fine-tune 65B на одной 48 GB GPU?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Поддержку multi-GPU FSDP — это и есть главный вклад QLoRA",
+              "correct": false,
+              "sections": {
+                "what_actually": "FSDP — это PyTorch-фича, появившаяся отдельно; ключ QLoRA — однопоточность на одной GPU за счёт квантизации.",
+                "source_of_confusion": "Путают историю distributed training с историей PEFT-квантизации.",
+                "if_it_were_true": "Тогда не было бы знаменитого тейка «65B на одной 48GB» — он именно про single-GPU.",
+                "how_it_should_be": "QLoRA даёт NF4 quant + double quant + paged optimizers, что позволяет обойтись одной GPU."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Замену AdamW на SGD без momentum для уменьшения optimizer state",
+              "correct": false,
+              "sections": {
+                "what_actually": "QLoRA использует обычный AdamW (часто 8-bit или paged), а не SGD; экономия идёт от 4-bit base + paged optimizers.",
+                "source_of_confusion": "SGD действительно экономит память по сравнению с AdamW, но к QLoRA это не относится.",
+                "if_it_were_true": "Тогда качество QLoRA было бы заметно ниже из-за худшей сходимости SGD на LLM.",
+                "how_it_should_be": "Оптимизатор — AdamW (paged); ключевые трюки — NF4, double quantization, paged optimizers."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Три трюка: NF4 (NormalFloat 4-bit) квантизация базы, double quantization quantization constants, paged optimizers с CPU-offload при OOM-spike",
+              "correct": true,
+              "sections": {
+                "explanation": "NF4 — информационно-оптимальное 4-битное представление для нормально распределённых весов LLM; double quantization жмёт сами quant constants ещё на ~0.5 бит/param; paged optimizers через NVIDIA unified memory спасают от OOM-пиков.",
+                "example": "LLaMA-65B QLoRA умещается в 48 GB на одной A6000; обучение в 2-3× медленнее LoRA, но возможно вообще на единичной карте.",
+                "when_to_apply": "Дефолт для open-weight моделей 2024-2026: bitsandbytes + peft + trl.",
+                "edge_cases": "На очень длинных последовательностях даже paged optimizers могут уйти в CPU слишком сильно — растёт latency; помогает gradient checkpointing.",
+                "related": "Q6 LoRA, Q12 SFT pipeline, Q24 библиотеки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Принципиально новую low-rank decomposition вместо B·A, более выразительную математически",
+              "correct": false,
+              "sections": {
+                "what_actually": "QLoRA использует ту же LoRA-decomposition B·A; вклад — не в математике адаптера, а в memory-tricks для базы.",
+                "source_of_confusion": "Название «QLoRA» воспринимается как новый Q-вариант LoRA, но «Q» — про quantization.",
+                "if_it_were_true": "Тогда LoRA-веса нельзя было бы загрузить в обычный peft без QLoRA-специфичного кода.",
+                "how_it_should_be": "Адаптер тот же; меняется только то, в каком формате хранится frozen base."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем DoRA принципиально отличается от LoRA и когда она реально полезна?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DoRA увеличивает inference latency вдвое из-за дополнительных матричных операций",
+              "correct": false,
+              "sections": {
+                "what_actually": "DoRA имеет тот же inference overhead, что и LoRA: после merge — ноль; без merge — сопоставимый с LoRA.",
+                "source_of_confusion": "Декомпозиция magnitude+direction звучит «тяжелее», но это касается тренировки, не inference.",
+                "if_it_were_true": "Тогда DoRA не была бы добавлена в peft как drop-in replacement.",
+                "how_it_should_be": "Inference overhead такой же, как у LoRA; в обучении чуть медленнее из-за подсчёта норм."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DoRA принципиально требует 8-bit квантизации базы и не работает с FP16",
+              "correct": false,
+              "sections": {
+                "what_actually": "DoRA работает с любой точностью базы (FP16/BF16/NF4); квантизация ортогональна.",
+                "source_of_confusion": "Путают с QLoRA, где квантизация — суть метода.",
+                "if_it_were_true": "Тогда `use_dora=True` нельзя было бы сочетать с обычной LoRA-конфигурацией в peft.",
+                "how_it_should_be": "DoRA — изменение декомпозиции дельты; точность базы выбирается отдельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DoRA заменяет attention на Mamba-блоки для быстрого long-context",
+              "correct": false,
+              "sections": {
+                "what_actually": "DoRA — PEFT-метод, никак не связан с заменой архитектуры на state-space модели типа Mamba.",
+                "source_of_confusion": "Слышали про несколько громких 2024-методов и слепили в один.",
+                "if_it_were_true": "Тогда DoRA не была бы совместима с обычными Llama/Mistral, а они её основная цель.",
+                "how_it_should_be": "DoRA — модификация LoRA-decomposition (magnitude + direction), архитектура базы не меняется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DoRA раскладывает W на magnitude (scalar per column) и направление (V/||V||), обучая low-rank ΔV отдельно — это даёт качество ближе к full FT при низких rank (r=4-8)",
+              "correct": true,
+              "sections": {
+                "explanation": "Weight-Decomposed LoRA разделяет вес на величину и направление: m — обучаемый magnitude-вектор, направление обновляется через low-rank ΔV; обучение стабильнее и качественнее особенно на маленьких rank.",
+                "example": "На r=8 DoRA часто закрывает разрыв с full FT, тогда как LoRA на том же rank ощутимо отстаёт; в peft включается `LoraConfig(use_dora=True)`.",
+                "when_to_apply": "Ограниченный compute или память, хочется выжать максимум из rank=8; стабильность важна.",
+                "edge_cases": "На больших rank (32-64) разница с LoRA нивелируется; чуть медленнее за счёт подсчёта норм.",
+                "related": "Q6 LoRA, Q10 rank, Q24 библиотеки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие слои сейчас типично выбирают как target_modules для LoRA на Llama/Mistral?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Минимум — q_proj и v_proj; стандарт 2024-2026 — все Linear attention и FFN: q_proj, k_proj, v_proj, o_proj + gate_proj, up_proj, down_proj (`all-linear`)",
+              "correct": true,
+              "sections": {
+                "explanation": "Оригинальная LoRA-статья ограничивалась q и v; современная практика для Llama/Mistral расширяет до всех linear-слоёв attention и SwiGLU FFN; в peft есть короткий `target_modules='all-linear'`.",
+                "example": "`target_modules=['q_proj','k_proj','v_proj','o_proj','gate_proj','up_proj','down_proj']` — типичный конфиг для Llama-3-8B SFT.",
+                "when_to_apply": "Domain adaptation, новый стиль/формат — берите all-linear; чисто instruction-tuning может ограничиться attention-only.",
+                "edge_cases": "Embedding и lm_head обычно не трогают — большие матрицы и риск сломать tokenizer-matching при merge.",
+                "related": "Q6 LoRA, Q10 rank, Q12 SFT pipeline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только embedding и lm_head — они хранят все «знания» модели",
+              "correct": false,
+              "sections": {
+                "what_actually": "Embedding и lm_head как раз обычно не трогают — это большие матрицы, и их изменение ломает совместимость токенайзера.",
+                "source_of_confusion": "Идея «знания в embed» — упрощение; реальные knowledge представления распределены по FFN.",
+                "if_it_were_true": "Тогда стандартные SFT-туториалы выбирали бы их по умолчанию — но они исключены явно.",
+                "how_it_should_be": "Target — attention/FFN linear; embed/lm_head — исключения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все LayerNorm-слои — изменение нормализации даёт максимальный эффект",
+              "correct": false,
+              "sections": {
+                "what_actually": "LayerNorm-параметры крошечные (несколько тысяч) и относятся к отдельной технике BitFit, а не LoRA.",
+                "source_of_confusion": "BitFit действительно работает с малыми параметрами bias/norm, но это не LoRA-target.",
+                "if_it_were_true": "Тогда LoRA r=16 на LayerNorm не имела бы смысла (там нет матрицы для разложения).",
+                "how_it_should_be": "LoRA применяется к большим Linear-слоям; LayerNorm — отдельная история (BitFit-style)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только router-слои Mixture-of-Experts — даже на dense моделях типа Llama",
+              "correct": false,
+              "sections": {
+                "what_actually": "У dense Llama/Mistral нет router-слоёв вообще; они есть только в MoE (Mixtral, Qwen-MoE, DeepSeek).",
+                "source_of_confusion": "Смешивают разные архитектуры в одну рекомендацию.",
+                "if_it_were_true": "Тогда LoRA вообще не работала бы на Llama — у неё нет router.",
+                "how_it_should_be": "Для dense — attention + FFN linear; для MoE — отдельно решают, тюнить ли expert и router."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как разумно выбрать rank `r` и `alpha` для LoRA?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Брать максимум r=512 на любой задаче — это всегда даёт лучшее качество",
+              "correct": false,
+              "sections": {
+                "what_actually": "Удвоение r редко удваивает качество; на большинстве задач r=16 даёт ~90% от r=64, и r=512 — переплата за память без пропорционального выигрыша.",
+                "source_of_confusion": "Линейная интуиция «больше параметров → лучше» неверна для low-rank подпространства fine-tune.",
+                "if_it_were_true": "Тогда никто бы не использовал r=8 и r=16, но они доминируют в open-source.",
+                "how_it_should_be": "Стартовать с r=16, расти если метрики плохие; alpha = 2r — рабочее правило."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Стартовать с r=16 и alpha = 2·r (=32); расти до 32-64 при domain adaptation; r=4-8 — для простого instruction format",
+              "correct": true,
+              "sections": {
+                "explanation": "Эмпирика 2023-2026: r=16 — рабочая середина для SFT; alpha обычно 2·r как baseline; lora_dropout 0.05-0.1 помогает на маленьких датасетах.",
+                "example": "`LoraConfig(r=16, lora_alpha=32, lora_dropout=0.05, target_modules='all-linear', bias='none', task_type='CAUSAL_LM')`.",
+                "when_to_apply": "Любой первый эксперимент с QLoRA SFT на Llama/Mistral — берите эти значения и итеррируйте.",
+                "edge_cases": "На очень маленьком датасете (<500 примеров) высокий r провоцирует overfitting; на сложном domain adaptation — r=32-64.",
+                "related": "Q6 LoRA, Q8 DoRA, Q12 SFT pipeline."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Всегда брать alpha = r/2, чтобы scaling factor был меньше 1 и адаптер работал слабее",
+              "correct": false,
+              "sections": {
+                "what_actually": "Классическое правило — alpha = 2r (scaling = 2), а не r/2; меньшее scaling делает адаптер слишком слабым на старте.",
+                "source_of_confusion": "Путают направление «осторожности» — alpha = r (scaling=1) считают консервативным вариантом, не alpha = r/2.",
+                "if_it_were_true": "Тогда стандартные конфиги peft не предлагали бы alpha=32 для r=16.",
+                "how_it_should_be": "alpha = 2r — классика; alpha = r — консервативный вариант; обычно используют первое."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Рank нужно подбирать grid-search по 1, 2, 3, ..., 100 на каждой задаче — нет общих рекомендаций",
+              "correct": false,
+              "sections": {
+                "what_actually": "Общие рекомендации есть; полный grid-search избыточен — обычно достаточно 2-3 значения (8/16/32).",
+                "source_of_confusion": "Перенос практик из ML с маленькими моделями (где grid-search дешевле) на дорогую LLM-тренировку.",
+                "if_it_were_true": "Тогда туториалы и paper-репорты не давали бы дефолтных r=16 как baseline.",
+                "how_it_should_be": "Старт с r=16, при плохих метриках попробовать r=32 или r=64; полный grid-search не оправдан по времени."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем SFT отличается от continued pretraining (DAPT)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "SFT и DAPT — это синонимы; различие чисто терминологическое, методология одинаковая",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные режимы с разной целью, данными, форматом и масштабом — терминология не пустая.",
+                "source_of_confusion": "Оба используют next-token loss и AdamW, отсюда впечатление эквивалентности.",
+                "if_it_were_true": "Тогда BloombergGPT и Llama-3-Instruct относились бы к одной категории, но это принципиально разные продукты.",
+                "how_it_should_be": "DAPT — сырой текст в больших объёмах для домена/языка; SFT — instruction/response пары с chat template."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DAPT всегда требует frozen tokenizer, SFT — обязательно его переучивает",
+              "correct": false,
+              "sections": {
+                "what_actually": "В обоих случаях tokenizer чаще всего frozen; переучивание словаря — отдельная редкая процедура.",
+                "source_of_confusion": "Путают расширение vocab (например, для нового языка) с обычным SFT/DAPT.",
+                "if_it_were_true": "Тогда любой SFT ломал бы совместимость с base-токенайзером.",
+                "how_it_should_be": "Tokenizer одинаковый; разница — в данных и формате, а не в vocab."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DAPT — continued pretraining на сыром тексте без chat template (миллиарды токенов, расширение домена/языка); SFT — instruction/response пары с chat template, loss часто только на response",
+              "correct": true,
+              "sections": {
+                "explanation": "DAPT (Domain-Adaptive Pretraining) добавляет знаний/языка через сырой текст в pretraining-режиме; SFT превращает base в instruction-following модель через пары `{instruction, response}` в правильном chat template.",
+                "example": "BloombergGPT — DAPT на финансовом корпусе; Llama-3-Instruct — SFT на демонстрациях с ChatML/Llama-3 форматом, `completion_only_loss=True`.",
+                "when_to_apply": "DAPT — новый язык/узкий домен (медицина, право, код); SFT — добавить instruction-following поверх любой base.",
+                "edge_cases": "В pipeline часто идёт base → DAPT → SFT → preference optimization; пропуск SFT перед DPO часто даёт нестабильность.",
+                "related": "Q12 SFT pipeline, Q13 distillation, Q14 RLHF."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "SFT использует cross-entropy, а DAPT — contrastive loss с negative samples",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба режима используют стандартный next-token cross-entropy; contrastive с negatives — это другие методы (embedding training, DPO).",
+                "source_of_confusion": "Путают категории training objectives.",
+                "if_it_were_true": "Тогда обычный SFTTrainer/Trainer не подходил бы для DAPT — но он используется в обоих.",
+                "how_it_should_be": "Loss одинаковый по форме; различие — в данных, формате и в том, на каких токенах считается."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой компонент критично включать в QLoRA + SFT pipeline на TRL для корректной работы с 4-bit базой?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Принудительно ставить fp32 для всех весов, иначе bitsandbytes не запустится",
+              "correct": false,
+              "sections": {
+                "what_actually": "QLoRA как раз использует NF4 для весов и bf16 для compute; fp32 повсюду убил бы всю экономию памяти.",
+                "source_of_confusion": "Когда-то старые туториалы рекомендовали fp32 для стабильности — для QLoRA это неверно.",
+                "if_it_were_true": "Тогда QLoRA 65B не уместился бы в 48 GB.",
+                "how_it_should_be": "Веса NF4, compute bf16; стабильность достигается paged optimizers и grad clipping."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Установить `bnb_4bit_compute_dtype=torch.float64` для максимальной точности градиентов",
+              "correct": false,
+              "sections": {
+                "what_actually": "Float64 на GPU LLM практически не используется — слишком медленно и нет пользы для QLoRA.",
+                "source_of_confusion": "Двойная точность звучит «точнее», но это инструмент численного анализа, а не LLM-тренировки.",
+                "if_it_were_true": "Тогда производительность QLoRA упала бы в десятки раз, и метод не стал бы стандартом.",
+                "how_it_should_be": "compute_dtype = bf16 или fp16; AdamW в fp32 для optimizer state — этого достаточно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Отключить tokenizer.eos_token, чтобы модель училась генерировать неограниченные ответы",
+              "correct": false,
+              "sections": {
+                "what_actually": "EOS, наоборот, обязателен — без него модель не учится останавливаться, и inference генерирует мусор до max_tokens.",
+                "source_of_confusion": "Идея «длиннее = лучше» неверна; отсутствие EOS — классическая ошибка из Q29.",
+                "if_it_were_true": "Тогда training data не имел бы конца, и loss не различал бы хорошие и плохие концовки.",
+                "how_it_should_be": "EOS обязателен; если pad_token отсутствует — pad_token = eos_token и `labels = -100` для pad-позиций."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Перед обучением вызвать `prepare_model_for_kbit_training(model)`, иначе LoRA градиенты на квантизованной базе будут некорректны",
+              "correct": true,
+              "sections": {
+                "explanation": "`prepare_model_for_kbit_training` из peft включает gradient checkpointing, кастует норм-слои в fp32 и фиксит requires_grad для frozen 4-bit базы — без этого backward не работает как ожидается.",
+                "example": "Стандартный QLoRA SFT: `model = AutoModelForCausalLM.from_pretrained(..., quantization_config=bnb_config); model = prepare_model_for_kbit_training(model); model = get_peft_model(model, lora_config)`.",
+                "when_to_apply": "Всегда при QLoRA или любой 4/8-bit базе с PEFT-адаптером.",
+                "edge_cases": "Если использовать Unsloth, обёртка делает то же самое внутри; вручную вызывать не нужно.",
+                "related": "Q7 QLoRA, Q24 библиотеки, Q26 hyperparameters."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем response distillation отличается от logit distillation для обучения маленькой модели?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Response distillation — учитель генерирует ответы, студент учится на парах `{prompt, teacher_response}` через обычный SFT; logit distillation использует distribution учителя через KL-divergence плюс CE",
+              "correct": true,
+              "sections": {
+                "explanation": "Response distillation — production-friendly: учитель просто сэмплирует ответы, студент тренируется как на обычном SFT-датасете. Logit distillation требует параллельного forward учителя и KL по vocab-distribution: `Loss = α·CE(student, gt) + (1-α)·KL(student||teacher)·T²`.",
+                "example": "DeepSeek-R1-Distill-Qwen-7B/14B/32B — response distillation: учитель R1 нагенерировал reasoning traces, студент обучен на них SFT.",
+                "when_to_apply": "Response distillation — почти всегда в open-source (дёшево, не нужен общий vocab); logit distillation — research или когда есть полный доступ к teacher logits и одинаковый vocab.",
+                "edge_cases": "Если у teacher и student разные tokenizers — logit distillation технически невозможен без алайнмента vocabs.",
+                "related": "Q11 SFT vs DAPT, Q14 RLHF, Q34 open-weight модели."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Response distillation требует общего токенайзера, а logit distillation — нет",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: logit distillation требует общий vocab (иначе KL нельзя посчитать), а response — нет.",
+                "source_of_confusion": "Перепутали направление зависимости от vocab.",
+                "if_it_were_true": "Тогда R1-Distill-Qwen (vocab Qwen, учитель R1 с другим vocab) был бы невозможен — но он работает.",
+                "how_it_should_be": "Response distillation работает на текстовых ответах и не требует общего vocab; logit distillation — требует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это синонимы; разница только в названии в разных paper",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные техники с разной стоимостью и применимостью.",
+                "source_of_confusion": "Оба называют distillation, отсюда впечатление взаимозаменяемости.",
+                "if_it_were_true": "Тогда статьи Hinton (logit) и более новые DeepSeek-Distill (response) описывали бы одно и то же.",
+                "how_it_should_be": "Logit — soft probabilities + KL; response — генерация и SFT по ним; разные методы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Logit distillation быстрее response distillation в 10 раз и поэтому везде используется",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: logit distillation требует параллельного forward teacher на каждом шаге — дороже, а не быстрее.",
+                "source_of_confusion": "«Без генерации = быстрее» — ложная интуиция; teacher forward на каждом токене затратнее, чем заранее сгенерированный датасет.",
+                "if_it_were_true": "Тогда open-source выбрал бы logit distillation, но доминирует response.",
+                "how_it_should_be": "Response — быстрее и дешевле, поэтому он доминирует; logit — выше потенциал качества, но дорого."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен классический RLHF-pipeline (InstructGPT)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один шаг: PPO от base модели сразу на human votes без SFT и reward model",
+              "correct": false,
+              "sections": {
+                "what_actually": "RLHF — три стадии (SFT → RM → PPO); пропуск SFT даёт нестабильность, отсутствие RM делает PPO невозможным.",
+                "source_of_confusion": "Упрощение «RL от человеческих оценок» опускает промежуточные модели.",
+                "if_it_were_true": "Тогда InstructGPT paper описывал бы только один шаг — но он строго трёхшаговый.",
+                "how_it_should_be": "Stage 1 SFT на demonstration, Stage 2 RM на preference pairs, Stage 3 PPO с KL-penalty к reference."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Три стадии: (1) SFT на demonstration data, (2) Reward Model на preference pairs `{prompt, chosen, rejected}`, (3) PPO: policy = SFT, reward = RM, KL-penalty от reference SFT",
+              "correct": true,
+              "sections": {
+                "explanation": "Классический InstructGPT pipeline (Ouyang 2022): сначала SFT превращает base в instruction-following, потом RM учится оценивать ответы (scalar head, loss `-log σ(r_chosen - r_rejected)`), потом PPO оптимизирует policy под reward с KL-penalty к SFT для борьбы с reward hacking.",
+                "example": "GPT-3.5/4, Claude, Gemini — все frontier модели прошли через варианты этого pipeline; open-source активно мигрирует на DPO/GRPO как замену PPO.",
+                "when_to_apply": "Frontier alignment с большим бюджетом и командой; когда нужно максимальное качество и есть инфра.",
+                "edge_cases": "Без KL-penalty модель быстро уезжает в reward hacking — генерирует degenerate ответы с высоким RM-score.",
+                "related": "Q15 DPO, Q16 GRPO, Q19 сравнение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Две стадии: SFT и DPO, без reward model и без RL — это и есть классический RLHF",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание pipeline с DPO, появившегося только в 2023; классический RLHF — про PPO + RM.",
+                "source_of_confusion": "DPO часто называют «RLHF без RL», и это легко перепутать с классическим вариантом.",
+                "if_it_were_true": "Тогда InstructGPT paper 2022 года использовал бы DPO — но DPO появился позже на год.",
+                "how_it_should_be": "Классический RLHF = SFT + RM + PPO; DPO — современная альтернатива, не его определение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Одна стадия GRPO с rule-based verifier — без SFT и preference pairs",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание R1-Zero (DeepSeek 2025), а не классический RLHF; GRPO появился позже PPO и применим к verifiable задачам.",
+                "source_of_confusion": "Свежие новости про R1 заслоняют исторический контекст RLHF.",
+                "if_it_were_true": "Тогда у обычных chat-моделей не было бы преимуществ от human feedback, а они их получают.",
+                "how_it_should_be": "Классический RLHF — SFT + RM + PPO с human preference; GRPO — отдельный современный метод."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему DPO смог заменить PPO для большинства open-source случаев?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DPO заменил neural network на классификатор через градиентный бустинг XGBoost, поэтому проще",
+              "correct": false,
+              "sections": {
+                "what_actually": "DPO работает на тех же transformer-весах через обычный supervised loss; никакого XGBoost.",
+                "source_of_confusion": "Слово «classification loss» в описании DPO вызывает ассоциации с классическим ML.",
+                "if_it_were_true": "Тогда DPOTrainer в TRL не использовал бы PyTorch — но он стандартный transformers-trainer.",
+                "how_it_should_be": "DPO — closed-form переписывание PPO-оптимизации в форму log-likelihood loss на pairs."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DPO требует в 100 раз больше данных, но качество выше, и поэтому он стал стандартом",
+              "correct": false,
+              "sections": {
+                "what_actually": "DPO часто работает на тех же или меньших датасетах, что PPO; преимущество — простота, а не больше данных.",
+                "source_of_confusion": "Путают «лучше» с «больше данных».",
+                "if_it_were_true": "Тогда DPO был бы менее, а не более доступным методом в open-source.",
+                "how_it_should_be": "DPO привлекателен тем, что нет RM и RL — не объёмами данных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Авторы математически вывели, что PPO-задачу можно решить closed-form через classification-loss на preference pairs — нет reward model и нет RL-loop, только policy + frozen reference в памяти",
+              "correct": true,
+              "sections": {
+                "explanation": "Rafailov et al. (2023) показали, что оптимум RLHF-задачи можно выразить через ratio log π_θ/π_ref; loss `-log σ(β·(log ratio_w - log ratio_l))` оптимизирует ту же цель без явной RM. В памяти всего две модели (policy + reference), нет rollouts, тренируется как обычный SFT.",
+                "example": "TRL DPOTrainer на preference dataset (поля prompt/chosen/rejected), `beta=0.1`, `learning_rate=5e-7`, 1 epoch — типичный pipeline для open-source alignment.",
+                "when_to_apply": "Есть pairs `{chosen, rejected}`, нет ресурсов на полный RLHF, не нужны verifiable rewards.",
+                "edge_cases": "LR в DPO значительно меньше SFT (5e-7 vs 2e-4) — иначе модель деградирует от reference; β контролирует жёсткость KL.",
+                "related": "Q14 RLHF, Q16 GRPO, Q17 KTO, Q18 ORPO."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DPO заменяет attention блоки на Mamba, что ускоряет training на 10×",
+              "correct": false,
+              "sections": {
+                "what_actually": "DPO не меняет архитектуру модели — это только новый loss и pipeline.",
+                "source_of_confusion": "Смешали несколько модных терминов 2023-2024 в одно описание.",
+                "if_it_were_true": "Тогда DPO работал бы только с Mamba моделями, а он применяется ко всем стандартным LLM.",
+                "how_it_should_be": "Архитектура любая; меняется только objective и pipeline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем GRPO (DeepSeek) принципиально отличается от PPO и DPO?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "GRPO — это переименованный DPO без новых идей; разница только в маркетинге",
+              "correct": false,
+              "sections": {
+                "what_actually": "GRPO — настоящий RL-метод с rollouts и rule-based reward, отличается от DPO принципиально.",
+                "source_of_confusion": "Оба метода новые и часто упоминаются вместе.",
+                "if_it_were_true": "Тогда GRPOTrainer в TRL не нуждался бы в отдельной реализации с генерацией групп.",
+                "how_it_should_be": "GRPO — RL-метод с группой rollouts и rule-based reward; DPO — closed-form на static pairs."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GRPO заменяет attention на graph neural networks для reasoning",
+              "correct": false,
+              "sections": {
+                "what_actually": "GRPO — RL-метод, никак не связан с GNN или сменой архитектуры.",
+                "source_of_confusion": "Буква «G» в GRPO означает «Group», а не «Graph».",
+                "if_it_were_true": "Тогда R1, тренированный GRPO, имел бы GNN-архитектуру — но это decoder-only transformer.",
+                "how_it_should_be": "GRPO — Group Relative Policy Optimization: RL без value model, advantage из группы rollouts."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "GRPO использует pairwise human preferences вместо rule-based rewards — то же что DPO, но с RL",
+              "correct": false,
+              "sections": {
+                "what_actually": "GRPO как раз про rule-based / verifiable rewards (math correct? code passes tests?), а не про human pairs.",
+                "source_of_confusion": "Путают источники reward в разных методах.",
+                "if_it_were_true": "Тогда R1 не показывал бы emergent reasoning — он получает сигнал именно от correctness, а не от judge.",
+                "how_it_should_be": "GRPO работает там, где есть verifiable answers; pairs — это DPO/KTO."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "GRPO не использует value model: для каждого prompt сэмплируется группа из G=4-16 ответов, reward даёт rule-based verifier, advantage = (r_i - mean) / std в группе; дешевле PPO на ~50%, работает только на verifiable tasks (math, code, logic)",
+              "correct": true,
+              "sections": {
+                "explanation": "Group Relative Policy Optimization экономит на value model (главный источник нестабильности PPO) за счёт нормализации reward внутри группы rollouts; verifier ground-truth блокирует reward hacking; в R1-Zero (DeepSeek 2025) GRPO дал emergent long-CoT reasoning без SFT.",
+                "example": "TRL GRPOTrainer: `reward_func` возвращает 1.0/0.0 для каждого completion; `num_generations=8`, `beta=0.04`, `learning_rate=1e-6`.",
+                "when_to_apply": "Reasoning, math, code, любая задача с verifiable ground truth; когда нужен emergent CoT.",
+                "edge_cases": "На noisy reward (LLM-judge) GRPO нестабилен; нужно много rollouts (G ответов на каждый prompt) — дорого по compute.",
+                "related": "Q14 RLHF/PPO, Q15 DPO, Q19 сравнительная таблица."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каком сценарии разумно выбрать KTO вместо DPO?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Когда есть production-логи с binary thumbs up/down per response, и нет ресурсов конвертировать их в pairs `{chosen, rejected}`",
+              "correct": true,
+              "sections": {
+                "explanation": "KTO (Kahneman-Tversky Optimization, 2024) работает на binary labels `{desirable, undesirable}` вместо preference pairs; основан на prospect-theory utility и устойчив к несбалансированным датасетам через `λ_w, λ_l`.",
+                "example": "Чат-ассистент в продакшне собирает thumbs up/down на каждый ответ; KTOTrainer в TRL принимает датасет с полями `prompt`, `completion`, `label`.",
+                "when_to_apply": "Есть per-response рейтинги без пары; имбаланс хороших/плохих; нет ресурсов аннотировать pairs.",
+                "edge_cases": "Если у вас уже есть pairs — DPO обычно проще и так же хорош; KTO даёт выигрыш именно при отсутствии пар.",
+                "related": "Q15 DPO, Q18 ORPO, Q19 сравнение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Когда нужны verifiable rewards для math/code, и хочется emergent reasoning",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для verifiable rewards и emergent reasoning используется GRPO, а не KTO.",
+                "source_of_confusion": "Путают категории методов: KTO про binary preference, GRPO про rule-based RL.",
+                "if_it_were_true": "Тогда R1 был бы тренирован KTO, но в paper явно указано GRPO.",
+                "how_it_should_be": "Verifiable rewards → GRPO; binary preferences → KTO."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Когда нужно полностью убрать reference model из памяти",
+              "correct": false,
+              "sections": {
+                "what_actually": "KTO сохраняет reference model для KL-control; убирает её ORPO, а не KTO.",
+                "source_of_confusion": "Путают мотивацию ORPO («один шаг без reference») с KTO.",
+                "if_it_were_true": "Тогда KTO потреблял бы столько же памяти, сколько SFT — но он сопоставим с DPO.",
+                "how_it_should_be": "Без reference model → ORPO; binary labels → KTO."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Когда нужно дообучать на сыром тексте без instruction format",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сырой текст без instruction format — это continued pretraining (DAPT), KTO не для этого.",
+                "source_of_confusion": "Смешивают разные стадии training pipeline.",
+                "if_it_were_true": "Тогда KTOTrainer принимал бы plain text dataset — но он требует prompt/completion/label.",
+                "how_it_should_be": "Сырой текст → DAPT; preference/label-based → KTO/DPO/ORPO."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Главная особенность ORPO по сравнению с DPO?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ORPO требует двух моделей в памяти, как DPO, но даёт лучшее качество",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главный смысл ORPO — наоборот, отсутствие reference model и объединение SFT с preference в один loss.",
+                "source_of_confusion": "Запоминают, что ORPO «как DPO», и забывают про ключевое отличие.",
+                "if_it_were_true": "Тогда у ORPO не было бы преимущества по памяти, и зачем тогда новый метод.",
+                "how_it_should_be": "ORPO: нет reference model, один шаг обучения (SFT + odds ratio в одном loss)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ORPO объединяет SFT и DPO в один loss: `L = L_SFT(chosen) + λ·L_OR`, не требует отдельной SFT-стадии и не требует reference model — меньше памяти и шагов",
+              "correct": true,
+              "sections": {
+                "explanation": "Odds Ratio Preference Optimization (Hong et al. 2024) добавляет к стандартному SFT-loss на chosen ещё член `-log σ(log odds(y_w|x) - log odds(y_l|x))`; обходится без reference модели и предварительной SFT-стадии.",
+                "example": "Для команды с ограниченным compute: ORPOTrainer берёт base модель и preference dataset, выдаёт aligned-model одним train run.",
+                "when_to_apply": "Минимум compute, хочется попробовать one-shot alignment без отдельной SFT-стадии.",
+                "edge_cases": "Меньше control: нельзя отдельно подстроить SFT и preference alignment; в production менее проверен, чем DPO.",
+                "related": "Q15 DPO, Q17 KTO, Q19 сравнение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ORPO использует rule-based verifier как GRPO, но без RL",
+              "correct": false,
+              "sections": {
+                "what_actually": "ORPO работает на preference pairs `{chosen, rejected}`, не на verifier.",
+                "source_of_confusion": "Смешивают разные источники сигнала в alignment-методах.",
+                "if_it_were_true": "Тогда ORPO применялся бы к math/code задачам, но он позиционируется как замена DPO/SFT.",
+                "how_it_should_be": "Verifier → GRPO; pairs + одноступенчатость → ORPO."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ORPO требует pretraining с нуля на gigabytes текста",
+              "correct": false,
+              "sections": {
+                "what_actually": "ORPO работает поверх pretrained base модели; никакого pretraining с нуля.",
+                "source_of_confusion": "Смешивают alignment с pretraining/DAPT.",
+                "if_it_were_true": "Тогда ни одна команда без датацентра не могла бы использовать ORPO — но он популярен в open-source.",
+                "how_it_should_be": "ORPO — alignment поверх готовой base; ресурсы сопоставимы с DPO."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Для задачи alignment с verifiable math-датасетом и без preference pairs — какой метод правильно выбрать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Классический RLHF (PPO) с собранной reward model — это единственный способ",
+              "correct": false,
+              "sections": {
+                "what_actually": "PPO применим, но требует RM и инфраструктуры RL; для verifiable задач есть более простой и дешёвый GRPO.",
+                "source_of_confusion": "По привычке считают PPO универсальным.",
+                "if_it_were_true": "Тогда DeepSeek не выпустил бы R1 на GRPO — это было сознательное упрощение pipeline.",
+                "how_it_should_be": "Для verifiable rewards и без pairs — GRPO; PPO остаётся для frontier-команд."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DPO с искусственно собранными pairs из чужой модели",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если уже есть verifier (math correctness), собирать суррогатные pairs — лишний шаг и потеря сигнала.",
+                "source_of_confusion": "DPO привычен и кажется самым простым решением.",
+                "if_it_were_true": "Тогда R1-Zero, обученный без SFT и без pairs, не был бы возможен.",
+                "how_it_should_be": "При наличии verifier — использовать его напрямую через GRPO."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "GRPO: rule-based verifier даёт reward 1.0/0.0 для каждого rollout, advantage нормализуется внутри группы, без value model и без preference pairs",
+              "correct": true,
+              "sections": {
+                "explanation": "GRPO специально создан для задач с verifiable rewards: math (правильный ответ), code (тесты проходят), logic; не нужны pairs, не нужна RM, не нужна value model.",
+                "example": "DeepSeek-R1 / R1-Zero обучены GRPO на math/code задачах с rule-based verifier; результат — emergent long-CoT и reasoning-уровень frontier.",
+                "when_to_apply": "Есть verifiable answers; хочется emergent reasoning или максимальное использование сигнала correctness.",
+                "edge_cases": "Нужно много rollouts (G ответов на каждый prompt) → дорого по compute; на noisy reward (LLM-judge) нестабилен.",
+                "related": "Q14 PPO, Q15 DPO, Q16 GRPO, Q34 open-weight base."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ORPO с пустыми rejected-ответами — он работает на binary",
+              "correct": false,
+              "sections": {
+                "what_actually": "ORPO требует и chosen, и rejected; binary labels — это KTO, не ORPO.",
+                "source_of_confusion": "Смешивают KTO (binary) и ORPO (pairs без reference).",
+                "if_it_were_true": "Тогда ORPOTrainer не требовал бы поля `rejected` в датасете.",
+                "how_it_should_be": "Для binary — KTO; для verifier — GRPO; ORPO — для pairs без reference."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие best practices при подготовке открытых SFT-датасетов (Alpaca, UltraChat, OpenOrca и т.п.)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Брать максимально большой датасет без фильтрации — больше данных всегда лучше",
+              "correct": false,
+              "sections": {
+                "what_actually": "LIMA-эффект и опыт Tulu-3 показали: 1-2K качественных примеров часто бьют 100K шумных.",
+                "source_of_confusion": "Интуиция «больше данных = лучше» из классического ML переоценивается в SFT-сценарии.",
+                "if_it_were_true": "Тогда не было бы курированных датасетов типа Tulu-3-SFT-Mixture, LIMA, No Robots.",
+                "how_it_should_be": "Фильтровать качество, дедуплицировать, декантаминировать против eval, миксовать домены."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Полагаться только на Alpaca — он покрывает все use case",
+              "correct": false,
+              "sections": {
+                "what_actually": "Alpaca — research-only лицензия (OpenAI ToS), один генератор (GPT-3.5), узкий стиль — не универсален.",
+                "source_of_confusion": "Alpaca стал известным благодаря Stanford, и его часто упоминают как «дефолт».",
+                "if_it_were_true": "Тогда не появлялись бы UltraChat, OpenOrca, Tulu — но они активно используются.",
+                "how_it_should_be": "Миксовать разные источники, учитывать лицензии (Alpaca нельзя в commercial)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать только chat-templates исходных моделей без переписывания",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, нужен format-cast: все примеры приведены к одному chat template целевой модели.",
+                "source_of_confusion": "«Не трогать оригинал» звучит как best practice, но не для SFT.",
+                "if_it_were_true": "Тогда модель видела бы несколько форматов в обучении и путалась.",
+                "how_it_should_be": "Format-cast в единый chat template (ChatML/Llama-3/Mistral) — обязательно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Mix разнородных датасетов (general + code + math + multilingual); decontaminate против eval benchmarks (MMLU, GSM8K); deduplicate (exact + minhash near-dup); фильтровать качество; format-cast в единый chat template",
+              "correct": true,
+              "sections": {
+                "explanation": "Качество > количество, разнообразие, чистота против test set, отсутствие дублей и единый формат — это базовые правила построения SFT-датасета 2024-2026; их нарушение даёт inflated benchmarks и unstable модели.",
+                "example": "Tulu-3-SFT-Mixture от Allen AI: ~1M примеров, mix general/math/code/multilingual, ручная декантаминация против ключевых eval; стабильно даёт сильные SFT-модели.",
+                "when_to_apply": "Любая подготовка SFT-датасета для open-source FT.",
+                "edge_cases": "Для домена (code, math, медицина) дополнительно добавлять domain-specific data: CodeAlpaca, MetaMathQA, Magicoder.",
+                "related": "Q21 preference datasets, Q22 chat templates, Q23 LIMA."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой способ собрать preference dataset наиболее быстрый, если нет ресурсов на human annotation?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "LLM-as-judge: две модели генерируют ответы, GPT-4 или Claude судит → pair `{better, worse}`; альтернатива — sample 2-4 ответа с разными temperatures и judge внутри",
+              "correct": true,
+              "sections": {
+                "explanation": "Это стандартный bootstrap-способ: ультра-дёшево, можно собрать тысячи пар за часы; качество не идеально, но достаточно для базового alignment.",
+                "example": "UltraFeedback (64K) построен GPT-4 judge на ответах 17 моделей; Nectar — GPT-4 rankings на 183K.",
+                "when_to_apply": "Стартап без бюджета на human annotation; быстрый прототип DPO.",
+                "edge_cases": "Judge может вносить bias (предпочитать длинные/уверенные ответы); полезен mix LLM-judge + human spot-check.",
+                "related": "Q20 SFT datasets, Q22 chat templates, Q27 evaluation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нанимать 100 fulltime annotators минимум на 3 месяца — без этого pairs невалидны",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это путь Anthropic HH-RLHF — мощный, но дорогой; open-source community давно использует LLM-judge для bootstrap.",
+                "source_of_confusion": "Перенос практик frontier-лабораторий на стартапы без поправки на масштаб.",
+                "if_it_were_true": "Тогда не существовали бы UltraFeedback, Nectar, Argilla DPO-mix и тысячи open-source DPO-моделей.",
+                "how_it_should_be": "Human annotation — для финальной верификации; bootstrap — через LLM-judge или existing public datasets."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать только thumbs up/down логи продакшна, и обязательно DPOTrainer",
+              "correct": false,
+              "sections": {
+                "what_actually": "Binary thumbs — это входной формат для KTO, а не DPO; DPO требует именно pairs.",
+                "source_of_confusion": "Путают входные форматы DPO (pairs) и KTO (binary).",
+                "if_it_were_true": "Тогда DPOTrainer принимал бы поле `label` вместо `chosen`/`rejected`.",
+                "how_it_should_be": "Binary → KTO; pairs → DPO; LLM-judge — способ получить pairs без human."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Брать любые pairs из публичных датасетов без декантаминации против eval benchmarks",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без decontamination test-данные могут протечь в train → inflated metrics, скрытая регрессия.",
+                "source_of_confusion": "Удобно «качать и тренировать», но это типичный source of bug в open-source LLMs.",
+                "if_it_were_true": "Тогда benchmark-результаты open-source моделей были бы надёжными, но они часто оспариваются именно из-за contamination.",
+                "how_it_should_be": "Всегда декантаминировать через n-gram match или minhash против MMLU/GSM8K/HumanEval."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему ошибка в chat template — одна из самых распространённых причин «модель пишет мусор» после fine-tune?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Chat template влияет только на форматирование вывода, но не на качество",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chat template — это сигнал, по которому модель определяет, где начинается её ход; неверный формат ломает базовые свойства модели.",
+                "source_of_confusion": "Воспринимают template как косметику, а не как часть протокола.",
+                "if_it_were_true": "Тогда смена формата не вызывала бы регрессий — но они хорошо задокументированы.",
+                "how_it_should_be": "Template — критическая часть SFT; несовпадение разрушает модель."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Модель не знает, где её ход начинается, не генерирует EOS, путает роли, ломает tool/function calls; решение — `tokenizer.apply_chat_template(messages)` и единый формат целевой модели (ChatML/Llama-3/Mistral)",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая модель ожидает свой формат: ChatML с `<|im_start|>/<|im_end|>` (Qwen, OpenAI), Llama-3 с `<|begin_of_text|>/<|start_header_id|>/<|eot_id|>`, Mistral с `[INST]/[/INST]`; рассинхрон между training-данными и runtime-инференсом ломает поведение полностью.",
+                "example": "Если обучить Llama-3 на ChatML-данных, на инференсе с Llama-3 template модель не будет находить eot_id и будет генерить до max_tokens.",
+                "when_to_apply": "Всегда: при подготовке датасета и при инференсе использовать `tokenizer.apply_chat_template`.",
+                "edge_cases": "После tokenizer-update HF могут меняться шаблоны; полезно протестировать `tokenizer.apply_chat_template([...], tokenize=False)` перед train.",
+                "related": "Q12 SFT pipeline, Q29 топ ошибок, Q31 deployment."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Chat template — это устаревший концепт, современные модели работают на любом тексте",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современные instruct-модели наоборот сильнее зависят от своего chat template — они обучены именно на нём.",
+                "source_of_confusion": "Путают base модель (без template) с instruct моделью (требует template).",
+                "if_it_were_true": "Тогда HuggingFace tokenizers не хранили бы `chat_template` jinja в metadata.",
+                "how_it_should_be": "Instruct модели — строго свой template; base — без template."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно вручную дописать `<system>...</system><user>...</user>` — формат един для всех моделей",
+              "correct": false,
+              "sections": {
+                "what_actually": "Универсального формата нет — у каждого семейства свой набор spec tokens.",
+                "source_of_confusion": "Псевдо-XML выглядит «универсально», но не соответствует ни одному реальному chat template.",
+                "if_it_were_true": "Тогда `tokenizer.apply_chat_template` не нужен был бы — но он есть и используется везде.",
+                "how_it_should_be": "Использовать tokenizer-специфичный template; не строить вручную."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Главный вывод работы LIMA (Less Is More for Alignment)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чем больше данных — тем лучше alignment, минимум 1M примеров",
+              "correct": false,
+              "sections": {
+                "what_actually": "LIMA утверждает обратное: 1000 высококачественных примеров дают alignment сравнимый с 50K синтетических.",
+                "source_of_confusion": "Перенос «больше = лучше» из других областей ML.",
+                "if_it_were_true": "Тогда работа называлась бы «More Is More», а не «Less Is More».",
+                "how_it_should_be": "Качество и diversity важнее количества; ~1K курированных примеров — рабочая точка."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Alignment вообще не нужен — base модели и так умеют чат",
+              "correct": false,
+              "sections": {
+                "what_actually": "LIMA не отрицает alignment — она утверждает, что для него нужно мало данных, не что он не нужен.",
+                "source_of_confusion": "Радикальное упрощение тезиса «мало данных» до «совсем не нужно».",
+                "if_it_were_true": "Тогда LIMA-paper описывала бы base модели без SFT — но она про SFT на 1K примеров.",
+                "how_it_should_be": "Alignment нужен; но малый объём высококачественных примеров достаточен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pretrained model уже «знает» — alignment лишь показывает формат; 1000 высококачественных примеров дают alignment сравнимый с 50K синтетических; качество и diversity важнее количества",
+              "correct": true,
+              "sections": {
+                "explanation": "Zhou et al. (Meta 2023) показали, что после качественного pretraining основные знания и способности уже в модели; SFT показывает формат ответа; 1K хорошо подобранных примеров (diverse, многозадачных) достаточны для конкурентного instruct-режима.",
+                "example": "LIMA-датасет — 1000 ручно отобранных примеров; модель после SFT на нём конкурировала с alignment на 50K синтетических.",
+                "when_to_apply": "Старт нового FT-проекта: лучше потратить время на 500-2000 hand-crafted, чем на 100K шумных.",
+                "edge_cases": "Для узкого домена с уникальной терминологией всё же нужны тысячи domain-specific примеров; LIMA-эффект про general instruction-following.",
+                "related": "Q20 SFT datasets, Q27 evaluation, Q29 топ ошибок."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Single-task fine-tuning всегда лучше multi-task; нужно отдельный fine-tune на каждую задачу",
+              "correct": false,
+              "sections": {
+                "what_actually": "LIMA не про single-task vs multi-task; она про объём данных и качество.",
+                "source_of_confusion": "Путают сообщения разных paper.",
+                "if_it_were_true": "Тогда multi-task instruction tuning не работал бы — но он успешен (FLAN, T0, Tulu).",
+                "how_it_should_be": "Multi-task SFT работает; LIMA про объём и качество, не про single vs multi."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую главную выгоду даёт Unsloth по сравнению с чистым transformers+TRL+PEFT?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Unsloth заменяет PyTorch на TensorFlow, что даёт прирост скорости",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unsloth написан поверх PyTorch и использует Triton для custom kernels; никакого TF.",
+                "source_of_confusion": "Любые «ускорения» иногда ассоциируются со сменой framework.",
+                "if_it_were_true": "Тогда Unsloth был бы несовместим с HF transformers — а он интегрирован.",
+                "how_it_should_be": "Unsloth = PyTorch + Triton-kernels; framework тот же, оптимизированы критические пути."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Unsloth поддерживает только Llama-1 модели",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unsloth поддерживает Llama 2/3/3.1, Mistral, Gemma, Qwen, Phi — широкий список.",
+                "source_of_confusion": "Возможно, путают с историей раннего пре-релиза.",
+                "if_it_were_true": "Тогда Unsloth никто бы не использовал в 2024-2026.",
+                "how_it_should_be": "Поддержка широкая; ограничения касаются скорее multi-GPU (платный Pro)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Unsloth автоматически собирает датасет из интернета без участия пользователя",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unsloth — библиотека тренировки/инференса; сбор датасетов — отдельная задача и инструменты.",
+                "source_of_confusion": "Высокоуровневая обёртка ассоциируется с «всё автоматически».",
+                "if_it_were_true": "Тогда не нужны были бы датасет-инструменты HF и кастомные пайплайны.",
+                "how_it_should_be": "Unsloth ускоряет training/inference; данные готовите сами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Custom Triton kernels для LoRA/QLoRA дают ~2-5× скорости обучения и ~70% меньше VRAM при том же качестве; интегрируется с TRL SFTTrainer как drop-in замена",
+              "correct": true,
+              "sections": {
+                "explanation": "Unsloth написал оптимизированные kernels для критических операций (LoRA forward/backward, RoPE, RMSNorm), что радикально сокращает время и VRAM; качество идентично стандартному pipeline.",
+                "example": "`from unsloth import FastLanguageModel; model, tokenizer = FastLanguageModel.from_pretrained('unsloth/Meta-Llama-3.1-8B', load_in_4bit=True)`; дальше обычный SFTTrainer.",
+                "when_to_apply": "Когда хочется быстрее тренировать на 1 GPU (Colab, локальная 4090); QLoRA на 7B-13B.",
+                "edge_cases": "Multi-GPU в free open-source ограничен — для distributed нужен Unsloth Pro или fallback на FSDP/DeepSpeed.",
+                "related": "Q12 SFT pipeline, Q25 hardware, Q26 hyperparameters."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое железо реально нужно для QLoRA SFT 7B / 70B моделей?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "7B QLoRA: ~10 GB VRAM (RTX 3090/4090 24 GB); 70B QLoRA: ~46 GB VRAM (одна A100 80GB)",
+              "correct": true,
+              "sections": {
+                "explanation": "QLoRA (NF4 + double quant) ужимает frozen base в 4 раза, а LoRA-адаптеры легки; для seq_len=2048 и batch=4 7B QLoRA вмещается в потребительскую 24GB карту, а 70B — в одну datacenter 80GB карту.",
+                "example": "Llama-3-8B QLoRA на RTX 4090 ~2-4 часа на 10K примеров; Llama-3-70B QLoRA на A100 80GB ~24-48 часов на 50K.",
+                "when_to_apply": "Прикидывая бюджет/железо под FT-проект.",
+                "edge_cases": "Длинные seq_len (8K+) и большой batch резко поднимают VRAM от activations; gradient checkpointing помогает.",
+                "related": "Q4 full FT cost, Q7 QLoRA, Q26 hyperparameters."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "7B QLoRA требует минимум 8×A100, 70B — целый датацентр",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это цифры для FULL fine-tune; QLoRA на порядок дешевле.",
+                "source_of_confusion": "Путают full FT и QLoRA по требованиям.",
+                "if_it_were_true": "Тогда народные туториалы про «QLoRA на одной 4090» были бы невозможны.",
+                "how_it_should_be": "QLoRA 7B → 24GB consumer; QLoRA 70B → одна 80GB datacenter."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "QLoRA работает только на CPU и не использует GPU вовсе",
+              "correct": false,
+              "sections": {
+                "what_actually": "QLoRA требует GPU с CUDA; bitsandbytes NF4 — это GPU-операции, paged optimizers используют unified GPU+CPU память.",
+                "source_of_confusion": "Путают с llama.cpp / GGUF inference на CPU (это другое).",
+                "if_it_were_true": "Тогда тренировка занимала бы недели на 7B и месяцы на 70B.",
+                "how_it_should_be": "GPU обязателен; CPU участвует только как backup для paged optimizer state."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для любой модели нужна ровно одна RTX 3060 12 GB",
+              "correct": false,
+              "sections": {
+                "what_actually": "12 GB хватит на 7B QLoRA с малым batch и коротким seq_len, но не на 13B/34B/70B.",
+                "source_of_confusion": "Желаемое за действительное.",
+                "if_it_were_true": "Тогда 70B QLoRA работала бы на RTX 3060 — но 70B base в NF4 ~35 GB.",
+                "how_it_should_be": "Размер VRAM зависит от модели: 7B → 24GB; 13B → 24GB; 34B → 40-48GB; 70B → 80GB."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему learning rate для DPO нужно ставить значительно меньше, чем для SFT?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DPO быстрее сходится, поэтому экономим compute через малый LR",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дело не в скорости сходимости, а в том, что DPO легко «уезжает» от reference и деградирует.",
+                "source_of_confusion": "Связывают LR со скоростью без учёта рисков.",
+                "if_it_were_true": "Тогда DPO с большим LR давал бы быстрый и хороший результат — а на практике он ломает модель.",
+                "how_it_should_be": "Малый LR (5e-7 — 5e-6) удерживает policy близко к reference, не давая reward-hacking-подобного развала."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DPO loss оптимизирует разность log-prob chosen/rejected, и при большом LR модель быстро деградирует от reference (катастрофическая регрессия); типичные значения 5e-7 — 5e-6 vs SFT 1e-4 — 5e-4",
+              "correct": true,
+              "sections": {
+                "explanation": "В DPO нет explicit KL-clipping как в PPO; β контролирует жёсткость KL, но при больших градиентных шагах policy уходит от reference, и поведение сильно ухудшается (output становится длинным, странным, шаблонным).",
+                "example": "Если на DPO поставить LR 2e-4 как в SFT, через 100-200 шагов eval-метрики катастрофически падают; стандарт — 5e-7, beta=0.1, 1 epoch.",
+                "when_to_apply": "Все DPO/IPO/KTO-runs — стартовать с очень малого LR; sanity-check на eval каждые N шагов.",
+                "edge_cases": "Если reference и policy расходятся слишком быстро — снизить LR ещё, или увеличить β; cosine scheduler помогает.",
+                "related": "Q15 DPO, Q19 сравнение, Q27 evaluation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DPO требует больших LR (1e-3+), потому что это RL-метод",
+              "correct": false,
+              "sections": {
+                "what_actually": "DPO — не RL и требует МЕНЬШИХ LR, чем SFT.",
+                "source_of_confusion": "Ассоциация «RL → большие LR» неверна и для DPO (не RL), и для самих RL-методов (обычно тоже малые).",
+                "if_it_were_true": "Тогда стандартные DPO-конфиги в TRL и Axolotl выдавали бы 1e-3 — но это 5e-7.",
+                "how_it_should_be": "DPO LR ~5e-7 — 5e-6, значительно меньше SFT."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "LR для DPO определяется только размером модели и не имеет смысла его варьировать",
+              "correct": false,
+              "sections": {
+                "what_actually": "LR — главный hyperparameter DPO и его обязательно тюнят; зависит от модели, β, датасета.",
+                "source_of_confusion": "Желание иметь «один правильный LR» противоречит практике.",
+                "if_it_were_true": "Тогда туториалы не публиковали бы рекомендации по LR на разных моделях.",
+                "how_it_should_be": "LR — главный hyperparameter; стартовать с 5e-7 и подгонять по eval."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой подход к оценке качества fine-tuned модели наиболее полный?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно train loss — если он падает, модель хорошая",
+              "correct": false,
+              "sections": {
+                "what_actually": "Падающий train loss может означать overfitting; качество мерят на held-out и task-specific benchmarks.",
+                "source_of_confusion": "Train loss — простая метрика, легко обманывает.",
+                "if_it_were_true": "Тогда модели с минимальным train loss всегда бы лидировали — но они часто перегружены примерами.",
+                "how_it_should_be": "Train loss — только индикатор сходимости; качество — held-out + task benchmarks + judge + human."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только MMLU — он покрывает все знания",
+              "correct": false,
+              "sections": {
+                "what_actually": "MMLU — общий benchmark знаний, но не покрывает code, math, reasoning, chat-quality, safety.",
+                "source_of_confusion": "MMLU стал самым цитируемым числом и иногда воспринимается как «универсальный».",
+                "if_it_were_true": "Тогда не было бы HumanEval, GSM8K, MT-Bench, AlpacaEval — но это стандартные дополнения.",
+                "how_it_should_be": "Многомерный eval: MMLU + GSM8K + HumanEval + MT-Bench + domain + safety."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Многоуровневая оценка: held-out loss/perplexity + task-specific benchmarks (MMLU, GSM8K, HumanEval, MT-Bench) + domain golden set + LLM-as-judge + human eval + catastrophic forgetting check + safety/red-teaming",
+              "correct": true,
+              "sections": {
+                "explanation": "Ни одна метрика не покрывает всех аспектов; production-ready evaluation сочетает быстрые автоматические метрики (loss, benchmarks), domain-specific тесты, LLM-judge и человеческую проверку, плюс regression-тест на general capabilities и safety.",
+                "example": "Tulu-3 evaluation suite от AI2 включает 10+ benchmarks; команда дополняет своими golden set 500-1000 примеров и MT-Bench/AlpacaEval-2 для chat.",
+                "when_to_apply": "Любой serious FT-проект; даже стартап должен иметь хотя бы golden set + 1-2 benchmark + judge.",
+                "edge_cases": "LLM-as-judge subjective и biased; human eval — gold standard, но дорогой и медленный; safety/red-teaming нельзя пропускать.",
+                "related": "Q28 catastrophic forgetting, Q29 топ ошибок, Q21 preference datasets."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только GPT-4 в роли judge — он всегда даёт правильные оценки",
+              "correct": false,
+              "sections": {
+                "what_actually": "GPT-4 judge subjective, biased (предпочитает длинные/уверенные ответы), и не годится как единственный источник истины.",
+                "source_of_confusion": "Удобство «один вызов API дал число» делает judge популярным, но это не gold standard.",
+                "if_it_were_true": "Тогда human evaluation давно перестали бы делать, но она остаётся стандартом для критичных задач.",
+                "how_it_should_be": "LLM-as-judge — один из источников; обязательно сочетать с benchmarks, golden set и human spot-checks."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обнаружить и митигировать catastrophic forgetting после fine-tune?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Никак — это неизбежное явление, ничего не сделать",
+              "correct": false,
+              "sections": {
+                "what_actually": "Forgetting обнаруживается прогоном general benchmarks до/после и контролируется набором практик.",
+                "source_of_confusion": "Драматизация явления до фатальности.",
+                "if_it_were_true": "Тогда все open-source FT-модели регрессировали бы и были бы непригодны — но многие из них сохраняют MMLU/HellaSwag.",
+                "how_it_should_be": "Mix general data, lower LR, меньше epochs, LoRA вместо full FT, adapter switching."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать только full FT — он не страдает forgetting",
+              "correct": false,
+              "sections": {
+                "what_actually": "Full FT — классический источник forgetting; LoRA как раз помогает, потому что base заморожена.",
+                "source_of_confusion": "Перепутали направление зависимости (full FT хуже, не лучше).",
+                "if_it_were_true": "Тогда LoRA не упоминалась бы как смягчающая мера.",
+                "how_it_should_be": "LoRA с adapter switching снижает forgetting; full FT — высокий риск."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Просто увеличить epochs до 20+ — модель «доучится» обратно",
+              "correct": false,
+              "sections": {
+                "what_actually": "Больше epochs усиливают forgetting и overfitting, а не лечат.",
+                "source_of_confusion": "Идея «больше тренировки = лучше» противоречит правилу «epochs ≤ 3» в SFT.",
+                "if_it_were_true": "Тогда стандартом был бы 20-epoch SFT, но это редкая практика и обычно catastrophic.",
+                "how_it_should_be": "Меньше epochs, не больше; лекарство — в данных и регуляризации, не во времени."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обнаружение: прогон general benchmarks (MMLU, HellaSwag, ARC) до и после FT, drop >5% = проблема. Митигация: mix 10-30% generic instruction data, lower LR (1e-5 вместо 5e-5), меньше epochs, LoRA вместо full FT, adapter switching, replay buffer, EWC",
+              "correct": true,
+              "sections": {
+                "explanation": "Forgetting — измеримое явление; набор техник позволяет его минимизировать без отказа от FT.",
+                "example": "Domain-adapted модель на 100K медицинских примеров с 30% mix Tulu/UltraChat сохраняет MMLU в пределах 1-2% от base; без mix теряет 5-10%.",
+                "when_to_apply": "Любой domain FT; особенно при узких доменах, новых языках, многоэпохных runs.",
+                "edge_cases": "Language drift (English → Russian) лечится bilingual mix 50/50; adapter switching не сработает, если адаптер вмержен в base.",
+                "related": "Q4 full FT, Q9 LoRA target, Q23 LIMA, Q29 топ ошибок."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие топ-5 типичных ошибок при fine-tuning?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Неправильный chat template; mismatched tokenizer (Llama-2 tokenizer для Llama-3); тренировка на маленьком датасете → overfitting; catastrophic forgetting без проверки; забытый EOS token или неверная labels mask → бесконечный output",
+              "correct": true,
+              "sections": {
+                "explanation": "Это пять самых частых причин, по которым «у меня модель пишет мусор» в open-source FT-проектах; каждый из них имеет конкретное лекарство и проверку.",
+                "example": "Симптом «модель не останавливается на inference» в 80% случаев — забыли EOS или поставили pad_token=0 без mask; лекарство `tokenizer.pad_token = tokenizer.eos_token` плюс корректные labels.",
+                "when_to_apply": "Pre-flight checklist перед запуском любого FT.",
+                "edge_cases": "Бонус-ошибки: data leakage train/eval, `completion_only_loss=False` (модель учится переписывать вопросы), `save_strategy='no'` + crash → потеря тренировки.",
+                "related": "Q12 SFT pipeline, Q22 chat templates, Q28 forgetting."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использование bf16 вместо fp32 на A100 — это всегда главная ошибка",
+              "correct": false,
+              "sections": {
+                "what_actually": "bf16 на A100/H100 — стандарт и часто лучше fp16; не ошибка, а рекомендация.",
+                "source_of_confusion": "Старые рекомендации про fp32 переносят на современные карты с native bf16.",
+                "if_it_were_true": "Тогда `bf16=True` не было бы дефолтом в SFTConfig/TrainingArguments.",
+                "how_it_should_be": "bf16 — стандарт на A100/H100; fp16 — на старых GPU; fp32 — для критической стабильности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использование `peft` библиотеки — она устарела и ломает модель",
+              "correct": false,
+              "sections": {
+                "what_actually": "peft — официальная и активно поддерживаемая HF библиотека для PEFT-методов.",
+                "source_of_confusion": "Слышали про неполадки в early-versions и перенесли на современную.",
+                "if_it_were_true": "Тогда TRL и Axolotl не использовали бы peft как зависимость — а они используют.",
+                "how_it_should_be": "peft — стандарт; обновляйтесь до последней версии для bug fixes."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Применение QLoRA вместо full FT — это основной источник bugs",
+              "correct": false,
+              "sections": {
+                "what_actually": "QLoRA — рабочая и широко используемая техника; не источник bugs сам по себе.",
+                "source_of_confusion": "Сложность setup (NF4, double quant, paged) иногда даёт ложное чувство «много мест для ошибок».",
+                "if_it_were_true": "Тогда open-source FT экосистема не использовала бы QLoRA как дефолт.",
+                "how_it_should_be": "QLoRA стабилен; типичные ошибки FT — в данных, template и hyperparameters, а не в самом методе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой метод model merging стоит выбрать, если у вас 4 fine-tuned модели на разных задачах от одной base, и хочется одну общую?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Linear average — он всегда оптимален для любых моделей",
+              "correct": false,
+              "sections": {
+                "what_actually": "Linear average работает только когда модели очень близки; для разных задач он усредняет конфликтующие изменения и теряет качество.",
+                "source_of_confusion": "Простота linear average создаёт иллюзию универсальности.",
+                "if_it_were_true": "Тогда не появились бы TIES, DARE, Task Arithmetic — они решают именно проблемы linear.",
+                "how_it_should_be": "Для multi-task — TIES или DARE; linear только для близких runs (model soups)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "TIES (Trim small changes + Elect sign + Disjoint merge) или DARE (Drop and Rescale) — оба специально решают конфликт между моделями: TIES обнуляет малые дельты и выбирает доминирующий знак, DARE случайно зануляет 50-90% дельт и rescales остальное; работают только если модели от ОДНОЙ base",
+              "correct": true,
+              "sections": {
+                "explanation": "TIES (Yadav 2023) и DARE (Yu 2024) — стандарт для merge нескольких моделей разных задач; они снимают деструктивную интерференцию через sparsification и resolution знаков; mergekit делает их декларативно через YAML.",
+                "example": "Merge code-specialist + math-specialist + chat-tuned в одну модель через mergekit с методом TIES; результат сохраняет способности всех трёх лучше, чем linear average.",
+                "when_to_apply": "Multiple models разных задач от одной base, хочется одну универсальную без переобучения.",
+                "edge_cases": "Модели от РАЗНЫХ base — merge невозможен; разные chat templates → конфликт; качество всегда нужно перепроверять eval.",
+                "related": "Q31 deployment, Q34 open-weight models."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SLERP — он работает с любым числом моделей одновременно",
+              "correct": false,
+              "sections": {
+                "what_actually": "SLERP (Spherical Linear Interpolation) — для двух моделей; для multiple нужен TIES/DARE.",
+                "source_of_confusion": "Геометрическая интуиция «sphere в N-мерном пространстве» неверно расширяется на multi-model.",
+                "if_it_were_true": "Тогда TIES/DARE были бы не нужны — но они появились именно для multi-merge.",
+                "how_it_should_be": "SLERP — two-model; multi-merge → TIES/DARE."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Брать модели от разных base — это даёт лучший merge",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модели от разных base нельзя нормально merge — weights в разных «бассейнах», merge даёт мусор.",
+                "source_of_confusion": "Желание «совместить лучшее» от разных семейств без понимания геометрии весов.",
+                "if_it_were_true": "Тогда можно было бы merge Llama-3 и Mistral, но это невозможно.",
+                "how_it_should_be": "Все модели для merge должны быть от одной base; разные base merge не поддаётся."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Если у вас LoRA-адаптер 100MB поверх Llama-3-70B — как лучше задеплоить в production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда merge адаптер в base и деплоить как полную 70B модель — других вариантов нет",
+              "correct": false,
+              "sections": {
+                "what_actually": "Merge — один из вариантов; runtime composition в vLLM/LoRAX/TGI позволяет держать base + адаптеры отдельно.",
+                "source_of_confusion": "Упрощение «модель должна быть одним файлом».",
+                "if_it_were_true": "Тогда multi-LoRA serving был бы невозможен — но он работает и активно используется.",
+                "how_it_should_be": "Merge → simple, нет гибкости; runtime composition → swap адаптеров, multi-tenancy."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Деплоить только через llama.cpp на CPU — это самый дешёвый способ",
+              "correct": false,
+              "sections": {
+                "what_actually": "llama.cpp на CPU для 70B чудовищно медленный и не годится для production-traffic; ограниченная LoRA-поддержка (merge only).",
+                "source_of_confusion": "llama.cpp популярен для локального single-user; путают с production.",
+                "if_it_were_true": "Тогда vLLM/TGI/SGLang не существовали бы как продукты.",
+                "how_it_should_be": "Production 70B → vLLM/TGI/SGLang на GPU; llama.cpp — для local single-user или edge."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Опции: (1) merge в base → один файл, 0 runtime overhead; (2) runtime composition в vLLM (`enable_lora=True`) / LoRAX / TGI — base + адаптер раздельно, можно swap, multi-LoRA; (3) AWQ/GPTQ-квантизация после FT для inference на 1×H100",
+              "correct": true,
+              "sections": {
+                "explanation": "В production-deploy fine-tuned модели есть три типичных пути: статический merge для одного use case, runtime LoRA для multi-tenant и hot-swap, и пост-квантизация (AWQ/GPTQ/EXL2) для снижения VRAM на serving stage.",
+                "example": "vLLM: `LLM(model='meta-llama/Meta-Llama-3-70B', enable_lora=True, max_loras=4); llm.generate(..., lora_request=LoRARequest('client-A', 1, '/path/to/adapter'))`.",
+                "when_to_apply": "Выбираете под use case: один tenant → merge; много адаптеров → multi-LoRA; ограниченный VRAM на serving → AWQ.",
+                "edge_cases": "AWQ/GPTQ после FT может слегка деградировать качество; eval после квантизации обязателен.",
+                "related": "Q32 multi-LoRA, Q34 open-weight base, Q35 cost."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать только OpenAI Fine-Tuning API — это единственный надёжный способ",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenAI FT API — для их моделей (gpt-3.5/4o); для open-weight Llama он не применим.",
+                "source_of_confusion": "Считают, что любая FT-модель «обязательно» через API.",
+                "if_it_were_true": "Тогда self-host open-source FT вообще не существовал бы как практика.",
+                "how_it_should_be": "Open-weight FT деплоят сами (vLLM/TGI/LoRAX); OpenAI API — только для OpenAI моделей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужен multi-LoRA serving и какие технологии его реализуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы каждый запрос порождал новый процесс с merged моделью — гарантия изоляции",
+              "correct": false,
+              "sections": {
+                "what_actually": "Спавнить процессы с merged 70B на каждый запрос невозможно по cost/latency.",
+                "source_of_confusion": "Идея изоляции переносится с микросервисов без учёта стоимости моделей.",
+                "if_it_were_true": "Тогда cost serving был бы заоблачным.",
+                "how_it_should_be": "Изоляция — через adapter_id в запросе; base загружен один раз, адаптеры маленькие."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы экономить на дисковом пространстве, объединяя адаптеры в архив",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная выгода — VRAM и compute на serving, не диск (адаптеры и так по 100MB).",
+                "source_of_confusion": "Путают экономию VRAM (важно) с экономией диска (не критично).",
+                "if_it_were_true": "Тогда multi-LoRA позиционировался бы как storage-tool, а не serving-tool.",
+                "how_it_should_be": "Multi-LoRA про shared base в VRAM и batch разных адаптеров вместе."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы заменить векторную БД в RAG",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-LoRA — это про serving fine-tuned моделей, никакого отношения к RAG/vector DB.",
+                "source_of_confusion": "Слепили два разных понятия из LLM-стека.",
+                "if_it_were_true": "Тогда LoRAX/vLLM позиционировались бы как vector DB — а они LLM-inference сервера.",
+                "how_it_should_be": "RAG ortogonal multi-LoRA: можно сочетать, но это разные задачи."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Один base в VRAM обслуживает множество адаптеров одновременно: cost (один deploy 70B вместо четырёх), SaaS multi-tenancy (per-client адаптер), A/B testing (runtime swap); технологии — vLLM (`enable_lora=True`), LoRAX (Predibase, hot-swap), Punica, HF TGI",
+              "correct": true,
+              "sections": {
+                "explanation": "Multi-LoRA — главный production-паттерн FT-моделей: один base в VRAM (40-140 GB), адаптеры по 100MB swap'аются между запросами; overhead 5-15% latency, throughput почти как у single base; OpenAI FT API внутри реализует именно multi-LoRA.",
+                "example": "LoRAX serv для SaaS: каждый клиент имеет свой адаптер, рутер на основе headers/auth выбирает нужный; один base, тысячи клиентов.",
+                "when_to_apply": "SaaS с per-tenant fine-tunes; A/B testing разных адаптеров; сокращение serving cost.",
+                "edge_cases": "Адаптеры должны быть с совместимым r и target_modules; конфликт rank между адаптерами обрабатывается через `max_lora_rank` параметр.",
+                "related": "Q31 deployment, Q33 OpenAI API, Q35 cost."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каков статус fine-tuning API у OpenAI, Anthropic и Google на 2026?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "OpenAI: SFT для gpt-3.5/4o-mini/4o + RFT для o-series (через partner program); Anthropic: публичный fine-tuning API отсутствует (custom — через enterprise/AWS Bedrock); Google: Vertex AI Tuning для Gemini 1.5/2.0/2.5 (LoRA-based)",
+              "correct": true,
+              "sections": {
+                "explanation": "OpenAI лидер по доступности FT (включая RFT для reasoning), Google идёт следом через Vertex AI, Anthropic сознательно не делает public FT API (фокусируется на base-моделях + system prompts + Bedrock-кастомизации для enterprise).",
+                "example": "`client.fine_tuning.jobs.create(model='gpt-4o-mini-2024-07-18', training_file=...)` — OpenAI SFT; Vertex AI: `aiplatform.LlmTuningJob.create(...)` для Gemini.",
+                "when_to_apply": "При выборе FT-стратегии: проверьте, нужна ли вам конкретно эта frontier-модель и есть ли API.",
+                "edge_cases": "Anthropic Claude через AWS Bedrock даёт некоторые кастомизации, но это не полноценный FT API; Mistral и Cohere имеют свои FT API для своих моделей.",
+                "related": "Q31 deployment, Q34 open-weight base, Q35 cost."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "У всех трёх (OpenAI, Anthropic, Google) есть идентичные публичные fine-tuning API",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они принципиально разные: Anthropic вообще не имеет public FT API.",
+                "source_of_confusion": "Желание видеть «равенство» лидеров.",
+                "if_it_were_true": "Тогда Anthropic-документация имела бы FT-раздел — но его нет.",
+                "how_it_should_be": "OpenAI — самый полный (SFT+RFT); Google — Vertex AI; Anthropic — только enterprise/Bedrock."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только Anthropic имеет fine-tuning API; OpenAI и Google его убрали",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: Anthropic — единственный без public FT API.",
+                "source_of_confusion": "Перепутали направление.",
+                "if_it_were_true": "Тогда `client.fine_tuning.jobs.create` в openai-python не существовало бы.",
+                "how_it_should_be": "OpenAI и Google активно развивают FT API; Anthropic — нет public API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Fine-tuning API больше не существует ни у одного провайдера — все перешли на pure prompting",
+              "correct": false,
+              "sections": {
+                "what_actually": "FT API живые и развиваются (OpenAI добавила RFT в 2024, Google — Gemini 2.5 tuning).",
+                "source_of_confusion": "Возможно, путают со снятием поддержки legacy моделей.",
+                "if_it_were_true": "Тогда коммерческого SFT в 2026 не было бы — но он рутинный продукт.",
+                "how_it_should_be": "FT API активны и развиваются; pure prompting — параллельная практика, не замена."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие открытые base-модели стоит выбирать для fine-tuning в 2025-2026?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только GPT-3 davinci — это единственный open base",
+              "correct": false,
+              "sections": {
+                "what_actually": "GPT-3 davinci не open-weight; open-source FT строится на Llama, Mistral, Qwen, Gemma, Phi.",
+                "source_of_confusion": "Путают историю терминов «base model» с реальной open-weight экосистемой.",
+                "if_it_were_true": "Тогда HuggingFace был бы пустым в разделе open LLMs — но там тысячи моделей.",
+                "how_it_should_be": "Open base 2025-2026 — Llama 3.x, Mistral/Mixtral, Qwen 2.5/3, DeepSeek, Gemma, Phi."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "General SFT — Llama-3.1-8B / Mistral-7B-v0.3 / Qwen-2.5-7B; reasoning fine-tune — DeepSeek-R1-Distill-Qwen-32B; edge/mobile — Phi-3-mini, Gemma-2-2B, Llama-3.2-1B; coding — DeepSeek-Coder-V2, Qwen-2.5-Coder; multilingual — Qwen-2.5, Aya-23; frontier open — DeepSeek V3/R1 (671B MoE)",
+              "correct": true,
+              "sections": {
+                "explanation": "В 2025-2026 open-weight экосистема зрелая: для каждой ниши есть проверенные base. Llama доминирует в general, Qwen в multilingual/code, DeepSeek в frontier и reasoning, Phi/Gemma в edge.",
+                "example": "Стартап делает support-bot на русском → Qwen-2.5-7B или Saiga (FT на основе Llama); reasoning-FT для math → DeepSeek-R1-Distill-Qwen-32B.",
+                "when_to_apply": "Любой выбор base для FT — сначала сверьтесь с лицензией (Llama Community для >700M MAU), потом с размером и доменом.",
+                "edge_cases": "Instruct vs base: чаще берут Instruct и дотюнивают DPO/short SFT; для DAPT — base.",
+                "related": "Q11 SFT vs DAPT, Q25 hardware, Q31 deployment."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Любая open-weight модель одинаково подходит для любой задачи; выбор не имеет значения",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модели различаются по размеру, лицензии, языкам, оптимизации; выбор сильно влияет на качество и cost.",
+                "source_of_confusion": "Воспринимают LLM как взаимозаменяемые «black boxes».",
+                "if_it_were_true": "Тогда benchmark-leaderboards и model cards были бы бессмысленны.",
+                "how_it_should_be": "Подбирать base под задачу: general/reasoning/code/multilingual/edge."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Никаких open-weight моделей в 2025-2026 уже не существует, все стали closed",
+              "correct": false,
+              "sections": {
+                "what_actually": "Open-weight экосистема процветает: Meta продолжает Llama, Mistral/Qwen/DeepSeek регулярно публикуют, Gemma/Phi от Google/Microsoft.",
+                "source_of_confusion": "Возможно, под влиянием отдельных enterprise-restrict объявлений.",
+                "if_it_were_true": "Тогда HuggingFace потерял бы основную долю каталога и сервисы вроде Together AI закрылись бы.",
+                "how_it_should_be": "Open-weight живой и активный сегмент 2025-2026."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда self-host fine-tune выигрывает по экономике у OpenAI/Vertex API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Self-host всегда дешевле, API — это переплата маркетингу",
+              "correct": false,
+              "sections": {
+                "what_actually": "При низком/среднем traffic API часто дешевле, чем self-host (GPU $1.30/hr × 24/7 = ~$936/mo даже без traffic).",
+                "source_of_confusion": "«Self-host = open-source = бесплатно» — игнорирует hidden costs.",
+                "if_it_were_true": "Тогда никто бы не пользовался OpenAI/Vertex для FT — но они растут.",
+                "how_it_should_be": "Self-host выигрывает при высоком traffic, on-prem requirements, наличии ML-инфры."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "API всегда дешевле — self-host бессмысленен в любом сценарии",
+              "correct": false,
+              "sections": {
+                "what_actually": "При высоком traffic (>50M tokens/мес) self-host экономичнее; on-prem/privacy — обязательный фактор для регулируемых отраслей.",
+                "source_of_confusion": "Переоценка API в маркетинге провайдеров.",
+                "if_it_were_true": "Тогда vLLM/TGI/LoRAX не существовали бы как production-инструменты.",
+                "how_it_should_be": "Зависит от traffic и требований; правило большого пальца — до $1000/mo API не парься, после — считай self-host."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Self-host выигрывает при высоком traffic (>50M tokens/мес), наличии GPU-инфры или ML-команды, требовании on-prem/privacy; API дешевле при low/medium traffic и без ML-инженеров. Правило: до $1000/mo на API — плати, после — считай self-host. Hidden costs self-host: ML eng время, запасной GPU, monitoring, security",
+              "correct": true,
+              "sections": {
+                "explanation": "Cost-trade-off зависит от объёма traffic, требований к данным и наличия инфраструктуры; формула: `Cost = Train_hours × GPU_price/hr + Inference_diff × ongoing_traffic`; нужно считать оба варианта и учитывать hidden costs self-host.",
+                "example": "70B QLoRA на A100 80GB: ~$60 за 48ч training (Lambda Labs); inference 24/7 self-host ~$936/mo vs Together serverless $0.88/M tokens — при 10M tokens/mo Together дешевле, при 1B tokens — self-host.",
+                "when_to_apply": "При планировании FT-стратегии и инфраструктуры; обновлять расчёт раз в квартал с актуальными ценами.",
+                "edge_cases": "On-prem/privacy (медицина, финансы) делают API недоступным независимо от cost; в этом случае self-host безальтернативен.",
+                "related": "Q25 hardware, Q31 deployment, Q33 OpenAI API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cost-расчёт fine-tuning невозможен — невозможно прогнозировать",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost вполне прогнозируется через известные GPU rates, объём training data и ожидаемый traffic.",
+                "source_of_confusion": "Сложность вычислений преувеличена.",
+                "if_it_were_true": "Тогда CFO не подписывали бы AI-бюджеты и не было бы cost calculators у Together/Modal.",
+                "how_it_should_be": "Cost — оценочно, но прогнозируемо; формула + регулярная корректировка по фактическим данным."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

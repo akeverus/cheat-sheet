@@ -1,0 +1,1685 @@
+{
+  "topic_slug": "ai-observability-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему для LLM-системы недостаточно классического APM (Datadog APM, New Relic) и нужен отдельный observability-слой?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Классический APM меряет latency/error rate как для детерминированного сервиса, а LLM требует ещё quality-метрик (faithfulness, hallucination), трейсинга многошаговых цепочек, cost-tracking per request и prompt-версионирования.",
+              "correct": true,
+              "sections": {
+                "explanation": "Классический APM заточен под бинарную модель «200 OK = работает». В LLM HTTP 200 ничего не говорит про правильность ответа: модель может уверенно галлюцинировать. Нужен отдельный слой, который умеет: quality-эвалы, дерево spans для агентов/RAG, cost per call как first-class метрика и diff/A/B для промптов как для кода.",
+                "example": "Запрос «столица Франции» вернул «Берлин» — Datadog покажет 200 OK 800 ms, а Langfuse покажет `faithfulness=0.1`, прикрепит trace `retrieve → llm_call → guardrail` и посчитает `cost_usd=0.012`.",
+                "when_to_apply": "Любой production LLM-сервис, где ответ модели — это бизнес-результат, а не просто транспортный код. Особенно RAG, агенты, customer-facing chat.",
+                "edge_cases": "Для одного batch-скрипта раз в неделю можно обойтись логами. Для high-volume prod без LLM obs вы ослеплены: cost spike $20K/неделю заметите по invoice провайдера.",
+                "related": "[[ai-observability-interview#Q2]] три pillars; [[ai-observability-interview#Q13]] метрики; [[observability-interview]] классический obs."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Datadog APM уже считает hallucination rate, faithfulness и стоимость per LLM-вызов, поэтому LLM-obs дублирует функционал.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Classic APM не имеет представления о quality (faithfulness/relevancy) и не считает $/token без отдельного LLM-плагина. Это специализированные метрики LLM-стека.",
+                "source_of_confusion": "Datadog вышел в LLM Observability как продукт, и кажется, что обычный APM-агент его покрывает — но это отдельный модуль, не «бесплатный bonus».",
+                "if_it_were_true": "Не было бы рынка LangSmith/Langfuse/Phoenix — все бы оставались в Datadog APM.",
+                "how_it_should_be": "Classic APM меряет инфра (latency, 5xx), LLM obs меряет качество ответа + стоимость + структуру цепочки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "LLM-системы детерминированы при `temperature=0`, поэтому хватает обычных метрик latency и error rate без дополнительного eval-слоя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже при `temperature=0` модель меняет ответы между версиями (`gpt-4o-2024-05-13` → `gpt-4o-2024-08-06`), при изменении prompt, при разных извлечённых чанках в RAG. Полной детерминированности нет.",
+                "source_of_confusion": "Документация говорит «greedy decoding», и кажется, что это делает систему предсказуемой как обычный сервис.",
+                "if_it_were_true": "Не нужны были бы continuous eval и regression-тесты промптов — но они стандарт индустрии.",
+                "how_it_should_be": "Quality остаётся главной метрикой даже при `temperature=0`, потому что меняется prompt/контекст/версия модели."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Классический APM достаточен, потому что LLM — это просто HTTP-вызов внешнего API, никакой специфики нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LLM-вызов уникален: input/output это длинный текст с PII, стоимость зависит от tokens (не от количества запросов), агент делает 10+ вложенных вызовов с tool-calls, prompt версионируется как код.",
+                "source_of_confusion": "С точки зрения сети — да, это POST. Но семантика и метрики совершенно другие.",
+                "if_it_were_true": "Не существовало бы OTel GenAI Semantic Conventions — но они есть, потому что HTTP-метрик не хватает.",
+                "how_it_should_be": "LLM-obs дополняет APM: span'ы с `gen_ai.*` атрибутами, eval-scores, cost-tracking, prompt-диффы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие три pillars у LLM observability и в чём ключевое отличие от классических metrics/logs/traces?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Те же три: metrics, logs, traces — никакой LLM-специфики нет, просто данных больше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LLM-стек переопределяет pillars: tracing (chain/agent), metrics (tokens/cost/eval scores), evals (quality как новый pillar). Logs «исчезают» — prompt/completion сами становятся span events.",
+                "source_of_confusion": "Названия инструментов те же (OTel, Prometheus), и кажется, что схема та же.",
+                "if_it_were_true": "Тогда `eval_score` не существовал бы как pillar — а Langfuse/Phoenix/LangSmith его выделяют.",
+                "how_it_should_be": "Три pillars LLM = tracing + metrics + evals; logs поглощены span events (`gen_ai.system.message`, `gen_ai.completion`)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tracing (chain/agent с parent-child spans), metrics (tokens, cost, eval-scores, latency), evals (LLM-as-judge, RAGAS, user feedback) — eval-scores это новый pillar, а логи поглощаются span events `gen_ai.*.message`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tracing передаёт структуру (chain → LLM call → tool → retrieval). Metrics агрегируют (tokens/min, $/hour, p95). Evals — отдельный pillar, потому что без оценки качества HTTP 200 ничего не значит. Логи становятся избыточны: сам prompt + completion это и есть лог, он попадает в span events с PII-маскированием.",
+                "example": "В Langfuse: trace=`chat_request`, observation=`llm_call` с `model=gpt-4o, tokens=1500/412, cost=$0.012`, score=`faithfulness=0.87` (асинхронно проставленный). Это три pillars в одном объекте.",
+                "when_to_apply": "Любой production LLM-сервис: построй pipeline с tracing (OTel/Langfuse SDK), metrics (Prometheus), evals (continuous LLM-judge).",
+                "edge_cases": "Если эваломы не пользуетесь — теряете главный сигнал качества; APM-метрики покажут «зелёные», а пользователи будут получать галлюцинации.",
+                "related": "[[ai-observability-interview#Q5]] OTel-атрибуты; [[ai-observability-interview#Q19]] continuous eval."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Metrics, logs, traces — но logs содержат полный prompt и completion в plain text без маскировки, это и есть LLM-специфика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хранение полного prompt в plain text без PII-маскировки — это **анти-паттерн** и риск GDPR. Контент идёт в span events с redaction (Presidio) или через флаг `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false`.",
+                "source_of_confusion": "Многие команды действительно так делают на старте, и потом получают breach.",
+                "if_it_were_true": "Не было бы PII-стратегий и GDPR-режима в Langfuse/LangSmith.",
+                "how_it_should_be": "Контент в spans только после redaction или вообще не сохраняется (только метаданные)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только evals — tracing и metrics для LLM не нужны, потому что важно только качество ответа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без tracing нельзя дебажить агента или RAG (где затык?), без metrics нет cost-контроля. Eval — необходим, но недостаточен.",
+                "source_of_confusion": "Eval — самая яркая LLM-специфика, и кажется, что остальное вторично.",
+                "if_it_were_true": "Не было бы агентских loop-debug кейсов и cost spike алертов — но это половина practitioner'ского контента про LLM-obs.",
+                "how_it_should_be": "Все три pillars нужны: tracing для debug, metrics для агрегатов и алертов, evals для качества."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое trace и span в контексте LLM-системы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Trace — это запись в логе на каждый вызов модели, span — отдельный токен в стриминговом ответе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Trace — end-to-end жизнь одного пользовательского запроса (от HTTP-входа до ответа). Span — один шаг внутри trace (LLM call, retrieval, tool, embedding). Span не является токеном.",
+                "source_of_confusion": "Streaming-метрика TTFT (time-to-first-token) ассоциируется со span'ами, но токены — это содержимое, а не span.",
+                "if_it_were_true": "Тогда 412 output_tokens = 412 spans — это бессмысленный взрыв трейс-объёма.",
+                "how_it_should_be": "Span — это шаг работы (LLM call, retrieve), а не токен. Стриминг трекается как атрибуты + опционально span events."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Trace — это единичный вызов OpenAI API, а span — это HTTP-заголовок запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Trace покрывает весь пользовательский запрос (может включать 10 LLM-вызовов в агенте). HTTP-заголовок — это атрибут span'а, а не сам span.",
+                "source_of_confusion": "Терминология HTTP смешивается с трейсинг-терминологией.",
+                "if_it_were_true": "Не было бы parent-child иерархии и cost rollup'а на агенте.",
+                "how_it_should_be": "Trace = end-to-end запрос, span = шаг внутри, заголовки и параметры — атрибуты span'а."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Trace — end-to-end жизнь одного пользовательского запроса (root + child spans), span — отдельный шаг (LLM call, retrieval, tool call, embedding, guardrail), связаны через `parent_span_id` в дерево.",
+              "correct": true,
+              "sections": {
+                "explanation": "Trace = весь запрос пользователя. Внутри trace — дерево spans через `parent_span_id`: root (HTTP-запрос или сессия чата), LLM call, retrieve_context, tool_call, embedding, guardrail. У каждого span атрибуты типа `gen_ai.system=openai`, `gen_ai.request.model=gpt-4o`, `gen_ai.usage.input_tokens=1500`, `cost_usd=0.012`, `trace.user_id=user_42`.",
+                "example": "trace_id=abc123 → chat_request (root) → retrieve_context → embedding (child) и → llm_call → stream_tokens (child) и → guardrail. Дерево из 5 spans за один пользовательский ввод.",
+                "when_to_apply": "Любая LLM-цепочка сложнее одного вызова: RAG, агент, мультистеп с guardrails. Без span-дерева невозможно понять, где затык по latency или cost.",
+                "edge_cases": "Если span дерево плоское (всё под root) — теряем breakdown latency/cost по этапам. Если слишком глубокое (>30 уровней у агента) — сигнал зацикливания.",
+                "related": "[[ai-observability-interview#Q4]] parent-child агента; [[ai-observability-interview#Q5]] обязательные атрибуты."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Trace и span — это синонимы, обозначающие одну и ту же запись в Langfuse/Phoenix.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные сущности: trace — контейнер, span (в Langfuse терминологии — observation) — единица работы внутри trace. Один trace содержит много span'ов.",
+                "source_of_confusion": "В UI они отображаются рядом, и кажется, что отличие условное.",
+                "if_it_were_true": "Не было бы понятия parent-child и rollup'а cost/latency.",
+                "how_it_should_be": "Trace = whole user request; span = one step; они связаны 1:N."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужна parent-child иерархия в trace для ReAct-агента и какие практические задачи она решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы создать визуальный отступ в UI, никаких функциональных задач иерархия не решает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Иерархия — это функциональная основа: cost rollup, latency breakdown, detection зацикливания, replay действий агента. UI-отступ — побочный эффект.",
+                "source_of_confusion": "Если смотреть на flame graph, отступ — главное визуальное, и кажется, что это вся ценность.",
+                "if_it_were_true": "Cost агента нельзя было бы вычислить как сумму детей, и detect loops не работал бы.",
+                "how_it_should_be": "Иерархия даёт rollup, breakdown, debug и replay; UI — следствие."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Parent-child нужны исключительно для OTel-экспорта в Jaeger, в Langfuse/LangSmith они не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Langfuse, LangSmith, Phoenix полностью поддерживают parent-child через observation hierarchy / runs tree. Это базовая фича всех LLM-obs платформ.",
+                "source_of_confusion": "OTel — наиболее известный носитель концепции parent-child, и кажется, что это исключительно OTel-вещь.",
+                "if_it_were_true": "Не было бы дерева spans в Langfuse UI — а оно есть.",
+                "how_it_should_be": "Parent-child универсальны для всех LLM-obs инструментов, формат экспорта (OTel/native) ортогонален."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Иерархия нужна только для подсчёта количества LLM-вызовов в trace и больше ни для чего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подсчёт вызовов — одна из многих функций. Главные: cost rollup, latency breakdown, debug loops, replay шагов.",
+                "source_of_confusion": "Метрика `tool_calls_per_request` действительно полезна, и можно подумать, что она самая важная.",
+                "if_it_were_true": "Тогда rollup стоимости и breakdown latency пришлось бы делать вручную в SQL.",
+                "how_it_should_be": "Иерархия — структурная основа для нескольких аналитических задач, включая count, cost rollup, latency breakdown, debug."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Парент-чайлд позволяет: (1) cost rollup на `agent_invoke` = сумма всех детей; (2) latency breakdown по этапам (LLM vs tool vs retrieval); (3) detect зацикливания через `span.depth > 20` или повтор tool_call; (4) replay шагов агента для разбора инцидента.",
+              "correct": true,
+              "sections": {
+                "explanation": "В ReAct-агенте корневой span `agent_invoke` собирает under себя `llm_call #1` → `tool_call: search` → `llm_call #2` → `tool_call: calculator` → `llm_call #3`. Cost агрегируется по дереву (rollup), latency показывает где затык (LLM или tool), depth > 20 или повторяющиеся аргументы tool — сигнал loop. Span links используются когда агент A зовёт агента B через очередь (cross-trace).",
+                "example": "Trace показывает `agent_invoke (latency=12s, cost=$0.20)` ← разбираем: 8s ушло на 5 LLM-calls, 4s на tool `search` (slow API). Без иерархии было бы только «12s и $0.20» без понимания где.",
+                "when_to_apply": "Любой агент с tool calling или multi-step reasoning: ReAct, LangGraph, AutoGPT-style, MCP-агенты.",
+                "edge_cases": "Если span links не используются для async-call между агентами — теряете причинно-следственную связь. Если иерархия плоская — теряете breakdown.",
+                "related": "[[ai-observability-interview#Q23]] infinite loops; [[ai-agents-interview]] ReAct."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие атрибуты обязательны для LLM-span по OpenTelemetry GenAI Semantic Conventions?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Минимум: `gen_ai.system` (openai/anthropic/...), `gen_ai.operation.name` (chat/embeddings), `gen_ai.request.model` (что запросили), `gen_ai.response.model` (что реально ответило), `gen_ai.usage.input_tokens` / `output_tokens`, `gen_ai.response.finish_reasons`.",
+              "correct": true,
+              "sections": {
+                "explanation": "OTel GenAI conventions фиксируют минимальный словарь: `gen_ai.system=openai`, `gen_ai.operation.name=chat`, `gen_ai.request.model=gpt-4o`, `gen_ai.response.model=gpt-4o-2024-08-06` (важно: реальная версия может отличаться от запрошенной), usage tokens для cost calc, `finish_reasons` (`stop`/`length`/`tool_calls`). Опционально — `gen_ai.conversation.id`, `gen_ai.prompt` / `gen_ai.completion` (как span events), `cost_usd`, `eval.score`.",
+                "example": "Span с `gen_ai.system=openai, gen_ai.request.model=gpt-4o, gen_ai.response.model=gpt-4o-2024-08-06, gen_ai.usage.input_tokens=1523, gen_ai.usage.output_tokens=412, gen_ai.response.finish_reasons=[\"stop\"]` — стандартный набор для аналитики через любой OTel-backend.",
+                "when_to_apply": "Любая инструментация LLM-вызова, особенно если данные уходят в несколько backends (Jaeger + Langfuse + Datadog).",
+                "edge_cases": "Без `response.model` (отличной от request.model) не отличить `gpt-4o → gpt-4o-2024-08-06` rollover. Без `finish_reasons` не понять, обрезали ли по `length`.",
+                "related": "[[ai-observability-interview#Q6]] OTel GenAI conventions; [[opentelemetry-interview]]."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только `http.method` и `http.status_code` — для LLM это всё, что нужно знать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это атрибуты HTTP, не LLM. Они не отражают модель, токены, стоимость, finish_reason — то есть всю LLM-семантику.",
+                "source_of_confusion": "Вызов идёт через HTTP, и автоинструментация HTTP действительно создаст эти атрибуты, но это не «всё, что нужно».",
+                "if_it_were_true": "Tokens/cost/quality пришлось бы считать вручную из тела ответа, и кросс-vendor аналитика бы не работала.",
+                "how_it_should_be": "HTTP-атрибуты + полный набор `gen_ai.*` атрибутов, чтобы любой OTel-backend понимал семантику."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только `prompt` и `completion` в полном тексте, без редактирования — этого достаточно для всех задач observability.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без модели, токенов, finish_reason нельзя считать стоимость, мониторить ratelimit-обрезания, делать кросс-агрегаты. Плюс сырой prompt без redaction — GDPR-риск.",
+                "source_of_confusion": "Контент часто кажется самой ценной информацией для debug.",
+                "if_it_were_true": "Cost-метрики и rate-limit алерты пришлось бы реверс-инжинирить из текста.",
+                "how_it_should_be": "Метаданные (`gen_ai.*` attrs) + контент в span events (с redaction)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только `cost_usd` и `latency_ms`, остальное провайдер сам прокидывает через свой SDK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost и latency — производные. Без `usage.input_tokens` / `output_tokens` и `request.model` cost вообще не посчитаешь. Провайдер прокидывает usage в ответе, но в span их нужно положить осознанно.",
+                "source_of_confusion": "Хочется минимизировать атрибуты, и cost кажется главным.",
+                "if_it_were_true": "Не работали бы дашборды `tokens by model` и алерты `429 by provider`.",
+                "how_it_should_be": "Полный набор `gen_ai.request/response/usage` атрибутов; cost — вычисляется."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое OpenTelemetry GenAI Semantic Conventions и какую главную проблему они решают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это закрытый стандарт OpenAI, который определяет формат запросов к ChatGPT API и не имеет отношения к трейсингу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OTel GenAI conventions — открытый стандарт CNCF/OpenTelemetry для атрибутов span'ов, не имеет отношения к формату OpenAI API запросов. Закрыт OpenAI ничего не делал.",
+                "source_of_confusion": "В namespace встречается `gen_ai.system=openai`, и кажется, что OpenAI driver.",
+                "if_it_were_true": "Не было бы поддержки Anthropic/Cohere/Google в этом стандарте.",
+                "how_it_should_be": "Это vendor-neutral CNCF-стандарт для трейс-атрибутов LLM-вызовов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Стандартный vendor-agnostic словарь атрибутов (`gen_ai.system`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`...) — позволяет один и тот же код инструментации экспортировать трейсы в любой OTel-backend (Jaeger, Langfuse, Phoenix, Datadog), считать кросс-vendor агрегаты и переезжать между backends без переписывания.",
+              "correct": true,
+              "sections": {
+                "explanation": "OTel GenAI Semantic Conventions — стандартизованный словарь имён атрибутов для LLM-spans, утверждённый OpenTelemetry/CNCF (статус Experimental → постепенный Stable в 2025-2026). Главная ценность: vendor-agnostic. Один код кладёт `gen_ai.request.model=gpt-4o` — и Jaeger, Langfuse, Phoenix, Datadog понимают одинаково. Можно считать `sum(gen_ai.usage.input_tokens) by gen_ai.request.model` в любом backend. Контент идёт через span events (`gen_ai.system.message`, `gen_ai.user.message`, `gen_ai.assistant.message`, `gen_ai.tool.message`), которые можно отключать через `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false` для PII.",
+                "example": "Питон-инструментация OpenInference кладёт `gen_ai.*` атрибуты. Экспорт идёт в OTel Collector, оттуда дублируется в Langfuse (для evals) и в Tempo (для general APM). Один код, два backend, одинаковая семантика.",
+                "when_to_apply": "Когда планируете возможный переезд между obs-backends, нужна кросс-vendor аналитика, или используете multi-backend (Langfuse + Datadog одновременно).",
+                "edge_cases": "Статус некоторых атрибутов — Experimental (могут меняться). Контент-events опасны для PII — отключайте через флаг или применяйте redaction.",
+                "related": "[[ai-observability-interview#Q5]] обязательные атрибуты; [[ai-observability-interview#Q7]] практический пример."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это спецификация модели prompt-injection защиты — определяет, какие атаки нужно блокировать в LLM-приложениях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OTel GenAI conventions — про телеметрию (трейсинг), а не про security/guardrails. Защита от prompt injection — отдельная тема (Llama Guard, NeMo Guardrails).",
+                "source_of_confusion": "OpenTelemetry охватывает много областей, и можно ожидать в нём security-разделов.",
+                "if_it_were_true": "В спеке были бы рекомендации по input sanitization, но их там нет.",
+                "how_it_should_be": "Это observability-стандарт для атрибутов span'ов, security — другая область."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Внутренний формат Langfuse для observation'ов, который другие платформы не поддерживают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Langfuse имеет свой native SDK, но GenAI Semantic Conventions — это open-source стандарт CNCF, поддерживаемый Langfuse, Phoenix (через OpenInference), OpenLLMetry, Datadog LLM Obs, многими другими.",
+                "source_of_confusion": "Langfuse активно поддерживает OTel, и кажется, что это его формат.",
+                "if_it_were_true": "Не было бы статуса CNCF и общего репозитория `opentelemetry/semantic-conventions`.",
+                "how_it_should_be": "Это vendor-neutral стандарт, поддерживаемый множеством инструментов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как практически инструментировать OpenAI-вызов через OTel GenAI без ручного раскладывания атрибутов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Никак — OTel GenAI работает только при ручной установке всех атрибутов через `span.set_attribute(\"gen_ai.request.model\", ...)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Существует автоинструментация: `OpenAIInstrumentor().instrument()` из `openinference` (или OpenLLMetry) — обёртывает OpenAI SDK и автоматически создаёт span'ы с правильными `gen_ai.*` атрибутами.",
+                "source_of_confusion": "Кажется, что OTel требует только ручной кодинг — но для популярных SDK есть auto-instrumentors.",
+                "if_it_were_true": "Было бы боль писать `set_attribute` на каждый вызов — но автоинструментация решает это.",
+                "how_it_should_be": "Авто-инструментор + опциональный ручной span для custom-логики (custom retrieve, custom guardrail)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Установить `pip install otel-llm` и больше ничего не делать — он сам определит провайдера и backend.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пакета `otel-llm` нет. Реальные библиотеки: `openinference-instrumentation-openai`, `opentelemetry-instrumentation-openai-v2`, `traceloop-sdk`. Backend задаётся в exporter явно.",
+                "source_of_confusion": "Хочется, чтобы было одно простое слово — но в OTel-экосистеме явные шаги.",
+                "if_it_were_true": "Можно было бы пропустить настройку TracerProvider и Exporter, но это не так.",
+                "how_it_should_be": "Установка provider + exporter + автоинструментор для конкретного SDK."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подключить provider через `provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(...)))`, затем `OpenAIInstrumentor().instrument()` — обёртка автоматически создаёт span'ы при каждом `client.chat.completions.create()` с заполненными `gen_ai.*` атрибутами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандартный паттерн OpenLLMetry/OpenInference: (1) настроить OTel `TracerProvider` + `BatchSpanProcessor` + `OTLPSpanExporter` на коллектор (`http://otel-collector:4317`); (2) вызвать `OpenAIInstrumentor().instrument()` (или `Traceloop.init()`); (3) обычный код `openai.OpenAI()` — span'ы создаются автоматически с `gen_ai.system=openai`, `gen_ai.request.model`, `gen_ai.usage.input_tokens/output_tokens`. Для custom-логики оборачивайте вручную: `with tracer.start_as_current_span(\"custom_llm_call\") as span: span.set_attribute(...)`.",
+                "example": "OpenAI SDK не меняется: `client.chat.completions.create(model=\"gpt-4o\", messages=[...])` — после `OpenAIInstrumentor().instrument()` создаётся span с `gen_ai.system=openai, gen_ai.request.model=gpt-4o, gen_ai.usage.input_tokens=8, gen_ai.usage.output_tokens=12`.",
+                "when_to_apply": "Любая Python-инструментация OpenAI/Anthropic/Cohere вызовов, когда хотите получить OTel-spans без ручного кодинга атрибутов.",
+                "edge_cases": "Custom вызовы (Anthropic через `requests`, локальные модели) требуют ручного span'а. Старые версии SDK могут не покрываться авто-инструментором.",
+                "related": "[[ai-observability-interview#Q6]] OTel GenAI conventions; [[ai-observability-interview#Q10]] Phoenix через OpenInference."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только через прокси: меняем `base_url` на Helicone и больше OTel не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Helicone (proxy-based) — отдельный подход. OTel GenAI можно использовать без proxy, через SDK auto-instrumentation. Это два разных способа решения.",
+                "source_of_confusion": "Helicone простой в подключении и кажется единственным безкодовым способом.",
+                "if_it_were_true": "Не было бы статуса OTel GenAI как стандарта — все бы перешли на прокси.",
+                "how_it_should_be": "Proxy-based и OTel auto-instrument — два независимых подхода, выбирайте по требованиям (latency hop vs SDK control)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое LangSmith и в каких случаях он наиболее обоснованный выбор?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Open-source инструмент с MIT-лицензией для self-host, конкурирующий с Langfuse в нише free deployment.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LangSmith — проприетарный SaaS от Anthropic-конкурента LangChain. Self-host есть только в Enterprise tier (платный). MIT и free self-host — это профиль Langfuse, не LangSmith.",
+                "source_of_confusion": "Оба инструмента из LLM-obs ниши, и легко перепутать их лицензии.",
+                "if_it_were_true": "LangChain не зарабатывал бы на SaaS — но это их основная монетизация.",
+                "how_it_should_be": "LangSmith — proprietary SaaS, Self-host Enterprise. Langfuse — MIT, free self-host."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Российский аналог Datadog APM — единственная LLM-obs платформа с локальным хостингом в РФ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LangSmith — продукт LangChain Inc. (США), не российский. Локализация в РФ не позиционируется.",
+                "source_of_confusion": "Иногда переводят названия и теряют контекст.",
+                "if_it_were_true": "Был бы российский ценник и юридическое лицо — но их нет.",
+                "how_it_should_be": "LangSmith — US-based SaaS от LangChain Inc., с EU/US-регионами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Дешёвая бесплатная альтернатива Helicone без proxy-hop'а.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LangSmith — не бесплатный (Plus от $39/seat), и это не proxy-based решение (это SDK-based). Helicone — отдельная категория (proxy).",
+                "source_of_confusion": "Оба позиционируются как «легкое подключение».",
+                "if_it_were_true": "Не было бы Plus/Enterprise tier — а они есть.",
+                "how_it_should_be": "LangSmith — SDK-based proprietary SaaS с pricing per seat."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Observability + eval-платформа от создателей LangChain с auto-instrumentation для LangChain/LangGraph, встроенными datasets/experiments, prompts hub с версионированием, annotation queue для human-feedback и встроенным A/B. Минусы: vendor-lock на LangChain-экосистему, cloud-only по дефолту, цена от ~$39/seat. Оправдан когда стек уже на LangChain и нужен eval+obs в одном.",
+              "correct": true,
+              "sections": {
+                "explanation": "LangSmith — флагман от LangChain, обеспечивает: auto-instrumentation для LangChain/LangGraph (нулевая настройка), datasets с версионированием, evaluations as code (built-in correctness/conciseness/custom LLM-judge), Prompts Hub (версии промптов с diff/rollback), annotation queue (UI для human-feedback), A/B testing. Декоратор `@traceable` работает и вне LangChain. Минусы: vendor-lock (хотя SDK open), cloud-only по умолчанию, цена от ~$39/seat в Plus tier, self-host только Enterprise.",
+                "example": "`from langsmith import traceable; @traceable(run_type=\"llm\", name=\"answer_question\") def answer(q): return openai...` — функция автоматически трейсится в LangSmith вне зависимости от LangChain.",
+                "when_to_apply": "Стек уже на LangChain/LangGraph, нужен eval + obs + prompt mgmt в одном, бюджет позволяет SaaS подписку, data residency не критична.",
+                "edge_cases": "Vendor-lock — переезд тяжёлый. Self-host Enterprise — недёшев. GDPR-strict сценарии часто двигают к Langfuse.",
+                "related": "[[ai-observability-interview#Q9]] Langfuse сравнение; [[ai-observability-interview#Q12]] общая таблица."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Langfuse и в чём его ключевые отличия от LangSmith?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Open-source (MIT) LLM observability с free self-host через Docker Compose, generic SDK без привязки к LangChain, prompts с labels (`production`, `staging`), EU-hosting из коробки. Отличия от LangSmith: open-source vs proprietary, free self-host vs Enterprise-only, generic SDK vs LangChain-centric, eval депth у LangSmith чуть сильнее (code-first), а Langfuse сильнее в data control / GDPR / self-host.",
+              "correct": true,
+              "sections": {
+                "explanation": "Langfuse — open-source LLM observability (MIT), запускается self-host через Docker Compose или k8s. Архитектура: traces (с `user_id`, `session_id`, `tags`), observations (span-эквивалент с типами `LLM`/`GENERATION`/`SPAN`/`EVENT`), sessions (группировка чата), users, prompts (версионируемые с labels), scores (числовые/категориальные/boolean evals). Generic SDK работает с любой LLM-библиотекой, не только LangChain. Cloud от $29/seat, EU-region из коробки. Сильные стороны: контроль данных, бюджет, не-LangChain стек. Eval depth чуть слабее, чем у LangSmith (LangSmith сильнее в code-first evaluations).",
+                "example": "`@observe(as_type=\"generation\") def call_llm(q): response = openai...; langfuse_context.update_current_observation(model=\"gpt-4o\", usage={\"input\":..., \"output\":...})` — пишет в Langfuse без LangChain.",
+                "when_to_apply": "Хотите контроль данных (self-host), бюджет ограничен, не на LangChain-стеке, нужен EU/GDPR-deploy, важна возможность форка кода.",
+                "edge_cases": "Self-host требует обслуживания (Postgres, Clickhouse, Redis). Cloud free tier ограничен по retention. Eval depth слабее, чем у LangSmith — для сложных эвалов может потребоваться внешний tool.",
+                "related": "[[ai-observability-interview#Q8]] LangSmith; [[ai-observability-interview#Q12]] таблица сравнения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Closed-source аналог LangSmith с ценой выше — отличий по сути нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Langfuse — open-source (MIT), free self-host. Cloud дешевле LangSmith ($29 vs $39+). Главное отличие — лицензия и self-host availability.",
+                "source_of_confusion": "Внешне UI похожие.",
+                "if_it_were_true": "Не существовало бы публичного GitHub `langfuse/langfuse` со звёздами и self-host гайдами.",
+                "how_it_should_be": "Open-source MIT, free self-host, cloud дешевле."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Прокси-сервер на manage Open AI запросов, не предоставляет SDK и не работает с Anthropic.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Langfuse — SDK-based, не proxy. Поддерживает OpenAI, Anthropic, Cohere, любой LLM через generic SDK. Proxy-based — Helicone.",
+                "source_of_confusion": "Перепутали с Helicone.",
+                "if_it_were_true": "Не было бы Python/JS SDK у Langfuse.",
+                "how_it_should_be": "Langfuse — SDK-based, multi-provider, не proxy."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Single-tenant SaaS-only сервис без возможности self-host, обязательное хранение данных в US-регионе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Self-host — главная фича Langfuse (free, MIT). EU-region из коробки. Multi-tenant cloud с per-project isolation.",
+                "source_of_confusion": "В индустрии много SaaS-only решений, и легко предположить тот же подход.",
+                "if_it_were_true": "Не было бы аудитории self-host-фокусированных команд (RegTech, HealthTech).",
+                "how_it_should_be": "Self-host + cloud, EU-region доступен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что уникального в Arize Phoenix среди LLM observability платформ?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Proxy-based архитектура без SDK — главное отличие Phoenix от Langfuse/LangSmith.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Phoenix — SDK-based с OpenTelemetry-native подходом (через OpenInference). Proxy-based — это Helicone.",
+                "source_of_confusion": "Часто путают позиционирование инструментов.",
+                "if_it_were_true": "Не было бы OpenInference как реализации OTel GenAI conventions от Arize.",
+                "how_it_should_be": "Phoenix — OTel-native SDK подход, не proxy."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "OpenTelemetry-native через OpenInference (расширение OTel GenAI), embedding cluster analysis для поиска «плохих» кластеров запросов в embedding-пространстве, RAG-дашборды с context relevance как первоклассной метрикой, local-first запуск через `phoenix.launch_app()` прямо в notebook, built-in evaluators (HallucinationEvaluator, QAEvaluator, RelevanceEvaluator).",
+              "correct": true,
+              "sections": {
+                "explanation": "Phoenix от Arize AI делает упор на: (1) OTel-native через OpenInference, легко встраивается в существующий OTel-pipeline; (2) embedding cluster analysis — кластеризует запросы/ответы в embedding-пространстве, находит сегменты с низким score (например, все запросы про API-доку имеют стабильно низкий faithfulness); (3) RAG dashboards с context relevance, retrieval precision/recall; (4) local-first — `import phoenix as px; px.launch_app()` запускает UI на `localhost:6006` прямо в notebook; (5) built-in evaluators через `from phoenix.evals import HallucinationEvaluator, run_evals`.",
+                "example": "`from phoenix.otel import register; tracer_provider = register(project_name=\"my-llm-app\"); px.launch_app()` — UI на localhost. Затем `df = px.Client().get_spans_dataframe(); run_evals(df, [HallucinationEvaluator(eval_model=\"gpt-4o\")])`.",
+                "when_to_apply": "Команда серьёзно занимается evals, нужен embedding cluster analysis (находить тематические сегменты с плохим качеством), уже на OTel-стеке, важен local-first dev experience.",
+                "edge_cases": "UX чуть более «инженерный», чем у LangSmith. Кластеризация требует embeddings — добавляет cost. Local-first хорош в dev, для prod нужен Phoenix Cloud / self-host.",
+                "related": "[[ai-observability-interview#Q24]] RAG tracing; [[ai-observability-interview#Q6]] OTel GenAI."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Закрытый источник с лицензией только под Arize Enterprise — самое дорогое решение на рынке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Phoenix — open-source, free для self-host. Arize Enterprise — отдельный продукт того же вендора, не Phoenix.",
+                "source_of_confusion": "Brand Arize общий, и продукты путают.",
+                "if_it_were_true": "Не было бы публичного `Arize-ai/phoenix` репо на GitHub.",
+                "how_it_should_be": "Phoenix — open-source, Arize — enterprise upgrade-путь, но Phoenix самостоятелен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Phoenix — это форк LangSmith с одним отличием: поддержка только Python.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Phoenix — независимый проект Arize, не форк LangSmith. Архитектурно разные. Python — основной язык, но это не единственное отличие.",
+                "source_of_confusion": "В Python-экосистеме много пересечений, и можно подумать о форке.",
+                "if_it_were_true": "Истории коммитов были бы общие, но это не так.",
+                "how_it_should_be": "Независимый проект Arize, OTel-native, embedding cluster analysis."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Helicone и в каких сценариях proxy-based подход оправдан?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это SDK-библиотека, которая через декоратор `@helicone` трейсит каждый вызов — никакого прокси нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная фишка Helicone — proxy-based: меняем `base_url` на `https://oai.helicone.ai/v1`, всё трейсится без SDK-изменений. Декораторов нет в core flow.",
+                "source_of_confusion": "Подход на декораторах распространён в Langfuse/LangSmith, и кажется универсальным.",
+                "if_it_were_true": "Не существовало бы маркетинга «zero code change» — а это главное обещание Helicone.",
+                "how_it_should_be": "Proxy-based, меняем `base_url` и хедер, никаких SDK-изменений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Helicone — это форк OpenAI SDK с обязательной заменой на форк-пакет в `pip install`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Helicone не требует замены SDK. Используется официальный `openai` SDK, меняется только `base_url` и добавляется auth-хедер.",
+                "source_of_confusion": "Иногда форки SDK существуют для других целей.",
+                "if_it_were_true": "Зачем тогда proxy — можно было бы трейсить в форке.",
+                "how_it_should_be": "Используется официальный SDK, перенаправление через proxy URL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Proxy-based observability: меняем `base_url=https://oai.helicone.ai/v1` + добавляем `Helicone-Auth` хедер — без SDK-изменений всё трейсится. Плюсы: zero code change, работает с любым OpenAI-compatible SDK, встроенный cache, rate limiting per user на уровне прокси. Минусы: дополнительный hop (+30-80 ms latency), single point of failure, меньше глубины (нет полноценного eval/dataset workflow). Оправдан для быстрого старта без рефакторинга и когда нужен встроенный cache.",
+              "correct": true,
+              "sections": {
+                "explanation": "Helicone — proxy между приложением и LLM-провайдером. `client = openai.OpenAI(api_key=\"sk-...\", base_url=\"https://oai.helicone.ai/v1\", default_headers={\"Helicone-Auth\": f\"Bearer {KEY}\"})` — всё, дальше обычный SDK. Плюсы: нулевой code change, любой OpenAI-compatible SDK, cache из коробки (повторы возвращаются мгновенно), rate limiting per user на уровне прокси. Минусы: +30-80 ms latency на hop, SPOF (Helicone лёг → ваш LLM лёг), меньше depth для eval/dataset workflow по сравнению с Langfuse/LangSmith.",
+                "example": "Прототип за 5 минут: меняем 1 строку и получаем dashboard с трафиком, cost, cache hit rate. Без рефакторинга обширной codebase.",
+                "when_to_apply": "Быстрый старт без SDK-доступа (legacy codebase), нужен встроенный cache + rate-limiting, готовы добавить hop. Часто используется как первый шаг перед миграцией на Langfuse/Phoenix.",
+                "edge_cases": "Latency-чувствительные приложения (chat с TTFT-целью) могут пострадать от proxy hop. SPOF — критично для high-availability систем; нужен fallback на direct.",
+                "related": "[[ai-observability-interview#Q12]] таблица сравнения; [[ai-observability-interview#Q27]] cache savings."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Self-hosted Kubernetes-кластер с distributed cache — единственный способ запустить Helicone.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Helicone — это в первую очередь cloud-сервис (proxy). Self-host опция есть, но не «единственный способ» и не требует обязательно k8s.",
+                "source_of_confusion": "Усложнение реальной картины.",
+                "if_it_were_true": "Marketing-слоган «zero code change» был бы недостижим без cloud-proxy.",
+                "how_it_should_be": "Helicone — cloud proxy с опциональным self-host; быстрый старт через cloud."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать LLM observability framework по основным сценариям использования?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Берите всегда самый дорогой enterprise-инструмент — он покроет любые потребности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цена ≠ соответствие задаче. Datadog LLM мощный, но может быть избыточен для команды на LangChain (LangSmith лучше интегрирован) или для self-host-required сценария (Langfuse подходит).",
+                "source_of_confusion": "В корпоративной среде часто считают, что «дороже = лучше».",
+                "if_it_were_true": "Не было бы нишевых решений типа Phoenix (eval-focused) — все бы использовали Datadog.",
+                "how_it_should_be": "Выбор по требованиям: стек, data residency, бюджет, depth of eval."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Всегда выбирайте open-source и self-host — это единственный правильный путь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Open-source self-host требует ops-усилий (Postgres, Clickhouse, Redis, k8s, обновления). Для маленькой команды cloud SaaS часто дешевле total cost.",
+                "source_of_confusion": "В open-source-сообществе есть культ self-host.",
+                "if_it_were_true": "Не было бы SaaS-рынка в LLM-obs — но он есть и растёт.",
+                "how_it_should_be": "Выбор по приоритетам: TCO (включая ops), data residency, контроль кода."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все инструменты эквивалентны по фичам, выбор не имеет значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Существенные различия: open-source vs proprietary, self-host availability, OTel-native vs proprietary protocol, depth of eval, vendor-lock, цена.",
+                "source_of_confusion": "На уровне маркетинга все обещают похожее.",
+                "if_it_were_true": "Рынок схлопнулся бы к одному игроку.",
+                "how_it_should_be": "Различия существенные, выбор зависит от приоритетов команды."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Стек на LangChain + бюджет → LangSmith. Контроль данных / GDPR / self-host → Langfuse. Серьёзный eval + кластеризация ошибок → Phoenix. Минимум усилий, нет SDK-доступа → Helicone. Уже OTel-инфра → OpenLLMetry → любой OTel-backend (Tempo, Jaeger, Datadog).",
+              "correct": true,
+              "sections": {
+                "explanation": "Правила выбора по доминирующему критерию: (1) LangChain-стек + бюджет на SaaS → LangSmith (auto-instrumentation, eval как класса); (2) self-host обязателен (GDPR, контроль данных, нет бюджета) → Langfuse (MIT, Docker Compose); (3) серьёзный eval с embedding cluster analysis → Phoenix (OTel-native, OpenInference); (4) нет доступа к SDK (legacy app) или нужен быстрый proxy с cache → Helicone; (5) уже на OTel-инфра → OpenLLMetry SDK → экспорт в любой OTel-backend (Tempo, Jaeger, Datadog APM). W&B Prompts — если уже ML-стек на W&B (combined с training). TruLens — RAG-eval first. Datadog LLM — если уже Datadog (1 UI).",
+                "example": "Стартап на LangChain без strict GDPR → LangSmith Plus. Банк с requirement self-host EU → Langfuse on-prem. Research-команда с фокусом на quality → Phoenix + RAGAS. Legacy Java app без рефакторинга → Helicone proxy.",
+                "when_to_apply": "На стадии выбора первого LLM-obs инструмента или замены текущего. Сделайте чеклист требований (стек, бюджет, data residency, depth) и сматчите по таблице.",
+                "edge_cases": "Multi-backend (Langfuse + Datadog) — реалистично через OpenLLMetry/OTel. Mid-size команды иногда стартуют с Helicone и мигрируют на Langfuse через 6 месяцев.",
+                "related": "[[ai-observability-interview#Q8]] LangSmith; [[ai-observability-interview#Q9]] Langfuse; [[ai-observability-interview#Q10]] Phoenix."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие метрики обязательно собирать с production LLM-системы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Token/cost (`input_tokens_total`, `output_tokens_total`, `cost_usd_total` per model/user/endpoint), latency (TTFT, total, перцентили p50/p95/p99), качество (`eval_score`, `user_feedback_thumbs`, `hallucination_rate`), надёжность (`error_rate`, `retry_count`, `fallback_triggered_count`), эффективность (`cache_hit_rate`, `prompt_token_overhead`, `tool_call_avg`), бизнес (`tasks_completed_rate`, `escalation_to_human`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Минимальный production-набор: Token/Cost — input/output tokens по model/user/endpoint, cost_usd_total = `input × $price_in + output × $price_out`, плюс cost_per_user_hourly для алертинга; Latency — обязательно перцентили (mean врёт), TTFT для streaming UX; Quality — eval_score (faithfulness/relevancy) асинхронно, thumbs feedback, hallucination_rate; Reliability — error_rate total/4xx/5xx/timeout/rate-limit, retry_count, fallback_triggered_count; Efficiency — cache_hit_rate (semantic/exact), prompt_token_overhead (system/user ratio), tool_call_avg для агентов; Business — tasks_completed_rate, escalation_to_human, retention.",
+                "example": "Дашборд: `sum(input_tokens) by model`, `histogram_quantile(0.95, latency_ms)`, `avg(faithfulness_score) by endpoint`, `rate(429_total[5m])`, `cache_hit_rate by cache_type`, `cost_per_active_user`.",
+                "when_to_apply": "Любой production LLM-сервис, особенно если есть SLA или бюджет на cost. Минимум cost + latency + error_rate + eval — без них вы слепы.",
+                "edge_cases": "Eval-метрики дороги — sample 1-5%. PII в user-метриках требует hashing. TTFT отсутствует для non-streaming flows.",
+                "related": "[[ai-observability-interview#Q14]] cost подробно; [[ai-observability-interview#Q15]] алерты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только `request_count` и `error_count` — этого достаточно для понимания состояния LLM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это базовые HTTP-метрики, недостаточны: не отвечают на «сколько тратим?», «насколько хороший ответ?», «где затык?».",
+                "source_of_confusion": "Из APM-мира идёт привычка к простым счётчикам.",
+                "if_it_were_true": "Cost spike $20K за неделю не обнаружить, hallucination spike не увидеть.",
+                "how_it_should_be": "Cost + latency перцентили + quality + reliability + efficiency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только `cost_usd_total` — остальное провайдер сам отслеживает в своём дашборде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Провайдер не знает про вашу quality (faithfulness — внутренний расчёт), не разбивает по вашим endpoint'ам, не делает p99-перцентили end-to-end (RAG + LLM call + guardrail).",
+                "source_of_confusion": "OpenAI dashboard действительно показывает cost, и кажется достаточным.",
+                "if_it_were_true": "Не было бы рынка LLM-obs — все бы пользовались провайдерскими дашбордами.",
+                "how_it_should_be": "Cost — одна из метрик; нужны quality, latency-breakdown, error классификация."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только `mean_latency_ms` без перцентилей — этого достаточно для SLA-репортинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mean врёт в long-tail сценариях. p99 может быть 30s при mean 2s — пользователь почувствует именно p99. SLA должен быть в терминах перцентилей.",
+                "source_of_confusion": "Mean — самая простая метрика и привычная.",
+                "if_it_were_true": "SRE-best practices (Google SRE book) пропагандировали бы mean — но они настоятельно требуют перцентили.",
+                "how_it_should_be": "p50/p95/p99 + TTFT для streaming + cost + quality + reliability."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как считать стоимость LLM-вызова и какой алерт настроить на cost spike?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто умножить количество запросов на $1 — этого достаточно для бюджетирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost зависит от tokens (input и output разные цены) и модели. Один запрос может стоить $0.0001 (gpt-4o-mini, короткий) или $0.50 (gpt-4o, длинный context).",
+                "source_of_confusion": "Флэт-rate проще считать, но не отражает реальность.",
+                "if_it_were_true": "Cost spike из-за `max_tokens=16000` не обнаружить — все запросы были бы по $1.",
+                "how_it_should_be": "Формула per-call с разными ценами для input/output и model."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`cost_usd = (input_tokens / 1_000_000) × price_per_million_input + (output_tokens / 1_000_000) × price_per_million_output`, цены вшиты в config (`PRICING[model][\"in\"/\"out\"]`); алерт: PromQL `sum(rate(llm_cost_usd[1h])) / sum(rate(llm_cost_usd[7d])) > 3` (среднечасовая стоимость > 3× weekly average) → SMS дежурному. Типичные причины spike: зацикленный агент, prompt с большим `max_tokens`, бот-абуз, случайный переход с gpt-4o-mini на gpt-4o, rebuild RAG-индекса без батчинга embeddings.",
+              "correct": true,
+              "sections": {
+                "explanation": "Формула: `(in_tok/1e6)*price_in + (out_tok/1e6)*price_out`. Цены вшиваются в config: `gpt-4o: {in: 2.50, out: 10.00}, gpt-4o-mini: {in: 0.15, out: 0.60}, claude-3-7-sonnet: {in: 3.00, out: 15.00}, deepseek-chat: {in: 0.27, out: 1.10}`. Алерт на spike: hourly cost > 3× weekly avg → SMS. Spike обычно вызывают: (1) зацикленный агент (10K LLM calls/min), (2) `max_tokens=16000` в новом промпте, (3) бот-абуз публичного API, (4) случайный переход на flagship модель, (5) rebuild RAG-индекса с embeddings без батчинга.",
+                "example": "Алерт PromQL: `( sum(rate(llm_cost_usd[1h])) ) / ( sum(rate(llm_cost_usd[7d])) ) > 3` → SMS on-call. Сразу проверяем top endpoint/model по cost, ищем аномалию.",
+                "when_to_apply": "Любой production с LLM-вызовами. Особенно если есть публичный API (бот-абуз), агенты (зацикливание), embedding-пайплайн.",
+                "edge_cases": "Цены меняются — нужен мониторинг изменения pricing у провайдера. Prompt caching у Anthropic/OpenAI меняет формулу (cached tokens дешевле в 10×).",
+                "related": "[[ai-observability-interview#Q15]] алерты Tier1; [[ai-observability-interview#Q27]] cost optimization."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Брать invoice от провайдера раз в месяц и распределять по endpoint'ам пропорционально request count.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Invoice раз в месяц — слишком поздно: за это время можно сжечь $50K. Распределение пропорционально request count неточно: один request может стоить в 100× больше другого.",
+                "source_of_confusion": "Бухгалтерский подход кажется наиболее точным.",
+                "if_it_were_true": "Зацикленный агент за день сжёг бы бюджет, и узнали бы через месяц.",
+                "how_it_should_be": "Real-time cost tracking per call с алертом на spike per hour."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cost считать не нужно — LLM-провайдер сам выставит лимит и заблокирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hard limit провайдера срабатывает на квоте, а не на anomaly. К моменту блокировки уже сожгли deposit. Plus, лимит на уровне organization, а вам нужны per-endpoint/user spikes.",
+                "source_of_confusion": "Soft limits и alerts в OpenAI Dashboard действительно есть, но это запоздалая защита.",
+                "if_it_were_true": "Не было бы кейсов «команда сожгла $20K за weekend».",
+                "how_it_should_be": "Свой real-time cost tracking + hourly alert, провайдерский limit — как backstop."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие алерты обязательно настроить для production LLM-системы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только классические: 5xx > 5% и p99 > 30s; для LLM достаточно тех же алертов, что и для микросервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "5xx > 5% и p99 — обязательны, но недостаточны: 200 OK с галлюцинацией хуже 500. Нужны cost spike, eval drop, hallucination spike, thumbs-down rate, cache hit drop.",
+                "source_of_confusion": "Перенос привычек из SRE микросервисов.",
+                "if_it_were_true": "Не было бы кейсов «всё зелёное в Datadog, но пользователи жалуются».",
+                "how_it_should_be": "Тiered alerts: критические (cost, latency, error, rate limit, eval drop) + quality (hallucination, thumbs-down, refusal) + operational (cache, loops, provider degradation)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только cost spike — остальное вторично.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost spike важный, но не покрывает quality regression, agent loops, provider degradation. Реальные incidents разнообразны.",
+                "source_of_confusion": "Cost spikes — самые громкие в истории LLM-обсуждений (\"$20K за weekend\").",
+                "if_it_were_true": "Не было бы выгод от eval-метрик в проде.",
+                "how_it_should_be": "Tier 1 (cost + latency + error + ratelimit + eval drop), Tier 2 (quality), Tier 3 (operational)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Tier 1 (критические): cost spike (hourly > 3× weekly), p99 latency > 30s или > 2× baseline, error rate 5xx > 5%, rate limit 429 > N, eval score drop (avg_faithfulness < threshold за 1h). Tier 2 (качество): hallucination spike > baseline+3σ, thumbs-down > 10%, refusal spike. Tier 3 (операционные): cache hit drop, tool_call loop (>20 per request), provider degradation by latency.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tier 1 — критические (SMS дежурному): cost spike hourly > 3× weekly avg; p99 latency > 30s или > 2× baseline; error rate 5xx > 5% за 5 минут; rate limit 429 > порог → расширить квоту/включить очередь; eval score drop — `avg_faithfulness < threshold` за 1 час → возможна регрессия промпта или модели. Tier 2 — деградация качества: hallucination_rate > baseline + 3σ; `negative_feedback / total > 10%`; refusal spike (модель массово отказывается). Tier 3 — операционные: cache_hit_rate упал с 60% до 30%; tool_calls_per_request > 20 (агент зациклился); provider degradation — latency by provider выросла у OpenAI → включить fallback на Anthropic. Anti-pattern — алертить только на 5xx.",
+                "example": "Eval score drop алерт: `avg_over_time(eval_faithfulness[1h]) < 0.75` (при baseline 0.85) → паге дежурному → проверяем последний promote промпта, последний model rollover у провайдера.",
+                "when_to_apply": "Любой production LLM-сервис с пользовательской аудиторией или критичной бизнес-функцией.",
+                "edge_cases": "Eval drop требует достаточного volume для статистической значимости. Cost spike при low-volume даёт false positives. Hallucination через 3σ требует baseline по дням недели (weekly seasonality).",
+                "related": "[[ai-observability-interview#Q14]] cost формула; [[ai-observability-interview#Q19]] continuous eval."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Никаких алертов не нужно — обнаружим проблемы через user complaints.",
+              "correct": false,
+              "sections": {
+                "what_actually": "User complaints — самый медленный и неполный сигнал. К моменту жалоб уже потеряны деньги, репутация, пользователи.",
+                "source_of_confusion": "В небольшом сервисе действительно можно подождать жалобы — но это не масштабируется.",
+                "if_it_were_true": "Не существовало бы on-call rotation для LLM-сервисов.",
+                "how_it_should_be": "Proactive alerts по cost/quality/error/eval drop с уведомлением до жалоб."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое sampling в LLM-трейсинге и какую стратегию выбрать для high-volume системы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда трейсить 100% запросов — sampling вреден, так как теряем данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На high-volume (10K+ req/min) 100% трейсинг съедает storage и сеть больше, чем сам LLM. Sampling неизбежен; правильная стратегия сохраняет ценное (errors, slow, costly).",
+                "source_of_confusion": "Хочется ничего не терять, но это не масштабируется.",
+                "if_it_were_true": "Не было бы tail-sampling процессоров в OTel Collector.",
+                "how_it_should_be": "Selective sampling: 100% errors/slow/costly + N% default."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Случайный head-based sampling 1% — самая простая и достаточная стратегия для любых объёмов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При 1% случайных мы пропустим большинство errors, slow requests, expensive traces — главные debug-кандидаты. Нужно tail-based с правилами на error/slow/cost.",
+                "source_of_confusion": "Head-based проще реализовать (без буферизации).",
+                "if_it_were_true": "Debug-инциденты были бы невозможны — трейс ошибки попадает в 99% несэмплированной части.",
+                "how_it_should_be": "Always-errors + tail-based для slow/costly + N% default."
+              }
+            },
+            {
+              "order": 2,
+              "label": "D",
+              "text": "Стратегия зависит от объёма. Low-volume (<100 req/min, dev) → always-on 100%. High-volume → tail-based (решение после ответа на основе latency/error/cost) или комбинированные правила: 100% errors + 100% slow (> p99) + 100% high_cost (> $0.50) + 100% eval_flagged + 5% обычных. Tail-based требует буферизации span'ов до конца trace — нужен OTel Collector с tail-sampling процессором.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sampling стратегии: (1) Always-on 100% — low-volume или dev; (2) Head-based — random N% до запроса, простой uniform, для high-volume где deeper-aware не нужен; (3) Tail-based — решение после ответа на основе атрибутов (latency, error, cost), требует буферизации в Collector с tail-sampling процессором; (4) Adaptive — динамический % по нагрузке (spike-prone); (5) Always-errors + N% successful — default рекомендация. Production-рецепт: `[(\"error\", 1.0), (\"slow\", 1.0), (\"high_cost\", 1.0), (\"eval_flagged\", 1.0), (\"default\", 0.05)]` — все аномалии сохраняются полностью, обычные — 5%.",
+                "example": "OTel Collector конфиг с `tail_sampling` процессором: policies = error_policy (status_code 5xx → 100%), latency_policy (latency_ms > 30000 → 100%), default (10%). Span'ы буферизируются по trace_id, решение после получения всех span'ов.",
+                "when_to_apply": "Любая high-volume LLM-система (>500 req/min). Особенно если есть бюджетные ограничения на trace storage или сетевой трафик.",
+                "edge_cases": "Tail-based требует памяти на буферизацию (configurable wait time, обычно 30s). При cost-flag важно знать cost до конца trace — может потребоваться head + late update. Adaptive sampling может терять контекст при резких изменениях.",
+                "related": "[[ai-observability-interview#Q5]] атрибуты для решения; [[ai-observability-interview#Q14]] cost flag."
+              }
+            },
+            {
+              "order": 3,
+              "label": "C",
+              "text": "Sampling не нужен — Langfuse/LangSmith сами решают, что сохранять.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Решение о sampling — на стороне приложения/коллектора, а не backend. Langfuse/LangSmith принимают всё, что им присылают.",
+                "source_of_confusion": "В UI Langfuse есть retention настройки, но это не sampling.",
+                "if_it_were_true": "Cost на trace storage был бы низким без вашего участия — но он не низкий.",
+                "how_it_should_be": "Sampling rules в SDK/коллекторе перед отправкой."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как защитить PII при трейсинге prompts и completions?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Несколько слоёв защиты: (1) redaction на уровне SDK через Presidio (`AnalyzerEngine` + `AnonymizerEngine` в `RedactingSpanProcessor` over span events); (2) regex pre-redaction (быстрее) для известных форматов (email, card, IP); (3) полное отключение content capture через `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false`; (4) hash вместо raw (`sha256(prompt)`); (5) tier-based (для VIP-юзеров content не сохраняется); (6) GDPR right-to-deletion API по `user_id` (поддерживается Langfuse/Phoenix штатно). Дополнительно — периодический LLM-judge для аудита 1% трейсов на «есть ли PII».",
+              "correct": true,
+              "sections": {
+                "explanation": "Многослойная защита: Layer 1 — SDK-level redaction через Microsoft Presidio: `AnalyzerEngine().analyze(text, language=\"en\")` + `AnonymizerEngine().anonymize(...)` встраиваются в custom `RedactingSpanProcessor`, заменяющий content в span events `gen_ai.user.message` / `gen_ai.completion` на anonymized. Layer 2 — regex для known patterns (email, credit card, IP) быстрее ML. Layer 3 — флаг `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false` отключает контент полностью, остаются только метаданные. Layer 4 — sha256 хэш вместо raw. Layer 5 — tier-based по типу пользователя (VIP — no content). Layer 6 — GDPR right-to-deletion: по `user_id` стереть все трейсы (Langfuse и Phoenix поддерживают штатно). Аудит — 1% трейсов LLM-judge проверяет «есть ли PII».",
+                "example": "```class RedactingSpanProcessor(BatchSpanProcessor):\n    def on_end(self, span):\n        for event in span.events:\n            if event.name in (\"gen_ai.user.message\", \"gen_ai.completion\"):\n                event.attributes[\"content\"] = redact(event.attributes[\"content\"])\n        super().on_end(span)```",
+                "when_to_apply": "Любая LLM-система с пользовательским контентом, особенно B2C, healthcare, finance, regulated industries. GDPR-зависимые EU-юрисдикции.",
+                "edge_cases": "Presidio замедляет — батчируйте. Regex даёт false negatives (имена в свободной форме). Полное отключение content усложняет debug (только метаданные). Hash непригоден для retrieval/eval analysis.",
+                "related": "[[ai-observability-interview#Q18]] masked prompts, GDPR; [[ai-safety-guardrails-interview]] guardrails."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Просто не пишите ничего в span events — этого достаточно для compliance.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это один из вариантов (через `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false`), но он жёсткий: теряете возможность debug, evals по контенту, аналитики. Лучше многослойная защита (redaction + selective).",
+                "source_of_confusion": "Кажется, что радикальный подход самый безопасный.",
+                "if_it_were_true": "Не было бы инструментов типа Presidio в LLM-стеке — они существуют именно для смягчения trade-off.",
+                "how_it_should_be": "Многослойная защита: redaction + selective tiering + опциональное полное отключение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Шифровать весь span зашифрованным ключом из vault — только так можно гарантировать privacy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шифрование at rest — стандарт всех backends (TLS 1.3 + AES-256). Но проблема не в storage, а в том, что obs-инженер с доступом видит plain text PII. Решение — redaction перед записью.",
+                "source_of_confusion": "Шифрование звучит максимально безопасно.",
+                "if_it_were_true": "Не было бы PII-leak инцидентов в зашифрованных storage — но они происходят, потому что инсайдеры видят расшифрованные данные.",
+                "how_it_should_be": "Encryption at rest как baseline + redaction до записи как фактическая защита от inside-доступа."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "PII в LLM-prompts не бывает — пользователи не пишут email и номера карт в чат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пользователи постоянно вставляют PII: «помоги составить письмо для john@example.com», «вот мой адрес 123 Main St», копируют резюме с паспортом, медицинские данные. Это происходит регулярно.",
+                "source_of_confusion": "Кажется, что чат — нерелевантное место для PII.",
+                "if_it_were_true": "Не было бы GDPR-инцидентов с LLM-приложениями — но они есть.",
+                "how_it_should_be": "Считать любой пользовательский ввод потенциально содержащим PII, применять redaction."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое masked prompts и зачем нужен GDPR-режим в LLM observability?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Masked prompts — это шифрование промптов AES-256; GDPR-режим — это галочка в UI, которая ничего не меняет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Masked prompts — это замена variable значений на плейсхолдеры (`{ADDRESS}`, `{EMAIL}`, `{NAME}`), не шифрование. GDPR-режим — это набор реальных гарантий (EU residency, encryption, DSAR/deletion API, DPA, sub-processor agreements), не косметический флажок.",
+                "source_of_confusion": "Маскировка и шифрование звучат похоже.",
+                "if_it_were_true": "Шифрованный prompt нельзя было бы анализировать (template usage analytics).",
+                "how_it_should_be": "Masked = шаблон с плейсхолдерами; GDPR-режим = реальные правовые и технические гарантии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Masked prompts — хранение структуры промпта без значений переменных (`Find restaurants near {ADDRESS} for {NAME} ({EMAIL})` вместо реальных данных). Зачем: template-аналитика работает без хранения PII, A/B сравнивает шаблоны вместо индивидуальных запросов, при breach утечёт только структура. GDPR-режим в Langfuse/LangSmith: EU data residency, encryption at rest (AES-256) + in transit (TLS 1.3), DSAR API (export по `user_id` <30 дней), Right-to-deletion API (<30 дней), sub-processor agreements (Vercel/AWS), DPA подписывается. Production-pattern: `user_id = sha256(raw_user_id + salt)` + reverse map в vault → при request на удаление удаляем строку в vault → user_id становится несвязанным (effective deletion).",
+              "correct": true,
+              "sections": {
+                "explanation": "Masked prompts: оригинал `Find restaurants near 123 Main St for John Doe (john@example.com)` маскируется в `Find restaurants near {ADDRESS} for {NAME} ({EMAIL})`. Это позволяет: template-аналитика (какие шаблоны популярны), A/B (сравниваем шаблоны), breach-protection (утечёт только структура). GDPR-режим в Langfuse/LangSmith включает: EU data residency (хранение только в EU), encryption at rest (AES-256) + in transit (TLS 1.3), DSAR (Data Subject Access Request) API — export всех данных по `user_id` за <30 дней, Right-to-deletion API за <30 дней, sub-processor agreements (Vercel, AWS), DPA (Data Processing Agreement) подписывается. Production-pattern для effective deletion: `user_id = sha256(raw_user_id + salt)`, reverse map в отдельном vault. При deletion: удаляем строку в vault — user_id в трейсах становится несвязанным с реальным человеком (без переписывания всех трейсов).",
+                "example": "Аналитика «какие шаблоны промптов часто использует юзер» работает на masked prompts без хранения ПД. При GDPR-запросе на удаление: `DELETE FROM user_vault WHERE raw_id=...` → user_id в Langfuse трейсах остаётся, но больше не связан с реальным человеком.",
+                "when_to_apply": "EU/UK юрисдикция, регулируемые индустрии (healthcare, finance), B2C с PII в промптах. Любая система обработки персональных данных под GDPR.",
+                "edge_cases": "Effective deletion (через vault) удобно, но при аудите спросят: «вы реально удалили данные или только связь?». Правовая интерпретация — реально удалена возможность связать. Sub-processor agreement — заранее подпишите с провайдером.",
+                "related": "[[ai-observability-interview#Q17]] PII redaction; [[gdpr-interview]] (если есть)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Masked prompts — это замена всего промпта на нули, GDPR-режим = удаление аккаунта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Masked сохраняют структуру и плейсхолдеры (`{ADDRESS}`, `{EMAIL}`), полная замена на нули убила бы возможность аналитики. GDPR-режим — это набор правовых и технических гарантий, не только удаление аккаунта.",
+                "source_of_confusion": "Маскировка ассоциируется с полным затиранием.",
+                "if_it_were_true": "Template аналитика не работала бы.",
+                "how_it_should_be": "Маскировка = плейсхолдеры; GDPR-режим = полная программа compliance."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Masked prompts применяются только для embeddings, GDPR-режим — для logs.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Masked prompts применяются к prompt/completion в трейсах. GDPR-режим — кросс-cutting (data residency, encryption, deletion API) применяется ко всему хранилищу.",
+                "source_of_confusion": "Разные данные подразумевают разные политики, но артифициальное разделение по типам данных не точно.",
+                "if_it_were_true": "Не было бы единых GDPR-сертификатов у платформ — но они есть.",
+                "how_it_should_be": "Masked = к user-content; GDPR-режим = к всей платформе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое continuous eval в production и какие ключевые принципы его реализации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это batch-эвал раз в месяц на сэмпле трафика — больше ничего не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Continuous eval — постоянное измерение на живом трафике (не раз в месяц), асинхронно, с независимой judge-моделью, мульти-метрика, со связкой score → metric → alert.",
+                "source_of_confusion": "Batch-подход дешевле и проще.",
+                "if_it_were_true": "Дрейф между batch-runs не отловить — а он есть.",
+                "how_it_should_be": "Sample 1-5% на каждый запрос, async, independent judge, multi-metric, alerts."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это синхронный judge на каждый запрос — блокирующий ответ пользователю до получения eval score.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eval — это отдельный LLM-вызов, дорогой и медленный. Делать его синхронно удвоит latency и cost. Должен быть async.",
+                "source_of_confusion": "Хочется иметь score сразу для каждого ответа.",
+                "if_it_were_true": "TTFT удвоился бы, p99 latency вышел из SLA.",
+                "how_it_should_be": "Async eval queue, score прикрепляется к trace post-hoc."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Постоянное измерение качества LLM-системы на живом трафике (а не только при релизе) с ключевыми принципами: (1) Sample 1-5% (eval сам по себе LLM-вызов, дорог); (2) Async — не блокировать ответ пользователю; (3) Independent judge model (eval'ит другая модель — Claude если основная GPT, и наоборот — снижает self-bias); (4) Multi-metric (faithfulness + relevancy + harmfulness, не одна); (5) Scored → metric → alert (каждый score в Prometheus, оттуда алерт). Pipeline: production request → trace → async eval queue → LLM-as-judge → score attached to trace → metric → alert / regression decision.",
+              "correct": true,
+              "sections": {
+                "explanation": "Continuous eval — eval в проде на живом трафике, в отличие от offline eval (golden dataset в CI). Принципы: (1) Sample 1-5% — eval сам по себе LLM-вызов с cost ~$0.005-0.01, на 100% делать дорого; (2) Async — eval в queue, не блокирует UX; (3) Independent judge — cross-judge снижает self-preference bias (если основная GPT, judge Claude и наоборот); (4) Multi-metric — faithfulness + relevancy + harmfulness, единая метрика не информативна; (5) Score → Prometheus → alert. Pipeline: prod request → trace exported → sample N% → eval queue → judge → score attached to trace_id → aggregated metric → alert if regression → auto-rollback или manual review. Пример с LangSmith feedback API: `client.create_feedback(run_id=run_id, key=\"faithfulness\", score=score)`.",
+                "example": "5% production traces → async queue → Claude-judge оценивает GPT-4o ответы по 3 метрикам → `faithfulness < 0.7` за час → PagerDuty + проверка последнего promote промпта.",
+                "when_to_apply": "Любая production LLM-система с пользовательской аудиторией. Особенно после prompt update, model rollover, RAG-index rebuild.",
+                "edge_cases": "Judge калибровка важна — periodically validate с human-labels. Sample 1% при low-volume даёт noisy сигнал. Cost eval может быть значителен (5% × $0.005 × 1M req = $250/day).",
+                "related": "[[ai-observability-interview#Q20]] user feedback; [[ai-observability-interview#Q21]] golden dataset из прод."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это manual review всех трейсов командой ML-инженеров — единственный надёжный способ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Manual review нерасшарируется (10K req/min × человек = невозможно). Continuous eval — automated через LLM-judge + sampling, manual review только для curated subset.",
+                "source_of_confusion": "Human eval считается самым качественным.",
+                "if_it_were_true": "Команды бы не использовали LLM-as-judge — но он стандарт.",
+                "how_it_should_be": "LLM-judge для масштаба + human для калибровки и edge cases."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как интегрировать user feedback в LLM observability и связать его с trace?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "User feedback хранится в отдельной системе (HubSpot/Zendesk) и не должен попадать в LLM obs.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Feedback должен быть связан с trace_id для анализа: какой эндпоинт даёт thumbs-down, какая модель чаще, корреляция judge ↔ user rating. Без связи теряете главный сигнал.",
+                "source_of_confusion": "В классическом продукте feedback идёт в CRM.",
+                "if_it_were_true": "Не было бы score API в Langfuse/LangSmith.",
+                "how_it_should_be": "Feedback с trace_id попадает в LLM obs как score."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только thumbs up/down — implicit signals слишком ненадёжны и не должны учитываться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Implicit feedback (переформулировка вопроса, копирование ответа, закрытие чата) — мощный сигнал. Explicit thumbs низкая response rate (~5%), без implicit теряем 95% инсайтов.",
+                "source_of_confusion": "Thumbs кажется самым «чистым» сигналом.",
+                "if_it_were_true": "Production-команды не отслеживали бы behavioral signals — но они отслеживают.",
+                "how_it_should_be": "Explicit (thumbs, rating, comment) + implicit (reformulation, copy, dwell) + downstream (conversion, retention)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Feedback пишется напрямую в Slack команды — это самый простой интерфейс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Slack — для уведомлений критических incidents, не для structured feedback. Feedback идёт в Langfuse/LangSmith через score API с trace_id, чтобы строить дашборды.",
+                "source_of_confusion": "Slack часто используется для alerts.",
+                "if_it_were_true": "Дашборд `thumbs_down by endpoint` нельзя было бы построить.",
+                "how_it_should_be": "Structured store (Langfuse/LangSmith) с trace_id-связью."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Три канала: (1) Explicit — thumbs up/down, 5-star rating, comment; (2) Implicit — пользователь переформулировал (значит не понял), скопировал ответ (значит понравился), закрыл чат; (3) Downstream — конверсия / retention / refund rate. Связка с trace: frontend отправляет `{trace_id, rating, comment}` → backend пишет в Langfuse через `langfuse.score(trace_id, name='user_feedback', value=0_or_1, comment=...)`. Дашборд: `thumbs_down_rate by endpoint`, `thumbs_down by model`, `correlation(eval_score, user_rating)` (если judge=0.9 а user=❌ — калибровка плохая). Pipeline learnings → dataset: thumbs-down trace → ручной разбор → подтверждённый low score → в golden dataset для регрессионных тестов будущих версий промпта.",
+              "correct": true,
+              "sections": {
+                "explanation": "User feedback каналы: Explicit — пользователь явно даёт сигнал (thumbs up/down, 5-star, comment); Implicit — поведенческий сигнал (переформулировка = ответ не понял, copy = понравилось, dwell time, закрытие чата); Downstream — отложенные бизнес-метрики (conversion, retention, refund). Связка с trace через trace_id: frontend `POST /api/feedback {trace_id, rating, comment}` → backend `langfuse.score(trace_id=..., name=\"user_feedback\", value=0_or_1, comment=...)`. Дашборд: `thumbs_down_rate by endpoint` (где негатив), `thumbs_down by model` (модель А vs B), `correlation(eval_score, user_rating)` — если LLM-judge говорит 0.9 а пользователь ставит ❌, judge калибровка плохая. Learning pipeline: thumbs-down trace → human review → подтверждённый low quality → curated в golden-dataset → regression test будущих версий промпта.",
+                "example": "В Langfuse: `langfuse.score(trace_id=\"abc123\", name=\"user_feedback\", value=0, comment=\"Wrong product link\")`. Затем дашборд `avg(user_feedback) by endpoint` показывает: `/api/recommendations` имеет 12% thumbs-down vs 3% baseline → инвестигируем.",
+                "when_to_apply": "Любой user-facing LLM-продукт (chat, ассистент, search). Без user feedback eval-сигнал односторонен (только judge).",
+                "edge_cases": "Response rate explicit ~5% — implicit и downstream важнее для масштаба. Negative bias — пользователи активнее жалуются, чем хвалят. Корреляция judge ↔ user низкая = калибровка или judge prompt плохой.",
+                "related": "[[ai-observability-interview#Q19]] continuous eval; [[ai-observability-interview#Q21]] golden dataset."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как из production-трейсов собрать golden dataset для регрессионного тестирования промптов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Источники из прод: (1) High-frequency queries — топ-100 самых частых запросов (по embedding-кластеризации); (2) Low-score traces — все с `eval_score < 0.5` и подтверждением human; (3) User-flagged — все thumbs-down с разметкой; (4) Edge cases — самые длинные/короткие prompts, нестандартные языки; (5) Adversarial — попытки jailbreak, prompt injection, OOD-вопросы. Workflow (Langfuse): `lf.fetch_traces(tags=[\"thumbs_down\"])` → `lf.create_dataset(name=\"regression-v2\")` → для каждого trace `lf.create_dataset_item(input=..., expected_output=human_corrected, metadata={...})` → `run_experiment(dataset, prompt_version=\"v3\", evaluators=[...])` → сравниваем с baseline. В CI/CD: при PR меняющем промпт → запуск eval против dataset → если avg score падает >5% → block merge.",
+              "correct": true,
+              "sections": {
+                "explanation": "Golden dataset = курируемый набор `(input, expected_output / criteria)` для регрессионных тестов. Источники из production: (1) High-frequency — топ-100 по embedding-кластеризации (покрываем большую часть трафика); (2) Low-score — все `eval_score < 0.5` после human-подтверждения (нашли «трудные» кейсы); (3) User-flagged — thumbs-down с human-разметкой ожидаемого ответа; (4) Edge cases — экстремумы по длине/языку; (5) Adversarial — jailbreak attempts, prompt injection, out-of-distribution. Workflow в Langfuse: `traces = lf.fetch_traces(tags=[\"thumbs_down\"], from_timestamp=...)` → `dataset = lf.create_dataset(name=\"regression-v2\")` → для каждого trace `lf.create_dataset_item(dataset_name=\"regression-v2\", input=trace.input, expected_output=trace.input_human_corrected, metadata={\"source_trace\": trace.id})` → запуск нового промпта `results = run_experiment(dataset=\"regression-v2\", prompt_version=\"v3\", evaluators=[faithfulness, relevancy])` → сравнение с baseline. В CI/CD: PR с промптом → eval pipeline → avg score падает >5% → block merge с комментарием diff в PR.",
+                "example": "После релиза v3 промпта собрали 50 thumbs-down → human review → 30 валидных регрессий → добавили в golden-dataset-v3. При попытке v4 запускаем eval — если faithfulness на этих 30 кейсах ниже v3 baseline на 5% — PR блокируется.",
+                "when_to_apply": "Любой production LLM-сервис, где есть continuous eval и можно курировать данные. Особенно после major prompt updates или model rollover.",
+                "edge_cases": "Dataset устаревает — periodically refresh (drift в типах запросов). Adversarial growing — security team регулярно докидывает новые injections. Privacy: при добавлении user-flagged → redact PII в expected_output.",
+                "related": "[[ai-observability-interview#Q20]] user feedback; [[ai-observability-interview#Q22]] CI/CD pipeline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только случайная выборка 100 трейсов — никакой курации не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Случайная выборка отразит распределение, но пропустит edge cases и regressions. Курация должна включать high-frequency + low-score + flagged + edge + adversarial.",
+                "source_of_confusion": "Простота random sample.",
+                "if_it_were_true": "Регрессия на 1% трафика (но критичный сегмент) не была бы поймана.",
+                "how_it_should_be": "Stratified curation по нескольким источникам, не uniform random."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Golden dataset нужно создавать вручную с нуля, не используя production-трейсы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hand-crafted dataset быстро становится несвязным с реальным трафиком (drift). Production-трейсы — главный источник realistic кейсов.",
+                "source_of_confusion": "Чистота вручную написанных кейсов кажется выше.",
+                "if_it_were_true": "Не было бы Langfuse/LangSmith functionality для импорта traces в datasets.",
+                "how_it_should_be": "Production-трейсы → курация → golden dataset; hand-crafted только для adversarial/edge."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать только публичные benchmark'и (MMLU, HellaSwag) — они уже идеальны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Public benchmarks не отражают вашу задачу (см. Q1 LLM eval). MMLU — multiple choice академический контент, не ваши customer support tickets.",
+                "source_of_confusion": "Готовые benchmarks дешевы в использовании.",
+                "if_it_were_true": "Не было бы кейсов «топ MMLU модель плохо работает на нашем стеке».",
+                "how_it_should_be": "Свой golden dataset из прод-трейсов + опционально public как additional signal."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как встроить prompt regression pipeline в CI/CD?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Промпты не требуют CI/CD — это просто строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Промпт = код: меняет поведение системы. Без regression pipeline каждое изменение — gambling. Стандарт зрелых команд — PR-гейт с eval против golden dataset.",
+                "source_of_confusion": "Текст не похож на исходник.",
+                "if_it_were_true": "Не существовало бы prompt management в LangSmith/Langfuse.",
+                "how_it_should_be": "Treat prompts as code: version control, PR review, automated regression."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Промпт = код, значит pipeline: Dev меняет prompt v3 → push PR → CI запускает eval на golden dataset → проверка avg score >= baseline - 5% → если нет, block merge + post diff в PR → если да, merge to staging → canary 5% traffic → continuous eval 24h → если quality стабилен, promote 100%, иначе auto-rollback → tag v3 production в registry. GitHub Actions: `python scripts/evaluate.py --prompt-file prompts/customer_support.txt --dataset langfuse://datasets/regression-v2 --baseline-prompt main:... --threshold 0.05`. Alert после canary: PromQL `avg_over_time(eval_score{prompt_version=\"v3\"}[1h]) < avg_over_time(eval_score{prompt_version=\"v2\"}[1h]) * 0.95`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полный pipeline: (1) Dev меняет prompt v3 → push PR; (2) CI запускает eval против golden dataset (`python scripts/evaluate.py --prompt-file prompts/customer_support.txt --dataset langfuse://datasets/regression-v2 --baseline-prompt main:prompts/customer_support.txt --threshold 0.05`); (3) `avg_score(v3) >= avg_score(v2) - 5%`? Нет → block merge + post diff таблицы score'ов в PR comment; Да → merge to staging; (4) Canary deploy 5% traffic с тегом variant=v3; (5) Continuous eval 24h на canary; (6) Quality стабилен? Нет → auto-rollback; Да → promote 100% + tag v3 production в prompt registry. Prometheus-style алерт на canary regression: `avg_over_time(eval_score{prompt_version=\"v3\"}[1h]) < avg_over_time(eval_score{prompt_version=\"v2\"}[1h]) * 0.95`. Полноценный prompt = код cycle с automated guardrails.",
+                "example": "PR с изменением system prompt → GitHub Actions запускает 200-question eval → faithfulness падает с 0.87 до 0.79 (>5% drop) → PR-комментарий: «BLOCKED. faithfulness regression -9.2%, examples that regressed: Q12, Q45, Q67». Dev фиксит и пушит снова.",
+                "when_to_apply": "Любая команда с regular prompt updates. Особенно critical для high-traffic systems с реальным cost от регрессий.",
+                "edge_cases": "Threshold 5% — настраиваемый (для stable systems можно 2%, для experimental 10%). Golden dataset должен периодически обновляться (drift). Canary period 24h может быть короче для high-volume или дольше для cyclical traffic.",
+                "related": "[[ai-observability-interview#Q21]] golden dataset; [[ai-observability-interview#Q26]] A/B testing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Eval запускается только manually, после деплоя — этого достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Manual eval после деплоя означает, что регрессия уже в проде. CI должен поймать до merge. Post-deploy continuous eval — дополнительный слой, не замена.",
+                "source_of_confusion": "Manual ощущается «контролируемее».",
+                "if_it_were_true": "Регрессия в проде была бы нормой.",
+                "how_it_should_be": "CI eval до merge + continuous eval после deploy (defense in depth)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно ревьювера на GitHub — он визуально проверит prompt diff.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Human review критичен (синтаксис, ясность), но не заменяет measurement. Невозможно вручную оценить, как изменение повлияет на 200 кейсов golden dataset.",
+                "source_of_confusion": "Code review стандарт, и кажется применимым.",
+                "if_it_were_true": "Не было бы автоматизированных eval pipelines.",
+                "how_it_should_be": "Human review (логика) + automated eval (numbers)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как трейсить ReAct-агента и находить infinite loops?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Loops в агенте — это нормально, не нужно их искать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Зацикленный агент сжигает тысячи $ за минуту и не даёт ответ. Это критичный incident. Нужны hard limits + alerts + дашборды.",
+                "source_of_confusion": "Self-correction в агентах действительно требует нескольких итераций.",
+                "if_it_were_true": "Не было бы `MaxIterationsExceeded` exception в LangChain.",
+                "how_it_should_be": "Hard limits (max_iter, max_tokens, max_cost) + alerts на depth/cost/duration."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Можно ограничиться счётчиком `request_count` — этого достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Request_count = 1 для зациклившегося агента (это один HTTP-запрос). Нужны метрики внутри: span depth, repeating tool calls, total_tokens per trace, duration.",
+                "source_of_confusion": "HTTP-метрики простые, привычные.",
+                "if_it_were_true": "Loops было бы невозможно обнаружить.",
+                "how_it_should_be": "Внутренние метрики trace: depth, tool repeats, tokens, duration."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сигналы зацикливания в трейсе: (1) High depth — `span.depth > 20`; (2) Repeating tool calls — один tool с похожими аргументами N раз; (3) Token spike per trace — `total_tokens > 100_000`; (4) Latency outlier — `duration > 5 min`. Алерт: `avg(llm_agent_depth) by (agent_name) > 15`. Дашборд: `avg_tool_calls_per_task`, `cost_per_completed_task`, `infinite_loop_count` (trace'ы прерванные по max_iterations), `tool_call_distribution`. Каждая итерация = свой span: `with tracer.start_as_current_span(f\"iter_{i}\") as span: span.set_attribute(\"agent.thought\", ...), span.set_attribute(\"agent.tool\", ...)`. Hard limits в проде: `max_iter`, `max_total_tokens`, `max_cost_per_request` — каждый с alert.",
+              "correct": true,
+              "sections": {
+                "explanation": "Структура агентского трейса: каждая итерация — отдельный span с атрибутами `agent.thought`, `agent.tool`, `agent.args`. Зацикливание ловится через: (1) depth > 20 (глубокое дерево spans); (2) Repeating tool calls — один tool вызван N раз с похожими args (semantic similarity по args); (3) total_tokens > 100K в одном trace (cost-blowup); (4) Duration > 5 min. Алерт: `avg(llm_agent_depth) by (agent_name) > 15`. Дашборд агентов: avg_tool_calls_per_task, cost_per_completed_task, infinite_loop_count (terminated by max_iterations), tool_call_distribution. Hard limits — обязательны: `max_iter`, `max_total_tokens`, `max_cost_per_request`, каждый кидает exception и пишет alert. Пример: `for i in range(max_iter): with tracer.start_as_current_span(f\"iter_{i}\") as span: ... raise MaxIterationsExceeded(...)`.",
+                "example": "Trace показывает agent_invoke с depth=35 (limit 20), 28 tool_calls (limit 10), total_tokens=180K. Алерт PagerDuty + auto-cancel. Разбор: модель зациклилась на «надо ещё раз проверить» → промпт нужен с явным stop-условием.",
+                "when_to_apply": "Любой ReAct-агент, LangGraph, AutoGPT-style, MCP-агент. Особенно если агент имеет доступ к долгим tools (web search, code execution).",
+                "edge_cases": "Legitimate long traces (например, deep research агенты) могут срабатывать на limits — настройте per-agent thresholds. False positive на depth, если агент делает legitimately multistep reasoning.",
+                "related": "[[ai-observability-interview#Q4]] parent-child иерархия; [[ai-agents-interview]] ReAct."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно поставить `temperature=0` — это устранит loops.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`temperature=0` уменьшает randomness, но не предотвращает loops — модель может детерминированно прийти в loop. Решение — hard limits + tracing.",
+                "source_of_confusion": "Greedy decoding кажется управляемым.",
+                "if_it_were_true": "Не было бы кейсов с зацикленными агентами на `temperature=0`.",
+                "how_it_should_be": "Hard limits на iter/tokens/cost + alerts + structured tracing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно трейсить RAG-pipeline и какие метрики ловить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто трейсить итоговый LLM-вызов — retrieval не нужно трейсить отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без retrieval span'ов нельзя дебажить «почему ответ плохой» (контекст релевантный? citation корректна?). RAG-quality зависит от retrieval не меньше, чем от LLM.",
+                "source_of_confusion": "LLM-call кажется главным шагом.",
+                "if_it_were_true": "Не существовало бы retrieval precision/recall как метрик.",
+                "how_it_should_be": "Все стадии RAG — отдельные spans с retrieval-метриками."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Просто `cost_usd` per request — этого достаточно для RAG.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost — операционная метрика. RAG требует quality dimensions: retrieved relevant? context used? answer faithful? citations correct?",
+                "source_of_confusion": "Cost проще считать.",
+                "if_it_were_true": "Невозможно было бы тюнить top_k или rerank threshold.",
+                "how_it_should_be": "Quality + utilization + operational, cost — одна из метрик."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Метрика только одна — `vector_search_latency`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Latency — operational, не отвечает на quality. Без precision/recall/faithfulness/citation нельзя оценить RAG как систему.",
+                "source_of_confusion": "Latency — самая простая метрика.",
+                "if_it_were_true": "Не существовало бы RAGAS как набора метрик.",
+                "how_it_should_be": "Retrieval quality + context utilization + answer quality + operational."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "RAG trace = `chat_request → embed_query → vector_search (top-k, retrieved_chunks=[id1, id2,...]) → rerank (опционально) → llm_call (context = query + chunks, chunks_used=[id1, id3]) → post_check (citation validation)`. Метрики: Retrieval quality — `retrieval_precision@k`, `retrieval_recall`, `mrr`; Context utilization — `chunks_retrieved` vs `chunks_cited_in_answer`, `context_relevance_score` (RAGAS); Answer quality — `faithfulness` (опирается на контекст), `answer_relevancy`, `citation_correctness`; Operational — `embedding_latency_p95`, `vector_search_latency_p95`, `cache_hit_rate` для embeddings, `unfound_query_rate` (retrieval вернул < threshold relevant). Phoenix-дашборд кластеризации: кластеры query-embedding'ов с `avg(faithfulness) < 0.5` — целые сегменты с плохим качеством.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полная структура RAG trace: root chat_request → embed_query (text → vector) → vector_search с атрибутом `retrieved_chunks=[id1, id2, ...]` → опционально rerank → llm_call с атрибутом `gen_ai.context.chunks_used=[id1, id3]` → post_check (citation validation). Метрики: (1) Retrieval quality — `retrieval_precision@k` (доля релевантных в top-k), `retrieval_recall` (доля найденных из всех релевантных), `mrr`; (2) Context utilization — `chunks_retrieved` vs `chunks_cited_in_answer` (если из 10 использовали 2 — нагрузка избыточна), `context_relevance_score` (RAGAS); (3) Answer quality — `faithfulness` (опирается ли ответ на контекст), `answer_relevancy`, `citation_correctness` (реально ли цитата поддерживает утверждение); (4) Operational — `embedding_latency_p95`, `vector_search_latency_p95`, `cache_hit_rate` для embeddings, `unfound_query_rate` (% запросов где retrieval вернул < threshold relevant → пробел в knowledge base). Phoenix дашборд кластеризации находит embedding-кластеры с avg(faithfulness) < 0.5 — целые сегменты с плохим качеством.",
+                "example": "`span.set_attribute(\"retrieval.top_k\", 10); span.set_attribute(\"retrieval.chunks_returned\", 8); span.set_attribute(\"retrieval.avg_similarity\", 0.78); span.set_attribute(\"rag.chunks_cited\", [\"doc1#p3\", \"doc2#p1\"]); span.set_attribute(\"rag.context_tokens\", 4200)`. Дашборд: `avg(rag_faithfulness) by query_cluster` — кластер «API documentation queries» имеет 0.3, остальные 0.85 → KB пробел.",
+                "when_to_apply": "Любая RAG-система: chatbots с docs, customer support с knowledge base, search-агенты, code-assistants с repository context.",
+                "edge_cases": "Citation extraction может быть неточной (модель не всегда корректно ссылается). Embedding-кластеризация требует ресурсов. `unfound_query_rate` сигналит как о пробелах в KB, так и о drift запросов.",
+                "related": "[[ai-observability-interview#Q25]] context utilization; [[rag-interview]] RAG patterns."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое context utilization в RAG и зачем эту метрику измерять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Доля полученного контекста, реально использованного в ответе. Зачем: (1) если из 10 чанков использовано 2, мы платим за обработку 8 лишних (cost + latency); (2) можно уменьшить `top_k` без потери качества; (3) если 0/10 — модель проигнорировала контекст (галлюцинация). Способы измерения: (1) Citation-based — модель обязана ссылаться на чанки `[1]`, `[2]`, парсим citations: `used = set(citations) & set(retrieved_chunks)`, `utilization = len(used) / len(retrieved_chunks)`; (2) LLM-as-judge — отдельный prompt «какие чанки реально использованы»; (3) Attention-based (если есть доступ к weights). Алерт: `avg(rag_context_utilization) by endpoint < 0.3` → top_k слишком большой, уменьшаем.",
+              "correct": true,
+              "sections": {
+                "explanation": "Context utilization = доля retrieved chunks, реально использованных в ответе. Зачем измерять: (1) Cost optimization — если из 10 чанков использовано 2, платим за обработку 8 лишних (input_tokens + latency); (2) `top_k` tuning — можно уменьшить без потери качества; (3) Hallucination detection — 0/10 utilization значит модель проигнорировала весь контекст (плохой sign). Способы измерения: (1) Citation-based — обязываем модель ссылаться на чанки (`[1]`, `[2]`), после парсим citations: `used = set(citations_in_answer) & set(c.id for c in retrieved_chunks); utilization = len(used) / len(retrieved_chunks)`; (2) LLM-as-judge — отдельный prompt «какие из этих чанков реально использованы»; (3) Attention-based — если есть доступ к attention weights модели, анализ attention на chunk tokens. Алерт на эндпоинт: `avg(rag_context_utilization) by endpoint < 0.3` → `top_k` слишком большой, уменьшаем (cost down without quality loss).",
+                "example": "Endpoint `/api/qa` имеет `top_k=10, avg(utilization)=0.18` (используется 1-2 chunk из 10) → снижаем top_k до 3 → cost -70%, latency -50%, faithfulness unchanged (0.87 → 0.86).",
+                "when_to_apply": "Любая RAG-система с `top_k > 1`. Особенно если cost растёт быстро или latency страдает от длинного context.",
+                "edge_cases": "Citation extraction неточная — модель может использовать чанк, но не процитировать. LLM-judge дорог. Attention-based — только для open-weight моделей. Для агрегатных запросов (summarize all) utilization естественно высокий — не сравнивать с QA.",
+                "related": "[[ai-observability-interview#Q24]] RAG metrics; [[ai-observability-interview#Q27]] cost optimization."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Доля свободного места в vector store — нужна для capacity planning.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это disk utilization, не context utilization. Контекст utilization — про использование retrieved chunks в ответе модели.",
+                "source_of_confusion": "Утилизация — общий термин.",
+                "if_it_were_true": "Не было бы RAGAS context_relevance метрики.",
+                "how_it_should_be": "Контекст utilization про использование retrieved chunks в LLM-ответе."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Время загрузки контекста в prompt — operational latency-метрика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это latency-метрика (embed_query_latency, vector_search_latency, context_assembly_latency). Context utilization — quality-метрика об использовании.",
+                "source_of_confusion": "Слово «context» в обоих случаях.",
+                "if_it_were_true": "Cost optimization через утилизацию не работал бы.",
+                "how_it_should_be": "Context utilization — про использование, не загрузку."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Процент памяти GPU, используемой LLM при обработке context.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это hardware utilization, к RAG context utilization не относится. RAG context utilization — про используемые chunks в ответе.",
+                "source_of_confusion": "Утилизация GPU — известная метрика в ML.",
+                "if_it_were_true": "Cloud LLM (OpenAI) не имел бы GPU utilization доступа, и метрика была бы бесполезна.",
+                "how_it_should_be": "RAG context utilization — про chunks, не GPU."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно делать A/B тестирование промптов в production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто катить новый промпт на 100% и смотреть метрики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без control варианта нельзя отделить эффект изменения промпта от других факторов (drift трафика, провайдерские обновления, seasonality). Нужен parallel A/B.",
+                "source_of_confusion": "Простота прямого деплоя.",
+                "if_it_were_true": "Не существовало бы Mann-Whitney U test и A/B-фреймворков в LLM-obs.",
+                "how_it_should_be": "Parallel A/B с stat significance проверкой."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pipeline: (1) Request приходит → bucket by `hash(user_id) % 100`; (2) 50% получают prompt v1 (control), 50% — v2 (treatment); (3) trace тегируется `variant=v1` или `variant=v2`; (4) continuous eval по обоим; (5) aggregated metrics by variant; (6) Stat significant difference? Если v2 wins — promote 100%, нет — продолжаем, v1 wins — discard v2. Метрики: `avg(eval_score) by variant`, `avg(thumbs_up_rate) by variant`, `avg(latency_ms) by variant`, `avg(cost_usd) by variant`. Statistical significance: Mann-Whitney U test или Bayesian, не просто «среднее больше». Sample size: для 5% effect и 80% power обычно 1000-3000 примеров на вариант (`statsmodels.stats.power`). Anti-pattern: «v2 за день дала лучше» — мог быть noise, ждать 7+ дней и проверять weekly seasonality.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полный A/B-pipeline: (1) Request приходит → bucket by `hash(user_id) % 100` — детерминированный split (один пользователь всегда в одном bucket); (2) 50% control (v1), 50% treatment (v2); (3) span тегируется `experiment.variant=v1` или `v2`; (4) continuous eval оценивает оба варианта; (5) aggregated metrics by variant: `avg(eval_score) by variant`, `avg(thumbs_up_rate)`, `avg(latency_ms)`, `avg(cost_usd)`; (6) statistical significance test (Mann-Whitney U для non-parametric или Bayesian с priors) — не просто «среднее больше». Sample size: для 5% effect и 80% power обычно 1000-3000 примеров на вариант, считать через `statsmodels.stats.power`. Anti-pattern «v2 за день дала лучше score» — мог быть noise, ждать 7+ дней для weekly seasonality (workday vs weekend pattern). Implementation: `prompt, variant = get_prompt(request.user_id); span.set_attribute(\"experiment.variant\", variant); response = llm.call(prompt + request.question)`.",
+                "example": "v2 промпт показал avg_faithfulness=0.89 vs v1=0.85 за 3 дня → выглядит как +4.7% improvement → Mann-Whitney U test p-value=0.32 (не значимо при alpha=0.05) → продолжаем сбор данных ещё 4 дня → p-value=0.02 → промоутим v2.",
+                "when_to_apply": "Любые серьёзные изменения промпта в проде. Особенно важно для high-traffic, customer-facing systems где регрессия дорога.",
+                "edge_cases": "User-level bucket чтобы один пользователь видел консистентный prompt (избегает confusion). Multi-variant A/B/C/D — нужны больше sample. Cross-contamination через session — изоляция по user_id важна. Seasonality — wait at least 7 days.",
+                "related": "[[ai-observability-interview#Q22]] CI/CD prompt pipeline; [[ai-observability-interview#Q19]] continuous eval."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Делать A/B вручную: один день v1, второй v2, сравнить средние.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sequential testing с разными днями смешивается с day-of-week effect, weather, news events. Parallel A/B критично для контролируемого сравнения.",
+                "source_of_confusion": "Sequential проще в implementation.",
+                "if_it_were_true": "Можно было бы сравнить два года и доказать «прошлый год был хуже».",
+                "how_it_should_be": "Parallel split с детерминированным bucket'ингом."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сравнить v1 и v2 только по среднему eval_score за неделю, statistical test не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без stat significance test разница может быть случайной. Даже на 1000 примерах разница в 2% часто не значима. Mann-Whitney U или Bayesian обязательны.",
+                "source_of_confusion": "Mean comparison кажется достаточным.",
+                "if_it_were_true": "A/B-фреймворки не включали бы statistical tests.",
+                "how_it_should_be": "Always-on stat significance test (Mann-Whitney U / Bayesian)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как observability помогает оптимизировать LLM costs?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Можно только сменить провайдера на более дешёвого — других путей нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost optimization многомерна: prompt shrinking, model downgrading by route, caching, batching, prompt caching у провайдера. Смена провайдера — один из путей.",
+                "source_of_confusion": "Самое очевидное действие.",
+                "if_it_were_true": "Не было бы prompt caching фичи у Anthropic/OpenAI.",
+                "how_it_should_be": "Multi-axis optimization: shrink prompts, downgrade models, cache, batch."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только через `max_tokens=100` ограничения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Max_tokens limit — одна из мер, но не единственная и часто плохая (обрезает полезный ответ). Лучше — анализ профиля запроса, model routing, caching.",
+                "source_of_confusion": "Простое ограничение.",
+                "if_it_were_true": "Cost issue решался бы простым флагом.",
+                "how_it_should_be": "Multi-step: prompt shrinking, model routing, caching, batching, prompt caching."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Шаги: (1) Топ-10 дорогих эндпоинтов — `SELECT endpoint, SUM(cost_usd) FROM traces WHERE date > now() - 7d GROUP BY endpoint ORDER BY total DESC LIMIT 10` → выясняем 80% бюджета на `/api/summarize`; (2) Профиль запроса в дорогом эндпоинте — input_tokens 12K (большой system prompt → сократить), output_tokens 3K без `max_tokens` → установить limit, используется `gpt-4o` → попробовать `gpt-4o-mini` для не-критичных; (3) Cache opportunities — `cache_hit_rate=15%` → semantic cache (Redis + embeddings); 30% запросов структурно одинаковы → шаблон + параметр; (4) Model downgrading by route — 70% запросов простой Q&A → дешёвая модель, 30% сложный reasoning → flagship; (5) Batch/async — embeddings 1K документов поодиночке дорого → батч → -5×; (6) Prompt caching (Anthropic/OpenAI) — длинный system prompt → cached → -90% на cached tokens. Дашборд: `cost_per_endpoint`, `cost_per_active_user`, `cost_per_completed_task`, `cache_savings_usd`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pipeline cost optimization: (1) Top-10 expensive endpoints — `SUM(cost_usd) GROUP BY endpoint` → видим 80% бюджета на одном эндпоинте; (2) Профилирование запроса — input_tokens 12K (большой system prompt → сократить), output_tokens 3K без `max_tokens` (установить limit), модель `gpt-4o` (попробовать `gpt-4o-mini`); (3) Cache opportunities — низкий cache_hit_rate (15%) → semantic cache (Redis + embeddings); 30% запросов одинаковы по структуре → template + parameter; (4) Model downgrading by routing — 70% запросов простые Q&A → дешёвая модель, 30% сложный reasoning → flagship; routing logic + метрика `model_distribution`; (5) Batch/async — embeddings 1K документов поштучно дорого, батчинг -5× cost; (6) Prompt caching (Anthropic/OpenAI) — длинный system prompt cached → -90% на cached tokens; метрика `cache_read_tokens` vs `cache_create_tokens`. Дашборд: `cost_per_endpoint` (тренд вниз), `cost_per_active_user` (масштабируется хорошо), `cost_per_completed_task` (для agent уменьшается), `cache_savings_usd`.",
+                "example": "Анализ: `/api/summarize` тратит $5K/неделю. Профиль: system prompt 8K tokens (legal disclaimer copy-paste 5×) → дедупликация → 2K. Это -75% input cost. Дополнительно prompt caching → -90% на оставшихся 2K. Итого: $5K → $1.2K (-76%).",
+                "when_to_apply": "Любая production LLM-система с растущим cost. Особенно critical когда cost growth > revenue growth.",
+                "edge_cases": "Model downgrading требует router quality measurement (нельзя downgrade на сложные запросы). Semantic cache требует embedding budget. Prompt caching работает только когда prefix действительно постоянный (Anthropic minimum 1024 tokens cached prefix).",
+                "related": "[[ai-observability-interview#Q14]] cost формула; [[ai-observability-interview#Q15]] cost alerts; [[ai-observability-interview#Q13]] metrics."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Перейти на open-source модель — единственное решение для cost reduction.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Open-source модель требует self-hosting infra (GPU rent, ops). Часто на small/medium scale это дороже cloud API. Optimization внутри cloud API часто эффективнее.",
+                "source_of_confusion": "Open-source ассоциируется с «бесплатным».",
+                "if_it_were_true": "Не было бы кейсов «мы остались на OpenAI после оценки self-host».",
+                "how_it_should_be": "Cloud API optimization (prompt, caching, routing) vs self-host — оценивать total cost case-by-case."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные анти-паттерны в LLM observability нужно избегать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только один: не использовать Datadog.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Анти-паттернов много, не один. И они не про выбор вендора, а про методологию: PII leak, оversampling, no quality metrics, no correlation user↔trace, judge bias, hardcoded prompts, monthly cost.",
+                "source_of_confusion": "Vendor-фокусированное мышление.",
+                "if_it_were_true": "Анти-паттерны решались бы покупкой одного продукта.",
+                "how_it_should_be": "Многочисленные методологические анти-паттерны, связанные с практикой."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Не использовать Python для LLM-приложений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Язык программирования к анти-паттернам observability не относится. Анти-паттерны методологические: PII в трейсах, oversampling, нет quality метрик, hardcoded prompts.",
+                "source_of_confusion": "Language wars в комьюнити.",
+                "if_it_were_true": "Подавляющее большинство LLM-стека на Python не существовало бы.",
+                "how_it_should_be": "Анти-паттерны методологические, не language-specific."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Не делать дашборды — нужно смотреть в raw логи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дашборды — стандарт зрелого observability. Без агрегатов невозможно увидеть тренды и spikes. Raw logs — для deep dive после алерта.",
+                "source_of_confusion": "Hard-core SRE-подход.",
+                "if_it_were_true": "Не существовало бы Grafana/Langfuse UI.",
+                "how_it_should_be": "Дашборды + raw logs (для drill-down)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Топ-12 анти-паттернов: (1) Логирование полных prompts без PII redaction → утечка ПД; (2) 100% sampling на масштабе → storage blowup; (3) Хранение raw embeddings в trace → 6 KB × 1M req = 6 GB/день; (4) Нет корреляции LLM trace ↔ business trace (`user_id`, `session_id`, `request_id`); (5) Только латентность без quality — p99=800ms ничего не говорит про hallucinations; (6) Eval только в CI, не в проде — дрейф провайдера / модели; (7) Один judge model — self-preference bias; (8) Prompts хардкодом в коде → любая правка = деплой, A/B невозможен; (9) Cost-метрики только по invoice раз в месяц → можно сжечь $50K; (10) Игнор tool calls агента в трейсе → 50 calls = 1 root span без детализации; (11) Нет SLO для LLM («у нас всё хорошо» = неизмеримо); (12) Trust judge без калибровки — judge=0.9, user=1/5 → периодически human-label + correlation check.",
+              "correct": true,
+              "sections": {
+                "explanation": "12 основных анти-паттернов: (1) PII leak — полные prompts без redaction; решение: Presidio/regex/отключение content capture/tier-based. (2) 100% sampling на high-volume — storage и денег больше чем сам LLM; решение: tail-based + always-errors. (3) Raw embeddings в trace — 1500 floats × 4 bytes = 6 KB/req × 1M = 6 GB/день; решение: только embedding_id или хеш. (4) Нет корреляции LLM trace ↔ business — пользователь жалуется «ответ был плохой 15 минут назад» без user_id/session_id/request_id не найти; решение: проксировать context через все spans. (5) Только latency без quality — p99=800ms ничего не говорит про hallucinations; решение: eval-метрики обязательны. (6) Eval только в CI — провайдер обновил модель, новый класс запросов; решение: continuous async eval в проде. (7) Один judge model — self-preference bias (GPT judge для GPT ответов); решение: cross-judge. (8) Hardcoded prompts — любая правка = деплой, A/B невозможен; решение: prompts в hub, pulled by name+version в runtime. (9) Monthly cost (по invoice) — за месяц $50K; решение: real-time tracking + hourly alert. (10) Ignore agent tool calls — 50 calls = 1 root span; решение: каждый tool call = свой span. (11) Нет SLO — «всё хорошо» неизмеримо; решение: `99% запросов с eval_score > 0.8, p95 < 3s, cost_per_request < $0.01`. (12) Judge без калибровки — judge=0.9, user=1/5; решение: periodic human-label + correlation, recalibrate.",
+                "example": "Команда сжигала $50K/месяц на зацикленных агентах — обнаружили через invoice (анти-паттерн 9). После внедрения hourly cost alert поймали инцидент за 30 минут вместо месяца.",
+                "when_to_apply": "Audit checklist для любой production LLM-системы. Проходитесь по списку и проверяете каждый пункт.",
+                "edge_cases": "Не все анти-паттерны равно критичны: для B2B low-volume PII leak < cost spike; для B2C consumer — наоборот. Приоритизация по domain и compliance требованиям.",
+                "related": "[[ai-observability-interview#Q17]] PII; [[ai-observability-interview#Q19]] continuous eval; [[ai-observability-interview#Q23]] agent tracing."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

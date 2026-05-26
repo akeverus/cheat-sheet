@@ -1,0 +1,1925 @@
+{
+  "topic_slug": "ai-application-architecture-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие 4 базовых паттерна AI-приложений?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Prompt Engineering, RAG, Fine-tuning, Agents — четыре кирпича, из которых собираются гибридные production-системы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это канонический список base-паттернов: prompt (zero/few-shot и structured output), RAG (retrieve + generate), fine-tune (адаптация весов) и agents (multi-step с tool use). Они дополняют друг друга и почти всегда комбинируются.",
+                "example": "Customer support: prompt для greeting + RAG по knowledge base + fine-tune на стиле компании + agent с tool 'create_ticket'.",
+                "when_to_apply": "При дизайне новой AI-фичи: определи, какие из 4 кирпичей нужны и в какой комбинации.",
+                "edge_cases": "Hybrid pattern почти всегда выигрывает у 'чистого' одного паттерна в production.",
+                "related": "RAG, Fine-tuning, AI Agents, Prompt Engineering."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Embedding, Tokenization, Attention, Backprop — четыре уровня архитектуры LLM-приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это компоненты архитектуры трансформера и обучения, а не паттерны построения приложений.",
+                "source_of_confusion": "Путаница между уровнем 'устройство модели' и уровнем 'как использовать модель в продукте'.",
+                "if_it_were_true": "Тогда product-team обсуждал бы attention heads, а не decision matrix RAG vs FT.",
+                "how_it_should_be": "Application patterns: Prompt / RAG / Fine-tune / Agents."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MapReduce, Streaming, CQRS, Event Sourcing — четыре data-flow паттерна AI-систем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это общие data-engineering паттерны, не специфичные для AI-приложений.",
+                "source_of_confusion": "Streaming действительно используется (SSE), но это паттерн доставки ответа, а не построения AI-логики.",
+                "if_it_were_true": "Тогда выбор между RAG и FT определялся бы способом передачи данных, а не природой задачи.",
+                "how_it_should_be": "Это data flow patterns (sync/async/streaming/batch — отдельный аспект)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Supervised, Unsupervised, Reinforcement, Self-supervised — четыре парадигмы AI-приложений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это парадигмы обучения ML-моделей, не application-architecture паттерны.",
+                "source_of_confusion": "Fine-tune использует supervised learning, но сам по себе SL — это про обучение, а не про дизайн приложения.",
+                "if_it_were_true": "Тогда product roadmap включал бы 'switch from supervised to RL', а не 'add RAG'.",
+                "how_it_should_be": "ML training paradigm ≠ application architecture pattern."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбрать Prompt Engineering vs RAG vs Fine-tune vs Agents?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда начинать с Fine-tuning, так как он даёт лучшее качество.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fine-tune — самый дорогой и инертный паттерн: нужен датасет, train, retrain при изменениях.",
+                "source_of_confusion": "FT действительно лучший для style/format, но не для свежих знаний и не для прототипа.",
+                "if_it_were_true": "Тогда каждый PoC занимал бы месяц на сбор данных вместо двух дней на prompt.",
+                "how_it_should_be": "Начинай с самого дешёвого (Prompt) → эскалируй только при доказанных проблемах качества."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Часто меняющаяся knowledge → RAG; стабильный style/format → Fine-tune; open-ended multi-step → Agents; простая укладывающаяся в context задача → Prompt.",
+              "correct": true,
+              "sections": {
+                "explanation": "Алгоритм выбора по верхним характеристикам задачи. Сначала смотрим: меняется ли знание? если да — RAG. Нужен ли специфический стиль не лечащийся few-shot? — FT. Multi-step с tools? — Agents. Иначе — Prompt.",
+                "example": "FAQ-бот по 5 категориям → Prompt. Поиск по 100k документам обновляемым ежедневно → RAG. Рефакторинг репозитория → Agents.",
+                "when_to_apply": "На каждой новой AI-фиче: пройти decision tree сверху вниз.",
+                "edge_cases": "В production почти всегда финальный ответ — гибрид, а не один паттерн.",
+                "related": "Decision matrix по requirements (Q3)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Любую задачу можно решить только Prompt Engineering, если правильно подобрать слова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Prompt не даёт grounded факты по большой базе (нужен RAG), не выдержит специфический стиль на 10k запросов (нужен FT), не выполнит multi-step (нужен Agent).",
+                "source_of_confusion": "Prompt engineering важен, но это foundation, не silver bullet.",
+                "if_it_were_true": "Тогда не существовало бы Pinecone, Together AI fine-tuning, LangGraph.",
+                "how_it_should_be": "Prompt — стартовая точка; при systematic failure → переход к следующему паттерну."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Выбор паттерна определяется только бюджетом: дёшево → Prompt, дорого → Agents.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бюджет — один из критериев, но главный — природа задачи (свежесть знания, стиль, multi-step, complexity).",
+                "source_of_confusion": "Cost arithmetic важна, но бесплатный prompt не решит задачу, требующую retrieval.",
+                "if_it_were_true": "Тогда RAG с его средней ценой никто бы не выбирал.",
+                "how_it_should_be": "Сначала requirements → паттерн → потом оптимизация cost."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как составить decision matrix по requirements?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Agents идеальны для latency < 500ms, потому что много небольших шагов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agents — самые медленные: 5-15 LLM-вызовов последовательно. Один LLM step уже ~1s.",
+                "source_of_confusion": "Многошаговость = больше latency, а не меньше.",
+                "if_it_were_true": "Тогда autocomplete делали бы агентами вместо on-device моделей.",
+                "how_it_should_be": "Для < 500ms — prompt + малая модель, possibly FT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Fine-tune лучше всего справляется с часто меняющимися знаниями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fine-tune вмораживает знание в веса; чтобы обновить — нужен retrain, который дорогой и медленный.",
+                "source_of_confusion": "FT хорош для domain-specific терминологии, но не для frequently-changing facts.",
+                "if_it_were_true": "Тогда никому не нужен был бы RAG.",
+                "how_it_should_be": "Для свежих знаний — RAG. Для стиля — FT."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При decision matrix свежие знания закрывает RAG, стиль/формат — Fine-tune, open-ended задачи — Agents, latency < 500ms — Prompt или FT (малая модель).",
+              "correct": true,
+              "sections": {
+                "explanation": "Матрица требований vs паттернов. По каждой строке выбираем паттерн, который не 'плохо'. Свежесть → RAG (или Agent через RAG-tool). Стиль → FT. Speed → FT-small или prompt. Audit trail → RAG (источники) или Agent (trace steps).",
+                "example": "Медицинский ассистент: свежесть guidelines + audit + стиль SOAP → RAG + FT.",
+                "when_to_apply": "Составить таблицу requirements → отфильтровать паттерны.",
+                "edge_cases": "Если ни один паттерн не покрывает все critical rows → нужен гибрид.",
+                "related": "Hybrid patterns (RAG + FT, Agents + RAG)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Prompt Engineering всегда даёт лучший audit trail для compliance.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Prompt сам по себе не даёт ссылки на источники. RAG с citations и Agent с trace steps дают лучший audit.",
+                "source_of_confusion": "Prompt можно логировать, но логи ≠ explanation на основе источников.",
+                "if_it_were_true": "Тогда regulated industries использовали бы plain prompt.",
+                "how_it_should_be": "Audit trail: RAG (sources) или Agent (steps trace)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем комбинировать RAG + Fine-tune?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "RAG учит модель стилю общения, а Fine-tune подгружает свежие факты в контекст.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: FT для стиля/формата (зашит в веса), RAG для свежих фактов (подгружается в context).",
+                "source_of_confusion": "Путаница между 'что в весах' (style/format) и 'что в context' (facts).",
+                "if_it_were_true": "Тогда обновление политики компании требовало бы retrain.",
+                "how_it_should_be": "Fine-tune = как отвечать (style); RAG = что отвечать (facts)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Комбинация RAG + Fine-tune нужна, чтобы удешевить inference (FT сжимает context, который ищет RAG).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не основная мотивация. Главное — разделение style (FT) и facts (RAG). FT не 'сжимает' RAG-context.",
+                "source_of_confusion": "Малая FT-модель действительно дешевле, но это побочный эффект, не основная цель комбинации.",
+                "if_it_were_true": "Тогда любая RAG-система автоматически просила бы FT для economy.",
+                "how_it_should_be": "Мотивация комбинации: правильный стиль + актуальные факты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "RAG и Fine-tune взаимоисключают друг друга — можно использовать только один паттерн в системе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они ортогональны: FT меняет веса, RAG расширяет context. Можно сочетать свободно.",
+                "source_of_confusion": "Кажется 'много инструментов = переусложнение', но именно их сила в комбинации.",
+                "if_it_were_true": "Тогда не существовало бы fine-tuned моделей с retrieval.",
+                "how_it_should_be": "Гибрид FT + RAG — стандартный паттерн для enterprise AI."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Fine-tune задаёт style/format/terminology через веса; RAG динамически даёт актуальные факты через context. Комбинация = правильный стиль + свежие данные.",
+              "correct": true,
+              "sections": {
+                "explanation": "Классическая ошибка — RAG-ом учить стилю (плохо работает, стиль не в context) или FT-ом учить фактам (быстро устаревает). Правильное разделение: веса = стиль, context = знания.",
+                "example": "Медицинский ассистент: FT на терминологии и формате SOAP-notes + RAG по последним guidelines и карте пациента.",
+                "when_to_apply": "Когда нужны ОБА: domain-specific стиль И часто-меняющиеся факты.",
+                "edge_cases": "Если FT не даёт измеримого +Δ качества над prompt+RAG — не нужен (overengineering).",
+                "related": "Hybrid patterns, evolution path."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что значит Agents + RAG — retrieval как tool?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Retrieval становится одним из tool-ов агента (search_docs, search_web, query_sql), агент сам решает когда и как искать.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместо жёсткого pipeline 'retrieve → generate' даём агенту retrieval как инструмент среди других. Агент сам решает, нужен ли поиск, может уточнять запросы итеративно и комбинировать источники.",
+                "example": "Customer support: агент видит запрос → решает search_docs vs query_sql vs ask_clarification → может вызвать несколько раз с уточнениями.",
+                "when_to_apply": "Complex research, customer support с разнородными источниками, code agents.",
+                "edge_cases": "Дороже (каждый step стоит) и есть loop risk — нужны limits на количество tool calls.",
+                "related": "Inference Gateway, agent design patterns."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Агент сначала вызывает все доступные retrieval-tools параллельно, а потом фильтрует результаты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параллельный вызов всех tools дорог и часто бесполезен. Сила агента — в умном выборе нужного tool.",
+                "source_of_confusion": "Иногда parallel-tool-calls применяют, но это паттерн на уровне отдельного шага, не общий подход.",
+                "if_it_were_true": "Тогда каждый запрос стоил бы $1+ и был бы медленный.",
+                "how_it_should_be": "Агент решает, какой tool вызвать; параллелит только когда явно нужно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pattern 'Agents + RAG' означает, что агент дообучает retriever на каждом запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дообучение retriever — отдельная offline задача (RAG fine-tuning). Агент использует retriever как готовый tool.",
+                "source_of_confusion": "Путаница между 'агент использует' и 'агент обучает'.",
+                "if_it_were_true": "Тогда каждый запрос триггерил бы embedding training — нереалистично.",
+                "how_it_should_be": "Retriever — статический tool, агент его вызывает с разными аргументами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Agents + RAG всегда быстрее обычного RAG, так как агент кеширует поиск.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agents + RAG чаще МЕДЛЕННЕЕ обычного RAG: добавляется LLM-step для решения 'нужен ли поиск'.",
+                "source_of_confusion": "Cache может быть, но он не относится к 'agent vs non-agent', это отдельный слой.",
+                "if_it_were_true": "Тогда обычный RAG никому не был бы нужен.",
+                "how_it_should_be": "Простой Q&A → обычный RAG. Сложные кейсы → agent + RAG (медленнее, но гибче)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cascading prompts (small → large model)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cascading prompts требуют, чтобы все запросы шли через большую модель — иначе теряется качество.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Идея cascading прямо противоположна: дешёвая модель отвечает на простые, дорогая подключается только при необходимости.",
+                "source_of_confusion": "Кажется 'always big = always best', но 70% запросов решает Haiku без потери качества.",
+                "if_it_were_true": "Тогда никакой экономии cascading не давал бы.",
+                "how_it_should_be": "Cheap-first, escalate to expensive только при low confidence."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Дешёвая модель (Haiku/Mini) делает первый шаг; если confidence низкий — эскалируем к дорогой (Sonnet/Opus). Blended cost существенно ниже.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cascading = двухуровневая стратегия: cheap-first answer → если low confidence, эскалируем к дорогой. Если 70% запросов решает Haiku ($0.001), 30% эскалируем к Sonnet ($0.03) → blended = $0.0097 против $0.03.",
+                "example": "Router-model классифицирует intent → выбирает специализированный pipeline. Или: small генерирует draft → large критикует и правит (sketch + refine).",
+                "when_to_apply": "High-volume traffic с переменной сложностью запросов; типичный customer support.",
+                "edge_cases": "Нужна eval-инфраструктура для калибровки порога эскалации.",
+                "related": "Cost arithmetic, router layer."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cascading означает, что выход одной модели последовательно подаётся в N разных моделей до получения консенсуса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это паттерн ensemble / consensus, а не cascading. Cascading про эскалацию по сложности.",
+                "source_of_confusion": "Оба паттерна 'много моделей', но цели разные: ensemble = качество за счёт усреднения, cascading = cost-optimization.",
+                "if_it_were_true": "Тогда blended cost был бы выше, а не ниже.",
+                "how_it_should_be": "Cascading = пирамида cheap → expensive по необходимости."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cascading prompts применимы только к локальным моделям и не работают с API-провайдерами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cascading отлично работает с API: Haiku $0.001 + Sonnet $0.03 в OpenAI/Anthropic линейках — типичный пример.",
+                "source_of_confusion": "Возможно путаница с tier-based pricing, но это про API именно и есть.",
+                "if_it_were_true": "Тогда LiteLLM и Portkey не нужны были бы для routing API-моделей.",
+                "how_it_should_be": "Cascading — provider-agnostic паттерн, чаще всего на API."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать RAG fallback to fine-tuned при low confidence?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "RAG всегда лучше fine-tuned модели, поэтому fallback не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RAG не покрывает все кейсы: если retrieval score низкий или 'I don't know' — fallback к FT даёт baseline answer.",
+                "source_of_confusion": "RAG ≠ универсальный winner; у него есть слепые зоны (запросы вне корпуса).",
+                "if_it_were_true": "Тогда не было бы стратегий fallback вообще.",
+                "how_it_should_be": "RAG → FT → human escalation по уровням confidence."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Fallback от RAG к Fine-tuned модели срабатывает только при HTTP ошибках провайдера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это fallback по технической ошибке (Q21). Fallback по low confidence — другая категория: семантический сигнал, не HTTP.",
+                "source_of_confusion": "Оба называются 'fallback', но триггеры разные.",
+                "if_it_were_true": "Тогда низкое качество ответа никогда не приводило бы к escalation.",
+                "how_it_should_be": "Confidence-based fallback по retrieval score и/или uncertainty модели."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сначала RAG; если retrieval score < threshold или ответ 'I don't know' — fallback к FT-модели, далее (если всё ещё low confidence) — human-in-the-loop.",
+              "correct": true,
+              "sections": {
+                "explanation": "Гибридная стратегия с уровнями confidence: RAG → FT → human. retriever score и модель сама дают сигналы 'не знаю' или 'низкая уверенность' — это триггер эскалации.",
+                "example": "Customer support: вопрос про exotic edge-case → RAG retrieval score 0.3 → fallback FT-модель → ответ confidence 0.5 → human review.",
+                "when_to_apply": "Когда RAG-корпус неполный, а FT даёт 'приемлемый' baseline по domain.",
+                "edge_cases": "Калибровка threshold-ов критична: слишком высокий → много human escalations.",
+                "related": "Failure modes (Q21), evolution path."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При low confidence нужно увеличить top_k retrieval до 50+ и снова вызвать LLM, без fallback к другой модели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Увеличение top_k увеличивает шум, разрушает relevance и взрывает context cost. Это не lечение, а ухудшение.",
+                "source_of_confusion": "Кажется 'больше документов = больше шансов найти ответ', но это анти-pattern.",
+                "if_it_were_true": "Тогда лучшим RAG был бы тот, кто грузит весь корпус.",
+                "how_it_should_be": "Тщательный top-k (5-10) + rerank → если не нашли, эскалируем, а не увеличиваем шум."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая reference architecture для production AI app?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно одного слоя: client → OpenAI API. Всё остальное — overengineering.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В production нужны: gateway, rate limit, auth, router, tools, observability, streaming, registries. Без них нельзя scale, debug, multi-tenant.",
+                "source_of_confusion": "Для PoC одного слоя достаточно, но для production — нет.",
+                "if_it_were_true": "Тогда не существовали бы LiteLLM, Langfuse, Pinecone.",
+                "how_it_should_be": "Reference architecture с разделением ответственности слоёв."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Observability и Prompt Registry — это nice-to-have, можно добавить после production-release.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без observability нельзя debug, без prompt registry — нельзя iterate без deploy. Это core, не nice-to-have.",
+                "source_of_confusion": "Anti-pattern 'no observability' (см. Q27) встречается часто и стоит дорого после инцидента.",
+                "if_it_were_true": "Тогда 'оно сломалось, не знаю почему' было бы нормой.",
+                "how_it_should_be": "Langfuse/LangSmith с первого дня MVP; prompts через registry, не hard-coded."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Reference architecture должна быть строго monolithic: один сервис вызывает LLM и сам же делает retrieval.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хотя monolith возможен для MVP, production требует разделения: gateway, router, tool executor — разные ответственности, разные scale-properties.",
+                "source_of_confusion": "Monolith проще на старте, но плохо масштабируется по командам и нагрузке.",
+                "if_it_were_true": "Тогда любая смена модели/провайдера требовала бы рефакторинг всего сервиса.",
+                "how_it_should_be": "Слоистая stateless архитектура с явным разделением."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reference architecture: Client → API Gateway → Rate Limiter + Auth → Model Router → LLM Service → Tool Executor (Vector DB, SQL, Cache) → Streaming. Observability cross-cuts всё, Prompt/Model Registry — конфигурация.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический скелет production AI-app. Stateless service layer для horizontal scale, configurable model/prompt (изменения без deploy), async-friendly (SSE для TTFT), trace everything через Langfuse.",
+                "example": "Реальный production-стек: Kong/Envoy → Redis token bucket → LiteLLM router → OpenAI/Anthropic → vector DB + tools → SSE → Langfuse traces.",
+                "when_to_apply": "Production stage (после PoC и MVP); масштабирование на множество тенантов / фич.",
+                "edge_cases": "Не все слои обязательны для MVP — наращивай по мере scale.",
+                "related": "Router layer (Q9), Tool Executor (Q10), Inference Gateway (Q22)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает Router layer — выбор модели по запросу?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Router определяет, какую модель дёрнуть для конкретного запроса: tenant override → intent-based → feature flag/canary → budget-based → default.",
+              "correct": true,
+              "sections": {
+                "explanation": "Router — слой выбора модели по контексту запроса. Стратегии: static (по фиче), intent classifier, cascading, A/B testing, tenant-config. Production обычно — гибрид: static defaults + tenant override + feature flag rollout.",
+                "example": "intent='code' → Sonnet; intent='simple_faq' → Haiku; feature_flag 'opus-rollout' → Opus; budget_left < $0.10 → degrade to Haiku.",
+                "when_to_apply": "Когда у системы > 1 модели/провайдера или нужен gradual rollout новых моделей.",
+                "edge_cases": "Intent-classifier добавляет +latency и +cost самого классификатора — окупается на high-volume.",
+                "related": "Cascading (Q6), Inference Gateway (Q22), feature flags (Q28)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Router сам по себе является самой дорогой моделью в системе и принимает решения через chain-of-thought reasoning.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Router обычно — лёгкая логика (rules + feature flags) или маленький LLM-classifier. Дорогая модель не нужна для routing.",
+                "source_of_confusion": "Возможно путаница с router-as-LLM (intent classifier), но даже там — маленькая модель.",
+                "if_it_were_true": "Тогда blended cost cascading-а был бы выше базового, а не ниже.",
+                "how_it_should_be": "Router — дешёвый слой, выбирающий нужную модель для запроса."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Router работает только на этапе offline-training и не используется в runtime.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Router — runtime-компонент, принимает решения на каждый запрос.",
+                "source_of_confusion": "Возможно путаница с router-нейронами в MoE-моделях (внутреннее устройство), но это другой layer.",
+                "if_it_were_true": "Тогда смена модели требовала бы deploy, а не feature flag.",
+                "how_it_should_be": "Router — runtime decision-maker per request."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Router нужен только когда у вас > 100 моделей в системе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Router окупается уже при 2 моделях: например, Haiku + Sonnet с cascading.",
+                "source_of_confusion": "Кажется 'overengineering для двух моделей', но даже простой if-else — это router.",
+                "if_it_were_true": "Тогда любая система с 2-3 моделями была бы переусложнённой.",
+                "how_it_should_be": "Router — паттерн для любого количества моделей >= 2."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Tool Executor и зачем sandboxing tools?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tool Executor доверяет любому tool_call от LLM и не валидирует параметры — LLM сам всё проверит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LLM не безопасный source: может галлюцинировать параметры, выполнять prompt injection из retrieved content. Validation обязательна.",
+                "source_of_confusion": "LLM выдаёт structured output, но это не replacement для validation.",
+                "if_it_were_true": "Тогда первая же prompt injection через RAG приведёт к 'DROP TABLE users'.",
+                "how_it_should_be": "Validation схемы + sandbox + allowlist + HITL для destructive."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tool Executor выполняет function calls агента в sandbox (Docker/gVisor/Firecracker), с allowlist доменов, read-only DB user по умолчанию, human-in-the-loop для destructive actions.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tool Executor — компонент, выполняющий function calls (search_web, run_sql, execute_python, send_email). Безопасность: sandbox для кода, allowlist для web, read-only DB user, HITL для деструктивных операций.",
+                "example": "code interpreter в Docker-контейнере без сети; SQL только SELECT-запросы; send_email требует подтверждения user-а.",
+                "when_to_apply": "Любая система с tool use агента (особенно code execution, web access, write-операции).",
+                "edge_cases": "Validation схемы (Pydantic/JSON Schema), timeout per tool call, retry с idempotency keys.",
+                "related": "Security architecture (Q24), agent design."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Tool Executor должен исполнять код от LLM напрямую через eval() в основном процессе для производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "eval() в основном процессе = полный RCE через prompt injection. Один из самых опасных анти-паттернов.",
+                "source_of_confusion": "Кажется быстрее, но цена компрометации несоизмеримо больше.",
+                "if_it_were_true": "Тогда любой агент с code interpreter был бы уязвимостью.",
+                "how_it_should_be": "Sandbox (Docker/gVisor/Firecracker) с network allowlist и без credentials."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Tool Executor — это просто HTTP-клиент, который вызывает REST API; sandboxing не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tools часто включают code execution, SQL, browser automation — не только REST. Без sandbox = compromised host.",
+                "source_of_confusion": "Часть tools действительно HTTP, но не все. Архитектура должна предполагать худший случай.",
+                "if_it_were_true": "Тогда не существовало бы Firecracker, gVisor, Chrome sandbox.",
+                "how_it_should_be": "Sandbox обязателен для любых execution-capable tools."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выглядит latency budget breakdown (target < 2s)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Latency budget = только время LLM prefill, остальное pre-LLM работа не считается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Auth, embedding, vector search, rerank, prompt assembly — все вносят вклад. Целостный budget учитывает каждый этап.",
+                "source_of_confusion": "LLM кажется главным узким местом, но 200ms vector search или 100ms rerank складываются.",
+                "if_it_were_true": "Тогда нельзя было бы оптимизировать ничего, кроме LLM.",
+                "how_it_should_be": "End-to-end budget с разбивкой по каждому этапу."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "LLM prefill всегда занимает ровно 100ms независимо от длины context.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Prefill линейно зависит от длины context: 1k tokens ~300ms, 100k tokens ~2-5s. Это одна из главных причин trim context.",
+                "source_of_confusion": "Streaming TPOT относительно стабильна, но prefill (TTFT) — нет.",
+                "if_it_were_true": "Тогда нельзя было бы оптимизировать latency через уменьшение context.",
+                "how_it_should_be": "TTFT зависит от context length: меньше context → быстрее первый токен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Auth ~10ms, embedding 20-50ms, vector search 50-200ms, rerank 30-150ms, prompt assembly <20ms, LLM prefill (TTFT) 300-800ms, token streaming 500-2000ms, tool call 500-3000ms — складываем под цель < 2s.",
+              "correct": true,
+              "sections": {
+                "explanation": "Бюджет разбит по этапам с типичными значениями. TTFT 300-800ms — критичная UX-метрика (что пользователь видит первым). Оптимизации: streaming (TTFT раньше full answer), параллелить retrieve, embedding cache, меньше context, smaller model.",
+                "example": "Конкретный кейс: 10 + 30 + 100 + 50 + 20 + 500 + 1000 = 1710ms (укладываемся в 2s).",
+                "when_to_apply": "При SLA на latency: посчитать бюджет per этап, найти боттлнек, оптимизировать.",
+                "edge_cases": "Tool call (500-3000ms) часто доминирует — кешируй результаты часто-используемых tools.",
+                "related": "TTFT/TPOT streaming (Q14), caching (Q17)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Vector search всегда занимает > 1s, поэтому RAG нельзя использовать с low-latency SLA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современные vector DB (Pinecone, Weaviate, pgvector с HNSW) делают search за 50-200ms на типичных индексах.",
+                "source_of_confusion": "Если индекс плохо сконфигурирован — да, медленно. Но это не норма.",
+                "if_it_were_true": "Тогда не существовало бы low-latency RAG в production.",
+                "how_it_should_be": "Vector search 50-200ms — нормальный budget, укладывается в SLA."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая cost arithmetic per request: prompt vs RAG vs agent?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все паттерны стоят примерно одинаково: $0.01-0.02 за request.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разница огромная: pure prompt $0.01-0.10, RAG $0.02-0.15, agent $0.10-2.00 (5-15 LLM calls).",
+                "source_of_confusion": "Если смотреть только на 1 LLM call — да, схоже. Но agent делает много.",
+                "if_it_were_true": "Тогда не было бы смысла в cascading и cost optimization.",
+                "how_it_should_be": "Agent в десятки раз дороже pure prompt из-за multi-step."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Batch API не даёт никакого discount — это просто другой способ вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Batch API у OpenAI/Anthropic даёт ~50% discount при SLA < 24h. Это значимая экономия для non-realtime workloads.",
+                "source_of_confusion": "Кажется 'batch = просто группа', но цена явно ниже.",
+                "if_it_were_true": "Тогда никто бы не использовал batch для evals и nightly enrich.",
+                "how_it_should_be": "Batch API — 50% дешевле для async workloads (nightly enrich, evals)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Fine-tuned модели всегда дешевле base моделей за каждый request.",
+              "correct": false,
+              "sections": {
+                "what_actually": "FT-base часто примерно равен или даже дороже базовой модели за token (плюс амортизация training $100-10000).",
+                "source_of_confusion": "FT-small (например, Haiku-FT) может быть дешевле large base, но это сравнение разных размеров.",
+                "if_it_were_true": "Тогда все production-системы были бы FT.",
+                "how_it_should_be": "FT окупается на high-volume и/или когда позволяет downgrade размера модели."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Pure prompt $0.01-0.10; RAG $0.02-0.15; Agent (5-15 LLM calls) $0.10-2.00; cascading 70% Haiku + 30% Sonnet даёт blended $0.005-0.015.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cost arithmetic per request на Q4 2025 ценах. Agent формула: N_steps × (avg_in × price_in + avg_out × price_out). Например, 10 steps × (3000 × $3/1M + 500 × $15/1M) = $0.165.",
+                "example": "Чат с RAG: embedding $0.0001 + 3k context input + 500 out → ~$0.05. Coding agent на 10 шагов → $0.20+.",
+                "when_to_apply": "Оценка unit-экономики фичи; выбор паттерна под cost-constraint.",
+                "edge_cases": "Cost-optimization: prompt caching (Anthropic/OpenAI), batch API (50% discount), self-hosted на high-volume.",
+                "related": "Cascading (Q6), caching (Q17), budgets (Q26)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие quality metrics для каждого паттерна?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Prompt — exact-match/BLEU/LLM-as-judge; RAG — groundedness/recall@k/MRR; FT — format-conformance/task-accuracy; Agents — task success rate / # steps / $ per task. Eval через Langfuse/LangSmith датасеты.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый паттерн имеет свои уязвимости и метрики. RAG — retrieval quality bottleneck (нужны recall@k и MRR). Agents — многошаговый failure rate накапливается (нужен task success rate). FT — формат-conformance важнее всего.",
+                "example": "Customer support RAG: groundedness > 0.9, recall@5 > 0.85, MRR > 0.7. Code agent: task success > 60% на golden dataset.",
+                "when_to_apply": "Eval-инфраструктура на CI с регрессионными тестами на каждый PR.",
+                "edge_cases": "LLM-as-judge калибруется через сравнение с human labels периодически.",
+                "related": "AI Observability, evaluation frameworks."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Quality оценивается только пользователем через thumbs up/down — автоматизированных метрик не бывает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Online thumbs — важно, но недостаточно. Offline evals с golden dataset + LLM-as-judge — обязательны для CI.",
+                "source_of_confusion": "Thumbs кажется 'ground truth', но он subjective и low-signal на отдельном запросе.",
+                "if_it_were_true": "Тогда нельзя было бы делать regression-testing prompt изменений.",
+                "how_it_should_be": "Online (thumbs, conversion) + offline (golden dataset evals) — комбинация."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все паттерны меряются одинаковыми метриками — accuracy и F1.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый паттерн имеет специфические метрики: prompt — exact-match/BLEU/LLM-as-judge, RAG — groundedness/recall@k/MRR, FT — format-conformance, agents — task success rate / # steps / $ per task.",
+                "source_of_confusion": "Accuracy — generic, но не всегда применимо (например, к open-ended генерации).",
+                "if_it_were_true": "Тогда не существовало бы RAGAS, Langfuse evals, task-specific метрик.",
+                "how_it_should_be": "Pattern-specific метрики; LLM-as-judge как унифицированный инструмент."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Eval-инфраструктуру нужно строить только после релиза, иначе она замедлит разработку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без evals каждый промпт-эксперимент — гадание. Eval должна быть с первого MVP.",
+                "source_of_confusion": "Кажется 'overhead', но без evals регрессия проскакивает незаметно.",
+                "if_it_were_true": "Тогда anti-pattern 'no evals' (Q27) был бы нормой.",
+                "how_it_should_be": "Golden dataset + CI eval с MVP-стадии."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем TTFT, TPOT и streaming для UX?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "TTFT — это просто синоним total latency, никакой разницы между TTFT и full answer нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTFT — время до первого токена. Full answer time — до последнего. Разница может быть 1-2 секунды, и она критична для UX.",
+                "source_of_confusion": "Без streaming оба показателя сливаются, но в production это разные метрики.",
+                "if_it_were_true": "Тогда streaming не давал бы UX-выигрыша.",
+                "how_it_should_be": "TTFT = до первого токена; TPOT = время на каждый последующий; total = TTFT + TPOT × N."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "TTFT (Time To First Token) — UX-метрика 'отзывчивости'; TPOT (Time Per Output Token) — 'скорость печати'. Streaming через SSE/WebSocket снижает воспринимаемую latency × 4.",
+              "correct": true,
+              "sections": {
+                "explanation": "Две главные latency-метрики. Без streaming пользователь ждёт ~2s до первого символа. Со streaming он видит первый токен через ~500ms → воспринимаемая latency существенно ниже.",
+                "example": "ChatGPT-стиль интерфейс: SSE на backend (Spring WebFlux / FastAPI), EventSource или Vercel AI SDK useChat на frontend.",
+                "when_to_apply": "Любая chat UX и codegen; пользователь видит токены по мере генерации.",
+                "edge_cases": "При streaming нельзя retry на полпути (нужна resumability strategy). Tool calls обычно не стримятся (нужен full object).",
+                "related": "Latency budget (Q11), async patterns (Q19)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Streaming реализуется через долгий polling (long-polling), а не SSE.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SSE (Server-Sent Events) — стандарт для streaming LLM. Long-polling — устаревший паттерн с накладными расходами.",
+                "source_of_confusion": "Оба про realtime, но SSE проще, дешевле и проходит через прокси/CDN.",
+                "if_it_were_true": "Тогда не было бы EventSource API и Vercel AI SDK.",
+                "how_it_should_be": "SSE — основной паттерн; WebSocket — когда нужна двусторонняя связь."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Streaming улучшает только TPOT, но не TTFT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Streaming именно про TTFT — первый токен приходит раньше, чем полный ответ. TPOT — отдельная характеристика модели.",
+                "source_of_confusion": "Streaming не ускоряет модель, но даёт пользователю токены сразу.",
+                "if_it_were_true": "Тогда не было бы UX-выигрыша от streaming.",
+                "how_it_should_be": "Streaming даёт early visibility (TTFT), не ускоряет TPOT."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие production stages: PoC → MVP → Production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сразу строим production-grade систему: full observability, multi-tenancy, BYOK, sophisticated routing — без PoC и MVP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "'Сразу production-grade' = трата месяцев на фичу, которая может не работать. PoC сначала проверяет, что задача решаема.",
+                "source_of_confusion": "Кажется 'делай правильно с первого раза', но без proof of concept ты строишь не то.",
+                "if_it_were_true": "Тогда стартапы не запускались бы за неделю.",
+                "how_it_should_be": "PoC → MVP → Production: каждая стадия добавляет complexity по доказанной необходимости."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "PoC обязательно должен включать full observability и multi-tenancy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PoC намеренно cut corners: no UI, no auth, no observability. Цель — proof, не reliability.",
+                "source_of_confusion": "Best practices важны, но не на стадии 'проверить идею'.",
+                "if_it_were_true": "Тогда PoC занимал бы 2 месяца вместо 2 недель.",
+                "how_it_should_be": "PoC = scrappy. Observability добавляется на MVP/Production."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "PoC (1-2 недели): Jupyter, hard-coded prompt, ручная eval; MVP (1-2 месяца): simple wrap (LangChain), базовая UI/auth, eval датасет 100-500; Production (3+ месяцев): reference architecture, proper evals, CI/CD, multi-tenancy, compliance.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три стадии с разной целью. PoC — доказать что задача решаема. MVP — реальные пользователи на dogfood. Production — reliable, scalable, observable.",
+                "example": "Стартап: PoC за 10 дней на 20 примерах → MVP с 100 ранними пользователями → Production с SLA, evals, multi-tenant через 6 месяцев.",
+                "when_to_apply": "Любой новый AI-проект; не прыгай через стадии.",
+                "edge_cases": "Антипаттерн: прыгать через стадии. Или, наоборот, застрять в PoC и никогда не дойти до production.",
+                "related": "Evolution path (Q16), MVP scope."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MVP должен сразу поддерживать BYOK и sophisticated routing.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BYOK и sophisticated routing — это enterprise features, обычно для Production стадии, не MVP.",
+                "source_of_confusion": "Иногда enterprise-MVP действительно требует BYOK, но это исключение.",
+                "if_it_were_true": "Тогда MVP занимал бы 6+ месяцев.",
+                "how_it_should_be": "MVP — простая auth, базовое логирование, без BYOK."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой evolution path: prompt → RAG → fine-tune → agent?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сначала всегда нужно делать multi-agent, потом upgrade до RAG, потом prompt.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обратный порядок: prompt → RAG → fine-tune → agent → multi-agent. Усложнение по доказанной необходимости.",
+                "source_of_confusion": "Multi-agent звучит круто, но это самое сложное и дорогое решение.",
+                "if_it_were_true": "Тогда любой Hello World стоил бы $1k.",
+                "how_it_should_be": "От простого к сложному; переходи к следующему уровню только при systematic failure."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Переходить на следующий уровень нужно каждый месяц независимо от потребностей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Технологический рост по календарю — anti-pattern. Только при доказанной необходимости (systematic failure mode).",
+                "source_of_confusion": "Кажется 'стагнация = плохо', но over-engineering — хуже.",
+                "if_it_were_true": "Тогда каждый проект быстро становился бы переусложнённым.",
+                "how_it_should_be": "Move up when current pattern fails to meet requirements."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Fine-tune нужно делать ДО prompt engineering, чтобы сразу получить нужный стиль.",
+              "correct": false,
+              "sections": {
+                "what_actually": "FT требует датасет, train, retrain. Сначала проверяешь, не лечится ли задача prompt-ом — почти всегда лечится.",
+                "source_of_confusion": "FT кажется 'правильным решением', но он дорогой и инертный.",
+                "if_it_were_true": "Тогда каждый PoC занимал бы месяцы.",
+                "how_it_should_be": "Prompt → если стиль не лечится — FT."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Prompt → Prompt+few-shot → RAG → Better RAG (rerank, hybrid) → Fine-tune → Agents → Multi-agent. Каждый шаг ×2-3 stack complexity, переходи только при доказанной необходимости.",
+              "correct": true,
+              "sections": {
+                "explanation": "Естественный порядок усложнения. Переход — когда systematic failure mode не лечится текущим уровнем. Каждый шаг увеличивает complexity в 2-3 раза, поэтому не переходи 'потому что модно'.",
+                "example": "FAQ-бот: prompt → few-shot (variance высокий) → RAG (когда добавили knowledge base) → агент (когда добавили tool 'create_ticket').",
+                "when_to_apply": "На каждом этапе планирования: 'нужен ли мне следующий уровень?'.",
+                "edge_cases": "Иногда возвращаешься назад: после долгой agent-стадии понимаешь, что хватит простого RAG.",
+                "related": "Production stages (Q15), anti-patterns (Q27)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие слои кеширования у AI-приложений?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Embedding cache (text → vector), Semantic cache (similar query → answer), Prompt cache (prefix reuse у провайдера), LLM response cache (exact match), Tool result cache. На 'горячих' запросах hit rate 30-60% → cost/latency пополам.",
+              "correct": true,
+              "sections": {
+                "explanation": "Слои кеша работают на разных уровнях. Embedding — самый безопасный (детерминированный). Prompt cache — provider-side (Anthropic/OpenAI), 5min-1h TTL. Semantic cache — самый эффективный, но требует threshold tuning.",
+                "example": "Чат-бот: 40% запросов попадают в semantic cache → cost снижается с $0.05 до $0.03 per request.",
+                "when_to_apply": "Любая система с повторяющимися запросами (FAQ, customer support).",
+                "edge_cases": "Semantic cache требует invalidation при изменении knowledge base, иначе ответы устаревают.",
+                "related": "Semantic vs exact match (Q18), cost optimization (Q12)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Кеширование в AI-приложениях невозможно, потому что LLM каждый раз выдаёт новый ответ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кешируются: embeddings (text детерминирован), semantic queries (близкие по смыслу), prompt prefix (system + RAG context), exact-match responses, tool results.",
+                "source_of_confusion": "LLM не детерминистичен по умолчанию, но это не блокирует кеширование на других уровнях.",
+                "if_it_were_true": "Тогда не было бы Anthropic prompt cache, OpenAI prompt caching, GPTCache.",
+                "how_it_should_be": "5+ слоёв кеша: embedding, semantic, prompt-prefix, response, tool result."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно одного слоя кеша — exact match на полный response.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Exact match даёт hit rate 1-5%. Embedding cache + semantic + prompt-prefix кратно эффективнее.",
+                "source_of_confusion": "Кажется 'simple is better', но в AI каждый слой решает свою задачу.",
+                "if_it_were_true": "Тогда не было бы смысла в semantic cache и prompt caching.",
+                "how_it_should_be": "Multi-layer cache; каждый слой даёт независимый выигрыш."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Prompt cache — это feature только Anthropic, у OpenAI его не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenAI запустил prompt caching в 2024 (automatic для prompts > 1024 tokens). Anthropic — explicit cache_control. Оба провайдера поддерживают.",
+                "source_of_confusion": "Реализации отличаются (auto vs explicit), но идея одна.",
+                "if_it_were_true": "Тогда нельзя было бы экономить на длинных system prompts у OpenAI.",
+                "how_it_should_be": "Prompt caching поддерживают и OpenAI, и Anthropic, и Google."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда semantic cache vs exact match?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Semantic cache всегда лучше exact match, потому что hit rate выше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Semantic cache имеет риск false positive (похожий, но не идентичный смысл). В финансах/медицине/юриспруденции это недопустимо.",
+                "source_of_confusion": "Hit rate выше — да, но точность важнее для regulated domains.",
+                "if_it_were_true": "Тогда не было бы advice 'для финансов — exact match only'.",
+                "how_it_should_be": "Trade-off hit rate vs false positive risk. Regulated → exact; FAQ → semantic."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Exact match (hash(query)): 0 false positive, hit rate 1-5% — для финансов/медицины/юр. данных. Semantic (embedding + cosine threshold ≥ 0.95): hit rate 20-40%, false positive risk — для FAQ/support. Brainstorming → без cache.",
+              "correct": true,
+              "sections": {
+                "explanation": "Exact = безопасный, низкий hit rate. Semantic = высокий hit rate, но риск false positive. Выбор зависит от domain criticality и acceptable error rate.",
+                "example": "Финансовый совет: только exact match. Generic FAQ: semantic с threshold 0.95. Креативный brainstorming: cache отключаем (нужна variability).",
+                "when_to_apply": "Anyone designing AI-cache layer; калибровка под domain.",
+                "edge_cases": "Semantic cache требует invalidation при изменении knowledge base; иначе ответы устаревают.",
+                "related": "Caching layers (Q17), multi-tenancy (cache не должен утечь между тенантами)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Semantic cache даёт нулевой риск false positive, потому что эмбеддинги детерминированы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эмбеддинги детерминированы, но cosine similarity > threshold не гарантирует семантическую идентичность. 'Как закрыть счёт?' и 'Можно ли закрыть счёт?' могут быть близки по cosine, но запрашивают разное.",
+                "source_of_confusion": "Детерминированность embedding ≠ семантическая идентичность.",
+                "if_it_were_true": "Тогда не нужны были бы guidelines про 'для финансов используй exact'.",
+                "how_it_should_be": "Semantic cache всегда имеет risk false positive — выбирать threshold консервативно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Brainstorming-сценарии должны использовать самый агрессивный semantic cache (threshold 0.5).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Brainstorming нужна variability — каждый вызов даёт разные идеи. Cache убивает creative variability.",
+                "source_of_confusion": "Cache кажется 'хорошим всегда', но для creative задач — наоборот.",
+                "if_it_were_true": "Тогда все идея-генераторы давали бы повторяющиеся ответы.",
+                "how_it_should_be": "Brainstorming → отключаем cache; нужна variability."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое sync vs async vs streaming vs batch — data flow patterns?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все AI-системы должны быть synchronous, чтобы upstream не блокировался.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sync хорош только для коротких задач (< 2s). Long generations, batch enrichment, deep research требуют async/streaming/batch.",
+                "source_of_confusion": "Sync проще, но не подходит для 30s+ генераций.",
+                "if_it_were_true": "Тогда не было бы webhook/SSE паттернов вообще.",
+                "how_it_should_be": "Выбор по природе задачи: < 2s → sync; > 10s → async/streaming; non-realtime → batch."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Batch API даёт максимум latency 1 секунда — это его главное преимущество.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Batch API имеет SLA 0-24h, не 1 секунду. Главное преимущество — 50% discount, а не latency.",
+                "source_of_confusion": "Путаница между sync и batch.",
+                "if_it_were_true": "Тогда не нужен был бы sync API.",
+                "how_it_should_be": "Batch = async с большим SLA окном и 50% discount."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Synchronous (POST /ask → 200 { answer }, < 2s); Async with callback (POST → 202 { job_id } → webhook, long generations); Streaming (POST → SSE, chat UX, low TTFT); Batch (file → file, 0-24h, 50% дешевле).",
+              "correct": true,
+              "sections": {
+                "explanation": "Четыре паттерна data flow с разными trade-off. Sync — простой, для коротких задач. Async — для long generations с callback. Streaming — для chat UX. Batch — для non-realtime workloads (nightly enrich, evals).",
+                "example": "Chat = streaming; daily report = batch; deep research agent = async with webhook; quick classification = sync.",
+                "when_to_apply": "Выбор паттерна по характеру задачи: latency-tolerance, UX-mode, volume.",
+                "edge_cases": "Гибрид: streaming для UI + сохранение state в БД (если клиент отвалился, можно вернуться).",
+                "related": "TTFT/TPOT (Q14), webhook patterns (Q20)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Streaming паттерн доступен только через WebSocket, SSE не поддерживается современными провайдерами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SSE — основной streaming-паттерн у OpenAI, Anthropic, Google. WebSocket используется реже (когда нужна двусторонняя связь, например, voice).",
+                "source_of_confusion": "WebSocket более known в general web, но в LLM API доминирует SSE.",
+                "if_it_were_true": "Тогда EventSource API не использовался бы в LLM-фронтендах.",
+                "how_it_should_be": "SSE = streaming; WebSocket = bidirectional (voice, realtime)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбирать webhook/SSE для long-running generations?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Webhook не требует никакой retry-стратегии — он гарантированно доставляется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Webhook требует retry с exponential backoff и idempotency keys. Receiver может быть недоступен временно.",
+                "source_of_confusion": "Один-два webhook 'обычно работают', но в proudction нужна robust delivery.",
+                "if_it_were_true": "Тогда не было бы Stripe/GitHub webhook retry политик.",
+                "how_it_should_be": "Retry + idempotency — обязательны для production webhook."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Polling всегда лучше webhook, потому что не требует endpoint на клиенте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Polling неэффективен (постоянная нагрузка), но проще в реализации. Webhook эффективнее, но требует HTTP endpoint у клиента.",
+                "source_of_confusion": "Polling 'проще' для простых случаев, но дороже на масштабе.",
+                "if_it_were_true": "Тогда webhook не существовали бы.",
+                "how_it_should_be": "Webhook — основной паттерн для backend-backend; polling — fallback."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SSE можно использовать только для текстовых ответов, не для прогресса агента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SSE передаёт любые JSON-события: токены, прогресс агента, tool calls, intermediate steps.",
+                "source_of_confusion": "ChatGPT-стиль SSE визуально 'текстовый', но протокол гибкий.",
+                "if_it_were_true": "Тогда coding agents не могли бы стримить прогресс через SSE.",
+                "how_it_should_be": "SSE передаёт любой структурированный event stream."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "SSE для UI с пользователем у экрана; Webhook для backend→backend интеграций где клиент может уйти и вернуться; Polling — fallback. Гибрид: SSE + сохранение прогресса в БД для resubscribe.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда генерация занимает 10s-10min (deep research, coding agent): SSE для 'привязанных' к UI задач, webhook для backend интеграций, polling как fallback. Best practice — SSE + state в БД для recovery.",
+                "example": "Coding agent: SSE стримит прогресс в IDE; одновременно state в Postgres; если IDE закрылась — можно resubscribe.",
+                "when_to_apply": "Long-running generations с возможной потерей соединения.",
+                "edge_cases": "Webhook требует retry с idempotency keys (client может временно недоступен).",
+                "related": "Async patterns (Q19), streaming (Q14)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие failure modes AI-системы и стратегии fallback?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Provider down → secondary через gateway; 429 → queue+retry+jitter+degrade; context exceeded → компрессия/summarize; hallucination → groundedness check + human escalate; cost budget → graceful degradation; slow → timeout → cached; tool failure → retry/alt-tool; prompt injection → input rails.",
+              "correct": true,
+              "sections": {
+                "explanation": "Восемь основных failure modes с конкретными fallback стратегиями. Принцип: каждый внешний вызов должен иметь явный fallback path; без fallback система — single point of failure.",
+                "example": "OpenAI 429 → queue с jitter → если очередь длинная → degrade to Haiku. Tool returns error → retry с другим парсером → если не помогло, inform LLM 'tool failed, try alternative'.",
+                "when_to_apply": "При проектировании любого production AI-сервиса; составить таблицу failure mode → fallback.",
+                "edge_cases": "Cost budget — graceful degradation не должна возвращать 500 ошибку; вместо этого — cached/cheap-model ответ.",
+                "related": "Inference Gateway (Q22), security (Q24)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hallucination — это не failure mode, потому что LLM всегда выдаёт technically valid ответ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hallucination — один из главных failure mode AI-системы. Технически valid ответ может быть фактически неправильным и вредным.",
+                "source_of_confusion": "'Valid output format' ≠ 'correct content'.",
+                "if_it_were_true": "Тогда groundedness check и output rails не были бы нужны.",
+                "how_it_should_be": "Hallucination — explicit failure mode; lечится groundedness check + escalation to human."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Failure mode 'Provider down' лечится только увеличением timeout — fallback к другому провайдеру не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Timeout не помогает, если провайдер реально down. Нужен secondary provider через Inference Gateway.",
+                "source_of_confusion": "Timeout — для slow response, не для outage.",
+                "if_it_were_true": "Тогда любой OpenAI outage давал бы downtime всем системам.",
+                "how_it_should_be": "Multi-provider fallback (Anthropic ↔ OpenAI ↔ self-hosted) через gateway."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Prompt injection защищается только output rails — input rails не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Input rails и output rails — обе нужны. Input блокирует malicious запросы до LLM. Output ловит то, что прошло.",
+                "source_of_confusion": "Output rails кажется 'последней линией', но input дешевле и эффективнее first.",
+                "if_it_were_true": "Тогда любой prompt injection доходил бы до LLM.",
+                "how_it_should_be": "Defense in depth: input rails + output rails."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Inference Gateway pattern (LiteLLM / Portkey / OpenRouter)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Inference Gateway удаляет необходимость в observability — все логи он сам пишет в Sentry автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway даёт базовые логи, но full observability (traces, evals, prompt versions) — отдельный слой (Langfuse/LangSmith).",
+                "source_of_confusion": "Logs ≠ observability. Gateway даёт логи, не traces с context.",
+                "if_it_were_true": "Тогда Langfuse и LangSmith не существовали бы.",
+                "how_it_should_be": "Gateway + dedicated observability — комбинация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Inference Gateway (LiteLLM/Portkey/OpenRouter) — единый API над multiple providers с централизованными fallback/retry/cache/observability/RBAC. Единый OpenAI-compatible формат, A/B testing моделей без изменений в коде. Не нужен если один провайдер и < 1k requests/day.",
+              "correct": true,
+              "sections": {
+                "explanation": "Inference Gateway — единый API над provider zoo. Централизованные fallback / retry / circuit breaker, per-tenant rate limits и cost tracking, observability одним подключением. A/B testing моделей без изменений в коде.",
+                "example": "LiteLLM config: model_list с GPT-4o + claude-sonnet; router_settings с fallbacks: gpt-4o → [claude-sonnet]; retry_policy: 3 retries, 30s timeout.",
+                "when_to_apply": "Когда у вас >= 2 провайдеров и/или нужны multi-tenant cost tracking, A/B testing моделей.",
+                "edge_cases": "Если один провайдер и < 1k requests/day — overhead не стоит того.",
+                "related": "Router layer (Q9), failure modes (Q21)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "LiteLLM работает только с OpenAI API, остальных провайдеров не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LiteLLM — multi-provider gateway: OpenAI, Anthropic, Azure, Bedrock, Cohere, local models через vLLM/Ollama. Сам OpenAI-compatible сверху.",
+                "source_of_confusion": "Возможно путаница с openai Python SDK.",
+                "if_it_were_true": "Тогда LiteLLM не имел бы 100+ supported providers.",
+                "how_it_should_be": "LiteLLM = multi-provider gateway, OpenAI-compatible API сверху."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Inference Gateway обязателен даже для PoC с одним провайдером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для PoC и single-provider — overhead. Gateway окупается при multi-provider или scale.",
+                "source_of_confusion": "Gateway полезен, но не на каждом этапе.",
+                "if_it_were_true": "Тогда каждый Jupyter notebook начинал бы с LiteLLM setup.",
+                "how_it_should_be": "Gateway нужен с MVP/Production стадии при multi-provider или > 1k req/day."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать multi-tenancy: per-tenant prompts, indices, rate limits?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Multi-tenancy в AI-приложении — это просто разные user-id; никакая изоляция данных не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "User-id != tenant-id. Tenant-level isolation требует отдельных namespace в RAG, per-tenant prompts, BYOK, cost budgets, row-level security.",
+                "source_of_confusion": "Single-tenant и multi-tenant выглядят похоже снаружи, но архитектурно сильно отличаются.",
+                "if_it_were_true": "Тогда не было бы советов 'mandatory filter by tenant_id' в RAG.",
+                "how_it_should_be": "Tenant isolation на уровне data, prompts, models, budgets."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cross-tenant leak в RAG не реален: vector DB сама изолирует тенантов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vector DB не знает про тенантов сама. Если забыли filter by tenant_id в retriever — утечка документов другого тенанта.",
+                "source_of_confusion": "Vector DB поддерживает namespace/filters, но это явная работа разработчика.",
+                "if_it_were_true": "Тогда не было бы инцидентов 'клиент видит чужие документы'.",
+                "how_it_should_be": "Strict mandatory filter by tenant_id в retriever; защита на уровне query, не на надежде."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Per-tenant prompts (namespace в registry), RAG index (отдельный namespace или filter), models (BYOK или shared с virtual budget), rate limits (Redis token bucket), cost budgets (monthly cap), FT models (tenant-specific), data isolation (row-level security + encryption). Watch out: cross-tenant leak в RAG, shared cache poisoning, BYOK keys в Vault.",
+              "correct": true,
+              "sections": {
+                "explanation": "Multi-tenancy = разделение по тенантам на всех уровнях: prompts, indices, models, rate limits, budgets, FT, data. Подводные камни: cross-tenant leak в RAG (забыл filter), shared cache poisoning (semantic cache без tenant_id), BYOK plaintext в БД (должно быть в Vault).",
+                "example": "Enterprise SaaS: Pinecone namespace per tenant + Redis key 'rl:{tenant}:{user}' + per-tenant Promptlayer namespace + BYOK через Vault.",
+                "when_to_apply": "Любая B2B SaaS AI-фича с несколькими организациями-клиентами.",
+                "edge_cases": "Cache poisoning — критичный bug; tenant_id обязательно в cache key.",
+                "related": "Security (Q24), compliance (Q25), cost monitoring (Q26)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Rate limits per-tenant не нужны — достаточно глобального лимита.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один noisy tenant съест весь глобальный лимит → все остальные tenants получат 429. Нужен per-tenant token bucket.",
+                "source_of_confusion": "Global limit проще, но не fair.",
+                "if_it_were_true": "Тогда любой клиент мог бы DoS всю систему.",
+                "how_it_should_be": "Per-tenant rate limit (Redis token bucket с key per tenant)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая security architecture: prompt injection, secrets, sandboxing?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Prompt injection защищается только обучением LLM 'не слушать malicious instructions' — внешние rails не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутреннего alignment модели недостаточно: indirect injection через RAG/web tool часто проходит. Нужны input + output rails как defense in depth.",
+                "source_of_confusion": "Модели улучшаются, но не immune.",
+                "if_it_were_true": "Тогда не было бы Guardrails AI, NeMo Guardrails, Lakera.",
+                "how_it_should_be": "Defense in depth: input rails + output rails + sanitize retrieved content + sandbox tools."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tool sandbox не нужен, если код от LLM проходит через linting — этого достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Linting ловит syntax/style, не безопасность. LLM-генерированный код может содержать RCE/file system access — нужен sandbox.",
+                "source_of_confusion": "Linting и sandbox — разные защиты, дополняющие друг друга.",
+                "if_it_were_true": "Тогда eval() было бы безопасным после линтинга.",
+                "how_it_should_be": "Sandbox (Docker/gVisor/Firecracker) с network allowlist обязателен для code execution."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "API keys можно хранить прямо в prompts — LLM их не выдаст наружу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LLM может выдать любой текст из context, включая API keys через jailbreak. Secrets в prompts — критическая уязвимость.",
+                "source_of_confusion": "Кажется 'модель не назовёт секрет', но prompt injection стирает эти ожидания.",
+                "if_it_were_true": "Тогда не было бы AWS Secrets Manager и HashiCorp Vault.",
+                "how_it_should_be": "Secrets в Vault, никогда не в prompts. Redact PII перед logging."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Input rails (классификатор malicious) → strict role separation → tool sandboxing (Docker/gVisor). Indirect injection (через RAG/web) лечится sanitize retrieved content. Output rails: PII redact, policy violation, jailbreak signals. Secrets в Vault, не в prompts/logs. Audit trails: каждый LLM/tool call с user/tenant/timestamp.",
+              "correct": true,
+              "sections": {
+                "explanation": "Threat model: direct injection, indirect injection (через retrieved content), secrets exposure, tool abuse. Контрмеры: input rails (классификатор), strict role separation, output rails (PII redact + policy), tool sandbox, secrets в Vault, audit trails.",
+                "example": "User вводит 'ignore previous instructions and...' → input rail classifier (malicious=true) → reject. RAG возвращает документ с injected prompt → sanitize layer.",
+                "when_to_apply": "Любая user-facing AI-система; обязательно для regulated industries.",
+                "edge_cases": "Compliance bonus: human review pipeline для всех output before customer-facing в финансах/медицине.",
+                "related": "Multi-tenancy (Q23), compliance (Q25), failure modes (Q21)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая compliance-aware architecture (PII, GDPR, residency)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "PII redaction layer до отправки в LLM (regex + ML-detector); data residency (region-aware endpoints); no-training agreement (по умолчанию для API); audit logging с retention по compliance window; GDPR consent + right-to-be-forgotten для embeddings; encryption at-rest/in-transit + per-tenant keys; DPA/BAA с провайдером; on-prem option для строгих кейсов (Llama 3, Mistral, vLLM).",
+              "correct": true,
+              "sections": {
+                "explanation": "Compliance-aware архитектура требует слоёв: PII redaction до LLM, region-aware endpoints, no-training contracts (DPA/BAA), audit logging, GDPR consent flows, per-tenant encryption, on-prem option для strict cases (Llama/Mistral через vLLM).",
+                "example": "Медицинская AI-фича: HIPAA-compliant Azure OpenAI endpoint + PII redaction (Presidio) + audit logs 7 лет + DPA с Microsoft. Или on-prem Llama 3 70B для максимальной privacy.",
+                "when_to_apply": "Финансы, медицина, юр, госсектор, EU customer data.",
+                "edge_cases": "Right-to-be-forgotten для embeddings — нужна возможность удалить vectors конкретного user-а.",
+                "related": "Security (Q24), multi-tenancy (Q23)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Data residency не существует для LLM — любая модель доступна из любой страны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Anthropic, Azure OpenAI имеют region-specific endpoints (EU, US, Australia). Для GDPR/data residency это критично.",
+                "source_of_confusion": "Multi-region pricing одинаков, но эндпойнты разные.",
+                "if_it_were_true": "Тогда GDPR-compliant deployment был бы невозможен.",
+                "how_it_should_be": "Выбор region-aware endpoints для compliance."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все облачные LLM-провайдеры по умолчанию обучаются на данных пользователей — GDPR compliance невозможен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API endpoints OpenAI/Anthropic/Google по умолчанию НЕ обучаются на данных (Zero Data Retention для API). Веб-чаты — другая история.",
+                "source_of_confusion": "Путаница между API и consumer-end products (ChatGPT free tier).",
+                "if_it_were_true": "Тогда не было бы enterprise-grade соглашений и HIPAA endpoints.",
+                "how_it_should_be": "API эндпойнты — no-training by default; consumer — нужны opt-out."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HIPAA compliance невозможна с cloud LLM — нужно только on-prem.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Azure OpenAI и AWS Bedrock имеют HIPAA-compliant endpoints с BAA. Cloud + compliance возможны.",
+                "source_of_confusion": "Многие думают cloud = automatic non-compliance, но это не так.",
+                "if_it_were_true": "Тогда не было бы Microsoft healthcare AI клиентов.",
+                "how_it_should_be": "Cloud HIPAA возможен с BAA + compliant endpoint."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать cost monitoring и budgets per tenant/feature?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно мониторить общий monthly bill от провайдера — детализация по тенантам не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bill от провайдера — total. Без per-tenant/per-feature breakdown нельзя выявить noisy tenant, cost-anomaly или unit economics.",
+                "source_of_confusion": "На малом scale общий bill достаточен; на enterprise — нет.",
+                "if_it_were_true": "Тогда не было бы Helicone, Langfuse cost tracking.",
+                "how_it_should_be": "Per-tenant + per-feature + per-model cost tracking."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tokens in/out по tenant/user/feature/model; $ per request с учётом provider price book; anomaly detection (запрос > p99 cost / sudden spike); хранение в time-series DB (VictoriaMetrics/Prometheus) + Grafana. Контроли: per-tenant budget с soft alert at 80% / hard cut at 100%; per-feature budget; auto-shutoff (за час > 10× нормы → throttle); cost-attribution в Langfuse span (cost_usd).",
+              "correct": true,
+              "sections": {
+                "explanation": "Cost monitoring: tracking по dimensions (tenant/user/feature/model), anomaly detection, budgets с уровнями (soft/hard), auto-shutoff на spike, attribution в traces. Формула: cost = (in_tokens × price_in + out_tokens × price_out) / 1M.",
+                "example": "GPT-4o Q4 2025: in $2.5/1M, out $10/1M. Tenant 'acme' spend: $230 за месяц (80% budget $300) → soft alert; на $300 → hard cut.",
+                "when_to_apply": "Любая multi-tenant production AI-система; критично для enterprise.",
+                "edge_cases": "Auto-shutoff может ломать UX — нужно graceful degradation вместо hard 500.",
+                "related": "Multi-tenancy (Q23), Inference Gateway (Q22 — built-in cost tracking)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Per-tenant budget — это просто HTTP rate limit и больше ничего не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rate limit — про QPS, budget — про доллары. Один запрос может стоить $0.001 или $2 (agent). Нужны разные слои.",
+                "source_of_confusion": "Оба про 'ограничения тенанта', но измеряют разное.",
+                "if_it_were_true": "Тогда budget по rate limit не давал бы предсказуемой $-стоимости.",
+                "how_it_should_be": "Rate limit (QPS) + cost budget ($) — отдельные контроли."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cost данные не должны попадать в trace, потому что они sensitive.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost в trace — стандартная практика (Langfuse, LangSmith). Не более sensitive, чем token counts.",
+                "source_of_confusion": "Возможна путаница с раскрытием цен клиенту, но internal traces — для команды.",
+                "if_it_were_true": "Тогда нельзя было бы делать cost-attribution debugging.",
+                "how_it_should_be": "Cost в trace span = best practice для debugging и optimization."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие architecture anti-patterns в AI-проектах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hard-coded model — это лучшая практика, потому что type safety.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hard-coded model — anti-pattern: смена модели требует deploy, нельзя A/B test без code change.",
+                "source_of_confusion": "Type safety можно сохранить и с enum в config.",
+                "if_it_were_true": "Тогда model registry никому не был бы нужен.",
+                "how_it_should_be": "Model name через config / registry; type safety через validated enum."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать observability — это анти-паттерн, потому что traces съедают много места.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отсутствие observability — анти-паттерн, не наоборот. Storage cost минимален относительно value debugging.",
+                "source_of_confusion": "Большие объёмы traces могут быть дороги, но это решается retention policy.",
+                "if_it_were_true": "Тогда Langfuse/LangSmith разорились бы.",
+                "how_it_should_be": "Observability с первого MVP — must-have, не опция."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Premature agents (multi-step там, где хватает workflow); RAG over fine-tune для style (плохо работает); hard-coded model (`openai.chat.completions.create('gpt-4')` повсюду); no fallback strategy; no observability; sync-only без streaming; plain prompt в коде; no evals; trust everything LLM выдаёт; 'чем больше context тем лучше' (dumping 100k tokens).",
+              "correct": true,
+              "sections": {
+                "explanation": "10 самых частых ошибок на ревью. Лечения: workflow вместо agent если задача линейная; FT для style + RAG для facts; model registry + config; inference gateway + secondary provider; Langfuse/LangSmith с первого дня; SSE для UX; prompt registry + version control; golden dataset + CI eval; input + output rails; curated context (top-k + rerank).",
+                "example": "PR review: вижу 'openai.chat.completions.create(\"gpt-4\")' в коде сервиса → request: вынести в config через model registry.",
+                "when_to_apply": "Code review AI-features; design review новой архитектуры; on-call retrospective.",
+                "edge_cases": "Иногда anti-pattern оправдан временно (early PoC) — но это явное техдолг.",
+                "related": "Production stages (Q15), evolution path (Q16), security (Q24)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чем больше context даём LLM, тем выше качество всегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большой context: дорого (price × tokens), медленно (prefill linear in tokens), и качество часто падает (lost in the middle).",
+                "source_of_confusion": "Long-context модели рекламируются как 'дайте всё', но в production curated context лучше.",
+                "if_it_were_true": "Тогда не нужны были бы reranking и top-k.",
+                "how_it_should_be": "Curated context: top-k retrieval + rerank → отбираем релевантное."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем feature flags и A/B testing для AI features?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "A/B testing для AI features невозможен — нет способа сравнить качество.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метрики возможны: user satisfaction (thumbs up/down), conversion rate, task completion. Плюс offline evals на golden dataset.",
+                "source_of_confusion": "Метрики не такие 'crisp' как для классического A/B (CTR), но они есть.",
+                "if_it_were_true": "Тогда нельзя было бы делать iterative improvement AI.",
+                "how_it_should_be": "Combination online (thumbs) + offline (golden dataset) метрик."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Statistical significance в A/B test для AI не нужна — достаточно посмотреть на 10 примеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "10 примеров — noise, не сигнал. Нужны sample sizes по power analysis и p-value.",
+                "source_of_confusion": "Кажется 'видно невооружённым глазом', но это subjective.",
+                "if_it_were_true": "Тогда любой случайный bias мог бы повлиять на решение.",
+                "how_it_should_be": "Stat significance с минимальным sample size; p < 0.05."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Kill switch не нужен — feature flag и rollback через deploy решают всё.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Deploy занимает минуты. Kill switch (флаг → off) — секунды. Для инцидентов нужна секундная реакция.",
+                "source_of_confusion": "Rollback и kill switch похожи, но скорость разная.",
+                "if_it_were_true": "Тогда feature flags не нужны были бы вообще.",
+                "how_it_should_be": "Feature flag = secunde-level kill switch; deploy rollback — fallback на 2-3-й уровень."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Feature flags для gradual rollout (1% → 10% → 50% → 100%), kill switch при инциденте, per-user/per-tenant override (LaunchDarkly/Unleash/Flagsmith). A/B testing: split traffic между variants (model A vs B, prompt v1 vs v2); measure user satisfaction, conversion, task completion; statistical significance с минимальным sample size, p-value < 0.05; sync online + offline evals.",
+              "correct": true,
+              "sections": {
+                "explanation": "Feature flags = постепенный rollout новых моделей/промптов с возможностью kill switch. A/B testing = data-driven сравнение вариантов. Sync online metrics с golden dataset performance — критично, чтобы реальный мир не разошёлся с eval-набором.",
+                "example": "Новый prompt v2 → 10% traffic → через 2 недели thumbs-up rate +5% → rollout до 100%. Иначе — rollback.",
+                "when_to_apply": "Любая production AI-фича; каждое изменение модели/промпта.",
+                "edge_cases": "Sample size: на низком QPS A/B test может занять недели; offline evals быстрее.",
+                "related": "Production stages (Q15), evals (Q13)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен edge AI: small model on-device + heavy в облаке?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "On-device малая модель (Apple Intelligence 3B / Phi-3-mini / Gemma 2B через ONNX/WebGPU/MLC LLM) для latency-sensitive, privacy, offline, cost; тяжёлые модели в облаке. Routing logic эскалирует сложные запросы. Trade-off: малые модели глупее → нужна тщательная calibration эскалации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hybrid edge + cloud. On-device: Apple Intelligence (3B), Phi-3-mini, Gemma 2B, ONNX runtime, WebGPU + WebLLM в браузере, MLC LLM на мобильных. Cloud: тяжёлые модели для сложных задач. Тщательный routing logic.",
+                "example": "Apple Intelligence: простые задачи (summarize notification) на устройстве; сложные (long-form generation) — через Private Cloud Compute или ChatGPT.",
+                "when_to_apply": "Mobile apps, browser AI, privacy-sensitive use cases, autocomplete.",
+                "edge_cases": "Routing calibration — критична: слишком агрессивный edge = плохие ответы, слишком cloud = ноль выигрыша от edge.",
+                "related": "Cascading (Q6), latency budget (Q11)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Edge AI бесполезен — все задачи лучше решаются в облаке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Edge AI нужен для latency-sensitive (autocomplete, voice), privacy (data не уходит из устройства), offline режима, cost (free на устройстве пользователя).",
+                "source_of_confusion": "Cloud мощнее, но не всегда подходит.",
+                "if_it_were_true": "Тогда Apple Intelligence и Copilot autocomplete не существовали бы.",
+                "how_it_should_be": "Edge для latency/privacy/offline; cloud для тяжёлых задач."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Малые модели на устройстве так же умные, как GPT-4 — разницы нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "3B-модель сильно глупее GPT-4. Их роль — простые задачи (autocomplete, classification, summarization), не general intelligence.",
+                "source_of_confusion": "Benchmarks улучшаются, но разрыв с frontier моделями всё равно большой.",
+                "if_it_were_true": "Тогда не нужен был бы cloud вообще.",
+                "how_it_should_be": "Малые модели — для узких задач; cloud — для general/complex."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Edge AI работает только в браузере через WebGPU.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Edge AI: native mobile (MLC LLM, Apple Intelligence), embedded (ONNX runtime), browser (WebGPU + WebLLM), desktop (ollama). WebGPU — одна из платформ.",
+                "source_of_confusion": "WebGPU + WebLLM известен в web-community, но это не единственный path.",
+                "if_it_were_true": "Тогда Apple Intelligence на iPhone не существовал бы.",
+                "how_it_should_be": "Edge AI = широкий набор платформ: native, embedded, browser, desktop."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая voice agent architecture: STT → LLM → TTS vs Realtime API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Voice agent можно построить только через STT → LLM → TTS pipeline. Realtime API не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OpenAI Realtime API и Gemini Live — audio-to-audio multimodal модели. Это альтернатива классическому pipeline.",
+                "source_of_confusion": "Pipeline был стандартом до 2024, но Realtime API существует с конца 2024.",
+                "if_it_were_true": "Тогда voice agents всегда имели бы latency 1.3s+.",
+                "how_it_should_be": "Pipeline или Realtime API — два варианта с разными trade-off."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Realtime API быстрее, но дороже и vendor lock-in; pipeline (STT 200ms + LLM 800ms + TTS 300ms = 1.3s+) даёт гибкость и explicit text trace, но не нативный barge-in. Optimizations: streaming STT (LLM до конца фразы), streaming LLM (TTS на первых токенах), VAD для barge-in.",
+              "correct": true,
+              "sections": {
+                "explanation": "Два варианта voice architecture. Pipeline (Whisper/Deepgram → LLM → ElevenLabs/OpenAI TTS): гибкость, explicit text trace, latency складывается. Realtime API (audio→audio): ~300-500ms latency, native barge-in, меньше контроля и vendor lock-in.",
+                "example": "Customer service voice agent: pipeline для compliance (text trace для audit) + streaming STT/LLM/TTS для latency. Consumer voice assistant: Realtime API для native interruption UX.",
+                "when_to_apply": "Voice agents с разными требованиями: regulated → pipeline; UX-first consumer → Realtime API.",
+                "edge_cases": "Streaming STT + streaming LLM + streaming TTS — каждый слой стримит для минимальной end-to-end latency.",
+                "related": "Streaming (Q14), latency budget (Q11)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Barge-in (прерывание пользователем) невозможен в pipeline architecture — только в Realtime API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Barge-in возможен в pipeline через VAD (voice activity detection), но реализация сложнее. Realtime API даёт его 'из коробки'.",
+                "source_of_confusion": "Native barge-in проще в Realtime, но не impossible в pipeline.",
+                "if_it_were_true": "Тогда voice assistants pre-2024 (Siri, Alexa) не имели бы interrupt.",
+                "how_it_should_be": "Pipeline + VAD = manual barge-in; Realtime API = native."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TTS — это всегда самый медленный этап voice pipeline, занимает 5+ секунд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTS обычно 200-500ms на короткие фразы (ElevenLabs, OpenAI TTS). LLM (800ms+) — обычно медленнее TTS.",
+                "source_of_confusion": "Старые TTS были медленнее; современные стримятся.",
+                "if_it_were_true": "Тогда voice agents имели бы latency 6+ секунд.",
+                "how_it_should_be": "TTS 200-500ms; LLM prefill 500ms+ — обычно главное узкое место."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как решать build vs buy: own RAG vs hosted Pinecone, OSS vs commercial?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "OSS всегда дороже commercial, потому что нужны DevOps.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Total cost: OSS требует ops (DevOps time), но без license fees. На scale OSS дешевле; на старте — commercial.",
+                "source_of_confusion": "DevOps cost real, но не всегда превышает license.",
+                "if_it_were_true": "Тогда никто не использовал бы pgvector / self-hosted vLLM.",
+                "how_it_should_be": "TCO calc: include both license + ops time."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Всегда нужно build, потому что vendor lock-in — единственная проблема.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Build окупается на scale и compliance, но на старте buy быстрее. Vendor lock-in — не единственный критерий.",
+                "source_of_confusion": "Lock-in важен, но не оправдывает 6 месяцев на свой gateway для PoC.",
+                "if_it_were_true": "Тогда стартапы не запускались бы.",
+                "how_it_should_be": "Build vs buy = trade-off скорости vs контроля; на старте обычно buy."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Vector DB — pgvector в существующей PG (build) vs Pinecone/Weaviate Cloud (buy); LLM Gateway — свой proxy vs Portkey/LiteLLM/OpenRouter; Observability — logs+Grafana vs Langfuse Cloud/LangSmith; Fine-tuning — свой H100 кластер vs OpenAI/Together/Anyscale FT API; Prompt Registry — git+service vs Promptlayer/Langfuse. Build при уникальных требованиях, инженерной мощности, > 1k QPS. Buy при старте, exploratory, ограниченной команде, < 1k QPS.",
+              "correct": true,
+              "sections": {
+                "explanation": "Decision criteria per component. Build когда: уникальные требования (compliance, custom retrieval, on-prem), есть engineering capacity, > 1k QPS (cost economics). Buy когда: старт, exploratory, ограниченная команда, фокус на product, < 1k QPS. OSS vs commercial: OSS = больше контроля, дешевле long-run, требует ops; commercial = быстрее, SLA, поддержка.",
+                "example": "Стартап на 100 users → Pinecone + LiteLLM + Langfuse Cloud. Enterprise с 10k QPS и compliance → pgvector + свой proxy + self-hosted Langfuse.",
+                "when_to_apply": "Architecture decision review при выборе компонентов AI-стека.",
+                "edge_cases": "Гибрид: купить gateway (Portkey), построить vector DB (pgvector в существующем кластере).",
+                "related": "Inference Gateway (Q22), production stages (Q15)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Buy единственный путь для enterprise — никогда не строй сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Enterprise часто строит сам именно ради compliance, customization, on-prem. Buy не всегда возможен (regulated industries).",
+                "source_of_confusion": "Buy быстрее, но не всегда подходит для enterprise constraints.",
+                "if_it_were_true": "Тогда не было бы on-prem deployments больших компаний.",
+                "how_it_should_be": "Enterprise часто гибрид: buy для commodity (gateway), build для core (custom retrieval)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие паттерны у real examples: Notion AI, Cursor, Perplexity, Devin?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все эти продукты используют чистый Prompt Engineering без RAG и tools.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все упомянутые продукты — гибрид RAG + tools + careful prompt engineering. Notion AI — RAG поверх workspace; Cursor — long context + embedding search + tools; Perplexity — RAG + agent + citations.",
+                "source_of_confusion": "Снаружи выглядит как 'просто чат', но внутри — multi-layer architecture.",
+                "if_it_were_true": "Тогда никаких vector DB и tool use в продуктах не было бы.",
+                "how_it_should_be": "Реальные продукты = hybrid patterns."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Devin — это обычный chat-бот без long-running execution и sandboxing.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Devin — autonomous coding agent с long-running execution (часы), sandboxed VM, multi-step planning, self-reflection, human-checkpoint.",
+                "source_of_confusion": "Возможно путаница с другими 'coding helpers' типа GitHub Copilot Chat.",
+                "if_it_were_true": "Тогда Devin не отличался бы от ChatGPT.",
+                "how_it_should_be": "Devin = frontier autonomous agent: VM sandbox, hours-long tasks, human checkpoints."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cursor — это просто Copilot с другим UI; никаких архитектурных отличий нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cursor: long context + multi-file embedding search + agent tools. Copilot: edge autocomplete + cloud chat. Архитектурно разные.",
+                "source_of_confusion": "Оба для разработчиков, но внутреннее устройство различно.",
+                "if_it_were_true": "Тогда оба были бы взаимозаменяемыми.",
+                "how_it_should_be": "Cursor — long-context + RAG + agent; Copilot — edge+cloud cascading."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Notion AI — RAG поверх workspace + per-workspace index + structured output; Cursor — long context (full file) + embedding search (codebase) + tool use + speculative decoding + code-specific FT; Perplexity — RAG + agent + web search tool + citation generation; Devin — autonomous coding agent с long-running execution, multi-step planning, sandboxed VM, self-reflection, human-checkpoint; Claude apps — tool use + Projects (persistent RAG-lite) + Artifacts (structured output); Copilot — edge (autocomplete small model) + cloud (chat heavy); ChatGPT Search — prompt + RAG + browser/python tools.",
+              "correct": true,
+              "sections": {
+                "explanation": "High-level разбор продуктов: все — гибрид RAG + tools + некоторое FT + careful prompt engineering. Общий паттерн 2025-2026 — не 'чистый' один паттерн, а композиция.",
+                "example": "Cursor combines: long-context для full-file analysis, vector search для codebase context, tool use для file edits, code-specific FT для completion speed, IDE как tool surface.",
+                "when_to_apply": "При дизайне нового AI-продукта — смотри на real-world architecture, а не на 'академические' паттерны.",
+                "edge_cases": "Devin показывает frontier: long-running agents с sandbox VM и self-reflection — много новых проблем, но направление 2026.",
+                "related": "Все предыдущие вопросы — это компоненты, из которых собраны эти продукты."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
