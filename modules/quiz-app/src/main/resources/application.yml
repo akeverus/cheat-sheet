@@ -4,6 +4,13 @@ server:
   # но даёт активным завершиться. K8s/docker compose шлют SIGTERM до SIGKILL
   # (по умолчанию 30s grace), поэтому Spring lifecycle тоже 30s.
   shutdown: graceful
+  # GZIP для текстового контента. /stats и /index возвращают большой HTML —
+  # сжатие даёт 5-10× меньше bandwidth. min-response-size=1KB чтобы не
+  # тратить CPU на мелкие ответы (actuator/health, JSON-фрагменты).
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,text/plain,application/javascript,application/json,image/svg+xml
+    min-response-size: 1KB
 
 spring:
   application:
