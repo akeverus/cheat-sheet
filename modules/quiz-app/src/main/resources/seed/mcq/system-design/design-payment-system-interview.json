@@ -1200,6 +1200,606 @@
           ]
         }
       ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что входит в AML/KYC pipeline платёжной системы и почему missed sanction screening привёл к BNP Paribas штрафу $8.9B в 2014?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "**KYC** (onboarding identity check: passport+selfie через Onfido/Jumio/Persona, OCR+face-match), **AML transaction monitoring** (pattern-detection: structuring, layering, integration; SAR filing с FinCEN), **sanction screening** (OFAC SDN, EU, UN lists на каждой транзакции по name/IBAN/country, fuzzy match с false-positive manual queue), **PEP detection** (politically exposed persons higher scrutiny); BNP Paribas обработал ~$30B транзакций для Sudan/Iran/Cuba 2002-2009 в нарушение OFAC, штраф $8.9B в 2014.",
+              "correct": true,
+              "sections": {
+                "explanation": "AML/KYC — это regulatory-mandated tri-pillar. **KYC** при onboarding: collect government ID + utility bill + selfie; vendor (Onfido/Jumio/Persona/Sumsub) делает OCR-extraction + face-match via ML + liveness check; для high-value/high-risk — manual review by compliance team. **AML transaction monitoring**: rule + ML pattern detection (`structuring` = много мелких transactions избегая reporting threshold $10K, `layering` = movement через множество счетов чтобы скрыть source, `integration` = реинвестирование laundered funds). Подозрительные паттерны → automated SAR (Suspicious Activity Report) filing к FinCEN (US) или local FIU (Financial Intelligence Unit). **Sanction screening**: real-time check на каждой транзакции против OFAC SDN list (US Treasury, 6000+ entities), EU consolidated list, UN sanctions; match по name + DOB + IBAN + country code; fuzzy matching (Soundex, Levenshtein) catches misspellings; false-positive `John Smith` идёт в manual review queue. **PEP**: politicians + immediate family получают enhanced due diligence (EDD). **BNP Paribas 2014**: $8.97B fine — крупнейший в AML history до того момента — за обработку $30B Sudan/Iran/Cuba transactions через NY офис, скрывая sanctioned country names в SWIFT messages.",
+                "example": "Vendor stack: ComplyAdvantage, Sumsub, Trulioo, Refinitiv World-Check. Real-time API hit на каждой transaction + batch overnight на full customer database (catch newly-added sanctions). Stripe Atlas включает KYC автоматически для US LLC formation. Wise/Revolut требуют customer KYC при $1K+ deposits.",
+                "when_to_apply": "Все licensed financial institutions (banks, money-service-businesses, fintechs); EU PSD2 PSPs; US FinCEN-registered. Critical для international wire, crypto exchanges.",
+                "edge_cases": "Cross-border: один transaction может trigger multiple sanction lists (OFAC + EU + UK). Fuzzy match — balance recall/precision (over-blocking customer; under-blocking sanctioned). Re-screening: customer profile changed (новое name через marriage) → re-run screening против updated lists.",
+                "related": "Q22 multi-currency FX добавляет AML layer (cross-border); Q14 vault не покрывает KYC compliance; Q25 architecture включает sanction-service."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "AML/KYC — это только check паспорта; sanctions automatically handled card network-ом Visa/MC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "KYC включает identity verification, address, source-of-funds; не только passport. Card networks НЕ делают sanction screening — это responsibility merchant/PSP. Visa/MC routing работает с любым card если authorize approved by issuer. Sanctions — merchant-side compliance, otherwise BNP Paribas $9B fine не произошёл бы.",
+                "source_of_confusion": "Кандидат предполагает что networks делают compliance; в реальности это merchant responsibility.",
+                "if_it_were_true": "Если бы card networks handled sanctions, любой merchant был бы PCI compliant automatically — реально нет.",
+                "how_it_should_be": "AML/KYC tri-pillar + sanctions = merchant responsibility; networks только route auth-messages."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sanctions check необязательны для PSPs — only banks. Stripe/Adyen passthrough merchant без screening.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все licensed financial institutions (включая PSPs которые держат money) обязаны делать sanction screening. Stripe registered как Money Service Business (MSB) в US, под FinCEN supervision; Adyen — licensed payment institution в EU под DNB. Они делают full AML/KYC/sanction stack.",
+                "source_of_confusion": "Кандидат предполагает что PSPs `просто карты`; реально они financial institutions с lic.",
+                "if_it_were_true": "Если бы PSPs не делали screening, OFAC закрыл бы Stripe немедленно; реально Stripe инвестирует в Compliance Engineering команду.",
+                "how_it_should_be": "PSPs обязаны делать AML/KYC/sanctions — это license condition."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "AML = anti-money-laundering = только batch overnight job; real-time screening невозможен из-за latency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Real-time screening — стандарт; ComplyAdvantage/Sumsub возвращают результат < 100ms через REST API + cached SDN lists. Batch overnight только для full database re-screen после list updates. На каждой транзакции — real-time hit обязателен (BSA/AML requirement в US, AMLD6 в EU).",
+                "source_of_confusion": "Кандидат экстраполирует overnight-batch из ранних 2000-х; современный AML real-time.",
+                "if_it_were_true": "Если бы только batch, sanctioned transaction проходила бы между screen-runs; OFAC bans это.",
+                "how_it_should_be": "Real-time + batch для full re-screening; real-time обязателен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно реализовать multi-currency wallet (один customer держит USD+EUR+GBP) и почему float-точка для FX-конверсии — это antipattern?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один wallet с amount в float64; конверсия через `amount_eur = amount_usd * 0.92`; FX rate cache 5 минут; ledger entries в base currency (USD).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Float для денег = accumulated rounding errors. На миллионах транзакций discrepancy в тысячи долларов. Один wallet с denominations через FX — нельзя audit (мы не знаем сколько у customer EUR, только переведённый USD). Ledger в base currency проблематичен для regulatory reporting (нужно показывать актуальные currency).",
+                "source_of_confusion": "Кандидат упрощает model один wallet, не понимая FX-audit-trail.",
+                "if_it_were_true": "Если бы float был ок, банковский софт писали бы на JavaScript; реально все используют integer/BigDecimal.",
+                "how_it_should_be": "Per-currency wallets в integer minor units; FX-conversion = explicit ledger entries; rates locked at quote time."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**Per-currency wallets** (`wallets(wallet_id, owner_id, currency CHAR(3), available_balance_minor BIGINT)` — один customer = N wallets), amount в **integer minor units** (cents/копейки) → no rounding errors; **FX rates** из Bloomberg/ECB refreshed minutely; lock rate на 30 sec при quote; **conversion entries**: USD wallet `-10000`, fx_clearing_USD `+10000`, fx_clearing_EUR `-9200` (rate 0.92), EUR wallet `+9200`, fx_revenue `+40` (markup 0.4%).",
+              "correct": true,
+              "sections": {
+                "explanation": "**Multi-currency wallet design**: один customer/merchant держит несколько wallets, по одному per currency. `wallets` table: `wallet_id, owner_id, currency CHAR(3), available_balance_minor BIGINT, pending_balance_minor BIGINT`. **Integer minor units** обязательны: `BIGINT amount_minor` = cents/копейки/satoshi; никакого float (`0.1 + 0.2 = 0.30000000000000004`). **FX rate sources**: Bloomberg / Refinitiv / ECB (European Central Bank) / Bank of England — major banks aggregate через FX providers (Wise, Currencylayer); refresh каждую минуту для major pairs (USD/EUR/GBP), real-time для high-volume pairs. **Pricing**: mid-market rate + markup (Wise 0.4%, банки 2-4%). **Lock rate** на 30 секунд при quote чтобы customer не получил surprise rate change. **Conversion ledger** entries: explicit double-entry с fx_clearing intermediate accounts + fx_revenue accumulates markup. **Rounding**: always `round-half-even` (banker's rounding) для consistent fair treatment; never `round-half-up`. **Hedging**: если real-time conversion на spot market → hedge через FX broker; если pre-funded — exposure managed by treasury team.",
+                "example": "Wise держит 50+ currency wallets per customer; multi-currency Mastercard debit attached к base currency wallet automatically converts. Revolut аналогично. Stripe handles auto-conversion на settlement (USD→EUR for EU merchant). Custom hedging risk для PSPs обычно вынесен в treasury department.",
+                "when_to_apply": "Wallets/neobanks (Wise, Revolut, N26, Mercury), trading apps (Robinhood, Interactive Brokers), marketplaces с cross-border (Etsy, Airbnb).",
+                "edge_cases": "Cross-currency settlement window: FX market закрыт weekend (NY 5pm Fri to Sun 5pm) — rate frozen; transactions during this period at last-Friday rate. Compounding rounding на miллиарды tx — bank's rounding accumulates near-zero diff. Negative balance edge: customer's GBP empty, попытка spend → reject vs auto-convert (product decision).",
+                "related": "Q5 double-entry для FX entries; Q21 AML triggers на large cross-border; Q26 PSP routing per-currency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один wallet с balance в JSON: `{USD: 10000, EUR: 9200, GBP: 8500}`; UPDATE на specific currency через JSON path operations.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JSON balance в Postgres работает функционально, но: (1) cannot index efficiently per-currency; (2) atomic UPDATE на specific currency через `jsonb_set` complicates concurrent updates; (3) ledger-entries не support — нужны separate INSERT в entries table; (4) regulatory reporting сложнее. Standard pattern — separate rows per currency.",
+                "source_of_confusion": "Кандидат тянется к flexible-schema JSON; для финансов structured rows надёжнее.",
+                "if_it_were_true": "Если бы JSON wallet был оптимально, banks использовали бы document DBs; реально все на RDBMS с typed columns.",
+                "how_it_should_be": "Per-currency rows в `wallets` table; JSON метаданные ок, но balance — typed BIGINT column."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Хранить только USD wallet; для display в EUR делать on-the-fly конверсию через FX-API; никаких EUR-balances не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "On-the-fly означает customer видит different EUR balance каждый момент времени (rate fluctuates). Нельзя дать GUARANTEED EUR amount. Regulatory: customer asks `сколько у меня EUR` — нет authoritative answer. Lawful требование на multi-currency wallets — explicit per-currency holdings.",
+                "source_of_confusion": "Кандидат думает в категориях display-conversion (как converter app); реально wallet — это holding.",
+                "if_it_were_true": "Если бы on-the-fly было ок, Wise не имел бы 50+ currency wallets; реально customer EXPECT EUR balance чтобы spend EUR без conversion friction.",
+                "how_it_should_be": "Per-currency actual holdings; display-conversion — это дополнительный feature, не replacement."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая стратегия retry на failed subscription payment даёт максимальный recovery rate и почему `insufficient_funds` нужно retry-ить иначе чем `do_not_honor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Retry каждый день 30 дней подряд — максимизирует attempt count; если customer card declines 30 раз — cancel subscription.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Aggressive retry (daily 30 days) ухудшает recovery rate: issuer flags merchant как `abusive retry`, card иногда блокируется. Stripe Smart Retries использует ML для timing. `lost_stolen` decline reason — НЕ retry никогда (potential fraud). 30 attempts blow merchant chargeback ratio через customer dispute `unauthorized recurring`.",
+                "source_of_confusion": "Кандидат maximizes attempts thinking persistence wins; реально quality of timing wins.",
+                "if_it_were_true": "Если бы daily 30 дней работало, Stripe Smart Retries не была бы product; реально она timing-optimized.",
+                "how_it_should_be": "ML-timed retry (3, 5, 7 дней default; ML adjusts per-issuer); decline-reason-aware (no retry на lost_stolen)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только manual retry через email + customer login update method; никаких auto-retries — это antipattern recurring.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Manual-only retry неэффективен: 80% customers просто игнорируют email, теряя subscription. Auto-retry с smart timing — стандарт индустрии. Combination: auto-retry первые 7 дней, потом email если still failing.",
+                "source_of_confusion": "Кандидат предполагает что любой auto-retry это abuse; реально legitimate-retry приветствуется issuer-ом.",
+                "if_it_were_true": "Если бы manual-only работал, Netflix не имел бы 99%+ retention на active subscribers; реально auto-retry critical.",
+                "how_it_should_be": "Auto-retry с smart timing + email fallback на N attempts; combo wins."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**Stripe Smart Retries** — ML model выбирает optimal retry times per-issuer (salary date detection, issuer-specific patterns); default cadence 3/5/7 days; **decline-reason-aware**: `insufficient_funds` → retry через 3 дня (salary day), `do_not_honor` → менее aggressive (может permanent), `expired_card` → email customer + Update API, `lost_stolen` → NO retry (fraud risk + chargeback potential); after 4-7 fails → `past_due` → optional cancel; **network tokens** снижают involuntary churn 5-7%/month до 1-2%.",
+              "correct": true,
+              "sections": {
+                "explanation": "**Dunning** = process управления failed payments. **Smart Retries** (Stripe ML feature): модель учится на billions historic retries, predicts когда specific issuer-card most likely succeed (salary date for `insufficient_funds`, после weekend для `do_not_honor`). Default: 3, 5, 7 дней после initial fail. **Decline-reason routing**: `insufficient_funds` (40% всех declines) — retry 3 дня (salary cycle); `do_not_honor` (issuer policy decline без specifics, 25%) — менее aggressive потому что может permanent; `expired_card` (15%) — email customer asking update method, automatic Customer Update if network token; `lost_stolen` (5%) — НИКОГДА не retry, fraud risk. После 4-7 fails — mark `past_due`, продолжать pay-period (allow customer 30 days to fix), потом optional cancel или suspend service. **Network tokens** (Q14) драматически снижают churn: traditional `expired_card` rate 5-7% / month; network tokens 1-2%. **MIT vs CIT** для EU SCA: первый CIT (customer initiated) с 3DS создаёт mandate; subsequent MIT (merchant initiated recurring) exempt от SCA.",
+                "example": "Spotify migrated на network tokens 2022 → involuntary churn -38%. Netflix аналогично сократил churn через Visa Account Updater. Apple Music: dunning через iCloud notification + 2 weeks grace. Tools: Recurly, Chargebee, Stripe Billing все включают dunning automation.",
+                "when_to_apply": "Все subscription businesses (SaaS, streaming, gaming, fitness apps). Critical для LTV optimization — каждый процент churn-reduction = миллионы revenue на скейле.",
+                "edge_cases": "International cards: cross-border retry часто declined `do_not_honor` due to country-mismatch — нужен local PSP routing. Trial-to-paid conversion: первый charge после trial high-risk; backup payment method UX critical. Subscription pause vs cancel — UX choice для retention.",
+                "related": "Q14 network tokens прямо для dunning; Q11 3DS для CIT enables MIT exempt; Q19 chargeback `unauthorized recurring` если customer не понял subscription."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Single retry attempt сразу при decline; если fail — cancel subscription немедленно; никакого dunning workflow.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Single attempt теряет recoverable subscriptions (insufficient_funds resolves следующий salary day). Immediate cancel также teleports customer вне ecosystem — re-acquisition cost обычно >> retention. Dunning critical for LTV.",
+                "source_of_confusion": "Кандидат думает что любая failed payment = `customer wants to leave`; реально temporary decline frequent.",
+                "if_it_were_true": "Если бы single-attempt был ок, SaaS-revenue был бы половиной — реально dunning recovers 30-50%.",
+                "how_it_should_be": "Multi-attempt dunning с smart timing; recovery rate 30-50%."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличается PCI-DSS SAQ A от SAQ D и какая архитектурная decision (iframe/hosted fields vs custom form) определяет, к какому уровню попадает merchant?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "SAQ A и D — это просто Level 1 vs Level 4; разница в audit frequency, не в scope.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inverted: Level — это transaction volume (Level 1 >6M tx/year requires QSA audit; Level 4 <20K tx self-assess). SAQ — это Self-Assessment Questionnaire type для merchants Level 2-4; SAQ A/A-EP/B/C/D — разные scope sizes. Merchant Level 1 проходит full audit, не SAQ. Они categorically разные.",
+                "source_of_confusion": "Кандидат смешивает PCI Level (volume-based) с SAQ type (architecture-based).",
+                "if_it_were_true": "Если бы это были одно и то же, не было бы 5 SAQ types; реально SAQ A или D определяется architecture, не volume.",
+                "how_it_should_be": "Level = volume (1-4); SAQ = architecture (A/A-EP/B/C/D); orthogonal."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SAQ A и D разные protocol versions PCI-DSS (3.2.1 vs 4.0); кто на старой версии — A, на новой — D.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PCI-DSS protocol versions (3.2.1, 4.0) — это standard releases; SAQ types orthogonal to version. SAQ A в 3.2.1 имел ~22 questions, в 4.0 чуть больше — но это всё ещё SAQ A. SAQ D — другой scope (~329 questions в 4.0), не version-based.",
+                "source_of_confusion": "Кандидат смешивает PCI version с SAQ type.",
+                "if_it_were_true": "Если бы SAQ был version-based, каждый PCI-DSS release переименовывал бы SAQ — реально нет.",
+                "how_it_should_be": "SAQ — scope-based (A=outsource, D=full custom); version — independent dimension."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SAQ A позволяет хранить PAN если encrypted AES-256; SAQ D требует HSM. Все остальное одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SAQ A — это full outsource scope: PAN NEVER touches merchant servers (iframe/hosted fields/redirect от PSP). Если merchant хранит PAN encrypted, это уже SAQ D scope ($329 questions, network segmentation, penetration testing). Encryption на disk не достаточно для SAQ A — главное `never touches your environment`.",
+                "source_of_confusion": "Кандидат думает encryption = automatic scope reduction; реально scope reduction = `not touching at all`.",
+                "if_it_were_true": "Если бы AES-256 storage = SAQ A, любой merchant с encrypted PAN был бы compliant; реально это уже Level 1 / SAQ D scope.",
+                "how_it_should_be": "SAQ A = no PAN touches; SAQ D = full custom storage с network segmentation, HSM, penetration testing."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**SAQ A** (~22 вопросов): полный outsource — merchant использует **iframe / hosted fields PSP** (Stripe Elements, Adyen Web Components); PAN NEVER touches merchant server → out of PCI scope; стоимость compliance $10-50K/year. **SAQ D** (~329 questions): merchant `видит` или хранит PAN — нужны network segmentation, HSM, penetration testing, ASV scans quarterly, annual SAQ — $100-500K/year + months of engineering. **Architecture decision**: iframe/redirect → SAQ A; custom form posting PAN to merchant server → SAQ D (10× compliance cost).",
+              "correct": true,
+              "sections": {
+                "explanation": "**PCI-DSS SAQ types**: **SAQ A** — full outsource of cardholder data handling к PCI-DSS validated third party (PSP). Merchant использует `iframe` или hosted payment page (Stripe Checkout redirect, Stripe Elements iframe, Adyen Web Components iframe). Browser отправляет PAN напрямую PSP, merchant server видит только token. Result: PAN никогда не в merchant scope → ~22 questions self-assessment, focused на network/access controls. **SAQ A-EP** (~191 questions): partial outsource — merchant page renders + JS handles PAN, sends к PSP без посредничества merchant backend, но JS controlled merchant. **SAQ B** (POS terminals only), **SAQ C** (payment app + Internet). **SAQ D** (~329 questions): everything not covered by A/A-EP/B/C — `you see / store / process PAN`. Requires: physical security, network segmentation (cardholder data environment isolated from corporate network), encryption at rest (HSM-managed keys), encryption in transit (TLS 1.2+), access logging (90 days online, 1 year archive), quarterly ASV (Approved Scanning Vendor) external scans, annual penetration testing, annual on-site audit by QSA если Level 1. **Cost**: SAQ A $10-50K/year (compliance tools + scan); SAQ D $100-500K + months engineering для remediation. **Architecture decision**: iframe / redirect → SAQ A; custom form sending PAN к merchant server → SAQ D.",
+                "example": "Stripe Elements (iframe sand-boxed) → SAQ A for merchants. Stripe.js v3 hosted fields (looks like form but PAN goes direct to Stripe) → SAQ A-EP. Stripe Charges API передачей PAN через merchant → SAQ D (deprecated mode). Shopify Hosted Checkout — SAQ A. Custom checkout с raw PAN в backend — SAQ D scope, requires network segmentation.",
+                "when_to_apply": "Все e-commerce merchants. SaaS platforms (Stripe customers automatic в SAQ A range). High-volume retail (Walmart, Amazon) обычно Level 1 + on-site audit. POS-based businesses (Square Terminal) SAQ B + B-IP variants.",
+                "edge_cases": "PCI 4.0 (effective 2024) добавляет requirements: MFA для access cardholder data, stronger encryption requirements, customer authentication tracking. Older 3.2.1 valid до 2024 retirement. Scope creep: developer ставит logger который accidentally logs PAN → automatic SAQ D scope, потеря $30-100K refactor.",
+                "related": "Q14 tokenization key tool for SAQ A; Q15 webhooks не PAN-handling so out-of-scope; Q25 architecture isolates PCI environment."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие core services должны существовать в payment system architecture и какая граница между API Gateway и Payment Orchestrator?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "**API Gateway** (auth/rate-limit/routing), **Payment Orchestrator** (Temporal state machine с saga для critical flow), **Risk/Fraud Service** (real-time scoring < 100ms), **Token Vault** (PCI-isolated, mTLS only), **PSP Adapters** (per-vendor adapter pattern), **Ledger Service** (double-entry sharded by merchant_id), **Webhook Dispatcher** (outbox consumer), **Reconciliation Job** (daily Spark on EMR); граница: Gateway = pure routing+auth, Orchestrator = business logic + workflow.",
+              "correct": true,
+              "sections": {
+                "explanation": "**Service boundaries** для финтех платформы — стандарт индустрии. **API Gateway**: API key/OAuth auth, per-merchant rate limiting, request routing к backend, request validation, response transformation. Pure infrastructure layer, no business logic. **Payment Orchestrator**: durable workflow engine (Temporal/Cadence/AWS Step Functions) — state machine для PaymentIntent (CREATED → RISK_CHECKING → PSP_SELECTING → AUTHORIZED → CAPTURING → SETTLED), saga compensation chain on failures. Business logic concentrated here. **Risk/Fraud Service**: real-time fraud scoring < 100ms через rule-engine + ML; в-house или 3rd-party (Sift, Forter, Riskified). **Token Vault**: PCI-isolated network zone, accessed only via mTLS, encrypted at rest (HSM-managed AES-256-GCM keys), audit log на каждое чтение. **PSP Adapters**: per-vendor adapter pattern — Stripe adapter, Adyen adapter, Worldpay adapter — унифицируют internal API; routing engine выбирает по cost/coverage/health. **Ledger Service**: append-only double-entry, sharded by merchant_id, hot tier Postgres 90 дней + cold S3 Iceberg для PCI 7-year retention. **Webhook Dispatcher**: consumes outbox topic, retries с exponential backoff до 72h, dead-letter после. **Reconciliation Job**: Spark on EMR daily, сверяет с PSP reports.",
+                "example": "Stripe internal architecture: PaymentIntent workflow на собственном Workflow Engine (Temporal-like). Adyen: Java-based bookkeeping engine + Cassandra ledger. Square: Postgres ledger + custom orchestration. Inter-service: gRPC + mTLS для sync, Kafka для async events.",
+                "when_to_apply": "Любая platform с custom payment processing. For SaaS using Stripe directly — большая часть upper-stack outsourced, остаётся ledger + reconciliation + webhook receiver.",
+                "edge_cases": "PCI scope: только Vault + Risk (touching PAN snippets) в PCI-CDE (Cardholder Data Environment) zone — network segmentation isolates. Multi-region: каждый region — full stack с per-region vault (sensitive data no cross-region replication). Database tier separation: hot Postgres + warm Snowflake + cold S3.",
+                "related": "Q8 saga в Orchestrator; Q14 vault details; Q17 reconciliation flow; Q26 PSP routing inside Orchestrator."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Один monolithic Payment Service handles все: gateway + orchestrator + risk + ledger; microservices это overkill для финтеха.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Monolith payment service не масштабируется на 50K txn/sec, не isolate PCI scope (один service touches PAN = whole monolith в PCI scope), не позволяет independent deploy. Banking monolith существовал до 2010-х; современные fintech (Stripe, Adyen, Square) разделили services.",
+                "source_of_confusion": "Кандидат против hype microservices; реально для финтеха разделение даёт concrete benefits.",
+                "if_it_were_true": "Если бы monolith работал, Stripe не разделил бы на 100+ services; реально service-decomposition критичен для scale + PCI scope reduction.",
+                "how_it_should_be": "Service decomposition required для PCI scope isolation + independent scaling + tech-diversity (Risk на Python, Ledger на Java)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "API Gateway включает business logic (validation, fraud check, ledger write) для performance — fewer network hops.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway с business logic — anti-pattern (becomes monolith again). Best practice: gateway pure routing + auth; business logic в backend services. Performance argument не валиден: gRPC + mTLS внутри datacenter добавляет 1-2ms, не bottleneck (PSP call 800-1500ms dominates).",
+                "source_of_confusion": "Кандидат tries оптимизировать latency через consolidation; реально wrong layer to optimize.",
+                "if_it_were_true": "Если бы gateway с business logic был лучше, Envoy/Kong/AWS API Gateway имели бы business logic features; реально они pure infrastructure.",
+                "how_it_should_be": "Gateway = pure routing + auth + rate limit; business logic в downstream services."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно одной БД (Postgres) для всех: payments, ledger, idempotency, sessions; service boundaries создают eventual consistency проблемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один Postgres не подходит для разных workloads: ledger требует append-only + sharding; idempotency — TTL-based KV (better Redis); sessions — fast eviction. Forcing все в Postgres = compromise каждого workload. Service boundaries — это application boundaries; БД могут shared with care (например ledger sharded Postgres).",
+                "source_of_confusion": "Кандидат хочет simplify через shared DB; в финтехе specialized stores per workload give better characteristics.",
+                "if_it_were_true": "Если бы single DB подходил, Stripe не использовал бы Redis + Postgres + S3 + ElasticSearch; реально workload-specific DBs.",
+                "how_it_should_be": "Workload-specific stores: Postgres ledger, Redis idempotency, Kafka events, S3 cold archive."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие сигналы использует smart routing engine для выбора оптимального PSP per transaction и почему `hedging` (параллельные in-flight на 2 PSP) применим только для high-value?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Routing decision только по cost; cheapest PSP всегда выигрывает; hedging — это illegal split-routing.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost-only routing игнорирует acceptance rate (1-3% разница между PSP) и resilience (cheap PSP может быть down). Hedging legal: merchant имеет право invoke 2 PSP одновременно для high-value; void на тот который второй replied success — стандартный pattern. Cost — один из multiple signals.",
+                "source_of_confusion": "Кандидат думает что cost optimization универсален; реально multi-signal.",
+                "if_it_were_true": "Если бы cost-only работал, single PSP с lowest fees доминировал бы; реально market сегментирован.",
+                "how_it_should_be": "Multi-signal: cost + acceptance rate + PSP health + 3DS support + local methods coverage."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**Сигналы**: (1) **Card BIN/country** (US card → US acquirer для lower interchange), (2) **Amount** (> threshold → PSP с лучшим acceptance rate, измеряется ML), (3) **Real-time PSP health** (latency p99, error rate, circuit breaker), (4) **3DS support** (некоторые PSP лучше handle 3DS challenges), (5) **Local methods coverage** (Alipay → Adyen, СБП → local PSP), (6) **Merchant contractual rates**; **Hedging** = параллельные in-flight 2 PSP, accept first success, void second — только high-value потому что дублирует cost + complicates ledger; обычные transactions используют sequential failover.",
+              "correct": true,
+              "sections": {
+                "explanation": "**Smart routing** = ML-driven выбор PSP. **Signals**: (1) **Card BIN** (Bank Identification Number, первые 6-8 цифр карты identify issuer + country) → routing decision; US card к US-domiciled acquirer = lower cross-border interchange. (2) **Amount-based**: ML model predicts acceptance rate per PSP per amount range — large amounts ($1000+) обычно better через PSP с higher acceptance reputation. (3) **PSP health**: real-time monitoring через circuit breaker pattern; latency p99 + error rate > threshold → exclude from routing pool temporarily. (4) **3DS support**: некоторые PSP лучше handle 3DS challenges (Adyen vs Stripe historically). (5) **Local methods**: Alipay/WeChat Pay → Adyen Connect; СБП → local RU PSP; iDEAL → EU PSP. (6) **Merchant contractual rates**: large merchants negotiate per-PSP volume discounts. **Hedging** = параллельные in-flight 2 PSP на один transaction; accept first success response, void на second; используется ONLY for high-value (e.g., > $10K wire-replacement) потому что (a) дублирует PSP fees, (b) creates phantom void-record в ledger, (c) complicates reconciliation. Обычные transactions используют sequential failover: PSP-A → on retriable failure (5xx, timeout, soft decline `do_not_honor`) → retry PSP-B. **Orchestrator pattern** (Temporal): state machine с `PSP_SELECTING → PSP_CALLING → on failure: next PSP / DECLINED`.",
+                "example": "Stripe Adaptive Acceptance (announced 2023): ML re-routes after soft decline. Adyen RevenueAccelerate: similar routing. Booking.com smart routing — главный feature their payment platform: per-region per-currency PSP selection. Klarna: routing между own + partner acquirers based на customer's bank.",
+                "when_to_apply": "Любая платформа > $100M GMV; B2B-payment shops; marketplaces with multi-region sellers.",
+                "edge_cases": "Cold-start: новый merchant без historical acceptance data — fallback на cost-based routing. Adversarial: PSP может gaming acceptance metrics (artificially boost success rate). Multi-region: PSP routing per-region — US merchant via US PSP, EU customer routed через EU PSP.",
+                "related": "Q12 multi-PSP rationale; Q8 saga handles PSP failover; Q25 Orchestrator implements routing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Round-robin между PSPs — fairness и evenly distribute load; no signals needed.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Round-robin игнорирует card-PSP affinity, cost differences, health. Result: some transactions routed к suboptimal PSP. Stripe для US card даёт 92% acceptance; round-robin send к Worldpay-EU on US card может give 85% — direct revenue loss.",
+                "source_of_confusion": "Кандидат предполагает что round-robin = `fair` подход; реально smart routing maximizes revenue.",
+                "if_it_were_true": "Если бы round-robin работал, не было бы smart routing engines; реально ML/rule-based routing standard.",
+                "how_it_should_be": "Signal-based routing maximizes acceptance + minimizes cost; round-robin loses 1-3% acceptance."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только failover routing (PSP-A → fail → PSP-B); no proactive selection. Smart routing — это overengineering.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Failover-only теряет proactive optimization. Каждая failed attempt = customer experience hit (5-10 sec delay через PSP timeout), потенциально lost sale. Proactive routing (route к best PSP first) — измеримое улучшение conversion 1-3%.",
+                "source_of_confusion": "Кандидат simplify к failover think; реально proactive routing critical.",
+                "if_it_were_true": "Если бы failover-only был ок, Stripe Adaptive Acceptance не была бы launched product; реально proactive routing is core feature.",
+                "how_it_should_be": "Proactive routing first + failover on fail = full smart routing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие data residency requirements заставляют payment system держать customer data within country (RU PD-152, India RBI) и какой fundamental trade-off cross-region ledger replication?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Data residency только в China; rest of world пускает GDPR-compliant transfer; nothing special для финтеха.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Many countries имеют data residency: RU PD-152 требует personal data RU citizens stored on RU territory; India RBI требует payment data within India; China cybersecurity law; UAE data residency; Saudi Arabia. Финтех специфически regulated в каждом — это не только China.",
+                "source_of_confusion": "Кандидат знает один кейс (China), не другие; реально регулирование regional differs.",
+                "if_it_were_true": "Если бы только China, мульти-нац fintechs не имели бы separate stacks for India/Russia; реально они strictly compliant.",
+                "how_it_should_be": "Multiple jurisdictions: RU PD-152, India RBI, China, UAE, Saudi; финтех strictly compliant."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все data residency можно solved с encryption — keys в local country, data в любом регионе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Encryption-with-local-keys не satisfies data residency. Regulators (India RBI) explicitly требуют data physically stored within India; encryption is additional control, не replacement. Apple compromised на China store: actual data centers в China, не just key-management.",
+                "source_of_confusion": "Кандидат предполагает technical workaround регулятор-intent; реально law literal.",
+                "if_it_were_true": "Если бы encryption + remote storage был ок, Apple не строил бы Guizhou data center для China; реально physical residency required.",
+                "how_it_should_be": "Physical storage location requirement; encryption — additional, не substitute."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**Data residency requirements** (RU PD-152: данные граждан РФ на территории РФ; India RBI: payment data only в India; China cybersecurity; UAE) → per-country isolated stack + customer sharded by citizenship/residency. **Trade-off cross-region ledger**: active-active (each region full stack, customer pinned to home region, async replication) даёт low latency + DR, но **cross-region writes** ledger = 100+ ms latency, **split-brain** risk если оба региона think they're primary → ledger divergence; sensitive data (PAN, tokens) НЕ replicated cross-region, per-region vault.",
+              "correct": true,
+              "sections": {
+                "explanation": "**Data residency landscape**: **RU PD-152** (2014) — данные граждан РФ хранятся на территории РФ; реализация — separate RU full stack, customer-data sharded by citizenship. **India RBI 2018** — payment data only в India (`data localization mandate`); все Visa/MC/Amex транзакции должны иметь Indian-based storage. **China Cybersecurity Law 2017** — financial data within China. **UAE/Saudi** аналогично. **GDPR EU** разрешает выход данных с adequacy decision (post-Schrems II — Privacy Shield invalidated, нужны SCC + Transfer Impact Assessment). **Multi-region architecture**: **Active-active** (US-east + EU-west + APAC-Singapore + APAC-Tokyo) — каждый regions full stack; customer pinned к home region by geo-IP или citizenship. Cassandra multi-DC replication async между regions для analytics; **Postgres logical replication** для non-sensitive (transactions metadata). **Sensitive (PAN, tokens) NEVER replicated cross-region** — per-region vault. **Trade-offs**: (1) Cross-region writes ledger = 100+ ms latency → break SLA; (2) Split-brain risk если network partition — both regions think they're primary, ledger divergence → manual reconciliation; (3) Failover decisions: reads — automatic (DNS GeoDNS latency-based), writes — controlled (per-region primary). DR drill quarterly + chaos engineering (Gremlin / in-house Chaos Monkey).",
+                "example": "Stripe multi-region 2023: US-east, EU-west, APAC. Yandex.Cash / YooMoney / Tinkoff на RU territory only. Razorpay India в RBI-compliant data center Mumbai. Wise: multi-region active-active с currency-corridor sharding.",
+                "when_to_apply": "Любая global fintech operating в regulated jurisdictions. Critical для banks-as-a-service (BaaS) crossing borders.",
+                "edge_cases": "Cross-region failover RTO 5-15 минут (DNS TTL + warm-up). FX rates cached per-region — но один source-of-truth from Bloomberg/Reuters. Compliance pain: один customer мигрировал между странами — data migration с regulatory approval.",
+                "related": "Q25 architecture replicated per-region; Q5 ledger per-region для durability; Q21 sanctions screening per-region для local lists."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Multi-region — это просто backup/DR; не связано с regulatory.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-region serves BOTH DR + regulatory. Active-active с regulatory data residency — это core requirement, не just DR. DR-only setup (active-passive) обычно ставит standby в other-region, что нарушает residency.",
+                "source_of_confusion": "Кандидат думает в backup-mental-model; реально регулятор-mandate dominates architecture.",
+                "if_it_were_true": "Если бы только DR, hot standby в same-country был бы достаточен; реально multi-region driven регулятором + global latency.",
+                "how_it_should_be": "Multi-region = DR + regulatory + latency optimization; regulatory часто dominant driver."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой компонент authorize-pipeline съедает большую часть p99 < 2 сек budget и почему 3DS challenge не считается в synchronous latency budget?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Risk service ML inference (XGBoost) — самый медленный, 800-1500 ms; PSP call быстрый (100-200ms).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inverted: PSP call (Stripe/Adyen) — обычно 800-1500 ms (network roundtrip + processing). ML inference 50-100 ms на GPU, < 200 ms на CPU. PSP — bottleneck (5-10× ML latency). Optimization PSP latency limited: external API, нельзя co-locate.",
+                "source_of_confusion": "Кандидат предполагает ML тяжелее; реально network к external service dominates.",
+                "if_it_were_true": "Если бы ML был bottleneck, GPU-acceleration был бы main optimization; реально PSP API latency unaddressable.",
+                "how_it_should_be": "PSP call dominates (800-1500 ms); ML inference small (50-100 ms); PSP bottleneck."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Idempotency lookup в Redis — главный bottleneck из-за network hops; решается local in-memory cache.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redis idempotency lookup 5 ms — negligible. Local in-memory cache не подходит для multi-instance deploy (each instance own state, no dedup across). Идемпотентность requires shared state.",
+                "source_of_confusion": "Кандидат overstates Redis latency; в реальности на datacenter ms-level.",
+                "if_it_were_true": "Если бы Redis был bottleneck, все идемпотентность shifted на DB; реально Redis perfect для this.",
+                "how_it_should_be": "Redis 5 ms negligible; PSP 800-1500 ms dominates."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "TLS handshake + auth — главный bottleneck с certificate validation; решается через TLS session resumption.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TLS handshake (включая session reuse через resumption) обычно 30 ms — small portion budget. Initial connection cold ~100 ms, warm < 30 ms. Optimizations exist (TLS 1.3 0-RTT) но это не bottleneck.",
+                "source_of_confusion": "Кандидат думает TLS expensive; реально modern TLS 1.3 + session resumption mostly negligible.",
+                "if_it_were_true": "Если бы TLS dominated, HTTP/2 + Quic не были бы roll-outs; реально TLS small fraction.",
+                "how_it_should_be": "TLS 30 ms small; PSP 800-1500 ms главный bottleneck."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**PSP call (Stripe/Adyen)** = 800-1500 ms — главный bottleneck (network roundtrip + PSP processing + network к card network + issuer authorization), не оптимизируется без перехода на низкоуровневое acquiring; остальные этапы (TLS 30ms, idempotency 5ms, risk 100ms, vault 20ms, ledger 30ms, outbox 20ms) = ~205 ms total → итого ~1.2 сек без 3DS. **3DS challenge** (5-30 сек async через redirect на ACS issuer-а) НЕ считается в synchronous budget потому что user уходит на issuer page; используется separate SLO `3DS-completion-rate`.",
+              "correct": true,
+              "sections": {
+                "explanation": "**Latency budget breakdown** для authorize p99 < 2 сек: **TLS handshake + auth** 30 ms. **Idempotency lookup** 5 ms (Redis). **Risk service** 100 ms (rules + ML inference). **Token resolve** 20 ms (vault mTLS call). **PSP call** 800-1500 ms (dominant). **Ledger write** 30 ms (Postgres INSERT в double-entry). **Outbox + response** 20 ms. **Итого без 3DS** ~1.2 сек, leaves ~800 ms buffer для variability. **PSP call optimization**: limited because external; can: (1) Per-region PSP routing (US → US Stripe edge), (2) Connection pooling + keep-alive, (3) Optimistic ledger pre-write before PSP confirms, rollback on fail. **3DS challenge**: 5-30 сек async — user uxодит на ACS (Access Control Server) issuer-а для biometry/OTP/push verification; синхронный API timeout 60+ сек typical (Stripe), но user actively in challenge UI. Separate measurement: `3DS_challenge_completion_rate` (target > 85%), `3DS_decline_rate`, `3DS_challenge_to_success_time`. **Capture latency** p99 < 500 ms: PSP capture 300 ms + ledger 30 + outbox 20 = ~350 ms. **Refund** p99 < 1 сек. **Status fetch** p99 < 200 ms (DB read replica + cache).",
+                "example": "Stripe Latency Dashboard публично показывает p99 ~1.3 сек на authorize. Adyen аналогично. Optimization Stripe внутри: HTTP/3 для PSP-acquirer link, sharing connection pool, request multiplexing.",
+                "when_to_apply": "Любой high-volume payment processor с SLA. Critical для customer-facing checkout where conversion drops при > 3 сек.",
+                "edge_cases": "Cold-start: первый payment merchant добавляет 200-500 ms (Stripe Customer object creation). 3DS challenge user idle time: customer открыл challenge popup но отвлёкся — timeout управление через separate session state. Mobile networks: 4G/3G adds 200-500 ms latency variance.",
+                "related": "Q11 3DS asynchronous flow; Q26 PSP routing impacts latency; Q25 architecture sub-services."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие core metrics обязательны для платёжного processor и почему `ledger_invariant_check` (Σ entries per txn = 0) — critical background job?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "**Core metrics**: `payment_success_rate` per merchant/PSP/card-type/hour, `authorize_latency_p99` per PSP per region, `fraud_score_distribution` (для drift detection), `chargeback_ratio` per merchant, `webhook_delivery_lag_p99`, `reconciliation_unresolved_count`, **`ledger_invariant_check`** (continuous Σ entries = 0 verification + alert если violated); critical потому что bug в коде ломает invariant silently — без alert через месяц discrepancy $10M+.",
+              "correct": true,
+              "sections": {
+                "explanation": "**Observability stack** для финтех — comprehensive. **Business metrics**: `payment_success_rate` slice by merchant/PSP/card/hour (Stripe Radar Insights pattern) — drop > 1% за 5 минут = page on-call. `chargeback_ratio` (per merchant) — early warning для VDMP threshold. `fraud_score_distribution` — model drift detection (if distribution shifted, ML stale). **Technical metrics**: `authorize_latency_p99` per PSP per region — изолирует который PSP slow. `webhook_delivery_lag_p99` — backlog indicates dispatcher down. **Ledger invariants**: `ledger_invariant_check` — continuous background job verifying `Σ amount_minor GROUP BY transaction_id = 0` per currency. Critical: bug в коде писатель может ломать invariant без crash (например INSERT одной entry из пары, second fail) — без alert через месяц $10M+ discrepancy. **Tracing**: OpenTelemetry / Datadog APM, trace ID propagated через sync + Kafka headers — full payment journey visibility (`1.7 сек: fraud 110ms → vault 15ms → Stripe 1.5s → ledger 30ms`). **Logging**: structured JSON, mask PAN/CVV/API keys regex, correlation_id everywhere; 90-day online + 1-year glacier (PCI retention). **Alerting**: page on success_rate drop > 1%; Slack на chargeback > 0.5%; email на reconciliation discrepancies. **Dashboards**: per-PSP health, per-merchant top movers, financial close (real-time balance).",
+                "example": "Stripe Sigma — analytics platform поверх payment data. Datadog Финтех customers use APM extensively. Stripe Workbench для internal observability. PagerDuty для on-call rotation. Sentry для error tracking.",
+                "when_to_apply": "Все payment processors. Critical для acquiring license retention (regulators monitor uptime).",
+                "edge_cases": "Multi-region observability: per-region metrics + global aggregate; cross-region failure correlation. Compliance: SOC 2 Type II audit checks observability practices. Cardinality explosion in metrics: per-merchant labels могут blow up Prometheus storage — solution: pre-aggregate, tiered retention.",
+                "related": "Q5 ledger invariants source-of-truth; Q17 reconciliation использует metrics; Q28 latency budget breakdown."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно CPU/Memory/Disk metrics на cluster level; business metrics — это analytics, не operational concern.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CPU/Memory не показывает business health — payment success rate может drop без CPU spike (PSP outside down). Operational concern в финтехе ВКЛЮЧАЕТ business metrics (success rate, chargeback ratio) потому что они leading indicators incidents.",
+                "source_of_confusion": "Кандидат думает в classical-DevOps категориях; финтех требует business-metric ops.",
+                "if_it_were_true": "Если бы CPU достаточно, on-call paged бы только на server failures; реально business-metric alerts (success rate drop) more important.",
+                "how_it_should_be": "CPU + business metrics + ledger invariants; financial-specific требования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только logs; metrics — overhead; tracing нужен только при инциденте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Logs alone не дают real-time visibility — alerting на logs slow (parse + index lag). Metrics критичны для real-time alerting. Tracing должен быть always-on (sampled) для post-incident analysis без re-running.",
+                "source_of_confusion": "Кандидат minimize observability stack; реально finance мандатами observability mature.",
+                "if_it_were_true": "Если бы logs alone, регуляторы не давали бы licenses; реально SOC 2 / PCI требуют comprehensive observability.",
+                "how_it_should_be": "Logs + metrics + traces (3 pillars observability); always-on с sampling."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Metrics только для marketing dashboard; engineering ops — это PSP responsibility.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PSP не visible в internal merchant operations. Merchant обязан monitor own infrastructure: orchestrator workflow state, vault access patterns, internal service health. PSP visibility ограничен PSP-side metrics.",
+                "source_of_confusion": "Кандидат экстраполирует `outsource everything` mental model; в финтех partial outsource.",
+                "if_it_were_true": "Если бы PSP делал ops, merchants не нанимали бы SRE; реально every fintech has dedicated SRE.",
+                "how_it_should_be": "Merchant-side ops critical; PSP visibility limited на их service health."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой из следующих антипаттернов наиболее катастрофичен в платёжной системе и почему `synchronous webhook delivery in same transaction as DB commit` ломает at-least-once гарантию?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Float-точка для денег — minor issue, accumulated в течение год, можно retroactively fix через round-off.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Float — серьёзная ошибка, не minor. Accumulated rounding errors на миллионах транзакций = thousands $ discrepancy. Cannot retroactively fix потому что каждая operation accumulated independently; полное reconstruction требует replay всех transactions с integer math. Antipattern класса `silent corruption`.",
+                "source_of_confusion": "Кандидат минимизирует severity float-issue; реально это foundational bug.",
+                "if_it_were_true": "Если бы float was minor, banking software писали бы на JavaScript с double; реально все используют integer/BigDecimal.",
+                "how_it_should_be": "Float — серьёзный antipattern; integer minor units обязательны с дня 1."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**Synchronous webhook в same transaction as DB commit** (`db.commit(); kafka.send();` или `kafka.send(); db.commit();`) — оба варианта ломают at-least-once: первый теряет events при Kafka outage после commit, второй создаёт phantom events если DB commit fails после Kafka send. **Fix**: outbox pattern (event row в той же DB transaction → отдельный publisher worker). Это foundational antipattern multiplying за все Q events.",
+              "correct": true,
+              "sections": {
+                "explanation": "**Naive sync delivery** = critical antipattern. **Variant 1** `db.commit(); kafka.send()`: если Kafka down/network failure между commit и send, event lost forever. Consumers не узнают о payment. **Variant 2** `kafka.send(); db.commit()`: если Kafka succeeded но DB commit fail (constraint violation, connection drop), event sent о состоянии, которого нет в БД. Consumers начнут обработку phantom payment — даже хуже than lost event. **Both variants** не дают at-least-once guarantee. **Fix — Outbox pattern**: в одной DB transaction INSERT в `payments` И `outbox`; separate publisher worker (polling или Debezium CDC) reads outbox, sends к Kafka, marks published. At-least-once guarantee: publisher may crash after send, retry on restart — consumer должен быть idempotent. **Other top antipatterns**: (1) `2PC между PSP и internal DB` (не существует, used саговать), (2) `Float-точка для денег` (accumulated rounding errors), (3) `Single PSP без fallback` (Stripe outage = 100% revenue loss), (4) `Ledger UPDATE / DELETE` (loses audit), (5) `Idempotency key без request hash` (different payload reuse), (6) `PAN в logs` (PCI violation), (7) `Polling status вместо webhooks` (self-DDoS), (8) `Retry без exponential backoff` (5xx burst usugубляет PSP outage), (9) `Reconciliation monthly` (discrepancy не находится 30 дней), (10) `Storing CVV` (прямой PCI violation).",
+                "example": "Twilio outage 2017 показал important webhook patterns: at-least-once + retry + signing. PayPal IPN использовал synchronous delivery до 2010s и переключился на outbox. Stripe Webhooks always with retry + outbox internally.",
+                "when_to_apply": "Любая платформа с DB + event distribution; outbox pattern stand-стандарт microservices.",
+                "edge_cases": "Polling outbox table может create DB lock contention при high write rate — fix через Debezium CDC reading WAL без table touch. Outbox ретеншен policy: delete published rows > 30 days чтобы prevent table bloat.",
+                "related": "Q10 outbox detailed; Q15 webhook contract; Q5 ledger atomicity с outbox в same transaction."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Reconciliation один раз в неделю — это compromise между cost (compute) и risk; daily — overkill.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Weekly reconciliation discovers discrepancies через неделю — к моменту обнаружения tickets от merchants накопились, partial fixes сложнее (state changed). Daily — стандарт; cost minimal (Spark job 1-2 часа на ночь). `Overkill` мнение — это false economy.",
+                "source_of_confusion": "Кандидат тригерит cost-conscious mental model; реально cost minimal по сравнению с risk reduction.",
+                "if_it_were_true": "Если бы weekly было ок, Stripe не invest в streaming reconciliation; реально они real-time через Flink.",
+                "how_it_should_be": "Daily reconciliation обязательна; streaming для critical merchants."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Multi-PSP — это premature optimization; начинать со одного, добавлять при scale.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-PSP это resilience requirement, не optimization. PSP outage любого crucial для revenue (Stripe 3 часа = lost $5M+ для large merchant). Adding second PSP при first outage — слишком поздно, integration 2-4 месяца. Стандарт: single PSP до Series B, потом multi-PSP critical.",
+                "source_of_confusion": "Кандидат тригерит `YAGNI` mental model; реально PSP redundancy не premature.",
+                "if_it_were_true": "Если бы multi-PSP был premature, Booking.com / Uber не имели бы N PSP с дня business; реально critical для resilience.",
+                "how_it_should_be": "Single PSP до $10M GMV; multi-PSP critical после; план integration заранее."
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

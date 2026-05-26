@@ -399,7 +399,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Design Chat System`](system-design/design-chat-system-interview.md) — `21` вопрос
 - [Вопросы на собеседовании: `Design Feed System`](system-design/design-feed-system-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Search System`](system-design/design-search-interview.md) — `20` вопросов
-- [Вопросы на собеседовании: `Design Payment System`](system-design/design-payment-system-interview.md) — `20` вопросов
+- [Вопросы на собеседовании: `Design Payment System`](system-design/design-payment-system-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Twitter (X)`](system-design/design-twitter-interview.md) — `27` вопросов
 - [Вопросы на собеседовании: `Design Instagram`](system-design/design-instagram-interview.md) — `27` вопросов
 - [Вопросы на собеседовании: `Design YouTube`](system-design/design-youtube-interview.md) — `28` вопросов
