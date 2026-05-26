@@ -8,6 +8,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LlmRequestBuilderTest {
 
     @Test
+    void buildsBasicRequestWithSystemAndUserMessages() {
+        ChatRequest request = LlmRequestBuilder.build(
+                "gpt-4o-mini",
+                "You are a strict reviewer.",
+                "Critique this code.",
+                0.0
+        );
+
+        assertThat(request.model()).isEqualTo("gpt-4o-mini");
+        assertThat(request.messages()).hasSize(2);
+        assertThat(request.messages().get(0).role()).isEqualTo("system");
+        assertThat(request.messages().get(0).content()).isEqualTo("You are a strict reviewer.");
+        assertThat(request.messages().get(1).role()).isEqualTo("user");
+        assertThat(request.messages().get(1).content()).isEqualTo("Critique this code.");
+        assertThat(request.temperature()).isEqualTo(0.0);
+        assertThat(request.max_tokens()).isNull();
+    }
+
+    @Test
     void buildsRequestWithMaxTokens() {
         ChatRequest request = LlmRequestBuilder.buildWithMaxTokens(
                 "gpt-4o-mini",
