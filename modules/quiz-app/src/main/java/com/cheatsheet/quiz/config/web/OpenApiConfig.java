@@ -1,7 +1,9 @@
 package com.cheatsheet.quiz.config.web;
 
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,6 +33,13 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("Interview Prep API")
                         .version(appVersion)
-                        .description("API для экспорта прогресса и тестирования перед интервью"));
+                        .description("API для экспорта прогресса и тестирования перед интервью. "
+                                + "В prod-профиле Swagger UI и /v3/api-docs выключены: spec доступна только в default-профиле.")
+                        .contact(new Contact()
+                                .name("cheat-sheet maintainers")
+                                .url("https://github.com/sergeyvoronin/cheat-sheet"))
+                        .license(new License()
+                                .name("MIT")
+                                .url("https://opensource.org/licenses/MIT")));
     }
 }
