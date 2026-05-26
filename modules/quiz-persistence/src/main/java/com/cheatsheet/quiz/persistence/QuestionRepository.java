@@ -142,23 +142,23 @@ public class QuestionRepository {
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     new String[]{"id"});
             String sourceSlug = question.sourceSlug() != null ? question.sourceSlug() : question.slug();
-            ps.setString(1, question.slug());
-            ps.setString(2, sourceSlug);
-            ps.setString(3, question.filePath());
-            ps.setString(4, question.topic());
-            ps.setString(5, question.questionText());
-            ps.setString(6, question.answerMarkdown());
+            ps.setString(1, stripNul(question.slug()));
+            ps.setString(2, stripNul(sourceSlug));
+            ps.setString(3, stripNul(question.filePath()));
+            ps.setString(4, stripNul(question.topic()));
+            ps.setString(5, stripNul(question.questionText()));
+            ps.setString(6, stripNul(question.answerMarkdown()));
             ps.setInt(7, question.important() ? 1 : 0);
-            ps.setString(8, question.sourceHash());
+            ps.setString(8, stripNul(question.sourceHash()));
             ps.setString(9, questionTypeOrDefault(question));
-            ps.setString(10, question.codeSnippet());
-            ps.setString(11, question.diagramMermaid());
-            ps.setString(12, question.takeaway());
+            ps.setString(10, stripNul(question.codeSnippet()));
+            ps.setString(11, stripNul(question.diagramMermaid()));
+            ps.setString(12, stripNul(question.takeaway()));
             ps.setString(13, question.difficulty() == null ? Difficulty.MEDIUM.name() : question.difficulty().name());
-            ps.setString(14, question.shortExplanation());
-            ps.setString(15, question.detailedExplanation());
-            ps.setString(16, question.commonMistake());
-            ps.setString(17, serializeTags(question.tags()));
+            ps.setString(14, stripNul(question.shortExplanation()));
+            ps.setString(15, stripNul(question.detailedExplanation()));
+            ps.setString(16, stripNul(question.commonMistake()));
+            ps.setString(17, stripNul(serializeTags(question.tags())));
             return ps;
         }, keyHolder);
         Number key = keyHolder.getKey();
@@ -642,6 +642,17 @@ public class QuestionRepository {
      */
     @Transactional
     public void updateTakeaway(long questionId, String takeawayText) {
-        jdbcTemplate.update("UPDATE questions SET takeaway = ? WHERE id = ?", takeawayText, questionId);
+        jdbcTemplate.update("UPDATE questions SET takeaway = ? WHERE id = ?", stripNul(takeawayText), questionId);
+    }
+
+    /**
+     * Удаляет NUL-byte ({@code  }) из строки. PostgreSQL не принимает NUL
+     * в text/varchar полях (выдаёт «invalid byte sequence for encoding UTF8»),
+     * а контент cheatsheets может содержать NUL после копи-паста из бинарных
+     * редакторов (Word, terminal output). SQLite в этих местах был более
+     * либерален, поэтому проблема всплыла после миграции на Postgres.
+     */
+    static String stripNul(String s) {
+        return s == null ? null : s.replace("\u0000", "");
     }
 }
