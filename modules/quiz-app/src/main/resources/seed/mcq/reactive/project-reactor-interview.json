@@ -1,0 +1,2825 @@
+{
+  "topic_slug": "project-reactor-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое реактивное программирование и какие принципы лежат в его основе?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Парадигма для работы с асинхронными потоками данных и распространением изменений: компоненты реагируют на события (onNext/onError/onComplete), а не блокирующе запрашивают результаты; принципы Reactive Manifesto — Responsive, Resilient, Elastic, Message Driven.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реактивный подход описывает что происходит с данными (декларативно), а не как их получить. Поток событий распространяется через цепочку операторов, освобождая поток выполнения между шагами.",
+                "example": "userRepository.findById(id).flatMap(orderRepo::findByUser) вместо блокирующего findById, который держит поток на JDBC.",
+                "when_to_apply": "Высоконагруженные I/O-приложения, стриминг событий, бэкенды с тысячами одновременных соединений.",
+                "edge_cases": "Реактивный код сложнее отлаживать; для чисто CPU-задач или простых CRUD преимуществ нет.",
+                "related": "Q2 Reactive Streams; Q4 backpressure; Q46 Spring WebFlux."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это синоним функционального программирования: всё сводится к использованию map/filter/reduce на коллекциях без побочных эффектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реактивный подход — про асинхронные потоки и backpressure, а не про чистоту функций. Stream API в Java функционален, но не реактивен.",
+                "source_of_confusion": "Похожий стиль API (map/filter) создаёт иллюзию эквивалентности.",
+                "if_it_were_true": "Не существовало бы отдельной спецификации Reactive Streams с onSubscribe/request.",
+                "how_it_should_be": "Функциональность — стиль; реактивность — модель асинхронной обработки с потоками сигналов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это синхронная парадигма, при которой каждый шаг блокирует поток до получения результата, как в обычном Java-коде с try/catch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная цель реактивности — неблокирующая обработка; блокировка потока противоречит самой сути парадигмы.",
+                "source_of_confusion": "Внешний вид цепочки операторов может напоминать синхронный код.",
+                "if_it_were_true": "Не было бы смысла в Schedulers, publishOn и Netty event loop.",
+                "how_it_should_be": "Реактивный код не блокирует поток — он подписывается на сигналы и обрабатывает их асинхронно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это название паттерна Observer из GoF в чистом виде, без каких-либо дополнительных возможностей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactive Streams развивает идеи Observer, но добавляет backpressure, обработку завершения/ошибок и стандартный протокол взаимодействия.",
+                "source_of_confusion": "Историческая связь: реактивный подход вырос из Observer, но не сводится к нему.",
+                "if_it_were_true": "Не нужны были бы спецификации Reactive Streams и интерфейсы Subscription с request(n).",
+                "how_it_should_be": "Реактивность = Observer + backpressure + операторы трансформации + Schedulers."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое спецификация Reactive Streams и какие интерфейсы она определяет?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это альтернативный API для java.util.stream — синхронная обработка коллекций с lazy-вычислениями, без поддержки асинхронности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactive Streams — асинхронная спецификация с поддержкой backpressure; Stream API синхронен и не описывает обмен сигналами.",
+                "source_of_confusion": "Похожие имена и операторы создают путаницу.",
+                "if_it_were_true": "В JDK не появился бы отдельный пакет java.util.concurrent.Flow с Publisher/Subscriber.",
+                "how_it_should_be": "Stream API — про коллекции, Reactive Streams — про асинхронные потоки сигналов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Спецификация для асинхронной обработки потоков с backpressure, состоящая из четырёх интерфейсов: Publisher<T>, Subscriber<T>, Subscription, Processor<T,R>; включена в JDK 9 как java.util.concurrent.Flow.",
+              "correct": true,
+              "sections": {
+                "explanation": "Publisher эмитит элементы через subscribe(); Subscriber получает onSubscribe/onNext/onError/onComplete; Subscription управляет потоком через request(n)/cancel(); Processor совмещает обе роли.",
+                "example": "Mono и Flux в Reactor реализуют Publisher; StepVerifier подписывается на них как Subscriber.",
+                "when_to_apply": "Понимание основ при отладке, интеграции с RxJava/JDK Flow или написании собственных операторов.",
+                "edge_cases": "TCK (Technology Compatibility Kit) строго проверяет соответствие — нарушения спецификации в кастомном Publisher приводят к утечкам.",
+                "related": "Q3 Reactor vs RxJava; Q4 backpressure; Q27 реализация backpressure."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это проприетарная спецификация Spring, которая работает только внутри Spring WebFlux.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactive Streams — открытая инициатива (Netflix, Lightbend, Pivotal, RedHat); входит в JDK 9+ и реализуется в RxJava, Akka, MongoDB driver и пр.",
+                "source_of_confusion": "Самая известная реализация — Project Reactor от Spring-команды.",
+                "if_it_were_true": "Не было бы CompletionStage-совместимых ReactiveStreams-адаптеров в JDK.",
+                "how_it_should_be": "Reactive Streams — кросс-вендорный стандарт, входит в стандартную библиотеку Java."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Спецификация описывает только Publisher и Consumer, без понятия Subscription и backpressure.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Subscription с методом request(n) — ключевой интерфейс, именно он реализует backpressure; без него спецификация бесполезна.",
+                "source_of_confusion": "Поверхностное знакомство с публикаторами/подписчиками без понимания обратной связи.",
+                "if_it_were_true": "Не было бы способа подписчику контролировать скорость; OOM при быстром источнике стал бы неизбежен.",
+                "how_it_should_be": "Все четыре интерфейса (Publisher/Subscriber/Subscription/Processor) — обязательная часть спецификации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Project Reactor и чем он отличается от RxJava?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Project Reactor — устаревший форк RxJava 1.x, поддержка которого прекращена в 2019 году.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor — независимая активно развиваемая библиотека от Spring/Pivotal, актуальные версии 3.x с регулярными релизами; основа Spring WebFlux.",
+                "source_of_confusion": "Обе библиотеки реализуют Reactive Streams и имеют похожий API.",
+                "if_it_were_true": "Spring WebFlux не мог бы быть рекомендуемым реактивным стеком в 2026 году.",
+                "how_it_should_be": "Reactor создан с нуля под спецификацию Reactive Streams и Java 8+."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Reactor — это адаптер поверх RxJava, переименовывающий Observable в Flux без собственной логики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor — самостоятельная реализация со своими операторами, Schedulers и Context; конвертеры между Reactor и RxJava существуют отдельно.",
+                "source_of_confusion": "Сходство API и обоюдная совместимость через Publisher.",
+                "if_it_were_true": "Reactor зависел бы от io.reactivex.rxjava3 в classpath.",
+                "how_it_should_be": "У Reactor собственный код; интероп с RxJava — опциональный модуль."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Project Reactor — реактивная библиотека от Spring/Pivotal с типами Mono и Flux, нативной интеграцией со Spring и встроенным Context; RxJava 3 различает Single/Maybe/Observable/Flowable и поддерживает backpressure только в Flowable.",
+              "correct": true,
+              "sections": {
+                "explanation": "Reactor упрощает иерархию до двух типов (0..1 и 0..N), везде поддерживает backpressure и не допускает null. Reactor — фундамент Spring WebFlux, R2DBC и Spring Data Reactive.",
+                "example": "В Reactor: Mono<User> findById(id). В RxJava: Single<User> или Maybe<User> findById(id).",
+                "when_to_apply": "Выбор реактивной библиотеки в Spring-проекте: Reactor — дефолт; RxJava — если уже используется в коде или для Android.",
+                "edge_cases": "Reactor запрещает null; код, перенесённый с RxJava 1 (где null допустим), требует переработки.",
+                "related": "Q5 Mono vs Flux; Q33 Context; Q46 Spring WebFlux."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это две идентичные библиотеки, различающиеся только пакетом — io.reactivex против reactor.core.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отличия идут глубже пакетов: типы, обработка null, Context, интеграция со Spring, поддержка backpressure.",
+                "source_of_confusion": "Похожие операторы и общая основа в виде Reactive Streams.",
+                "if_it_were_true": "Не было бы смысла в двух конкурирующих экосистемах.",
+                "how_it_should_be": "Reactor и RxJava — разные реализации с разными приоритетами и архитектурными решениями."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое backpressure и почему он критически важен для реактивных систем?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это механизм автоматического перезапуска неработающего Subscriber через ReconnectStrategy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backpressure — это контроль скорости через request(n); перезапуски относятся к retry/retryWhen, а не к backpressure.",
+                "source_of_confusion": "Оба механизма про устойчивость, но решают разные задачи.",
+                "if_it_were_true": "Не было бы операторов onBackpressureBuffer/Drop/Latest для управления переполнением.",
+                "how_it_should_be": "Backpressure = подписчик контролирует темп; retry = повторная подписка при ошибке."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Backpressure — это шифрование трафика между Publisher и Subscriber для защиты от перехвата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Безопасность не имеет отношения к backpressure; это про управление потоком данных.",
+                "source_of_confusion": "Английское слово pressure ассоциируется с давлением, но речь о потоке элементов.",
+                "if_it_were_true": "Subscription включал бы методы encrypt/decrypt.",
+                "how_it_should_be": "Backpressure — контроль количества элементов, а не их содержимого."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это устаревшее название для механизма transaction rollback в реактивных базах данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backpressure не связан с транзакциями; rollback в R2DBC — отдельная тема.",
+                "source_of_confusion": "Оба понятия про реактивный мир, но из разных слоёв.",
+                "if_it_were_true": "Backpressure был бы методом TransactionalOperator.",
+                "how_it_should_be": "Backpressure — про темп обработки сигналов, rollback — про целостность данных."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Механизм управления потоком, при котором Subscriber через Subscription.request(n) указывает, сколько элементов он готов принять; без него быстрый Publisher переполнит буфер потребителя и приведёт к OOM или потере данных.",
+              "correct": true,
+              "sections": {
+                "explanation": "Producer не имеет права отправлять больше, чем запрошено. Это превращает push-модель в pull-based на уровне сигналов и защищает медленного потребителя от быстрого источника.",
+                "example": "BaseSubscriber: hookOnSubscribe { request(1); } hookOnNext(v) { process(v); request(1); } — обработка строго по одному элементу.",
+                "when_to_apply": "Любой реактивный пайплайн с разной скоростью источника и потребителя: Kafka → DB, file streaming, HTTP-стриминг.",
+                "edge_cases": "Hot publishers (UI-события, WebSocket) не уважают request(n) автоматически — нужны onBackpressureBuffer/Drop/Latest.",
+                "related": "Q27 реализация в Reactor; Q28 стратегии; Q29 limitRate."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём принципиальная разница между Mono<T> и Flux<T> в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Mono<T> представляет 0 или 1 элемент (реактивный аналог Optional/CompletableFuture), Flux<T> — 0 или N элементов (потенциально бесконечный поток); оба наследуют Publisher<T> и поддерживают onNext/onError/onComplete.",
+              "correct": true,
+              "sections": {
+                "explanation": "Mono чаще используют для одиночных операций (findById, save, HTTP-запрос), Flux — для коллекций и стримов. Между ними есть конвертеры: flux.collectList() → Mono<List<T>>, mono.flux() → Flux<T>.",
+                "example": "Mono<User> findById(Long id) vs Flux<User> findAll(); Mono<Long> count() vs Flux<Order> findByUser(user).",
+                "when_to_apply": "Mono — для CRUD-операций над одной сущностью; Flux — для коллекций, SSE, Kafka-стримов, чтения файлов построчно.",
+                "edge_cases": "Mono.just(null) бросает NullPointerException — для отсутствующего значения используйте Mono.empty() или Mono.justOrEmpty().",
+                "related": "Q6 создание Mono; Q7 создание Flux; Q47 block()."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Mono всегда возвращает ровно один элемент и не может быть пустым; Flux — синхронная коллекция.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mono может быть пустым (Mono.empty()) — он представляет 0 или 1 элемент. Flux асинхронный, как и Mono.",
+                "source_of_confusion": "Аналогия с Optional делает упор на ненулевой случай и теряет пустой.",
+                "if_it_were_true": "Не было бы методов switchIfEmpty/defaultIfEmpty на Mono.",
+                "how_it_should_be": "Mono = 0..1, Flux = 0..N, оба асинхронные."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Mono — для блокирующих операций, Flux — для неблокирующих.",
+              "correct": false,
+              "sections": {
+                "what_actually": "И Mono, и Flux реактивны и неблокирующи; разница только в кардинальности (0..1 vs 0..N).",
+                "source_of_confusion": "block() есть у Mono — отсюда ассоциация с блокировкой.",
+                "if_it_were_true": "Spring WebFlux бы выбрасывал ошибку при использовании Mono в контроллере.",
+                "how_it_should_be": "Блокирующее поведение — побочный эффект block(), не свойство типа Mono."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Mono работает только с примитивами, а Flux — только с объектами и коллекциями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mono<T> и Flux<T> — оба generic над любым reference-типом; примитивы боксируются (Mono<Integer>, не Mono<int>).",
+                "source_of_confusion": "Сходство Mono со скалярным значением.",
+                "if_it_were_true": "Mono<User> и Flux<List<User>> были бы невозможны.",
+                "how_it_should_be": "Оба типа параметризуются произвольным T; ограничений по reference-типу нет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные способы создания Mono существуют в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Единственный способ — конструктор new Mono<>(value), как у обычных Java-классов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mono — абстрактный класс с private/protected конструкторами; экземпляры создаются через статические фабрики.",
+                "source_of_confusion": "Привычка к new для классов в Java.",
+                "if_it_were_true": "Не существовало бы Mono.just(), Mono.defer() и т.п.",
+                "how_it_should_be": "Создание только через статические методы: just, defer, fromCallable, create, empty, error."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Mono.just(value) — eager со значением; Mono.empty() — пустой; Mono.error(ex) — ошибка; Mono.defer(supplier) — lazy; Mono.fromCallable(Callable) — обёртка над блокирующим вызовом; Mono.fromFuture(CompletableFuture); Mono.create(sink) — ручное управление через MonoSink.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая фабрика решает свою задачу: just для констант, defer для отложенных вычислений, fromCallable для синхронных вызовов, create для интеграции с callback-API.",
+                "example": "Mono.fromCallable(() -> jdbc.query(...)).subscribeOn(Schedulers.boundedElastic()) — оборачивание блокирующего JDBC.",
+                "when_to_apply": "fromCallable — для интеграции с не-реактивными API; defer — когда нужен свежий Mono при каждой подписке.",
+                "edge_cases": "Mono.just(null) → NullPointerException; для опционального значения нужен Mono.justOrEmpty(Optional).",
+                "related": "Q8 just vs defer; Q9 create/push; Q26 Exceptions.propagate."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Mono создаётся только из Iterable через Mono.fromIterable() — других способов нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "fromIterable есть у Flux, а не у Mono. Mono создаётся из just/defer/fromCallable/fromFuture/create/empty/error.",
+                "source_of_confusion": "Путаница между Flux и Mono.",
+                "if_it_were_true": "Каждый Mono требовал бы оборачивания значения в List.of(value).",
+                "how_it_should_be": "Из Iterable создаётся Flux; для Mono — just/defer/fromCallable и т.д."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Mono.just() и Mono.defer() работают идентично, поэтому достаточно использовать только один из них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "just — eager (вычисление при создании), defer — lazy (при каждой подписке). Это критическое различие.",
+                "source_of_confusion": "Семантически оба возвращают значение.",
+                "if_it_were_true": "Не было бы проблемы с Mono.just(LocalDateTime.now()) — времени создания вместо времени подписки.",
+                "how_it_should_be": "just для констант, defer для значений с побочными эффектами или зависимостью от момента подписки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие способы создания Flux существуют в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Flux создаётся только из готовой Java-коллекции через Flux.fromCollection().",
+              "correct": false,
+              "sections": {
+                "what_actually": "Способов много: just, fromIterable, fromArray, range, interval, generate, create, push, error, empty, from(Publisher).",
+                "source_of_confusion": "fromIterable — частый случай, но не единственный.",
+                "if_it_were_true": "Не было бы Flux.interval для периодических потоков и Flux.generate для алгоритмических.",
+                "how_it_should_be": "Выбор фабрики зависит от источника: коллекция → fromIterable, диапазон → range, бесконечный поток → interval/generate."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только Flux.just(vararg) — у Flux нет других конструкторов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "just(vararg) — лишь один из вариантов; для больших коллекций он непрактичен.",
+                "source_of_confusion": "just — самый известный способ.",
+                "if_it_were_true": "Flux<String> из List<String> на 100 000 элементов пришлось бы создавать через Flux.just(arr[0], arr[1], ...).",
+                "how_it_should_be": "Для коллекций — fromIterable; для бесконечных потоков — interval/generate; для callback-API — create/push."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Flux.just(...), Flux.fromIterable(Collection), Flux.fromArray(T[]), Flux.range(start, count), Flux.interval(Duration), Flux.empty(), Flux.error(ex), Flux.generate(stateSupplier, generator) — синхронная генерация с состоянием, Flux.create(sink) — асинхронная многопоточная.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти фабрики покрывают типичные сценарии: фиксированные значения, коллекции, числовые диапазоны, периодические тики, программная генерация, асинхронные источники.",
+                "example": "Flux.fromIterable(repo.findAll()) для коллекции; Flux.interval(Duration.ofSeconds(1)) для heartbeat; Flux.create(sink -> bus.subscribe(sink::next)) для event-шины.",
+                "when_to_apply": "Подбор источника под задачу: fromIterable для готовой коллекции; create — для интеграции с callback-API.",
+                "edge_cases": "Flux.fromIterable на бесконечной Iterable работает, но без backpressure быстро заполнит буфер; Flux.interval требует Scheduler.",
+                "related": "Q9 create vs push; Q10 generate vs create; Q38 операторы времени."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Flux нельзя создать руками — он формируется только Spring-контроллерами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor — независимая библиотека; Flux/Mono создаются в любом коде без Spring.",
+                "source_of_confusion": "Чаще всего Flux встречается в Spring WebFlux.",
+                "if_it_were_true": "Reactor нельзя было бы использовать в десктопных приложениях или Kafka Streams.",
+                "how_it_should_be": "Reactor — самостоятельная библиотека; Flux/Mono создаются явными фабриками."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между Mono.just() и Mono.defer()?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "just безопасен с null, а defer бросает NullPointerException.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё ровно наоборот: Mono.just(null) сразу бросает NPE; в defer NPE возможен только при выполнении лямбды, не при создании Mono.",
+                "source_of_confusion": "Кажется, что just безопаснее, потому что проще.",
+                "if_it_were_true": "Не было бы Mono.justOrEmpty() для опциональных значений.",
+                "how_it_should_be": "Mono.just(value) запрещает null; для опционального значения — Mono.justOrEmpty(Optional)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "defer медленнее just в 10 раз из-за вызова Supplier на каждой подписке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Накладные расходы Supplier ничтожны по сравнению с самим вычислением и I/O; разница не порядка раз.",
+                "source_of_confusion": "Гипербола про производительность ленивой инициализации.",
+                "if_it_were_true": "defer не рекомендовался бы документацией для типичных fallback-сценариев.",
+                "how_it_should_be": "Overhead defer пренебрежимо мал; выбирать по семантике, а не по бенчмарку."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "just и defer — синонимы; defer был добавлен только ради консистентности с Flux.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Семантика принципиально разная: eager vs lazy. Документация и behavior это явно разделяют.",
+                "source_of_confusion": "Оба возвращают Mono — снаружи кажется идентично.",
+                "if_it_were_true": "Не было бы багов класса 'мой Mono всегда возвращает время старта сервера'.",
+                "how_it_should_be": "just — eager; defer — lazy; выбор зависит от наличия побочных эффектов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Mono.just(value) — eager: значение вычисляется немедленно при создании Mono (до подписки); Mono.defer(Supplier) — lazy: Supplier вызывается при каждой подписке, каждый подписчик получает свежий Mono.",
+              "correct": true,
+              "sections": {
+                "explanation": "just фиксирует значение в момент создания цепочки; defer откладывает вычисление до момента подписки. Это критично для функций с побочными эффектами (LocalDateTime.now(), вызов БД, генерация UUID).",
+                "example": "Mono.just(LocalDateTime.now()) — время создания; Mono.defer(() -> Mono.just(LocalDateTime.now())) — время подписки.",
+                "when_to_apply": "defer — когда значение должно быть свежим для каждого подписчика или генерируется с побочными эффектами; just — для константных значений.",
+                "edge_cases": "При повторных подписках на just все подписчики видят одно и то же значение; на defer — каждый своё.",
+                "related": "Q6 создание Mono; Q26 propagate; Q35 cold vs hot."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Flux.create() и Flux.push() и в чём между ними разница?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Flux.create(consumer) — для асинхронной многопоточной генерации (FluxSink можно передавать в несколько потоков); Flux.push(consumer) — для однопоточной генерации событий. Оба поддерживают OverflowStrategy (BUFFER, DROP, LATEST, ERROR, IGNORE) для управления переполнением.",
+              "correct": true,
+              "sections": {
+                "explanation": "create обёртывает потенциально многопоточные источники (event bus, JMS); push предполагает один поток-эмиттер (callback-based API). Различие важно для thread-safety при вызове sink.next().",
+                "example": "create: eventBus.subscribe(event -> sink.next(event)) — из разных потоков; push: asyncApi.onData(sink::next) — из одного потока.",
+                "when_to_apply": "create — для event-шин, JMS, multi-threaded callback; push — для single-threaded callback-API.",
+                "edge_cases": "Использование push в многопоточном контексте даёт UB; OverflowStrategy.IGNORE приведёт к OOM при отсутствии request(n).",
+                "related": "Q10 generate; Q28 стратегии backpressure; Q35 hot publishers."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "create — асинхронный wrapper над CompletableFuture, push — wrapper над Stream API; ни один из них не поддерживает backpressure.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба создают Flux через FluxSink с поддержкой OverflowStrategy. CompletableFuture и Stream API не имеют к этому отношения.",
+                "source_of_confusion": "Английское слово push ассоциируется с pushing данных, что верно концептуально, но детали отличаются.",
+                "if_it_were_true": "Не было бы FluxSink.OverflowStrategy.BUFFER/DROP/LATEST.",
+                "how_it_should_be": "create/push используют FluxSink с настраиваемым backpressure через OverflowStrategy."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "create() и push() работают одинаково, push — просто старое название для совместимости с RxJava.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два разных метода с разной семантикой по потокобезопасности.",
+                "source_of_confusion": "Оба создают Flux через FluxSink-callback.",
+                "if_it_were_true": "Документация Reactor не разделяла бы их в отдельные разделы.",
+                "how_it_should_be": "create — многопоточный, push — однопоточный."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Flux.create нужен только для синхронных операций, а Flux.push — для запросов к удалённым серверам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба метода универсальны и не привязаны к синхронности или удалённости; различие в потокобезопасности эмиссии.",
+                "source_of_confusion": "Терминология push/pull создаёт ложные ассоциации с сетью.",
+                "if_it_were_true": "Не было бы WebClient — он использовал бы push.",
+                "how_it_should_be": "Выбор по числу потоков-эмиттеров: один → push, несколько → create."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Flux.generate() и чем он отличается от Flux.create()?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "generate() и create() полностью идентичны и взаимозаменяемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У них разная модель: generate — синхронная, однопоточная, ровно один next() за вызов; create — многопоточная, любое число next().",
+                "source_of_confusion": "Оба эмитят элементы через sink.",
+                "if_it_were_true": "Не существовало бы двух API в библиотеке.",
+                "how_it_should_be": "generate — для синхронных пошаговых генераторов; create — для асинхронных callback-API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Flux.generate(stateSupplier, generator) — синхронный pull-based генератор с состоянием: за каждый вызов request(n) генератор вызывается n раз, и каждый вызов должен сделать ровно один sink.next() или sink.complete()/sink.error(); встроенный backpressure через pull-модель. Flux.create — многопоточный с настраиваемой OverflowStrategy.",
+              "correct": true,
+              "sections": {
+                "explanation": "generate идеально подходит для синхронных алгоритмических генераторов (Fibonacci, range, последовательности). Состояние передаётся между шагами, ровно один элемент за итерацию.",
+                "example": "Flux.generate(() -> 0, (s, sink) -> { sink.next(s); return s + 1; }) — натуральный ряд.",
+                "when_to_apply": "Алгоритмические последовательности, итерация по структуре без потоков, синхронные генераторы с состоянием.",
+                "edge_cases": "Второй вызов sink.next() за итерацию приводит к IllegalStateException; забыли вернуть state → бесконечный цикл.",
+                "related": "Q9 create/push; Q27 backpressure; Q7 создание Flux."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "generate — для коллекций, create — для бесконечных потоков; больше различий нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба могут создавать бесконечные потоки; для коллекций есть Flux.fromIterable. Различие — в backpressure и числе потоков.",
+                "source_of_confusion": "Поверхностная классификация по размеру источника.",
+                "if_it_were_true": "Не было бы Flux.fromIterable как отдельной фабрики.",
+                "how_it_should_be": "Конечность/бесконечность — задача обеих фабрик; различие в модели."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "generate — асинхронный, create — синхронный; generate всегда быстрее create.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: generate синхронный pull-based, create может быть многопоточным. Скорость зависит от задачи.",
+                "source_of_confusion": "Англоязычные глаголы могут вводить в заблуждение.",
+                "if_it_were_true": "create использовался бы только для тестов.",
+                "how_it_should_be": "generate — sync/single-threaded, create — multi-threaded; выбор по природе источника."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между операторами map() и flatMap() в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "map() работает только с числами, а flatMap() — со строками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба generic-операторы, работают с любым T.",
+                "source_of_confusion": "Псевдо-классификация по типу данных.",
+                "if_it_were_true": "Не было бы Flux<User>.map(User::getName).",
+                "how_it_should_be": "Тип T произвольный; различие в сигнатуре трансформера."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "map() возвращает Mono, а flatMap() — Flux, других различий нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возвращаемый тип определяется источником (Mono.map → Mono, Flux.map → Flux). Главное различие — в типе функции.",
+                "source_of_confusion": "Поверхностное знакомство с сигнатурами.",
+                "if_it_were_true": "Mono.flatMap не существовал бы.",
+                "how_it_should_be": "map: T → R (sync); flatMap: T → Publisher<R> (async)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "map(Function<T,R>) — синхронная трансформация T→R, не подходящая для операций, возвращающих Mono/Flux; flatMap(Function<T,Publisher<R>>) — асинхронная трансформация: преобразует каждый элемент в Publisher и сливает их в единый поток, подписки на внутренние Publisher выполняются конкурентно.",
+              "correct": true,
+              "sections": {
+                "explanation": "map для простых преобразований (String → String.upperCase). flatMap для асинхронных вложенных запросов: User → Mono<Order>. Если использовать map с функцией T → Mono<R>, получишь Flux<Mono<R>> — лишняя обёртка.",
+                "example": "flux.flatMap(userId -> repo.findById(userId)) корректно, flux.map(repo::findById) даст Flux<Mono<User>>.",
+                "when_to_apply": "map — синхронные преобразования; flatMap — вложенные асинхронные вызовы (DB, HTTP, файлы).",
+                "edge_cases": "flatMap не сохраняет порядок (подписки конкурентны); для упорядоченного результата нужен concatMap или flatMapSequential.",
+                "related": "Q12 flatMap/concatMap/switchMap; Q13 flatMapSequential; Q14 transform."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "flatMap — устаревший псевдоним map, который удалят в Reactor 4.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба оператора активны и решают разные задачи; никаких планов deprecation у flatMap нет.",
+                "source_of_confusion": "Слухи о слиянии операторов.",
+                "if_it_were_true": "Документация Reactor отметила бы deprecated.",
+                "how_it_should_be": "map и flatMap — самостоятельные операторы с разной семантикой."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между flatMap(), concatMap() и switchMap()?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все три оператора эквивалентны; различия только в названиях для маркетинговых целей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различия принципиальные: конкурентность подписок, сохранение порядка, обработка новых элементов.",
+                "source_of_confusion": "Все три принимают Function<T, Publisher<R>>.",
+                "if_it_were_true": "RxMarbles не показывал бы три разные диаграммы.",
+                "how_it_should_be": "flatMap — параллельно; concatMap — последовательно; switchMap — отмена предыдущего."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "switchMap() возвращает все элементы по порядку, а concatMap() отменяет предыдущие подписки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: concatMap сохраняет порядок, switchMap отменяет предыдущие.",
+                "source_of_confusion": "Перепутаны два схожих по названию оператора.",
+                "if_it_were_true": "Typeahead-поиск не работал бы корректно.",
+                "how_it_should_be": "concatMap — keep all in order; switchMap — keep only latest."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "concatMap — конкурентный, flatMap — последовательный, switchMap — асинхронный (наоборот к правильному).",
+              "correct": false,
+              "sections": {
+                "what_actually": "flatMap — параллельный (concurrent), concatMap — sequential, switchMap — последний-выигрывает.",
+                "source_of_confusion": "Перевёрнутые имена операторов.",
+                "if_it_were_true": "Документация Reactor противоречила бы сама себе.",
+                "how_it_should_be": "flatMap = concurrent, concatMap = sequential, switchMap = latest-only."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "flatMap() — подписки на внутренние Publisher одновременно (конкурентно), порядок результирующих элементов не гарантирован; concatMap() — подписки последовательно (один за раз), порядок сохраняется; switchMap() — при появлении нового элемента отменяет предыдущую подписку, результат содержит только последний завершившийся Publisher.",
+              "correct": true,
+              "sections": {
+                "explanation": "flatMap для независимых параллельных запросов (максимальная пропускная способность). concatMap — когда важен порядок (sequential job processing). switchMap — для typeahead/search-as-you-type, где предыдущие запросы устаревают.",
+                "example": "inputFlux.debounce(300ms).switchMap(query -> search.search(query)) — поиск с отменой устаревших.",
+                "when_to_apply": "flatMap — параллельные API-вызовы; concatMap — сохранение последовательности; switchMap — реактивные UI с фильтрацией.",
+                "edge_cases": "concatMap при медленном внутреннем Publisher создаёт очередь и снижает пропускную способность; switchMap может терять промежуточные результаты.",
+                "related": "Q11 map vs flatMap; Q13 flatMapSequential; Q20 combineLatest."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое flatMapSequential() и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Гибрид flatMap и concatMap: внутренние Publisher подписываются одновременно (параллельно, как у flatMap), но результаты буферизуются и выдаются в исходном порядке (как у concatMap); даёт скорость flatMap с упорядоченностью concatMap.",
+              "correct": true,
+              "sections": {
+                "explanation": "Reactor подписывается на все внутренние Publisher параллельно, но буферизует результаты до тех пор, пока не сможет выдать их в исходном порядке. Компромисс: скорость + порядок ценой потребления памяти.",
+                "example": "Flux.range(1,5).flatMapSequential(i -> fetchFromDB(i)) — параллельные запросы, но результат 1,2,3,4,5.",
+                "when_to_apply": "Нужен порядок и допустима буферизация; например, отображение списка результатов.",
+                "edge_cases": "Если первый Publisher долго отвечает, буфер копит результаты остальных; ограничивайте concurrency через флаги.",
+                "related": "Q11 map/flatMap; Q12 flatMap/concatMap/switchMap; Q22 обработка ошибок."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это оператор, отменяющий все подписки кроме последней (как switchMap).",
+              "correct": false,
+              "sections": {
+                "what_actually": "flatMapSequential не отменяет подписки; он сохраняет все результаты в исходном порядке.",
+                "source_of_confusion": "Sequential может ассоциироваться с упорядоченностью через выбор последнего.",
+                "if_it_were_true": "switchMap был бы избыточен.",
+                "how_it_should_be": "flatMapSequential = параллельные подписки + буферизация для сохранения порядка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "flatMapSequential — синоним concatMap, отличий нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У них разная производительность: concatMap подписывается на следующий внутренний Publisher только после завершения предыдущего; flatMapSequential подписывается на все одновременно.",
+                "source_of_confusion": "Оба сохраняют порядок результатов.",
+                "if_it_were_true": "Разница в производительности была бы нулевой.",
+                "how_it_should_be": "concatMap = последовательная подписка; flatMapSequential = параллельная подписка + упорядоченный вывод."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это утилита для тестирования — в продакшене не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "flatMapSequential — обычный продакшен-оператор Reactor Core.",
+                "source_of_confusion": "Менее известен, чем flatMap/concatMap.",
+                "if_it_were_true": "Он был бы в reactor-test, а не в reactor-core.",
+                "how_it_should_be": "Стандартный оператор для случаев параллельности + порядок."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Для чего используются операторы transform() и as() в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "transform — псевдоним map, as — псевдоним flatMap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "transform применяет функцию ко всему Flux при сборке цепочки; as — конвертирует Flux в другой тип. С map/flatMap общего мало.",
+                "source_of_confusion": "Аналогичные названия в других библиотеках.",
+                "if_it_were_true": "Документация не выделяла бы transform/as в отдельную главу.",
+                "how_it_should_be": "transform — применить переиспользуемую последовательность операторов; as — преобразование типа всего Publisher."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "transform(Function<Flux<T>,Publisher<V>>) применяет функцию-трансформер ко всей цепочке при сборке (assembly-time), позволяя выносить набор операторов в переиспользуемую функцию; as(Function<Flux<T>,P>) преобразует Flux в другой тип (например, в Mono<List<T>> через Flux::collectList).",
+              "correct": true,
+              "sections": {
+                "explanation": "transform полезен для DRY: можно выделить набор операторов (filter+trim+log+timeout) в один Function и применять к разным потокам. as выполняет конверсию типа.",
+                "example": "Function<Flux<String>,Flux<String>> trim = f -> f.filter(s->!s.isEmpty()).map(String::trim); flux.transform(trim).",
+                "when_to_apply": "transform — переиспользуемые цепочки; as — конверсия (Flux → Mono<List>, Flux → Mono).",
+                "edge_cases": "transform применяется один раз при сборке — для применения per-subscription используйте transformDeferred.",
+                "related": "Q15 doOn-операторы; Q34 transformDeferredContextual; Q22 обработка ошибок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "transform работает только с числами, as — только со строками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба generic, работают с произвольным T.",
+                "source_of_confusion": "Псевдо-классификация.",
+                "if_it_were_true": "Не было бы примеров transform с DTO.",
+                "how_it_should_be": "Тип элементов произвольный; различие в семантике трансформации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "transform нужен только для XML-обработки, as — для JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого отношения к форматам сериализации эти операторы не имеют.",
+                "source_of_confusion": "Слово transform ассоциируется с XSLT и преобразованием документов.",
+                "if_it_were_true": "Они были бы в reactor-extra или spring-web модулях.",
+                "how_it_should_be": "Это структурные операторы Reactor Core, независимые от формата данных."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делают операторы doOnNext(), doOnComplete(), doOnError() и подобные?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Они отменяют все предшествующие операторы в цепочке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "doOn-операторы не меняют поток; для отмены подписки используют cancel/dispose.",
+                "source_of_confusion": "Префикс do создаёт ощущение активного действия.",
+                "if_it_were_true": "Любой doOnNext делал бы цепочку бесполезной.",
+                "how_it_should_be": "doOn-операторы — read-only хуки для side-effects (логирование, метрики)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "doOnNext меняет каждое значение, удваивая его; doOnError превращает ошибку в успех.",
+              "correct": false,
+              "sections": {
+                "what_actually": "doOn-операторы не модифицируют сигналы. Для модификации значений нужен map; для обработки ошибок — onErrorResume/onErrorMap.",
+                "source_of_confusion": "Путаница с трансформирующими операторами.",
+                "if_it_were_true": "Документация называла бы их transform*, а не doOn*.",
+                "how_it_should_be": "doOn = side-effect only; модификация — отдельные операторы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Side-effect операторы: выполняют действие при наступлении соответствующего события (onSubscribe, onNext, onError, onComplete, onCancel, onRequest, onTerminate, finally, onEach), но не изменяют поток данных — возвращают исходный тип Flux/Mono.",
+              "correct": true,
+              "sections": {
+                "explanation": "Используются для логирования, метрик, отладки, обновления стейта без вмешательства в сам поток. Реализованы так, чтобы исключение в side-effect не ломало основной поток (но логируется).",
+                "example": "flux.doOnNext(log::info).doOnError(log::error).doFinally(sig -> meter.recordTerminal(sig)).",
+                "when_to_apply": "Observability в реактивной цепочке: логи, метрики, трейсинг.",
+                "edge_cases": "Исключение в doOnNext-callback не обрабатывается основной цепочкой и попадает в Hooks.onOperatorError; не используйте для бизнес-логики.",
+                "related": "Q22 обработка ошибок; Q43 отладка; Q45 Hooks."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Эти операторы запускают новый поток для каждого элемента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "doOn-операторы выполняются в том же потоке, что и upstream-оператор; смена потока — через publishOn.",
+                "source_of_confusion": "Кажется, что do — это асинхронная операция.",
+                "if_it_were_true": "Цепочка с doOnNext имела бы поведение subscribeOn.",
+                "how_it_should_be": "doOn — синхронные хуки; смена потока — отдельные операторы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие операторы фильтрации предоставляет Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только filter(Predicate), других операторов фильтрации в Reactor нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor предлагает богатый набор: filter, filterWhen, distinct, distinctUntilChanged, take, takeLast, takeWhile, skip, skipWhile, ignoreElements, elementAt.",
+                "source_of_confusion": "filter — самый известный, остальные менее популярны.",
+                "if_it_were_true": "distinct и take нужно было бы реализовывать вручную.",
+                "how_it_should_be": "Reactor покрывает все типичные сценарии фильтрации встроенными операторами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "filter, takeNot, skipNot — других нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Операторов takeNot/skipNot в Reactor не существует; есть filter, take, skip, takeLast, takeWhile, skipWhile и т.д.",
+                "source_of_confusion": "Логичные имена, которых в API нет.",
+                "if_it_were_true": "Документация показывала бы эти методы в javadoc.",
+                "how_it_should_be": "Используйте filter с negation: filter(x -> !p.test(x)) вместо несуществующих takeNot."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Операторов фильтрации нет — Reactor предлагает только map и flatMap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor — полноценный реактивный фреймворк с разнообразными операторами; фильтрация присутствует широко.",
+                "source_of_confusion": "Минималистское впечатление от map/flatMap.",
+                "if_it_were_true": "Невозможно было бы выбрать только активных пользователей из Flux<User>.",
+                "how_it_should_be": "Reactor покрывает фильтрацию через filter, take, skip, distinct и т.п."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "filter(Predicate) — базовый фильтр; filterWhen(Function<T,Mono<Boolean>>) — асинхронный фильтр; distinct/distinctUntilChanged — устранение дубликатов; take(n)/takeLast(n)/takeWhile/takeUntil — взять начало/конец/по условию; skip(n)/skipWhile — пропустить; ignoreElements — только сигналы завершения; elementAt(idx) — элемент по индексу.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти операторы покрывают синхронную/асинхронную фильтрацию, отбор по индексу, времени и предикату. filterWhen важен для асинхронной проверки (например, через БД).",
+                "example": "users.filterWhen(u -> permissions.canRead(u)) — асинхронная авторизация через Mono<Boolean>.",
+                "when_to_apply": "Подбор оператора под задачу: filter — синхронно; filterWhen — асинхронно; distinct — уникальность; take/skip — по позиции.",
+                "edge_cases": "distinct хранит все ранее увиденные элементы в HashSet — для бесконечных Flux требует ограничения; distinctUntilChanged легче по памяти.",
+                "related": "Q17 switchIfEmpty; Q18 take/skip; Q15 doOn-операторы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает оператор switchIfEmpty()?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "switchIfEmpty(Publisher<T>) — если исходный Mono/Flux завершается без элементов (только onComplete без onNext), оператор переключается на альтернативный Publisher; реактивный аналог orElse/coalesce.",
+              "correct": true,
+              "sections": {
+                "explanation": "Срабатывает только при пустом потоке (onComplete без elements). При ошибке switchIfEmpty не сработает — для этого есть onErrorResume.",
+                "example": "cache.findById(id).switchIfEmpty(db.findById(id)).switchIfEmpty(Mono.error(new NotFoundException())).",
+                "when_to_apply": "Многоуровневый fallback: кэш → БД → ошибка. Загрузка значений по умолчанию.",
+                "edge_cases": "Не путать с onErrorResume — switchIfEmpty не реагирует на ошибки; для empty + error нужны оба.",
+                "related": "Q22 обработка ошибок; Q23 onErrorReturn; Q18 take/skip."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "switchIfEmpty — синоним defaultIfEmpty без отличий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "defaultIfEmpty принимает фиксированное значение, switchIfEmpty — Publisher (lazy).",
+                "source_of_confusion": "Оба обрабатывают пустой поток.",
+                "if_it_were_true": "Не было бы смысла в двух методах.",
+                "how_it_should_be": "defaultIfEmpty(T) — eager fixed value; switchIfEmpty(Publisher<T>) — lazy alternative source."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "switchIfEmpty срабатывает при ошибке и подавляет её.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ошибки switchIfEmpty не обрабатывает; для них есть onErrorResume.",
+                "source_of_confusion": "switchIfEmpty семантически близок к onErrorResume.",
+                "if_it_were_true": "В коде с switchIfEmpty не было бы непойманных RuntimeException.",
+                "how_it_should_be": "switchIfEmpty = только для empty; onErrorResume = для ошибок."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это псевдоним для filter(Objects::nonNull).",
+              "correct": false,
+              "sections": {
+                "what_actually": "filter с предикатом отфильтровывает null; switchIfEmpty работает на уровне потока, не отдельных значений.",
+                "source_of_confusion": "Поверхностная аналогия с обработкой отсутствующих значений.",
+                "if_it_were_true": "switchIfEmpty не требовал бы Publisher в аргументе.",
+                "how_it_should_be": "Разные слои: filter — элемент; switchIfEmpty — весь поток."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делают операторы take() и skip() в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "take(n) хранит элементы в памяти, skip(n) выгружает их в файл.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба оператора работают потоково; ни один не выгружает данные в файл.",
+                "source_of_confusion": "Аналогии с командами head/tail в Unix.",
+                "if_it_were_true": "Требовался бы параметр пути к файлу.",
+                "how_it_should_be": "take и skip — реактивные операторы без I/O побочных эффектов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "take(n) — взять первые n элементов и отменить подписку; take(duration) — брать элементы в течение заданного времени; takeWhile(predicate) — брать пока условие истинно; takeUntil(predicate) — брать до выполнения условия включительно; skip(n)/skip(duration)/skipWhile — пропустить соответственно n элементов, длительность или пока условие истинно.",
+              "correct": true,
+              "sections": {
+                "explanation": "take ограничивает поток сверху, skip — снизу. После take(n) оператор посылает cancel вверх по цепочке. takeUntilOther останавливает поток при первом элементе другого Publisher.",
+                "example": "Flux.range(1,100).take(5) → 1..5; Flux.range(1,100).skip(7) → 8..100; Flux.interval(ms).take(Duration.ofSec(10)).",
+                "when_to_apply": "take — паджинация/первые N; skip — пропуск заголовка/первых элементов; takeWhile — обработка пока условие выполняется.",
+                "edge_cases": "take(0) приведёт к моментальному complete; skip(больше_элементов) даст пустой Flux.",
+                "related": "Q16 фильтрация; Q39 timeout; Q38 операторы времени."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оба оператора работают только с Mono, не с Flux.",
+              "correct": false,
+              "sections": {
+                "what_actually": "take/skip имеют смысл для Flux (где есть несколько элементов); на Mono доступны, но избыточны.",
+                "source_of_confusion": "Mono.take(1) технически работает.",
+                "if_it_were_true": "Документация ограничивала бы методы только Mono.",
+                "how_it_should_be": "take/skip — операторы Flux в основном; для Mono используются редко."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "take(n) принимает только положительные числа, skip(n) только отрицательные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба принимают целое неотрицательное число; отрицательные значения недопустимы.",
+                "source_of_confusion": "Никаких знаков чисел.",
+                "if_it_were_true": "skip(-3) имел бы какой-то особый смысл.",
+                "how_it_should_be": "n >= 0 для обоих; отрицательное приведёт к IllegalArgumentException."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между merge(), concat() и zip() в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "merge() и concat() идентичны; zip() работает только с числами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "merge подписывается на все источники одновременно, concat — последовательно; zip работает с любыми типами.",
+                "source_of_confusion": "Поверхностное знакомство с операторами комбинирования.",
+                "if_it_were_true": "Не было бы примеров zip с DTO в документации.",
+                "how_it_should_be": "Три разных оператора с разной семантикой подписки и упорядоченности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "concat() требует ровно двух Publisher, merge() — ровно трёх, zip() — четырёх.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три перегружены для произвольного числа источников (Iterable, vararg).",
+                "source_of_confusion": "Произвольная придумка.",
+                "if_it_were_true": "Документация имела бы строгие ограничения по числу аргументов.",
+                "how_it_should_be": "Все три принимают любое число Publisher: 2, 3, N."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "merge(p1, p2, ...) — одновременная подписка на все источники, элементы перемешиваются по мере поступления, завершается когда все источники завершились; concat(p1, p2, ...) — последовательная подписка (сначала весь p1, потом p2 и т.д.), порядок сохраняется; zip(p1, p2, combinator) — попарное объединение, завершается как только закончился самый короткий источник.",
+              "correct": true,
+              "sections": {
+                "explanation": "merge для независимых параллельных потоков; concat для строгой последовательности; zip для синхронизированной попарной обработки.",
+                "example": "merge(fastFlux, slowFlux) перемешивает; concat сохраняет порядок; zip даёт Tuple2 или результат combinator-функции.",
+                "when_to_apply": "merge — стриминг от нескольких источников; concat — pipeline-задачи; zip — синхронизированные данные (например, параллельные запросы с одинаковой кардинальностью).",
+                "edge_cases": "zip завершается по самому короткому — другие источники cancelятся; merge не гарантирует порядок даже при одинаковой скорости.",
+                "related": "Q20 combineLatest; Q21 zipWith; Q11 map/flatMap."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все три оператора работают только с Mono, не с Flux.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три работают как с Mono, так и с Flux; чаще используются с Flux.",
+                "source_of_confusion": "Сходство с CompletableFuture.thenCombine() (мономорфным).",
+                "if_it_were_true": "Не было бы Flux.merge() в API.",
+                "how_it_should_be": "Все три универсальны — Mono и Flux одинаково поддерживаются."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое combineLatest() и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "combineLatest идентичен zip.",
+              "correct": false,
+              "sections": {
+                "what_actually": "zip ждёт нового элемента от каждого источника попарно; combineLatest реагирует на новый элемент от любого источника, используя последние известные значения других.",
+                "source_of_confusion": "Оба комбинируют значения из нескольких источников.",
+                "if_it_were_true": "Не было бы двух операторов в API.",
+                "how_it_should_be": "zip = strict pairing; combineLatest = reactive composition with latest values."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это оператор для агрегации (reduce) элементов одного Flux.",
+              "correct": false,
+              "sections": {
+                "what_actually": "combineLatest объединяет несколько Publisher; reduce работает с одним.",
+                "source_of_confusion": "Слово combine ассоциируется с агрегацией.",
+                "if_it_were_true": "Сигнатура принимала бы один Publisher, а не несколько.",
+                "how_it_should_be": "Агрегация одного потока — reduce/scan; combineLatest — кросс-источниковая композиция."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "combineLatest работает только с CompletableFuture.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это оператор Reactor, работает с Mono/Flux.",
+                "source_of_confusion": "Аналогичное название thenCombine() в CompletableFuture.",
+                "if_it_were_true": "Метод был бы в JDK, а не в Reactor.",
+                "how_it_should_be": "combineLatest — оператор Flux для комбинирования реактивных источников."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "combineLatest(publisher1, publisher2, combinator) — при получении нового элемента от любого источника объединяет его с последним известным значением из остальных источников; начинает эмитить только когда каждый источник эмитнул хотя бы один элемент.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полезно для слежения за состоянием нескольких независимо обновляемых сигналов: фильтры в UI, реактивные конфиги, multi-criteria search.",
+                "example": "Flux.combineLatest(query$, category$, (q, c) -> search(q, c)) — переисчисление при изменении любого фильтра.",
+                "when_to_apply": "Реактивные UI с несколькими источниками сигналов, переисчисление при изменении одного из входных параметров.",
+                "edge_cases": "Если один из источников никогда не эмитит, combineLatest не сработает; для cold source с одним значением — нет смысла.",
+                "related": "Q19 merge/concat/zip; Q21 zipWith/withLatestFrom; Q33 Context."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между zipWith() и withLatestFrom()?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "zipWith(other) — попарное объединение текущего Flux с другим, ожидает элементы от обоих; withLatestFrom(other, combinator) — комбинирует каждый элемент текущего Flux с последним значением из other; если other ещё не эмитировал — элемент пропускается.",
+              "correct": true,
+              "sections": {
+                "explanation": "В zipWith основной поток ждёт пары; в withLatestFrom основной поток управляет темпом, а второй просто служит контекстом. withLatestFrom — паттерн «при тике добавь текущее состояние».",
+                "example": "ticks.withLatestFrom(updates, (tick, upd) -> tick + ': ' + upd) — каждый тик с последним апдейтом.",
+                "when_to_apply": "withLatestFrom — когда есть основной триггер и метаданные; zipWith — когда оба источника одинаково важны.",
+                "edge_cases": "Если other пустой — withLatestFrom не эмитит ничего; zipWith ждёт первого элемента вечно.",
+                "related": "Q19 merge/concat/zip; Q20 combineLatest; Q38 операторы времени."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "zipWith медленнее в 100 раз из-за буферизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Производительность сопоставима; различие — в семантике.",
+                "source_of_confusion": "Гипербола без бенчмарков.",
+                "if_it_were_true": "Документация рекомендовала бы избегать zipWith.",
+                "how_it_should_be": "Выбор по семантике, не по абстрактной скорости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "withLatestFrom — устаревший псевдоним zipWith.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба оператора актуальны и имеют разное поведение.",
+                "source_of_confusion": "Слух о deprecation.",
+                "if_it_were_true": "JavaDoc был бы помечен @Deprecated.",
+                "how_it_should_be": "Оба активны, выбор по семантике."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Оба оператора идентичны и взаимозаменяемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Семантика разная: zipWith требует нового элемента от обоих источников; withLatestFrom — нового от первичного и последнего из второстепенного.",
+                "source_of_confusion": "Сходное название.",
+                "if_it_were_true": "Документация дублировала бы один метод дважды.",
+                "how_it_should_be": "zipWith = strict pairing; withLatestFrom = primary stream drives the combination."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие операторы используются для обработки ошибок в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Reactor ошибки нельзя перехватывать — они всегда останавливают поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor предоставляет богатый набор: onErrorReturn, onErrorResume, onErrorMap, onErrorContinue, onErrorComplete, retry, retryWhen, timeout.",
+                "source_of_confusion": "По умолчанию ошибка действительно завершает поток.",
+                "if_it_were_true": "Не было бы примеров fallback-сервисов.",
+                "how_it_should_be": "Ошибки в Reactor — обрабатываемые сигналы; широкий набор операторов для их обработки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "onErrorReturn(value) — статическое значение по умолчанию; onErrorResume(Function<Throwable,Publisher<T>>) — переключение на другой Publisher; onErrorMap(Function<Throwable,Throwable>) — трансформация типа исключения; onErrorComplete() — завершить поток без ошибки; retry(n)/retryWhen(spec) — повторная подписка; timeout(duration) — Timeout-исключение.",
+              "correct": true,
+              "sections": {
+                "explanation": "Reactor предлагает многоуровневую обработку: трансформация типа, fallback на другой источник, статическое значение, retry-стратегия. Можно фильтровать по типу ошибки.",
+                "example": "service.call().onErrorMap(SQLException.class, RepositoryException::new).onErrorResume(RepositoryException.class, ex -> cache.get(id)).onErrorReturn(default).",
+                "when_to_apply": "Сложные пайплайны с многоуровневым fallback (БД → кэш → дефолт); трансформация инфраструктурных исключений в доменные.",
+                "edge_cases": "doOnError не обрабатывает ошибку — только side-effect; цепочка onError* применяется сверху вниз.",
+                "related": "Q23 onErrorReturn vs onErrorResume; Q24 onErrorMap; Q25 retry/retryWhen."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только try/catch вокруг subscribe() — других механизмов нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "try/catch вокруг subscribe бесполезен: ошибки в реактивной цепочке доставляются через onError, а не как throw.",
+                "source_of_confusion": "Привычка к императивному обработке.",
+                "if_it_were_true": "Все примеры в документации использовали бы try/catch.",
+                "how_it_should_be": "Использовать onError-операторы внутри цепочки или Consumer<Throwable> в subscribe."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только doOnError(consumer) — это единственный обработчик ошибок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "doOnError — side-effect callback, не обработчик; ошибка после него продолжает распространение.",
+                "source_of_confusion": "Похожее название на onError.",
+                "if_it_were_true": "doOnError(log::error) преобразовывал бы ошибку в успех.",
+                "how_it_should_be": "doOnError — наблюдение; обработка — onError*-операторы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между onErrorReturn() и onErrorResume()?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "onErrorReturn возвращает Mono.error(), а onErrorResume — Mono.empty().",
+              "correct": false,
+              "sections": {
+                "what_actually": "onErrorReturn заменяет ошибку фиксированным значением; onErrorResume переключается на другой Publisher (значение, источник или новая ошибка).",
+                "source_of_confusion": "Префиксы onError создают иллюзию схожести.",
+                "if_it_were_true": "Оба оператора были бы no-op.",
+                "how_it_should_be": "onErrorReturn = static value; onErrorResume = dynamic Publisher."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оба оператора идентичны, onErrorReturn — устаревший псевдоним.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они принимают разные типы аргументов и имеют разную семантику.",
+                "source_of_confusion": "Похожие имена.",
+                "if_it_were_true": "JavaDoc помечал бы один из них @Deprecated.",
+                "how_it_should_be": "Два самостоятельных оператора с разной семантикой."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "onErrorReturn(T) — при ошибке возвращает фиксированное статическое значение и завершает поток успешно; onErrorResume(Function<Throwable,Publisher<T>>) — переключается на другой Publisher, позволяя реализовать динамический fallback (например, обращение к резервному сервису).",
+              "correct": true,
+              "sections": {
+                "explanation": "onErrorReturn — простейший fallback на константу; onErrorResume — гибкий механизм с возможностью обращения к другому источнику или генерации новой ошибки.",
+                "example": "primary.call().onErrorReturn(\"default\") vs primary.call().onErrorResume(ex -> backup.call()).",
+                "when_to_apply": "onErrorReturn — для значения по умолчанию; onErrorResume — для альтернативного источника или цепочки сервисов.",
+                "edge_cases": "Оба можно фильтровать по типу: onErrorReturn(SQLException.class, default); если тип не совпал — ошибка пропускается дальше.",
+                "related": "Q22 общая обработка ошибок; Q24 onErrorMap; Q17 switchIfEmpty."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "onErrorReturn перехватывает любые исключения, а onErrorResume только RuntimeException.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба обрабатывают любой Throwable; различие — в типе результата (значение vs Publisher).",
+                "source_of_confusion": "Произвольно придуманное ограничение.",
+                "if_it_were_true": "Документация подчёркивала бы это ограничение.",
+                "how_it_should_be": "Оба обрабатывают любые исключения; фильтрация по типу — опциональный параметр."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает оператор onErrorMap()?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Преобразует элементы потока (а не ошибки) в Map<String,Object>.",
+              "correct": false,
+              "sections": {
+                "what_actually": "onErrorMap работает только с Throwable, не с потоком данных; для преобразования элементов нужен map.",
+                "source_of_confusion": "Слово Map ассоциируется со словарём.",
+                "if_it_were_true": "Сигнатура принимала бы Function<T, Map<String,Object>>.",
+                "how_it_should_be": "Map в onErrorMap — глагол «отобразить», не существительное «словарь»."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Заменяет ошибку значением null.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor не допускает null в потоке; для подавления ошибки используют onErrorReturn/onErrorComplete.",
+                "source_of_confusion": "Привычка к null как fallback.",
+                "if_it_were_true": "Mono.just(null) был бы допустим.",
+                "how_it_should_be": "Подавление ошибки — onErrorReturn(value) или onErrorComplete(); onErrorMap трансформирует тип."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Создаёт HashMap из всех ошибок цепочки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Reactor нет аккумуляции ошибок в коллекцию; первая ошибка обычно завершает поток.",
+                "source_of_confusion": "Опять же ассоциация с Map-коллекцией.",
+                "if_it_were_true": "Оператор возвращал бы Mono<Map<Throwable, ...>>.",
+                "how_it_should_be": "onErrorMap трансформирует ОДНО исключение в ОДНО другое; не аккумулирует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "onErrorMap(Function<Throwable,Throwable>) преобразует тип Throwable без изменения потока данных — реактивный аналог императивного «catch (LowLevelEx e) { throw new HighLevelEx(e); }»; полезен для оборачивания инфраструктурных исключений в доменные.",
+              "correct": true,
+              "sections": {
+                "explanation": "Не подавляет ошибку — она продолжает распространяться, но с другим типом. Часто используется в цепочке: сначала onErrorMap (инфра → домен), затем onErrorResume (fallback).",
+                "example": "repo.findById(id).onErrorMap(SQLException.class, ex -> new RepositoryException(\"DB unavailable\", ex)).",
+                "when_to_apply": "Изоляция слоёв: persistence-исключения → доменные; внешние API-ошибки → собственные.",
+                "edge_cases": "onErrorMap с типом ошибки не пропустит другие типы; цепочка фильтрации работает по принципу первого совпадения.",
+                "related": "Q22 обработка ошибок; Q23 onErrorReturn/onErrorResume; Q25 retry/retryWhen."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают операторы retry() и retryWhen() в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "retry(n) — при ошибке повторно подписывается на источник до n раз (простая стратегия без задержек и фильтрации); retryWhen(RetrySpec) — расширенная стратегия: экспоненциальный backoff, jitter, максимум попыток, фильтрация по типу ошибки, кастомизация onRetryExhausted; для Flux retry перезапускает всю последовательность с начала.",
+              "correct": true,
+              "sections": {
+                "explanation": "retry — простой счётчик; retryWhen использует Retry.backoff/Retry.fixedDelay из reactor.util.retry с богатой конфигурацией. Важно: retry перезапускает upstream, что для Flux означает повтор всех элементов.",
+                "example": "retryWhen(Retry.backoff(3, Duration.ofMillis(100)).maxBackoff(Duration.ofSec(5)).jitter(0.5).filter(ex -> ex instanceof TransientException)).",
+                "when_to_apply": "retry — для простых временных ошибок; retryWhen — для production-сценариев с экспоненциальным отступом, jitter и условной фильтрацией.",
+                "edge_cases": "retry на бесконечном Flux может маскировать постоянную ошибку; retryWhen без maxAttempts даёт infinite retry; jitter снижает thundering herd при множестве клиентов.",
+                "related": "Q22 обработка ошибок; Q24 onErrorMap; Q39 timeout."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "retry() и retryWhen() блокируют поток до завершения попыток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба оператора реактивны и не блокируют; задержки реализуются через Scheduler.",
+                "source_of_confusion": "Воспринимаемое сходство с императивным retry-with-sleep.",
+                "if_it_were_true": "Эти операторы не работали бы на event loop Netty.",
+                "how_it_should_be": "Reactive retry — через Scheduler.delay, без блокировки потока."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "retry(n) — резервирует n потоков из пула.",
+              "correct": false,
+              "sections": {
+                "what_actually": "retry не управляет пулом потоков напрямую; повторная подписка использует существующий Scheduler.",
+                "source_of_confusion": "Перепутаны механизмы конкурентности.",
+                "if_it_were_true": "retry(1000) приводил бы к исчерпанию пула.",
+                "how_it_should_be": "retry — про количество попыток, а не про потоки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "retry() работает только с HTTP-запросами WebClient.",
+              "correct": false,
+              "sections": {
+                "what_actually": "retry — универсальный оператор Reactor Core, применим к любому Mono/Flux.",
+                "source_of_confusion": "Самый частый сценарий retry — действительно HTTP-вызовы.",
+                "if_it_were_true": "retry был бы в spring-webflux, а не в reactor-core.",
+                "how_it_should_be": "Универсальный оператор для любых реактивных источников."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Exceptions.propagate() и когда его применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это альтернатива retry — повторяет операцию при ошибке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Exceptions.propagate — утилита для оборачивания checked-исключений; никакого retry не реализует.",
+                "source_of_confusion": "Слово propagate можно интерпретировать как «продолжить попытки».",
+                "if_it_were_true": "Не нужны были бы операторы retry/retryWhen.",
+                "how_it_should_be": "Exceptions.propagate = wrap checked exception; retry = повторение операции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Утилита из reactor.core.Exceptions, оборачивающая checked-исключение в RuntimeException, чтобы можно было бросать его из лямбды (где throws не разрешён); парный метод Exceptions.unwrap() извлекает оригинальное исключение в обработчике.",
+              "correct": true,
+              "sections": {
+                "explanation": "В лямбдах map/flatMap нельзя бросать checked-исключения. propagate оборачивает их в Reactor-специфичную RuntimeException, которую затем можно развернуть через unwrap. Error и RuntimeException пробрасываются как есть.",
+                "example": "map(file -> { try { return Files.readString(Path.of(file)); } catch (IOException e) { throw Exceptions.propagate(e); } }).",
+                "when_to_apply": "Интеграция с API, бросающими checked-исключения (IO, JDBC, Reflection); затем .onErrorResume или Exceptions.unwrap в catch.",
+                "edge_cases": "Обычный throw new RuntimeException(e) тоже работает, но Exceptions.propagate сохраняет правильный класс-обёртку для unwrap; стек unwrap корректнее распознаёт оригинал.",
+                "related": "Q22 обработка ошибок; Q24 onErrorMap; Q43 отладка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это глобальный обработчик всех необработанных исключений (как Thread.UncaughtExceptionHandler).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Глобальные хуки — это Hooks.onErrorDropped и т.п.; propagate — локальная утилита для оборачивания.",
+                "source_of_confusion": "Похожая на «глобальный» функционал терминология.",
+                "if_it_were_true": "Достаточно было бы одного вызова propagate в main().",
+                "how_it_should_be": "Глобальное — Hooks; локальное оборачивание checked — Exceptions.propagate."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это устаревший метод, заменённый на CompletableFuture.allOf().",
+              "correct": false,
+              "sections": {
+                "what_actually": "Exceptions.propagate активен; CompletableFuture не имеет к этому отношения.",
+                "source_of_confusion": "Слухи о deprecation.",
+                "if_it_were_true": "Не было бы примеров с Files.readString в реактивных пайплайнах.",
+                "how_it_should_be": "Exceptions.propagate — основная утилита для checked-исключений в Reactor."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Project Reactor реализует backpressure?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Через паузу в потоке Thread.sleep().",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backpressure в Reactor — на уровне сигналов Subscription.request(n), без блокировок потока.",
+                "source_of_confusion": "Идея «замедлить» через sleep кажется естественной.",
+                "if_it_were_true": "Reactor не работал бы на event loop.",
+                "how_it_should_be": "Сигнальный механизм через request(n), без блокировок."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Через выключение источника, когда Subscriber падает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При cancel источник отписывается; но backpressure — про регуляцию темпа, не про отключение.",
+                "source_of_confusion": "Cancel и backpressure оба влияют на поток сигналов.",
+                "if_it_were_true": "Не было бы понятия request(n) как способа замедлить, но не остановить.",
+                "how_it_should_be": "Backpressure = регуляция через request(n); cancel = терминальная отмена."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Reactor реализует backpressure через протокол Reactive Streams: подписчик контролирует темп через Subscription.request(n), Producer не имеет права отправить больше, чем запрошено; для операторов одного потока работает прозрачно, при переходе между потоками (publishOn) устанавливается внутренний буфер (SpscArrayQueue) ограниченного размера; ручное управление через BaseSubscriber.hookOnSubscribe/hookOnNext.",
+              "correct": true,
+              "sections": {
+                "explanation": "Между upstream и downstream передаются сигналы request(n); каждый оператор знает, сколько ещё может эмитнуть. publishOn создаёт queue, через которую сигналы перебрасываются между потоками, ограничивая память.",
+                "example": "BaseSubscriber: hookOnSubscribe { request(10); } hookOnNext(v) { process(v); if (v%10==0) request(10); } — порциями по 10.",
+                "when_to_apply": "Хочешь контролировать темп — наследуйся от BaseSubscriber; в большинстве случаев работает автоматически.",
+                "edge_cases": "Hot publisher (callback API) сам по себе не уважает request(n) — нужны onBackpressure*-операторы.",
+                "related": "Q4 backpressure; Q28 стратегии; Q29 limitRate."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Через synchronized-блоки на каждой операции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor использует lock-free структуры (SpscArrayQueue, MpscArrayQueue) и сигналы, без synchronized.",
+                "source_of_confusion": "Императивная аналогия с критическими секциями.",
+                "if_it_were_true": "Производительность была бы катастрофической.",
+                "how_it_should_be": "Lock-free сигнальный протокол + queue с ограничениями."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие стратегии backpressure существуют в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Существует только одна стратегия — буферизация всего без ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor предоставляет несколько стратегий: BUFFER (с ограничением размера), DROP, LATEST, ERROR.",
+                "source_of_confusion": "BUFFER — стратегия по умолчанию в Flux.create.",
+                "if_it_were_true": "OOM был бы неизбежен при медленном Subscriber.",
+                "how_it_should_be": "Выбор из onBackpressureBuffer/Drop/Latest/Error в зависимости от требований."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Backpressure управляется через атрибут @Backpressure на методе контроллера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такой аннотации не существует; управление — через операторы Reactor.",
+                "source_of_confusion": "Привычка к декларативным аннотациям Spring.",
+                "if_it_were_true": "Документация показывала бы примеры @Backpressure.",
+                "how_it_should_be": "onBackpressureBuffer/Drop/Latest/Error — программные операторы, не аннотации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Стратегии backpressure определяются исключительно в OS, а не в Reactor.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OS не управляет внутренним queue Reactor; стратегии реализованы на уровне библиотеки.",
+                "source_of_confusion": "Путаница с TCP backpressure (которое уже на уровне сокетов).",
+                "if_it_were_true": "Reactor не имел бы методов onBackpressure*.",
+                "how_it_should_be": "Reactor сам управляет стратегиями через дедикейтные операторы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "onBackpressureBuffer(maxSize, dropHandler, BufferOverflowStrategy) — буферизация с ограничением и callback; onBackpressureDrop(consumer) — отбрасывание новых элементов при переполнении (с callback); onBackpressureLatest() — хранение только последнего непрочитанного; onBackpressureError() — генерация Exceptions.failWithOverflow; используются для Hot publishers и callback-источников.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти операторы применяются между быстрым источником, не уважающим request(n), и медленным потребителем. Выбор стратегии зависит от семантики: BUFFER — все важны, DROP — новые не важны, LATEST — важно только последнее значение.",
+                "example": "stockPriceStream().onBackpressureLatest().publishOn(boundedElastic()).subscribe(this::display) — UI хочет только последнюю цену.",
+                "when_to_apply": "BUFFER + maxSize — gauge events; DROP — телеметрия с потерями; LATEST — состояние/значения с заменой; ERROR — fail-fast при перегрузке.",
+                "edge_cases": "Без maxSize у BUFFER → OOM; ERROR прерывает поток — нужно onErrorResume; LATEST теряет промежуточные значения.",
+                "related": "Q4 backpressure; Q27 реализация; Q29 limitRate."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает оператор limitRate() в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "limitRate(n) — управляет backpressure, запрашивая у upstream порциями по n элементов через Subscription.request(n); при потреблении 75% от полученной партии автоматически запрашивает следующую (prefetch); версия limitRate(highTide, lowTide) даёт явное управление порогом пополнения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандартный paddern: между быстрым источником и медленным потребителем установить limitRate, чтобы ограничить размер буфера. Также применяется для дросселирования Flux перед publishOn.",
+                "example": "Flux.range(1, 10000).limitRate(50).publishOn(boundedElastic()).subscribe(this::process) — request(50), затем при 38 потреблённых ещё request(38).",
+                "when_to_apply": "Реактивные пайплайны с большим объёмом данных, где нужно контролировать размер внутреннего буфера; интеграция с медленным потребителем.",
+                "edge_cases": "Слишком маленький highTide увеличивает overhead на request-сигналах; слишком большой — упрощает работу, но даёт большой буфер.",
+                "related": "Q27 backpressure; Q28 стратегии; Q31 publishOn."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Ограничивает скорость через Thread.sleep между элементами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "limitRate использует механизм сигналов request(n); никаких sleep нет.",
+                "source_of_confusion": "Аналогия с rate-limiter в HTTP-клиентах.",
+                "if_it_were_true": "Поток блокировался бы между элементами.",
+                "how_it_should_be": "Реактивный rate-control через request, не через sleep."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ограничивает число подписчиков на Flux.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Количество подписчиков ограничивается другими механизмами (например, share().refCount(n)).",
+                "source_of_confusion": "Слово rate ассоциируется с числом запросов или клиентов.",
+                "if_it_were_true": "limitRate имел бы сигнатуру с предикатом-фильтром подписчиков.",
+                "how_it_should_be": "limitRate — про темп обмена сигналами; ограничение подписчиков — refCount/autoConnect."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это HTTP-клиентский оператор для rate-limiting запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это оператор Reactor Core, применим к любому Flux; не специфичен для HTTP.",
+                "source_of_confusion": "Сходство со словом rate-limiter в HTTP.",
+                "if_it_were_true": "Метод был бы в spring-webflux.",
+                "how_it_should_be": "Универсальный оператор Reactor Core для управления backpressure."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие Schedulers существуют в Project Reactor и для чего они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Reactor есть только один Scheduler — main.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor предоставляет immediate, single, parallel, boundedElastic, fromExecutor, newSingle, newParallel и др.",
+                "source_of_confusion": "Привычка к одному event-loop.",
+                "if_it_were_true": "Невозможно было бы изолировать блокирующий код в отдельный пул.",
+                "how_it_should_be": "Reactor предлагает несколько Scheduler-ов для разных типов задач."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Schedulers.immediate() — выполнение в текущем потоке (для тестов/sync кода); Schedulers.single() — один shared переиспользуемый поток; Schedulers.parallel() — N потоков по числу CPU (для CPU-intensive операций); Schedulers.boundedElastic() — динамический пул с лимитом 10×CPU потоков и очередью (для блокирующих I/O); Schedulers.fromExecutor() — адаптер; newSingle/newParallel — изолированные пулы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор Scheduler определяет, где будут выполняться операторы. boundedElastic — для безопасного запуска блокирующих вызовов; parallel — для CPU-intensive; single — для serialized задач.",
+                "example": "Mono.fromCallable(() -> jdbc.find(id)).subscribeOn(boundedElastic()) — JDBC в boundedElastic-пуле, не блокируя event loop.",
+                "when_to_apply": "boundedElastic — JDBC/JMS/file I/O; parallel — параллельная обработка; single — sequenced задачи; immediate — синхронные тесты.",
+                "edge_cases": "Запуск блокирующего кода на parallel приводит к starvation; boundedElastic ограничен 10×CPU потоков по умолчанию.",
+                "related": "Q31 subscribeOn vs publishOn; Q32 ParallelFlux; Q47 block()."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Schedulers нужны только для тестирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Schedulers — фундаментальная часть Reactor; используются в продакшене постоянно.",
+                "source_of_confusion": "VirtualTimeScheduler действительно для тестов.",
+                "if_it_were_true": "Spring WebFlux не использовал бы boundedElastic для блокирующих интеграций.",
+                "how_it_should_be": "Schedulers — основной механизм управления потоками в реактивных приложениях."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Каждый Scheduler создаётся отдельно для каждого Flux.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Schedulers — shared синглтоны (parallel, boundedElastic, single); один Scheduler обслуживает множество Flux.",
+                "source_of_confusion": "Не понимаются жизненные циклы.",
+                "if_it_were_true": "На каждый запрос создавался бы новый пул потоков → исчерпание ресурсов.",
+                "how_it_should_be": "Schedulers — длинноживущие синглтоны; newSingle/newParallel — для редких изолированных случаев."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между subscribeOn() и publishOn() в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "subscribeOn применяется к Mono, publishOn к Flux.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба применяются и к Mono, и к Flux; различие — в позиции в цепочке.",
+                "source_of_confusion": "Поверхностное знакомство с операторами.",
+                "if_it_were_true": "Mono.publishOn не существовал бы.",
+                "how_it_should_be": "Оба универсальны; различие в семантике переключения потока."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оба оператора идентичны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Существенное различие: subscribeOn влияет на upstream (создание + операторы выше), publishOn — на downstream (операторы ниже).",
+                "source_of_confusion": "Имена начинаются с одинакового корня.",
+                "if_it_were_true": "Документация не выделяла бы их в отдельные главы.",
+                "how_it_should_be": "subscribeOn = upstream context; publishOn = downstream context switch."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "subscribeOn(Scheduler) меняет поток выполнения от источника (влияет на источник и операторы выше), один subscribeOn определяет поток для всего upstream; publishOn(Scheduler) меняет поток для операторов, следующих за ним (downstream), каждый publishOn в цепочке создаёт новый switch точку.",
+              "correct": true,
+              "sections": {
+                "explanation": "Типичный паттерн: subscribeOn(boundedElastic) для блокирующего источника + publishOn(parallel) для CPU-обработки. subscribeOn применяется только один раз — самый близкий к источнику.",
+                "example": "Mono.fromCallable(blockingCall()).subscribeOn(boundedElastic()).publishOn(parallel()).map(this::cpuWork).",
+                "when_to_apply": "subscribeOn — изоляция блокирующего источника; publishOn — переключение downstream-операторов на другой пул.",
+                "edge_cases": "Несколько subscribeOn в цепочке — только первый (ближайший к источнику) учитывается; multiple publishOn создают многократные переключения.",
+                "related": "Q30 Schedulers; Q32 ParallelFlux; Q47 block()."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "subscribeOn вызывается при подписке, publishOn — при отписке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба активны в течение всей жизни подписки; semantics — про переключение потока, не про события жизненного цикла.",
+                "source_of_confusion": "Префиксы subscribe/publish могут вводить в заблуждение.",
+                "if_it_were_true": "Они бы вызывались по событиям onSubscribe/onComplete.",
+                "how_it_should_be": "Оба определяют контекст выполнения операторов, а не привязаны к событиям."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ParallelFlux и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это устаревший тип, вместо него нужно использовать flatMap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ParallelFlux активен и предоставляет более явное партиционирование, чем flatMap.",
+                "source_of_confusion": "flatMap действительно умеет распараллеливать.",
+                "if_it_were_true": "Документация помечала бы метод parallel() как @Deprecated.",
+                "how_it_should_be": "ParallelFlux — рекомендованный способ явного партиционирования; flatMap — для асинхронных вложенных вызовов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Псевдоним Flux с другим именем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ParallelFlux — отдельный класс; не все операторы Flux доступны; требуется sequential() для возврата к Flux.",
+                "source_of_confusion": "Сходство в названии.",
+                "if_it_were_true": "Можно было бы сразу применять map/filter без runOn().",
+                "how_it_should_be": "ParallelFlux — специализированный тип с собственным API rails."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это контейнер для ParallelStream из Java 8.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ParallelFlux — реактивный тип; ParallelStream — Java 8 Streams. Они независимы.",
+                "source_of_confusion": "Похожее имя.",
+                "if_it_were_true": "ParallelFlux зависел бы от Stream API.",
+                "how_it_should_be": "ParallelFlux — Reactor-специфичное партиционирование на rails."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ParallelFlux<T> — специальный тип Flux, который разбивает поток на N «рельс» (rails) для параллельной обработки; создаётся через flux.parallel(N); каждая рельса обрабатывается независимо на указанном Scheduler через runOn(); возврат к обычному Flux — sequential(); обеспечивает явный, предсказуемый параллелизм.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от flatMap с параллельным Scheduler, ParallelFlux разбивает данные по rails round-robin, гарантируя количество параллельных задач = number of rails. Сохраняется при последующей агрегации (reduce, sum).",
+                "example": "Flux.range(1,1000).parallel(4).runOn(Schedulers.parallel()).map(this::heavyComputation).sequential().",
+                "when_to_apply": "CPU-intensive обработка большого числа элементов с известной заранее степенью параллелизма; map-reduce паттерны.",
+                "edge_cases": "Не все операторы Flux доступны на ParallelFlux; требует runOn() для активации Scheduler; sequential() возвращает к обычному Flux.",
+                "related": "Q30 Schedulers; Q31 subscribeOn/publishOn; Q11 map/flatMap."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Context в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Context — неизменяемая (immutable) карта пар ключ-значение, реактивный аналог ThreadLocal, которая распространяется снизу вверх по цепочке (от подписчика к источнику); contextWrite на нижнем уровне пишет, deferContextual на верхнем читает; используется для передачи userId, traceId, locale без явной передачи параметров.",
+              "correct": true,
+              "sections": {
+                "explanation": "ThreadLocal не работает в реактивном коде — поток меняется между операторами. Context — структурное решение: данные передаются на уровне реактивной цепочки, а не привязаны к потоку.",
+                "example": "process().contextWrite(ctx -> ctx.put(\"traceId\", id)) + Mono.deferContextual(ctx -> useTraceId(ctx.get(\"traceId\"))).",
+                "when_to_apply": "Трейсинг (MDC, traceId), авторизация (userId, roles), локализация (locale) — везде, где раньше использовали ThreadLocal.",
+                "edge_cases": "Context immutable: put возвращает новый Context; reactor-extra включает ContextSnapshot для интеграции с MDC.",
+                "related": "Q34 запись/чтение; Q43 отладка; Q46 WebFlux."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Context — это ThreadLocal в реактивном виде, который меняется с потоком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Context привязан к реактивной цепочке, а не к потоку. ThreadLocal не работает после publishOn.",
+                "source_of_confusion": "Семантическое сходство с ThreadLocal.",
+                "if_it_were_true": "После publishOn значение Context терялось бы.",
+                "how_it_should_be": "Context — структурное решение, переживающее смену потока."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Context передаётся сверху вниз, как параметр метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Context передаётся снизу вверх (от подписчика к источнику); пишется в конце цепочки, читается выше.",
+                "source_of_confusion": "Привычное направление чтения сверху вниз.",
+                "if_it_were_true": "contextWrite применялся бы в начале цепочки.",
+                "how_it_should_be": "contextWrite — на финале цепочки, deferContextual — выше."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это устаревший аналог Spring ApplicationContext.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные сущности: Spring ApplicationContext — DI-контейнер; Reactor Context — структурное хранилище в цепочке.",
+                "source_of_confusion": "Сходство в названии.",
+                "if_it_were_true": "Context имел бы методы getBean().",
+                "how_it_should_be": "Reactor Context = data-only key-value store, привязанный к подписке."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как записывать и читать данные из Context в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Через статические методы Thread.currentThread().setContext(...).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Context не привязан к Thread; используются операторы Reactor (contextWrite, deferContextual).",
+                "source_of_confusion": "Аналогия с ThreadLocal API.",
+                "if_it_were_true": "Не нужен был бы отдельный Context API в Reactor.",
+                "how_it_should_be": "Только операторы: contextWrite для записи, deferContextual / transformDeferredContextual для чтения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запись — contextWrite(Function<Context,Context>) на любом уровне цепочки (применяется в направлении upstream); чтение — Mono.deferContextual(ctx -> ...) / Flux.deferContextual / transformDeferredContextual((flux, ctx) -> ...); ключ может быть String или Class<T>.",
+              "correct": true,
+              "sections": {
+                "explanation": "contextWrite применяется на нижнем уровне цепочки и распространяется вверх. Когда верхний оператор читает через deferContextual, он получает значение, записанное любым downstream contextWrite.",
+                "example": "service.process().contextWrite(ctx -> ctx.put(\"userId\", req.getUserId())); внутри service: Mono.deferContextual(ctx -> findUser(ctx.<String>get(\"userId\"))).",
+                "when_to_apply": "Сквозная передача данных через цепочки сервисов (traceId, userId, locale); интеграция с MDC через doOnEach + Hooks.",
+                "edge_cases": "ctx.get(missingKey) бросит NoSuchElementException; используйте getOrDefault. Context propagation на subscribeOn-боундери требует поддержки в Scheduler.",
+                "related": "Q33 Context; Q43 отладка; Q46 WebFlux."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Запись и чтение — через map(ctx -> ctx.put(...)).",
+              "correct": false,
+              "sections": {
+                "what_actually": "map работает с элементами потока, а не с Context; для Context — отдельные операторы.",
+                "source_of_confusion": "Привычка решать всё через map.",
+                "if_it_were_true": "Context был бы частью каждого элемента.",
+                "how_it_should_be": "contextWrite / deferContextual — специализированные операторы для Context."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Через REST API контекстного сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Context — внутренняя структура Reactor, не требует REST-сервиса.",
+                "source_of_confusion": "Произвольная интерпретация.",
+                "if_it_were_true": "Требовалось бы поднять отдельный сервис для Context.",
+                "how_it_should_be": "Локальная in-memory структура, привязанная к Subscription."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между Cold и Hot publisher в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cold — синхронный, Hot — асинхронный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба могут быть синхронными или асинхронными; различие — в моменте начала эмиссии и независимости от подписчиков.",
+                "source_of_confusion": "Терминология температуры.",
+                "if_it_were_true": "Mono.just (cold) был бы синхронным, а Flux.interval (cold с задержкой) — асинхронным.",
+                "how_it_should_be": "Cold/Hot — про lazy vs eager эмиссию, а не про синхронность."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это идентичные понятия с разными именами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это противоположные характеристики Publisher.",
+                "source_of_confusion": "Поверхностное знакомство с терминами.",
+                "if_it_were_true": "Документация не выделяла бы их в отдельную главу.",
+                "how_it_should_be": "Cold = lazy per subscriber; Hot = active shared producer."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cold publisher — ленивый, не начинает генерировать данные до подписки; каждый подписчик получает независимую копию данных с самого начала (как HTTP-запрос). Hot publisher — активный, генерирует данные независимо от подписчиков; подписчики получают только элементы, эмитированные после подписки (как WebSocket, Kafka-стрим, UI-события). По умолчанию все Flux/Mono в Reactor — Cold.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cold: каждый subscribe() запускает источник заново. Hot: источник работает постоянно, поток шарится между подписчиками. Различие критично для проектирования: реактивный HTTP-вызов — cold, broadcast-события — hot.",
+                "example": "Cold: webClient.get().retrieve().bodyToMono(...) — каждая подписка = новый запрос. Hot: stockPriceStream() — все подписчики видят одни и те же тики.",
+                "when_to_apply": "Cold — для idempotent операций (HTTP, query, computation); Hot — для broadcast, событий, UI-апдейтов.",
+                "edge_cases": "Cold с побочными эффектами на каждую подписку — частая ошибка; Hot без backpressure — риск переполнения буфера.",
+                "related": "Q36 cold → hot; Q37 ConnectableFlux; Q4 backpressure."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cold работает только в Spring WebFlux, Hot — только в Spring MVC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это понятия Reactor, независимые от Spring; работают в любом контексте.",
+                "source_of_confusion": "Spring WebFlux реактивен, MVC — нет; ложная привязка.",
+                "if_it_were_true": "Невозможно было бы использовать hot publishers в desktop-приложениях.",
+                "how_it_should_be": "Cold/Hot — общие концепции Reactor, не зависят от Spring."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как преобразовать Cold publisher в Hot в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Невозможно — это разные типы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor предоставляет несколько способов: share(), publish().connect(), publish().autoConnect(n), publish().refCount(n), cache().",
+                "source_of_confusion": "Терминологическая дихотомия.",
+                "if_it_were_true": "Не было бы метода share() в API.",
+                "how_it_should_be": "share/publish/cache — стандартные способы конвертации Cold → Hot."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только через flatMap(Function.identity()).",
+              "correct": false,
+              "sections": {
+                "what_actually": "flatMap не меняет cold/hot природу источника.",
+                "source_of_confusion": "Поверхностная интуиция.",
+                "if_it_were_true": "После flatMap каждая подписка не запускала бы upstream заново.",
+                "how_it_should_be": "Для конвертации — share/publish/cache, не flatMap."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Через Flux.fromHot().",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метода Flux.fromHot() не существует.",
+                "source_of_confusion": "Произвольное название.",
+                "if_it_were_true": "API имел бы прямой fabric-метод.",
+                "how_it_should_be": "Преобразование — через share/publish/cache на существующем cold Publisher."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "share() — multicast с автоподключением (первая подписка активирует, последняя отменяет); publish() возвращает ConnectableFlux, требующий ручного connect(); publish().autoConnect(n) — автозапуск при n подписчиках; publish().refCount(n) — автоподключение + автоотключение при 0 подписчиков; cache() — replay + hot (кэширует все элементы); cache(n) — кэширует последние n.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор зависит от поведения: share — для динамических подписок; publish + connect — для контролируемого старта; cache — для broadcast с replay для late subscribers.",
+                "example": "Flux.interval(ms).share() — поток для всех подписчиков; cache() — отдаст всем элементы, накопленные с момента первой подписки.",
+                "when_to_apply": "share — UI-события; cache — конфигурация/состояние; publish().connect() — для синхронизированного старта нескольких подписчиков.",
+                "edge_cases": "cache() без ограничений → потенциальный OOM на бесконечном Flux; refCount(1) равноценен share()-у.",
+                "related": "Q35 cold/hot; Q37 ConnectableFlux; Q33 Context."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ConnectableFlux в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ConnectableFlux<T> — специальный тип Flux, который не начинает эмитить элементы до явного вызова connect(); позволяет «мультикастить» одну подписку на upstream нескольким подписчикам; создаётся через publish(); методы: connect() (возвращает Disposable), autoConnect(n) (автозапуск при n подписчиках), refCount(n) (автозапуск + автоотключение).",
+              "correct": true,
+              "sections": {
+                "explanation": "Решает проблему синхронизированного старта: все подписчики хотят начать получать элементы с одной и той же точки. publish() делает Flux multicast-ready, но не активирует — connect() запускает.",
+                "example": "ConnectableFlux<Long> cf = source.publish(); cf.subscribe(a); cf.subscribe(b); cf.connect(); — оба подписчика получат одни и те же события.",
+                "when_to_apply": "Тесты с синхронизированным стартом, broadcast-сервисы с контролируемым запуском.",
+                "edge_cases": "Подписка после connect() пропускает уже эмитированные элементы; не путать с share() (автоматический refCount).",
+                "related": "Q35 cold/hot; Q36 cold → hot; Q38 операторы времени."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это интерфейс для подключения к Redis Pub/Sub.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ConnectableFlux — внутренний тип Reactor; для Redis есть отдельные клиенты (Lettuce).",
+                "source_of_confusion": "Слово connect ассоциируется с сетевыми подключениями.",
+                "if_it_were_true": "ConnectableFlux был бы в spring-data-redis.",
+                "how_it_should_be": "Reactor-специфичный тип для multicast и контролируемого запуска."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ConnectableFlux — устаревший псевдоним Mono.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ConnectableFlux — отдельный класс для multi-subscriber сценариев; не связан с Mono.",
+                "source_of_confusion": "Произвольная путаница.",
+                "if_it_were_true": "Документация не выделяла бы его в отдельный раздел.",
+                "how_it_should_be": "Это специализация Flux для controlled-start multicast."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это контейнер для соединений к JDBC-пулу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Connection-пулы — отдельная тема (HikariCP, R2DBC); ConnectableFlux к ним не относится.",
+                "source_of_confusion": "Слово Connectable ассоциируется с базами данных.",
+                "if_it_were_true": "ConnectableFlux имел бы методы getConnection.",
+                "how_it_should_be": "Reactor-тип для multicast с контролируемым стартом эмиссии."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие операторы для работы со временем предоставляет Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только Thread.sleep().",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor имеет богатый набор временных операторов: interval, delayElements, delaySubscription, delayElement, timeout, elapsed, timestamp.",
+                "source_of_confusion": "Привычка к императивному коду.",
+                "if_it_were_true": "Реактивные временные пайплайны не работали бы без блокировок.",
+                "how_it_should_be": "Используйте операторы Reactor с Scheduler-ами вместо sleep."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "interval(Duration) — периодический Flux<Long> с тиками; delayElements(Duration) — задержка между элементами; delaySubscription(Duration) — задержка перед подпиской; delayElement(Duration) — задержка перед эмиссией для Mono; timeout(Duration) — TimeoutException при превышении ожидания; elapsed() — добавляет время с последнего элемента; timestamp() — добавляет Unix-timestamp.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все временные операторы используют Scheduler (по умолчанию Schedulers.parallel()); могут принимать кастомный Scheduler параметром.",
+                "example": "Flux.interval(Duration.ofSec(1)).take(10).timestamp() → 10 тиков с timestamp; Mono.delay(Duration.ofMs(500)) → задержанный Mono.",
+                "when_to_apply": "interval — heartbeat/polling; delayElements — троттлинг; delaySubscription — отложенный запуск; timeout — SLA.",
+                "edge_cases": "interval работает на parallel Scheduler — не блокируйте его; delayElements на огромном Flux может скушать кучу памяти буфера.",
+                "related": "Q39 timeout; Q41 virtual time; Q30 Schedulers."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только timeout(Duration).",
+              "correct": false,
+              "sections": {
+                "what_actually": "timeout — один из многих временных операторов.",
+                "source_of_confusion": "Самый известный временной оператор.",
+                "if_it_were_true": "Не было бы Flux.interval для periodic-задач.",
+                "how_it_should_be": "Reactor предоставляет полный спектр временных операторов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все временные операторы блокируют поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все временные операторы реактивны и не блокируют; задержки реализуются через Scheduler.",
+                "source_of_confusion": "Императивная аналогия.",
+                "if_it_were_true": "Flux.interval блокировал бы event loop.",
+                "how_it_should_be": "Задержки через ScheduledExecutorService внутри Scheduler, без блокировок."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает оператор timeout() в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "timeout блокирует поток на Duration.",
+              "correct": false,
+              "sections": {
+                "what_actually": "timeout не блокирует; задача-таймер запускается на Scheduler.",
+                "source_of_confusion": "Аналогия с Thread.join(timeout).",
+                "if_it_were_true": "Реактивный код терял бы преимущества при использовании timeout.",
+                "how_it_should_be": "Реактивный таймер через Scheduler, без блокировки потока."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "timeout — устаревший синоним take(Duration).",
+              "correct": false,
+              "sections": {
+                "what_actually": "take(Duration) ограничивает общее время и завершает поток успешно; timeout бросает ошибку при превышении ожидания элемента.",
+                "source_of_confusion": "Оба связаны со временем.",
+                "if_it_were_true": "Не было бы примеров с обработкой TimeoutException.",
+                "how_it_should_be": "take(Duration) = window of activity; timeout = max wait for next element."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "timeout(Duration) — если следующий элемент не поступил за указанное время, бросает TimeoutException и отменяет подписку; для Flux таймаут применяется к ожиданию КАЖДОГО следующего элемента, не общего времени; перегрузка timeout(Duration, Mono<T>) подставляет fallback Publisher вместо ошибки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Базовая защита от зависших источников. Для Flux важно: таймаут — на элемент, не на весь поток. Для контроля общего времени используют take(Duration).",
+                "example": "userService.findById(id).timeout(Duration.ofSec(3), Mono.just(User.anonymous())) — fallback при таймауте.",
+                "when_to_apply": "SLA для внешних сервисов; защита от зависших источников данных; circuit breaker pattern.",
+                "edge_cases": "timeout создаёт задачу на Scheduler — не используйте слишком часто на parallel; cleanup ресурсов upstream происходит через cancel.",
+                "related": "Q22 обработка ошибок; Q25 retry/retryWhen; Q38 операторы времени."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "timeout — это аннотация Spring для контроллеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "timeout — оператор Reactor; в Spring есть @Timeout в некоторых тестах, но не аннотация для контроллеров.",
+                "source_of_confusion": "Привычка к декларативным аннотациям.",
+                "if_it_were_true": "Применялся бы только в Spring-проектах.",
+                "how_it_should_be": "Reactor-оператор, доступный в любом контексте."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое StepVerifier и как его использовать для тестирования реактивных потоков?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это профайлер для Reactor.",
+              "correct": false,
+              "sections": {
+                "what_actually": "StepVerifier — инструмент тестирования из reactor-test для верификации сигналов в потоке.",
+                "source_of_confusion": "Слово verifier может ассоциироваться с тулзой анализа.",
+                "if_it_were_true": "Метод verify() не имел бы expect-API.",
+                "how_it_should_be": "StepVerifier = test utility для unit-тестов реактивных потоков."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "StepVerifier нужен только для проверки порядка элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "StepVerifier проверяет порядок, значения, ошибки, завершение, таймауты, cancellation, side-effects.",
+                "source_of_confusion": "Имя step намекает на пошаговую проверку, что верно, но порядок — только один аспект.",
+                "if_it_were_true": "Не было бы expectError и expectErrorMatches.",
+                "how_it_should_be": "Универсальный verifier для всех аспектов реактивного контракта."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это часть Reactor Core.",
+              "correct": false,
+              "sections": {
+                "what_actually": "StepVerifier — в отдельном модуле reactor-test, обычно подключается как testImplementation.",
+                "source_of_confusion": "Имя похоже на core-функциональность.",
+                "if_it_were_true": "Производственные приложения тащили бы тестовые зависимости.",
+                "how_it_should_be": "reactor-test — отдельный test-scope модуль."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "StepVerifier — утилита из reactor-test (io.projectreactor:reactor-test) для тестирования реактивных потоков; позволяет задавать ожидаемую последовательность сигналов через expectNext, expectComplete, expectError, expectNextCount, expectErrorMatches; вызов verify() запускает подписку и ждёт завершения; verify(Duration) с таймаутом; thenCancel() — для проверки cancellation.",
+              "correct": true,
+              "sections": {
+                "explanation": "StepVerifier подписывается на тестируемый Publisher и проверяет каждый сигнал согласно DSL. Не требует @Mock, работает с любыми Mono/Flux. Терминальные методы verify(), expectComplete().verify() запускают и блокируют тест до завершения.",
+                "example": "StepVerifier.create(flux).expectNext(1).expectNext(2, 3).expectComplete().verify();",
+                "when_to_apply": "Unit-тесты сервисов и операторов; интеграция с JUnit/TestNG.",
+                "edge_cases": "verify() блокирует тестовый поток до завершения; для долгих/бесконечных потоков используйте verify(Duration); withVirtualTime для time-based.",
+                "related": "Q41 virtual time; Q42 TestPublisher; Q43 отладка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать реактивные потоки, зависящие от времени, в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "StepVerifier.withVirtualTime(Supplier<Publisher>) — подставляет VirtualTimeScheduler вместо реальных Scheduler.parallel/single и др. на время теста; время «перематывается» через thenAwait(Duration) и expectNoEvent(Duration); тест Flux.interval(Duration.ofHours(1)).take(3) выполняется мгновенно вместо 3 часов; Supplier обязателен — Publisher создаётся внутри блока, чтобы Reactor успел подставить VirtualScheduler.",
+              "correct": true,
+              "sections": {
+                "explanation": "Virtual time работает только если Publisher создаётся внутри Supplier, переданного в withVirtualTime. Reactor подменяет Scheduler.parallel() на VirtualTimeScheduler через Schedulers.setFactory.",
+                "example": "StepVerifier.withVirtualTime(() -> Flux.interval(Duration.ofHours(1)).take(3)).thenAwait(Duration.ofHours(1)).expectNext(0L)....verify();",
+                "when_to_apply": "Любое тестирование операторов времени: interval, delay, timeout, debounce, sample.",
+                "edge_cases": "Если Publisher создан вне Supplier — virtual time не применится; не работает с кастомным Scheduler, который не использует Reactor-factory.",
+                "related": "Q40 StepVerifier; Q42 TestPublisher; Q38 операторы времени."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только моки через Mockito.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Моки помогают, но virtual time лучше для тестирования операторов времени.",
+                "source_of_confusion": "Mockito — общий инструмент.",
+                "if_it_were_true": "Тестирование interval/delay требовало бы кастомного моканья Scheduler.",
+                "how_it_should_be": "StepVerifier.withVirtualTime — целевой инструмент."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Через @Async и Future.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это конструкции для асинхронного выполнения; для тестирования времени Reactor предлагает специализированный инструмент.",
+                "source_of_confusion": "Произвольная аналогия.",
+                "if_it_were_true": "Reactor не предлагал бы StepVerifier.withVirtualTime.",
+                "how_it_should_be": "Virtual time через StepVerifier."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать Thread.sleep(realDuration) в тестах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor предоставляет StepVerifier.withVirtualTime для перематывания времени без реального ожидания.",
+                "source_of_confusion": "Императивная привычка.",
+                "if_it_were_true": "Тест Flux.interval(Duration.ofHours(1)).take(3) занимал бы 3 часа.",
+                "how_it_should_be": "withVirtualTime — мгновенное тестирование time-based потоков."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое TestPublisher в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это альтернативный Publisher для production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TestPublisher — только для тестов; production-Publisher — Mono/Flux/ConnectableFlux.",
+                "source_of_confusion": "Слово Publisher без префикса.",
+                "if_it_were_true": "Не было бы createNoncompliant.",
+                "how_it_should_be": "Тестовый инструмент, специально для unit-тестов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "TestPublisher<T> — инструмент из reactor-test, позволяющий вручную управлять эмиссией сигналов в тестах; методы: next(T...), complete(), error(Throwable), emit(T...); также createNoncompliant(Violation) для тестирования устойчивости к нарушениям спецификации Reactive Streams (например, ALLOW_NULL); используется когда нужно сэмулировать произвольные последовательности событий или ошибок.",
+              "correct": true,
+              "sections": {
+                "explanation": "TestPublisher даёт полный контроль над тем, что и когда происходит. StepVerifier.create(publisher.flux()).then(() -> publisher.next(...)).expectNext(...).verify() — типичный паттерн.",
+                "example": "TestPublisher<String> tp = TestPublisher.create(); StepVerifier.create(tp.flux().map(String::toUpperCase)).then(() -> tp.next(\"hello\")).expectNext(\"HELLO\").then(tp::complete).expectComplete().verify();",
+                "when_to_apply": "Тестирование операторов, обрабатывающих определённые последовательности сигналов; проверка устойчивости к нарушениям Reactive Streams.",
+                "edge_cases": "createNoncompliant отключает спецификационные проверки — для тестов того, как код реагирует на bad publishers; нельзя использовать в production.",
+                "related": "Q40 StepVerifier; Q41 virtual time; Q22 обработка ошибок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это deprecated синоним Sinks.Many.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TestPublisher и Sinks.Many — разные API для разных целей. TestPublisher для тестов; Sinks для production multicast.",
+                "source_of_confusion": "Оба позволяют программно эмитить элементы.",
+                "if_it_were_true": "JavaDoc был бы помечен @Deprecated.",
+                "how_it_should_be": "TestPublisher = тест; Sinks = production multicast."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это часть JUnit, а не Reactor.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TestPublisher — из reactor-test, специфичен для Reactor.",
+                "source_of_confusion": "Тестовая утилита часто ассоциируется с JUnit.",
+                "if_it_were_true": "Импортировался бы из org.junit.",
+                "how_it_should_be": "Reactor-specific testing utility."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 43,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие инструменты отладки реактивных цепочек предоставляет Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Реактивные потоки нельзя отлаживать — только через логи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor предоставляет богатый набор: log(), checkpoint(), Hooks.onOperatorDebug(), ReactorDebugAgent, doOnEach.",
+                "source_of_confusion": "Стек-трейсы Reactor действительно нечитаемы по умолчанию.",
+                "if_it_were_true": "Не было бы reactor-tools модуля.",
+                "how_it_should_be": "Set инструментов для отладки: log, checkpoint, Hooks.onOperatorDebug, ReactorDebugAgent."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только через Thread.dumpStack().",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stack dump не показывает структуру реактивной цепочки; нужны специализированные инструменты.",
+                "source_of_confusion": "Императивная привычка к отладке.",
+                "if_it_were_true": "Reactor не разрабатывал бы reactor-tools и Hooks.",
+                "how_it_should_be": "Используйте reactor-специфичные инструменты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "log(category) — логирует все сигналы (onSubscribe, request, onNext, onError, onComplete); checkpoint(description) — именованная точка для понятных стек-трейсов; Hooks.onOperatorDebug() — глобальное включение полных стек-трейсов (с overhead, только для разработки); ReactorDebugAgent.init() — Java-агент с минимальным overhead для продакшена; doOnEach(signal -> ...) — полный трейсинг каждого сигнала; reactor-tools модуль.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hooks.onOperatorDebug() даёт ассембли-стек для каждого оператора, что критично для понимания, где собран Publisher. ReactorDebugAgent — производственная альтернатива через bytecode instrumentation.",
+                "example": "flux.checkpoint(\"after-map\").map(this::convert).checkpoint(\"after-convert\").subscribe();",
+                "when_to_apply": "log — точечная отладка; checkpoint — выделение проблемных мест; Hooks.onOperatorDebug — глобально в dev; ReactorDebugAgent — production.",
+                "edge_cases": "Hooks.onOperatorDebug замедляет работу в 5-10 раз; ReactorDebugAgent безопасен для продакшена.",
+                "related": "Q44 checkpoint; Q45 Hooks; Q15 doOn-операторы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только через IDE-дебаггер с брейкпойнтами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "IDE-дебаггер ограниченно полезен в реактивном коде из-за асинхронности; нужны log/checkpoint.",
+                "source_of_confusion": "Привычка к IDE-отладке императивного кода.",
+                "if_it_were_true": "Не было бы log() и checkpoint() в Reactor.",
+                "how_it_should_be": "IDE + reactor-tools для эффективной отладки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 44,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое checkpoint() и как он помогает при отладке реактивных цепочек?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "checkpoint — устаревший псевдоним log().",
+              "correct": false,
+              "sections": {
+                "what_actually": "checkpoint и log решают разные задачи: log — логирует сигналы; checkpoint — добавляет ассембли-стек к ошибке.",
+                "source_of_confusion": "Оба связаны с отладкой.",
+                "if_it_were_true": "Один из них был бы помечен @Deprecated.",
+                "how_it_should_be": "log = signal logging; checkpoint = error trace assembly site."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "checkpoint сохраняет состояние Flux на диск.",
+              "correct": false,
+              "sections": {
+                "what_actually": "checkpoint — диагностический оператор, без сериализации; работает только в памяти.",
+                "source_of_confusion": "Слово checkpoint ассоциируется с recovery/persistence.",
+                "if_it_were_true": "Требовался бы параметр пути к файлу.",
+                "how_it_should_be": "Диагностика на уровне стек-трейса."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "checkpoint автоматически останавливает поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "checkpoint — пассивный оператор, не влияет на поток; добавляет метаданные для error tracing.",
+                "source_of_confusion": "Слово checkpoint в других контекстах означает паузу.",
+                "if_it_were_true": "Любой checkpoint ломал бы поток.",
+                "how_it_should_be": "Прозрачный оператор, без воздействия на сигналы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "checkpoint(description) — добавляет «точку сборки» (assembly site) в реактивную цепочку; при ошибке в стек-трейс включается информация о месте вызова checkpoint, помогая идентифицировать проблемный участок; checkpoint(description, true) — принудительный полный стек-трейс (с overhead); локальная альтернатива глобальному Hooks.onOperatorDebug().",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандартные стек-трейсы Reactor показывают внутренности оператора, а не пользовательский код. checkpoint добавляет на проблемный шаг название/описание, и при ошибке оно появится в trace.",
+                "example": "flux.checkpoint(\"before-division\").map(i -> 10/i).checkpoint(\"after-division\").subscribe(); → в трейсе будет 'Assembly site of checkpoint after-division'.",
+                "when_to_apply": "Локализованная отладка одного участка без глобального overhead; в production-коде на критических точках.",
+                "edge_cases": "checkpoint без forceStackTrace = lightweight (рекомендовано); с true — точный stack, но дороже.",
+                "related": "Q43 отладка; Q45 Hooks; Q15 doOn-операторы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 45,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Hooks и как использовать Hooks.onOperatorDebug() в Project Reactor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hooks — класс для глобальной настройки поведения операторов Reactor; Hooks.onOperatorDebug() включает полные ассембли-стек-трейсы для всех операторов (значительный overhead, только для dev); Hooks.onErrorDropped(consumer) перехватывает unhandled-ошибки; Hooks.onNextDropped(consumer) — отброшенные элементы; Hooks.resetOn*() — отмена; в production предпочтительнее ReactorDebugAgent (Java-агент без runtime overhead).",
+              "correct": true,
+              "sections": {
+                "explanation": "Hooks применяются глобально и навсегда (до reset). onOperatorDebug инструментирует каждый оператор для записи stack-trace в момент assembly — это позволяет в случае ошибки показать, где именно в коде был создан проблемный оператор.",
+                "example": "В main() приложения: Hooks.onOperatorDebug(); или ReactorDebugAgent.init() для производства.",
+                "when_to_apply": "onOperatorDebug — в dev/staging; ReactorDebugAgent — в production; onErrorDropped — глобальное логирование непойманных ошибок.",
+                "edge_cases": "Hooks.onOperatorDebug замедляет работу в 5-10 раз; ReactorDebugAgent безопаснее, но требует -javaagent или ReactorDebugAgent.init().",
+                "related": "Q43 отладка; Q44 checkpoint; Q22 обработка ошибок."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hooks — это аннотации Spring.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hooks — статический класс reactor.core.publisher.Hooks для глобальной настройки поведения операторов.",
+                "source_of_confusion": "Слово Hooks ассоциируется с lifecycle-аннотациями.",
+                "if_it_were_true": "Hooks был бы в org.springframework.",
+                "how_it_should_be": "Reactor-специфичный механизм для global hooks."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hooks работают только в тестах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hooks применимы и в продакшене (но onOperatorDebug — с осторожностью из-за overhead).",
+                "source_of_confusion": "Связь с тестовыми утилитами.",
+                "if_it_were_true": "Не было бы ReactorDebugAgent как production-инструмента.",
+                "how_it_should_be": "Универсальный механизм; в production — через ReactorDebugAgent."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hooks — это listener для kafka событий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hooks ничего общего с Kafka не имеют; для Kafka есть reactor-kafka с собственным API.",
+                "source_of_confusion": "Произвольная аналогия.",
+                "if_it_were_true": "Hooks был бы в reactor-kafka.",
+                "how_it_should_be": "Reactor-Core механизм для глобальных настроек."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 46,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Project Reactor интегрируется со Spring WebFlux?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "WebFlux использует только RxJava.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring WebFlux построен на Project Reactor как основной реактивной библиотеке; RxJava поддерживается через адаптеры.",
+                "source_of_confusion": "Обе библиотеки реализуют Reactive Streams.",
+                "if_it_were_true": "Не было бы примеров с Mono/Flux в @RestController.",
+                "how_it_should_be": "Spring WebFlux + Reactor — основная реактивная связка."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Контроллеры WebFlux возвращают Mono<T>/Flux<T>/ResponseEntity<Mono<T>>; WebClient — реактивный HTTP-клиент, возвращающий Mono/Flux; ReactiveCrudRepository для R2DBC возвращает реактивные типы; SSE через MediaType.TEXT_EVENT_STREAM_VALUE; реактивная Spring Security через ReactiveSecurityContextHolder; @ExceptionHandler работает с Mono<ResponseEntity>; вся интеграция нативная — Mono/Flux воспринимаются как первоклассные типы.",
+              "correct": true,
+              "sections": {
+                "explanation": "WebFlux пронизан Reactor сверху донизу: контроллеры, клиенты, репозитории, безопасность. Spring сам подписывается на возвращаемые Publisher через DispatcherHandler.",
+                "example": "@GetMapping public Flux<User> users() { return repo.findAll(); } — Spring подпишется, прочитает, сериализует и отправит ответ.",
+                "when_to_apply": "Реактивные веб-приложения, высокая параллельность, intensive I/O, стриминг (SSE), интеграция с R2DBC/MongoDB Reactive.",
+                "edge_cases": "Смешивание блокирующих и реактивных вызовов — частая ошибка; @Transactional требует ReactiveTransactionManager.",
+                "related": "Q47 block(); Q33 Context; Q30 Schedulers."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Через ручную конвертацию Mono → CompletableFuture в каждом контроллере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring WebFlux нативно понимает Mono/Flux; ручная конвертация не нужна.",
+                "source_of_confusion": "Привычка к asyncControllers с CompletableFuture в MVC.",
+                "if_it_were_true": "Контроллеры были бы громоздкими.",
+                "how_it_should_be": "Прямой возврат Mono/Flux — Spring сам всё обрабатывает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Через @Reactive аннотацию на методах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такой аннотации не существует; реактивность определяется возвращаемым типом и стартером webflux.",
+                "source_of_confusion": "Привычка к декларативным аннотациям.",
+                "if_it_were_true": "В документации был бы пример @Reactive.",
+                "how_it_should_be": "spring-boot-starter-webflux + возврат Mono/Flux."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 47,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему нельзя вызывать block() в WebFlux-приложении?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "block() работает только в Java 17+.",
+              "correct": false,
+              "sections": {
+                "what_actually": "block() доступен с Java 8 и не связан с версией; проблема в семантике для реактивного контекста.",
+                "source_of_confusion": "Произвольная привязка к версии Java.",
+                "if_it_were_true": "Документация ограничивала бы JDK.",
+                "how_it_should_be": "block() есть всегда, но в WebFlux event loop — опасен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "block() запрещён компилятором.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компилятор не блокирует; есть runtime-защита в WebFlux (IllegalStateException), но не compile-time.",
+                "source_of_confusion": "Желание видеть статический анализ.",
+                "if_it_were_true": "Не существовало бы IllegalStateException с сообщением 'block() is blocking'.",
+                "how_it_should_be": "Runtime-защита в Netty-потоках; rule запрещает использование, но не компилятор."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "block() синхронно блокирует вызывающий поток до завершения реактивного потока; в WebFlux Netty event loop имеет малый пул потоков (parallel Scheduler), блокировка одного из них приводит к: 1) возможному дедлоку, если другой поток ожидает результата от заблокированного; 2) деградации производительности (преимущества реактивной модели исчезают). WebFlux выбрасывает IllegalStateException: 'block()/blockFirst()/blockLast() are blocking, which is not supported in thread xxx' в потоках Netty; вместо block() — использовать полную реактивную цепочку или Mono.fromCallable(...).subscribeOn(boundedElastic()) для изоляции блокирующего кода.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реактивная модель WebFlux основана на малом числе потоков, обрабатывающих много соединений. Блокировка одного потока — это потеря большой части capacity. block() в event loop — анти-паттерн.",
+                "example": "ПРАВИЛЬНО: @GetMapping return userService.find(id).map(this::transform); НЕПРАВИЛЬНО: User u = service.find(id).block();",
+                "when_to_apply": "block() допустим только в edge cases: main()/init scripts, тестах с @Test, миграциях; никогда в reactive handlers.",
+                "edge_cases": "Mono.fromCallable + subscribeOn(boundedElastic) — единственный безопасный путь для блокирующих API; даже в boundedElastic блокировка не должна быть длительной.",
+                "related": "Q30 Schedulers; Q31 subscribeOn/publishOn; Q46 WebFlux."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "block() удалён из Reactor в 2024 году.",
+              "correct": false,
+              "sections": {
+                "what_actually": "block() активен и доступен в текущих версиях Reactor; используется в main(), тестах и edge cases.",
+                "source_of_confusion": "Слух об удалении.",
+                "if_it_were_true": "Тесты Reactor не имели бы возможности извлечь результат.",
+                "how_it_should_be": "block() остаётся в API, но не в WebFlux handlers."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
