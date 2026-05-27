@@ -1,0 +1,3305 @@
+{
+  "topic_slug": "postgresql-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова архитектура процессов `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PostgreSQL` использует мультипроцессную модель: `postmaster` принимает соединения и форкает `backend` на каждое подключение, а фоновые процессы (`checkpointer`, `bgwriter`, `WAL writer`, `autovacuum launcher`) работают через `shared memory`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый клиент обслуживается отдельным процессом ОС (а не потоком). `shared_buffers`, `WAL buffers`, `lock table` лежат в разделяемой памяти, к которой все backend-ы имеют доступ.",
+                "example": "`SELECT pid, usename, state, query FROM pg_stat_activity WHERE state <> 'idle'` — показывает активные backend-процессы.",
+                "when_to_apply": "Понимание архитектуры нужно при настройке `max_connections`, выборе `PgBouncer` и диагностике потребления памяти.",
+                "edge_cases": "Fork backend-а стоит ~1–5 мс и ~5–10 МБ RAM; поэтому тысячи коротких соединений деградируют производительность без пула.",
+                "related": "Q2 `shared_buffers`; Q49 `PgBouncer`; Q53 `max_connections`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`PostgreSQL` использует один многопоточный процесс с пулом потоков внутри, как `MySQL InnoDB`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PostgreSQL` — мультипроцессная СУБД: один процесс на соединение, без внутреннего пула потоков.",
+                "source_of_confusion": "Перенос модели `MySQL`/`Oracle` на `PostgreSQL` без проверки.",
+                "if_it_were_true": "Не было бы необходимости в `PgBouncer` для экономии соединений.",
+                "how_it_should_be": "Главный `postmaster` форкает отдельный backend-процесс на каждое соединение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все запросы выполняются внутри `postmaster`, а `shared_buffers` существует на каждый backend отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`postmaster` только принимает соединения и порождает дочерние процессы; `shared_buffers` единственный и общий.",
+                "source_of_confusion": "Смешение ролей master-процесса и worker-процессов.",
+                "if_it_were_true": "Каждый клиент имел бы собственный кэш страниц, что взорвало бы потребление RAM.",
+                "how_it_should_be": "`shared_buffers` — один общий кэш в разделяемой памяти для всех backend-ов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Фоновых процессов в `PostgreSQL` нет — `VACUUM` и `checkpoint` выполняются внутри backend-а пользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Существуют выделенные фоновые процессы: `checkpointer`, `bgwriter`, `WAL writer`, `autovacuum launcher`/`worker`, `stats collector`.",
+                "source_of_confusion": "Незнание ролей служебных процессов в `pg_stat_activity`/`ps`.",
+                "if_it_were_true": "Каждый клиентский запрос блокировался бы фоновой работой обслуживания.",
+                "how_it_should_be": "Фоновые процессы отделены от backend-ов и работают параллельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `shared_buffers` и как он влияет на производительность?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`shared_buffers` — это локальный кэш каждого backend-а, не разделяемый между соединениями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это именно общий кэш в `shared memory`, доступный всем backend-процессам одновременно.",
+                "source_of_confusion": "Путаница с `work_mem`, который действительно локален.",
+                "if_it_were_true": "Кэширование было бы бесполезно — каждый клиент грел бы свой кэш заново.",
+                "how_it_should_be": "Один общий буфер для всех соединений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`shared_buffers` — общий кэш страниц данных в разделяемой памяти; перед чтением с диска `PostgreSQL` ищет страницу здесь. Рекомендуемое значение ~25% RAM на выделенном сервере, но не более 8–16 ГБ, чтобы оставить место ОС-кэшу.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чем выше hit-rate в `shared_buffers`, тем меньше дискового I/O. Совместно работает с `effective_cache_size` — подсказкой планировщику об ОС-кэше.",
+                "example": "`SELECT sum(heap_blks_hit)::float / nullif(sum(heap_blks_hit)+sum(heap_blks_read),0) FROM pg_statio_user_tables;` — должно быть > 0.99.",
+                "when_to_apply": "При настройке сервера под OLTP/OLAP-нагрузку и при росте дискового I/O в метриках.",
+                "edge_cases": "Слишком большой `shared_buffers` (> 40% RAM) часто ухудшает производительность: страницы дублируются в ОС-кэше, растёт overhead на управление буфером.",
+                "related": "Q53 ключевые параметры; Q24 `seq_page_cost`/`random_page_cost`; Q4 `checkpoint`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Рекомендуется выставлять `shared_buffers` в 90–95% RAM, чтобы максимально использовать память.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Типичная рекомендация — 25% RAM с потолком 8–16 ГБ; остальное оставляют ОС-кэшу и `work_mem`.",
+                "source_of_confusion": "Аналогия с `InnoDB buffer pool`, где доля действительно выше.",
+                "if_it_were_true": "Не оставалось бы памяти под ОС-кэш, сортировки и соединения.",
+                "how_it_should_be": "~25% RAM, с тонкой настройкой под конкретную нагрузку."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`shared_buffers` хранит планы выполнения запросов и не связан с дисковым I/O.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это кэш страниц данных (8 КБ блоков таблиц/индексов); планы запросов кэшируются отдельно (`prepared statements`, `plan cache`).",
+                "source_of_confusion": "Слово «buffers» ассоциируется с любыми буферами.",
+                "if_it_were_true": "Размер задавался бы числом планов, а не байтами.",
+                "how_it_should_be": "`shared_buffers` — кэш дисковых страниц данных."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `WAL` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`WAL` — это резервная копия базы, создаваемая раз в сутки утилитой `pg_dump`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`pg_dump` — это логический backup; `WAL` — это непрерывный журнал изменений на уровне блоков.",
+                "source_of_confusion": "Смешение понятий «бэкап» и «журнал транзакций».",
+                "if_it_were_true": "Не было бы PITR с точностью до транзакции.",
+                "how_it_should_be": "`WAL` пишется синхронно при каждом изменении; `pg_dump` — это отдельный механизм."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`WAL` нужен только для репликации и может быть полностью отключён на одиночном инстансе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WAL` необходим для crash recovery даже без репликации; отключить его нельзя.",
+                "source_of_confusion": "Параметр `wal_level=minimal` ошибочно воспринимают как «без WAL».",
+                "if_it_were_true": "После kill -9 база восстанавливалась бы только из бэкапа.",
+                "how_it_should_be": "`WAL` всегда активен; `wal_level=minimal` лишь убирает данные для репликации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`WAL` (Write-Ahead Log) — журнал предзаписи: любое изменение сначала пишется в `WAL`-сегмент, и только потом применяется к страницам данных. Обеспечивает durability, ускоряет запись (последовательная вместо случайной) и служит источником для репликации и PITR.",
+              "correct": true,
+              "sections": {
+                "explanation": "При сбое `PostgreSQL` восстанавливает базу, проигрывая `WAL` с последнего `checkpoint`. Параметр `wal_level` (`minimal`/`replica`/`logical`) определяет детализацию.",
+                "example": "`SHOW wal_level;` `SHOW synchronous_commit;` — основные настройки. `archive_mode=on` + `archive_command` включают архивирование для PITR.",
+                "when_to_apply": "Всегда включён; настраивается под цели DR (`synchronous_commit`, `wal_level`, `archive_mode`).",
+                "edge_cases": "При `synchronous_commit=off` возможна потеря последних подтверждённых транзакций при сбое (но база остаётся консистентной).",
+                "related": "Q4 `checkpoint`; Q44 streaming replication; Q46 replication slot."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Запись в `WAL` происходит после применения изменений к страницам данных, чтобы журнал содержал «фактическое» состояние.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Принцип write-ahead: сначала `WAL` (с `fsync`), затем грязная страница в `shared_buffers`, и только при `checkpoint` — на диск данных.",
+                "source_of_confusion": "Интуитивное «сначала сделать, потом записать в журнал».",
+                "if_it_were_true": "При сбое после изменения страницы, но до записи в `WAL`, восстановить транзакцию было бы невозможно.",
+                "how_it_should_be": "`WAL` всегда пишется ДО изменения страницы данных."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `checkpoint` в `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Checkpoint` блокирует все запросы на чтение и запись на время сброса грязных страниц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Checkpoint работает в фоне (процесс `checkpointer`) и не блокирует пользовательские запросы.",
+                "source_of_confusion": "Опыт со старыми СУБД, где checkpoint действительно стопил мир.",
+                "if_it_were_true": "Каждые 5 минут на 30+ секунд база становилась бы недоступной.",
+                "how_it_should_be": "Checkpoint размазан во времени параметром `checkpoint_completion_target`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`max_wal_size` задаёт максимальный объём `WAL`, после которого `PostgreSQL` начинает терять старые записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`max_wal_size` — это мягкий триггер для запуска checkpoint, а не лимит на удаление; старые `WAL` удаляются только после успешного checkpoint и сброса репликам.",
+                "source_of_confusion": "Слово «max» интерпретируется как жёсткий потолок с обрезанием.",
+                "if_it_were_true": "Реплики и PITR могли бы остаться без нужного `WAL`-сегмента.",
+                "how_it_should_be": "Параметр стимулирует checkpoint; реальное удаление контролируется отдельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`checkpoint_completion_target=0.9` означает, что 90% запросов будут отброшены во время checkpoint для разгрузки диска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Этот параметр задаёт долю интервала `checkpoint_timeout`, за которую записи грязных страниц должны быть распределены.",
+                "source_of_confusion": "Незнание единицы измерения параметра (доля времени, не доля запросов).",
+                "if_it_were_true": "База теряла бы транзакции на каждом checkpoint.",
+                "how_it_should_be": "Параметр сглаживает I/O, не отбрасывая запросы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Checkpoint` — точка согласованности: все грязные страницы из `shared_buffers` сбрасываются на диск, в `WAL` записывается отметка. После сбоя достаточно проиграть `WAL` начиная с последнего `checkpoint`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Запускается по таймеру (`checkpoint_timeout`, по умолчанию 5 мин) или по объёму накопленного `WAL` (`max_wal_size`). `checkpoint_completion_target=0.9` размазывает запись грязных страниц во времени для снижения пиков I/O.",
+                "example": "В логах: `LOG: checkpoint starting: time` / `checkpoint complete: wrote 12345 buffers (5.3%)`.",
+                "when_to_apply": "При тюнинге OLTP — увеличивают `max_wal_size` и `checkpoint_timeout`, чтобы избежать частых checkpoint-ов.",
+                "edge_cases": "Слишком редкие checkpoint-ы → долгое восстановление после сбоя и большой `WAL`. Слишком частые → постоянная нагрузка на диск.",
+                "related": "Q3 `WAL`; Q53 `max_wal_size`; Q2 `shared_buffers`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `pg_hba.conf` и для чего он используется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`pg_hba.conf` (host-based authentication) — файл правил аутентификации клиентов: тип соединения, база, пользователь, IP/CIDR-адрес и метод (`trust`/`peer`/`md5`/`scram-sha-256`/`ldap`/`cert`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Правила читаются сверху вниз — первое совпадение применяется. Изменения подхватываются по `SELECT pg_reload_conf();` или `pg_ctl reload`, без рестарта.",
+                "example": "`host all all 10.0.0.0/8 scram-sha-256` — все базы для всех пользователей из подсети по `SCRAM`.",
+                "when_to_apply": "При выкатке нового сервиса в кластере, ограничении доступа по IP, переходе со старого `md5` на `scram-sha-256`.",
+                "edge_cases": "`trust` без указания IP открывает базу всему миру; `peer` работает только для локальных Unix-socket соединений и сверяет имя ОС-пользователя.",
+                "related": "Q1 архитектура; Q53 `max_connections`; Q49 `PgBouncer`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`pg_hba.conf` хранит хэши паролей пользователей и применяется вместо системного каталога `pg_authid`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пароли хранятся в `pg_authid` (системный каталог); `pg_hba.conf` содержит только правила, какой метод аутентификации применять.",
+                "source_of_confusion": "Слово «authentication» в имени файла наводит на мысль о хранении секретов.",
+                "if_it_were_true": "Смена пароля требовала бы правки текстового файла на диске.",
+                "how_it_should_be": "Пароли — в `pg_authid`/`pg_shadow`; правила — в `pg_hba.conf`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Изменения в `pg_hba.conf` применяются только после полного рестарта кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достаточно `pg_reload_conf()` или `SIGHUP`; рестарт нужен только для параметров уровня кластера (например, `shared_buffers`).",
+                "source_of_confusion": "Перенос правил «всё требует рестарта» с других конфигов.",
+                "if_it_were_true": "Простая смена IP-диапазона требовала бы downtime.",
+                "how_it_should_be": "Hot reload поддерживается."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Правила в `pg_hba.conf` обрабатываются по принципу «лучшее совпадение» с учётом весов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Правила обрабатываются строго сверху вниз; первое подходящее применяется, остальные игнорируются.",
+                "source_of_confusion": "Аналогия с маршрутизацией по «самой специфичной» подсети.",
+                "if_it_were_true": "Порядок строк не имел бы значения.",
+                "how_it_should_be": "Сначала идут конкретные правила, затем общие."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие специальные типы данных поддерживает `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PostgreSQL` поддерживает только стандартные `SQL`-типы: `INT`, `VARCHAR`, `DATE`, `BOOLEAN`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо стандартных, есть `JSONB`, массивы, диапазоны, геометрия, `UUID`, `HSTORE` и пользовательские типы.",
+                "source_of_confusion": "Опыт с СУБД, где такие типы доступны только через расширения.",
+                "if_it_were_true": "Все ассоциативные структуры пришлось бы хранить в `TEXT` и парсить вручную.",
+                "how_it_should_be": "Тип подбирается под домен из широкого набора встроенных."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Помимо стандартных, `PostgreSQL` предоставляет `JSONB`, `JSON`, `UUID`, массивы (`int[]`/`text[]`), `HSTORE`, `ENUM`, `INET`/`CIDR`, диапазоны (`tsrange`/`daterange`), `TSVECTOR`, `BYTEA`, `XML`, геометрические (`POINT`/`POLYGON`) и пользовательские типы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Богатая система типов позволяет моделировать сложные домены без EAV-таблиц: например, теги хранить массивом `TEXT[]`, гибкие атрибуты — в `JSONB`.",
+                "example": "`CREATE TABLE events (id SERIAL, payload JSONB, tags TEXT[], occurred_at TSTZRANGE);`",
+                "when_to_apply": "При проектировании схемы, когда стандартного `VARCHAR`/`INT` недостаточно — гибкие атрибуты, диапазоны времени, геометрия.",
+                "edge_cases": "`ENUM` сложно мигрировать (добавление через `ALTER TYPE ... ADD VALUE` нельзя в транзакции до PG 12); `JSON` сохраняет порядок ключей, `JSONB` — нет.",
+                "related": "Q7 `JSON` vs `JSONB`; Q8 массивы; Q10 пользовательские типы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JSONB` доступен только через расширение `jsonb_ext`, которое нужно включать отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JSONB` — встроенный тип ядра с версии 9.4; никаких расширений включать не нужно.",
+                "source_of_confusion": "Путаница с `hstore`, который действительно требует `CREATE EXTENSION`.",
+                "if_it_were_true": "Базовая работа с JSON была бы недоступна на managed-сервисах с запретом расширений.",
+                "how_it_should_be": "`JSONB` доступен из коробки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Массивы в `PostgreSQL` — это всегда массивы `TEXT`; типизированные массивы не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддерживаются массивы любого встроенного и пользовательского типа: `INT[]`, `NUMERIC[]`, `UUID[]`, `JSONB[]`, многомерные.",
+                "source_of_confusion": "Опыт с typeless-структурами `Redis`/`MongoDB`.",
+                "if_it_were_true": "Хранение списков ID требовало бы постоянного парсинга строк.",
+                "how_it_should_be": "Тип элементов задаётся явно: `INT[]`, `TEXT[]`, и т. д."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `JSON` и `JSONB`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`JSON` поддерживает `GIN`-индексирование, а `JSONB` — нет, поэтому `JSON` быстрее для поиска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GIN`-индекс поддерживается именно `JSONB`; `JSON` индексируется только функционально по конкретному выражению.",
+                "source_of_confusion": "Перепутаны типы местами.",
+                "if_it_were_true": "Сравнение в документации было бы перевёрнутым.",
+                "how_it_should_be": "`JSONB` — индексируемый бинарный формат; `JSON` — текст."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JSON` и `JSONB` физически идентичны; разница только в имени и алиасе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные типы с разным внутренним представлением, наборами операторов и поведением при дублях ключей.",
+                "source_of_confusion": "Поверхностное знакомство только с `->`/`->>`, общими для обоих.",
+                "if_it_were_true": "Не было бы двух разных типов в системе.",
+                "how_it_should_be": "Внутреннее представление и индексирование различаются."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JSON` хранит оригинальный текст (с дубликатами ключей и пробелами), парсится при чтении и не индексируется напрямую. `JSONB` хранит бинарное дерево, удаляет дубли ключей, не сохраняет порядок, поддерживает `GIN`-индекс и операторы `@>`/`?`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Запись в `JSONB` медленнее (нужен парсинг при `INSERT`), но чтение и поиск — быстрее. Для большинства задач выбирают `JSONB`.",
+                "example": "`CREATE TABLE events (id SERIAL, payload JSONB); CREATE INDEX ON events USING GIN (payload);` `SELECT * FROM events WHERE payload @> '{\"type\":\"purchase\"}'`.",
+                "when_to_apply": "`JSONB` — по умолчанию. `JSON` — только когда критичен оригинальный байт-в-байт текст (подпись, логирование внешних payload-ов).",
+                "edge_cases": "В `JSONB` при дублях ключей выживает последнее значение; порядок ключей не определён — нельзя полагаться на него в сравнениях.",
+                "related": "Q48 операторы `JSONB`; Q13 `GIN`-индекс; Q17 функциональный индекс по полю JSON."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JSONB` сохраняет порядок ключей и дубликаты, в отличие от `JSON`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `JSON` сохраняет порядок и дубликаты, `JSONB` нормализует и удаляет дубли.",
+                "source_of_confusion": "Интуитивная связь «бинарный = точнее».",
+                "if_it_were_true": "`JSONB` нельзя было бы использовать с `GIN`, где требуется детерминированное представление.",
+                "how_it_should_be": "Бинарное представление подразумевает нормализацию."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают массивы (`arrays`) в `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Массивы в `PostgreSQL` хранятся в отдельной служебной таблице по `FK`, что и обеспечивает индексирование.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Массив хранится inline в строке (с возможным TOAST для больших значений); отдельной таблицы нет.",
+                "source_of_confusion": "Аналогия с нормализацией many-to-many.",
+                "if_it_were_true": "Каждый `SELECT` тянул бы скрытый `JOIN`.",
+                "how_it_should_be": "Массив — это атомарное (для движка) поле строки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поиск по элементу массива всегда требует `unnest` в подзапросе и индекс использоваться не может.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`= ANY(arr)`, `@>`, `&&` напрямую поддерживаются `GIN`-индексом с `array_ops`.",
+                "source_of_confusion": "Незнание оператора `@>` и `GIN`-индекса для массивов.",
+                "if_it_were_true": "Массивы были бы непригодны для запросов по элементу.",
+                "how_it_should_be": "`GIN`-индекс делает поиск по элементу эффективным."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Массивы в `PostgreSQL` нетипизированные и могут содержать значения разных типов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Массив строго типизирован: `INT[]`, `TEXT[]`, `UUID[]` и т. д.; смешение типов запрещено.",
+                "source_of_confusion": "Перенос модели JS/Python-массивов.",
+                "if_it_were_true": "Не нужен был бы синтаксис `INT[]` при объявлении.",
+                "how_it_should_be": "Тип элементов фиксируется при объявлении столбца."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Массивы — типизированные коллекции значений одного типа в одном поле. Поддерживают многомерность, операторы `@>`/`<@`/`&&`, функции `ANY`/`ALL`/`unnest` и индексирование `GIN` (`array_ops`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Массивы хранятся inline с признаком null-битмапа на элемент. Для большой селективности по элементам строят `GIN`-индекс.",
+                "example": "`SELECT * FROM articles WHERE 'pg' = ANY(tags);` `SELECT * FROM articles WHERE tags @> ARRAY['pg','sql'];` `CREATE INDEX ON articles USING GIN (tags);`",
+                "when_to_apply": "Когда атрибут естественным образом — небольшой набор значений (теги статьи, роли пользователя), и не нужна отдельная таблица.",
+                "edge_cases": "Изменение одного элемента переписывает весь массив; для частых обновлений лучше нормализованная таблица. Индексирование по позиции (`tags[1]`) требует функционального индекса.",
+                "related": "Q13 `GIN`-индекс; Q11 типы индексов; Q7 `JSONB` как альтернатива для разнородных значений."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `hstore` и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`hstore` — расширение, добавляющее тип «строковая пара ключ→значение» (оба поля — `TEXT`). Подходит для плоских разреженных атрибутов; поддерживает `GIN`/`GiST`-индексирование и операторы `->`, `@>`, `?`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от `JSONB`, `hstore` плоский (без вложенности) и хранит только строки. Создаётся через `CREATE EXTENSION hstore`.",
+                "example": "`INSERT INTO products(attributes) VALUES ('color=>\"red\", size=>\"L\"'); SELECT attributes->'color' FROM products;`",
+                "when_to_apply": "Когда нужны простые key-value атрибуты без вложенности и числовых типов, и нет смысла тащить `JSONB`.",
+                "edge_cases": "Все значения — строки; для чисел/дат нужна явная конверсия. На новых проектах обычно предпочитают `JSONB` для единообразия.",
+                "related": "Q7 `JSON` vs `JSONB`; Q13 `GIN`; Q55 популярные расширения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`hstore` поддерживает произвольную вложенность объектов и массивов, как `JSONB`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`hstore` плоский: только пары ключ-значение, оба строки.",
+                "source_of_confusion": "Внешняя похожесть синтаксиса на JSON.",
+                "if_it_were_true": "Не было бы смысла в существовании `JSONB`.",
+                "how_it_should_be": "Для вложенности — `JSONB`; `hstore` остаётся плоским."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`hstore` — встроенный тип ядра `PostgreSQL`, не требует `CREATE EXTENSION`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это extension в `contrib`; нужно `CREATE EXTENSION hstore` в каждой базе.",
+                "source_of_confusion": "На managed-сервисах часто предустановлен и кажется встроенным.",
+                "if_it_were_true": "Не существовало бы `pg_available_extensions` записи для `hstore`.",
+                "how_it_should_be": "Включается явно как расширение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `hstore` ключи и значения могут быть любого типа, включая `INTEGER` и `TIMESTAMP`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "И ключи, и значения — `TEXT`; типизированные значения нужно кастовать вручную.",
+                "source_of_confusion": "Аналогия с типизированными map-ами Java/Kotlin.",
+                "if_it_were_true": "Не нужна была бы конверсия при чтении числовых атрибутов.",
+                "how_it_should_be": "`hstore` хранит только строки; для типов — `JSONB`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают пользовательские типы (`enum`, `composite`, `domain`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ENUM` в `PostgreSQL` идентичен `CHECK (col IN (...))` и не имеет преимуществ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ENUM` — отдельный тип с oid-кодом, экономит место, даёт упорядоченность и проверяется на уровне типа, а не строки.",
+                "source_of_confusion": "Функциональная схожесть с `CHECK IN`.",
+                "if_it_were_true": "Не нужен был бы синтаксис `CREATE TYPE ... AS ENUM`.",
+                "how_it_should_be": "`ENUM` хранится компактнее и эффективнее проверяется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ENUM` — упорядоченный список фиксированных строковых значений. `COMPOSITE` — структура из нескольких полей (как row-тип). `DOMAIN` — псевдоним типа с `CHECK`/`NOT NULL`-ограничениями.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ENUM` экономит место (oid 4 байта vs полная строка) и даёт сортировку по порядку объявления. `DOMAIN` переиспользует ограничения в нескольких таблицах.",
+                "example": "`CREATE TYPE mood AS ENUM ('low','ok','high'); CREATE DOMAIN email AS TEXT CHECK (VALUE ~ '@'); CREATE TYPE addr AS (city TEXT, zip TEXT);`",
+                "when_to_apply": "`ENUM` — для стабильных перечислений (статусы); `DOMAIN` — для повторяемых валидаций; `COMPOSITE` — для возврата из функций.",
+                "edge_cases": "`ENUM` сложно реорганизовать: до PG 12 `ALTER TYPE ... ADD VALUE` нельзя было выполнять в транзакции; удаление значения требует пересоздания типа.",
+                "related": "Q6 типы данных; Q26 транзакции и DDL; Q11 индексы по `ENUM`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`DOMAIN` создаёт новый базовый тип с собственным внутренним представлением.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DOMAIN` — это псевдоним поверх существующего типа с дополнительными ограничениями; представление наследуется.",
+                "source_of_confusion": "Слово «новый тип» в документации.",
+                "if_it_were_true": "Нельзя было бы кастовать `DOMAIN` к базовому типу неявно.",
+                "how_it_should_be": "`DOMAIN` — тонкая обёртка с `CHECK`/`NOT NULL`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`COMPOSITE` типы можно использовать только внутри хранимых процедур, но не как столбцы таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`COMPOSITE` можно использовать и как тип столбца таблицы (`addr address`), и как тип возврата функции.",
+                "source_of_confusion": "Чаще встречаются именно в `RETURNS TABLE`/`RETURNS SETOF`.",
+                "if_it_were_true": "Нельзя было бы хранить структуру в строке таблицы.",
+                "how_it_should_be": "`COMPOSITE` — полноправный тип столбца."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы индексов существуют в `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `PostgreSQL` доступен только `B-tree`-индекс; остальные типы есть только в коммерческих сборках.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Hash`/`GIN`/`GiST`/`SP-GiST`/`BRIN` — встроенные типы в community-сборке.",
+                "source_of_confusion": "Опыт с `MySQL`, где экзотические индексы были привилегией InnoDB-вариантов.",
+                "if_it_were_true": "`JSONB`, FTS и геометрия не имели бы эффективного поиска.",
+                "how_it_should_be": "Все шесть типов индексов доступны из коробки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`BRIN` — это разновидность `B-tree` для коротких строк (до 8 символов).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BRIN` — Block Range Index, хранящий min/max по диапазонам блоков; никак не связан с `B-tree` или длиной строк.",
+                "source_of_confusion": "Совпадение префикса букв в названии.",
+                "if_it_were_true": "Не было бы смысла в отдельном типе.",
+                "how_it_should_be": "`BRIN` — для коррелированных монотонных данных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`B-tree` (по умолчанию, сравнение и диапазоны), `Hash` (только `=`), `GIN` (массивы, `JSONB`, FTS), `GiST` (диапазоны, геометрия, FTS), `SP-GiST` (точки, IP), `BRIN` (монотонные большие таблицы).",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор индекса диктуется набором поддерживаемых операторов и характером данных. Один и тот же столбец можно индексировать разными типами.",
+                "example": "`CREATE INDEX ON orders (user_id);` — `B-tree`; `CREATE INDEX ON events USING GIN (payload);` — `GIN`; `CREATE INDEX ON logs USING BRIN (created_at);` — `BRIN`.",
+                "when_to_apply": "Выбирать тип по операторам в `WHERE`: `=`/`<`/`>` → `B-tree`; `@>`/`?` → `GIN`; диапазоны → `GiST`; временные ряды → `BRIN`.",
+                "edge_cases": "`Hash` исторически не был crash-safe; начиная с PG 10 — пишется в `WAL`, но `B-tree` обычно практичнее.",
+                "related": "Q12 `B-tree`; Q13 `GIN`; Q14 `GiST`; Q15 `BRIN`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`GIN` и `GiST` — это синонимы одного и того же индекса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные структуры: `GIN` — инвертированный индекс, `GiST` — обобщённое дерево; различаются по поддерживаемым запросам, скорости обновления и размеру.",
+                "source_of_confusion": "Близкое звучание имён.",
+                "if_it_were_true": "Не имело бы смысла выбирать между ними при `CREATE INDEX USING ...`.",
+                "how_it_should_be": "`GIN` оптимален для точных контейнеров, `GiST` — для геометрии/диапазонов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `B-tree` индекс и когда он применяется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`B-tree` — несбалансированное дерево с глубиной, зависящей от порядка вставок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя «Balanced Tree» означает именно сбалансированность: глубина одинакова от корня к любому листу.",
+                "source_of_confusion": "Смешение с обычным бинарным деревом поиска.",
+                "if_it_were_true": "Производительность зависела бы от порядка `INSERT`.",
+                "how_it_should_be": "Перебалансировка происходит при каждой вставке/удалении."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`B-tree` индексирует только числовые столбцы; для строк нужен `GIN`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`B-tree` работает с любым типом, имеющим оператор сравнения (числа, строки, даты, `UUID`).",
+                "source_of_confusion": "`GIN` действительно используется для FTS по тексту, но это про `tsvector`, а не базовые строки.",
+                "if_it_were_true": "Нельзя было бы делать PK по `VARCHAR`.",
+                "how_it_should_be": "`B-tree` поддерживает все упорядочиваемые типы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Составной `B-tree` индекс `(a, b)` ускоряет фильтр `WHERE b = ?` так же, как `WHERE a = ?`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Составной индекс эффективен только при наличии префикса (`a` или `a,b`); фильтр только по `b` обычно требует `Seq Scan` или отдельного индекса.",
+                "source_of_confusion": "Интуиция «все колонки равны».",
+                "if_it_were_true": "Не нужно было бы заботиться о порядке столбцов в индексе.",
+                "how_it_should_be": "Порядок колонок критичен; самая селективная и самая часто фильтруемая — первой."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`B-tree` — сбалансированное дерево с отсортированными ключами. Поддерживает `=`, `<`, `<=`, `>`, `>=`, `BETWEEN`, `IS NULL`, `ORDER BY`, `LIKE 'prefix%'` и применяется для большинства типичных предикатов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Глубина дерева ~log_b(N); поиск, вставка и удаление — `O(log N)`. Составной индекс отрабатывает фильтр по префиксу ключа (`(a,b)` → запросы по `a` или `a,b`).",
+                "example": "`CREATE INDEX idx_orders_user_status ON orders (user_id, status);` — оптимизирует `WHERE user_id=42 AND status='open'`.",
+                "when_to_apply": "По умолчанию для PK, FK, частых фильтров, ORDER BY и UNIQUE-ограничений.",
+                "edge_cases": "`LIKE '%suffix'` не использует `B-tree` (нет префикса). Для таких случаев — `pg_trgm` + `GIN`/`GiST`.",
+                "related": "Q11 типы индексов; Q22 `Seq Scan` vs `Index Scan`; Q18 покрывающий индекс."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `GIN` индекс и для каких данных он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`GIN` (Generalized Inverted Index) — инвертированный индекс: для каждого элемента (ключ JSONB, лемма tsvector, элемент массива) хранится список строк. Применяется для `JSONB` (`@>`, `?`), массивов, FTS, `hstore`, `pg_trgm`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поиск быстрый, но запись медленнее `B-tree` из-за множественных обновлений posting list. Параметр `fastupdate` буферизует вставки в pending list.",
+                "example": "`CREATE INDEX ON events USING GIN (payload);` `CREATE INDEX ON articles USING GIN (to_tsvector('russian', body));` `CREATE EXTENSION pg_trgm; CREATE INDEX ON products USING GIN (name gin_trgm_ops);`",
+                "when_to_apply": "Когда одно значение содержит много «элементов», по которым нужен поиск (`@>`, `?`, `@@`, `%`).",
+                "edge_cases": "Медленная вставка → периодически выполнять `VACUUM` для merge pending list. Размер обычно больше `B-tree` на тех же данных.",
+                "related": "Q14 `GiST`; Q47 FTS; Q48 операторы `JSONB`; Q11 типы индексов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`GIN` оптимален для точных равенств скалярных значений и часто заменяет `B-tree`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для скалярных `=` быстрее и компактнее `B-tree`; `GIN` нужен для контейнерных операторов.",
+                "source_of_confusion": "Слово «inverted» воспринимают как «улучшенный».",
+                "if_it_were_true": "`B-tree` стал бы не нужен на скалярах.",
+                "how_it_should_be": "`GIN` — для контейнеров (`JSONB`, массивы, FTS); `B-tree` — для скаляров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`GIN` обновляется быстрее `B-tree` на каждом `INSERT`/`UPDATE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обновление `GIN` медленнее — каждое значение раскладывается на множество элементов, каждый из которых обновляет свой posting list.",
+                "source_of_confusion": "Незнание устройства posting list и pending list.",
+                "if_it_were_true": "Не понадобилась бы оптимизация `fastupdate`.",
+                "how_it_should_be": "`GIN` — read-optimized; обновление дороже."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`GIN` не поддерживает full-text search; для FTS используется только `GiST`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "FTS поддерживают оба, но `GIN` обычно быстрее на чтении и считается дефолтом для статичного контента.",
+                "source_of_confusion": "Старый совет «для FTS — GiST» из эпохи pre-`GIN`.",
+                "if_it_were_true": "Документация не предлагала бы `GIN (to_tsvector(...))`.",
+                "how_it_should_be": "`GIN` — основной для FTS; `GiST` — когда важна скорость обновления."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `GiST` индекс и чем он отличается от `GIN`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`GiST` не поддерживает геометрические типы; для `PostGIS` нужен только `BRIN`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GiST` — основной индекс для геометрии и `PostGIS` (`gist_geometry_ops_2d`).",
+                "source_of_confusion": "Перепутаны области применения индексов.",
+                "if_it_were_true": "`PostGIS` не мог бы строить пространственные индексы.",
+                "how_it_should_be": "`GiST` — стандарт для гео; `BRIN` — для линейных метаданных."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`GiST` (Generalized Search Tree) — расширяемое сбалансированное дерево, в котором логика индексирования вынесена в opclass-ы. Подходит для геометрии (`PostGIS`), диапазонов (`tsrange`), FTS, `pg_trgm`. Меньше `GIN`, быстрее обновляется, но допускает ложные срабатывания (требуется recheck).",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от `GIN`, `GiST` может индексировать диапазоны и приближённые запросы (`KNN`, `ORDER BY pt <-> '(0,0)' LIMIT 10`).",
+                "example": "`CREATE INDEX ON reservations USING GiST (period);` для `tsrange &&`. `CREATE INDEX ON locations USING GiST (geom);` для PostGIS.",
+                "when_to_apply": "Геометрия, диапазоны, exclusion-constraint (`EXCLUDE USING GIST`), KNN-поиск ближайших точек.",
+                "edge_cases": "`GiST` допускает false positives → требует recheck по таблице; для проверки актуальности используется `Recheck Cond` в плане.",
+                "related": "Q13 `GIN`; Q11 типы индексов; Q15 `BRIN` для альтернативной нагрузки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`GiST` всегда быстрее `GIN` на чтении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На точных запросах `@>`/`?` по контейнерам `GIN` обычно быстрее; `GiST` сильнее на диапазонах и KNN.",
+                "source_of_confusion": "Аналогия «дерево быстрее посписковой структуры».",
+                "if_it_were_true": "`GIN` был бы не нужен.",
+                "how_it_should_be": "Выбор зависит от типа запроса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`GiST` не допускает ложных срабатываний и не требует recheck по таблице.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GiST` хранит приближённые representations и для точного ответа делает recheck по строкам таблицы.",
+                "source_of_confusion": "Незнание плана с `Recheck Cond`.",
+                "if_it_were_true": "Лист `GiST` хранил бы полное значение, что свело бы его к `B-tree`.",
+                "how_it_should_be": "Recheck — нормальная часть работы `GiST`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `BRIN` индекс и когда его выгодно использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`BRIN` эффективен на любых данных и заменяет `B-tree` благодаря меньшему размеру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BRIN` эффективен ТОЛЬКО при высокой корреляции значений с физическим порядком; иначе он бесполезен.",
+                "source_of_confusion": "Маркетинговый аргумент «индекс в 1000 раз меньше».",
+                "if_it_were_true": "`B-tree` стал бы избыточным.",
+                "how_it_should_be": "Корреляция > 0.9 — обязательное условие выгодности `BRIN`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`BRIN` хранит полный список значений ключа, как и `B-tree`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хранятся только агрегаты (min/max) по диапазонам блоков, без перечисления отдельных значений.",
+                "source_of_confusion": "Незнание структуры `BRIN`.",
+                "if_it_were_true": "Размер `BRIN` был бы сопоставим с `B-tree`.",
+                "how_it_should_be": "`BRIN` — это краткое summary по физическим диапазонам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`BRIN` (Block Range Index) хранит агрегаты (min/max) по диапазонам страниц таблицы (по умолчанию 128 страниц). Подходит для очень больших таблиц с физической упорядоченностью значений: time-series, монотонные id, append-only логи.",
+              "correct": true,
+              "sections": {
+                "explanation": "Размер индекса в сотни раз меньше `B-tree`; при сканировании пропускаются диапазоны, в которых min/max не пересекаются с предикатом.",
+                "example": "`CREATE INDEX ON logs USING BRIN (created_at) WITH (pages_per_range=64);`",
+                "when_to_apply": "Таблицы > 100 ГБ, append-only по времени; запросы по диапазону на ключ упорядочения.",
+                "edge_cases": "Эффективен только при высокой корреляции значений с физическим порядком; на случайных данных деградирует до `Seq Scan`. После массовых `UPDATE`/`VACUUM FULL` корреляция может испортиться.",
+                "related": "Q11 типы индексов; Q25 статистика и корреляция; Q12 `B-tree`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Параметр `pages_per_range` влияет только на размер индекса и никак не на качество.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Меньшие значения дают более точные min/max → меньше ложных пересечений, но больший размер индекса.",
+                "source_of_confusion": "Незнание trade-off между гранулярностью и компактностью.",
+                "if_it_were_true": "Не было бы смысла настраивать параметр.",
+                "how_it_should_be": "`pages_per_range` балансирует точность и размер."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое частичный (`partial`) индекс?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Частичный индекс — это индекс по части строки (несколько столбцов).",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Частичный» означает по части СТРОК (фильтр `WHERE`); индексирование части столбцов — это просто составной индекс.",
+                "source_of_confusion": "Двусмысленность слова «часть».",
+                "if_it_were_true": "Любой составной индекс назывался бы partial.",
+                "how_it_should_be": "Partial = `CREATE INDEX ... WHERE predicate`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Частичный индекс автоматически обновляется при любом изменении строки, даже не подходящей под условие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если строка не удовлетворяет предикату индекса, запись в индекс не делается; это и даёт экономию.",
+                "source_of_confusion": "Неполное понимание условия индекса.",
+                "if_it_were_true": "Не было бы выигрыша по скорости записи.",
+                "how_it_should_be": "Обновление только для строк, попадающих в условие."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Частичный индекс работает только с `B-tree`; `GIN`/`GiST` его не поддерживают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Партиальность задаётся через `WHERE` в `CREATE INDEX` и работает с любым типом индекса.",
+                "source_of_confusion": "Чаще встречается на `B-tree` в примерах.",
+                "if_it_were_true": "Нельзя было бы строить частичный `GIN` по `JSONB`.",
+                "how_it_should_be": "`WHERE` — общий механизм для всех типов индексов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Частичный индекс строится только по строкам, удовлетворяющим условию `WHERE`. Он меньше, быстрее обновляется и используется планировщиком, когда фильтр запроса покрыт условием индекса.",
+              "correct": true,
+              "sections": {
+                "explanation": "Особенно полезен, когда «горячее» подмножество данных значительно меньше всей таблицы (например, `status='open'` среди миллионов закрытых заказов).",
+                "example": "`CREATE INDEX idx_orders_open ON orders (user_id) WHERE status='open';` — индексируются только открытые заказы.",
+                "when_to_apply": "Когда запросы устойчиво фильтруют по фиксированному предикату и подмножество — небольшая доля таблицы.",
+                "edge_cases": "Планировщик использует индекс только если условие в `WHERE` запроса доказуемо включает условие индекса; параметризованные предикаты могут мешать.",
+                "related": "Q17 функциональный индекс; Q11 типы индексов; Q20 чтение `EXPLAIN`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое функциональный (`expression`) индекс?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Индекс по результату выражения или функции, применённой к одному или нескольким столбцам. Используется, когда запросы фильтруют по выражению, а не по сырому значению.",
+              "correct": true,
+              "sections": {
+                "explanation": "Функция должна быть `IMMUTABLE`; планировщик использует индекс только если выражение в запросе синтаксически совпадает с индексным.",
+                "example": "`CREATE INDEX idx_users_lower_email ON users (LOWER(email));` `CREATE INDEX idx_events_type ON events ((payload->>'event_type'));`",
+                "when_to_apply": "Регистронезависимый поиск; индексирование вычисляемых полей или поля `JSONB`/`HSTORE`.",
+                "edge_cases": "Если функция помечена `VOLATILE`/`STABLE`, индекс создать нельзя. Запрос `WHERE email = 'x'` не использует индекс по `LOWER(email)` — нужен `LOWER(email) = lower('x')`.",
+                "related": "Q16 частичный индекс; Q48 операторы `JSONB`; Q20 `EXPLAIN`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Функциональный индекс работает с любыми функциями, включая `now()` и `random()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только `IMMUTABLE`-функции допустимы; `VOLATILE` (`now()`, `random()`) нельзя.",
+                "source_of_confusion": "Незнание категорий volatility функций.",
+                "if_it_were_true": "Значения в индексе менялись бы сами по себе.",
+                "how_it_should_be": "Функция должна быть детерминистичной."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Функциональный индекс автоматически перестраивается при изменении исходных столбцов на сервере, даже без `UPDATE` строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Индекс обновляется в рамках обычной записи строки; никаких автоматических пересчётов «фоновой работы» нет.",
+                "source_of_confusion": "Аналогия с materialized view.",
+                "if_it_were_true": "Производительность сервера сильно зависела бы от наличия таких индексов.",
+                "how_it_should_be": "Перестройка происходит вместе с `INSERT`/`UPDATE` строки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Запрос `WHERE email = 'x'` использует индекс по `LOWER(email)` автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Планировщик использует функциональный индекс только если выражение в `WHERE` синтаксически совпадает: `WHERE LOWER(email) = LOWER('x')`.",
+                "source_of_confusion": "Иллюзия, что планировщик «умеет» применить функцию к константе сам.",
+                "if_it_were_true": "Не нужно было бы переписывать запросы под индекс.",
+                "how_it_should_be": "Запрос приводят к виду выражения индекса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое покрывающий (`covering`) индекс и как его создать в `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Покрывающий индекс в `PostgreSQL` нельзя создать — поддерживается только в `SQL Server` и `Oracle`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С PG 11 синтаксис `INCLUDE` доступен; до этого использовали составной ключ.",
+                "source_of_confusion": "Старая документация PG <= 10.",
+                "if_it_were_true": "`Index Only Scan` был бы недоступен.",
+                "how_it_should_be": "`CREATE INDEX ... INCLUDE (cols)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Покрывающий индекс содержит все столбцы, нужные запросу, поэтому планировщик может выполнить `Index Only Scan` без обращения к heap. С PG 11 такой индекс создаётся через `INCLUDE`, добавляющий неключевые столбцы в листья.",
+              "correct": true,
+              "sections": {
+                "explanation": "`INCLUDE` не участвует в сортировке/поиске, но позволяет читать значения прямо из индекса. До PG 11 покрывающий эффект достигался расширением ключа.",
+                "example": "`CREATE INDEX idx_orders_covering ON orders (user_id) INCLUDE (status, total);` — `SELECT status, total FROM orders WHERE user_id=42;` идёт через `Index Only Scan`.",
+                "when_to_apply": "Точечные SELECT-ы с известным небольшим набором столбцов и высоким QPS, где важно избавиться от heap-доступа.",
+                "edge_cases": "Для `Index Only Scan` visibility map должна показывать, что страницы heap не содержат непогашенных мёртвых кортежей; иначе planner всё равно посмотрит heap.",
+                "related": "Q23 `Index Only Scan`; Q31 `VACUUM` и visibility map; Q12 `B-tree`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Столбцы из `INCLUDE` участвуют в сортировке и могут заменять часть ключа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`INCLUDE`-столбцы хранятся только в листьях и не используются ни для поиска, ни для сортировки.",
+                "source_of_confusion": "Кажется, что «есть в индексе = можно фильтровать».",
+                "if_it_were_true": "Не было бы разницы между `(a, b)` и `(a) INCLUDE (b)`.",
+                "how_it_should_be": "`INCLUDE` — для устранения heap-доступа, не для фильтрации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Index Only Scan` работает всегда, независимо от состояния таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужна актуальная visibility map; иначе требуется обращение к heap для проверки видимости.",
+                "source_of_confusion": "Незнание роли `VACUUM` в обновлении visibility map.",
+                "if_it_were_true": "После массового `UPDATE` план не деградировал бы.",
+                "how_it_should_be": "Периодический `VACUUM` поддерживает `Index Only Scan` рабочим."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CONCURRENTLY` при создании индекса?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CONCURRENTLY` ускоряет создание индекса за счёт распараллеливания по ядрам CPU.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это про отсутствие блокировки записи, а не про скорость; фактически медленнее обычного `CREATE INDEX` из-за двух проходов.",
+                "source_of_confusion": "Слово «concurrently» воспринимают как «parallel».",
+                "if_it_were_true": "Время построения сокращалось бы пропорционально числу ядер.",
+                "how_it_should_be": "Параллелизм построения настраивается отдельно (`max_parallel_maintenance_workers`)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CREATE INDEX CONCURRENTLY` можно безопасно запускать внутри транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это явный запрет: команда должна выполняться в autocommit-режиме.",
+                "source_of_confusion": "Логичная привычка всё оборачивать в `BEGIN`/`COMMIT`.",
+                "if_it_were_true": "Не выдавалась бы ошибка `CREATE INDEX CONCURRENTLY cannot run inside a transaction block`.",
+                "how_it_should_be": "Команда выполняется отдельно, без явной транзакции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CREATE INDEX CONCURRENTLY` строит индекс без эксклюзивной блокировки таблицы — записи в таблицу продолжаются. Делает два прохода и ждёт завершения транзакций, видевших старое состояние.",
+              "correct": true,
+              "sections": {
+                "explanation": "Используется на проде, когда нельзя останавливать запись. Аналогично `DROP INDEX CONCURRENTLY` и `REINDEX CONCURRENTLY` (с PG 12).",
+                "example": "`CREATE INDEX CONCURRENTLY idx_orders_user_id ON orders (user_id);`",
+                "when_to_apply": "На больших таблицах с активной записью; при выкатке миграций без downtime.",
+                "edge_cases": "Нельзя выполнять внутри транзакции (`BEGIN`...`COMMIT`). При прерывании остаётся `INVALID`-индекс — его нужно удалить вручную: `DROP INDEX idx_name;`.",
+                "related": "Q11 индексы; Q51 блокировки; Q31 `VACUUM`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Если `CONCURRENTLY` прервётся, индекс автоматически удаляется и таблица остаётся чистой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После сбоя остаётся `INVALID`-индекс; его видно в `pg_class.indisvalid=false`, и его нужно удалить вручную.",
+                "source_of_confusion": "Аналогия с откатом транзакции.",
+                "if_it_were_true": "Не требовался бы мониторинг `pg_index.indisvalid`.",
+                "how_it_should_be": "После failure выполнить `DROP INDEX` и пересоздать."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как читать вывод `EXPLAIN`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "План `EXPLAIN` читается строго сверху вниз — корневой узел выполняется первым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корневой узел отображается сверху, но логически выполняется ПОСЛЕДНИМ; листья (внизу/вглубь дерева) выполняются первыми.",
+                "source_of_confusion": "Чтение текста сверху вниз кажется естественным.",
+                "if_it_were_true": "Финальная агрегация выполнялась бы до получения строк.",
+                "how_it_should_be": "Логический порядок — снизу вверх; визуальный — сверху вниз."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поле `cost` в `EXPLAIN` всегда выражено в миллисекундах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`cost` — это условные единицы (приблизительно соответствующие стоимости чтения одной страницы); это не миллисекунды.",
+                "source_of_confusion": "Привычка к измерению времени.",
+                "if_it_were_true": "Эти единицы не зависели бы от `seq_page_cost`/`random_page_cost`.",
+                "how_it_should_be": "Реальное время — только в `EXPLAIN ANALYZE` (`actual time`)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`EXPLAIN` без `ANALYZE` фактически выполняет запрос, поэтому медленный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EXPLAIN` без `ANALYZE` НЕ выполняет запрос, а лишь показывает оценочный план; быстрый.",
+                "source_of_confusion": "Слово `EXPLAIN` ассоциируют с выполнением.",
+                "if_it_were_true": "Нельзя было бы безопасно смотреть план на `DELETE`/`UPDATE` без отката.",
+                "how_it_should_be": "`EXPLAIN` — оценка; `EXPLAIN ANALYZE` — реальное выполнение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`EXPLAIN` показывает дерево узлов плана; читать снизу вверх (листья выполняются первыми). У каждого узла указаны `cost=start..total`, `rows=N`, `width=N`; у `EXPLAIN ANALYZE` дополнительно — `actual time` и `actual rows loops`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Типичные узлы: `Seq Scan`, `Index Scan`, `Index Only Scan`, `Bitmap Index/Heap Scan`, `Hash Join`, `Nested Loop`, `Merge Join`, `Sort`, `Aggregate`. Отличие оценочных `rows` от реальных `actual rows` сигнализирует о плохой статистике.",
+                "example": "`EXPLAIN SELECT * FROM orders WHERE user_id=42;` → `Index Scan using idx_orders_user_id on orders (cost=0.43..8.45 rows=5 width=128) Index Cond: (user_id = 42)`.",
+                "when_to_apply": "При оптимизации запроса: сравнить оценки и реальность, проверить выбранный access-метод, найти узкие места.",
+                "edge_cases": "`loops=N` нужно умножать на `actual time` (это время одной итерации) для оценки общей стоимости узла.",
+                "related": "Q21 `EXPLAIN ANALYZE`; Q22 `Seq Scan`/`Index Scan`; Q24 `cost`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `EXPLAIN` и `EXPLAIN ANALYZE`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`EXPLAIN` показывает оценочный план без выполнения. `EXPLAIN ANALYZE` реально выполняет запрос и показывает фактическое время и число строк. Опции `BUFFERS`, `VERBOSE`, `FORMAT JSON/YAML/TEXT` добавляют детализацию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сравнение `rows` (оценка) и `actual rows` показывает качество статистики; `BUFFERS` различает `shared hit` (кэш) и `read` (диск).",
+                "example": "`EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM orders JOIN users ON ...;` — реальное время + I/O.",
+                "when_to_apply": "`EXPLAIN` — быстрый sanity-check плана; `EXPLAIN ANALYZE` — для диагностики реального поведения и расхождений с оценкой.",
+                "edge_cases": "`EXPLAIN ANALYZE` ВЫПОЛНЯЕТ деструктивные запросы (`DELETE`, `UPDATE`) — оборачивать в `BEGIN; ... ROLLBACK;`.",
+                "related": "Q20 чтение `EXPLAIN`; Q24 `cost`; Q25 статистика."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`EXPLAIN ANALYZE` не выполняет запрос, а лишь добавляет дополнительный анализ статистики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ANALYZE` именно выполняет запрос (включая побочные эффекты).",
+                "source_of_confusion": "Путаница с командой `ANALYZE table` (обновление статистики).",
+                "if_it_were_true": "Не нужно было бы оборачивать в `BEGIN; ... ROLLBACK;` для `DELETE`.",
+                "how_it_should_be": "`ANALYZE` в `EXPLAIN` означает реальный запуск."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Опция `BUFFERS` в `EXPLAIN` работает без `ANALYZE` и показывает прогнозируемые попадания в кэш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BUFFERS` доступна только в связке с `ANALYZE` — она показывает РЕАЛЬНЫЕ попадания/чтения, измеренные при выполнении.",
+                "source_of_confusion": "Желание получить I/O-метрики без выполнения.",
+                "if_it_were_true": "Можно было бы дёшево оценивать I/O любого запроса.",
+                "how_it_should_be": "`EXPLAIN (ANALYZE, BUFFERS)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Между `EXPLAIN` и `EXPLAIN ANALYZE` нет разницы — это синонимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие фундаментально: один оценивает, другой выполняет.",
+                "source_of_confusion": "Поверхностное знакомство с командами.",
+                "if_it_were_true": "В документации они описывались бы как одна команда.",
+                "how_it_should_be": "Это две разные операции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Seq Scan` и `Index Scan` и когда планировщик выбирает каждый?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Seq Scan` всегда означает отсутствие индекса или неправильную статистику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Seq Scan` может быть оптимальным выбором при низкой селективности фильтра или малом размере таблицы.",
+                "source_of_confusion": "Стереотип «индекс всегда лучше».",
+                "if_it_were_true": "Полное сканирование маленькой таблицы всегда требовалось бы оптимизировать.",
+                "how_it_should_be": "`Seq Scan` — нормальный выбор в подходящих условиях."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Seq Scan` — последовательное чтение всех страниц таблицы; выгоден при чтении большой доли строк или отсутствии индекса. `Index Scan` — поиск через индекс с возвратом в heap за строкой; выгоден при высокой селективности фильтра.",
+              "correct": true,
+              "sections": {
+                "explanation": "Планировщик сравнивает оценочные стоимости с учётом `seq_page_cost`/`random_page_cost`. Для SSD `random_page_cost` обычно понижают до 1.1.",
+                "example": "`WHERE status='open'` — если `open` = 90% строк → `Seq Scan` дешевле; если 0.1% → `Index Scan` или `Bitmap Index Scan`.",
+                "when_to_apply": "Не пытаться принудить индекс; анализировать селективность через `EXPLAIN ANALYZE` и корректировать стоимости/статистику.",
+                "edge_cases": "На маленьких таблицах `Seq Scan` почти всегда выгоднее даже при наличии индекса — накладные расходы перевешивают.",
+                "related": "Q23 `Bitmap Index Scan`; Q24 `cost`; Q25 статистика."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Index Scan` всегда быстрее `Seq Scan` независимо от количества возвращаемых строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При большой доле строк `Index Scan` делает много `random` обращений к heap и проигрывает последовательному чтению.",
+                "source_of_confusion": "Интуиция «индекс = быстро».",
+                "if_it_were_true": "Не было бы порога перехода между планами.",
+                "how_it_should_be": "Выбор зависит от селективности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Принудительный запрет `Seq Scan` через `SET enable_seqscan = off` всегда улучшает план.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это инструмент диагностики, а не оптимизации; в проде использовать не стоит — может ухудшить план в других условиях.",
+                "source_of_confusion": "Кажется простым способом «заставить базу использовать индекс».",
+                "if_it_were_true": "Команда применялась бы в проде по умолчанию.",
+                "how_it_should_be": "Корректируют статистику и стоимости, а не отключают планы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Bitmap Index Scan` и `Index Only Scan`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Bitmap Index Scan` всегда быстрее `Index Scan`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bitmap эффективен при умеренной селективности; на точечных запросах (`= primary key`) обычный `Index Scan` быстрее.",
+                "source_of_confusion": "Bitmap воспринимается как «более продвинутый».",
+                "if_it_were_true": "Планировщик использовал бы только Bitmap.",
+                "how_it_should_be": "Выбор зависит от ожидаемого числа строк."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Index Only Scan` работает с любым индексом, без необходимости включать столбцы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все запрашиваемые столбцы должны быть в индексе (ключ или `INCLUDE`).",
+                "source_of_confusion": "Кажется, что «only» относится к операции, а не к источнику данных.",
+                "if_it_were_true": "Не нужен был бы `INCLUDE` для покрытия запросов.",
+                "how_it_should_be": "Индекс должен покрывать все нужные столбцы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Bitmap Index Scan` строит битовую карту страниц по индексу, затем `Bitmap Heap Scan` читает эти страницы последовательно — снижает random I/O при умеренной селективности. `Index Only Scan` отвечает на запрос полностью из индекса, не заглядывая в heap (если visibility map позволяет).",
+              "correct": true,
+              "sections": {
+                "explanation": "`Bitmap` хорошо сочетает несколько индексов (`BitmapAnd`/`BitmapOr`). `Index Only` экономит heap-доступ, но требует свежей visibility map (после `VACUUM`).",
+                "example": "`Bitmap Heap Scan on orders Recheck Cond: (status='open') -> Bitmap Index Scan on idx_orders_status`.",
+                "when_to_apply": "Bitmap — когда индекс возвращает много строк, расположенных вразброс. Index Only — когда индекс покрывает все нужные столбцы.",
+                "edge_cases": "Для `Index Only` устаревшая visibility map (после массового `UPDATE`) приведёт к `Heap Fetches > 0` в плане.",
+                "related": "Q18 покрывающий индекс; Q31 `VACUUM`; Q22 `Index Scan`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Index Only Scan` не требует поддержки visibility map и работает даже на свежеобновлённых данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без актуальной visibility map для каждой строки выполняется heap fetch — это видно в `Heap Fetches: N`.",
+                "source_of_confusion": "Незнание роли `VACUUM` для visibility map.",
+                "if_it_were_true": "Не было бы метрики `Heap Fetches` в `EXPLAIN`.",
+                "how_it_should_be": "`VACUUM` обновляет visibility map для эффективного Index Only."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `cost` в плане запроса?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`cost` измеряется в миллисекундах и точно соответствует времени выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`cost` — условные единицы, не миллисекунды; время есть только в `actual time` у `EXPLAIN ANALYZE`.",
+                "source_of_confusion": "Привычка к измерению производительности во времени.",
+                "if_it_were_true": "Не нужно было бы запускать `ANALYZE` для измерения реального времени.",
+                "how_it_should_be": "`cost` — модельная оценка; `actual time` — реальное измерение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поле `start cost` всегда равно нулю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Start cost — стоимость до получения первой строки; для `Sort`, `Aggregate`, `Hash Join` он значительный.",
+                "source_of_confusion": "Незнание семантики двух чисел в `cost=a..b`.",
+                "if_it_were_true": "Не было бы смысла в двух значениях.",
+                "how_it_should_be": "Start ≠ 0 для блокирующих узлов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параметр `random_page_cost` нужно повышать на SSD, чтобы планировщик чаще выбирал `Seq Scan`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На SSD случайное чтение дёшево — `random_page_cost` ПОНИЖАЮТ (типично до 1.1), чтобы Index Scan стал привлекательнее.",
+                "source_of_confusion": "Перевёрнутая логика.",
+                "if_it_were_true": "Index-ы реже использовались бы на SSD-серверах.",
+                "how_it_should_be": "`random_page_cost` = 1.1–2.0 для SSD."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`cost=start..total` — оценочная стоимость в условных единицах, пропорциональная стоимости последовательного чтения одной 8 КБ страницы (`seq_page_cost=1.0`). Учитывает страницы, CPU-обработку строк и операторы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Формула опирается на `seq_page_cost`, `random_page_cost`, `cpu_tuple_cost`, `cpu_index_tuple_cost`, `cpu_operator_cost`. Это не миллисекунды и не байты, а абстракция.",
+                "example": "`Index Scan ... (cost=0.43..8.45 rows=5 width=128)` — start cost 0.43 (до возвращения первой строки), total 8.45 (до полного завершения).",
+                "when_to_apply": "Сравнивать планы и понимать, почему планировщик выбрал один вариант, а не другой. Для SSD понижают `random_page_cost`.",
+                "edge_cases": "Если оценочный `cost` сильно расходится с реальным временем — обычно проблема в статистике (`ANALYZE`) или в неверных значениях стоимостей.",
+                "related": "Q22 выбор плана; Q25 статистика; Q20 `EXPLAIN`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает статистика в `PostgreSQL` (`pg_statistics`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Планировщик использует статистику из `pg_statistic` (доступную через view `pg_stats`): `n_distinct`, `most_common_vals`/`most_common_freqs`, гистограммы границ, корреляция с физическим порядком. Обновляется командой `ANALYZE` или autovacuum.",
+              "correct": true,
+              "sections": {
+                "explanation": "Гранулярность задаётся `default_statistics_target` (по умолчанию 100) и может быть переопределена на уровне столбца (`ALTER COLUMN SET STATISTICS`).",
+                "example": "`ANALYZE orders;` `SELECT n_distinct, most_common_vals FROM pg_stats WHERE tablename='orders' AND attname='status';`",
+                "when_to_apply": "После массовых импортов/обновлений и при сильном расхождении `rows` vs `actual rows` в `EXPLAIN ANALYZE`.",
+                "edge_cases": "Для коррелированных столбцов используют `CREATE STATISTICS` (multivariate stats). Для очень больших таблиц `default_statistics_target` повышают до 500–1000 на ключевые столбцы.",
+                "related": "Q24 `cost`; Q22 выбор плана; Q33 `autovacuum`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Статистика обновляется автоматически при каждом `INSERT`/`UPDATE`/`DELETE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Статистика обновляется только командой `ANALYZE` (вручную) или фоновым `autovacuum`, не на каждой операции.",
+                "source_of_confusion": "Аналогия с реактивными индексами.",
+                "if_it_were_true": "Не понадобилась бы команда `ANALYZE`.",
+                "how_it_should_be": "`ANALYZE` — отдельный шаг; autovacuum запускает его по порогам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`default_statistics_target` определяет, сколько строк хранить в `pg_statistic` целиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметр задаёт число bin-ов гистограммы и MCV-значений; сами строки не хранятся, только агрегаты.",
+                "source_of_confusion": "Слово «target» интерпретируется как размер выборки.",
+                "if_it_were_true": "`pg_statistic` хранил бы сэмпл данных таблицы.",
+                "how_it_should_be": "Параметр настраивает детализацию агрегатов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для коррелированных столбцов планировщик автоматически строит multivariate-статистику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multivariate-статистика создаётся явно через `CREATE STATISTICS` и собирается отдельно.",
+                "source_of_confusion": "Желание «планировщик сам разберётся».",
+                "if_it_were_true": "Не было бы команды `CREATE STATISTICS`.",
+                "how_it_should_be": "Multivariate stats — это явная декларация."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие уровни изоляции транзакций поддерживает `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "На уровне `READ UNCOMMITTED` `PostgreSQL` действительно допускает чтение незакоммиченных данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `PostgreSQL` dirty read невозможен ни на одном уровне; `READ UNCOMMITTED` ведёт себя как `READ COMMITTED`.",
+                "source_of_confusion": "Перенос стандартного определения уровня изоляции.",
+                "if_it_were_true": "На `READ UNCOMMITTED` снижалась бы консистентность для производительности.",
+                "how_it_should_be": "Все уровни в `PostgreSQL` исключают dirty read."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`READ UNCOMMITTED`, `READ COMMITTED` (по умолчанию), `REPEATABLE READ`, `SERIALIZABLE`. Реально `READ UNCOMMITTED` ведёт себя как `READ COMMITTED` (dirty read невозможен), а `REPEATABLE READ` благодаря MVCC исключает и phantom read.",
+              "correct": true,
+              "sections": {
+                "explanation": "`SERIALIZABLE` использует SSI (Serializable Snapshot Isolation): обнаруживает write-skew и откатывает транзакцию с `SQLSTATE 40001`.",
+                "example": "`BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE; ... COMMIT;` Spring: `@Transactional(isolation=SERIALIZABLE)`.",
+                "when_to_apply": "Финансы/инвентарь — `SERIALIZABLE` или `REPEATABLE READ` + явные локи; обычные CRUD — `READ COMMITTED`.",
+                "edge_cases": "На `SERIALIZABLE` ожидаются периодические откаты с `40001`; клиент должен уметь повторить транзакцию.",
+                "related": "Q27 MVCC; Q29 аномалии; Q51 блокировки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`REPEATABLE READ` в `PostgreSQL` допускает phantom read, как требует стандарт `SQL-92`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Благодаря снимочной MVCC `REPEATABLE READ` исключает и phantom read; повторное чтение всегда вернёт тот же набор строк.",
+                "source_of_confusion": "Знание стандарта `SQL-92` без поправок на реализацию.",
+                "if_it_were_true": "Нужно было бы поднимать уровень до `SERIALIZABLE` ради phantom-read.",
+                "how_it_should_be": "MVCC сильнее, чем минимум стандарта."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SERIALIZABLE` в `PostgreSQL` реализован через классическую 2PL с пессимистическими блокировками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реализация — SSI (Serializable Snapshot Isolation), оптимистическая модель с обнаружением конфликтов и откатом.",
+                "source_of_confusion": "Знание классической теории изоляции.",
+                "if_it_were_true": "На `SERIALIZABLE` росли бы time-out-ы, а не откаты с `40001`.",
+                "how_it_should_be": "SSI откатывает «жертву» при сериализационном конфликте."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `MVCC` в `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`MVCC` означает блокировку строк на чтение и запись, как в `READ COMMITTED` без MVCC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MVCC специально устраняет необходимость блокировок «читатель vs писатель» за счёт версионирования.",
+                "source_of_confusion": "Смешение MVCC с lock-based изоляцией.",
+                "if_it_were_true": "Не было бы выигрыша по конкуренции по сравнению с lock-based СУБД.",
+                "how_it_should_be": "Читатель видит свою версию, писатель создаёт новую."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При `UPDATE` `PostgreSQL` перезаписывает строку in-place; старая версия не сохраняется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Старая версия помечается `xmax`, новая создаётся отдельной строкой; обе физически существуют до `VACUUM`.",
+                "source_of_confusion": "Аналогия с in-place update в файловой системе.",
+                "if_it_were_true": "Не было бы `dead tuples` и не нужен был бы `VACUUM`.",
+                "how_it_should_be": "Update — это insert новой версии + tombstone старой."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`MVCC` (Multi-Version Concurrency Control) — каждая транзакция видит снимок (snapshot) данных на момент своего начала или statement-а. Изменения создают новые версии строк (`xmin`/`xmax`), а не перезаписывают существующие, поэтому читатели и писатели не блокируют друг друга.",
+              "correct": true,
+              "sections": {
+                "explanation": "Видимость кортежа определяется по `xmin`/`xmax` относительно снимка. Старые версии становятся `dead tuples` и удаляются `VACUUM`.",
+                "example": "После `UPDATE orders SET status='paid' WHERE id=1` старая строка остаётся с `xmax=<txid>`, новая создаётся с `xmin=<txid>`.",
+                "when_to_apply": "Понимание MVCC нужно для интерпретации `VACUUM`, bloat, изоляции и репликации.",
+                "edge_cases": "Долгая открытая транзакция блокирует `VACUUM` от удаления версий, видимых её снимку, → рост bloat. Видно через `pg_stat_activity.xact_start`.",
+                "related": "Q28 `xmin`/`xmax`; Q31 `VACUUM`; Q26 уровни изоляции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MVCC исключает необходимость `VACUUM` — старые версии очищаются автоматически в момент COMMIT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Старые версии остаются физически в таблице; чистит их `VACUUM`/autovacuum в фоне.",
+                "source_of_confusion": "Желание «всё само».",
+                "if_it_were_true": "Не существовало бы команды `VACUUM`.",
+                "how_it_should_be": "MVCC требует периодической уборки `dead tuples`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `xmin` и `xmax` в кортежах `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`xmin`/`xmax` — это пользовательские поля, которые нужно добавлять в схему вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это служебные скрытые поля, существующие у каждого кортежа автоматически; их можно только читать.",
+                "source_of_confusion": "Поля видны в `SELECT`, поэтому кажутся обычными.",
+                "if_it_were_true": "Без них не существовало бы MVCC.",
+                "how_it_should_be": "Поля системные; добавлять не нужно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`xmax` равен `xmin` для активных строк, и `0` после удаления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `xmax=0` у живой строки; при удалении/обновлении в `xmax` записывается id транзакции-удалителя.",
+                "source_of_confusion": "Перевёрнутая семантика «0 = удалено».",
+                "if_it_were_true": "Активные строки имели бы один из id транзакций как `xmax`.",
+                "how_it_should_be": "`xmax=0` означает «не удалена»."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ctid` — это глобально уникальный неизменяемый идентификатор строки, как PK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ctid` — это физический адрес `(block, offset)`, который МЕНЯЕТСЯ при `UPDATE` или `VACUUM FULL`; не подходит для использования как идентификатор.",
+                "source_of_confusion": "Похожесть на ROWID других СУБД.",
+                "if_it_were_true": "Внешние ключи можно было бы делать по `ctid`.",
+                "how_it_should_be": "Для стабильного идентификатора — отдельный PK."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Системные поля каждого кортежа: `xmin` — id транзакции, создавшей версию (`INSERT` или `UPDATE` источник); `xmax` — id транзакции, удалившей/обновившей версию (или 0, если активна). `ctid` — физический адрес `(block, offset)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Видимость для транзакции T: `xmin` зафиксирован и виден в её snapshot, `xmax` либо 0, либо вне snapshot, либо откатился.",
+                "example": "`SELECT xmin, xmax, ctid, * FROM orders WHERE id=1;` — покажет «возраст» строки и факт удаления/обновления.",
+                "when_to_apply": "Диагностика MVCC, отладка repeatable read, поиск зависших long-running транзакций.",
+                "edge_cases": "При wraparound `xid` (счётчик 32-битный) `PostgreSQL` использует freeze (запись `xmin=FrozenXid`), чтобы избежать переполнения. Это часть работы `VACUUM`.",
+                "related": "Q27 MVCC; Q31 `VACUUM` и freeze; Q33 autovacuum и txid wraparound."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `phantom read`, `non-repeatable read` и `dirty read`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Dirty read — чтение незакоммиченных данных другой транзакции. Non-repeatable read — повторный `SELECT` возвращает другие значения из-за чужого `UPDATE`. Phantom read — повторный `SELECT` возвращает новые строки из-за чужого `INSERT`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти аномалии — индикаторы уровня изоляции. В `PostgreSQL` все три исключены на уровне `REPEATABLE READ` благодаря MVCC.",
+                "example": "Phantom: `SELECT COUNT(*) FROM orders WHERE total > 100` дважды в одной транзакции на `READ COMMITTED` — между вызовами другой клиент вставил подходящую строку.",
+                "when_to_apply": "Выбор уровня изоляции в зависимости от того, какие аномалии бизнес-логика терпит.",
+                "edge_cases": "Помимо трёх стандартных, есть write skew и lost update; они устраняются только `SERIALIZABLE` или явными локами (`SELECT ... FOR UPDATE`).",
+                "related": "Q26 уровни изоляции; Q27 MVCC; Q51 блокировки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Phantom read — это чтение незакоммиченных данных другой транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это dirty read; phantom — это появление НОВЫХ строк при повторном `SELECT` уже зафиксированной транзакции.",
+                "source_of_confusion": "Перепутаны определения аномалий.",
+                "if_it_were_true": "Невозможен был бы phantom на `READ COMMITTED`.",
+                "how_it_should_be": "Phantom — про набор строк, dirty — про незафиксированное чтение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Dirty read возможен на уровне `READ COMMITTED` `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PostgreSQL` исключает dirty read на всех уровнях, включая `READ UNCOMMITTED`.",
+                "source_of_confusion": "Стандартное описание уровней не учитывает реализацию.",
+                "if_it_were_true": "Не нужно было бы повышать уровень для критичных операций.",
+                "how_it_should_be": "Dirty read невозможен в `PostgreSQL`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Non-repeatable read и phantom read — это одна и та же аномалия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Non-repeatable — изменение значений в существующих строках; phantom — появление/исчезновение строк в результате `WHERE`.",
+                "source_of_confusion": "Обе аномалии «повторное чтение даёт другой результат».",
+                "if_it_were_true": "Стандарт SQL не разделял бы их.",
+                "how_it_should_be": "Это две различные аномалии."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `SAVEPOINT`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SAVEPOINT` создаёт независимую транзакцию, видимую другим клиентам как закоммиченную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Savepoint — это часть текущей транзакции, не видимая до её `COMMIT`.",
+                "source_of_confusion": "Аналогия с nested transactions других СУБД.",
+                "if_it_were_true": "Можно было бы делать частичные `COMMIT`-ы.",
+                "how_it_should_be": "Savepoint виден другим только после общего `COMMIT`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SAVEPOINT name` создаёт точку внутри транзакции, к которой можно откатиться через `ROLLBACK TO SAVEPOINT name` без отмены всей транзакции. `RELEASE SAVEPOINT name` отбрасывает точку, сохраняя выполненные операции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Технически savepoint — вложенная под-транзакция с собственным subxid. Позволяет реализовать idempotent retry конкретных шагов внутри длинной транзакции.",
+                "example": "`BEGIN; INSERT INTO a ...; SAVEPOINT s1; UPDATE b ...; ROLLBACK TO s1; COMMIT;` — `INSERT` останется, `UPDATE` откатится.",
+                "when_to_apply": "Сложные сценарии в одной транзакции, где часть шагов может failованно повториться; в JDBC — `Connection.setSavepoint()`.",
+                "edge_cases": "Большое число savepoint-ов в одной транзакции создаёт нагрузку на subxid cache; десятки тысяч ведут к переполнению и snapshot suboverflowed.",
+                "related": "Q26 транзакции; Q27 MVCC; Q51 блокировки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ROLLBACK TO SAVEPOINT` откатывает всю транзакцию целиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Откатывается только часть, выполненная после savepoint; всё до него сохраняется.",
+                "source_of_confusion": "Слово `ROLLBACK` ассоциируется с полным откатом.",
+                "if_it_were_true": "Savepoint был бы бесполезен.",
+                "how_it_should_be": "Откат частичный, до точки savepoint."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Число savepoint-ов в одной транзакции не влияет на производительность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большое число subxid (тысячи) переполняет subxid cache и приводит к snapshot suboverflowed, замедляя видимость.",
+                "source_of_confusion": "Незнание ограничений subxid cache.",
+                "if_it_were_true": "Можно было бы свободно генерировать миллионы savepoint-ов.",
+                "how_it_should_be": "Использовать savepoint умеренно; держать число ниже 64."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужен `VACUUM` и что такое `dead tuples`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`VACUUM` физически удаляет dead tuples и сразу возвращает место операционной системе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный `VACUUM` лишь помечает место свободным внутри файла; ОС оно не отдаётся.",
+                "source_of_confusion": "Аналогия с `DELETE` файла.",
+                "if_it_were_true": "Не существовало бы `VACUUM FULL`/`pg_repack`.",
+                "how_it_should_be": "Для возврата места ОС — `VACUUM FULL` или `pg_repack`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Dead tuples появляются только после `DELETE`, но не после `UPDATE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`UPDATE` в MVCC создаёт новую версию строки и помечает старую как мёртвую; dead tuples появляются от обоих.",
+                "source_of_confusion": "Незнание устройства MVCC для `UPDATE`.",
+                "if_it_were_true": "`UPDATE`-нагрузка не создавала бы bloat.",
+                "how_it_should_be": "Оба `UPDATE` и `DELETE` оставляют dead tuples."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Dead tuples` — устаревшие версии строк, оставшиеся после `UPDATE`/`DELETE` из-за MVCC. `VACUUM` помечает их пространство как переиспользуемое внутри таблицы и обновляет visibility map; место ОС не возвращается (для этого нужен `VACUUM FULL` или `pg_repack`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Без `VACUUM` накапливается bloat: таблица и индексы растут, `Seq Scan` замедляется, `Index Only Scan` деградирует из-за устаревшей visibility map. Также `VACUUM` обновляет статистику txid wraparound (freeze).",
+                "example": "`VACUUM (VERBOSE) orders;` `SELECT relname, n_dead_tup FROM pg_stat_user_tables ORDER BY n_dead_tup DESC LIMIT 10;`",
+                "when_to_apply": "Обычно работает autovacuum; ручной `VACUUM` — при массовых `UPDATE`/`DELETE` или для контролируемого освобождения места.",
+                "edge_cases": "Долгая открытая транзакция или нелениво поднятый replication slot не дают `VACUUM` чистить — `dead_tuples` растут.",
+                "related": "Q32 `VACUUM FULL`; Q33 autovacuum; Q34 table bloat."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`VACUUM` блокирует таблицу на чтение и запись на всё время работы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный `VACUUM` берёт лишь `SHARE UPDATE EXCLUSIVE`, не мешая `SELECT`/`INSERT`/`UPDATE`/`DELETE`.",
+                "source_of_confusion": "Путаница с `VACUUM FULL`.",
+                "if_it_were_true": "Autovacuum остановил бы любую БД.",
+                "how_it_should_be": "`VACUUM` работает в фоне без блокировки DML."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `VACUUM` и `VACUUM FULL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`VACUUM FULL` и обычный `VACUUM` одинаково не блокируют запросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`VACUUM FULL` берёт `ACCESS EXCLUSIVE` — блокирует абсолютно всё, включая `SELECT`.",
+                "source_of_confusion": "Имя «VACUUM» в обеих командах.",
+                "if_it_were_true": "Можно было бы безопасно запускать `VACUUM FULL` на проде в час пик.",
+                "how_it_should_be": "Это две принципиально разные операции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`VACUUM FULL` не пересоздаёт индексы и работает только с heap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все индексы перестраиваются в рамках `VACUUM FULL`.",
+                "source_of_confusion": "Незнание устройства команды.",
+                "if_it_were_true": "После `VACUUM FULL` индексы оставались бы bloated.",
+                "how_it_should_be": "`VACUUM FULL` фактически делает `REINDEX`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`pg_repack` — это синоним `VACUUM FULL` с тем же поведением блокировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`pg_repack` работает онлайн: создаёт копию через триггеры, swap-ает таблицы коротким эксклюзивным lock-ом в конце.",
+                "source_of_confusion": "Похожий результат сжатия.",
+                "if_it_were_true": "Не было бы смысла в отдельном расширении.",
+                "how_it_should_be": "`pg_repack` — без длительной блокировки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`VACUUM` помечает место `dead tuples` доступным внутри таблицы без блокировки DML. `VACUUM FULL` переписывает таблицу в новый файл, реально возвращая место ОС, но требует `ACCESS EXCLUSIVE`-блокировку — никто не может ни читать, ни писать.",
+              "correct": true,
+              "sections": {
+                "explanation": "`VACUUM FULL` также пересоздаёт все индексы. Альтернатива без блокировки — расширение `pg_repack` (читает онлайн, swap-ает таблицы атомарно).",
+                "example": "`VACUUM ANALYZE orders;` — рутинно. `VACUUM FULL orders;` — только в окно обслуживания.",
+                "when_to_apply": "`VACUUM` — регулярно (или через autovacuum). `VACUUM FULL` — после массового `DELETE`, когда нужно отдать дисковое место.",
+                "edge_cases": "`VACUUM FULL` требует ~2x места на диске на время работы (новый файл создаётся параллельно). На больших таблицах это часы блокировки.",
+                "related": "Q31 `VACUUM`; Q34 bloat; Q55 `pg_repack`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `AUTOVACUUM` и как его настроить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`autovacuum` — фоновый процесс, периодически запускающий `VACUUM` и `ANALYZE` на таблицах с накопленными dead tuples. Порог: `autovacuum_vacuum_threshold + autovacuum_vacuum_scale_factor * n_live_tup` (по умолчанию 50 + 20% от живых строк).",
+              "correct": true,
+              "sections": {
+                "explanation": "Для больших таблиц 20% — слишком много; снижают `scale_factor` per-table через `ALTER TABLE ... SET (autovacuum_vacuum_scale_factor = 0.01)`. Параллельно работает `autovacuum_max_workers` (по умолчанию 3).",
+                "example": "`ALTER TABLE orders SET (autovacuum_vacuum_scale_factor=0.01, autovacuum_vacuum_threshold=1000);` `SELECT relname, last_autovacuum, n_dead_tup FROM pg_stat_user_tables;`",
+                "when_to_apply": "Для горячих таблиц с высокой долей `UPDATE`/`DELETE`; tuning под профиль нагрузки.",
+                "edge_cases": "`autovacuum_freeze_max_age` форсирует aggressive vacuum при приближении к txid wraparound — пропустить нельзя, иначе кластер встанет.",
+                "related": "Q31 `VACUUM`; Q34 bloat; Q53 параметры конфигурации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`autovacuum` нельзя отключить даже временно — это часть ядра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Можно отключить через `autovacuum=off` или на уровне таблицы (`ALTER TABLE ... SET (autovacuum_enabled=false)`); делать это в проде опасно.",
+                "source_of_confusion": "Желание представить процесс как обязательный.",
+                "if_it_were_true": "Не было бы документированного параметра отключения.",
+                "how_it_should_be": "Отключение возможно, но не рекомендуется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параметр `autovacuum_vacuum_scale_factor=0.2` означает запуск каждые 20 секунд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это доля живых строк (20%): автовакуум запускается, когда dead tuples ≥ 20% от `n_live_tup` (плюс пороговое значение).",
+                "source_of_confusion": "Слово «scale» интерпретируют как время.",
+                "if_it_were_true": "Расписание зависело бы от размера таблицы линейно.",
+                "how_it_should_be": "Это пропорция от количества строк, не время."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`autovacuum` обновляет только статистику и не запускает `VACUUM`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Делает и `VACUUM`, и `ANALYZE` (с разными порогами `autovacuum_*_threshold`).",
+                "source_of_confusion": "Незнание двойной роли.",
+                "if_it_were_true": "Нужно было бы запускать `VACUUM` cron-ом.",
+                "how_it_should_be": "Autovacuum покрывает обе задачи."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `table bloat` и как его измерить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Размер таблицы в `pg_total_relation_size` точно равен объёму живых строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`pg_total_relation_size` включает dead tuples, индексы, TOAST и FSM/VM-страницы; bloat = разница с реальным объёмом данных.",
+                "source_of_confusion": "Имя функции кажется «размером данных».",
+                "if_it_were_true": "Не было бы понятия bloat.",
+                "how_it_should_be": "Это физический размер на диске, не логический объём."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Table bloat` — разница между физическим размером таблицы/индекса и объёмом живых данных. Возникает из-за накопления dead tuples, незаполненных страниц и фрагментации индексов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Точно измеряется через расширение `pgstattuple` (`pgstattuple_approx` — быстрее) или эвристическими SQL-запросами из `check_postgres`/`pgexperts`.",
+                "example": "`CREATE EXTENSION pgstattuple; SELECT * FROM pgstattuple('orders');` — покажет `dead_tuple_percent`, `free_percent`.",
+                "when_to_apply": "При росте размера таблицы непропорционально количеству строк; перед решением о `VACUUM FULL`/`pg_repack`.",
+                "edge_cases": "Bloat в индексах считается отдельно (`pgstatindex`); индексы тоже требуют `REINDEX CONCURRENTLY` периодически.",
+                "related": "Q31 `VACUUM`; Q32 `VACUUM FULL`; Q55 `pg_repack`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`pgstattuple` — встроенная функция ядра `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это расширение в `contrib`; устанавливается через `CREATE EXTENSION pgstattuple`.",
+                "source_of_confusion": "Часто предустановлено на managed-сервисах.",
+                "if_it_were_true": "Не нужно было бы `CREATE EXTENSION`.",
+                "how_it_should_be": "Это extension, его включают явно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Bloat есть только в таблицах; индексы от bloat не страдают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Индексы тоже копят bloat — особенно `B-tree` при частых `UPDATE`/`DELETE`; решение — `REINDEX CONCURRENTLY`.",
+                "source_of_confusion": "Фокус на размере таблицы.",
+                "if_it_were_true": "Не существовало бы `REINDEX`/`pgstatindex`.",
+                "how_it_should_be": "Bloat возможен в любых relation-объектах."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие виды партиционирования поддерживает `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PostgreSQL` поддерживает только `HASH`-партиционирование; `RANGE` и `LIST` доступны только через расширения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RANGE`, `LIST` и `HASH` — все три встроены в декларативное партиционирование с версии 10–11.",
+                "source_of_confusion": "Опыт со старым подходом через наследование таблиц.",
+                "if_it_were_true": "Time-based партиционирование требовало бы стороннего инструмента.",
+                "how_it_should_be": "Все три типа доступны из коробки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В партиционированной таблице можно создать единый глобальный `UNIQUE`-индекс по любому столбцу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Глобальных индексов нет; `UNIQUE` через все партиции возможен только если ключ партиционирования входит в индекс.",
+                "source_of_confusion": "Привычка из `Oracle` с глобальными индексами.",
+                "if_it_were_true": "Можно было бы делать `UNIQUE(email)` через все партиции без ограничений.",
+                "how_it_should_be": "Уникальность обеспечивается локально на каждой партиции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "С версии 10 — декларативное партиционирование: `RANGE` (по диапазону, типично по дате), `LIST` (по списку значений), `HASH` (по hash от ключа). Поддерживается подпартиционирование (`RANGE + HASH`, и т.д.).",
+              "correct": true,
+              "sections": {
+                "explanation": "Партиционированная таблица — это «зонтик», физически данные хранятся в дочерних таблицах. Индексы создаются на партициях (PG 11+) или объявляются на родителе с автоматической пропагацией.",
+                "example": "`CREATE TABLE orders (...) PARTITION BY RANGE (created_at); CREATE TABLE orders_2026 PARTITION OF orders FOR VALUES FROM ('2026-01-01') TO ('2027-01-01');`",
+                "when_to_apply": "Таблицы > 100 ГБ, чёткое временное/категориальное разделение, частые удаления по диапазону (`DROP PARTITION` мгновенный).",
+                "edge_cases": "Глобальные индексы не поддерживаются — `UNIQUE` через все партиции возможен только включением ключа партиционирования в `PRIMARY KEY`.",
+                "related": "Q36 partition pruning; Q37 когда не даёт выигрыша; Q55 `pg_partman`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подпартиционирование `RANGE + HASH` не поддерживается; можно только один уровень.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Многоуровневое партиционирование поддерживается: партиция сама может быть `PARTITION BY ...`.",
+                "source_of_confusion": "Незнание возможностей PG 11+.",
+                "if_it_were_true": "Time-series + sharding требовали бы внешних решений.",
+                "how_it_should_be": "Поддерживается несколько уровней вложенности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `partition pruning`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Partition pruning` работает только на этапе planning и не поддерживает параметризованные запросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С PG 11 поддерживается и runtime pruning — для prepared statements и параметризованных предикатов.",
+                "source_of_confusion": "Опыт с PG 10, где runtime pruning отсутствовал.",
+                "if_it_were_true": "JDBC-prepared запросы не получали бы выгоды.",
+                "how_it_should_be": "Runtime pruning доступен с PG 11."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Partition pruning требует явного указания партиции в запросе через имя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достаточно условия по ключу партиционирования — планировщик сам определяет нужные партиции.",
+                "source_of_confusion": "Опыт с UNION ALL по дочерним таблицам.",
+                "if_it_were_true": "Декларативное партиционирование было бы бесполезным.",
+                "how_it_should_be": "Имя партиции не упоминается; работает прозрачно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Если в плане упомянуты все партиции, pruning не сработал, но это всегда баг планировщика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чаще всего причина — фильтр не привязан к ключу партиционирования или предикат непригоден для pruning (например, `EXTRACT(YEAR FROM ...)` без functional partition keys).",
+                "source_of_confusion": "Лёгкое обвинение планировщика.",
+                "if_it_were_true": "Любое отсутствие pruning требовало бы багфикса.",
+                "how_it_should_be": "Сначала проверить предикат, затем планировщика."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Partition pruning` — оптимизация планировщика: при наличии условия по ключу партиционирования `PostgreSQL` исключает нерелевантные партиции из плана. С PG 11 работает и динамический pruning (на этапе выполнения для параметризованных запросов).",
+              "correct": true,
+              "sections": {
+                "explanation": "Партиции, не упомянутые в плане `EXPLAIN`, отсечены. Эффективность зависит от того, попадает ли предикат в ключ партиционирования.",
+                "example": "`SELECT * FROM orders WHERE created_at >= '2026-01-01' AND created_at < '2026-02-01';` → планировщик читает только `orders_2026_01`.",
+                "when_to_apply": "Всегда строить запросы с фильтром по ключу партиционирования; иначе чтение пройдёт по всем партициям.",
+                "edge_cases": "`JOIN` партиционированной таблицы с обычной может не давать pruning, если фильтр приходит косвенно через условие соединения. Помогает `enable_partitionwise_join`.",
+                "related": "Q35 виды партиционирования; Q37 когда не даёт выигрыша; Q20 `EXPLAIN`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда партиционирование не даёт выигрыша?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Если запросы не фильтруют по ключу партиционирования; если таблица небольшая (накладные расходы на маршрутизацию); если партиций слишком много (> 1000 — медленное планирование); при `JOIN` без фильтра по ключу; глобальные индексы недоступны.",
+              "correct": true,
+              "sections": {
+                "explanation": "Партиционирование — это инструмент для очень больших таблиц с понятным паттерном фильтрации; на маленьких или нерегулярно фильтруемых данных оно вредит.",
+                "example": "Таблица `users` в 100 тыс. строк с поиском по `email` — партиционирование бессмысленно, нужен индекс по `email`.",
+                "when_to_apply": "Не партиционировать ради экспериментов; делать только когда таблица > 50–100 ГБ и есть стабильный фильтр.",
+                "edge_cases": "Партиционирование по `HASH` усложняет миграции данных и не даёт pruning по диапазонам; используется для шардирования.",
+                "related": "Q35 виды; Q36 pruning; Q55 `pg_partman`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чем больше партиций — тем лучше производительность; рекомендуется делать сотни тысяч мелких партиций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После 1000–10000 партиций время планирования растёт нелинейно и съедает выигрыш.",
+                "source_of_confusion": "Логика «мельче = быстрее».",
+                "if_it_were_true": "Партиционирование per-row было бы оптимальным.",
+                "how_it_should_be": "Размер партиции подбирают так, чтобы их было десятки/сотни, не тысячи."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Партиционирование всегда ускоряет любые запросы — даже без фильтра по ключу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запросы без фильтра по ключу партиционирования сканируют все партиции и работают медленнее непартиционированной таблицы.",
+                "source_of_confusion": "Маркетинговое «партиционирование = производительность».",
+                "if_it_were_true": "Партиционировать стоило бы все таблицы.",
+                "how_it_should_be": "Выигрыш только при правильно подобранном ключе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Глобальные индексы по партиционированной таблице создаются автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `PostgreSQL` глобальных индексов нет — каждый индекс физически живёт на одной партиции.",
+                "source_of_confusion": "Опыт с `Oracle` global indexes.",
+                "if_it_were_true": "`UNIQUE(email)` через все партиции работал бы без указания ключа.",
+                "how_it_should_be": "Уникальность через все партиции требует включения ключа партиционирования."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое оконные функции и как они работают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Оконные функции — это синоним `GROUP BY`; они тоже сворачивают строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оконные функции сохраняют все строки результата, добавляя вычисленное значение в каждую.",
+                "source_of_confusion": "Похожесть синтаксиса агрегатных функций.",
+                "if_it_were_true": "Не было бы запросов с одновременным `OVER` и `GROUP BY`.",
+                "how_it_should_be": "Окно не сворачивает: 100 строк на входе → 100 на выходе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оконные функции выполняют вычисления над набором строк, связанных с текущей (окном), не сворачивая результат в одну строку как `GROUP BY`. Объявляются с `OVER (PARTITION BY ... ORDER BY ... ROWS|RANGE BETWEEN ...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Бывают ранжирующие (`ROW_NUMBER`, `RANK`, `DENSE_RANK`, `NTILE`), смещения (`LAG`, `LEAD`, `FIRST_VALUE`), агрегатные с `OVER` (`SUM`, `AVG`, `COUNT`).",
+                "example": "`SELECT user_id, total, SUM(total) OVER (PARTITION BY user_id ORDER BY order_date) AS running_total FROM orders;`",
+                "when_to_apply": "Топ-N на группу, нарастающие итоги, скользящие средние, дельты между строками, ранжирование.",
+                "edge_cases": "При отсутствии `ORDER BY` агрегат считается по всему окну; при `ORDER BY` без явного frame — `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` (с особенностью обработки ties).",
+                "related": "Q39 ранжирующие; Q40 `LAG`/`LEAD`; Q41 скользящие агрегаты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `PostgreSQL` оконные функции работают только для агрегатов `SUM`/`AVG`/`COUNT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддерживаются также ранжирующие (`ROW_NUMBER`, `RANK`, `DENSE_RANK`, `NTILE`), смещения (`LAG`/`LEAD`/`FIRST_VALUE`).",
+                "source_of_confusion": "Узкое знакомство с агрегатами.",
+                "if_it_were_true": "Невозможно было бы реализовать «топ-N на группу».",
+                "how_it_should_be": "Класс оконных функций гораздо шире."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`PARTITION BY` в окне обязателен и не имеет значения по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PARTITION BY` опционален; без него окно — вся таблица.",
+                "source_of_confusion": "Привычка к `GROUP BY`.",
+                "if_it_were_true": "Все примеры с `OVER ()` без партиций были бы синтаксической ошибкой.",
+                "how_it_should_be": "Без `PARTITION BY` окно охватывает весь набор."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают `ROW_NUMBER`, `RANK` и `DENSE_RANK`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`RANK` и `DENSE_RANK` — это синонимы и дают одинаковый результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различаются обработкой ничьих: `RANK` пропускает номера, `DENSE_RANK` — нет.",
+                "source_of_confusion": "Похожие имена.",
+                "if_it_were_true": "Не было бы смысла в двух функциях.",
+                "how_it_should_be": "На последовательности 100, 90, 90, 80: `RANK` = 1,2,2,4; `DENSE_RANK` = 1,2,2,3."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ROW_NUMBER` детерминирован даже при равных значениях в `ORDER BY`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без tiebreaker порядок строк с равными значениями не определён — добавляют второй ключ сортировки.",
+                "source_of_confusion": "Уникальность номеров не означает стабильности назначения.",
+                "if_it_were_true": "Не было бы необходимости в tiebreaker.",
+                "how_it_should_be": "Для стабильности — явный tiebreaker в `ORDER BY`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ROW_NUMBER()` — уникальный порядковый номер. `RANK()` — ранг с пропусками при дублях (1, 2, 2, 4). `DENSE_RANK()` — ранг без пропусков (1, 2, 2, 3).",
+              "correct": true,
+              "sections": {
+                "explanation": "Все три — оконные ранжирующие функции; различаются обработкой одинаковых значений в `ORDER BY` окна.",
+                "example": "`ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS rn` — типичный «последний заказ на пользователя» через `WHERE rn = 1`.",
+                "when_to_apply": "`ROW_NUMBER` — для дедупликации (выбрать одну строку из группы). `RANK`/`DENSE_RANK` — для leaderboard с обработкой ничьих.",
+                "edge_cases": "Если в `ORDER BY` нет уникальности и нужен детерминизм — добавляют tiebreaker (`ORDER BY score DESC, id`).",
+                "related": "Q38 оконные функции; Q40 `LAG`/`LEAD`; Q41 скользящие."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`RANK` всегда возвращает последовательные целые числа без пропусков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При наличии ничьих `RANK` ПРОПУСКАЕТ номера; именно `DENSE_RANK` без пропусков.",
+                "source_of_confusion": "Перепутаны функции.",
+                "if_it_were_true": "Не существовало бы `DENSE_RANK`.",
+                "how_it_should_be": "Пропуски — отличительная черта `RANK`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают `LAG` и `LEAD`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`LAG(col, 1)` для первой строки окна вызывает ошибку выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возвращает `default` (по умолчанию NULL); ошибки не возникает.",
+                "source_of_confusion": "Аналогия с обращением к `array[-1]`.",
+                "if_it_were_true": "Любая агрегация с `LAG` падала бы на первой строке.",
+                "how_it_should_be": "Третий аргумент задаёт значение по умолчанию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`LAG` смотрит на строку ниже по окну, `LEAD` — на строку выше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `LAG` (отставание) — выше, `LEAD` (опережение) — ниже.",
+                "source_of_confusion": "Английские термины перепутаны.",
+                "if_it_were_true": "Семантика времени была бы обратной.",
+                "how_it_should_be": "`LAG` = предыдущее, `LEAD` = следующее."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`LAG` и `LEAD` работают только с числовыми столбцами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Работают с любым типом — `TEXT`, `DATE`, `JSONB`, `UUID`.",
+                "source_of_confusion": "Частое использование с числовыми дельтами.",
+                "if_it_were_true": "Нельзя было бы найти предыдущий статус заказа.",
+                "how_it_should_be": "Тип столбца не ограничен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`LAG(col, offset, default)` возвращает значение из строки выше по окну на `offset` позиций. `LEAD(col, offset, default)` — из строки ниже. Без явных аргументов offset=1, default=NULL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полезны для вычисления дельт между соседними строками, определения «предыдущего значения», поиска изменений статусов.",
+                "example": "`SELECT order_date, total, total - LAG(total) OVER (PARTITION BY user_id ORDER BY order_date) AS diff FROM orders;`",
+                "when_to_apply": "Time-series анализ, разница между последовательными измерениями, определение перехода статусов в журналах событий.",
+                "edge_cases": "Для первой строки в окне `LAG` возвращает `default` (или NULL); часто используют `LAG(col, 1, 0)` чтобы получить 0 вместо NULL.",
+                "related": "Q38 оконные функции; Q41 скользящие; Q39 ранжирование."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `SUM OVER` и скользящие агрегаты?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Скользящие агрегаты задаются явным frame в `OVER (... ROWS|RANGE BETWEEN ... AND ...)`. `ROWS BETWEEN 6 PRECEDING AND CURRENT ROW` — фиксированное число строк; `RANGE BETWEEN '7 days' PRECEDING AND CURRENT ROW` — диапазон значений ключа сортировки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без `ROWS`/`RANGE` поведение по умолчанию — `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` (нарастающий итог).",
+                "example": "`AVG(total) OVER (ORDER BY order_date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg_7d`.",
+                "when_to_apply": "Скользящие средние, running totals, top-N по окну, агрегаты внутри партиции.",
+                "edge_cases": "`RANGE` требует, чтобы тип столбца сортировки поддерживал `+`/`-` с интервалом (даты, числа); для строк работает только `ROWS`.",
+                "related": "Q38 оконные функции; Q40 `LAG`/`LEAD`; Q39 ранжирование."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SUM(col) OVER (ORDER BY x)` без явного frame даёт сумму по всему окну (как без `ORDER BY`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `ORDER BY` и без явного frame применяется `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` — это running total, а не общая сумма.",
+                "source_of_confusion": "Незнание поведения frame по умолчанию.",
+                "if_it_were_true": "Не получалось бы делать running total без явного `ROWS`.",
+                "how_it_should_be": "Поведение по умолчанию = нарастающий итог."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ROWS` и `RANGE` в frame — это синонимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ROWS` считает физические строки; `RANGE` — значения ключа сортировки (с особой обработкой ties).",
+                "source_of_confusion": "Похожий синтаксис.",
+                "if_it_were_true": "Не существовало бы двух ключевых слов.",
+                "how_it_should_be": "`ROWS` физический, `RANGE` логический."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Скользящие агрегаты невозможно выразить через оконные функции — нужна процедура на `PL/pgSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AVG/SUM/MIN/MAX OVER (... ROWS BETWEEN ...)` — стандартный декларативный способ.",
+                "source_of_confusion": "Незнание frame-синтаксиса.",
+                "if_it_were_true": "В стандарте `SQL:2003` не было бы оконных функций.",
+                "how_it_should_be": "Реализуется одним `SELECT`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CTE` и чем он отличается от подзапроса?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CTE` в `PostgreSQL` всегда материализуется, как было до PG 12.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С PG 12 поведение по умолчанию — inlining (как подзапрос); материализация явная (`MATERIALIZED`).",
+                "source_of_confusion": "Устаревшее знание про «оптимизационный забор».",
+                "if_it_were_true": "Не существовало бы ключевого слова `NOT MATERIALIZED`.",
+                "how_it_should_be": "С PG 12 поведение инвертировано."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CTE` (Common Table Expression) — именованный временный результат в `WITH`-блоке, используемый в основном запросе. До PG 12 `CTE` был «забором оптимизации» (всегда материализовался); с PG 12 встраивается в план как подзапрос, кроме рекурсивных и с побочными эффектами. Управление: `MATERIALIZED`/`NOT MATERIALIZED`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`CTE` улучшает читаемость, позволяет именовать промежуточные шаги и переиспользовать (несколько ссылок). `WITH RECURSIVE` — для иерархий.",
+                "example": "`WITH active AS (SELECT id FROM users WHERE status='active') SELECT u.id, COUNT(*) FROM active u JOIN orders o ON o.user_id=u.id GROUP BY u.id;`",
+                "when_to_apply": "Сложные многошаговые запросы, рекурсия, переиспользование промежуточного результата; явная материализация для управления планом.",
+                "edge_cases": "`CTE` с побочными эффектами (`INSERT`/`UPDATE`/`DELETE RETURNING`) всегда материализуется и выполняется один раз — поведение, на которое опираются для атомарных операций.",
+                "related": "Q43 рекурсивные `CTE`; Q20 `EXPLAIN`; Q38 оконные функции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CTE` нельзя использовать несколько раз — каждое имя ссылается только один раз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На один `CTE` можно ссылаться многократно; именно это — одна из главных причин его использования.",
+                "source_of_confusion": "Аналогия с inline view.",
+                "if_it_were_true": "Не было бы выигрыша по сравнению с подзапросом.",
+                "how_it_should_be": "Многократные ссылки разрешены."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CTE` с `RETURNING` всегда встраивается и может выполняться несколько раз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CTE` с побочными эффектами всегда материализуется и выполняется ровно один раз.",
+                "source_of_confusion": "Желание перенести правила PG 12 на все случаи.",
+                "if_it_were_true": "`INSERT ... RETURNING` внутри `WITH` дублировал бы вставки.",
+                "how_it_should_be": "Side-effect CTE — всегда materialize."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 43,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают рекурсивные `CTE`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Рекурсивный `CTE` требует `UNION` (с устранением дублей) вместо `UNION ALL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартный синтаксис — именно `UNION ALL`; `UNION` тоже допустим, но почти всегда избыточен и снижает производительность.",
+                "source_of_confusion": "Стереотип «UNION безопаснее».",
+                "if_it_were_true": "Стандартный пример из документации был бы неработающим.",
+                "how_it_should_be": "Используется `UNION ALL`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Рекурсивный `CTE` всегда останавливается автоматически даже на циклических графах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На циклах нужно явное условие завершения; без него получается бесконечный цикл (выполнение прервётся по таймауту/памяти).",
+                "source_of_confusion": "Желание «база разберётся сама».",
+                "if_it_were_true": "Не нужно было бы городить массив visited.",
+                "how_it_should_be": "Циклы устраняют через `WHERE depth < N` или `NOT (id = ANY(visited))`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`WITH RECURSIVE` объединяет базовый запрос и рекурсивный шаг через `UNION ALL`. Базовый возвращает стартовые строки, рекурсивный ссылается на имя `CTE` и применяется до тех пор, пока не вернёт пустое множество.",
+              "correct": true,
+              "sections": {
+                "explanation": "Применяется для обхода иерархий (employee-manager), графов, генерации последовательностей, обхода JSON-структур.",
+                "example": "`WITH RECURSIVE h AS (SELECT id, mgr, 1 d FROM emp WHERE mgr IS NULL UNION ALL SELECT e.id, e.mgr, h.d+1 FROM emp e JOIN h ON e.mgr=h.id) SELECT * FROM h;`",
+                "when_to_apply": "Деревья комментариев, BOM, маршруты, ancestor/descendant lookup.",
+                "edge_cases": "Без условия завершения возможен бесконечный цикл (на циклических графах). Ограничивают глубиной: `WHERE depth < 100` или массивом visited.",
+                "related": "Q42 `CTE`; Q38 оконные функции; Q20 `EXPLAIN`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `WITH RECURSIVE` базовый запрос может ссылаться на имя `CTE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только рекурсивная часть ссылается на имя `CTE`; базовая часть должна быть автономной.",
+                "source_of_confusion": "Идея «всё взаимно».",
+                "if_it_were_true": "Не существовало бы базового случая для остановки рекурсии.",
+                "how_it_should_be": "Базовая часть — независимый стартовый запрос."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 44,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `streaming replication` в `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Streaming replication — это копирование SQL-запросов с primary на standby.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Физическая репликация копирует `WAL`-записи (изменения блоков), а не SQL-запросы.",
+                "source_of_confusion": "Аналогия с statement-based репликацией в `MySQL`.",
+                "if_it_were_true": "На standby нужно было бы заново выполнять `RANDOM()`/`now()` с другим результатом.",
+                "how_it_should_be": "Реплицируются изменения на уровне страниц/блоков."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "На `hot_standby` можно выполнять и `INSERT`/`UPDATE`; реплика двунаправленна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`hot_standby` принимает только read-only запросы; запись блокируется до `promote`.",
+                "source_of_confusion": "Желание получить multi-master из коробки.",
+                "if_it_were_true": "Не нужен был бы Patroni и явное переключение ролей.",
+                "how_it_should_be": "Запись — только на primary; standby — read-only."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`synchronous_commit=remote_apply` гарантирует фиксацию на primary до получения подтверждения от standby.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `remote_apply` означает ожидание ПРИМЕНЕНИЯ изменений на standby перед возвратом клиенту.",
+                "source_of_confusion": "Перевёрнутая семантика.",
+                "if_it_were_true": "Не было бы разницы с `local`.",
+                "how_it_should_be": "Это самый строгий режим — primary ждёт apply на реплике."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Streaming replication — физическая репликация через постоянное TCP-соединение: `primary` отправляет `WAL`-записи `walsender`-ом, `standby` принимает `walreceiver`-ом и применяет. Standby может быть `hot_standby` (открыт для read-only запросов).",
+              "correct": true,
+              "sections": {
+                "explanation": "Уровень согласованности задаётся `synchronous_commit`: `local` (асинхронно), `remote_write`, `remote_apply`, `on` (синхронно с `fsync` на реплике).",
+                "example": "На primary: `wal_level=replica`, `max_wal_senders=10`. На standby: `primary_conninfo='host=primary user=repuser'`, `hot_standby=on`.",
+                "when_to_apply": "HA-кластеры с автоматическим failover (Patroni, repmgr), read-replicas для масштабирования чтения, DR.",
+                "edge_cases": "При `synchronous_commit=on` и недоступной синхронной реплике — `COMMIT` зависает; всегда настраивать несколько кандидатов или `ANY n_synchronous_standby_names`.",
+                "related": "Q45 физическая vs логическая; Q46 replication slot; Q3 `WAL`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 45,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между физической и логической репликацией?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Физическая копирует `WAL` блок-в-блок; реплика — точная байтовая копия, должны совпадать версия PG и платформа; реплицируется вся база. Логическая публикует изменения строк (`INSERT`/`UPDATE`/`DELETE`) через `Publication`/`Subscription`; версии и платформы могут различаться, выборочные таблицы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Физическая нужна для DR и read-replicas. Логическая — для миграций между версиями, выборочной репликации, CDC (`pgoutput`).",
+                "example": "`CREATE PUBLICATION pub FOR TABLE orders, users;` на источнике; `CREATE SUBSCRIPTION sub CONNECTION '...' PUBLICATION pub;` на получателе.",
+                "when_to_apply": "Логическая — версионные миграции, ETL, CDC в Kafka через `pg_logical_emit_message`. Физическая — HA-кластер.",
+                "edge_cases": "Логическая требует `wal_level=logical`, уникальный `replica identity` для `UPDATE`/`DELETE` (PK или `REPLICA IDENTITY FULL`). `DDL` не реплицируется.",
+                "related": "Q44 streaming replication; Q46 replication slot; Q3 `WAL`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Логическая репликация копирует `WAL`-блоки, как физическая.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Логическая декодирует `WAL` в логические change events (INSERT/UPDATE/DELETE по строкам); блоки не передаются.",
+                "source_of_confusion": "Обе работают «через WAL».",
+                "if_it_were_true": "Логическая не могла бы реплицировать между разными версиями.",
+                "how_it_should_be": "WAL — только источник; payload — логический."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Физическая репликация поддерживает выбор конкретных таблиц для копирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Физическая копирует ВСЮ базу целиком (включая системные каталоги); выборочность доступна только в логической.",
+                "source_of_confusion": "Желание гибкости.",
+                "if_it_were_true": "Не нужна была бы логическая репликация для выборочного копирования.",
+                "how_it_should_be": "Физическая — всё или ничего."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Логическая репликация реплицирует `DDL` так же, как `DML`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DDL` не реплицируется логически — структуру нужно мигрировать вручную или внешним инструментом (`pglogical`, schema-tracker).",
+                "source_of_confusion": "Желание «реплицируется всё».",
+                "if_it_were_true": "`CREATE TABLE` на источнике сразу был бы виден на subscriber-е.",
+                "how_it_should_be": "Структуру синхронизируют отдельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 46,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `replication slot` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Replication slot нужен только для логической репликации; физической достаточно `wal_keep_size`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Slot полезен и в физической репликации — он надёжнее `wal_keep_size`, который имеет верхний предел.",
+                "source_of_confusion": "Минимальная конфигурация без slot работает на тестовых стендах.",
+                "if_it_were_true": "Не существовало бы `pg_create_physical_replication_slot`.",
+                "how_it_should_be": "Slot — рекомендованный механизм для обоих видов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Replication slot` — структура на primary, гарантирующая, что `WAL`-сегменты не удалятся, пока подписчик (физическая реплика или логический consumer) их не получил. Бывают физические и логические.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без слота `primary` может удалить `WAL` по `max_wal_size`/`wal_keep_size`, и реплика навсегда отстанет (нужен `pg_basebackup` заново).",
+                "example": "`SELECT pg_create_physical_replication_slot('standby1');` `SELECT pg_create_logical_replication_slot('cdc', 'pgoutput');` `SELECT * FROM pg_replication_slots;`",
+                "when_to_apply": "Обязательно для production-кластеров: HA-стендбай и CDC-пайплайны.",
+                "edge_cases": "Заброшенный (inactive) slot — основной риск: `WAL` копится, диск переполняется. Мониторят через `pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)`.",
+                "related": "Q44 streaming replication; Q45 логическая; Q3 `WAL`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Inactive slot безопасен — `WAL` всё равно удаляется по таймауту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это самый частый incident в проде: inactive slot держит `WAL` бесконечно, заполняя диск.",
+                "source_of_confusion": "Желание «всё чистится автоматически».",
+                "if_it_were_true": "Не приходилось бы мониторить лаг слотов.",
+                "how_it_should_be": "Заброшенные slot-ы удаляют явно (`pg_drop_replication_slot`)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Slot хранится в `WAL`-сегменте и теряется при перезапуске сервера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Slot хранится в `pg_replslot/` директории файловой системы и переживает рестарт.",
+                "source_of_confusion": "Незнание места хранения.",
+                "if_it_were_true": "После каждого рестарта `WAL`-лаг обнулялся бы.",
+                "how_it_should_be": "Slot — персистентный объект кластера."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 47,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `full-text search` в `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "FTS в `PostgreSQL` поддерживает fuzzy-поиск с обработкой опечаток из коробки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Базовый FTS не делает fuzzy-поиска; для опечаток нужен `pg_trgm` или внешние решения.",
+                "source_of_confusion": "Привычка к ES, где fuzzy включён по умолчанию.",
+                "if_it_were_true": "Не было бы спроса на `pg_trgm`/`fuzzystrmatch`.",
+                "how_it_should_be": "Опечатки обрабатывают `pg_trgm` operators (`%`)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для FTS обязателен только `GiST`-индекс; `GIN` для tsvector не подходит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чаще всего используется именно `GIN` (быстрее на чтение); `GiST` — когда нужна быстрая запись.",
+                "source_of_confusion": "Старый совет использовать `GiST` для FTS.",
+                "if_it_were_true": "Документация рекомендовала бы только `GiST`.",
+                "how_it_should_be": "`GIN` — современный дефолт; `GiST` — частный случай."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "FTS работает через типы `tsvector` (нормализованный набор лексем с весами и позициями) и `tsquery` (выражение поиска). Применяются операторами `@@`; для индексирования — `GIN` (быстрее на чтение) или `GiST` (быстрее на запись).",
+              "correct": true,
+              "sections": {
+                "explanation": "`to_tsvector(config, text)` применяет токенизацию, стоп-слова и стемминг по словарю (`russian`, `english`). `to_tsquery` парсит запрос с операторами `&`, `|`, `!`.",
+                "example": "`ALTER TABLE articles ADD COLUMN tsv tsvector GENERATED ALWAYS AS (to_tsvector('russian', title||' '||body)) STORED; CREATE INDEX ON articles USING GIN (tsv);`",
+                "when_to_apply": "Поиск по статьям, документам, описаниям товаров — когда не нужны фасеты и аналитика как в Elasticsearch.",
+                "edge_cases": "FTS не делает fuzzy-поиск (опечатки); для опечаток подключают `pg_trgm` (similarity) или внешний движок.",
+                "related": "Q13 `GIN`; Q14 `GiST`; Q48 `JSONB` для гибких документов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`to_tsvector` не применяет стемминг и сохраняет слова в исходной форме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стемминг применяется по словарю выбранной конфигурации (`russian`/`english`); «бежал» и «бежать» приводятся к общему `беж`.",
+                "source_of_confusion": "Незнание роли словарей.",
+                "if_it_were_true": "Поиск «бежать» не находил бы «бежал».",
+                "how_it_should_be": "Стемминг — стандартная часть `to_tsvector`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 48,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие операторы и функции доступны для `JSONB`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Оператор `->>` возвращает JSON, а `->` — text.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `->` возвращает JSON, `->>` — text.",
+                "source_of_confusion": "Перепутаны операторы.",
+                "if_it_were_true": "Цепочка `payload->'a'->>'b'` не работала бы.",
+                "how_it_should_be": "Двойные стрелки — text; одна — JSON."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`GIN`-индекс по `JSONB` поддерживает только опции `jsonb_ops`; `jsonb_path_ops` не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть оба класса операторов; `jsonb_path_ops` компактнее и быстрее для `@>`, но не поддерживает `?`.",
+                "source_of_confusion": "Незнание про `jsonb_path_ops`.",
+                "if_it_were_true": "Не было бы выбора при `CREATE INDEX`.",
+                "how_it_should_be": "Выбор класса opclass меняет компактность и набор поддерживаемых операторов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оператор `@>` означает «равно» и эквивалентен `=` для `JSONB`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@>` — оператор containment (правый аргумент содержится в левом), не равенство.",
+                "source_of_confusion": "Похожесть на стрелочный оператор.",
+                "if_it_were_true": "`'{\"a\":1, \"b\":2}' @> '{\"a\":1}'` не возвращало бы `true`.",
+                "how_it_should_be": "Containment ≠ равенство."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Доступ: `->` (поле как JSON), `->>` (как text), `#>`/`#>>` (по пути). Поиск: `@>` (содержит), `<@` (содержится), `?` (ключ есть), `?|`/`?&` (любой/все ключи). Модификация: `||` (merge), `-` (удалить ключ), `jsonb_set`, `jsonb_insert`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Индексируются операторы `@>`, `?`, `?|`, `?&` через `GIN` с opclass-ами `jsonb_ops` (по умолчанию) или `jsonb_path_ops` (компактнее, только `@>`).",
+                "example": "`SELECT * FROM events WHERE payload @> '{\"type\":\"purchase\"}';` `UPDATE events SET payload = jsonb_set(payload, '{user,name}', '\"Alice\"');`",
+                "when_to_apply": "Гибкие схемы (события, конфиги, метаданные); миграции из document-БД; событийные журналы.",
+                "edge_cases": "`->` vs `->>`: `->` возвращает JSON (для дальнейших операций), `->>` — text (для сравнения и индексирования по выражению). Частая ошибка — путать `?` (jsonb-ключ) с placeholder-ом JDBC.",
+                "related": "Q7 `JSON` vs `JSONB`; Q13 `GIN`; Q17 функциональный индекс."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 49,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `PgBouncer` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PgBouncer` — легковесный пул соединений перед `PostgreSQL`. Приложение подключается к нему, а он держит небольшой пул реальных соединений до базы. Это решает проблему дорогих backend-процессов (`fork`+~5–10 МБ RAM каждый) при тысячах клиентов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поддерживает три режима: `session`, `transaction`, `statement`. Запускается отдельным процессом, обычно на той же машине или в sidecar.",
+                "example": "`pool_mode=transaction max_client_conn=1000 default_pool_size=20` → 1000 клиентов работают через 20 реальных соединений.",
+                "when_to_apply": "Любое продовое приложение со множеством short-lived соединений (web-фронты, serverless, lambdas).",
+                "edge_cases": "`transaction` mode ломает session-фичи (`SET LOCAL` работает, `SET` без `LOCAL` — нет; `LISTEN`, `PREPARE`, advisory locks могут сломаться).",
+                "related": "Q50 режимы пулинга; Q1 архитектура; Q53 `max_connections`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`PgBouncer` — расширение внутри `PostgreSQL`, включается через `CREATE EXTENSION`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это отдельный процесс/демон, не расширение СУБД.",
+                "source_of_confusion": "Имя в стиле `pg_*` ассоциируется с extension.",
+                "if_it_were_true": "Не нужно было бы менять `host`/`port` в connection string.",
+                "how_it_should_be": "PgBouncer — внешний прокси."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`PgBouncer` нужен только для тысяч одновременных соединений; до сотен соединений он бесполезен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уже на 200–500 коротких соединений выигрыш заметен из-за amortization `fork` и снижения памяти.",
+                "source_of_confusion": "Эмпирический порог «1000+».",
+                "if_it_were_true": "На умеренной нагрузке pool никогда бы не окупался.",
+                "how_it_should_be": "Выигрыш есть и на скромных нагрузках."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`PgBouncer` поддерживает SQL-уровневую авторизацию через `pg_hba.conf` самого `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аутентификация настраивается в `userlist.txt`/`auth_query` самого `PgBouncer`; `pg_hba.conf` действует уже на уровне базы.",
+                "source_of_confusion": "Желание единого места конфигурации.",
+                "if_it_were_true": "Не нужно было бы дублировать пользователей.",
+                "how_it_should_be": "Аутентификация настраивается в обоих слоях."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 50,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие режимы пулинга поддерживает `PgBouncer`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `session` mode `PgBouncer` даёт наибольшую экономию соединений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наименьшую: клиентское соединение фактически прибито к серверному на всё время.",
+                "source_of_confusion": "Слово «session» воспринимают как «продвинутый».",
+                "if_it_were_true": "Не было бы смысла во введении `transaction`/`statement` режимов.",
+                "how_it_should_be": "`session` — минимальная экономия; `transaction` — оптимум."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`session` — соединение клиента занимает реальное соединение на всю сессию (минимальная экономия). `transaction` — реальное соединение возвращается в пул после `COMMIT`/`ROLLBACK` (рекомендуемый). `statement` — после каждого оператора (нельзя многооператорные транзакции).",
+              "correct": true,
+              "sections": {
+                "explanation": "`transaction` — баланс между совместимостью и экономией. `statement` — экстремальный case (только autocommit, без `BEGIN`).",
+                "example": "`pool_mode=transaction` — после `COMMIT` соединение свободно для следующего клиента; `pool_mode=session` — пока клиент держит, никто другой не получит.",
+                "when_to_apply": "`transaction` — дефолт для большинства приложений. `session` — если используются `LISTEN`/`NOTIFY`, advisory locks, `SET` параметров сессии.",
+                "edge_cases": "В `transaction` mode prepared statements кэшируются на клиенте (на сервере они привязаны к сессии). Решения: `prepared_statements: false` или `protocol_v2` PgBouncer 1.21+.",
+                "related": "Q49 `PgBouncer`; Q26 уровни изоляции; Q30 `SAVEPOINT`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`transaction` mode полностью прозрачен для приложения и совместим со всеми session-фичами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ломает `LISTEN`/`NOTIFY`, `SET` без `LOCAL`, server-side prepared statements (без специальной поддержки), advisory locks на уровне сессии.",
+                "source_of_confusion": "Маркетинговая «прозрачность».",
+                "if_it_were_true": "Не нужно было бы знать о режимах.",
+                "how_it_should_be": "Совместимость частичная; знать ограничения обязательно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `statement` mode можно выполнять многооператорные транзакции с `BEGIN`/`COMMIT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `statement` mode явные транзакции ЗАПРЕЩЕНЫ; разрешён только autocommit.",
+                "source_of_confusion": "Желание получить максимум плюсов без ограничений.",
+                "if_it_were_true": "Не было бы разницы с `transaction` mode.",
+                "how_it_should_be": "Statement mode — только одиночные операторы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 51,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы блокировок существуют в `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PostgreSQL` использует только row-level блокировки; table-level отсутствует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть и table-level (8 уровней), и row-level, и advisory, и predicate locks.",
+                "source_of_confusion": "Маркетинг «row-level locking».",
+                "if_it_were_true": "`DROP TABLE` мог бы выполниться параллельно с `SELECT`.",
+                "how_it_should_be": "Уровни блокировок многослойны."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SELECT FOR UPDATE` берёт `ACCESS EXCLUSIVE` lock на таблицу и блокирует все `SELECT`-ы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Берёт `ROW SHARE` на таблицу + эксклюзивный row-level lock на конкретные строки; обычные `SELECT` без `FOR UPDATE` не блокируются.",
+                "source_of_confusion": "Слово `EXCLUSIVE` в названии оператора.",
+                "if_it_were_true": "Любой `FOR UPDATE` останавливал бы всю таблицу.",
+                "how_it_should_be": "Блокировка точечная — только на строках, попавших в `WHERE`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Многоуровневая система: table-level (`ACCESS SHARE`, `ROW SHARE`, `ROW EXCLUSIVE`, `SHARE UPDATE EXCLUSIVE`, `SHARE`, `SHARE ROW EXCLUSIVE`, `EXCLUSIVE`, `ACCESS EXCLUSIVE`), row-level (`FOR UPDATE`, `FOR NO KEY UPDATE`, `FOR SHARE`, `FOR KEY SHARE`), advisory locks и predicate locks (для `SERIALIZABLE`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Table-locks приобретаются командами автоматически: `SELECT` → `ACCESS SHARE`, `INSERT`/`UPDATE`/`DELETE` → `ROW EXCLUSIVE`, `DROP`/`TRUNCATE` → `ACCESS EXCLUSIVE`. Row-locks хранятся в `xmax` строки.",
+                "example": "`SELECT pid, locktype, relation::regclass, mode, granted FROM pg_locks WHERE NOT granted;` — кто кого ждёт.",
+                "when_to_apply": "Диагностика блокировок, разрешение deadlock-ов, аудит DDL-операций на проде.",
+                "edge_cases": "`ALTER TABLE` берёт `ACCESS EXCLUSIVE` — блокирует даже `SELECT`. Многие варианты (`ADD COLUMN` без DEFAULT, `SET NOT NULL` с constant CHECK) ускорены и не переписывают таблицу, но lock всё равно нужен — пусть и кратко.",
+                "related": "Q52 deadlock; Q26 уровни изоляции; Q19 `CONCURRENTLY`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Advisory locks в `PostgreSQL` блокируют ресурсы базы данных, как обычные локи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Advisory locks — пользовательские мьютексы, не связанные с какими-либо объектами БД; их семантика определяется приложением.",
+                "source_of_confusion": "Слово «lock» в имени.",
+                "if_it_were_true": "Они конфликтовали бы с обычными блокировками таблиц.",
+                "how_it_should_be": "Advisory locks — приложенческий механизм координации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 52,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `deadlock` и как `PostgreSQL` его обнаруживает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PostgreSQL` не умеет обнаруживать deadlock; администратор должен убивать сессии вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обнаружение встроено: `deadlock_timeout` запускает анализ графа, и одна транзакция откатывается автоматически.",
+                "source_of_confusion": "Опыт со старыми СУБД без detection.",
+                "if_it_were_true": "На проде висели бы тысячи зависших транзакций.",
+                "how_it_should_be": "Автоматический детектор + явный `40P01 deadlock_detected`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При обнаружении deadlock `PostgreSQL` всегда откатывает обе участвующие транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Откатывается ровно одна «жертва» (выбирается по эвристике); остальные продолжают выполнение.",
+                "source_of_confusion": "Симметричное представление «оба виноваты».",
+                "if_it_were_true": "Падал бы более существенный объём работы.",
+                "how_it_should_be": "Только жертва откатывается."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SKIP LOCKED` снижает производительность и должен применяться только в крайних случаях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SKIP LOCKED` — стандартный высокопроизводительный паттерн для очередей: воркеры берут разные задачи без deadlock-ов и без ожидания.",
+                "source_of_confusion": "Незнание паттерна workers + queue table.",
+                "if_it_were_true": "Очереди на `PostgreSQL` были бы неработоспособны.",
+                "how_it_should_be": "Рекомендуется для job queue."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Deadlock — взаимная блокировка двух+ транзакций, ждущих ресурсов друг друга. `PostgreSQL` периодически (каждые `deadlock_timeout`, по умолчанию 1 с) строит граф ожидания; при обнаружении цикла одна из транзакций откатывается с `ERROR: deadlock detected`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Профилактика: блокировать ресурсы в одном и том же порядке во всех путях кода; минимизировать длительность транзакций; использовать `NOWAIT`/`SKIP LOCKED` для optimistic-сценариев.",
+                "example": "`SELECT * FROM jobs WHERE status='pending' FOR UPDATE SKIP LOCKED LIMIT 1;` — паттерн очереди без deadlock-ов.",
+                "when_to_apply": "В системах с конкурентными обновлениями (биллинг, инвентарь, очереди задач).",
+                "edge_cases": "Уменьшение `deadlock_timeout` ускоряет обнаружение, но грузит CPU постоянной проверкой; в большинстве случаев 1 с достаточно.",
+                "related": "Q51 блокировки; Q26 уровни изоляции; Q30 `SAVEPOINT` (для retry)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 53,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ключевые параметры конфигурации влияют на производительность?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`shared_buffers` (~25% RAM), `effective_cache_size` (~75% RAM), `work_mem` (4–64 МБ), `maintenance_work_mem` (256–1024 МБ), `max_connections` (с pool), `wal_buffers`, `random_page_cost` (1.1–2.0 для SSD), `effective_io_concurrency` (200 для SSD), `checkpoint_completion_target`=0.9, `log_min_duration_statement`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство параметров требует `pg_reload_conf()`; некоторые (`shared_buffers`, `max_connections`) — только рестарт. `work_mem` локален на operation, не на запрос — сложный запрос может использовать в разы больше.",
+                "example": "`work_mem=16MB`, `JOIN` с двумя `Sort` + `Hash Agg` может суммарно потратить ~50 МБ на этот запрос.",
+                "when_to_apply": "Тюнинг под workload: OLTP/OLAP/смешанный. Использовать `pgtune`/`postgresqlco.nf` как стартовую точку.",
+                "edge_cases": "Слишком большой `work_mem` × `max_connections` может «съесть» всю RAM в пике; считают по worst-case sort/hash на запрос.",
+                "related": "Q2 `shared_buffers`; Q24 стоимости; Q33 autovacuum."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`work_mem` — это глобальная память сервера, разделяемая всеми соединениями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`work_mem` — лимит на КАЖДУЮ sort/hash-операцию в КАЖДОМ запросе КАЖДОГО соединения. Может умножаться многократно.",
+                "source_of_confusion": "Аналогия с `shared_buffers`.",
+                "if_it_were_true": "Не приходилось бы остерегаться `work_mem × max_connections × N_operations`.",
+                "how_it_should_be": "`work_mem` — per-operation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для SSD рекомендуется повышать `random_page_cost` до 4–8.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для SSD `random_page_cost` ПОНИЖАЮТ до 1.1–2.0, чтобы планировщик чаще выбирал индексные планы.",
+                "source_of_confusion": "Перевёрнутая логика.",
+                "if_it_were_true": "На SSD стало бы выгоднее `Seq Scan`.",
+                "how_it_should_be": "1.1–2.0 для SSD; 4.0 (дефолт) — для HDD."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`max_connections` нужно ставить максимально высоким (10 000+) для масштабирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Высокое `max_connections` без пула ведёт к деградации; рекомендуют 100–200 + `PgBouncer`.",
+                "source_of_confusion": "Желание «больше всегда лучше».",
+                "if_it_were_true": "Не существовало бы `PgBouncer`.",
+                "how_it_should_be": "Низкое значение + connection pool."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 54,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как анализировать медленные запросы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Лог медленных запросов включается по умолчанию во всех инсталляциях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`log_min_duration_statement` по умолчанию `-1` (выключено); включают явно (`1000` мс — типичное значение).",
+                "source_of_confusion": "Желание «всё логируется само».",
+                "if_it_were_true": "Файлы логов росли бы неконтролируемо на проде из коробки.",
+                "how_it_should_be": "Параметр включают сознательно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Шаги: 1) включить `log_min_duration_statement` для логов медленных запросов; 2) использовать `pg_stat_statements` для агрегатной статистики (total/mean time, rows, calls); 3) для конкретного запроса — `EXPLAIN (ANALYZE, BUFFERS)`; 4) смотреть `pg_stat_activity` для выявления активных long-running.",
+              "correct": true,
+              "sections": {
+                "explanation": "`pg_stat_statements` нормализует запросы (заменяет константы на `$1`), что позволяет агрегировать одинаковые шаблоны.",
+                "example": "`SELECT query, calls, total_exec_time, mean_exec_time FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;`",
+                "when_to_apply": "Регулярный аудит; при росте latency/ошибках на API; перед оптимизацией индексов.",
+                "edge_cases": "После выкатки изменений сбрасывать статистику: `SELECT pg_stat_statements_reset();`. Логирование slow queries создаёт I/O нагрузку на сервер логов — порог подбирают.",
+                "related": "Q20 `EXPLAIN`; Q21 `EXPLAIN ANALYZE`; Q25 статистика; Q55 расширения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`pg_stat_statements` — это встроенный view, не требующий установки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это расширение `contrib`; устанавливается через `CREATE EXTENSION pg_stat_statements` + `shared_preload_libraries='pg_stat_statements'` + рестарт.",
+                "source_of_confusion": "Чаще предустановлено на managed-сервисах.",
+                "if_it_were_true": "Не нужно было бы менять `shared_preload_libraries`.",
+                "how_it_should_be": "Требует extension + рестарт."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`EXPLAIN ANALYZE` безопасен для любого запроса, включая `DELETE` и `UPDATE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EXPLAIN ANALYZE` ВЫПОЛНЯЕТ запрос; для деструктивных нужно `BEGIN; EXPLAIN ANALYZE ...; ROLLBACK;`.",
+                "source_of_confusion": "Слово «EXPLAIN» вызывает ассоциацию с «только анализ».",
+                "if_it_were_true": "Можно было бы наугад запускать его в проде.",
+                "how_it_should_be": "Деструктивные запросы оборачивают в откатываемую транзакцию."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 55,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие популярные расширения `PostgreSQL` стоит знать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все расширения `PostgreSQL` доступны на любом managed-сервисе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AWS RDS/Cloud SQL/Azure имеют ограниченный allowlist расширений; редкие или системные могут отсутствовать.",
+                "source_of_confusion": "Опыт on-premise установок.",
+                "if_it_were_true": "Не было бы документации со списками `Supported Extensions`.",
+                "how_it_should_be": "Проверять allowlist провайдера заранее."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`pg_repack` — это синоним `VACUUM FULL` и работает с тем же поведением.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`pg_repack` пересоздаёт таблицу без длительной блокировки (короткий exclusive lock только в финальной фазе swap).",
+                "source_of_confusion": "Совпадение цели — устранить bloat.",
+                "if_it_were_true": "Не было бы смысла в отдельном расширении.",
+                "how_it_should_be": "`pg_repack` — онлайн-альтернатива."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`pg_stat_statements` (статистика SQL), `pg_trgm` (similarity/fuzzy), `PostGIS` (геопространственные данные), `uuid-ossp`/`gen_random_uuid()` (UUID), `hstore`, `pgcrypto`, `pg_partman` (автопартиционирование), `timescaledb` (time-series), `pg_repack` (рекомпакция без блокировки), `pgaudit`, `pgvector` (векторы для AI).",
+              "correct": true,
+              "sections": {
+                "explanation": "Расширения подключаются через `CREATE EXTENSION name;`, некоторые требуют `shared_preload_libraries` + рестарт. Список доступных — `pg_available_extensions`.",
+                "example": "`CREATE EXTENSION IF NOT EXISTS pg_stat_statements;` `CREATE EXTENSION pgcrypto;` `SELECT gen_random_uuid();` (встроено с PG 13).",
+                "when_to_apply": "Подбирают под задачу: гео → PostGIS, FTS с fuzzy → pg_trgm, time-series → TimescaleDB, AI embeddings → pgvector.",
+                "edge_cases": "Не все расширения доступны на managed-сервисах (AWS RDS, Cloud SQL): нужно проверять список заранее.",
+                "related": "Q9 `hstore`; Q34 bloat (`pg_repack`); Q47 FTS (`pg_trgm`); Q54 (`pg_stat_statements`)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`gen_random_uuid()` требует расширения `uuid-ossp` во всех версиях `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С PG 13 `gen_random_uuid()` встроена в ядро (через `pgcrypto`-функционал, доступный по умолчанию); `uuid-ossp` нужен лишь для специфичных версий UUID.",
+                "source_of_confusion": "До PG 13 нужно было ставить расширение.",
+                "if_it_were_true": "В PG 13+ команда вызывала бы ошибку без extension.",
+                "how_it_should_be": "В современных версиях — встроено."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
