@@ -46,6 +46,8 @@ class GlobalExceptionHandlerTest {
                         new ApiTypeMismatchController(),
                         new ApiConflictController(),
                         new FaviconController(),
+                        new ApiMissingResourceController(),
+                        new UiMissingResourceController(),
                         new ApiQuestionNotFoundController(),
                         new UiQuestionNotFoundController(),
                         new ApiOptionNotFoundController(),
@@ -115,6 +117,24 @@ class GlobalExceptionHandlerTest {
     void faviconMissingReturnsNoContentWithoutServerError() throws Exception {
         mockMvc.perform(get("/favicon.ico"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void apiNoResourceReturns404WithResourceNotFoundType() throws Exception {
+        // ApiMissingResourceController бросает NoResourceFoundException для
+        // /api/test/missing-resource — handler из cycle #94 должен вернуть
+        // 404 + RESOURCE_NOT_FOUND вместо дефолтного 500.
+        mockMvc.perform(get("/api/test/missing-resource"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.type").value(ApiErrorTypes.RESOURCE_NOT_FOUND));
+    }
+
+    @Test
+    void uiNoResourceRendersErrorViewWith404Status() throws Exception {
+        // Не-API путь → handler возвращает ModelAndView("error") с 404 status.
+        mockMvc.perform(get("/test/missing-resource"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -222,6 +242,22 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/favicon.ico")
         String fail() throws NoResourceFoundException {
             throw new NoResourceFoundException(HttpMethod.GET, "/favicon.ico");
+        }
+    }
+
+    @RestController
+    static class ApiMissingResourceController {
+        @GetMapping("/api/test/missing-resource")
+        String fail() throws NoResourceFoundException {
+            throw new NoResourceFoundException(HttpMethod.GET, "/api/test/missing-resource");
+        }
+    }
+
+    @Controller
+    static class UiMissingResourceController {
+        @GetMapping("/test/missing-resource")
+        String fail() throws NoResourceFoundException {
+            throw new NoResourceFoundException(HttpMethod.GET, "/test/missing-resource");
         }
     }
 
