@@ -24,7 +24,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "In-memory key-value store для кэширования с TTL, без персистентности на диске. Kafka — persistent log-based broker;. Путают с Redis или Memcached — другими классами систем.",
+              "text": "In-memory key-value store для кэширования с TTL, без персистентности на диске.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka — persistent log-based broker; данные пишутся на диск, в памяти держится page cache ОС.",
@@ -36,11 +36,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Реляционная СУБД с поддержкой SQL и ACID-транзакций на уровне строк. Kafka — не RDBMS;. Слышали про ksqlDB и решили, что Kafka сама БД.",
+              "text": "Реляционная СУБД с поддержкой SQL и ACID-транзакций на уровне строк.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka — не RDBMS; есть транзакции, но на уровне записи в топик, без таблиц и SQL.",
-                "source_of_confusion": "Слышали про ksqlDB и решили, что Kafka сама БД. Kafka — не RDBMS;",
+                "source_of_confusion": "Слышали про ksqlDB и решили, что Kafka сама БД.",
                 "if_it_were_true": "Можно было бы писать JOIN-ы между топиками напрямую — это делает только Kafka Streams/ksqlDB поверх.",
                 "how_it_should_be": "Kafka — лог с partitions; SQL поверх предоставляет ksqlDB, но это отдельный продукт."
               }
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Синхронный RPC-фреймворк с request-response семантикой подобно gRPC. Kafka асинхронный — producer пишет в лог, consumer читает независимо;",
+              "text": "Синхронный RPC-фреймворк с request-response семантикой подобно gRPC.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka асинхронный — producer пишет в лог, consumer читает независимо; никакого request-response.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Только Producer и Consumer — больше ничего не нужно для работы. Кроме клиентов есть брокеры (хранят данные), topics с partitions, ZooKeeper или KRaft controller для координации.",
+              "text": "Только Producer и Consumer — больше ничего не нужно для работы.",
               "correct": false,
               "sections": {
                 "what_actually": "Кроме клиентов есть брокеры (хранят данные), topics с partitions, ZooKeeper или KRaft controller для координации.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Broker (хранит данные в партициях), Topic с Partitions, Producer и Consumer, координация через ZooKeeper или KRaft Controller;",
+              "text": "Broker (хранит данные в партициях), Topic с Partitions, Producer и Consumer, координация через ZooKeeper или KRaft Controller; опционально Schema Registry, Kafka Connect и Streams.",
               "correct": true,
               "sections": {
                 "explanation": "Brokers формируют кластер и хранят партиции с репликацией. Topic — логическое имя потока; partitions — единицы параллелизма. Controller выбирает leader-ов партиций. Schema Registry хранит Avro/Protobuf-схемы для совместимости.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Только брокер и ZooKeeper; клиенты не являются частью Kafka. Producer и Consumer — официальные клиентские библиотеки в составе Apache Kafka, неотъемлемая часть экосистемы.",
+              "text": "Только брокер и ZooKeeper; клиенты не являются частью Kafka.",
               "correct": false,
               "sections": {
                 "what_actually": "Producer и Consumer — официальные клиентские библиотеки в составе Apache Kafka, неотъемлемая часть экосистемы.",
@@ -108,11 +108,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Producer, Consumer и Kafka Streams; брокер не нужен — данные ходят peer-to-peer между клиентами. Брокер — центральное хранилище;",
+              "text": "Producer, Consumer и Kafka Streams; брокер не нужен — данные ходят peer-to-peer между клиентами.",
               "correct": false,
               "sections": {
                 "what_actually": "Брокер — центральное хранилище; producer и consumer не общаются напрямую друг с другом.",
-                "source_of_confusion": "Путают с P2P-системами или с in-memory брокерами. Брокер — центральное хранилище;",
+                "source_of_confusion": "Путают с P2P-системами или с in-memory брокерами.",
                 "if_it_were_true": "Не было бы persistent log и replay — главных фишек Kafka.",
                 "how_it_should_be": "Producer → Broker → Consumer; брокер обязателен и хранит данные."
               }
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Файл на диске одного брокера, содержащий все сообщения в JSON-формате. Topic — логическое имя;. Упрощают до одного файла, забывая про partitions и репликацию.",
+              "text": "Файл на диске одного брокера, содержащий все сообщения в JSON-формате.",
               "correct": false,
               "sections": {
                 "what_actually": "Topic — логическое имя; физически он разбит на partitions, реплицированные по брокерам; данные хранятся в binary segments.",
@@ -143,11 +143,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Очередь с FIFO-семантикой, где сообщение удаляется после прочтения первым consumer-ом. Topic — append-only log;. Переносят модель JMS/RabbitMQ-очереди на Kafka.",
+              "text": "Очередь с FIFO-семантикой, где сообщение удаляется после прочтения первым consumer-ом.",
               "correct": false,
               "sections": {
                 "what_actually": "Topic — append-only log; сообщения не удаляются после чтения, остаются до истечения retention.",
-                "source_of_confusion": "Переносят модель JMS/RabbitMQ-очереди на Kafka. Topic — append-only log;",
+                "source_of_confusion": "Переносят модель JMS/RabbitMQ-очереди на Kafka.",
                 "if_it_were_true": "Нельзя было бы replay сообщений и параллельно читать несколькими consumer group.",
                 "how_it_should_be": "Topic — log с offset; consumer хранит свою позицию и может перечитать."
               }
@@ -168,11 +168,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Connection pool между producer и consumer на уровне TCP-сессий. Topic — это структура данных хранения, не сетевая абстракция. Смешивают логические сущности с сетевыми.",
+              "text": "Connection pool между producer и consumer на уровне TCP-сессий.",
               "correct": false,
               "sections": {
                 "what_actually": "Topic — это структура данных хранения, не сетевая абстракция. TCP-соединения существуют отдельно.",
-                "source_of_confusion": "Смешивают логические сущности с сетевыми. Topic — это структура данных хранения, не сетевая абстракция.",
+                "source_of_confusion": "Смешивают логические сущности с сетевыми.",
                 "if_it_were_true": "Topic привязан был бы к одному соединению — не было бы persistent storage.",
                 "how_it_should_be": "Topic — log на брокерах; соединения — отдельный транспортный слой."
               }
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "ZooKeeper — это веб-интерфейс мониторинга Kafka, аналог Kafka UI. ZooKeeper — coordination service от Apache, не GUI;",
+              "text": "ZooKeeper — это веб-интерфейс мониторинга Kafka, аналог Kafka UI.",
               "correct": false,
               "sections": {
                 "what_actually": "ZooKeeper — coordination service от Apache, не GUI; для UI есть Kafka UI, AKHQ, Confluent Control Center.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "ZooKeeper хранил сами сообщения Kafka — топики и партиции лежали в ZK. ZK хранит только метаданные (десятки KB), сами сообщения — на брокерах в segment-файлах.",
+              "text": "ZooKeeper хранил сами сообщения Kafka — топики и партиции лежали в ZK.",
               "correct": false,
               "sections": {
                 "what_actually": "ZK хранит только метаданные (десятки KB), сами сообщения — на брокерах в segment-файлах.",
@@ -215,11 +215,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ZooKeeper — это альтернатива брокеру Kafka и может работать независимо как event store. ZK — отдельная система для координации, не брокер сообщений;",
+              "text": "ZooKeeper — это альтернатива брокеру Kafka и может работать независимо как event store.",
               "correct": false,
               "sections": {
                 "what_actually": "ZK — отдельная система для координации, не брокер сообщений; нельзя использовать его как event store.",
-                "source_of_confusion": "Не различают роли координатора и брокера. ZK — отдельная система для координации, не брокер сообщений;",
+                "source_of_confusion": "Не различают роли координатора и брокера.",
                 "if_it_were_true": "Каждый сервис использовал бы ZK для pub-sub — это противоречит его назначению.",
                 "how_it_should_be": "ZK — coordination service для Kafka, не замена брокера."
               }
@@ -264,35 +264,35 @@
             {
               "order": 1,
               "label": "B",
-              "text": "KRaft — это Kotlin DSL для написания Kafka-приложений. KRaft (Kafka Raft) — протокол консенсуса внутри Kafka, заменяющий ZooKeeper;. Просто угадывают по созвучию K-в-начале.",
+              "text": "KRaft — это Kotlin DSL для написания Kafka-приложений.",
               "correct": false,
               "sections": {
                 "what_actually": "KRaft (Kafka Raft) — протокол консенсуса внутри Kafka, заменяющий ZooKeeper; не имеет отношения к Kotlin.",
-                "source_of_confusion": "Просто угадывают по созвучию K-в-начале. KRaft (Kafka Raft) — протокол консенсуса внутри Kafka, заменяющий ZooKeeper;",
-                "if_it_were_true": "Был бы maven-артефакт kraft-dsl — такого нет. KRaft (Kafka Raft) — протокол консенсуса внутри Kafka, заменяющий ZooKeeper;",
+                "source_of_confusion": "Просто угадывают по созвучию K-в-начале.",
+                "if_it_were_true": "Был бы maven-артефакт kraft-dsl — такого нет.",
                 "how_it_should_be": "KRaft — Raft-протокол для controller quorum в Kafka."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "KRaft — это инструмент CLI для управления кластером, замена kafka-topics.sh. Это не CLI, а внутренний протокол кластера;. Думают, что любой новый компонент — это инструмент командной строки.",
+              "text": "KRaft — это инструмент CLI для управления кластером, замена kafka-topics.sh.",
               "correct": false,
               "sections": {
                 "what_actually": "Это не CLI, а внутренний протокол кластера; CLI остались прежними (kafka-topics.sh и т.д.).",
                 "source_of_confusion": "Думают, что любой новый компонент — это инструмент командной строки.",
-                "if_it_were_true": "Появилась бы команда kraft.sh — её нет. Это не CLI, а внутренний протокол кластера;",
-                "how_it_should_be": "KRaft — модель координации брокеров без ZK. Это не CLI, а внутренний протокол кластера;"
+                "if_it_were_true": "Появилась бы команда kraft.sh — её нет.",
+                "how_it_should_be": "KRaft — модель координации брокеров без ZK."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "KRaft — это формат сериализации сообщений, заменяющий Avro и Protobuf. KRaft не имеет отношения к сериализации;. Угадывают по аббревиатуре, не зная сути.",
+              "text": "KRaft — это формат сериализации сообщений, заменяющий Avro и Protobuf.",
               "correct": false,
               "sections": {
                 "what_actually": "KRaft не имеет отношения к сериализации; формат сообщений отдельный (RecordBatch v2).",
-                "source_of_confusion": "Угадывают по аббревиатуре, не зная сути. KRaft не имеет отношения к сериализации;",
+                "source_of_confusion": "Угадывают по аббревиатуре, не зная сути.",
                 "if_it_were_true": "Schema Registry поддерживал бы KRaft как тип схемы — он не поддерживает.",
                 "how_it_should_be": "KRaft — протокол координации; сериализация — отдельный слой (Avro/Protobuf/JSON)."
               }
@@ -311,11 +311,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Partition — это копия всего topic на отдельном брокере для отказоустойчивости. Копии — это реплики (replicas);. Путают partition с replica.",
+              "text": "Partition — это копия всего topic на отдельном брокере для отказоустойчивости.",
               "correct": false,
               "sections": {
                 "what_actually": "Копии — это реплики (replicas); partition — это часть topic с уникальным диапазоном сообщений.",
-                "source_of_confusion": "Путают partition с replica. Копии — это реплики (replicas);",
+                "source_of_confusion": "Путают partition с replica.",
                 "if_it_were_true": "Не было бы параллельной обработки — все consumer читали бы одно и то же.",
                 "how_it_should_be": "Topic делится на partitions (шарды); каждая partition имеет N реплик."
               }
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Partition — это TCP-канал между конкретным producer и брокером. Partition — структура хранения на диске;. Смешивают сетевые соединения и логическую структуру.",
+              "text": "Partition — это TCP-канал между конкретным producer и брокером.",
               "correct": false,
               "sections": {
                 "what_actually": "Partition — структура хранения на диске; TCP — отдельный транспортный слой.",
@@ -348,11 +348,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Partition — это произвольный поток сообщений без гарантий порядка, как набор объектов в S3. В partition строгий порядок: каждое сообщение имеет монотонно растущий offset;",
+              "text": "Partition — это произвольный поток сообщений без гарантий порядка, как набор объектов в S3.",
               "correct": false,
               "sections": {
                 "what_actually": "В partition строгий порядок: каждое сообщение имеет монотонно растущий offset; FIFO внутри partition.",
-                "source_of_confusion": "Путают со схемами event storage без ordering. В partition строгий порядок: каждое сообщение имеет монотонно растущий offset;",
+                "source_of_confusion": "Путают со схемами event storage без ordering.",
                 "if_it_were_true": "Не было бы partition key для ordering — главной фишки Kafka.",
                 "how_it_should_be": "Внутри partition порядок строгий по offset; между partitions глобального ordering нет."
               }
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Смещение в байтах от начала segment-файла на диске. Offset — логический счётчик сообщений, не байтовое смещение;. Путают логический offset с физическим положением на диске.",
+              "text": "Смещение в байтах от начала segment-файла на диске.",
               "correct": false,
               "sections": {
                 "what_actually": "Offset — логический счётчик сообщений, не байтовое смещение; байтовая позиция — это position в .index файле.",
@@ -383,12 +383,12 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Уникальный UUID сообщения, генерируемый producer на стороне клиента. Offset — это long, присваиваемый брокером, а не UUID и не клиентом.",
+              "text": "Уникальный UUID сообщения, генерируемый producer на стороне клиента.",
               "correct": false,
               "sections": {
                 "what_actually": "Offset — это long, присваиваемый брокером, а не UUID и не клиентом.",
-                "source_of_confusion": "Путают с message ID в JMS/AMQP. Offset — это long, присваиваемый брокером, а не UUID и не клиентом.",
-                "if_it_were_true": "Не было бы упорядоченности — UUID не монотонны. Offset — это long, присваиваемый брокером, а не UUID и не клиентом.",
+                "source_of_confusion": "Путают с message ID в JMS/AMQP.",
+                "if_it_were_true": "Не было бы упорядоченности — UUID не монотонны.",
                 "how_it_should_be": "Offset — sequential long, присваивается брокером при записи в partition."
               }
             },
@@ -408,11 +408,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Timestamp сообщения в миллисекундах с эпохи Unix. Это timestamp, отдельное поле;. Смешивают два поля сообщения. Offset — порядковый номер;",
+              "text": "Timestamp сообщения в миллисекундах с эпохи Unix.",
               "correct": false,
               "sections": {
                 "what_actually": "Это timestamp, отдельное поле; offset — это long-счётчик, независимый от времени.",
-                "source_of_confusion": "Смешивают два поля сообщения. Это timestamp, отдельное поле;",
+                "source_of_confusion": "Смешивают два поля сообщения.",
                 "if_it_were_true": "Сообщения с одинаковым timestamp имели бы одинаковый offset — конфликт.",
                 "how_it_should_be": "Offset — порядковый номер; timestamp — отдельное поле сообщения."
               }
@@ -431,11 +431,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Использовать одну partition на topic — это даёт глобальный порядок, но убивает параллелизм. Это работает, но это крайний случай;. Знают одно решение, не знают практичный подход.",
+              "text": "Использовать одну partition на topic — это даёт глобальный порядок, но убивает параллелизм.",
               "correct": false,
               "sections": {
                 "what_actually": "Это работает, но это крайний случай; на практике делают partition key для сохранения ordering по сущности при сохранении параллелизма.",
-                "source_of_confusion": "Знают одно решение, не знают практичный подход. Это работает, но это крайний случай;",
+                "source_of_confusion": "Знают одно решение, не знают практичный подход.",
                 "if_it_were_true": "Все production-системы имели бы 1 partition — не масштабируются.",
                 "how_it_should_be": "Partition key (например userId) даёт ordering в рамках сущности и параллелизм по разным ключам."
               }
@@ -443,11 +443,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Использовать transactional producer — транзакции гарантируют глобальный порядок между всеми partitions. Транзакции гарантируют атомарность записи в несколько partitions, но не глобальный ordering между ними.",
+              "text": "Использовать transactional producer — транзакции гарантируют глобальный порядок между всеми partitions.",
               "correct": false,
               "sections": {
                 "what_actually": "Транзакции гарантируют атомарность записи в несколько partitions, но не глобальный ordering между ними.",
-                "source_of_confusion": "Путают атомарность с упорядоченностью. Транзакции гарантируют атомарность записи в несколько partitions, но не глобальный ordering между ними.",
+                "source_of_confusion": "Путают атомарность с упорядоченностью.",
                 "if_it_were_true": "Транзакции снимали бы все проблемы ordering — но это разные гарантии.",
                 "how_it_should_be": "Транзакции = атомарность; ordering = partition или partition key."
               }
@@ -455,11 +455,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Включить опцию enable.global.ordering=true — Kafka сама обеспечит порядок между всеми partitions. Такой опции нет;. Придумывают магическую настройку. Глобального ordering нет;",
+              "text": "Включить опцию enable.global.ordering=true — Kafka сама обеспечит порядок между всеми partitions.",
               "correct": false,
               "sections": {
                 "what_actually": "Такой опции нет; глобальный порядок между partitions невозможен из-за распределённости.",
-                "source_of_confusion": "Придумывают магическую настройку. Такой опции нет;",
+                "source_of_confusion": "Придумывают магическую настройку.",
                 "if_it_were_true": "Kafka не масштабировался бы — нужна была бы синхронизация всех partitions.",
                 "how_it_should_be": "Глобального ordering нет; либо 1 partition, либо partition key для ordering по сущности."
               }
@@ -504,23 +504,23 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Partition выбирается на брокере, клиент не знает в какую partition пишет. Partition выбирается на клиенте (Producer), брокеру отправляется готовая partition.",
+              "text": "Partition выбирается на брокере, клиент не знает в какую partition пишет.",
               "correct": false,
               "sections": {
                 "what_actually": "Partition выбирается на клиенте (Producer), брокеру отправляется готовая partition.",
-                "source_of_confusion": "Не знают про клиентский partitioner. Partition выбирается на клиенте (Producer), брокеру отправляется готовая partition.",
-                "if_it_were_true": "Producer не контролировал бы ordering по ключу. Partition выбирается на клиенте (Producer), брокеру отправляется готовая partition.",
+                "source_of_confusion": "Не знают про клиентский partitioner.",
+                "if_it_were_true": "Producer не контролировал бы ordering по ключу.",
                 "how_it_should_be": "Producer вычисляет partition через Partitioner; брокер только записывает."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Partition всегда выбирается случайно (round-robin) независимо от наличия ключа. Если ключ есть — partition = hash(key) % numPartitions (детерминированно);",
+              "text": "Partition всегда выбирается случайно (round-robin) независимо от наличия ключа.",
               "correct": false,
               "sections": {
                 "what_actually": "Если ключ есть — partition = hash(key) % numPartitions (детерминированно); без ключа — sticky partitioner или round-robin.",
-                "source_of_confusion": "Видели только один режим без ключа. Если ключ есть — partition = hash(key) % numPartitions (детерминированно);",
+                "source_of_confusion": "Видели только один режим без ключа.",
                 "if_it_were_true": "Partition key был бы бесполезен — ordering по ключу не работал бы.",
                 "how_it_should_be": "С ключом — hash-based; без ключа — sticky/round-robin для батчинга."
               }
@@ -528,11 +528,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Partition выбирается ZooKeeper для каждого сообщения. ZK не участвует в data plane — он хранит только метаданные;. Преувеличивают роль ZooKeeper.",
+              "text": "Partition выбирается ZooKeeper для каждого сообщения.",
               "correct": false,
               "sections": {
                 "what_actually": "ZK не участвует в data plane — он хранит только метаданные; выбор partition делает Producer на клиенте.",
-                "source_of_confusion": "Преувеличивают роль ZooKeeper. ZK не участвует в data plane — он хранит только метаданные;",
+                "source_of_confusion": "Преувеличивают роль ZooKeeper.",
                 "if_it_were_true": "ZK был бы bottleneck при миллионе сообщений в секунду.",
                 "how_it_should_be": "Producer-side Partitioner выбирает; ZK только в control plane."
               }
@@ -551,12 +551,12 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Producer открывает по одному TCP-соединению на каждое сообщение и блокируется до подтверждения. Producer держит persistent connection к каждому брокеру, отправляет асинхронно с батчингом.",
+              "text": "Producer открывает по одному TCP-соединению на каждое сообщение и блокируется до подтверждения.",
               "correct": false,
               "sections": {
                 "what_actually": "Producer держит persistent connection к каждому брокеру, отправляет асинхронно с батчингом.",
-                "source_of_confusion": "Представляют HTTP-style request-response. Producer держит persistent connection к каждому брокеру, отправляет асинхронно с батчингом.",
-                "if_it_were_true": "Throughput был бы катастрофически низким. Producer держит persistent connection к каждому брокеру, отправляет асинхронно с батчингом.",
+                "source_of_confusion": "Представляют HTTP-style request-response.",
+                "if_it_were_true": "Throughput был бы катастрофически низким.",
                 "how_it_should_be": "Producer — async с long-lived connections, batching и pipelining."
               }
             },
@@ -576,23 +576,23 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Producer — это процесс на стороне брокера, который получает сообщения от клиентов. Producer — клиентская библиотека (kafka-clients. Путают роль клиента и сервера. Producer = client-side;",
+              "text": "Producer — это процесс на стороне брокера, который получает сообщения от клиентов.",
               "correct": false,
               "sections": {
                 "what_actually": "Producer — клиентская библиотека (kafka-clients.jar) в приложении, не серверный процесс.",
-                "source_of_confusion": "Путают роль клиента и сервера. Producer — клиентская библиотека (kafka-clients.",
-                "if_it_were_true": "Не нужны были бы клиентские библиотеки. Producer — клиентская библиотека (kafka-clients.",
+                "source_of_confusion": "Путают роль клиента и сервера.",
+                "if_it_were_true": "Не нужны были бы клиентские библиотеки.",
                 "how_it_should_be": "Producer = client-side; брокер принимает и пишет на диск."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Producer работает только синхронно — каждый send() блокирует до получения ack. send() возвращает Future и работает асинхронно;. Не знают про асинхронный режим по умолчанию.",
+              "text": "Producer работает только синхронно — каждый send() блокирует до получения ack.",
               "correct": false,
               "sections": {
                 "what_actually": "send() возвращает Future и работает асинхронно; синхронный режим — это явный future.get() после send().",
-                "source_of_confusion": "Не знают про асинхронный режим по умолчанию. send() возвращает Future и работает асинхронно;",
+                "source_of_confusion": "Не знают про асинхронный режим по умолчанию.",
                 "if_it_were_true": "Throughput был бы ограничен RTT — сотни сообщений в секунду максимум.",
                 "how_it_should_be": "По умолчанию async с батчингом; sync — опционально через get()."
               }
@@ -611,11 +611,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "acks контролирует размер батча перед отправкой брокеру. acks — уровень подтверждения записи;. Путают разные параметры Producer.",
+              "text": "acks контролирует размер батча перед отправкой брокеру.",
               "correct": false,
               "sections": {
                 "what_actually": "acks — уровень подтверждения записи; размер батча — это batch.size.",
-                "source_of_confusion": "Путают разные параметры Producer. acks — уровень подтверждения записи;",
+                "source_of_confusion": "Путают разные параметры Producer.",
                 "if_it_were_true": "Не было бы возможности настроить durability — отдельной настройки.",
                 "how_it_should_be": "acks ∈ {0, 1, all}; batch.size — байты в батче; разные настройки."
               }
@@ -623,11 +623,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "acks включает шифрование сообщений с разными алгоритмами при разных значениях. acks не имеет отношения к шифрованию;. Угадывают функцию по сокращению ACK.",
+              "text": "acks включает шифрование сообщений с разными алгоритмами при разных значениях.",
               "correct": false,
               "sections": {
                 "what_actually": "acks не имеет отношения к шифрованию; для шифрования — SSL/SASL и encryption-at-rest на уровне ОС.",
-                "source_of_confusion": "Угадывают функцию по сокращению ACK. acks не имеет отношения к шифрованию;",
+                "source_of_confusion": "Угадывают функцию по сокращению ACK.",
                 "if_it_were_true": "Изменение acks меняло бы безопасность — этого нет.",
                 "how_it_should_be": "acks — durability; шифрование — отдельные настройки."
               }
@@ -635,7 +635,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "acks определяет уровень подтверждения записи: 0 — fire-and-forget, 1 — leader подтвердил запись, all (-1) — leader и все ISR-реплики подтвердили;",
+              "text": "acks определяет уровень подтверждения записи: 0 — fire-and-forget, 1 — leader подтвердил запись, all (-1) — leader и все ISR-реплики подтвердили; компромисс durability vs latency.",
               "correct": true,
               "sections": {
                 "explanation": "acks=0: producer не ждёт ответа, максимальный throughput, риск потери. acks=1: leader подтвердил, но если он упадёт до репликации — потеря. acks=all: leader плюс все in-sync replicas (количество регулируется min.insync.replicas). Самая надёжная комбинация: acks=all, replication.factor=3, min.insync.replicas=2.",
@@ -648,11 +648,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "acks определяет количество consumer-ов, которые должны прочитать сообщение перед commit. acks — Producer-side параметр про запись;",
+              "text": "acks определяет количество consumer-ов, которые должны прочитать сообщение перед commit.",
               "correct": false,
               "sections": {
                 "what_actually": "acks — Producer-side параметр про запись; consumer-side commit — отдельная механика.",
-                "source_of_confusion": "Смешивают producer и consumer семантики. acks — Producer-side параметр про запись;",
+                "source_of_confusion": "Смешивают producer и consumer семантики.",
                 "if_it_were_true": "Producer ждал бы consumer — нарушает асинхронность.",
                 "how_it_should_be": "acks — между producer и брокерами; commit — между consumer и брокерами."
               }
@@ -671,19 +671,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Producer, который пишет только одно сообщение в секунду чтобы избежать дубликатов. Идемпотентность не имеет отношения к rate limiting;. Придумывают механизм через rate limiting.",
+              "text": "Producer, который пишет только одно сообщение в секунду чтобы избежать дубликатов.",
               "correct": false,
               "sections": {
                 "what_actually": "Идемпотентность не имеет отношения к rate limiting; throughput не ограничен.",
-                "source_of_confusion": "Придумывают механизм через rate limiting. Идемпотентность не имеет отношения к rate limiting;",
-                "if_it_were_true": "Kafka не использовался бы для high-throughput. Идемпотентность не имеет отношения к rate limiting;",
+                "source_of_confusion": "Придумывают механизм через rate limiting.",
+                "if_it_were_true": "Kafka не использовался бы для high-throughput.",
                 "how_it_should_be": "Идемпотентность через protocol-level дедупликацию, не через ограничение скорости."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Producer, который шифрует сообщения детерминированным алгоритмом, чтобы одинаковые данные давали одинаковые шифротексты. Идемпотентность не про шифрование, а про дедупликацию по PID+seq на брокере.",
+              "text": "Producer, который шифрует сообщения детерминированным алгоритмом, чтобы одинаковые данные давали одинаковые шифротексты.",
               "correct": false,
               "sections": {
                 "what_actually": "Идемпотентность не про шифрование, а про дедупликацию по PID+seq на брокере.",
@@ -695,13 +695,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Producer, который не шлёт retry — если send упал, ошибка возвращается приложению. Наоборот, идемпотентный producer шлёт retries (по умолчанию Integer. Считают, что от дубликатов спасает отключение retry.",
+              "text": "Producer, который не шлёт retry — если send упал, ошибка возвращается приложению.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот, идемпотентный producer шлёт retries (по умолчанию Integer.MAX_VALUE) безопасно — без дубликатов.",
                 "source_of_confusion": "Считают, что от дубликатов спасает отключение retry.",
                 "if_it_were_true": "Сообщения терялись бы при любом таймауте — снижение reliability.",
-                "how_it_should_be": "Retry включен, но дедуп на брокере по PID+seq. Наоборот, идемпотентный producer шлёт retries (по умолчанию Integer."
+                "how_it_should_be": "Retry включен, но дедуп на брокере по PID+seq."
               }
             },
             {
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "batch.size (по умолчанию 16KB) определяет максимальный размер батча, linger.ms (по умолчанию 0) — сколько ждать заполнения батча; compression.type=lz4/zstd/snappy сжимает батч целиком;",
+              "text": "batch.size (по умолчанию 16KB) определяет максимальный размер батча, linger.ms (по умолчанию 0) — сколько ждать заполнения батча; compression.type=lz4/zstd/snappy сжимает батч целиком; чем больше batch, тем лучше степень сжатия и throughput.",
               "correct": true,
               "sections": {
                 "explanation": "Producer аккумулирует сообщения в RecordAccumulator per partition. Батч отправляется когда: batch.size заполнен ИЛИ прошло linger.ms. Сжатие применяется к целому батчу — большие батчи дают лучший ratio. lz4 — быстрое, zstd — лучшее сжатие, snappy — компромисс.",
@@ -744,11 +744,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Сжатие включается на consumer-стороне через decompression.type. Сжатие настраивается у Producer через compression. Думают, что нужны симметричные настройки.",
+              "text": "Сжатие включается на consumer-стороне через decompression.type.",
               "correct": false,
               "sections": {
                 "what_actually": "Сжатие настраивается у Producer через compression.type; consumer декомпрессит автоматически.",
-                "source_of_confusion": "Думают, что нужны симметричные настройки. Сжатие настраивается у Producer через compression.",
+                "source_of_confusion": "Думают, что нужны симметричные настройки.",
                 "if_it_were_true": "Producer должен был бы знать настройки всех consumer-ов.",
                 "how_it_should_be": "compression.type — на Producer; на брокере и consumer ничего не нужно настраивать."
               }
@@ -756,11 +756,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Батчинг невозможен в Kafka — каждое send() отправляет немедленно. Батчинг — ключевая оптимизация;. Не знают про async-модель Producer. Send() кладёт в buffer;",
+              "text": "Батчинг невозможен в Kafka — каждое send() отправляет немедленно.",
               "correct": false,
               "sections": {
                 "what_actually": "Батчинг — ключевая оптимизация; включён по умолчанию через RecordAccumulator.",
-                "source_of_confusion": "Не знают про async-модель Producer. Батчинг — ключевая оптимизация;",
+                "source_of_confusion": "Не знают про async-модель Producer.",
                 "if_it_were_true": "Throughput Kafka был бы как у HTTP API — десятки RPS.",
                 "how_it_should_be": "Send() кладёт в buffer; Sender-thread формирует батчи и отправляет."
               }
@@ -768,13 +768,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "compression.type=gzip — единственный поддерживаемый алгоритм. Поддерживаются: none, gzip, snappy, lz4, zstd. Знают только gzip как старый алгоритм. Пять алгоритмов;",
+              "text": "compression.type=gzip — единственный поддерживаемый алгоритм.",
               "correct": false,
               "sections": {
                 "what_actually": "Поддерживаются: none, gzip, snappy, lz4, zstd. В Kafka 2.1+ zstd часто лучший выбор.",
-                "source_of_confusion": "Знают только gzip как старый алгоритм. Поддерживаются: none, gzip, snappy, lz4, zstd.",
-                "if_it_were_true": "Не было бы lz4/snappy в документации. Поддерживаются: none, gzip, snappy, lz4, zstd.",
-                "how_it_should_be": "Пять алгоритмов; выбор по compromise speed/ratio. Поддерживаются: none, gzip, snappy, lz4, zstd."
+                "source_of_confusion": "Знают только gzip как старый алгоритм.",
+                "if_it_were_true": "Не было бы lz4/snappy в документации.",
+                "how_it_should_be": "Пять алгоритмов; выбор по compromise speed/ratio."
               }
             }
           ]
@@ -791,19 +791,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Consumer всегда работает в одной группе, и группы между собой не пересекаются — одна группа на брокер. Несколько Consumer Group могут параллельно читать один topic;. Путают понятие группы с понятием брокера.",
+              "text": "Consumer всегда работает в одной группе, и группы между собой не пересекаются — одна группа на брокер.",
               "correct": false,
               "sections": {
                 "what_actually": "Несколько Consumer Group могут параллельно читать один topic; группа — клиентская абстракция, не привязана к брокеру.",
-                "source_of_confusion": "Путают понятие группы с понятием брокера. Несколько Consumer Group могут параллельно читать один topic;",
-                "if_it_were_true": "Не было бы pub-sub fanout через разные группы. Несколько Consumer Group могут параллельно читать один topic;",
+                "source_of_confusion": "Путают понятие группы с понятием брокера.",
+                "if_it_were_true": "Не было бы pub-sub fanout через разные группы.",
                 "how_it_should_be": "Group — это set consumer-ов с одним group.id; групп может быть много per topic."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Consumer — клиент, читающий сообщения из topic; Consumer Group — набор consumer-ов с одним group.id, разделяющих partitions topic между собой: каждая partition обрабатывается ровно одним consumer-ом в группе;",
+              "text": "Consumer — клиент, читающий сообщения из topic; Consumer Group — набор consumer-ов с одним group.id, разделяющих partitions topic между собой: каждая partition обрабатывается ровно одним consumer-ом в группе; разные группы получают копии всех сообщений независимо.",
               "correct": true,
               "sections": {
                 "explanation": "Внутри группы Kafka балансирует partitions через GroupCoordinator: одна partition → один consumer в group. Если consumer-ов больше, чем partitions, лишние простаивают. Разные группы независимы — это даёт pub-sub fanout. Offset commit per group.",
@@ -816,11 +816,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Consumer Group — это group_id в имени topic, который указывает на категорию сообщений. Группа — это конфигурация клиента (group. Путают логические понятия topic и group. Topic и group.",
+              "text": "Consumer Group — это group_id в имени topic, который указывает на категорию сообщений.",
               "correct": false,
               "sections": {
                 "what_actually": "Группа — это конфигурация клиента (group.id), не часть имени topic.",
-                "source_of_confusion": "Путают логические понятия topic и group. Группа — это конфигурация клиента (group.",
+                "source_of_confusion": "Путают логические понятия topic и group.",
                 "if_it_were_true": "Изменение группы требовало бы создания нового topic.",
                 "how_it_should_be": "Topic и group.id — независимые сущности; group хранится в __consumer_offsets."
               }
@@ -828,11 +828,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Consumer Group — это статическая привязка одного consumer к одной partition без возможности изменений. Привязка динамическая через rebalance;. Считают, что распределение partition фиксировано.",
+              "text": "Consumer Group — это статическая привязка одного consumer к одной partition без возможности изменений.",
               "correct": false,
               "sections": {
                 "what_actually": "Привязка динамическая через rebalance; статическая возможна через Static Group Membership (group.instance.id), но и она поддерживает rebalance.",
-                "source_of_confusion": "Считают, что распределение partition фиксировано. Привязка динамическая через rebalance;",
+                "source_of_confusion": "Считают, что распределение partition фиксировано.",
                 "if_it_were_true": "Не было бы автомасштабирования consumer-ов при добавлении инстансов.",
                 "how_it_should_be": "Distribution динамичное; добавление/удаление consumer триггерит rebalance."
               }
@@ -851,11 +851,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Rebalance запускается ZooKeeper и не контролируется приложением. Rebalance координирует GroupCoordinator (один из брокеров), не ZK;. Преувеличивают роль ZooKeeper. GroupCoordinator управляет;",
+              "text": "Rebalance запускается ZooKeeper и не контролируется приложением.",
               "correct": false,
               "sections": {
                 "what_actually": "Rebalance координирует GroupCoordinator (один из брокеров), не ZK; ConsumerRebalanceListener позволяет приложению реагировать.",
-                "source_of_confusion": "Преувеличивают роль ZooKeeper. Rebalance координирует GroupCoordinator (один из брокеров), не ZK;",
+                "source_of_confusion": "Преувеличивают роль ZooKeeper.",
                 "if_it_were_true": "В KRaft-кластерах rebalance не работал бы — ZK там нет.",
                 "how_it_should_be": "GroupCoordinator управляет; consumer может зарегистрировать listener."
               }
@@ -863,11 +863,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Rebalance происходит только при первом запуске consumer и больше никогда. Rebalance триггерится на каждое изменение группы: scale up/down, рестарт, изменение subscription. Думают, что это разовая операция инициализации.",
+              "text": "Rebalance происходит только при первом запуске consumer и больше никогда.",
               "correct": false,
               "sections": {
                 "what_actually": "Rebalance триггерится на каждое изменение группы: scale up/down, рестарт, изменение subscription.",
-                "source_of_confusion": "Думают, что это разовая операция инициализации. Rebalance триггерится на каждое изменение группы: scale up/down, рестарт, изменение subscription.",
+                "source_of_confusion": "Думают, что это разовая операция инициализации.",
                 "if_it_were_true": "Добавление новых consumer-ов не давало бы им partitions.",
                 "how_it_should_be": "Rebalance — событийный процесс при любых изменениях группы."
               }
@@ -875,7 +875,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Rebalance — процесс перераспределения partitions между consumer-ами при изменениях в группе (новый/упавший consumer, изменение partitions, изменение subscription); классический stop-the-world rebalance останавливает обработку до завершения;",
+              "text": "Rebalance — процесс перераспределения partitions между consumer-ами при изменениях в группе (новый/упавший consumer, изменение partitions, изменение subscription); классический stop-the-world rebalance останавливает обработку до завершения; Cooperative Sticky минимизирует простой.",
               "correct": true,
               "sections": {
                 "explanation": "Триггеры: heartbeat timeout, новый consumer, изменение subscription, изменение partitions topic. Этапы: JoinGroup → SyncGroup → assignment from leader. Во время stop-the-world все consumer теряют partition assignment и переподписываются. Cooperative Sticky (Kafka 2.4+) переназначает только нужные partitions.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Rebalance — это процедура копирования сообщений между partitions для выравнивания нагрузки. Rebalance не двигает данные;. Путают rebalance consumer-ов с reassignment partitions между брокерами. Rebalance меняет только assignment у клиентов;",
+              "text": "Rebalance — это процедура копирования сообщений между partitions для выравнивания нагрузки.",
               "correct": false,
               "sections": {
                 "what_actually": "Rebalance не двигает данные; он перераспределяет assignment partition-consumer; данные лежат на тех же брокерах.",
@@ -911,11 +911,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Manual commit вызывается на стороне брокера, auto-commit — на клиенте. Оба варианта — клиентский commit;. Путают client-side и server-side операции. Commit всегда из consumer;",
+              "text": "Manual commit вызывается на стороне брокера, auto-commit — на клиенте.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба варианта — клиентский commit; разница лишь в том, кто инициирует — таймер или код приложения.",
-                "source_of_confusion": "Путают client-side и server-side операции. Оба варианта — клиентский commit;",
+                "source_of_confusion": "Путают client-side и server-side операции.",
                 "if_it_were_true": "Брокер должен был бы знать состояние приложения — нарушение decoupling.",
                 "how_it_should_be": "Commit всегда из consumer; auto — фоновый таймер, manual — вызов из кода."
               }
@@ -923,11 +923,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Manual commit работает только в Kafka Streams, в обычном consumer его нет. KafkaConsumer имеет API commitSync()/commitAsync() — manual commit базовый функционал. Путают функциональность разных уровней API.",
+              "text": "Manual commit работает только в Kafka Streams, в обычном consumer его нет.",
               "correct": false,
               "sections": {
                 "what_actually": "KafkaConsumer имеет API commitSync()/commitAsync() — manual commit базовый функционал.",
-                "source_of_confusion": "Путают функциональность разных уровней API. KafkaConsumer имеет API commitSync()/commitAsync() — manual commit базовый функционал.",
+                "source_of_confusion": "Путают функциональность разных уровней API.",
                 "if_it_were_true": "В библиотеке kafka-clients не было бы commit-методов.",
                 "how_it_should_be": "commitSync/commitAsync доступны в KafkaConsumer; Streams делает commit неявно."
               }
@@ -935,19 +935,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Auto-commit гарантирует exactly-once, manual — at-most-once. Auto-commit обычно at-least-once с риском duplicate;. Не понимают связь commit и delivery semantics. Auto/manual — оба at-least-once или at-most-once;",
+              "text": "Auto-commit гарантирует exactly-once, manual — at-most-once.",
               "correct": false,
               "sections": {
                 "what_actually": "Auto-commit обычно at-least-once с риском duplicate; exactly-once требует транзакций или idempotent потребителя.",
-                "source_of_confusion": "Не понимают связь commit и delivery semantics. Auto-commit обычно at-least-once с риском duplicate;",
-                "if_it_were_true": "Не нужны были бы транзакции Kafka. Auto-commit обычно at-least-once с риском duplicate;",
+                "source_of_confusion": "Не понимают связь commit и delivery semantics.",
+                "if_it_were_true": "Не нужны были бы транзакции Kafka.",
                 "how_it_should_be": "Auto/manual — оба at-least-once или at-most-once; EOS — отдельный механизм."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Auto-commit (enable.auto.commit=true) коммитит offset фоновым таймером (auto.commit.interval.ms) — риск потери (краш до обработки, но после commit) или дублирования (краш после обработки, но до commit);",
+              "text": "Auto-commit (enable.auto.commit=true) коммитит offset фоновым таймером (auto.commit.interval.ms) — риск потери (краш до обработки, но после commit) или дублирования (краш после обработки, но до commit); manual commit (commitSync/commitAsync) позволяет коммитить после успешной обработки — основа at-least-once.",
               "correct": true,
               "sections": {
                 "explanation": "Auto-commit удобен, но привязка к poll() даёт слабые гарантии. Manual: commitSync блокирует и retry до успеха; commitAsync — fire-and-forget. Best practice: process → commitAsync периодически + commitSync на shutdown в finally.",
@@ -984,36 +984,36 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Стратегия партиционирования на стороне producer. Это consumer-side assignment стратегия;. Путают partition assignment у consumer и partition selection у producer.",
+              "text": "Стратегия партиционирования на стороне producer.",
               "correct": false,
               "sections": {
                 "what_actually": "Это consumer-side assignment стратегия; producer partitioner — другая сущность.",
                 "source_of_confusion": "Путают partition assignment у consumer и partition selection у producer.",
-                "if_it_were_true": "Был бы параметр у Producer — его нет. Это consumer-side assignment стратегия;",
+                "if_it_were_true": "Был бы параметр у Producer — его нет.",
                 "how_it_should_be": "Cooperative Sticky — consumer.partition.assignment.strategy."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Алгоритм репликации между брокерами, заменяющий ISR. Репликация — отдельный механизм через ISR/leader;. Путают разные слои Kafka. Cooperative Sticky — стратегия в consumer config, не replication.",
+              "text": "Алгоритм репликации между брокерами, заменяющий ISR.",
               "correct": false,
               "sections": {
                 "what_actually": "Репликация — отдельный механизм через ISR/leader; Cooperative Sticky — у consumer group.",
-                "source_of_confusion": "Путают разные слои Kafka. Репликация — отдельный механизм через ISR/leader;",
-                "if_it_were_true": "Был бы параметр у брокера — он не существует. Репликация — отдельный механизм через ISR/leader;",
+                "source_of_confusion": "Путают разные слои Kafka.",
+                "if_it_were_true": "Был бы параметр у брокера — он не существует.",
                 "how_it_should_be": "Cooperative Sticky — стратегия в consumer config, не replication."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Метод хранения данных в Kafka Streams state store. State store использует RocksDB или in-memory;. Похоже на разделение работы — но это другой уровень.",
+              "text": "Метод хранения данных в Kafka Streams state store.",
               "correct": false,
               "sections": {
                 "what_actually": "State store использует RocksDB или in-memory; Cooperative Sticky — assignment strategy у consumer group.",
                 "source_of_confusion": "Похоже на разделение работы — но это другой уровень.",
-                "if_it_were_true": "Был бы параметр в Streams config — его нет. State store использует RocksDB или in-memory;",
+                "if_it_were_true": "Был бы параметр в Streams config — его нет.",
                 "how_it_should_be": "Cooperative Sticky — для consumer group; state store — отдельная штука в Streams."
               }
             }
@@ -1031,19 +1031,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Репликация работает peer-to-peer без выделенного leader. В Kafka каждая partition имеет одного leader и N-1 follower;. Путают с multi-master системами вроде Cassandra. Leader-follower модель: leader принимает запись, followers fetch и реплицируют.",
+              "text": "Репликация работает peer-to-peer без выделенного leader.",
               "correct": false,
               "sections": {
                 "what_actually": "В Kafka каждая partition имеет одного leader и N-1 follower; запись и чтение идут через leader.",
-                "source_of_confusion": "Путают с multi-master системами вроде Cassandra. В Kafka каждая partition имеет одного leader и N-1 follower;",
-                "if_it_were_true": "Не было бы понятия ISR и leader election. В Kafka каждая partition имеет одного leader и N-1 follower;",
+                "source_of_confusion": "Путают с multi-master системами вроде Cassandra.",
+                "if_it_were_true": "Не было бы понятия ISR и leader election.",
                 "how_it_should_be": "Leader-follower модель: leader принимает запись, followers fetch и реплицируют."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Каждая partition имеет N реплик (replication.factor); одна реплика — leader, остальные — follower; producer пишет в leader, followers подтягивают через fetch-запросы; ISR (In-Sync Replicas) — следующие за leader без лагов более replica.lag.time.max.",
+              "text": "Каждая partition имеет N реплик (replication.factor); одна реплика — leader, остальные — follower; producer пишет в leader, followers подтягивают через fetch-запросы; ISR (In-Sync Replicas) — следующие за leader без лагов более replica.lag.time.max.ms.",
               "correct": true,
               "sections": {
                 "explanation": "Repliction factor по умолчанию 3 — стандарт production. Leader-партиции распределены по брокерам через rack-awareness (broker.rack). Followers периодически fetch с leader и догоняют. Если follower отстаёт более replica.lag.time.max.ms (10с) — выкидывается из ISR.",
@@ -1056,11 +1056,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Реплицируется только metadata о сообщениях, сами сообщения хранятся на одном брокере. Реплицируется полное содержимое partition включая все сообщения. Не понимают модель отказоустойчивости.",
+              "text": "Реплицируется только metadata о сообщениях, сами сообщения хранятся на одном брокере.",
               "correct": false,
               "sections": {
                 "what_actually": "Реплицируется полное содержимое partition включая все сообщения.",
-                "source_of_confusion": "Не понимают модель отказоустойчивости. Реплицируется полное содержимое partition включая все сообщения.",
+                "source_of_confusion": "Не понимают модель отказоустойчивости.",
                 "if_it_were_true": "При падении брокера данные терялись бы — нарушает обещание HA.",
                 "how_it_should_be": "Каждая реплика — полная копия partition; leader/follower все содержат данные."
               }
@@ -1068,11 +1068,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Репликация настраивается только на уровне кластера, не на уровне topic. Replication factor — параметр topic;. Думают что это глобальная настройка. RF задаётся при создании topic;",
+              "text": "Репликация настраивается только на уровне кластера, не на уровне topic.",
               "correct": false,
               "sections": {
                 "what_actually": "Replication factor — параметр topic; разные топики могут иметь разный RF.",
-                "source_of_confusion": "Думают что это глобальная настройка. Replication factor — параметр topic;",
+                "source_of_confusion": "Думают что это глобальная настройка.",
                 "if_it_were_true": "Не было бы --replication-factor в kafka-topics.sh --create.",
                 "how_it_should_be": "RF задаётся при создании topic; default.replication.factor — только дефолт."
               }
@@ -1091,11 +1091,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "ISR — это producer ID; OSR — старый ZK-путь. Producer ID — отдельное понятие (для идемпотентности);. Смешивают разные понятия Kafka. ISR — In-Sync Replicas;",
+              "text": "ISR — это producer ID; OSR — старый ZK-путь.",
               "correct": false,
               "sections": {
                 "what_actually": "Producer ID — отдельное понятие (для идемпотентности); ISR/OSR — про репликацию.",
-                "source_of_confusion": "Смешивают разные понятия Kafka. Producer ID — отдельное понятие (для идемпотентности);",
+                "source_of_confusion": "Смешивают разные понятия Kafka.",
                 "if_it_were_true": "ISR использовался бы в transactional API — он там не фигурирует.",
                 "how_it_should_be": "ISR — In-Sync Replicas; PID — Producer ID; разные понятия."
               }
@@ -1103,19 +1103,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "ISR — это размер сообщения в байтах; OSR — старый формат записей. ISR — In-Sync Replicas, термины про репликацию;. Не знают сокращений, угадывают. ISR/OSR — статус реплик partition.",
+              "text": "ISR — это размер сообщения в байтах; OSR — старый формат записей.",
               "correct": false,
               "sections": {
                 "what_actually": "ISR — In-Sync Replicas, термины про репликацию; не про сообщения.",
-                "source_of_confusion": "Не знают сокращений, угадывают. ISR — In-Sync Replicas, термины про репликацию;",
+                "source_of_confusion": "Не знают сокращений, угадывают.",
                 "if_it_were_true": "Не было бы упоминаний ISR в acks=all и min.insync.replicas.",
-                "how_it_should_be": "ISR/OSR — статус реплик partition. ISR — In-Sync Replicas, термины про репликацию;"
+                "how_it_should_be": "ISR/OSR — статус реплик partition."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "ISR — In-Sync Replicas, реплики догнавшие leader в пределах replica.lag.time.max.ms; OSR — Out-of-Sync Replicas, отстающие реплики;",
+              "text": "ISR — In-Sync Replicas, реплики догнавшие leader в пределах replica.lag.time.max.ms; OSR — Out-of-Sync Replicas, отстающие реплики; High Watermark — offset последнего сообщения, реплицированного на все ISR, доступного для чтения consumer.",
               "correct": true,
               "sections": {
                 "explanation": "Только сообщения до High Watermark видны consumer — это обеспечивает durability: даже если leader упадёт, эти сообщения уже на ISR. min.insync.replicas + acks=all гарантируют что запись принимается только когда подтверждена N ISR. OSR-реплики при догонке возвращаются в ISR.",
@@ -1128,13 +1128,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "High Watermark — это лимит retention по объёму данных. Retention лимит — это retention. Угадывают по словосочетанию. HW — offset, retention — bytes/ms.",
+              "text": "High Watermark — это лимит retention по объёму данных.",
               "correct": false,
               "sections": {
                 "what_actually": "Retention лимит — это retention.bytes/log.retention.bytes; HW — offset последнего реплицированного сообщения.",
-                "source_of_confusion": "Угадывают по словосочетанию. Retention лимит — это retention.",
+                "source_of_confusion": "Угадывают по словосочетанию.",
                 "if_it_were_true": "HW измерялся бы в байтах — он измеряется в offset.",
-                "how_it_should_be": "HW — offset, retention — bytes/ms. Retention лимит — это retention."
+                "how_it_should_be": "HW — offset, retention — bytes/ms."
               }
             }
           ]
@@ -1151,19 +1151,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Кластер становится недоступным до возврата упавшего брокера. При RF≥2 и наличии ISR-реплик Controller выбирает нового leader из ISR;. Считают что Kafka single-master. Failover к новому leader из ISR в пределах секунд.",
+              "text": "Кластер становится недоступным до возврата упавшего брокера.",
               "correct": false,
               "sections": {
                 "what_actually": "При RF≥2 и наличии ISR-реплик Controller выбирает нового leader из ISR; кластер продолжает работу.",
-                "source_of_confusion": "Считают что Kafka single-master. При RF≥2 и наличии ISR-реплик Controller выбирает нового leader из ISR;",
-                "if_it_were_true": "RF=3 не имел бы смысла для отказоустойчивости. При RF≥2 и наличии ISR-реплик Controller выбирает нового leader из ISR;",
+                "source_of_confusion": "Считают что Kafka single-master.",
+                "if_it_were_true": "RF=3 не имел бы смысла для отказоустойчивости.",
                 "how_it_should_be": "Failover к новому leader из ISR в пределах секунд."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Consumer получает ровно то же сообщение дважды от старого и нового leader. Consumer читает с одного leader;. Путают replay при retry producer с дублированием от brokers. Один leader активен в момент времени;",
+              "text": "Consumer получает ровно то же сообщение дважды от старого и нового leader.",
               "correct": false,
               "sections": {
                 "what_actually": "Consumer читает с одного leader; смена leader не дублирует сообщения. Идемпотентный producer защищает от duplicate при retry.",
@@ -1175,12 +1175,12 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Все данные partition теряются и producer должен отправить заново. Данные сохраняются на остальных репликах;. Игнорируют наличие репликации. Failover без потерь при правильной настройке RF и min.",
+              "text": "Все данные partition теряются и producer должен отправить заново.",
               "correct": false,
               "sections": {
                 "what_actually": "Данные сохраняются на остальных репликах; если ISR ≥ min.insync.replicas потерь нет.",
-                "source_of_confusion": "Игнорируют наличие репликации. Данные сохраняются на остальных репликах;",
-                "if_it_were_true": "Kafka не подошла бы для critical-сценариев. Данные сохраняются на остальных репликах;",
+                "source_of_confusion": "Игнорируют наличие репликации.",
+                "if_it_were_true": "Kafka не подошла бы для critical-сценариев.",
                 "how_it_should_be": "Failover без потерь при правильной настройке RF и min.insync.replicas."
               }
             },
@@ -1224,11 +1224,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Election leader через ручную перезагрузку брокеров. Unclean — это автоматическая опция, не ручная процедура;. Угадывают по смыслу слова unclean. Unclean = автоматический выбор leader из out-of-sync replica.",
+              "text": "Election leader через ручную перезагрузку брокеров.",
               "correct": false,
               "sections": {
                 "what_actually": "Unclean — это автоматическая опция, не ручная процедура; выбор leader из OSR-реплики.",
-                "source_of_confusion": "Угадывают по смыслу слова unclean. Unclean — это автоматическая опция, не ручная процедура;",
+                "source_of_confusion": "Угадывают по смыслу слова unclean.",
                 "if_it_were_true": "Не было бы параметра unclean.leader.election.enable.",
                 "how_it_should_be": "Unclean = автоматический выбор leader из out-of-sync replica."
               }
@@ -1236,11 +1236,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Это процесс восстановления данных после повреждения segment-файлов. Восстановление segment — это log recovery;. Совершенно не та категория проблем. Unclean — про leader election;",
+              "text": "Это процесс восстановления данных после повреждения segment-файлов.",
               "correct": false,
               "sections": {
                 "what_actually": "Восстановление segment — это log recovery; unclean leader election — про выбор leader из OSR.",
-                "source_of_confusion": "Совершенно не та категория проблем. Восстановление segment — это log recovery;",
+                "source_of_confusion": "Совершенно не та категория проблем.",
                 "if_it_were_true": "Был бы параметр про recovery — но это отдельный процесс.",
                 "how_it_should_be": "Unclean — про leader election; recovery — про целостность segment."
               }
@@ -1248,13 +1248,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Election leader на грязных серверах с устаревшими версиями Kafka. Версия Kafka не влияет на этот выбор;. Буквальная интерпретация слова unclean. Unclean — про OSR-реплику, не про версии.",
+              "text": "Election leader на грязных серверах с устаревшими версиями Kafka.",
               "correct": false,
               "sections": {
                 "what_actually": "Версия Kafka не влияет на этот выбор; unclean — про состояние реплики ISR/OSR.",
-                "source_of_confusion": "Буквальная интерпретация слова unclean. Версия Kafka не влияет на этот выбор;",
-                "if_it_were_true": "Был бы checking версий — этого нет. Версия Kafka не влияет на этот выбор;",
-                "how_it_should_be": "Unclean — про OSR-реплику, не про версии. Версия Kafka не влияет на этот выбор;"
+                "source_of_confusion": "Буквальная интерпретация слова unclean.",
+                "if_it_were_true": "Был бы checking версий — этого нет.",
+                "how_it_should_be": "Unclean — про OSR-реплику, не про версии."
               }
             }
           ]
@@ -1271,11 +1271,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Только exactly-once — Kafka сама гарантирует уникальную доставку. По умолчанию at-least-once;. Слышали про exactly-once и считают его дефолтом. Three semantics: at-most-once / at-least-once / exactly-once.",
+              "text": "Только exactly-once — Kafka сама гарантирует уникальную доставку.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию at-least-once; exactly-once требует явной настройки (idempotent + transactions + read_committed).",
-                "source_of_confusion": "Слышали про exactly-once и считают его дефолтом. По умолчанию at-least-once;",
+                "source_of_confusion": "Слышали про exactly-once и считают его дефолтом.",
                 "if_it_were_true": "Не было бы параметра enable.idempotence и transactions API.",
                 "how_it_should_be": "Three semantics: at-most-once / at-least-once / exactly-once."
               }
@@ -1296,11 +1296,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Только at-most-once и at-least-once — exactly-once невозможно в распределённой системе. Kafka реализует EOS с Kafka 0. Цитируют CAP-теоретиков, не зная про EOS Kafka.",
+              "text": "Только at-most-once и at-least-once — exactly-once невозможно в распределённой системе.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka реализует EOS с Kafka 0.11 через идемпотентность плюс транзакции.",
-                "source_of_confusion": "Цитируют CAP-теоретиков, не зная про EOS Kafka. Kafka реализует EOS с Kafka 0.",
+                "source_of_confusion": "Цитируют CAP-теоретиков, не зная про EOS Kafka.",
                 "if_it_were_true": "Не было бы Kafka Streams exactly-once processing.guarantee.",
                 "how_it_should_be": "EOS реализуется в Kafka на уровне Kafka-to-Kafka pipeline."
               }
@@ -1308,11 +1308,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Semantics задаётся типом topic — есть at-most-once topics и exactly-once topics. Semantics определяется конфигурацией Producer + Consumer;. Придумывают непосуществующее свойство topic.",
+              "text": "Semantics задаётся типом topic — есть at-most-once topics и exactly-once topics.",
               "correct": false,
               "sections": {
                 "what_actually": "Semantics определяется конфигурацией Producer + Consumer; topic не имеет такой настройки.",
-                "source_of_confusion": "Придумывают непосуществующее свойство topic. Semantics определяется конфигурацией Producer + Consumer;",
+                "source_of_confusion": "Придумывают непосуществующее свойство topic.",
                 "if_it_were_true": "При создании topic был бы --semantics параметр — его нет.",
                 "how_it_should_be": "Semantics — клиентское свойство; topic про durability/retention."
               }
@@ -1331,11 +1331,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Включить acks=all и retries=0 — это даёт exactly-once автоматически. acks=all + retries=0 даёт at-most-once (без retry теряем при ошибке);. Не различают durability и delivery semantics. EOS = idempotent producer + transactions + read_committed isolation.",
+              "text": "Включить acks=all и retries=0 — это даёт exactly-once автоматически.",
               "correct": false,
               "sections": {
                 "what_actually": "acks=all + retries=0 даёт at-most-once (без retry теряем при ошибке); EOS требует enable.idempotence и транзакций.",
-                "source_of_confusion": "Не различают durability и delivery semantics. acks=all + retries=0 даёт at-most-once (без retry теряем при ошибке);",
+                "source_of_confusion": "Не различают durability и delivery semantics.",
                 "if_it_were_true": "Все production-системы давно бы использовали этот рецепт.",
                 "how_it_should_be": "EOS = idempotent producer + transactions + read_committed isolation."
               }
@@ -1343,11 +1343,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Использовать только одну partition и один consumer — этого достаточно для EOS. Одна partition даёт ordering, но не защищает от duplicate при retry или повторной обработке. Путают ordering и dedup. EOS требует idempotent + transactions;",
+              "text": "Использовать только одну partition и один consumer — этого достаточно для EOS.",
               "correct": false,
               "sections": {
                 "what_actually": "Одна partition даёт ordering, но не защищает от duplicate при retry или повторной обработке.",
-                "source_of_confusion": "Путают ordering и dedup. Одна partition даёт ordering, но не защищает от duplicate при retry или повторной обработке.",
+                "source_of_confusion": "Путают ordering и dedup.",
                 "if_it_were_true": "Не нужны были бы транзакции — все системы делали бы 1 partition.",
                 "how_it_should_be": "EOS требует idempotent + transactions; partition count тут вторично."
               }
@@ -1368,11 +1368,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Включить compaction в topic — она автоматически удалит дубликаты. Log compaction удаляет старые версии по ключу, не дубликаты сообщений;. Смешивают понятия compaction и dedup. Compaction — для key-based последнего значения;",
+              "text": "Включить compaction в topic — она автоматически удалит дубликаты.",
               "correct": false,
               "sections": {
                 "what_actually": "Log compaction удаляет старые версии по ключу, не дубликаты сообщений; не имеет отношения к EOS.",
-                "source_of_confusion": "Смешивают понятия compaction и dedup. Log compaction удаляет старые версии по ключу, не дубликаты сообщений;",
+                "source_of_confusion": "Смешивают понятия compaction и dedup.",
                 "if_it_were_true": "Compaction решал бы delivery semantics — но это про retention.",
                 "how_it_should_be": "Compaction — для key-based последнего значения; EOS — отдельный механизм."
               }
@@ -1391,11 +1391,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Транзакции — это синхронизация с реляционной СУБД через 2PC-протокол. Транзакции Kafka работают только внутри Kafka;. Путают с XA-транзакциями. Kafka-only транзакции;",
+              "text": "Транзакции — это синхронизация с реляционной СУБД через 2PC-протокол.",
               "correct": false,
               "sections": {
                 "what_actually": "Транзакции Kafka работают только внутри Kafka; нет 2PC с внешними БД.",
-                "source_of_confusion": "Путают с XA-транзакциями. Транзакции Kafka работают только внутри Kafka;",
+                "source_of_confusion": "Путают с XA-транзакциями.",
                 "if_it_were_true": "Producer.commitTransaction() касался бы и БД — это не так.",
                 "how_it_should_be": "Kafka-only транзакции; для интеграции с БД — Outbox Pattern."
               }
@@ -1403,11 +1403,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Транзакции хранятся в отдельном topic __transactions и доступны для чтения. Состояние транзакций хранится в __transaction_state, но не нужно читать его напрямую — это служебный topic.",
+              "text": "Транзакции хранятся в отдельном topic __transactions и доступны для чтения.",
               "correct": false,
               "sections": {
                 "what_actually": "Состояние транзакций хранится в __transaction_state, но не нужно читать его напрямую — это служебный topic.",
-                "source_of_confusion": "Угадывают имя topic, путая со смыслом. Состояние транзакций хранится в __transaction_state, но не нужно читать его напрямую — это служебный topic.",
+                "source_of_confusion": "Угадывают имя topic, путая со смыслом.",
                 "if_it_were_true": "Был бы API для чтения transactions log в приложении.",
                 "how_it_should_be": "__transaction_state — служебный internal topic, читать не нужно."
               }
@@ -1415,19 +1415,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Транзакции включаются автоматически при включении acks=all. Транзакции включаются явно через transactional. Считают транзакции пассивной фичей. Транзакции опциональны и требуют explicit setup.",
+              "text": "Транзакции включаются автоматически при включении acks=all.",
               "correct": false,
               "sections": {
                 "what_actually": "Транзакции включаются явно через transactional.id и initTransactions(); acks=all — отдельный параметр.",
-                "source_of_confusion": "Считают транзакции пассивной фичей. Транзакции включаются явно через transactional.",
+                "source_of_confusion": "Считают транзакции пассивной фичей.",
                 "if_it_were_true": "Не было бы API beginTransaction/commitTransaction.",
-                "how_it_should_be": "Транзакции опциональны и требуют explicit setup. Транзакции включаются явно через transactional."
+                "how_it_should_be": "Транзакции опциональны и требуют explicit setup."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Механизм атомарной записи в несколько partition нескольких topic в рамках одной транзакции producer; consumer с isolation.level=read_committed видит только committed-сообщения; идентифицируется transactional.",
+              "text": "Механизм атомарной записи в несколько partition нескольких topic в рамках одной транзакции producer; consumer с isolation.level=read_committed видит только committed-сообщения; идентифицируется transactional.id и обеспечивает exactly-once Kafka-to-Kafka.",
               "correct": true,
               "sections": {
                 "explanation": "Producer с transactional.id вызывает initTransactions, beginTransaction, send (несколько раз в разные topic), sendOffsetsToTransaction, commitTransaction. До commit consumer не видит сообщения. На брокере хранится TransactionMarker в каждом partition.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Добавить зависимость spring-kafka; настроить spring.kafka.bootstrap-servers и serializer/deserializer в application.yml; использовать KafkaTemplate.send() для отправки и @KafkaListener для приёма;",
+              "text": "Добавить зависимость spring-kafka; настроить spring.kafka.bootstrap-servers и serializer/deserializer в application.yml; использовать KafkaTemplate.send() для отправки и @KafkaListener для приёма; auto-configuration создаёт ConsumerFactory, ProducerFactory, ConcurrentKafkaListenerContainerFactory.",
               "correct": true,
               "sections": {
                 "explanation": "spring-kafka добавляется в pom.xml. application.yml: spring.kafka.bootstrap-servers, consumer.group-id, producer.value-serializer. @EnableKafka на конфигурации. @KafkaListener(topics=\"orders\", groupId=\"svc1\") public void handle(OrderEvent e). KafkaTemplate автоматически бин.",
@@ -1464,37 +1464,37 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Подключить только зависимость kafka-clients и использовать KafkaProducer/KafkaConsumer напрямую — Spring-обёртки не нужны. Знают только базовый API kafka-clients.",
+              "text": "Подключить только зависимость kafka-clients и использовать KafkaProducer/KafkaConsumer напрямую — Spring-обёртки не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Можно так, но Spring Boot предоставляет spring-kafka с готовой автоконфигурацией: KafkaTemplate, @KafkaListener, ContainerFactory, error handlers.",
-                "source_of_confusion": "Знают только базовый API kafka-clients. Можно так, но Spring Boot предоставляет spring-kafka с готовой автоконфигурацией: KafkaTemplate, @KafkaListener, ContainerFactory, error handlers.",
-                "if_it_were_true": "Не было бы готового стартера spring-kafka. Можно так, но Spring Boot предоставляет spring-kafka с готовой автоконфигурацией: KafkaTemplate, @KafkaListener, ContainerFactory, error handlers.",
+                "source_of_confusion": "Знают только базовый API kafka-clients.",
+                "if_it_were_true": "Не было бы готового стартера spring-kafka.",
                 "how_it_should_be": "В Spring Boot — spring-kafka starter; KafkaTemplate для отправки, @KafkaListener для приёма."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Spring Boot не поддерживает Kafka — нужно использовать только Spring Integration с adapter-ами. Spring Kafka — официальный модуль Spring;. Не знакомы с экосистемой Spring. Прямая поддержка через spring-kafka.",
+              "text": "Spring Boot не поддерживает Kafka — нужно использовать только Spring Integration с adapter-ами.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring Kafka — официальный модуль Spring; Spring Integration с Kafka — отдельная опциональная обёртка поверх.",
-                "source_of_confusion": "Не знакомы с экосистемой Spring. Spring Kafka — официальный модуль Spring;",
-                "if_it_were_true": "Не было бы spring-kafka в Maven Central. Spring Kafka — официальный модуль Spring;",
-                "how_it_should_be": "Прямая поддержка через spring-kafka. Spring Kafka — официальный модуль Spring;"
+                "source_of_confusion": "Не знакомы с экосистемой Spring.",
+                "if_it_were_true": "Не было бы spring-kafka в Maven Central.",
+                "how_it_should_be": "Прямая поддержка через spring-kafka."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Подключить spring-data-kafka для CRUD-операций как с базой данных. Такого модуля нет;. Аналогия с spring-data-jpa. spring-kafka, не spring-data-kafka.",
+              "text": "Подключить spring-data-kafka для CRUD-операций как с базой данных.",
               "correct": false,
               "sections": {
                 "what_actually": "Такого модуля нет; Spring Data — про БД, Kafka не БД; для Kafka — spring-kafka.",
                 "source_of_confusion": "Аналогия с spring-data-jpa.",
-                "if_it_were_true": "Был бы KafkaRepository<Order, String> — его нет. Такого модуля нет;",
-                "how_it_should_be": "spring-kafka, не spring-data-kafka. Такого модуля нет;"
+                "if_it_were_true": "Был бы KafkaRepository<Order, String> — его нет.",
+                "how_it_should_be": "spring-kafka, не spring-data-kafka."
               }
             }
           ]
@@ -1511,11 +1511,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Producer настраивается ТОЛЬКО через Java-конфигурацию, application.yml не поддерживается. Не пробовали стандартную auto-configuration. spring.",
+              "text": "Producer настраивается ТОЛЬКО через Java-конфигурацию, application.yml не поддерживается.",
               "correct": false,
               "sections": {
                 "what_actually": "application.yml/properties — основной способ; Java-конфигурация — опционально для кастомизации.",
-                "source_of_confusion": "Не пробовали стандартную auto-configuration. application.",
+                "source_of_confusion": "Не пробовали стандартную auto-configuration.",
                 "if_it_were_true": "Не было бы префиксов spring.kafka.producer.* в config metadata.",
                 "how_it_should_be": "spring.kafka.producer.* в yml — основной путь; @Bean ProducerFactory — кастом."
               }
@@ -1523,7 +1523,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Прописать spring.kafka.producer.* в application.yml (bootstrap-servers, key-serializer, value-serializer, acks, batch-size, compression-type, retries, properties.enable.",
+              "text": "Прописать spring.kafka.producer.* в application.yml (bootstrap-servers, key-serializer, value-serializer, acks, batch-size, compression-type, retries, properties.enable.idempotence) или определить ProducerFactory/KafkaTemplate бины для кастомизации; типичный setup — acks=all, idempotence=true, lz4 compression.",
               "correct": true,
               "sections": {
                 "explanation": "spring.kafka.producer.bootstrap-servers, value-serializer (StringSerializer/JsonSerializer/Avro), acks, retries, batch-size, linger-ms, compression-type, properties.enable.idempotence=true. Spring Boot создаёт ProducerFactory<Object, Object> и KafkaTemplate автоматически.",
@@ -1536,11 +1536,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Достаточно только bootstrap-servers — все остальные параметры жёстко зашиты. Acks, serializer, retries, compression — настраиваемые;. Недооценивают объём конфигурации.",
+              "text": "Достаточно только bootstrap-servers — все остальные параметры жёстко зашиты.",
               "correct": false,
               "sections": {
                 "what_actually": "Acks, serializer, retries, compression — настраиваемые; bootstrap-servers только подключение.",
-                "source_of_confusion": "Недооценивают объём конфигурации. Acks, serializer, retries, compression — настраиваемые;",
+                "source_of_confusion": "Недооценивают объём конфигурации.",
                 "if_it_were_true": "Не было бы списка spring.kafka.producer.* свойств в документации.",
                 "how_it_should_be": "Bootstrap-servers — необходимый минимум; остальное — для тюнинга."
               }
@@ -1548,12 +1548,12 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Spring Kafka не поддерживает Producer — только Consumer. KafkaTemplate — основной механизм отправки в spring-kafka. Незнание базового API.",
+              "text": "Spring Kafka не поддерживает Producer — только Consumer.",
               "correct": false,
               "sections": {
                 "what_actually": "KafkaTemplate — основной механизм отправки в spring-kafka.",
-                "source_of_confusion": "Незнание базового API. Spring Kafka поддерживает обе стороны: Producer (KafkaTemplate) и Consumer (@KafkaListener).",
-                "if_it_were_true": "Не было бы класса KafkaTemplate в библиотеке. Незнание базового API.",
+                "source_of_confusion": "Незнание базового API.",
+                "if_it_were_true": "Не было бы класса KafkaTemplate в библиотеке.",
                 "how_it_should_be": "Spring Kafka поддерживает обе стороны: Producer (KafkaTemplate) и Consumer (@KafkaListener)."
               }
             }
@@ -1571,23 +1571,23 @@
             {
               "order": 0,
               "label": "A",
-              "text": "@KafkaListener работает только с single thread и не поддерживает concurrency. ConcurrentKafkaListenerContainerFactory с параметром concurrency=N создаёт N consumer-threads;. Не знают про concurrency параметр. @KafkaListener(concurrency=\"3\") — параллельная обработка.",
+              "text": "@KafkaListener работает только с single thread и не поддерживает concurrency.",
               "correct": false,
               "sections": {
                 "what_actually": "ConcurrentKafkaListenerContainerFactory с параметром concurrency=N создаёт N consumer-threads; каждый обрабатывает свой subset partitions.",
-                "source_of_confusion": "Не знают про concurrency параметр. ConcurrentKafkaListenerContainerFactory с параметром concurrency=N создаёт N consumer-threads;",
-                "if_it_were_true": "Не было бы параметра concurrency в Listener. ConcurrentKafkaListenerContainerFactory с параметром concurrency=N создаёт N consumer-threads;",
+                "source_of_confusion": "Не знают про concurrency параметр.",
+                "if_it_were_true": "Не было бы параметра concurrency в Listener.",
                 "how_it_should_be": "@KafkaListener(concurrency=\"3\") — параллельная обработка."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "@KafkaListener — это маркерная аннотация, надо самому реализовать обработку через while-loop. Spring сам управляет циклом poll/handle через container;. Не понимают inversion of control в Spring Kafka. Container управляет lifecycle;",
+              "text": "@KafkaListener — это маркерная аннотация, надо самому реализовать обработку через while-loop.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring сам управляет циклом poll/handle через container; разработчик пишет только метод обработки.",
-                "source_of_confusion": "Не понимают inversion of control в Spring Kafka. Spring сам управляет циклом poll/handle через container;",
+                "source_of_confusion": "Не понимают inversion of control в Spring Kafka.",
                 "if_it_were_true": "Не было бы пользы от spring-kafka — все писали бы вручную.",
                 "how_it_should_be": "Container управляет lifecycle; метод-обработчик — только бизнес-логика."
               }
@@ -1600,7 +1600,7 @@
               "sections": {
                 "explanation": "@KafkaListener — high-level API. concurrency=N даёт N потоков (≤ partitions, иначе лишние idle). containerFactory может быть кастомным с batchListener, ackMode, errorHandler. Аргументы метода: ConsumerRecord, value, Acknowledgment, @Header.",
                 "example": "@KafkaListener(topics=\"orders\", groupId=\"billing\", concurrency=\"3\") public void onOrder(@Payload Order o, Acknowledgment ack) { process(o); ack.acknowledge(); }",
-                "when_to_apply": "Любая обработка событий из Kafka в Spring Boot. @KafkaListener — high-level API.",
+                "when_to_apply": "Любая обработка событий из Kafka в Spring Boot.",
                 "edge_cases": "В batch mode возвращается List; ack.acknowledge() коммитит весь батч. KafkaListenerEndpointRegistry даёт runtime control (start/stop/pause).",
                 "related": "Q14 consumer group; Q28 error handler; Q16 manual commit."
               }
@@ -1608,11 +1608,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "@KafkaListener поддерживает только StringDeserializer без возможности кастомизации. Поддерживаются любые Deserializer: JsonDeserializer, ByteArrayDeserializer, Avro, Protobuf и custom. Видели только пример со String. Deserializer настраивается;",
+              "text": "@KafkaListener поддерживает только StringDeserializer без возможности кастомизации.",
               "correct": false,
               "sections": {
                 "what_actually": "Поддерживаются любые Deserializer: JsonDeserializer, ByteArrayDeserializer, Avro, Protobuf и custom.",
-                "source_of_confusion": "Видели только пример со String. Поддерживаются любые Deserializer: JsonDeserializer, ByteArrayDeserializer, Avro, Protobuf и custom.",
+                "source_of_confusion": "Видели только пример со String.",
                 "if_it_were_true": "Не было бы spring.kafka.consumer.value-deserializer параметра.",
                 "how_it_should_be": "Deserializer настраивается; JsonDeserializer для POJO, Avro для schema-based."
               }
@@ -1631,11 +1631,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Spring Kafka не имеет error handling — нужно писать свой aspect-oriented механизм. Есть DefaultErrorHandler, CommonContainerErrorHandler, RetryTopicConfiguration — целый набор готовых решений. Незнание имеющегося API.",
+              "text": "Spring Kafka не имеет error handling — нужно писать свой aspect-oriented механизм.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть DefaultErrorHandler, CommonContainerErrorHandler, RetryTopicConfiguration — целый набор готовых решений.",
-                "source_of_confusion": "Незнание имеющегося API. Есть DefaultErrorHandler, CommonContainerErrorHandler, RetryTopicConfiguration — целый набор готовых решений.",
+                "source_of_confusion": "Незнание имеющегося API.",
                 "if_it_were_true": "Все писали бы свои handler-ы — фрагментация подходов.",
                 "how_it_should_be": "Готовые ErrorHandler классы; кастом только при специфичных требованиях."
               }
@@ -1643,24 +1643,24 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Игнорировать ошибки — Spring Kafka сам обрабатывает все исключения автоматически. Без явного error handler сообщения могут блокировать partition (бесконечный retry). Опираются на default behaviour без понимания деталей.",
+              "text": "Игнорировать ошибки — Spring Kafka сам обрабатывает все исключения автоматически.",
               "correct": false,
               "sections": {
                 "what_actually": "Без явного error handler сообщения могут блокировать partition (бесконечный retry).",
                 "source_of_confusion": "Опираются на default behaviour без понимания деталей.",
-                "if_it_were_true": "Не было бы DefaultErrorHandler в библиотеке. Без явного error handler сообщения могут блокировать partition (бесконечный retry).",
+                "if_it_were_true": "Не было бы DefaultErrorHandler в библиотеке.",
                 "how_it_should_be": "Настраивать ErrorHandler с retry policy и DLT для production."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Использовать try-catch внутри обработчика — этого достаточно. Try-catch скрывает ошибку и приводит к молчаливому commit offset;. Применяют общий Java-подход без понимания Kafka специфики. Bubble up exception → ErrorHandler решает retry/DLT/skip.",
+              "text": "Использовать try-catch внутри обработчика — этого достаточно.",
               "correct": false,
               "sections": {
                 "what_actually": "Try-catch скрывает ошибку и приводит к молчаливому commit offset; теряется information о проблеме и нет retry.",
                 "source_of_confusion": "Применяют общий Java-подход без понимания Kafka специфики.",
-                "if_it_were_true": "Не нужны были бы DLT и BackOff. Try-catch скрывает ошибку и приводит к молчаливому commit offset;",
+                "if_it_were_true": "Не нужны были бы DLT и BackOff.",
                 "how_it_should_be": "Bubble up exception → ErrorHandler решает retry/DLT/skip."
               }
             },
@@ -1704,11 +1704,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Mockito mock на KafkaTemplate без реального брокера — этого достаточно для всех тестов. Mock работает для unit-тестов;. Считают что mock полностью заменяет integration.",
+              "text": "Mockito mock на KafkaTemplate без реального брокера — этого достаточно для всех тестов.",
               "correct": false,
               "sections": {
                 "what_actually": "Mock работает для unit-тестов; для integration нужен реальный брокер: @EmbeddedKafka или Testcontainers.",
-                "source_of_confusion": "Считают что mock полностью заменяет integration. Mock работает для unit-тестов;",
+                "source_of_confusion": "Считают что mock полностью заменяет integration.",
                 "if_it_were_true": "Не было бы EmbeddedKafkaBroker в spring-kafka-test.",
                 "how_it_should_be": "Mock для unit; @EmbeddedKafka или Testcontainers для integration."
               }
@@ -1716,11 +1716,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Тесты Kafka возможны только на staging-стенде с реальным кластером. Локальные тесты возможны через @EmbeddedKafka или Testcontainers;. Не знают про embedded-варианты.",
+              "text": "Тесты Kafka возможны только на staging-стенде с реальным кластером.",
               "correct": false,
               "sections": {
                 "what_actually": "Локальные тесты возможны через @EmbeddedKafka или Testcontainers; staging — для нагрузочных и end-to-end.",
-                "source_of_confusion": "Не знают про embedded-варианты. Локальные тесты возможны через @EmbeddedKafka или Testcontainers;",
+                "source_of_confusion": "Не знают про embedded-варианты.",
                 "if_it_were_true": "CI не мог бы запускать integration тесты без cluster.",
                 "how_it_should_be": "Local tests возможны и нужны для быстрого feedback loop."
               }
@@ -1728,11 +1728,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать H2 как mock Kafka — JDBC API совместим. H2 — реляционная СУБД;. Сильно ошибочное смешение технологий. Для Kafka — EmbeddedKafka или Testcontainers с реальным образом.",
+              "text": "Использовать H2 как mock Kafka — JDBC API совместим.",
               "correct": false,
               "sections": {
                 "what_actually": "H2 — реляционная СУБД; Kafka — message broker; API несовместимы.",
-                "source_of_confusion": "Сильно ошибочное смешение технологий. H2 — реляционная СУБД;",
+                "source_of_confusion": "Сильно ошибочное смешение технологий.",
                 "if_it_were_true": "Не было бы EmbeddedKafka — все использовали бы H2.",
                 "how_it_should_be": "Для Kafka — EmbeddedKafka или Testcontainers с реальным образом."
               }
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Это отдельный кластер для потоковой обработки, аналог Flink. Kafka Streams — клиентская библиотека (jar), встраивается в приложение;. Сравнивают с Flink/Spark, где есть отдельный кластер worker-ов.",
+              "text": "Это отдельный кластер для потоковой обработки, аналог Flink.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka Streams — клиентская библиотека (jar), встраивается в приложение; не требует отдельного кластера.",
@@ -1763,7 +1763,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Клиентская библиотека Java/Scala для построения потоковых приложений поверх Kafka; топология обработки (map, filter, join, aggregate) работает поверх consumer/producer; масштабируется через partitions и инстансы;",
+              "text": "Клиентская библиотека Java/Scala для построения потоковых приложений поверх Kafka; топология обработки (map, filter, join, aggregate) работает поверх consumer/producer; масштабируется через partitions и инстансы; поддерживает stateful обработку через RocksDB-state stores и exactly-once.",
               "correct": true,
               "sections": {
                 "explanation": "Kafka Streams строит DAG из processors. StreamsBuilder.stream(topic) → map → filter → groupByKey → aggregate → to(outputTopic). Параллелизм — через partitions: один stream-thread обрабатывает несколько StreamTask, каждая task — одна partition. State хранится в RocksDB + changelog topic.",
@@ -1776,24 +1776,24 @@
             {
               "order": 2,
               "label": "C",
-              "text": "REST API для управления топиками Kafka. REST для admin — это Kafka REST Proxy или Confluent REST;. Угадывают по слову streams. Kafka Streams — stream processing library.",
+              "text": "REST API для управления топиками Kafka.",
               "correct": false,
               "sections": {
                 "what_actually": "REST для admin — это Kafka REST Proxy или Confluent REST; Kafka Streams — про обработку.",
-                "source_of_confusion": "Угадывают по слову streams. REST для admin — это Kafka REST Proxy или Confluent REST;",
-                "if_it_were_true": "Был бы /topics endpoint у Streams — его нет. REST для admin — это Kafka REST Proxy или Confluent REST;",
-                "how_it_should_be": "Kafka Streams — stream processing library. REST для admin — это Kafka REST Proxy или Confluent REST;"
+                "source_of_confusion": "Угадывают по слову streams.",
+                "if_it_were_true": "Был бы /topics endpoint у Streams — его нет.",
+                "how_it_should_be": "Kafka Streams — stream processing library."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Это синоним для Kafka Connect — оба термина означают одно. Kafka Connect — для интеграции (source/sink из/в external systems);. Путают похожие термины. Connect = integration;",
+              "text": "Это синоним для Kafka Connect — оба термина означают одно.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka Connect — для интеграции (source/sink из/в external systems); Kafka Streams — для процессинга внутри Kafka.",
-                "source_of_confusion": "Путают похожие термины. Kafka Connect — для интеграции (source/sink из/в external systems);",
-                "if_it_were_true": "Не было бы двух разных products в Apache Kafka. Kafka Connect — для интеграции (source/sink из/в external systems);",
+                "source_of_confusion": "Путают похожие термины.",
+                "if_it_were_true": "Не было бы двух разных products в Apache Kafka.",
                 "how_it_should_be": "Connect = integration; Streams = processing; разные вещи."
               }
             }
@@ -1811,11 +1811,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Producer и Consumer — других абстракций нет. Kafka Streams вводит свой набор абстракций поверх consumer/producer: KStream, KTable, GlobalKTable, processors, state stores. Не различают уровни API.",
+              "text": "Producer и Consumer — других абстракций нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka Streams вводит свой набор абстракций поверх consumer/producer: KStream, KTable, GlobalKTable, processors, state stores.",
-                "source_of_confusion": "Не различают уровни API. Kafka Streams вводит свой набор абстракций поверх consumer/producer: KStream, KTable, GlobalKTable, processors, state stores.",
+                "source_of_confusion": "Не различают уровни API.",
                 "if_it_were_true": "Не было бы DSL — все писали бы на producer/consumer.",
                 "how_it_should_be": "KStream/KTable/GlobalKTable — высокоуровневые абстракции."
               }
@@ -1823,19 +1823,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Только Topic и Partition; всё остальное реализуется снаружи. Topic/Partition — общие для Kafka;. Не знают Streams DSL. Streams вводит abstraction поверх partitions.",
+              "text": "Только Topic и Partition; всё остальное реализуется снаружи.",
               "correct": false,
               "sections": {
                 "what_actually": "Topic/Partition — общие для Kafka; в Streams есть KStream, KTable, GlobalKTable, Processor — высокий уровень.",
-                "source_of_confusion": "Не знают Streams DSL. Topic/Partition — общие для Kafka;",
-                "if_it_were_true": "Не было бы StreamsBuilder API. Topic/Partition — общие для Kafka;",
-                "how_it_should_be": "Streams вводит abstraction поверх partitions. Topic/Partition — общие для Kafka;"
+                "source_of_confusion": "Не знают Streams DSL.",
+                "if_it_were_true": "Не было бы StreamsBuilder API.",
+                "how_it_should_be": "Streams вводит abstraction поверх partitions."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "KStream — поток событий (insert semantics); KTable — changelog stream с upsert/update-семантикой по ключу; GlobalKTable — реплицирована на каждый инстанс целиком; Topology — DAG из Processors;",
+              "text": "KStream — поток событий (insert semantics); KTable — changelog stream с upsert/update-семантикой по ключу; GlobalKTable — реплицирована на каждый инстанс целиком; Topology — DAG из Processors; State Store — локальное хранилище для stateful обработки.",
               "correct": true,
               "sections": {
                 "explanation": "KStream — каждое событие = insert; полезно для логов и событий. KTable — последнее значение по ключу; полезно для состояния. GlobalKTable — full copy на каждом инстансе, для lookup-join. Topology — DAG с processors. State Store — RocksDB с changelog в Kafka.",
@@ -1848,12 +1848,12 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Только Window и Aggregator — без других концепций. Window и Aggregator — операции;. Не различают абстракции и операции. Stream/Table — носители данных;",
+              "text": "Только Window и Aggregator — без других концепций.",
               "correct": false,
               "sections": {
                 "what_actually": "Window и Aggregator — операции; абстракции — KStream/KTable; смешивают разные категории.",
-                "source_of_confusion": "Не различают абстракции и операции. Window и Aggregator — операции;",
-                "if_it_were_true": "Не было бы понятия KStream в документации. Window и Aggregator — операции;",
+                "source_of_confusion": "Не различают абстракции и операции.",
+                "if_it_were_true": "Не было бы понятия KStream в документации.",
                 "how_it_should_be": "Stream/Table — носители данных; Window/Aggregator — операции."
               }
             }
@@ -1871,11 +1871,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Kafka Streams нельзя использовать в Spring Boot — только в standalone приложениях. spring-kafka содержит интеграцию: @EnableKafkaStreams, StreamsBuilderFactoryBean, конфиг через application.",
+              "text": "Kafka Streams нельзя использовать в Spring Boot — только в standalone приложениях.",
               "correct": false,
               "sections": {
                 "what_actually": "spring-kafka содержит интеграцию: @EnableKafkaStreams, StreamsBuilderFactoryBean, конфиг через application.yml.",
-                "source_of_confusion": "Не знают про @EnableKafkaStreams. spring-kafka содержит интеграцию: @EnableKafkaStreams, StreamsBuilderFactoryBean, конфиг через application.",
+                "source_of_confusion": "Не знают про @EnableKafkaStreams.",
                 "if_it_were_true": "Не было бы примеров Streams + Spring в документации.",
                 "how_it_should_be": "spring-kafka поддерживает Streams; @Bean KStream от StreamsBuilder."
               }
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Конфигурация Streams возможна только через Java-код, application.yml не поддерживается. spring. Не знают auto-configuration. yml для конфигурации;",
+              "text": "Конфигурация Streams возможна только через Java-код, application.yml не поддерживается.",
               "correct": false,
               "sections": {
                 "what_actually": "spring.kafka.streams.* в application.yml — основной способ; Java-config — только для кастомных топологий.",
@@ -1895,19 +1895,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Через REST API — Spring Boot обращается к Kafka Streams REST endpoint. Streams — это embedded library;. Аналогия с Kafka Connect REST. Streams — embedded в JVM;",
+              "text": "Через REST API — Spring Boot обращается к Kafka Streams REST endpoint.",
               "correct": false,
               "sections": {
                 "what_actually": "Streams — это embedded library; нет внешнего REST API для управления.",
-                "source_of_confusion": "Аналогия с Kafka Connect REST. Streams — это embedded library;",
-                "if_it_were_true": "Был бы Streams-сервер на отдельном порту. Streams — это embedded library;",
+                "source_of_confusion": "Аналогия с Kafka Connect REST.",
+                "if_it_were_true": "Был бы Streams-сервер на отдельном порту.",
                 "how_it_should_be": "Streams — embedded в JVM; spring-kafka управляет lifecycle."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Добавить spring-kafka-streams; включить @EnableKafkaStreams; сконфигурировать spring.kafka.streams.application-id; объявить @Bean KStream<K,V> от StreamsBuilder в конфигурации;",
+              "text": "Добавить spring-kafka-streams; включить @EnableKafkaStreams; сконфигурировать spring.kafka.streams.application-id; объявить @Bean KStream<K,V> от StreamsBuilder в конфигурации; StreamsBuilderFactoryBean сам стартует Streams при boot.",
               "correct": true,
               "sections": {
                 "explanation": "spring-kafka-streams автоконфигурирует KafkaStreamsConfiguration и StreamsBuilderFactoryBean. application.yml: spring.kafka.streams.application-id=order-processor, properties.processing.guarantee=exactly_once_v2. В @Configuration: @Bean public KStream<String, Order> orderStream(StreamsBuilder builder) {...}",
@@ -1931,7 +1931,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Framework для интеграции Kafka с внешними системами через готовые connector-ы (JDBC, Debezium, S3, Elasticsearch, HDFS);",
+              "text": "Framework для интеграции Kafka с внешними системами через готовые connector-ы (JDBC, Debezium, S3, Elasticsearch, HDFS); работает как standalone-process или distributed-cluster; конфигурация JSON через REST API; разделение Source (внешняя система → Kafka) и Sink (Kafka → внешняя система).",
               "correct": true,
               "sections": {
                 "explanation": "Connect Cluster — отдельный набор worker-процессов. Connector — конфигурация для источника/приёмника. Task — единица параллелизма (один connector делится на N task). Конфигурация через POST /connectors API. Сотни готовых connector — JDBC, Debezium (CDC), S3, ES, MongoDB.",
@@ -1944,11 +1944,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Это API для подключения новых брокеров к существующему кластеру Kafka. Kafka Connect — framework для интеграции Kafka с внешними системами (БД, файлами, S3, Elasticsearch);.",
+              "text": "Это API для подключения новых брокеров к существующему кластеру Kafka.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka Connect — framework для интеграции Kafka с внешними системами (БД, файлами, S3, Elasticsearch); не для кластеризации брокеров.",
-                "source_of_confusion": "Угадывают по слову connect. Kafka Connect — framework для интеграции Kafka с внешними системами (БД, файлами, S3, Elasticsearch);",
+                "source_of_confusion": "Угадывают по слову connect.",
                 "if_it_were_true": "Был бы CLI для join broker через Connect — его нет.",
                 "how_it_should_be": "Kafka Connect = integration framework с connector-ами."
               }
@@ -1956,23 +1956,23 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Это библиотека потоковой обработки, заменяющая Kafka Streams. Connect — про интеграцию;. Путают близкие термины. Connect — integration;",
+              "text": "Это библиотека потоковой обработки, заменяющая Kafka Streams.",
               "correct": false,
               "sections": {
                 "what_actually": "Connect — про интеграцию; Streams — про процессинг; разные продукты.",
                 "source_of_confusion": "Путают близкие термины.",
-                "if_it_were_true": "Был бы DSL для обработки в Connect — его нет. Connect — про интеграцию;",
-                "how_it_should_be": "Connect — integration; Streams — processing. Connect — про интеграцию;"
+                "if_it_were_true": "Был бы DSL для обработки в Connect — его нет.",
+                "how_it_should_be": "Connect — integration; Streams — processing."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Это TCP-протокол между producer и брокером. Протокол Kafka — отдельная штука;. Угадывают по форме слова. Connect = framework;",
+              "text": "Это TCP-протокол между producer и брокером.",
               "correct": false,
               "sections": {
                 "what_actually": "Протокол Kafka — отдельная штука; Kafka Connect — высокоуровневый framework.",
-                "source_of_confusion": "Угадывают по форме слова. Протокол Kafka — отдельная штука;",
+                "source_of_confusion": "Угадывают по форме слова.",
                 "if_it_were_true": "Был бы RFC на kafka-connect protocol — нет такого.",
                 "how_it_should_be": "Connect = framework; протокол — отдельный уровень."
               }
@@ -1991,11 +1991,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Разницы нет — оба читают и пишут одновременно. Source — только из внешней системы в Kafka;. Не разобрались с направлением. Однонаправленные: Source = pull в Kafka;",
+              "text": "Разницы нет — оба читают и пишут одновременно.",
               "correct": false,
               "sections": {
                 "what_actually": "Source — только из внешней системы в Kafka; Sink — только из Kafka во внешнюю.",
-                "source_of_confusion": "Не разобрались с направлением. Source — только из внешней системы в Kafka;",
+                "source_of_confusion": "Не разобрались с направлением.",
                 "if_it_were_true": "Не было бы двух разных classes SourceConnector/SinkConnector.",
                 "how_it_should_be": "Однонаправленные: Source = pull в Kafka; Sink = push из Kafka."
               }
@@ -2003,7 +2003,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Source Connector читает данные из внешней системы (БД через CDC, файлы, REST API) и пишет в Kafka topic; Sink Connector читает из Kafka topic и пишет во внешнюю систему (ES, S3, JDBC);",
+              "text": "Source Connector читает данные из внешней системы (БД через CDC, файлы, REST API) и пишет в Kafka topic; Sink Connector читает из Kafka topic и пишет во внешнюю систему (ES, S3, JDBC); реализуют разные интерфейсы SourceConnector и SinkConnector.",
               "correct": true,
               "sections": {
                 "explanation": "Source: poll() из источника → SourceRecord → Kafka. Примеры: Debezium (CDC из БД), JDBC Source (SELECT), FileSource. Sink: poll() из Kafka → put(records) во внешнюю систему. Примеры: ElasticsearchSink, S3Sink, JDBCSink, MongoSink.",
@@ -2016,11 +2016,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Source — это producer, Sink — это consumer на уровне Kafka clients. Source/Sink — на уровне Kafka Connect framework;. Смешивают low-level и high-level API. Connect-абстракции (Source/Sink) выше producer/consumer.",
+              "text": "Source — это producer, Sink — это consumer на уровне Kafka clients.",
               "correct": false,
               "sections": {
                 "what_actually": "Source/Sink — на уровне Kafka Connect framework; внутри они используют producer/consumer, но это разные абстракции.",
-                "source_of_confusion": "Смешивают low-level и high-level API. Source/Sink — на уровне Kafka Connect framework;",
+                "source_of_confusion": "Смешивают low-level и high-level API.",
                 "if_it_were_true": "Не нужно было бы дополнительной абстракции Connect.",
                 "how_it_should_be": "Connect-абстракции (Source/Sink) выше producer/consumer."
               }
@@ -2028,12 +2028,12 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Source работает только с SQL-базами, Sink — только с NoSQL. Тип внешней системы не определяет Source/Sink;. Придумывают ограничение, которого нет. Тип системы независим от Source/Sink;",
+              "text": "Source работает только с SQL-базами, Sink — только с NoSQL.",
               "correct": false,
               "sections": {
                 "what_actually": "Тип внешней системы не определяет Source/Sink; есть Source для SQL, NoSQL, файлов, REST; то же для Sink.",
-                "source_of_confusion": "Придумывают ограничение, которого нет. Тип внешней системы не определяет Source/Sink;",
-                "if_it_were_true": "Не было бы Debezium MongoDB Source. Тип внешней системы не определяет Source/Sink;",
+                "source_of_confusion": "Придумывают ограничение, которого нет.",
+                "if_it_were_true": "Не было бы Debezium MongoDB Source.",
                 "how_it_should_be": "Тип системы независим от Source/Sink; направление определяет."
               }
             }
@@ -2051,31 +2051,31 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Это инструмент мониторинга кластера Kafka. Schema Registry — хранилище схем (Avro/Protobuf/JSON Schema);. Угадывают функцию.",
+              "text": "Это инструмент мониторинга кластера Kafka.",
               "correct": false,
               "sections": {
                 "what_actually": "Schema Registry — хранилище схем (Avro/Protobuf/JSON Schema); мониторинг — это Prometheus/Grafana/AKHQ.",
-                "source_of_confusion": "Угадывают функцию. Schema Registry — хранилище схем (Avro/Protobuf/JSON Schema);",
-                "if_it_were_true": "Был бы UI для метрик в Schema Registry — его нет. Schema Registry — хранилище схем (Avro/Protobuf/JSON Schema);",
+                "source_of_confusion": "Угадывают функцию.",
+                "if_it_were_true": "Был бы UI для метрик в Schema Registry — его нет.",
                 "how_it_should_be": "Schema Registry = storage для schemas + compatibility checks."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Schema Registry заменяет ZooKeeper в новых версиях Kafka. ZK заменяет KRaft;. Смешивают разные понятия. ZK → KRaft;",
+              "text": "Schema Registry заменяет ZooKeeper в новых версиях Kafka.",
               "correct": false,
               "sections": {
                 "what_actually": "ZK заменяет KRaft; Schema Registry — отдельный сервис, никак не связанный с координацией кластера.",
-                "source_of_confusion": "Смешивают разные понятия. Schema Registry стартовал бы вместе с брокером — он отдельный сервис.",
+                "source_of_confusion": "Смешивают разные понятия.",
                 "if_it_were_true": "Schema Registry стартовал бы вместе с брокером — он отдельный сервис.",
-                "how_it_should_be": "ZK → KRaft; Schema Registry — opt-in для schemas. ZK заменяет KRaft;"
+                "how_it_should_be": "ZK → KRaft; Schema Registry — opt-in для schemas."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Schema Registry хранит и версионирует схемы сообщений (Avro, Protobuf, JSON Schema);. Confluent Schema Registry (либо Apicurio) хранит схемы.",
+              "text": "Schema Registry хранит и версионирует схемы сообщений (Avro, Protobuf, JSON Schema); при отправке producer публикует schema_id в Registry и в сообщение пишет только id + binary; consumer достаёт schema по id; обеспечивает forward/backward/full compatibility между версиями схем.",
               "correct": true,
               "sections": {
                 "explanation": "Confluent Schema Registry (либо Apicurio) хранит схемы. Avro Serializer регистрирует схему при первой отправке, получает schema_id, в сообщение пишется magic byte + schema_id + binary. Consumer Deserializer ходит по id и десериализует. Compatibility check блокирует breaking changes.",
@@ -2088,11 +2088,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Schema Registry автоматически сжимает все сообщения для экономии трафика. Сжатие — это compression. Не понимают цель компонента. Schema Registry — про schemas;",
+              "text": "Schema Registry автоматически сжимает все сообщения для экономии трафика.",
               "correct": false,
               "sections": {
                 "what_actually": "Сжатие — это compression.type у producer; Schema Registry хранит схемы.",
-                "source_of_confusion": "Не понимают цель компонента. Сжатие — это compression.",
+                "source_of_confusion": "Не понимают цель компонента.",
                 "if_it_were_true": "Без Schema Registry не было бы compression — но compression работает без него.",
                 "how_it_should_be": "Schema Registry — про schemas; compression — отдельно."
               }
@@ -2111,11 +2111,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Lag — это задержка между producer и брокером. Producer-side latency — отдельная метрика;. Путают разные метрики. Lag — отставание consumer от leader-end-offset partition.",
+              "text": "Lag — это задержка между producer и брокером.",
               "correct": false,
               "sections": {
                 "what_actually": "Producer-side latency — отдельная метрика; consumer lag = LEO partition − current offset consumer.",
-                "source_of_confusion": "Путают разные метрики. Producer-side latency — отдельная метрика;",
+                "source_of_confusion": "Путают разные метрики.",
                 "if_it_were_true": "Lag измерялся бы в миллисекундах — он измеряется в количестве сообщений.",
                 "how_it_should_be": "Lag — отставание consumer от leader-end-offset partition."
               }
@@ -2123,11 +2123,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Lag — это задержка между публикацией и удалением сообщения по retention. Retention — про удаление старых сообщений;. Смешивают разные характеристики. Lag = consumer behind log-end;",
+              "text": "Lag — это задержка между публикацией и удалением сообщения по retention.",
               "correct": false,
               "sections": {
                 "what_actually": "Retention — про удаление старых сообщений; lag — про скорость обработки.",
-                "source_of_confusion": "Смешивают разные характеристики. Retention — про удаление старых сообщений;",
+                "source_of_confusion": "Смешивают разные характеристики.",
                 "if_it_were_true": "Lag был бы связан с retention.ms — это разные параметры.",
                 "how_it_should_be": "Lag = consumer behind log-end; retention — про lifecycle сообщений."
               }
@@ -2135,19 +2135,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Lag — это процент CPU usage у брокера. CPU usage — отдельная инфраструктурная метрика;. Случайная ассоциация. Consumer lag = offset difference.",
+              "text": "Lag — это процент CPU usage у брокера.",
               "correct": false,
               "sections": {
                 "what_actually": "CPU usage — отдельная инфраструктурная метрика; lag — про положение consumer.",
-                "source_of_confusion": "Случайная ассоциация. CPU usage — отдельная инфраструктурная метрика;",
-                "if_it_were_true": "Lag измерялся бы в процентах — он в сообщениях. CPU usage — отдельная инфраструктурная метрика;",
-                "how_it_should_be": "Consumer lag = offset difference. CPU usage — отдельная инфраструктурная метрика;"
+                "source_of_confusion": "Случайная ассоциация.",
+                "if_it_were_true": "Lag измерялся бы в процентах — он в сообщениях.",
+                "how_it_should_be": "Consumer lag = offset difference."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Lag = log-end-offset partition минус current-offset consumer-group, измеряется в сообщениях per partition; показывает отставание обработки от текущей записи; измеряется через kafka-consumer-groups.",
+              "text": "Lag = log-end-offset partition минус current-offset consumer-group, измеряется в сообщениях per partition; показывает отставание обработки от текущей записи; измеряется через kafka-consumer-groups.sh --describe, Burrow, Confluent Control Center, JMX-метрики records-lag.",
               "correct": true,
               "sections": {
                 "explanation": "Lag критично следить — рост lag сигнализирует о медленной обработке или плохом scale. Бывает per-partition; alerting обычно на max(lag) или sum(lag). Burrow — отдельный сервис для production monitoring lag с лояльной интерпретацией (статус OK/WARNING/ERROR).",
@@ -2171,12 +2171,12 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Broker: UnderReplicatedPartitions (должно быть 0), OfflinePartitionsCount, request latency (p99 produce/fetch), disk usage, network throughput; Topic: messages-in/out rate, lag; JVM: GC pause, heap;",
+              "text": "Broker: UnderReplicatedPartitions (должно быть 0), OfflinePartitionsCount, request latency (p99 produce/fetch), disk usage, network throughput; Topic: messages-in/out rate, lag; JVM: GC pause, heap; Consumer: lag, rebalance count, commit rate; Producer: error rate, retry rate.",
               "correct": true,
               "sections": {
                 "explanation": "UnderReplicatedPartitions > 0 — критично, сигнал проблемы с репликацией. OfflinePartitionsCount > 0 — partition недоступна. ISR shrink rate показывает flapping. Disk usage критичен — Kafka крашится при заполнении. Request latency p99 — здоровье брокера.",
                 "example": "Prometheus + JMX Exporter собирают kafka.server.ReplicaManager.UnderReplicatedPartitions. Grafana dashboard: UnderReplicated, lag, throughput.",
-                "when_to_apply": "Production-ready monitoring; SLA-driven alerting. UnderReplicatedPartitions > 0 — критично, сигнал проблемы с репликацией.",
+                "when_to_apply": "Production-ready monitoring; SLA-driven alerting.",
                 "edge_cases": "Network saturation между брокерами приводит к ISR shrink. Disk fills up бесшумно если retention=infinity. Consumer lag растёт при медленной обработке.",
                 "related": "Q36 lag; Q44 production; Q50 alerting."
               }
@@ -2184,11 +2184,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Только количество сообщений в секунду — этого достаточно. Throughput — лишь одна метрика;. Сводят сложную систему к одной метрике. Multi-dimensional monitoring: broker health + topic health + consumer health.",
+              "text": "Только количество сообщений в секунду — этого достаточно.",
               "correct": false,
               "sections": {
                 "what_actually": "Throughput — лишь одна метрика; критически важны также ISR, lag, under-replicated partitions, request latency, disk usage.",
-                "source_of_confusion": "Сводят сложную систему к одной метрике. Throughput — лишь одна метрика;",
+                "source_of_confusion": "Сводят сложную систему к одной метрике.",
                 "if_it_were_true": "Не было бы списка JMX-метрик из десятков значений.",
                 "how_it_should_be": "Multi-dimensional monitoring: broker health + topic health + consumer health."
               }
@@ -2196,25 +2196,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Только uptime брокеров — если все живы, всё работает. Брокер может быть жив но иметь UnderReplicatedPartitions, отставать от ISR, иметь высокую latency. Упрощённое понятие health.",
+              "text": "Только uptime брокеров — если все живы, всё работает.",
               "correct": false,
               "sections": {
                 "what_actually": "Брокер может быть жив но иметь UnderReplicatedPartitions, отставать от ISR, иметь высокую latency.",
-                "source_of_confusion": "Упрощённое понятие health. Брокер может быть жив но иметь UnderReplicatedPartitions, отставать от ISR, иметь высокую latency.",
-                "if_it_were_true": "Не было бы под-метрик performance и replication. Брокер может быть жив но иметь UnderReplicatedPartitions, отставать от ISR, иметь высокую latency.",
-                "how_it_should_be": "Uptime + replication + latency + lag + disk. Брокер может быть жив но иметь UnderReplicatedPartitions, отставать от ISR, иметь высокую latency."
+                "source_of_confusion": "Упрощённое понятие health.",
+                "if_it_were_true": "Не было бы под-метрик performance и replication.",
+                "how_it_should_be": "Uptime + replication + latency + lag + disk."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Только JVM heap — все остальные метрики мониторить не нужно. Heap критичен но недостаточен;. Зацикливаются на одной области. Multi-layer monitoring.",
+              "text": "Только JVM heap — все остальные метрики мониторить не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Heap критичен но недостаточен; нужны метрики из всех слоёв (replication, disk, network, requests).",
-                "source_of_confusion": "Зацикливаются на одной области. Heap критичен но недостаточен;",
+                "source_of_confusion": "Зацикливаются на одной области.",
                 "if_it_were_true": "Игнорировали бы под-репликацию — приводит к потере данных.",
-                "how_it_should_be": "Multi-layer monitoring. Heap критичен но недостаточен;"
+                "how_it_should_be": "Multi-layer monitoring."
               }
             }
           ]
@@ -2231,19 +2231,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Удвоить количество partitions в существующих топиках и подождать. Партиционирование — один из инструментов;. Упрощают до одного действия. Multi-step: добавить брокеры → reassign partitions → scale consumers.",
+              "text": "Удвоить количество partitions в существующих топиках и подождать.",
               "correct": false,
               "sections": {
                 "what_actually": "Партиционирование — один из инструментов; ещё нужны брокеры, rebalance, tuning продьюсеров/консьюмеров.",
-                "source_of_confusion": "Упрощают до одного действия. Партиционирование — один из инструментов;",
-                "if_it_were_true": "Не было бы инструментов partition reassignment. Партиционирование — один из инструментов;",
+                "source_of_confusion": "Упрощают до одного действия.",
+                "if_it_were_true": "Не было бы инструментов partition reassignment.",
                 "how_it_should_be": "Multi-step: добавить брокеры → reassign partitions → scale consumers."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Добавлять брокеры в кластер и rebalance partitions (kafka-reassign-partitions.sh); увеличивать число partitions топика (только в большую сторону);",
+              "text": "Добавлять брокеры в кластер и rebalance partitions (kafka-reassign-partitions.sh); увеличивать число partitions топика (только в большую сторону); масштабировать producer пулом соединений и batch-tuning; consumer — добавлять инстансы группы до количества partitions; вертикально — больше RAM (page cache), SSD/NVMe.",
               "correct": true,
               "sections": {
                 "explanation": "Горизонтально: добавить broker → kafka-reassign-partitions.sh переносит реплики на новый брокер. Partitions можно увеличить (kafka-topics.sh --alter --partitions N), уменьшить — только пересоздать. Consumer scale = инстансы ≤ partitions. Cruise Control — автоматический rebalance.",
@@ -2256,11 +2256,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Kafka не масштабируется горизонтально — нужно мигрировать на другую систему. Kafka — distributed system, изначально дизайн для horizontal scaling. Глубокое непонимание.",
+              "text": "Kafka не масштабируется горизонтально — нужно мигрировать на другую систему.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka — distributed system, изначально дизайн для horizontal scaling.",
-                "source_of_confusion": "Глубокое непонимание. Kafka — distributed system, изначально дизайн для horizontal scaling.",
+                "source_of_confusion": "Глубокое непонимание.",
                 "if_it_were_true": "Не было бы кластеров на сотни брокеров (LinkedIn, Uber).",
                 "how_it_should_be": "Kafka масштабируется до тысяч брокеров и трлн сообщений в день."
               }
@@ -2268,11 +2268,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Достаточно увеличить heap size JVM на брокерах. Heap для Kafka обычно 6-12 GB;. Применяют Java-подход без учёта специфики Kafka. Heap moderate;",
+              "text": "Достаточно увеличить heap size JVM на брокерах.",
               "correct": false,
               "sections": {
                 "what_actually": "Heap для Kafka обычно 6-12 GB; больше нет смысла — Kafka использует page cache, а не heap.",
-                "source_of_confusion": "Применяют Java-подход без учёта специфики Kafka. Heap для Kafka обычно 6-12 GB;",
+                "source_of_confusion": "Применяют Java-подход без учёта специфики Kafka.",
                 "if_it_were_true": "Не было бы рекомендаций RAM=heap*2-3 в production.",
                 "how_it_should_be": "Heap moderate; RAM — для page cache; масштаб — горизонтальный."
               }
@@ -2291,31 +2291,31 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Kafka не поддерживает security — нужно прятать кластер за VPN. Kafka поддерживает SSL/TLS, SASL аутентификацию (PLAIN/SCRAM/GSSAPI/OAUTHBEARER), ACL авторизацию. Не знают про security features. Multi-layer security: TLS + SASL + ACL.",
+              "text": "Kafka не поддерживает security — нужно прятать кластер за VPN.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka поддерживает SSL/TLS, SASL аутентификацию (PLAIN/SCRAM/GSSAPI/OAUTHBEARER), ACL авторизацию.",
-                "source_of_confusion": "Не знают про security features. Kafka поддерживает SSL/TLS, SASL аутентификацию (PLAIN/SCRAM/GSSAPI/OAUTHBEARER), ACL авторизацию.",
-                "if_it_were_true": "Не было бы security.protocol параметра в config. Kafka поддерживает SSL/TLS, SASL аутентификацию (PLAIN/SCRAM/GSSAPI/OAUTHBEARER), ACL авторизацию.",
-                "how_it_should_be": "Multi-layer security: TLS + SASL + ACL. Kafka поддерживает SSL/TLS, SASL аутентификацию (PLAIN/SCRAM/GSSAPI/OAUTHBEARER), ACL авторизацию."
+                "source_of_confusion": "Не знают про security features.",
+                "if_it_were_true": "Не было бы security.protocol параметра в config.",
+                "how_it_should_be": "Multi-layer security: TLS + SASL + ACL."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Только SSL/TLS — больше ничего не требуется. SSL — только транспорт;. Не различают слои безопасности. TLS + SASL + ACL = полная security. нужны аутентификация (SASL) и авторизация (ACL).",
+              "text": "Только SSL/TLS — больше ничего не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "SSL — только транспорт; нужны аутентификация (SASL) и авторизация (ACL).",
-                "source_of_confusion": "Не различают слои безопасности. SSL — только транспорт;",
-                "if_it_were_true": "Любой клиент с SSL мог бы читать любой topic. SSL — только транспорт;",
-                "how_it_should_be": "TLS + SASL + ACL = полная security. SSL — только транспорт;"
+                "source_of_confusion": "Не различают слои безопасности.",
+                "if_it_were_true": "Любой клиент с SSL мог бы читать любой topic.",
+                "how_it_should_be": "TLS + SASL + ACL = полная security."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Шифрование транспорта SSL/TLS (security.protocol=SSL/SASL_SSL); аутентификация через SASL (PLAIN, SCRAM-SHA-256/512, GSSAPI/Kerberos, OAUTHBEARER); авторизация через ACL (kafka-acls.",
+              "text": "Шифрование транспорта SSL/TLS (security.protocol=SSL/SASL_SSL); аутентификация через SASL (PLAIN, SCRAM-SHA-256/512, GSSAPI/Kerberos, OAUTHBEARER); авторизация через ACL (kafka-acls.sh) на уровне topic/group/cluster; mTLS для двусторонней аутентификации; шифрование данных в покое — на уровне диска (LUKS).",
               "correct": true,
               "sections": {
                 "explanation": "SSL/TLS защищает в транзите. SASL/SCRAM хранит соли+хеши паролей в ZK/KRaft. mTLS — клиент и сервер обмениваются сертификатами. ACL controls: CREATE/READ/WRITE per resource. RBAC — в Confluent. At-rest encryption обычно на уровне ОС (LUKS, KMS).",
@@ -2328,11 +2328,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Безопасность настраивается только при создании кластера и не меняется. ACL и пользователи добавляются/изменяются runtime через kafka-acls. Считают security статической конфигурацией.",
+              "text": "Безопасность настраивается только при создании кластера и не меняется.",
               "correct": false,
               "sections": {
                 "what_actually": "ACL и пользователи добавляются/изменяются runtime через kafka-acls.sh и SCRAM credentials.",
-                "source_of_confusion": "Считают security статической конфигурацией. ACL и пользователи добавляются/изменяются runtime через kafka-acls.",
+                "source_of_confusion": "Считают security статической конфигурацией.",
                 "if_it_were_true": "Невозможно было бы добавить нового сервиса в работающий кластер.",
                 "how_it_should_be": "Runtime изменения: ACL, SCRAM users, certs (с restart) — гибкая модель."
               }
@@ -2351,23 +2351,23 @@
             {
               "order": 0,
               "label": "A",
-              "text": "DLQ — это отдельный кластер Kafka для failed-сообщений. DLQ (или DLT — Dead Letter Topic) — обычный topic в том же кластере, куда перенаправляются необрабатываемые сообщения.",
+              "text": "DLQ — это отдельный кластер Kafka для failed-сообщений.",
               "correct": false,
               "sections": {
                 "what_actually": "DLQ (или DLT — Dead Letter Topic) — обычный topic в том же кластере, куда перенаправляются необрабатываемые сообщения.",
-                "source_of_confusion": "Думают, что DLQ — отдельная инфраструктура. DLQ (или DLT — Dead Letter Topic) — обычный topic в том же кластере, куда перенаправляются необрабатываемые сообщения.",
+                "source_of_confusion": "Думают, что DLQ — отдельная инфраструктура.",
                 "if_it_were_true": "Был бы dedicated DLQ-кластер в production — обычно нет.",
-                "how_it_should_be": "DLT — topic в основном кластере с именем X.DLT. DLQ (или DLT — Dead Letter Topic) — обычный topic в том же кластере, куда перенаправляются необрабатываемые сообщения."
+                "how_it_should_be": "DLT — topic в основном кластере с именем X.DLT."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "DLQ — это автоматическая retention policy для удаления старых сообщений. Retention — отдельный механизм (log. Случайная ассоциация. DLQ — error handling pattern;",
+              "text": "DLQ — это автоматическая retention policy для удаления старых сообщений.",
               "correct": false,
               "sections": {
                 "what_actually": "Retention — отдельный механизм (log.retention.ms); DLQ — для перенаправления ошибок.",
-                "source_of_confusion": "Случайная ассоциация. Retention — отдельный механизм (log.",
+                "source_of_confusion": "Случайная ассоциация.",
                 "if_it_were_true": "DLQ работал бы автоматически — но он opt-in через error handler.",
                 "how_it_should_be": "DLQ — error handling pattern; retention — lifecycle сообщений."
               }
@@ -2375,19 +2375,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "DLQ — это buffer в памяти Kafka для неотправленных сообщений. DLQ — persistent topic на диске;. Путают разные buffer-механизмы. DLT = персистентный topic;",
+              "text": "DLQ — это buffer в памяти Kafka для неотправленных сообщений.",
               "correct": false,
               "sections": {
                 "what_actually": "DLQ — persistent topic на диске; in-memory buffer producer-а — другая абстракция (RecordAccumulator).",
-                "source_of_confusion": "Путают разные buffer-механизмы. DLQ — persistent topic на диске;",
-                "if_it_were_true": "DLQ терялся бы при рестарте брокера. DLQ — persistent topic на диске;",
+                "source_of_confusion": "Путают разные buffer-механизмы.",
+                "if_it_were_true": "DLQ терялся бы при рестарте брокера.",
                 "how_it_should_be": "DLT = персистентный topic; in-memory — producer buffer."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "DLQ (Dead Letter Topic, DLT) — специальный topic, куда перенаправляются сообщения, которые не удалось обработать после N retry; в Spring Kafka — DeadLetterPublishingRecoverer;",
+              "text": "DLQ (Dead Letter Topic, DLT) — специальный topic, куда перенаправляются сообщения, которые не удалось обработать после N retry; в Spring Kafka — DeadLetterPublishingRecoverer; добавляются headers с информацией о причине (exception, original topic/partition/offset); используется для последующего ручного анализа или автоматического retry с задержкой.",
               "correct": true,
               "sections": {
                 "explanation": "Без DLQ poison message блокирует partition бесконечно или теряется. С DLQ: после N retry → DeadLetterPublishingRecoverer пишет в orders.DLT с headers kafka_dlt-original-topic, kafka_dlt-exception-message. Отдельный consumer читает DLT для retry/анализа.",
@@ -2411,7 +2411,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Один topic на тип события или bounded context (orders, payments, inventory); количество partitions определяется ожидаемым throughput и параллелизмом consumer-ов (обычно 12-32); RF=3 для production;",
+              "text": "Один topic на тип события или bounded context (orders, payments, inventory); количество partitions определяется ожидаемым throughput и параллелизмом consumer-ов (обычно 12-32); RF=3 для production; партиционирование по бизнес-ключу (userId, orderId); retention под use-case (события — 7 дней, аудит — годы, compacted state — навсегда).",
               "correct": true,
               "sections": {
                 "explanation": "Naming convention: <domain>.<entity>.<event-type>.<version>, например orders.order.created.v1. Partitions calc: peak throughput / per-consumer-throughput. Слишком много partitions = overhead в metadata; слишком мало = bottleneck.",
@@ -2424,11 +2424,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Создать один большой catch-all topic для всех событий системы. Catch-all topic создаёт coupling, плохое масштабирование, сложности с ACL и retention. Кажется проще, но в production катастрофа.",
+              "text": "Создать один большой catch-all topic для всех событий системы.",
               "correct": false,
               "sections": {
                 "what_actually": "Catch-all topic создаёт coupling, плохое масштабирование, сложности с ACL и retention.",
-                "source_of_confusion": "Кажется проще, но в production катастрофа. Catch-all topic создаёт coupling, плохое масштабирование, сложности с ACL и retention.",
+                "source_of_confusion": "Кажется проще, но в production катастрофа.",
                 "if_it_were_true": "Не было бы рекомендаций про event-per-type топики.",
                 "how_it_should_be": "Один topic на тип события (or bounded context); строго по event type."
               }
@@ -2436,7 +2436,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Один topic на каждый сервис, независимо от типа событий. Topic не должен зависеть от producer-а;. Привычка к message broker, где queue per consumer. Topic per event type;",
+              "text": "Один topic на каждый сервис, независимо от типа событий.",
               "correct": false,
               "sections": {
                 "what_actually": "Topic не должен зависеть от producer-а; разные типы событий должны быть в разных топиках для clean evolving.",
@@ -2448,11 +2448,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Минимум partitions (1-2) для всех топиков чтобы не нагружать кластер. Малое число partitions ограничивает параллелизм consumer-ов и throughput. Боятся overhead, забывают про параллелизм. Partitions ≥ ожидаемому числу consumer-ов в группе;",
+              "text": "Минимум partitions (1-2) для всех топиков чтобы не нагружать кластер.",
               "correct": false,
               "sections": {
                 "what_actually": "Малое число partitions ограничивает параллелизм consumer-ов и throughput.",
-                "source_of_confusion": "Боятся overhead, забывают про параллелизм. Малое число partitions ограничивает параллелизм consumer-ов и throughput.",
+                "source_of_confusion": "Боятся overhead, забывают про параллелизм.",
                 "if_it_were_true": "Не было бы рекомендаций 12+ partitions для production.",
                 "how_it_should_be": "Partitions ≥ ожидаемому числу consumer-ов в группе; обычно 12-32."
               }
@@ -2471,19 +2471,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Они идентичны — оба message broker с одинаковой моделью. Kafka — log-based, persistent, pull-model, partitioned;.",
+              "text": "Они идентичны — оба message broker с одинаковой моделью.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka — log-based, persistent, pull-model, partitioned; RabbitMQ — queue-based, push-model, exchange-routing.",
-                "source_of_confusion": "Видят оба как brokers и считают одинаковыми. Kafka — log-based, persistent, pull-model, partitioned;",
-                "if_it_were_true": "Не было бы дискуссий какой выбрать. Kafka — log-based, persistent, pull-model, partitioned;",
-                "how_it_should_be": "Разные парадигмы: log vs queue; pull vs push. Kafka — log-based, persistent, pull-model, partitioned;"
+                "source_of_confusion": "Видят оба как brokers и считают одинаковыми.",
+                "if_it_were_true": "Не было бы дискуссий какой выбрать.",
+                "how_it_should_be": "Разные парадигмы: log vs queue; pull vs push."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Kafka — log-based, persistent, pull-model, partitioned, заточен под high-throughput и event streaming с replay;",
+              "text": "Kafka — log-based, persistent, pull-model, partitioned, заточен под high-throughput и event streaming с replay; RabbitMQ — queue-based broker (AMQP), push-model, гибкая routing через exchanges (topic, direct, fanout, headers), сообщения удаляются после ack, лучше для классических task queues и сложного routing.",
               "correct": true,
               "sections": {
                 "explanation": "Kafka хранит лог, consumer читает по offset, replay возможен. RabbitMQ — очереди, broker сам пушит сообщения, после ack удаляет. Kafka: миллионы msg/sec, retention дни/годы; RabbitMQ: десятки тысяч msg/sec, простой priority/routing.",
@@ -2496,25 +2496,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Kafka — для real-time, RabbitMQ — для batch обработки. Оба real-time;. Упрощение без понимания моделей.",
+              "text": "Kafka — для real-time, RabbitMQ — для batch обработки.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба real-time; разница в архитектуре (log vs queue), не в режиме обработки.",
                 "source_of_confusion": "Упрощение без понимания моделей.",
-                "if_it_were_true": "Был бы batch endpoint в RabbitMQ — его нет. Оба real-time;",
+                "if_it_were_true": "Был бы batch endpoint в RabbitMQ — его нет.",
                 "how_it_should_be": "Оба real-time; разница в semantics."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Kafka использует TCP, RabbitMQ — UDP. Оба используют TCP (Kafka — свой protocol;. Случайные ассоциации. Оба TCP-based;",
+              "text": "Kafka использует TCP, RabbitMQ — UDP.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба используют TCP (Kafka — свой protocol; RabbitMQ — AMQP).",
-                "source_of_confusion": "Случайные ассоциации. Оба используют TCP (Kafka — свой protocol;",
+                "source_of_confusion": "Случайные ассоциации.",
                 "if_it_were_true": "RabbitMQ был бы непригоден для reliable messaging.",
-                "how_it_should_be": "Оба TCP-based; разные protocols. Оба используют TCP (Kafka — свой protocol;"
+                "how_it_should_be": "Оба TCP-based; разные protocols."
               }
             }
           ]
@@ -2531,24 +2531,24 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Single retry с фиксированной задержкой — этого достаточно для всех случаев. Используют exponential backoff, retry topics с разной задержкой, DLT — разные стратегии под разные ошибки. Упрощают до одной стратегии. Multi-tier retry: exponential backoff в памяти + retry topics + DLT.",
+              "text": "Single retry с фиксированной задержкой — этого достаточно для всех случаев.",
               "correct": false,
               "sections": {
                 "what_actually": "Используют exponential backoff, retry topics с разной задержкой, DLT — разные стратегии под разные ошибки.",
-                "source_of_confusion": "Упрощают до одной стратегии. Используют exponential backoff, retry topics с разной задержкой, DLT — разные стратегии под разные ошибки.",
-                "if_it_were_true": "Не было бы Spring Kafka @RetryableTopic. Используют exponential backoff, retry topics с разной задержкой, DLT — разные стратегии под разные ошибки.",
+                "source_of_confusion": "Упрощают до одной стратегии.",
+                "if_it_were_true": "Не было бы Spring Kafka @RetryableTopic.",
                 "how_it_should_be": "Multi-tier retry: exponential backoff в памяти + retry topics + DLT."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Бесконечный retry без задержки — пока сообщение не обработается. Бесконечный retry без задержки = poison message блокирует partition навсегда + storm на downstream. Не понимают cascade effects. Ограниченный retry с backoff + DLT для unrecoverable.",
+              "text": "Бесконечный retry без задержки — пока сообщение не обработается.",
               "correct": false,
               "sections": {
                 "what_actually": "Бесконечный retry без задержки = poison message блокирует partition навсегда + storm на downstream.",
-                "source_of_confusion": "Не понимают cascade effects. Бесконечный retry без задержки = poison message блокирует partition навсегда + storm на downstream.",
-                "if_it_were_true": "Production был бы наводнён poison-сообщениями. Бесконечный retry без задержки = poison message блокирует partition навсегда + storm на downstream.",
+                "source_of_confusion": "Не понимают cascade effects.",
+                "if_it_were_true": "Production был бы наводнён poison-сообщениями.",
                 "how_it_should_be": "Ограниченный retry с backoff + DLT для unrecoverable."
               }
             },
@@ -2568,12 +2568,12 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Не делать retry вообще — failed messages просто пропускать. Это at-most-once с потерей данных при любой transient error — недопустимо для critical processing. Игнорируют важность recovery. Хотя бы N retry на transient errors + DLT для остального.",
+              "text": "Не делать retry вообще — failed messages просто пропускать.",
               "correct": false,
               "sections": {
                 "what_actually": "Это at-most-once с потерей данных при любой transient error — недопустимо для critical processing.",
-                "source_of_confusion": "Игнорируют важность recovery. Это at-most-once с потерей данных при любой transient error — недопустимо для critical processing.",
-                "if_it_were_true": "Не нужны были бы retry topics и DLT механизмы. Это at-most-once с потерей данных при любой transient error — недопустимо для critical processing.",
+                "source_of_confusion": "Игнорируют важность recovery.",
+                "if_it_were_true": "Не нужны были бы retry topics и DLT механизмы.",
                 "how_it_should_be": "Хотя бы N retry на transient errors + DLT для остального."
               }
             }
@@ -2591,11 +2591,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Можно создавать миллионы партиций — Kafka масштабируется бесконечно. На брокер обычно ≤200K partitions;. Идеализируют масштабируемость. Разумные пределы;",
+              "text": "Можно создавать миллионы партиций — Kafka масштабируется бесконечно.",
               "correct": false,
               "sections": {
                 "what_actually": "На брокер обычно ≤200K partitions; больше — деградация (metadata size, leader elections становятся медленными).",
-                "source_of_confusion": "Идеализируют масштабируемость. На брокер обычно ≤200K partitions;",
+                "source_of_confusion": "Идеализируют масштабируемость.",
                 "if_it_were_true": "Не было бы предупреждений в документации про partition limits.",
                 "how_it_should_be": "Разумные пределы; partition consolidation если переборщили."
               }
@@ -2603,36 +2603,36 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Достаточно RF=1 — Kafka сама всё восстановит при падениях. RF=1 = одна копия данных;. Игнорируют важность replication. RF=3 — стандарт;",
+              "text": "Достаточно RF=1 — Kafka сама всё восстановит при падениях.",
               "correct": false,
               "sections": {
                 "what_actually": "RF=1 = одна копия данных; падение брокера = потеря всех его partitions.",
-                "source_of_confusion": "Игнорируют важность replication. RF=1 = одна копия данных;",
+                "source_of_confusion": "Игнорируют важность replication.",
                 "if_it_were_true": "Production-кластеры использовали бы RF=1 — никогда не используют.",
-                "how_it_should_be": "RF=3 — стандарт; RF=1 только для dev/test. RF=1 = одна копия данных;"
+                "how_it_should_be": "RF=3 — стандарт; RF=1 только для dev/test."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Не нужно мониторить ничего — Kafka сама уведомит о проблемах. Kafka не имеет alerting сама по себе;. Ожидают managed-сервиса. Внешний monitoring + alerts обязательны.",
+              "text": "Не нужно мониторить ничего — Kafka сама уведомит о проблемах.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka не имеет alerting сама по себе; нужен внешний monitoring stack (Prometheus + Grafana + AlertManager).",
-                "source_of_confusion": "Ожидают managed-сервиса. Kafka не имеет alerting сама по себе;",
-                "if_it_were_true": "Production-команды не имели бы SRE. Kafka не имеет alerting сама по себе;",
-                "how_it_should_be": "Внешний monitoring + alerts обязательны. Kafka не имеет alerting сама по себе;"
+                "source_of_confusion": "Ожидают managed-сервиса.",
+                "if_it_were_true": "Production-команды не имели бы SRE.",
+                "how_it_should_be": "Внешний monitoring + alerts обязательны."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Брокеры с RF=3, min.insync.replicas=2, acks=all, enable.idempotence=true; чёткое именование топиков (<domain>.<entity>.<event>.<version>); 12-32 partitions;",
+              "text": "Брокеры с RF=3, min.insync.replicas=2, acks=all, enable.idempotence=true; чёткое именование топиков (<domain>.<entity>.<event>.<version>); 12-32 partitions; SLO мониторинг (lag, ISR, UnderReplicated); SSL/SASL/ACL для security; DLT для error handling; не использовать ZooKeeper в новых установках — только KRaft; не превышать 200K partitions на брокер.",
               "correct": true,
               "sections": {
                 "explanation": "Production checklist: durability через acks=all + min.insync.replicas=2 + RF=3, защита от duplicate через enable.idempotence=true. Мониторинг lag, ISR, UnderReplicatedPartitions, OfflinePartitions. Security — обязательная многоуровневая. Topology design с naming и retention.",
                 "example": "topic orders.order.created.v1 (24 part, RF=3, retention=7d, min.isr=2). Prometheus alerts на UnderReplicated>0, lag>10000, ISR_shrink_rate>5/min.",
-                "when_to_apply": "Любой production deployment Kafka. Production checklist: durability через acks=all + min.",
+                "when_to_apply": "Любой production deployment Kafka.",
                 "edge_cases": "При migration ZK→KRaft нужен dual-write подход. Topic naming замораживается рано — переименование требует пересоздания. min.insync.replicas=RF блокирует запись при единственном падении.",
                 "related": "Q11 acks; Q18 репликация; Q37 метрики."
               }
@@ -2651,7 +2651,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Group Coordinator (один из брокеров) запускает протокол JoinGroup при изменениях; consumer leader получает subscriptions всех members и распределяет partitions через assignor (Range/RoundRobin/Sticky/CooperativeSticky); Static Membership через group.instance.",
+              "text": "Group Coordinator (один из брокеров) запускает протокол JoinGroup при изменениях; consumer leader получает subscriptions всех members и распределяет partitions через assignor (Range/RoundRobin/Sticky/CooperativeSticky); Static Membership через group.instance.id даёт стабильный ID — при рестарте consumer возвращается с тем же ID и rebalance не запускается, пока не истечёт session.timeout.ms.",
               "correct": true,
               "sections": {
                 "explanation": "Без static membership: consumer крашится → session timeout (10s) → rebalance → ... → возвращается → второй rebalance. С static membership: тот же group.instance.id → coordinator ждёт session.timeout.ms (можно увеличить до минут) перед rebalance.",
@@ -2664,11 +2664,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Rebalance — это repartitioning топика; static membership — фиксированное число partitions. Rebalance — это переназначение partitions consumer-ам в группе, а не repartitioning топика;. Путают partitions и членов группы. Rebalance = переназначение partitions;",
+              "text": "Rebalance — это repartitioning топика; static membership — фиксированное число partitions.",
               "correct": false,
               "sections": {
                 "what_actually": "Rebalance — это переназначение partitions consumer-ам в группе, а не repartitioning топика; static membership — фиксированный member.id для consumer.",
-                "source_of_confusion": "Путают partitions и членов группы. Rebalance — это переназначение partitions consumer-ам в группе, а не repartitioning топика;",
+                "source_of_confusion": "Путают partitions и членов группы.",
                 "if_it_were_true": "Изменение consumer вызывало бы repartitioning — невозможно.",
                 "how_it_should_be": "Rebalance = переназначение partitions; static membership = stable identity consumer-а."
               }
@@ -2676,23 +2676,23 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Static membership означает что partition assignment не меняется никогда. Static membership уменьшает частоту rebalance, но не отменяет их полностью;. Слово static вводит в заблуждение. Static — stable identity;",
+              "text": "Static membership означает что partition assignment не меняется никогда.",
               "correct": false,
               "sections": {
                 "what_actually": "Static membership уменьшает частоту rebalance, но не отменяет их полностью; добавление/удаление consumer всё равно вызывает.",
-                "source_of_confusion": "Слово static вводит в заблуждение. Static membership уменьшает частоту rebalance, но не отменяет их полностью;",
-                "if_it_were_true": "Невозможно было бы масштабировать группу. Static membership уменьшает частоту rebalance, но не отменяет их полностью;",
+                "source_of_confusion": "Слово static вводит в заблуждение.",
+                "if_it_were_true": "Невозможно было бы масштабировать группу.",
                 "how_it_should_be": "Static — stable identity; rebalance происходит на изменения состава, не на рестарты."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Static membership работает только в Kafka Streams, не в обычном consumer. Static membership — параметр обычного KafkaConsumer (group. Думают, что это streams-specific. Доступен в любом consumer;",
+              "text": "Static membership работает только в Kafka Streams, не в обычном consumer.",
               "correct": false,
               "sections": {
                 "what_actually": "Static membership — параметр обычного KafkaConsumer (group.instance.id), доступен с Kafka 2.3+.",
-                "source_of_confusion": "Думают, что это streams-specific. Static membership — параметр обычного KafkaConsumer (group.",
+                "source_of_confusion": "Думают, что это streams-specific.",
                 "if_it_were_true": "Не было бы параметра group.instance.id в kafka-clients.",
                 "how_it_should_be": "Доступен в любом consumer; Streams использует автоматически если задан."
               }
@@ -2711,19 +2711,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Compaction удаляет все старые сообщения по retention.ms. Это delete policy (cleanup. Путают delete и compact. Compact = keep latest per key;",
+              "text": "Compaction удаляет все старые сообщения по retention.ms.",
               "correct": false,
               "sections": {
                 "what_actually": "Это delete policy (cleanup.policy=delete); compaction (cleanup.policy=compact) удаляет старые версии по ключу, не по времени.",
-                "source_of_confusion": "Путают delete и compact. Это delete policy (cleanup.",
-                "if_it_were_true": "Не было бы двух разных значений cleanup.policy. Это delete policy (cleanup.",
+                "source_of_confusion": "Путают delete и compact.",
+                "if_it_were_true": "Не было бы двух разных значений cleanup.policy.",
                 "how_it_should_be": "Compact = keep latest per key; delete = remove old by time/size."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Log Compaction (cleanup.policy=compact) сохраняет только последнюю запись по каждому ключу, удаляя старые версии; null-value = tombstone (удаление ключа);",
+              "text": "Log Compaction (cleanup.policy=compact) сохраняет только последнюю запись по каждому ключу, удаляя старые версии; null-value = tombstone (удаление ключа); работает периодически фоновым cleaner thread; __consumer_offsets — compacted topic, хранящий последний offset commit per (group, topic, partition); используется для key-based state.",
               "correct": true,
               "sections": {
                 "explanation": "Compaction делает Kafka подходящей для event sourcing state и changelog. Topic с compact: записи группируются по ключу, после flush log cleaner thread (log.cleaner.threads) проходит по segment и удаляет устаревшие. __consumer_offsets хранит каждый commit как запись с ключом (group,topic,partition) → offset.",
@@ -2736,11 +2736,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Compaction — это сжатие сообщений алгоритмом gzip перед записью. Compaction — про удаление старых версий;. Похожие слова, разные понятия. Compaction = key-based retention;",
+              "text": "Compaction — это сжатие сообщений алгоритмом gzip перед записью.",
               "correct": false,
               "sections": {
                 "what_actually": "Compaction — про удаление старых версий; сжатие сообщений — compression.type у producer.",
-                "source_of_confusion": "Похожие слова, разные понятия. Compaction — про удаление старых версий;",
+                "source_of_confusion": "Похожие слова, разные понятия.",
                 "if_it_were_true": "Не было бы отдельных параметров cleanup.policy и compression.type.",
                 "how_it_should_be": "Compaction = key-based retention; compression = байтовое сжатие."
               }
@@ -2748,12 +2748,12 @@
             {
               "order": 3,
               "label": "D",
-              "text": "__consumer_offsets — это файл на диске одного брокера. __consumer_offsets — обычный topic с 50 partitions (по умолчанию), реплицированный на все брокеры. Думают про файловую систему.",
+              "text": "__consumer_offsets — это файл на диске одного брокера.",
               "correct": false,
               "sections": {
                 "what_actually": "__consumer_offsets — обычный topic с 50 partitions (по умолчанию), реплицированный на все брокеры.",
-                "source_of_confusion": "Думают про файловую систему. __consumer_offsets — обычный topic с 50 partitions (по умолчанию), реплицированный на все брокеры.",
-                "if_it_were_true": "Падение брокера терило бы все offsets. __consumer_offsets — обычный topic с 50 partitions (по умолчанию), реплицированный на все брокеры.",
+                "source_of_confusion": "Думают про файловую систему.",
+                "if_it_were_true": "Падение брокера терило бы все offsets.",
                 "how_it_should_be": "__consumer_offsets — распределённый topic с RF=3 в production."
               }
             }
@@ -2771,19 +2771,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Schema Registry хранит схемы в файловой системе на одном диске. Schemas хранятся в Kafka topic _schemas (compacted) — distributed и replicated. Незнание архитектуры Schema Registry. _schemas topic в Kafka — distributed storage.",
+              "text": "Schema Registry хранит схемы в файловой системе на одном диске.",
               "correct": false,
               "sections": {
                 "what_actually": "Schemas хранятся в Kafka topic _schemas (compacted) — distributed и replicated.",
-                "source_of_confusion": "Незнание архитектуры Schema Registry. Schemas хранятся в Kafka topic _schemas (compacted) — distributed и replicated.",
-                "if_it_were_true": "Падение диска терило бы все схемы — недопустимо. Schemas хранятся в Kafka topic _schemas (compacted) — distributed и replicated.",
-                "how_it_should_be": "_schemas topic в Kafka — distributed storage. Schemas хранятся в Kafka topic _schemas (compacted) — distributed и replicated."
+                "source_of_confusion": "Незнание архитектуры Schema Registry.",
+                "if_it_were_true": "Падение диска терило бы все схемы — недопустимо.",
+                "how_it_should_be": "_schemas topic в Kafka — distributed storage."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Schema Registry хранит только Avro — Protobuf и JSON Schema не поддерживаются. С Confluent 5. Старая информация о возможностях. Три формата: Avro, Protobuf, JSON Schema.",
+              "text": "Schema Registry хранит только Avro — Protobuf и JSON Schema не поддерживаются.",
               "correct": false,
               "sections": {
                 "what_actually": "С Confluent 5.5 поддерживаются Avro, Protobuf, JSON Schema.",
@@ -2795,7 +2795,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Schema Registry хранит схемы в Kafka topic _schemas (compacted, RF≥3); каждая схема получает globally unique id; subject = логическая группа (обычно <topic>-value или <topic>-key);",
+              "text": "Schema Registry хранит схемы в Kafka topic _schemas (compacted, RF≥3); каждая схема получает globally unique id; subject = логическая группа (обычно <topic>-value или <topic>-key); compatibility levels: BACKWARD (новая схема позволяет читать старые данные старым consumer), FORWARD (старая читает новые), FULL (оба направления), NONE; проверка на каждую регистрацию.",
               "correct": true,
               "sections": {
                 "explanation": "_schemas — compacted topic, leader-кэширует в памяти. Schema Registry — stateless кроме этого topic. Subject naming: TopicNameStrategy (default), RecordNameStrategy, TopicRecordNameStrategy (отдельная схема per record type внутри topic). Compatibility BACKWARD по умолчанию.",
@@ -2808,11 +2808,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Schema Registry не проверяет compatibility — это задача разработчика. Compatibility checks автоматические;. Не знают про автоматические проверки. Автоматические checks на основе настроенного compatibility level.",
+              "text": "Schema Registry не проверяет compatibility — это задача разработчика.",
               "correct": false,
               "sections": {
                 "what_actually": "Compatibility checks автоматические; регистрация breaking schema возвращает 409 если уровень совместимости включён.",
-                "source_of_confusion": "Не знают про автоматические проверки. Compatibility checks автоматические;",
+                "source_of_confusion": "Не знают про автоматические проверки.",
                 "if_it_were_true": "Schema Registry был бы просто хранилищем без ценности.",
                 "how_it_should_be": "Автоматические checks на основе настроенного compatibility level."
               }
@@ -2831,11 +2831,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно одного enable.idempotence=true без транзакций. Idempotent producer защищает от duplicate в пределах одной partition и одной producer-сессии;.",
+              "text": "Достаточно одного enable.idempotence=true без транзакций.",
               "correct": false,
               "sections": {
                 "what_actually": "Idempotent producer защищает от duplicate в пределах одной partition и одной producer-сессии; для EOS Kafka-to-Kafka нужны транзакции (атомарность нескольких partition + offsets commit).",
-                "source_of_confusion": "Путают idempotent с EOS. Idempotent producer защищает от duplicate в пределах одной partition и одной producer-сессии;",
+                "source_of_confusion": "Путают idempotent с EOS.",
                 "if_it_were_true": "Не нужен был бы transactional.id и API initTransactions.",
                 "how_it_should_be": "Idempotent + transactions = EOS; idempotent один — это at-least-once без duplicate в одной partition."
               }
@@ -2843,11 +2843,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Передавать transactional.id одинаковый для всех инстансов producer. Одинаковый transactional. Считают, что transactional.",
+              "text": "Передавать transactional.id одинаковый для всех инстансов producer.",
               "correct": false,
               "sections": {
                 "what_actually": "Одинаковый transactional.id вызывает zombie-fencing — новый producer выкидывает старого. Для нескольких параллельных producer нужны разные id.",
-                "source_of_confusion": "Считают, что transactional.id как application id. Одинаковый transactional.",
+                "source_of_confusion": "Считают, что transactional.id как application id.",
                 "if_it_were_true": "Только один producer работал бы одновременно — single-point.",
                 "how_it_should_be": "transactional.id уникален per producer-instance; обычно содержит pod-name/host-id."
               }
@@ -2855,19 +2855,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Использовать database transaction для записи offset и payload — этого достаточно. Это другой паттерн (Outbox/Inbox), работает для Kafka↔DB интеграции.",
+              "text": "Использовать database transaction для записи offset и payload — этого достаточно.",
               "correct": false,
               "sections": {
                 "what_actually": "Это другой паттерн (Outbox/Inbox), работает для Kafka↔DB интеграции, но не EOS Kafka-to-Kafka.",
-                "source_of_confusion": "Перенос концепции БД-транзакций. Это другой паттерн (Outbox/Inbox), работает для Kafka↔DB интеграции, но не EOS Kafka-to-Kafka.",
-                "if_it_were_true": "Не было бы Kafka transactional API. Это другой паттерн (Outbox/Inbox), работает для Kafka↔DB интеграции, но не EOS Kafka-to-Kafka.",
+                "source_of_confusion": "Перенос концепции БД-транзакций.",
+                "if_it_were_true": "Не было бы Kafka transactional API.",
                 "how_it_should_be": "Для Kafka-to-Kafka EOS — Kafka transactions; для Kafka↔DB — Outbox + idempotency."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Включить enable.idempotence=true; задать transactional.id (стабильный per producer instance); initTransactions();",
+              "text": "Включить enable.idempotence=true; задать transactional.id (стабильный per producer instance); initTransactions(); в обработке: beginTransaction → send в несколько partition/topics → sendOffsetsToTransaction(offsets, consumerGroupMetadata) → commitTransaction; consumer читает с isolation.level=read_committed; при ошибке — abortTransaction; в Streams: processing.guarantee=exactly_once_v2.",
               "correct": true,
               "sections": {
                 "explanation": "transactional.id критичен — он zombie-fences старые instance с тем же id (epoch bumping). sendOffsetsToTransaction атомарно коммитит offsets consumer-группы вместе с output messages. read_committed скрывает uncommitted и aborted сообщения. EOS работает только Kafka-to-Kafka.",
@@ -2891,7 +2891,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "State Store — локальное хранилище (RocksDB or in-memory) для stateful операций (aggregate, count, join, window); каждое изменение state также пишется в changelog topic (compacted) для recovery; при rebalance state мигрирует с инстанса на инстанс через replay changelog;",
+              "text": "State Store — локальное хранилище (RocksDB or in-memory) для stateful операций (aggregate, count, join, window); каждое изменение state также пишется в changelog topic (compacted) для recovery; при rebalance state мигрирует с инстанса на инстанс через replay changelog; используется в KTable, aggregate(), reduce(), windowed operations.",
               "correct": true,
               "sections": {
                 "explanation": "RocksDB — embedded LSM-tree DB. Каждое put() в state store также пишется в <app-id>-<store-name>-changelog topic. При падении инстанса другой инстанс читает changelog с начала и восстанавливает state. Standby replicas (num.standby.replicas) держат hot copy для быстрого failover.",
@@ -2904,11 +2904,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "State Store — это база данных PostgreSQL, в которой Kafka Streams хранит состояние. State Store по умолчанию — embedded RocksDB на локальном диске инстанса;. Считают, что нужна внешняя БД. Embedded RocksDB + Kafka changelog topic для recovery.",
+              "text": "State Store — это база данных PostgreSQL, в которой Kafka Streams хранит состояние.",
               "correct": false,
               "sections": {
                 "what_actually": "State Store по умолчанию — embedded RocksDB на локальном диске инстанса; есть также in-memory варианты.",
-                "source_of_confusion": "Считают, что нужна внешняя БД. State Store по умолчанию — embedded RocksDB на локальном диске инстанса;",
+                "source_of_confusion": "Считают, что нужна внешняя БД.",
                 "if_it_were_true": "Streams требовал бы DB как зависимость — он не требует.",
                 "how_it_should_be": "Embedded RocksDB + Kafka changelog topic для recovery."
               }
@@ -2916,11 +2916,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "State Store работает только in-memory и теряется при рестарте. Default — RocksDB на диске + changelog topic = persistent + recoverable;. Знают только in-memory вариант. Default — persistent через RocksDB + changelog;",
+              "text": "State Store работает только in-memory и теряется при рестарте.",
               "correct": false,
               "sections": {
                 "what_actually": "Default — RocksDB на диске + changelog topic = persistent + recoverable; in-memory только опционально.",
-                "source_of_confusion": "Знают только in-memory вариант. Default — RocksDB на диске + changelog topic = persistent + recoverable;",
+                "source_of_confusion": "Знают только in-memory вариант.",
                 "if_it_were_true": "Stateful обработка была бы непригодной для production.",
                 "how_it_should_be": "Default — persistent через RocksDB + changelog; in-memory — opt-in."
               }
@@ -2928,12 +2928,12 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Stateful обработка в Kafka Streams невозможна. Stateful — основной use-case Streams (aggregate, count, join, windows). Глубокое непонимание Streams. Streams — stateful processing engine с persistent state.",
+              "text": "Stateful обработка в Kafka Streams невозможна.",
               "correct": false,
               "sections": {
                 "what_actually": "Stateful — основной use-case Streams (aggregate, count, join, windows).",
-                "source_of_confusion": "Глубокое непонимание Streams. Stateful — основной use-case Streams (aggregate, count, join, windows).",
-                "if_it_were_true": "Не было бы KTable и aggregate(). Stateful — основной use-case Streams (aggregate, count, join, windows).",
+                "source_of_confusion": "Глубокое непонимание Streams.",
+                "if_it_were_true": "Не было бы KTable и aggregate().",
                 "how_it_should_be": "Streams — stateful processing engine с persistent state."
               }
             }
@@ -2951,19 +2951,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно проверять uptime consumer-приложений — если они живы, lag нормальный. Consumer может быть жив, но обрабатывать медленнее, чем producer пишет — lag растёт;. Уравнивают liveness и progress. Monitoring lag метрик отдельно от health-check сервиса.",
+              "text": "Достаточно проверять uptime consumer-приложений — если они живы, lag нормальный.",
               "correct": false,
               "sections": {
                 "what_actually": "Consumer может быть жив, но обрабатывать медленнее, чем producer пишет — lag растёт; uptime не отражает прогресс.",
-                "source_of_confusion": "Уравнивают liveness и progress. Consumer может быть жив, но обрабатывать медленнее, чем producer пишет — lag растёт;",
-                "if_it_were_true": "Не нужны были бы Burrow и kafka-lag-exporter. Consumer может быть жив, но обрабатывать медленнее, чем producer пишет — lag растёт;",
+                "source_of_confusion": "Уравнивают liveness и progress.",
+                "if_it_were_true": "Не нужны были бы Burrow и kafka-lag-exporter.",
                 "how_it_should_be": "Monitoring lag метрик отдельно от health-check сервиса."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Использовать kafka-lag-exporter (Prometheus exporter) или Burrow (LinkedIn) которые читают __consumer_offsets через Kafka API; экспортить per-group/per-topic/per-partition lag в Prometheus; алертить на абсолютный lag (>10K) или rate-of-change (lag-rate>0 длительно);",
+              "text": "Использовать kafka-lag-exporter (Prometheus exporter) или Burrow (LinkedIn) которые читают __consumer_offsets через Kafka API; экспортить per-group/per-topic/per-partition lag в Prometheus; алертить на абсолютный lag (>10K) или rate-of-change (lag-rate>0 длительно); Burrow возвращает status OK/WARNING/ERROR с интеллектуальной оценкой; в Grafana дашборды per consumer-group.",
               "correct": true,
               "sections": {
                 "explanation": "Burrow следит за trend lag, а не абсолютным значением — снижает false positives при batch обработке. kafka-lag-exporter — простой Prometheus exporter. Также JMX-метрики consumer (records-lag-max) можно собрать. Alert: lag > N длительно или скорость роста аномальна.",
@@ -2976,24 +2976,24 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Lag можно посмотреть только через kafka-consumer-groups.sh в shell — программный API недоступен. Программный AdminClient. Знают только CLI. AdminClient API + JMX — для programmatic monitoring;",
+              "text": "Lag можно посмотреть только через kafka-consumer-groups.sh в shell — программный API недоступен.",
               "correct": false,
               "sections": {
                 "what_actually": "Программный AdminClient.listConsumerGroupOffsets() + listEndOffsets() даёт lag; есть и JMX kafka.consumer:type=consumer-fetch-manager-metrics records-lag-max.",
-                "source_of_confusion": "Знают только CLI. AdminClient API + JMX — для programmatic monitoring;",
-                "if_it_were_true": "Не было бы Prometheus exporters. Программный AdminClient.",
+                "source_of_confusion": "Знают только CLI.",
+                "if_it_were_true": "Не было бы Prometheus exporters.",
                 "how_it_should_be": "AdminClient API + JMX — для programmatic monitoring; CLI — для ad-hoc проверок."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Мониторить __consumer_offsets как обычный topic через consumer. Можно технически читать __consumer_offsets с specialized OffsetsMessageFormatter, но это hacky;. Слышали что __consumer_offsets — это topic. Использовать AdminClient или готовые exporter;",
+              "text": "Мониторить __consumer_offsets как обычный topic через consumer.",
               "correct": false,
               "sections": {
                 "what_actually": "Можно технически читать __consumer_offsets с specialized OffsetsMessageFormatter, но это hacky; стандартный путь — AdminClient API.",
-                "source_of_confusion": "Слышали что __consumer_offsets — это topic. Можно технически читать __consumer_offsets с specialized OffsetsMessageFormatter, но это hacky;",
-                "if_it_were_true": "Все писали бы свой kafka-lag-exporter с consumer. Можно технически читать __consumer_offsets с specialized OffsetsMessageFormatter, но это hacky;",
+                "source_of_confusion": "Слышали что __consumer_offsets — это topic.",
+                "if_it_were_true": "Все писали бы свой kafka-lag-exporter с consumer.",
                 "how_it_should_be": "Использовать AdminClient или готовые exporter; не читать __consumer_offsets напрямую."
               }
             }
