@@ -1,0 +1,26 @@
+/* ===================================================================
+   mobile-fixes.css — точечные override-ы для mobile (<= 899px).
+   Отдельный файл, чтобы не конфликтовать с правками styles.css в WIP.
+
+   Каждое правило здесь существует, потому что media-query в styles.css
+   не имеет того же selector-specificity, что и desktop-правило, и не
+   побеждает каскад на мобильных. Это видно через Playwright + getComputedStyle.
+   =================================================================== */
+
+@media (max-width: 899px) {
+    /* /stats: фильтр-card и search-card должны раскладываться в 1 колонку
+       (default media-query в styles.css теряется по specificity vs
+       `.stats-page .stats-filter-row` desktop-правилу). */
+    .stats-page .stats-filter-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .stats-page .stats-filter-separated .stats-search-pane {
+        /* На мобильном убираем вертикальный border-left + лишний padding —
+           они смотрятся как сломанный layout, когда панели в одну колонку. */
+        border-left: none;
+        padding-left: 0;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+    }
+}
