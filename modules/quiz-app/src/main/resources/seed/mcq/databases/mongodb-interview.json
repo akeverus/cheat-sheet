@@ -1,0 +1,2765 @@
+{
+  "topic_slug": "mongodb-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое MongoDB и в каких сценариях её выбирают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MongoDB — документоориентированная NoSQL БД, хранящая данные в BSON-документах; выбирают для полуструктурированных данных, иерархических документов и горизонтального масштабирования через sharding.",
+              "correct": true,
+              "sections": {
+                "explanation": "MongoDB предлагает гибкую схему: документы одной коллекции могут различаться по составу полей. Встроены sharding для горизонтального масштабирования и Replica Set для высокой доступности.",
+                "example": "Каталог товаров e-commerce, CMS, профили пользователей, лента событий — данные с переменным набором атрибутов и редкими связями.",
+                "when_to_apply": "Полуструктурированные данные, прототипирование, высокая нагрузка на запись с шардированием, JSON-документы с вложенностью.",
+                "edge_cases": "Сложные many-to-many связи и строгие OLAP-аналитики — проигрывает РСУБД и колоночным БД.",
+                "related": "Q2 сравнение с РСУБД; Q3 BSON; Q40 когда MongoDB плохой выбор."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MongoDB — реляционная БД, использующая SQL и фиксированную схему через DDL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB — NoSQL-документная БД с MQL и гибкой схемой; SQL и DDL не являются её основным языком.",
+                "source_of_confusion": "Смешение MongoDB с PostgreSQL/MySQL.",
+                "if_it_were_true": "Не было бы коллекций и BSON-документов — только таблицы и строки.",
+                "how_it_should_be": "MongoDB хранит BSON-документы в коллекциях и использует MQL вместо SQL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MongoDB — это in-memory key-value хранилище без поддержки сложных запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB персистентна на диск и поддерживает агрегационный pipeline, индексы и сложные запросы по содержимому документа.",
+                "source_of_confusion": "Путаница с Redis, которое действительно in-memory KV.",
+                "if_it_were_true": "Не было бы aggregate, $match, индексов по полям документа.",
+                "how_it_should_be": "MongoDB — документная БД с дисковым хранилищем (WiredTiger) и MQL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MongoDB — графовая БД, оптимизированная для обхода рёбер между узлами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB — документная БД; графовые задачи решает Neo4j/JanusGraph с языками Cypher/Gremlin.",
+                "source_of_confusion": "Обобщение «NoSQL» без различения подтипов (документные/графовые/колоночные/KV).",
+                "if_it_were_true": "В MongoDB были бы первичные операторы обхода рёбер и индексов на связях.",
+                "how_it_should_be": "Документная модель: коллекции из BSON-документов, JOIN-подобные операции через $lookup."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевое отличие MongoDB от реляционных СУБД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В MongoDB используется фиксированная схема с DDL и обязательные JOIN-ы по внешним ключам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB schema-less: документы коллекции могут различаться; связи строятся через embedding или $lookup, а не через FK.",
+                "source_of_confusion": "Перенос реляционной модели на MongoDB.",
+                "if_it_were_true": "Не было бы необходимости в денормализации и embedded-документах.",
+                "how_it_should_be": "Гибкая схема, денормализация и горизонтальное масштабирование вместо JOIN и FK."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MongoDB хранит данные в BSON-документах с гибкой схемой и масштабируется горизонтально через sharding, тогда как РСУБД использует таблицы, SQL и обычно вертикальное масштабирование.",
+              "correct": true,
+              "sections": {
+                "explanation": "Документная модель устраняет жёсткую схему и допускает вложенные структуры. Шардирование встроено и распределяет коллекции по узлам без ручного партиционирования.",
+                "example": "В MongoDB заказ с позициями — один документ; в PostgreSQL — таблицы orders и order_items, связанные FK.",
+                "when_to_apply": "Сравнение моделей данных, выбор БД, обоснование архитектуры хранения.",
+                "edge_cases": "Multi-document ACID появились лишь с 4.0 и стоят дороже одного-документного обновления.",
+                "related": "Q1 что такое MongoDB; Q6 embedding vs referencing; Q27 транзакции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MongoDB всегда даёт более строгие ACID-гарантии, чем PostgreSQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ACID в MongoDB ограничен и дороже многодокументно; РСУБД исторически сильнее по транзакционной гарантии.",
+                "source_of_confusion": "Маркетинговое утверждение «MongoDB ACID» интерпретируется без оговорок про overhead и Replica Set.",
+                "if_it_were_true": "Не было бы рекомендаций использовать денормализацию вместо транзакций.",
+                "how_it_should_be": "MongoDB поддерживает multi-document ACID с 4.0, но это компромисс по производительности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MongoDB и PostgreSQL имеют одинаковую модель данных и язык запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модели и языки разные: документы и MQL у MongoDB, таблицы и SQL у PostgreSQL.",
+                "source_of_confusion": "Поверхностное представление о БД как «единой технологии».",
+                "if_it_were_true": "Не имело бы смысла существование двух разных классов БД.",
+                "how_it_should_be": "Принципиально разные модели: документная vs реляционная, MQL vs SQL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем BSON отличается от JSON и какие преимущества он даёт MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "BSON — это синоним JSON, ровно тот же текстовый формат с теми же типами данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BSON — бинарный формат с расширенным набором типов: Date, ObjectId, Decimal128, Int32/Int64, BinData, Regex.",
+                "source_of_confusion": "Похожее визуальное представление документа в shell.",
+                "if_it_were_true": "Не нужны были бы драйверы для конвертации BSON↔приложение.",
+                "how_it_should_be": "BSON — бинарный JSON с дополнительными типами и метаданными размеров."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "BSON — это XML-формат с поддержкой бинарных вложений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BSON не имеет отношения к XML; это бинарная сериализация JSON-структур.",
+                "source_of_confusion": "Путаница со старыми форматами обмена данными.",
+                "if_it_were_true": "В коллекциях встречались бы теги и атрибуты в стиле XML.",
+                "how_it_should_be": "BSON — двоичная сериализация документов с типами и длинами полей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "BSON — бинарный формат сериализации с расширенными типами (Date, ObjectId, Decimal128), хранящий длины полей для быстрого обхода и пропуска ненужных частей документа.",
+              "correct": true,
+              "sections": {
+                "explanation": "Длины подмассивов и подобъектов хранятся отдельно, что позволяет драйверу пропускать ненужные участки. ObjectId — 12 байт timestamp+random+counter, генерируемый на клиенте.",
+                "example": "Поле Date хранится как 8-байтовый long ms-from-epoch; Decimal128 даёт точную арифметику для финансовых данных.",
+                "when_to_apply": "Понимание формата хранения, типов данных и эффективности парсинга.",
+                "edge_cases": "BSON-документ ограничен 16 МБ; за пределом — GridFS.",
+                "related": "Q4 коллекции и документы; Q5 типы данных; Q7 ограничения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "BSON — это сжатый текстовый JSON, который всегда меньше JSON-аналога по размеру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BSON бинарный, не текстовый; и за счёт метаданных типов и длин он часто больше JSON.",
+                "source_of_confusion": "Ассоциация «бинарный = всегда меньше».",
+                "if_it_were_true": "Не существовало бы рекомендаций сокращать имена полей для экономии места.",
+                "how_it_should_be": "BSON — бинарная сериализация с возможным увеличением размера ради скорости обхода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что в MongoDB представляют собой коллекция и документ?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Документ — это строка в таблице, а коллекция — это таблица с жёстко заданной схемой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB хранит документы (BSON), не строки; схема коллекции не фиксирована и не требует DDL.",
+                "source_of_confusion": "Перенос терминологии РСУБД.",
+                "if_it_were_true": "Не было бы schema-less операций и embedded-структур.",
+                "how_it_should_be": "Документ — BSON-объект, коллекция — набор документов без обязательной схемы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Коллекция в MongoDB обязательно должна содержать документы с одинаковым набором полей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Схема коллекции гибкая: документы могут иметь разные наборы полей.",
+                "source_of_confusion": "Привычка к таблицам РСУБД.",
+                "if_it_were_true": "Не было бы преимущества MongoDB в полуструктурированных данных.",
+                "how_it_should_be": "Коллекция допускает разнородные документы; единообразие — выбор приложения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Документ — это файл на диске, а коллекция — каталог файлов в файловой системе MongoDB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Документы хранятся в WiredTiger как записи в файлах коллекций; это не отдельные файлы на FS на уровне модели.",
+                "source_of_confusion": "Буквальная трактовка слова «документ».",
+                "if_it_were_true": "Лимит размера документа определялся бы файловой системой, а не MongoDB.",
+                "how_it_should_be": "Документ — единица данных в коллекции, а не файл на диске."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Документ — BSON-объект с уникальным _id (по умолчанию ObjectId) и лимитом 16 МБ; коллекция — набор документов без обязательной единой схемы, аналог таблицы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый документ имеет _id, генерируемый клиентом или сервером. Коллекция хранит произвольные BSON-документы и не требует, чтобы они имели одинаковые поля.",
+                "example": "db.users.insertOne({name:'Иван', address:{city:'Москва'}, interests:['Java']}).",
+                "when_to_apply": "Любое моделирование данных в MongoDB; основа CRUD-операций.",
+                "edge_cases": "Capped Collection — коллекция фиксированного размера с FIFO для логов и буферов.",
+                "related": "Q5 типы данных; Q6 embedding; Q8 CRUD."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы данных поддерживает MongoDB через BSON?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "BSON поддерживает String, Int32/Int64, Double, Decimal128, Boolean, ObjectId, Date, Array, Object, Binary, Null, Regex, Timestamp — расширенный набор поверх JSON.",
+              "correct": true,
+              "sections": {
+                "explanation": "Расширение JSON-типами особенно полезно для финансов (Decimal128), идентификаторов (ObjectId) и времени (Date с миллисекундами).",
+                "example": "NumberDecimal('19.99') для цен, ISODate('2026-01-01') для даты, ObjectId() для _id.",
+                "when_to_apply": "Моделирование данных, выбор корректных типов при маппинге через драйвер.",
+                "edge_cases": "Timestamp — внутренний тип для oplog, не для бизнес-времени; используйте Date.",
+                "related": "Q3 BSON; Q4 документ; Q31 аннотации Spring Data."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только бинарные типы — для текстовых полей нужно использовать GridFS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Текст хранится как BSON-тип String (UTF-8); GridFS нужен только для файлов больше 16 МБ.",
+                "source_of_confusion": "Путаница назначения GridFS.",
+                "if_it_were_true": "Нельзя было бы делать поиск по подстроке в обычных запросах.",
+                "how_it_should_be": "String — стандартный BSON-тип; GridFS — для крупных файлов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только String и Number — остальные типы недоступны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BSON поддерживает десятки типов: String, Int32/Int64, Double, Decimal128, Boolean, Date, ObjectId, Array, Object, Binary, Null, Regex, Timestamp.",
+                "source_of_confusion": "Аналогия с минималистичным JSON.",
+                "if_it_were_true": "Не было бы Decimal128 для финансов и ObjectId для идентификаторов.",
+                "how_it_should_be": "Богатый набор типов BSON, включая Date, ObjectId, Decimal128, Binary."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В MongoDB нельзя хранить вложенные документы и массивы — только плоские структуры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BSON-типы Object и Array поддерживают вложенность до 100 уровней.",
+                "source_of_confusion": "Незнание про embedding.",
+                "if_it_were_true": "Не было бы преимущества MongoDB перед обычным KV-хранилищем.",
+                "how_it_should_be": "Документы могут содержать вложенные объекты и массивы (тип Object/Array)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать между embedding и referencing при моделировании связей в MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Referencing всегда предпочтительнее embedding для любых отношений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Embedding часто эффективнее, если данные читаются вместе и невелики; не существует универсального правила «всегда referencing».",
+                "source_of_confusion": "Перенос принципа нормализации из РСУБД.",
+                "if_it_were_true": "Преимущество MongoDB в денормализации полностью обесценивалось бы.",
+                "how_it_should_be": "Выбор определяется паттерном доступа, размером, кардинальностью и частотой изменений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Embedding — когда данные читаются вместе, размер ограничен и кардинальность 1:few/1:many до сотен; referencing — когда вложенные данные крупные, часто меняются независимо или 1:very-many.",
+              "correct": true,
+              "sections": {
+                "explanation": "Embedded-документы дают атомарное обновление и быстрое чтение, но 16 МБ — жёсткий лимит. Referencing подходит для больших и независимых сущностей.",
+                "example": "Заказ + позиции — embedding; пользователь + 10к комментариев — referencing.",
+                "when_to_apply": "Любое моделирование связей при проектировании коллекций MongoDB.",
+                "edge_cases": "Unbounded arrays — антипаттерн; для много-ко-многим обычно referencing.",
+                "related": "Q4 коллекции; Q7 ограничения; Q18 $lookup."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Решение зависит только от размера полей, не от паттернов чтения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Паттерн чтения (вместе/раздельно) — ключевой критерий, как и размер, кардинальность и частота обновлений.",
+                "source_of_confusion": "Слишком узкое представление о критериях моделирования.",
+                "if_it_were_true": "Не имело бы значения, как часто данные меняются и читаются.",
+                "how_it_should_be": "Учитываются паттерн чтения, размер, кардинальность и частота изменений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Embedding всегда лучше для больших массивов любого размера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Неограниченные массивы (unbounded arrays) — антипаттерн: документ упирается в 16 МБ и деградирует.",
+                "source_of_confusion": "Стремление к одному документу любой ценой.",
+                "if_it_were_true": "Лимит 16 МБ не имел бы значения.",
+                "how_it_should_be": "Для больших или независимо растущих коллекций — referencing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие важные ограничения MongoDB нужно учитывать при проектировании?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Транзакции в MongoDB не имеют таймаута по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию transactionLifetimeLimitSeconds = 60 секунд; за пределом транзакция автоматически прерывается.",
+                "source_of_confusion": "Перенос неограниченных транзакций РСУБД.",
+                "if_it_were_true": "Зависшие транзакции могли бы блокировать ресурсы без автоматического abort.",
+                "how_it_should_be": "Дефолтный таймаут транзакции 60 секунд, настраиваемый."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Размер документа неограничен, можно хранить файлы любых размеров без GridFS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Документ ограничен 16 МБ; для крупных файлов используется GridFS, разбивающий их на чанки.",
+                "source_of_confusion": "Маркетинговое восприятие «гибкая схема = без лимитов».",
+                "if_it_were_true": "Не существовало бы GridFS как отдельного механизма.",
+                "how_it_should_be": "Лимит документа — 16 МБ; крупные blob-ы — через GridFS."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Максимальный размер документа — 16 МБ, максимум 100 уровней вложенности, не более 64 индексов на коллекцию, до 32 полей в составном индексе и таймаут транзакций 60 секунд по умолчанию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти лимиты определяют моделирование: для файлов больше 16 МБ — GridFS; индексы — экономно; транзакции не должны быть долгими.",
+                "example": "Пытаясь сохранить лог-документ в 20 МБ, получите BSONObjectTooLarge — нужно либо разбить, либо вынести в GridFS.",
+                "when_to_apply": "Дизайн схемы и индексов, оценка применимости транзакций.",
+                "edge_cases": "Сортировка в памяти ограничена 100 МБ без allowDiskUse; имена полей не могут начинаться с $ или содержать точку.",
+                "related": "Q6 embedding; Q12 индексы; Q27 транзакции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "На коллекцию допускается неограниченное количество индексов без падения производительности записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Максимум 64 индекса на коллекцию; каждый индекс замедляет insert/update, потому что обновляется при каждой записи.",
+                "source_of_confusion": "Идея «индексы дёшевы».",
+                "if_it_were_true": "Не было бы рекомендаций аудитировать неиспользуемые индексы.",
+                "how_it_should_be": "Лимит 64 индекса и осознанный выбор по паттернам запросов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные CRUD-операции предоставляет MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только find и save — на этом API заканчивается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API богат: insertOne/insertMany, find/findOne, updateOne/updateMany/replaceOne, deleteOne/deleteMany, findOneAndUpdate/findOneAndDelete.",
+                "source_of_confusion": "Поверхностное знакомство со shell.",
+                "if_it_were_true": "Не было бы атомарного findOneAndUpdate.",
+                "how_it_should_be": "Полный набор CRUD-операций для одного и многих документов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Update в MongoDB всегда заменяет весь документ целиком, частичные обновления не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Операторы $set/$inc/$push/$pull позволяют частичные изменения; replaceOne — полная замена.",
+                "source_of_confusion": "Путаница между updateOne и replaceOne.",
+                "if_it_were_true": "Не существовало бы $set и $inc.",
+                "how_it_should_be": "updateOne с операторами для частичных изменений и replaceOne для полной замены."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MongoDB использует SQL-операторы INSERT/SELECT/UPDATE/DELETE как основное API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это MQL, не SQL: insertOne/find/updateOne/deleteOne.",
+                "source_of_confusion": "Перенос синтаксиса из РСУБД.",
+                "if_it_were_true": "Не существовало бы драйверов MongoDB с собственным API.",
+                "how_it_should_be": "MQL-операции вместо SQL; SQL-доступ — через BI Connector."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MongoDB поддерживает insertOne/insertMany для записи, find/findOne для чтения с проекциями, updateOne/updateMany/replaceOne и findOneAndUpdate для атомарного изменения, deleteOne/deleteMany для удаления.",
+              "correct": true,
+              "sections": {
+                "explanation": "Операции одного документа всегда атомарны. findOneAndUpdate возвращает оригинал или обновлённый документ, что полезно для очередей и счётчиков.",
+                "example": "db.users.updateOne({name:'Иван'},{$set:{age:29},$push:{tags:'senior'}}).",
+                "when_to_apply": "Любая работа с данными приложения через MQL.",
+                "edge_cases": "updateMany по большой выборке без индекса даст collection scan; используйте индекс на фильтре.",
+                "related": "Q9 операторы; Q10 операторы обновления; Q35 оптимизация."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как в MongoDB работают операторы сравнения и логические операторы в запросах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MQL предоставляет операторы сравнения ($eq/$ne/$gt/$gte/$lt/$lte/$in/$nin/$exists/$type) и логические ($and/$or/$not/$nor); поддерживается dot notation для вложенных полей и $elemMatch для массивов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Операторы записываются как BSON-объекты на стороне фильтра. dot notation позволяет фильтровать по вложенным полям; $elemMatch требует, чтобы все условия выполнились на одном элементе массива.",
+                "example": "db.users.find({$and:[{city:{$in:['Москва','СПб']}},{age:{$gt:25}}]}).",
+                "when_to_apply": "Любые сложные фильтры find/aggregate; запросы по embedded-данным.",
+                "edge_cases": "Без $elemMatch условия по массиву могут срабатывать на разных элементах массива одновременно.",
+                "related": "Q8 CRUD; Q12 индексы; Q17 aggregation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запросы строятся через SQL WHERE — операторов вроде $gt/$in в MongoDB нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB использует MQL c операторами $eq/$ne/$gt/$gte/$lt/$lte/$in/$nin/$exists/$type и $and/$or/$not/$nor.",
+                "source_of_confusion": "Перенос SQL-стиля.",
+                "if_it_were_true": "Драйверы не предоставляли бы MQL-обёрток над BSON.",
+                "how_it_should_be": "Условия описываются BSON-объектами с операторами $-семантики."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Логические операторы $and и $or нельзя комбинировать в одном запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Любая комбинация $and/$or/$nor/$not поддерживается на любой глубине вложенности фильтра.",
+                "source_of_confusion": "Неверная аналогия с упрощёнными KV-фильтрами.",
+                "if_it_were_true": "Нельзя было бы писать сложные критерии без денормализации.",
+                "how_it_should_be": "Свободная комбинация логических операторов внутри фильтра."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для поиска по элементу массива всегда требуется $elemMatch — обычное равенство не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "db.users.find({interests:'Java'}) сработает и без $elemMatch; $elemMatch нужен для нескольких условий на одном элементе массива.",
+                "source_of_confusion": "Переусложнение синтаксиса.",
+                "if_it_were_true": "Не существовало бы упрощённого matching по элементу массива.",
+                "how_it_should_be": "Равенство работает для одного условия; $elemMatch — для составных условий на элементе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужны операторы обновления $set, $inc, $push, $pull?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "$set заменяет весь документ, а $inc удаляет поле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "$set задаёт значение конкретного поля без замены документа; $inc увеличивает числовое поле; за удаление поля отвечает $unset.",
+                "source_of_confusion": "Перепутаны семантики операторов.",
+                "if_it_were_true": "Любое updateOne замещало бы весь документ.",
+                "how_it_should_be": "$set — точечная установка; $unset — удаление поля; $inc — инкремент числа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "$set/$unset управляют значениями полей, $inc делает инкремент числа, $push добавляет элемент в массив, $addToSet добавляет без дубликатов, а $pull удаляет элементы по условию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Операторы обеспечивают точечные изменения без перезаписи всего документа и атомарны на уровне одного документа.",
+                "example": "db.users.updateOne({_id:id},{$inc:{loginCount:1,score:-5}, $push:{tags:'mongo'}}).",
+                "when_to_apply": "Любые частичные обновления; счётчики, теги, статусы.",
+                "edge_cases": "$push с $each/$sort/$slice позволяет ограничивать длину массива; upsert требует $setOnInsert для специфичных при вставке полей.",
+                "related": "Q8 CRUD; Q11 find vs aggregate; Q28 оптимистическая блокировка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "$push и $pull работают только при upsert=true.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти операторы применяются к существующим документам и не требуют upsert.",
+                "source_of_confusion": "Путаница назначения upsert.",
+                "if_it_were_true": "Нельзя было бы менять массивы в найденных документах.",
+                "how_it_should_be": "$push/$pull работают на найденных документах; upsert — отдельный режим вставки при отсутствии совпадения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Операторы обновления нельзя комбинировать в одной операции updateOne.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В одной операции можно совмещать несколько операторов: {$set:{...},$inc:{...},$push:{...}}.",
+                "source_of_confusion": "Слишком осторожное представление о MQL.",
+                "if_it_were_true": "Любое сложное изменение требовало бы нескольких раундов обращения к серверу.",
+                "how_it_should_be": "Несколько операторов в одной updateOne — атомарная операция на документе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между операциями find и aggregate?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "find и aggregate — это синонимы одной и той же операции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "find — простая выборка с фильтром/проекцией/сортировкой; aggregate — pipeline с произвольной обработкой ($group, $lookup, $unwind, $project).",
+                "source_of_confusion": "Поверхностное знакомство с MQL.",
+                "if_it_were_true": "Не было бы отдельного агрегационного pipeline.",
+                "how_it_should_be": "find — простой запрос; aggregate — конвейер преобразований."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "find не использует индексы, а aggregate использует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба используют индексы; в aggregate индексами обычно пользуется первый $match.",
+                "source_of_confusion": "Идея «aggregate всегда быстрее».",
+                "if_it_were_true": "Простой find работал бы медленнее простого aggregate.",
+                "how_it_should_be": "find и aggregate с $match используют индексы; разница — в выразительности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "find подходит для простых выборок с фильтром, проекцией и сортировкой; aggregate — для сложной обработки данных через pipeline: группировки, $lookup, вычисляемые поля и многошаговые преобразования.",
+              "correct": true,
+              "sections": {
+                "explanation": "aggregate определяет последовательность этапов, преобразующих поток документов; find ограничен фильтром/проекцией/сортировкой/limit.",
+                "example": "Группировка заказов по категориям с суммированием — только aggregate с $group.",
+                "when_to_apply": "Простой запрос — find; аналитика, JOIN, группировка — aggregate.",
+                "edge_cases": "Для больших агрегаций нужен allowDiskUse=true; первый $match критически важен и должен использовать индекс.",
+                "related": "Q17 pipeline; Q18 $lookup; Q19 $group/$unwind/$project."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "aggregate всегда быстрее find независимо от запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для простой выборки find обычно быстрее: меньше overhead pipeline-этапов.",
+                "source_of_confusion": "Маркетинговое восприятие aggregation framework.",
+                "if_it_were_true": "Не было бы рекомендаций «если хватает find — используйте find».",
+                "how_it_should_be": "aggregate ценен сложными операциями; для простых выборок предпочтителен find."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы индексов поддерживает MongoDB и зачем они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MongoDB поддерживает только один тип индекса — по полю _id.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо _id, доступны single-field, compound, multikey (по массивам), text, hashed, TTL, geospatial (2dsphere), partial и wildcard индексы.",
+                "source_of_confusion": "Поверхностное знакомство.",
+                "if_it_were_true": "Не было бы возможностей фильтра по любому полю и геозапросов.",
+                "how_it_should_be": "Богатый набор типов индексов под разные сценарии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все индексы в MongoDB бесплатны по записи и не имеют негативных эффектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый индекс обновляется при insert/update/delete, что замедляет запись и расходует диск.",
+                "source_of_confusion": "Мифы «больше индексов — всегда лучше».",
+                "if_it_were_true": "Не было бы рекомендаций аудитировать неиспользуемые индексы.",
+                "how_it_should_be": "Индексы создаются по реальным паттернам запросов; лишние удаляются."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В MongoDB нет геопространственных индексов — для геозапросов нужно использовать PostGIS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть 2dsphere/2d индексы и операторы $geoWithin/$near/$nearSphere для гео-запросов.",
+                "source_of_confusion": "Сравнение со специализированным PostGIS.",
+                "if_it_were_true": "Не существовало бы примеров с db.places.createIndex({location:'2dsphere'}).",
+                "how_it_should_be": "Геоиндексы есть; PostGIS — лишь альтернатива для сложной ГИС."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MongoDB предлагает single/compound/multikey/text/hashed/TTL/geospatial(2dsphere)/partial/wildcard индексы поверх B-tree; без индекса запрос делает collection scan.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый тип решает свою задачу: hashed — для шардирования, TTL — для автоудаления, geospatial — для гео-поиска, partial — для экономии места и записи.",
+                "example": "db.sessions.createIndex({createdAt:1},{expireAfterSeconds:3600}) — TTL на час.",
+                "when_to_apply": "Любая оптимизация запросов и проектирование схемы.",
+                "edge_cases": "Каждый индекс замедляет запись; лимит 64 индекса на коллекцию.",
+                "related": "Q13 ESR; Q14 covered query; Q35 оптимизация."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает составной индекс в MongoDB и в чём суть правила ESR?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Составной индекс хранит ключи по порядку перечисленных полей и поддерживает запросы по префиксу; правило ESR (Equality, Sort, Range) — оптимальный порядок: сначала поля точного совпадения, затем поле сортировки, затем диапазонные условия.",
+              "correct": true,
+              "sections": {
+                "explanation": "ESR минимизирует количество просканированных ключей: equality сужает диапазон, sort избегает in-memory сортировки, range замыкает запрос.",
+                "example": "Запрос status='ACTIVE', sort by createdAt desc, price>1000 → индекс {status:1, createdAt:-1, price:1}.",
+                "when_to_apply": "Дизайн любого составного индекса под конкретный запрос.",
+                "edge_cases": "Лимит 32 поля в составном индексе; направление сортировки имеет значение только для многополевых сортировок.",
+                "related": "Q12 типы индексов; Q14 covered query; Q35 оптимизация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Составной индекс поддерживает запрос по любому подмножеству полей независимо от порядка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Составной индекс {a:1,b:1,c:1} поддерживает только запросы по префиксу: {a}, {a,b}, {a,b,c}. Запрос только по {b} индекс не использует.",
+                "source_of_confusion": "Аналогия с covering-индексами PostgreSQL.",
+                "if_it_were_true": "Любая комбинация полей была бы эффективна.",
+                "how_it_should_be": "Поддерживается только префиксное использование составного индекса."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В правиле ESR Sort идёт перед Equality.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок именно Equality → Sort → Range; equality раньше всех, чтобы максимально сузить набор ключей.",
+                "source_of_confusion": "Запоминание аббревиатуры в обратном порядке.",
+                "if_it_were_true": "Запросы были бы медленнее из-за большего числа просканированных ключей.",
+                "how_it_should_be": "Сначала Equality, затем Sort, затем Range."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Направление сортировки в составном индексе никогда не влияет на план запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для многополевых сортировок направления полей в индексе должны соответствовать порядку sort (или быть противоположны для обратного обхода).",
+                "source_of_confusion": "Перенос правил из single-field индекса.",
+                "if_it_were_true": "MongoDB всегда могла бы сортировать произвольно без in-memory шага.",
+                "how_it_should_be": "Для многополевой сортировки направления полей в индексе и в sort должны согласовываться."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое covered query в MongoDB и как его получить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Covered query — это любой запрос, использующий индекс, независимо от чтения документов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Использование индекса (IXSCAN) не равно covered. Covered требует, чтобы документ не читался ни разу (totalDocsExamined=0).",
+                "source_of_confusion": "Смешение IXSCAN и covered.",
+                "if_it_were_true": "Все индексированные запросы автоматически были бы максимально быстрыми.",
+                "how_it_should_be": "IXSCAN + FETCH = обычный индексированный запрос; covered = только IXSCAN."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запрос называется covered, когда все поля фильтра, проекции и сортировки содержатся в индексе, и MongoDB возвращает результат прямо из индекса без чтения документов (требует обычно _id:0 в проекции).",
+              "correct": true,
+              "sections": {
+                "explanation": "Covered query экономит I/O: MongoDB не обращается к документам коллекции, только к B-tree индекса. Через explain видно totalDocsExamined=0.",
+                "example": "Индекс {email:1,name:1}; запрос db.users.find({email:'x'},{email:1,name:1,_id:0}) — covered.",
+                "when_to_apply": "Высокочастотные точечные запросы, где важна минимальная латентность.",
+                "edge_cases": "Если _id не входит в индекс, нужно исключить его проекцией (_id:0); запросы по multikey-индексам обычно не covered.",
+                "related": "Q12 типы индексов; Q13 ESR; Q35 оптимизация."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Covered query — это запрос, который кешируется WiredTiger в памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это особенность плана запроса, а не кэширования. Кэширование — отдельный механизм WiredTiger cache.",
+                "source_of_confusion": "Перенос концепции query cache из других СУБД.",
+                "if_it_were_true": "Прогрев кэша делал бы любой запрос covered.",
+                "how_it_should_be": "Covered — план, использующий только индекс; cache — слой WiredTiger."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Covered query доступен только при использовании text-индекса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Covered работает с обычными single/compound индексами; text-индексы как раз чаще требуют FETCH.",
+                "source_of_confusion": "Произвольная привязка к одной из фич.",
+                "if_it_were_true": "Существенно ограничило бы применимость covered query.",
+                "how_it_should_be": "Covered — это паттерн обычных индексов плюс правильной проекции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать полнотекстовый поиск в MongoDB через текстовый индекс?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Полнотекстовый поиск в MongoDB всегда поддерживает fuzzy и синонимы из коробки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенный $text не делает fuzzy и не учитывает синонимы. Эти возможности есть в Atlas Search.",
+                "source_of_confusion": "Сравнение с Elasticsearch/Lucene.",
+                "if_it_were_true": "Не существовало бы рекомендаций уходить в Atlas Search или Elasticsearch.",
+                "how_it_should_be": "$text — базовый поиск без fuzzy/synonyms; Atlas Search — продвинутый."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Создать несколько text-индексов на одну коллекцию и обращаться к ним по имени в запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На коллекцию допускается только один text-индекс; повторное создание приведёт к ошибке.",
+                "source_of_confusion": "Аналогия с обычными составными индексами.",
+                "if_it_were_true": "Можно было бы параллельно поддерживать поиск по нескольким наборам полей.",
+                "how_it_should_be": "Один text-индекс с весами; для альтернатив — Atlas Search/Elasticsearch."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать text-индекс по нужным строковым полям с весами и default_language, а запросы выполнять через $text с поддержкой $search, фразового поиска, исключения слов и ранжирования через score:{$meta:'textScore'}.",
+              "correct": true,
+              "sections": {
+                "explanation": "Один text-индекс на коллекцию может включать несколько полей с разными весами. $text понимает фразы в кавычках и минус-слова для исключения.",
+                "example": "db.articles.createIndex({title:'text',body:'text'},{weights:{title:10,body:5}}); db.articles.find({$text:{$search:'MongoDB индексы'}}).",
+                "when_to_apply": "Простой полнотекстовый поиск без fuzzy-семантики и синонимов.",
+                "edge_cases": "Только один text-индекс на коллекцию; нет fuzzy/synonym; для продвинутого поиска — Atlas Search или Elasticsearch.",
+                "related": "Q12 типы индексов; Q46 Atlas Search; Q40 когда не брать MongoDB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для текстового поиска не нужен индекс — $text работает по любому полю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без text-индекса оператор $text не работает; MongoDB вернёт ошибку отсутствия text index.",
+                "source_of_confusion": "Перенос идеи schema-less на индексы.",
+                "if_it_were_true": "Любая коллекция поддерживала бы $text без подготовки.",
+                "how_it_should_be": "Создать text-индекс на соответствующих полях; затем использовать $text."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое TTL-индекс в MongoDB и какие у него особенности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "TTL-индекс — это индекс по полю с обязательным шифрованием значений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL-индекс связан с автоматическим удалением документов по времени, а не с шифрованием.",
+                "source_of_confusion": "Смешение TTL и шифрования на уровне поля.",
+                "if_it_were_true": "Не существовало бы expireAfterSeconds как ключевой опции TTL.",
+                "how_it_should_be": "TTL-индекс — авто-удаление документов по полю Date через expireAfterSeconds."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "TTL-индекс мгновенно удаляет документ при истечении срока, не зависит от Replica Set и работает по любому типу поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фоновый процесс проверяет TTL раз в 60 секунд — удаление не мгновенное; поле должно быть типа Date; в Replica Set удаление выполняется только на primary.",
+                "source_of_confusion": "Идеализация поведения TTL.",
+                "if_it_were_true": "TTL давал бы реактивные гарантии expiry без задержек.",
+                "how_it_should_be": "TTL работает с Date-полем, проверяется раз в минуту, выполняется только на primary."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "TTL-индекс автоматически создаётся на каждой коллекции по полю _id.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоматически создаётся обычный индекс на _id (уникальный), не TTL. TTL нужно создавать явно по Date-полю.",
+                "source_of_confusion": "Смешение auto-_id-индекса и TTL.",
+                "if_it_were_true": "Все документы удалялись бы автоматически без явных правил.",
+                "how_it_should_be": "TTL создаётся явно с expireAfterSeconds по полю Date."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TTL (Time To Live) индекс — это индекс по полю Date с опцией expireAfterSeconds: MongoDB фоновым процессом раз в 60 секунд удаляет документы, у которых поле меньше now - TTL; в Replica Set удаление выполняется только на primary, разрешён один TTL на коллекцию.",
+              "correct": true,
+              "sections": {
+                "explanation": "expireAfterSeconds=0 + конкретное значение Date в документе позволяют задать точное время удаления. Подходит для сессий, токенов, кэша.",
+                "example": "db.sessions.createIndex({createdAt:1},{expireAfterSeconds:3600}) — удалить через час.",
+                "when_to_apply": "Сессии, временные токены, временные логи, отложенный кэш.",
+                "edge_cases": "Удаление не точное во времени; на secondary удаления реплицируются через oplog.",
+                "related": "Q12 типы индексов; Q23 Oplog; Q20 Replica Set."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен агрегационный pipeline в MongoDB и какие у него лучшие практики?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Aggregation pipeline — цепочка этапов ($match, $group, $project, $sort, $limit, $unwind, $lookup и др.), каждый трансформирует поток документов; $match следует ставить первым (использует индексы), $project до $group убирает ненужные поля, для больших данных нужен allowDiskUse:true.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оптимизатор может переставлять некоторые этапы, но лучшая практика — явно ставить узкий $match в начало, чтобы он использовал индекс и сократил объём данных.",
+                "example": "$match → $group по category → $sort by total → $limit → $project.",
+                "when_to_apply": "Аналитика, агрегаты, JOIN-подобные операции через $lookup, расчёт метрик.",
+                "edge_cases": "Сортировка в памяти ограничена 100 МБ; allowDiskUse:true разрешает spill на диск.",
+                "related": "Q11 find vs aggregate; Q18 $lookup; Q19 $group/$unwind/$project."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "$match всегда должен идти последним, после $group и $sort.",
+              "correct": false,
+              "sections": {
+                "what_actually": "$match эффективнее в самом начале — он использует индексы и сокращает поток данных для последующих этапов.",
+                "source_of_confusion": "Перенос SQL HAVING.",
+                "if_it_were_true": "Пришлось бы группировать всю коллекцию даже для узкого фильтра.",
+                "how_it_should_be": "$match как можно раньше; после $group допустим повторный $match для агрегатов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pipeline выполняет все этапы параллельно над всей коллекцией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Этапы выполняются последовательно: выход одного этапа поступает на вход следующего.",
+                "source_of_confusion": "Аналогия с map-reduce без понимания pipeline-семантики.",
+                "if_it_were_true": "Не было бы смысла в порядке этапов и в оптимизации $match-first.",
+                "how_it_should_be": "Pipeline — последовательность этапов; порядок критичен для производительности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Aggregation pipeline не может использовать индексы вообще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Индексы используются первым $match (и иногда $sort/$lookup), что критично для производительности.",
+                "source_of_confusion": "Миф о том, что aggregate всегда делает COLLSCAN.",
+                "if_it_were_true": "Любая агрегация была бы непригодна для high-load запросов.",
+                "how_it_should_be": "Первый $match использует индекс; правильный порядок этапов ускоряет pipeline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает $lookup в MongoDB и какие у него ограничения по сравнению с SQL JOIN?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "$lookup — это полноценный INNER JOIN с автоматической оптимизацией под все типы шардирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "$lookup аналогичен LEFT OUTER JOIN: всегда возвращает массив (возможно пустой) для каждого исходного документа. В шардированных коллекциях $lookup имел ограничения до 5.1.",
+                "source_of_confusion": "Перенос терминов SQL без учёта особенностей.",
+                "if_it_were_true": "Был бы синтаксис указания типа JOIN (INNER/RIGHT/FULL).",
+                "how_it_should_be": "$lookup — LEFT OUTER в массив; для INNER нужен $unwind без preserveNullAndEmptyArrays."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "$lookup — этап агрегации, выполняющий LEFT JOIN с другой коллекцией: результат лежит в массиве заданного поля; поддерживается коррелированная форма с let/pipeline, но в шардированных коллекциях до 5.1 with from-collection были ограничения, и для high-load часто предпочтительнее денормализация.",
+              "correct": true,
+              "sections": {
+                "explanation": "$lookup ищет в from-коллекции документы, где foreignField соответствует localField, и кладёт массив совпадений в as.",
+                "example": "{$lookup:{from:'users',localField:'userId',foreignField:'_id',as:'user'}}, затем $unwind:'$user'.",
+                "when_to_apply": "Редкие отчётные JOIN-ы; объединение двух коллекций для агрегаций.",
+                "edge_cases": "Старые версии не использовали индексы from-коллекции при шардировании; pipeline-форма гибче, но дороже.",
+                "related": "Q11 aggregate; Q19 $group/$unwind/$project; Q41 $lookup + pipeline."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "$lookup всегда быстрее, чем embedded-структуры, потому что не дублирует данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для горячих путей чтения embedded-структуры обычно быстрее $lookup; денормализация — частая оптимизация.",
+                "source_of_confusion": "Перенос идеи нормализации.",
+                "if_it_were_true": "Документная модель не имела бы преимущества над реляционной.",
+                "how_it_should_be": "Embedding — основной паттерн; $lookup — там, где данные действительно нужны редко вместе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "$lookup работает только между коллекциями одной и той же базы данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "$lookup действительно ограничен одной базой данных, но это не отменяет других ограничений — на шардирование, на использование индексов в старых версиях, на стоимость операции.",
+                "source_of_confusion": "Хотя утверждение верно по части БД, оно ставится как полный ответ и теряет основные нюансы.",
+                "if_it_were_true": "Это лишь одна из деталей, не полный портрет $lookup.",
+                "how_it_should_be": "$lookup ограничен одной БД; ключевые ограничения связаны с шардированием и производительностью."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать этапы $group, $unwind и $project в aggregation pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "$group делает то же, что $sort, а $project удаляет документы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "$group группирует документы по ключу и считает агрегаты; $sort сортирует; $project выбирает/преобразует поля без удаления документов.",
+                "source_of_confusion": "Поверхностное знание этапов.",
+                "if_it_were_true": "Не существовало бы $sum/$avg/$max в $group.",
+                "how_it_should_be": "$group — группировка с агрегатами; $project — формирование выходных полей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "$unwind можно применять только к массивам, состоящим из чисел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "$unwind работает с массивами любых элементов: чисел, строк, объектов, ObjectId.",
+                "source_of_confusion": "Произвольная привязка к типу.",
+                "if_it_were_true": "Нельзя было бы развернуть массив объектов items.",
+                "how_it_should_be": "$unwind применим к массивам любого типа элементов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "$unwind разворачивает массив в отдельные документы (по одному на элемент); $group группирует по выражению с агрегатами $sum/$avg/$max и т.п.; $project формирует выходные поля, включая вычисляемые ($concat, $switch, $multiply), а $addFields добавляет поля, не убирая существующие.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти три этапа покрывают подавляющее большинство аналитических преобразований. preserveNullAndEmptyArrays:true в $unwind сохраняет документы с пустыми массивами.",
+                "example": "$unwind:'$tags' → $group:{_id:'$tags',count:{$sum:1}} — частоты тегов.",
+                "when_to_apply": "Любая агрегация по элементам массива, формирование отчётов, вычисляемые поля.",
+                "edge_cases": "$unwind по большому массиву резко увеличивает объём данных; $facet позволяет выполнять несколько pipeline параллельно.",
+                "related": "Q11 aggregate; Q17 pipeline; Q41 $lookup + $unwind."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "$project не позволяет вычислять новые поля; для этого нужен $compute.",
+              "correct": false,
+              "sections": {
+                "what_actually": "$project поддерживает выражения: $concat, $multiply, $switch, $year и др. Этап $compute отсутствует.",
+                "source_of_confusion": "Выдумывание этапа.",
+                "if_it_were_true": "Не было бы примеров с fullName: {$concat:[...]}.",
+                "how_it_should_be": "$project (или $addFields) поддерживает вычисляемые выражения напрямую."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Replica Set и как происходит выбор PRIMARY?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Replica Set — это master-master конфигурация, где запись допускается на любой узел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Replica Set одновременно только один PRIMARY принимает запись; остальные — SECONDARY (и при необходимости ARBITER).",
+                "source_of_confusion": "Аналогия с другими БД, поддерживающими multi-master.",
+                "if_it_were_true": "Не было бы election и oplog как механизма репликации.",
+                "how_it_should_be": "Single-primary, multi-secondary; запись только на PRIMARY."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ARBITER хранит копию данных и принимает запись, как другие узлы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ARBITER не хранит данные и не принимает запись; он только голосует, обеспечивая кворум.",
+                "source_of_confusion": "Путаница с SECONDARY.",
+                "if_it_were_true": "Не было бы смысла отдельного типа узла без данных.",
+                "how_it_should_be": "ARBITER — только голос; данные — PRIMARY/SECONDARY."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "PRIMARY выбирается администратором вручную, без участия узлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Election автоматический и основан на голосовании участников с majority.",
+                "source_of_confusion": "Опыт ручного фейловера в других БД.",
+                "if_it_were_true": "HA не была бы автоматической — простой при падении PRIMARY.",
+                "how_it_should_be": "Автоматический election с голосованием; priority и oplog лишь влияют на выбор."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Replica Set — группа узлов с одной копией данных: один PRIMARY принимает записи и реплицирует oplog в SECONDARY; при падении PRIMARY узлы голосуют (majority) и выбирают нового PRIMARY; ARBITER участвует в голосовании без данных; election обычно занимает 1–2 секунды.",
+              "correct": true,
+              "sections": {
+                "explanation": "Replica Set обеспечивает HA и отказоустойчивость. priority узла, latency и состояние oplog влияют на исход election.",
+                "example": "PSS — два secondary и primary; PSA — primary, secondary, arbiter (минимальная HA).",
+                "when_to_apply": "Любой production-кластер MongoDB; основа транзакций и change streams.",
+                "edge_cases": "Чётное число узлов с голосом ухудшает кворум; geo-distributed обычно 5 узлов (2+2+1).",
+                "related": "Q21 write/read concern; Q22 read preference; Q23 oplog."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Write Concern и Read Concern в MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Write Concern задаёт уровень подтверждения записи (w:0 fire-and-forget, w:1 от primary, w:'majority' от большинства узлов, j:true с journal на диск), а Read Concern определяет уровень согласованности чтения: 'local' (последние данные узла, могут откатиться), 'majority' (подтверждённые большинством), 'snapshot' (для транзакций), 'linearizable' (строгая линеаризуемость, только primary).",
+              "correct": true,
+              "sections": {
+                "explanation": "Сочетание w:'majority',j:true,readConcern:'majority' даёт высочайшую надёжность ценой латентности.",
+                "example": "Платежи — majority/majority/j; логи — w:1, readConcern:'local'.",
+                "when_to_apply": "Подбор гарантий под характер данных и SLA.",
+                "edge_cases": "w:0 не получает ошибок записи; linearizable доступен только на primary и дорог.",
+                "related": "Q20 Replica Set; Q22 read preference; Q27 транзакции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Write Concern и Read Concern — это синонимы одного и того же параметра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Write Concern определяет гарантию записи (w/j), Read Concern — уровень согласованности чтения (local/majority/snapshot/linearizable).",
+                "source_of_confusion": "Поверхностное знакомство с настройками.",
+                "if_it_were_true": "Не было бы отдельных конфигураций для записи и чтения.",
+                "how_it_should_be": "Это два разных параметра: один для записи, другой для чтения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "w:'majority' гарантирует, что данные нельзя будет откатить ни в каком случае.",
+              "correct": false,
+              "sections": {
+                "what_actually": "w:'majority' защищает от rollback при потере PRIMARY, но не от катастрофического сбоя кластера или несовместимых конфигураций.",
+                "source_of_confusion": "Идеализация гарантий majority.",
+                "if_it_were_true": "Не было бы понятия catastrophic failure и backup-стратегий.",
+                "how_it_should_be": "w:'majority' резко снижает риск rollback, но не отменяет необходимости backup."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Read Concern 'linearizable' доступен и для secondary-узлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "linearizable работает только на PRIMARY и блокирует чтения, ожидающие подтверждения; на SECONDARY его использовать нельзя.",
+                "source_of_confusion": "Перенос идеи строгой согласованности на любые узлы.",
+                "if_it_were_true": "Можно было бы разгружать PRIMARY без потери линеаризуемости.",
+                "how_it_should_be": "linearizable доступен только на PRIMARY; secondary даёт max majority."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Read Preference и когда уместно читать из SECONDARY-узлов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Read Preference нельзя настроить — все чтения всегда идут на PRIMARY.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Read Preference настраивается: primary, primaryPreferred, secondary, secondaryPreferred, nearest.",
+                "source_of_confusion": "Незнание API драйверов.",
+                "if_it_were_true": "Не существовало бы способов снять нагрузку с PRIMARY.",
+                "how_it_should_be": "5 режимов Read Preference, выбираются под задачу."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Read Preference определяет, с какого узла Replica Set читать (primary, primaryPreferred, secondary, secondaryPreferred, nearest); SECONDARY уместен для аналитики/отчётов, но даёт eventual consistency из-за replication lag — после записи лучше читать с PRIMARY.",
+              "correct": true,
+              "sections": {
+                "explanation": "Использование SECONDARY снижает нагрузку на PRIMARY и приближает чтение к пользователю (nearest), но требует терпимости к отставанию реплик.",
+                "example": "Аналитика — secondaryPreferred; платежи — primary; geo-distributed app — nearest.",
+                "when_to_apply": "Разгрузка PRIMARY, geo-маршрутизация, отчёты.",
+                "edge_cases": "Сценарий read-after-write не работает с secondary; для гарантии используется causal consistency через session.",
+                "related": "Q20 Replica Set; Q21 read/write concern; Q35 оптимизация."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтение с SECONDARY всегда даёт строгую согласованность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На SECONDARY возможен replication lag — данные могут быть устаревшими.",
+                "source_of_confusion": "Маркетинговое восприятие репликации.",
+                "if_it_were_true": "Не было бы рекомендаций избегать SECONDARY для read-after-write.",
+                "how_it_should_be": "Eventual consistency на SECONDARY; для строгой — PRIMARY/linearizable."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Режима 'nearest' не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "nearest — официальный режим Read Preference: ближайший узел по latency.",
+                "source_of_confusion": "Незнание полного списка режимов.",
+                "if_it_were_true": "Не было бы поддержки geo-распределённых архитектур.",
+                "how_it_should_be": "nearest активно используется в multi-region MongoDB."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Oplog в MongoDB и какую роль он играет?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Oplog хранит запросы на чтение для последующего повтора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Oplog хранит только операции изменения данных, не чтения.",
+                "source_of_confusion": "Перенос аналогии с access log.",
+                "if_it_were_true": "Размер oplog был бы пропорционален RPS на чтение.",
+                "how_it_should_be": "Oplog — изменения (insert/update/delete); чтения там не отображаются."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Oplog — журнал WAL только для транзакций MongoDB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Oplog — журнал репликации всех изменений на PRIMARY (не только транзакций); журнал транзакций WiredTiger — отдельный механизм (journal).",
+                "source_of_confusion": "Смешение journal и oplog.",
+                "if_it_were_true": "Без транзакций не было бы репликации.",
+                "how_it_should_be": "Oplog — для репликации; WiredTiger journal — для durability на диск."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Oplog (Operations Log) — capped-коллекция local.oplog.rs на PRIMARY с идемпотентными операциями записи; SECONDARY читают oplog и применяют операции; на основе oplog работают Change Streams; при отставании реплики больше размера oplog потребуется initial sync.",
+              "correct": true,
+              "sections": {
+                "explanation": "Размер oplog по умолчанию ~5% диска (минимум 990 МБ). Чем больше oplog, тем дольше реплика может отставать без полной пересинхронизации.",
+                "example": "use local; db.oplog.rs.find().sort({$natural:-1}).limit(5) — последние операции.",
+                "when_to_apply": "Понимание репликации, размер oplog при планировании, source CDC.",
+                "edge_cases": "Очень активные кластеры могут переполнять oplog раньше, чем SECONDARY успевает синхронизироваться; нужен увеличенный oplog.",
+                "related": "Q20 Replica Set; Q21 concerns; Q36 Change Streams."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Oplog — это обычная пользовательская коллекция, которую можно вручную редактировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это системная capped-коллекция, редактирование которой нарушит репликацию.",
+                "source_of_confusion": "Соблазн прямого вмешательства в local.",
+                "if_it_were_true": "Можно было бы потерять согласованность кластера одним апдейтом.",
+                "how_it_should_be": "Oplog — read-only для приложений; через oplog работают Change Streams."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает шардирование в MongoDB и какие у него компоненты?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Шардирование делается на уровне приложения, MongoDB его не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB поддерживает встроенное автоматическое шардирование с mongos, config servers и shards.",
+                "source_of_confusion": "Перенос ручного партиционирования из других БД.",
+                "if_it_were_true": "Не было бы балансировщика чанков и резолверов запросов.",
+                "how_it_should_be": "Шардирование встроено и прозрачно для клиента через mongos."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Каждый шард обязан быть standalone-узлом без репликации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый шард — Replica Set, иначе теряется HA для подмножества данных.",
+                "source_of_confusion": "Минимальная демо-конфигурация принимается за production.",
+                "if_it_were_true": "Падение шарда выключало бы часть данных.",
+                "how_it_should_be": "Шард = Replica Set с HA внутри."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Config servers необязательны — кластер работает и без них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Config servers хранят метаданные cluster routing и обязательны; недоступность всех config servers блокирует операции на изменение метаданных.",
+                "source_of_confusion": "Идея «лишних» компонент.",
+                "if_it_were_true": "mongos не знал бы, на какой шард слать запрос.",
+                "how_it_should_be": "Config servers — обязательный Replica Set."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sharded Cluster состоит из шардов (каждый — Replica Set с подмножеством данных), config servers (хранят метаданные: диапазоны чанков и маппинг) и mongos (роутер запросов); данные делятся на чанки (по умолчанию ~128 МБ), которые балансировщик перемещает между шардами; запрос с shard key — targeted, без — scatter-gather.",
+              "correct": true,
+              "sections": {
+                "explanation": "mongos определяет, на какие шарды отправить запрос. Балансировщик перемещает чанки для равномерного распределения нагрузки.",
+                "example": "sh.shardCollection('mydb.users',{userId:'hashed'}) — hash-based шардирование.",
+                "when_to_apply": "Горизонтальное масштабирование за пределы одного хоста; геораспределённые кластеры.",
+                "edge_cases": "Jumbo chunk — чанк превысил размер и не делится; bad shard key даёт hot spot.",
+                "related": "Q25 shard key; Q26 range vs hash; Q45 zone sharding."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие критерии важны при выборе shard key в MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Хороший shard key обладает высокой кардинальностью, обеспечивает равномерное распределение без hot spots, совпадает с типичными запросами для targeted-операций и не является монотонным (избегайте чистого timestamp/ObjectId как ключа).",
+              "correct": true,
+              "sections": {
+                "explanation": "Монотонные ключи создают write hot spot на одном шарде; низкая кардинальность приводит к jumbo chunks; несоответствие запросам — к scatter-gather.",
+                "example": "{userId:1,createdAt:1} — высокая кардинальность и targeted-запросы; {createdAt:1} — анти-паттерн.",
+                "when_to_apply": "Перед sh.shardCollection — выбор ключа определяет производительность кластера.",
+                "edge_cases": "Resharding с 5.0 позволяет менять ключ, но это дорого; жалоба «jumbo chunk» указывает на плохой ключ.",
+                "related": "Q24 sharding; Q26 range vs hash; Q45 zone sharding."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Shard key может быть любым полем — кардинальность и распределение неважны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Низкая кардинальность приводит к jumbo chunks и плохому балансу; распределение определяет нагрузку на шарды.",
+                "source_of_confusion": "Поверхностное знакомство с темой.",
+                "if_it_were_true": "Не существовало бы рекомендаций по выбору ключа.",
+                "how_it_should_be": "Высокая кардинальность и равномерное распределение — ключевые критерии."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Идеальный shard key — это всегда монотонно растущее значение (timestamp, ObjectId).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Монотонный ключ — анти-паттерн: все новые записи идут в один шард, создавая hot spot.",
+                "source_of_confusion": "Совет «ставьте индекс на timestamp» переносится на shard key.",
+                "if_it_were_true": "Шардирование не давало бы прироста на запись.",
+                "how_it_should_be": "Использовать хеш или составной ключ для равномерного распределения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Shard key можно безболезненно менять в любой момент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "До MongoDB 5.0 ключ менять было нельзя; с 5.0 reshardCollection доступен, но очень дорог по ресурсам и времени.",
+                "source_of_confusion": "Аналогия со сменой индекса.",
+                "if_it_were_true": "Не было бы рекомендаций тщательно выбирать ключ заранее.",
+                "how_it_should_be": "Resharding возможен, но дорог; выбор ключа — критическое решение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между range-based и hash-based шардированием?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hash-based всегда поддерживает эффективные range-запросы по ключу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Range-запросы по hash-ключу — это scatter-gather: соседние значения попадают в разные шарды.",
+                "source_of_confusion": "Перенос идеи range-индекса.",
+                "if_it_were_true": "Не было бы смысла в range-шардировании.",
+                "how_it_should_be": "Hash → targeted по равенству; range — для диапазонов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Range-шардирование распределяет данные по диапазонам shard key и поддерживает эффективные range-запросы, но рискует hot spots при монотонном ключе; hash-шардирование распределяет по хешу значения, обеспечивая равномерность, но превращая range-запросы в scatter-gather.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор между ними — компромисс между локальностью range-запросов и равномерностью распределения.",
+                "example": "Гео-данные: {region:1, timestamp:1} — range; счётчики: {userId:'hashed'} — hash.",
+                "when_to_apply": "Sharded Cluster любого типа; выбирается стратегия для конкретной коллекции.",
+                "edge_cases": "Композитный ключ {country:1, orderId:'hashed'} даёт компромисс: locality + равномерность.",
+                "related": "Q24 sharding; Q25 shard key; Q45 zone sharding."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Range-based и hash-based — это просто разные имена одного и того же механизма.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это принципиально разные стратегии распределения чанков.",
+                "source_of_confusion": "Поверхностное знакомство.",
+                "if_it_were_true": "Не было бы выбора между ними при создании коллекции.",
+                "how_it_should_be": "Две разные стратегии с разными свойствами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hash-based шардирование делает hot spot неизбежным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hash-based, наоборот, обычно устраняет hot spots; их создают монотонные ключи в range-схеме.",
+                "source_of_confusion": "Перепутаны последствия двух стратегий.",
+                "if_it_were_true": "Hash-шардирование не применяли бы для высокой нагрузки на запись.",
+                "how_it_should_be": "Hash распределяет равномерно; hot spot — типичная проблема monotonic range-ключа."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают транзакции в MongoDB и каковы их ограничения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Транзакции в MongoDB всегда были полноценным ACID и не имеют ограничений по времени и размеру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-document ACID появились в 4.0 (Replica Set) и 4.2 (sharded); таймаут по умолчанию 60 секунд, размер ограничен 16 МБ oplog-записей.",
+                "source_of_confusion": "Маркетинговое восприятие фичи без оговорок.",
+                "if_it_were_true": "Не было бы рекомендаций избегать длинных транзакций.",
+                "how_it_should_be": "Транзакции с 4.0, лимит 60 сек и 16 МБ; overhead значительный."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Транзакции в MongoDB работают на standalone-сервере без Replica Set.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-document транзакции требуют Replica Set (или sharded cluster); на standalone они недоступны.",
+                "source_of_confusion": "Локальный dev-режим запускают как standalone.",
+                "if_it_were_true": "Можно было бы тестировать транзакции без Replica Set.",
+                "how_it_should_be": "Для транзакций нужен RS даже в тестовом окружении (через Testcontainers)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MongoDB поддерживает multi-document ACID-транзакции с версии 4.0 (Replica Set) и 4.2 (sharded), используя startTransaction/commitTransaction/abortTransaction; ограничения: требуется Replica Set, таймаут по умолчанию 60 сек, размер до 16 МБ oplog, нельзя создавать коллекции/индексы внутри (до 4.4), заметный overhead — лучше избегать через embedding.",
+              "correct": true,
+              "sections": {
+                "explanation": "Транзакции применяются, когда атомарность нужна между документами/коллекциями; для одной коллекции часто проще денормализация.",
+                "example": "session.startTransaction(); ... session.commitTransaction(); или @Transactional в Spring Data MongoDB.",
+                "when_to_apply": "Переводы между счетами, операции с несколькими сущностями, где нужна атомарность.",
+                "edge_cases": "На шардах транзакции сильно дороже; на standalone MongoDB транзакции не работают.",
+                "related": "Q20 Replica Set; Q33 транзакции в Spring; Q43 multi-document транзакции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Транзакции не имеют overhead — их можно использовать вместо обычных операций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Транзакции дороже обычных операций в 3–5 раз и нагружают oplog/coordinator.",
+                "source_of_confusion": "Идея, что ACID бесплатен.",
+                "if_it_were_true": "Не существовало бы советов избегать транзакций через embedding.",
+                "how_it_should_be": "Транзакции — для исключительных случаев, а не универсальное средство."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализуется оптимистическая блокировка при работе с MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MongoDB имеет встроенную оптимистическую блокировку, активную по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенной по умолчанию нет; оптимистическая блокировка реализуется через поле версии и условие в updateOne.",
+                "source_of_confusion": "Перенос идеи из ORM/JPA на MongoDB.",
+                "if_it_were_true": "Не нужно было бы добавлять @Version в Spring Data MongoDB.",
+                "how_it_should_be": "Реализуется приложением: версия + условный апдейт."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В Spring Data MongoDB аннотация @Version не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "@Version полностью поддерживается и автоматически добавляет проверку версии и инкремент.",
+                "source_of_confusion": "Незнание стандартных аннотаций фреймворка.",
+                "if_it_were_true": "Не существовало бы OptimisticLockingFailureException в Spring Data MongoDB.",
+                "how_it_should_be": "@Version Long version — стандартный путь для оптимистической блокировки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для оптимистической блокировки нужно обязательно использовать транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оптимистическая блокировка реализуется одной conditional updateOne без транзакций.",
+                "source_of_confusion": "Идея «конкуренция = транзакции».",
+                "if_it_were_true": "Не было бы advantage оптимистической схемы перед пессимистической блокировкой.",
+                "how_it_should_be": "Условный апдейт по версии — достаточно без транзакций."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Оптимистическая блокировка строится на уровне приложения: при чтении документа сохраняется его поле версии, при апдейте версия включается в фильтр и инкрементируется ($inc:{version:1}); если modifiedCount=0, значит документ изменили — конфликт; в Spring Data это автоматически делает @Version.",
+              "correct": true,
+              "sections": {
+                "explanation": "Подход эквивалентен SQL-подходу: WHERE id=? AND version=?; если апдейт не сработал, считается конфликт.",
+                "example": "@Document class Product { @Version Long version; ... } — Spring Data MongoDB добавит условие на version автоматически.",
+                "when_to_apply": "Конкурентное редактирование одного и того же документа; параллельные счётчики, статусы.",
+                "edge_cases": "Без правильной обработки modifiedCount=0 ошибочные обновления можно не заметить; для упрощения — атомарные операторы вроде $inc.",
+                "related": "Q10 операторы обновления; Q29 schema validation; Q33 транзакции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Schema Validation в MongoDB и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Schema Validation — правила $jsonSchema на коллекции, проверяющие документы при insert/update; настраивается level (strict|moderate) и action (error|warn); полезно для целостности на уровне БД, дополняя валидацию в приложении.",
+              "correct": true,
+              "sections": {
+                "explanation": "Уровень strict проверяет все документы; moderate — только те, что соответствовали схеме раньше. action 'warn' лишь логирует, 'error' отклоняет запись.",
+                "example": "validator: { $jsonSchema: { required:['email','name'], properties:{ email:{ pattern:'^.+@.+\\\\..+$' } } } }.",
+                "when_to_apply": "Защита от случайных нарушений схемы, миграции с постепенным переходом на новую структуру.",
+                "edge_cases": "Validator не заменяет проверку в приложении; ошибки записи возвращают код 121.",
+                "related": "Q4 коллекции; Q7 ограничения; Q31 аннотации Spring Data."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Schema Validation работает только при создании индекса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Schema Validation действует на insert и update, не имеет отношения к индексам.",
+                "source_of_confusion": "Смешение разных механизмов.",
+                "if_it_were_true": "Документы могли бы быть невалидными при наличии индекса.",
+                "how_it_should_be": "Validator применяется к каждой записи на уровне БД."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Schema Validation в MongoDB обязательна — без неё коллекцию нельзя создать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Schema-less — основное свойство MongoDB; validator опционален.",
+                "source_of_confusion": "Перенос модели РСУБД.",
+                "if_it_were_true": "MongoDB не имела бы своей ключевой особенности гибкой схемы.",
+                "how_it_should_be": "Validator подключается по желанию; по умолчанию его нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Schema Validation не поддерживает регулярные выражения и enum.",
+              "correct": false,
+              "sections": {
+                "what_actually": "$jsonSchema поддерживает pattern, enum, minLength, minimum/maximum, bsonType и т.п.",
+                "source_of_confusion": "Незнание возможностей JSON Schema.",
+                "if_it_were_true": "Не существовало бы примеров с email-pattern и role-enum.",
+                "how_it_should_be": "Поддерживается богатый набор ограничений из JSON Schema."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать Spring Data MongoDB: MongoRepository против MongoTemplate?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MongoRepository поддерживает только save(); все запросы пишутся вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoRepository поддерживает CRUD, derived-методы (findByName, findByAgeBetween), @Query, проекции, пагинацию.",
+                "source_of_confusion": "Незнание стандартного Spring Data API.",
+                "if_it_were_true": "Spring Data был бы бесполезен против ручного драйвера.",
+                "how_it_should_be": "MongoRepository — высокоуровневое API; MongoTemplate — низкоуровневое и гибкое."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MongoRepository — декларативный CRUD/derived-методы/@Query/проекции/пагинация; MongoTemplate — программное API для сложных запросов, агрегаций, bulkOps, upsert; MongoRepository удобнее для типовых задач, MongoTemplate — для динамических критериев, агрегаций и тонкой настройки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Они отлично сочетаются в одном сервисе: репозиторий — простые операции, темплейт — сложная логика.",
+                "example": "interface UserRepo extends MongoRepository<User,String>; внутри сервиса — mongoTemplate.find(query, User.class) для сложных критериев.",
+                "when_to_apply": "Любая работа со Spring Data MongoDB; выбор инструмента по сложности задачи.",
+                "edge_cases": "MongoRepository derived-методы по большому числу полей становятся нечитаемыми — лучше @Query или MongoTemplate.",
+                "related": "Q31 аннотации; Q32 агрегации; Q34 настройка подключения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MongoTemplate использовать в Spring-приложениях не рекомендуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoTemplate — стандартный и официально поддерживаемый компонент Spring Data MongoDB.",
+                "source_of_confusion": "Догма «только репозитории».",
+                "if_it_were_true": "Не существовало бы документации Spring Data по MongoTemplate.",
+                "how_it_should_be": "MongoTemplate активно используется для сложных запросов и агрегаций."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MongoRepository и MongoTemplate нельзя использовать в одном сервисе одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Их легко комбинировать; оба бина существуют независимо в контексте Spring.",
+                "source_of_confusion": "Излишний пуризм.",
+                "if_it_were_true": "Архитектура была бы менее гибкой.",
+                "how_it_should_be": "Комбинирование — нормальная практика."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие аннотации Spring Data MongoDB важно знать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Spring Data MongoDB используются те же аннотации, что и в Spring Data JPA (@Entity, @Table, @Column).",
+              "correct": false,
+              "sections": {
+                "what_actually": "У MongoDB свои аннотации: @Document, @Id, @Field, @Indexed, @CompoundIndex, @TextIndexed, @DBRef, @Version, @Transient, @CreatedDate, @LastModifiedDate.",
+                "source_of_confusion": "Перенос JPA-аннотаций на MongoDB.",
+                "if_it_were_true": "Не имело бы смысла отдельного модуля Spring Data MongoDB.",
+                "how_it_should_be": "Аннотации Spring Data MongoDB — отдельный набор, специфичный для документной модели."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "@CompoundIndex не работает в Spring Data MongoDB — индексы можно создавать только программно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "@CompoundIndex — стандартная аннотация; индексы создаются автоматически при запуске приложения.",
+                "source_of_confusion": "Незнание возможностей фреймворка.",
+                "if_it_were_true": "Не существовало бы декларативного описания составных индексов.",
+                "how_it_should_be": "@CompoundIndex(def = \"{'status':1,'createdAt':-1}\") создаст индекс."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ключевые аннотации: @Document (маппинг класса на коллекцию), @Id (поле _id), @Field (имя BSON-поля), @Indexed/@CompoundIndex/@TextIndexed (индексы), @DBRef (ссылка), @Version (оптимистическая блокировка), @Transient (не сохранять), @CreatedDate/@LastModifiedDate (auditing с @EnableMongoAuditing).",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотации позволяют декларативно настраивать маппинг, индексацию, версионирование и аудит без императивного кода.",
+                "example": "@Document('orders') class Order { @Id String id; @Indexed String status; @Version Long version; @CreatedDate Instant createdAt; }.",
+                "when_to_apply": "Описание entity-классов MongoDB в Spring Boot приложениях.",
+                "edge_cases": "@DBRef поддерживает ленивую загрузку, но добавляет round-trip; чаще предпочтительнее ручное referencing или embedding.",
+                "related": "Q30 MongoRepository/MongoTemplate; Q32 aggregations; Q33 transactions."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "@Version нельзя использовать совместно с @CreatedDate и @LastModifiedDate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти аннотации спокойно сосуществуют; auditing и optimistic locking — независимые механизмы.",
+                "source_of_confusion": "Произвольное предположение о конфликте.",
+                "if_it_were_true": "Любая модель с версиями не имела бы стандартного аудита.",
+                "how_it_should_be": "@Version + @CreatedDate + @LastModifiedDate — обычное сочетание."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выполнять агрегации в Spring Data MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring Data MongoDB не поддерживает агрегации; их нужно писать чистым Java Driver.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoTemplate.aggregate и @Aggregation полностью поддерживают agg pipeline через типобезопасный билдер.",
+                "source_of_confusion": "Незнание Aggregation API Spring Data MongoDB.",
+                "if_it_were_true": "Не существовало бы примеров с Aggregation.newAggregation в документации.",
+                "how_it_should_be": "MongoTemplate.aggregate + Aggregation builder или @Aggregation на методе репозитория."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "@Aggregation поддерживает только один этап pipeline.",
+              "correct": false,
+              "sections": {
+                "what_actually": "@Aggregation принимает массив строк-этапов любой длины.",
+                "source_of_confusion": "Поверхностный просмотр документации.",
+                "if_it_were_true": "Не было бы смысла в @Aggregation для сложных пайплайнов.",
+                "how_it_should_be": "@Aggregation(pipeline = { '...', '...', '...' }) — несколько этапов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В Spring Data MongoDB агрегации всегда выполняются на клиенте, а не на сервере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pipeline отправляется на MongoDB-сервер и выполняется там; клиенту возвращается результат.",
+                "source_of_confusion": "Идея, что фреймворк локально обрабатывает данные.",
+                "if_it_were_true": "Не было бы смысла использовать $match для уменьшения трафика.",
+                "how_it_should_be": "Pipeline выполняется на сервере; клиент получает агрегированный результат."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Через Aggregation.newAggregation в MongoTemplate.aggregate (типобезопасный билдер с match/group/sort/project/unwind/lookup) или через @Aggregation на методе MongoRepository с pipeline-строками; результат собирается в AggregationResults<T>.",
+              "correct": true,
+              "sections": {
+                "explanation": "Aggregation builder выражает pipeline как последовательность методов; @Aggregation удобен для статичных pipeline на репозитории.",
+                "example": "Aggregation.newAggregation(match(...), unwind('items'), group('items.category').sum('items.price').as('totalRevenue'), sort(DESC,'totalRevenue')).",
+                "when_to_apply": "Любая агрегация — статистика, отчёты, $lookup, фасеты.",
+                "edge_cases": "Для динамических pipeline удобнее MongoTemplate; для статичных — @Aggregation; результат может потребовать allowDiskUse:true.",
+                "related": "Q17 pipeline; Q18 $lookup; Q30 MongoTemplate."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать транзакции в Spring Data MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно объявить MongoTransactionManager и работать через @Transactional или TransactionTemplate; обязательно нужен Replica Set, иначе транзакции не работают.",
+              "correct": true,
+              "sections": {
+                "explanation": "MongoTransactionManager интегрируется со стандартным Spring transaction API; @Transactional оборачивает методы; TransactionTemplate подходит для программного управления.",
+                "example": "@Bean MongoTransactionManager + @Transactional public void transfer(...) — атомарные обновления.",
+                "when_to_apply": "Multi-document/multi-collection операции с требованием атомарности.",
+                "edge_cases": "Standalone MongoDB не поддерживает транзакции; для тестов нужно Testcontainers с Replica Set; не создавать коллекции внутри транзакции.",
+                "related": "Q27 транзакции; Q43 multi-doc; Q34 настройка подключения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Транзакции в Spring Data MongoDB работают на любой версии MongoDB и не требуют Replica Set.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-document транзакции есть с 4.0 и требуют Replica Set/Sharded.",
+                "source_of_confusion": "Незнание ограничений MongoDB.",
+                "if_it_were_true": "Не было бы рекомендаций использовать Testcontainers с RS.",
+                "how_it_should_be": "Версия 4.0+ и Replica Set — обязательное условие."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для транзакций обязательно использовать ReactiveMongoTemplate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Транзакции работают и в блокирующей модели через MongoTransactionManager и обычный MongoTemplate.",
+                "source_of_confusion": "Маркетинг реактивных API.",
+                "if_it_were_true": "Любой Spring MVC проект не мог бы использовать транзакции MongoDB.",
+                "how_it_should_be": "Транзакции доступны для блокирующего и реактивного стека."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "@Transactional на методе автоматически создаст коллекции, если их не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутри транзакции (особенно до 4.4) создание коллекций недопустимо или ограничено; коллекции создаются заранее.",
+                "source_of_confusion": "Перенос лояльности MongoDB к schema-less на DDL внутри транзакции.",
+                "if_it_were_true": "Не было бы ограничений на DDL в транзакциях.",
+                "how_it_should_be": "Коллекции создаются вне транзакции, заранее."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить подключение к MongoDB в Spring Boot?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Spring Boot подключение к MongoDB настроить нельзя — нужен ручной запуск через Java Driver.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Boot предоставляет авто-конфигурацию через spring.data.mongodb.* и AbstractMongoClientConfiguration.",
+                "source_of_confusion": "Незнание возможностей Spring Boot.",
+                "if_it_were_true": "Не было бы spring-boot-starter-data-mongodb.",
+                "how_it_should_be": "URI/host/port/credentials в application.yml + опциональная программная настройка."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Через application.yml задаются spring.data.mongodb.uri или host/port/database/username/password; программно настраивается AbstractMongoClientConfiguration с ConnectionString, ConnectionPoolSettings (maxSize/minSize/maxWaitTime), SocketSettings, WriteConcern/ReadPreference; для нескольких БД создаются отдельные MongoTemplate.",
+              "correct": true,
+              "sections": {
+                "explanation": "application.yml покрывает большинство случаев; программная конфигурация даёт тонкий контроль над пулом, таймаутами и concerns.",
+                "example": "uri: mongodb://user:pass@h1,h2/db?replicaSet=rs0&readPreference=secondaryPreferred.",
+                "when_to_apply": "Любое подключение Spring Boot к MongoDB, включая Replica Set и Atlas.",
+                "edge_cases": "Для нескольких БД создавайте именованные MongoDatabaseFactory и MongoTemplate; не забывайте таймауты для production.",
+                "related": "Q30 MongoTemplate; Q22 ReadPreference; Q21 WriteConcern."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "URI всегда должен быть в виде mongodb+srv://, иначе соединение не установится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "mongodb+srv:// — DNS-резолвинг replica set (Atlas); обычная схема mongodb:// со списком хостов работает не хуже.",
+                "source_of_confusion": "Использование только Atlas.",
+                "if_it_were_true": "Self-hosted MongoDB нельзя было бы подключить.",
+                "how_it_should_be": "mongodb:// или mongodb+srv:// — обе схемы валидны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Пул соединений в MongoDB нельзя настраивать программно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ConnectionPoolSettings.builder().maxSize().minSize().maxWaitTime() — стандартное API драйвера.",
+                "source_of_confusion": "Недостаток знакомства с MongoClientSettings.",
+                "if_it_were_true": "Production-настройки пула были бы невозможны.",
+                "how_it_should_be": "Пул соединений настраивается через MongoClientSettings."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как оптимизировать запросы в MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы ускорить MongoDB, нужно отключить все индексы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без индексов запросы делают COLLSCAN — это медленнее, а не быстрее; индексы — основной инструмент оптимизации.",
+                "source_of_confusion": "Идея «индексы тормозят».",
+                "if_it_were_true": "Не было бы explain и рекомендаций по ESR.",
+                "how_it_should_be": "Создавать целевые индексы по паттернам запросов; удалять только неиспользуемые."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для пагинации больших коллекций всегда нужно использовать skip + limit.",
+              "correct": false,
+              "sections": {
+                "what_actually": "skip сканирует пропущенные документы — на больших offset катастрофически медленно.",
+                "source_of_confusion": "Простой SQL OFFSET-стиль.",
+                "if_it_were_true": "Производительность UI оставалась бы стабильной при глубокой пагинации.",
+                "how_it_should_be": "Keyset-пагинация: find({_id:{$gt:lastSeenId}}).sort({_id:1}).limit(20)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Анализ через explain('executionStats'), целевые индексы по правилу ESR, covered queries, проекция только нужных полей, keyset-пагинация вместо skip, $match первым в aggregation, allowDiskUse для больших агрегаций, профайлер для медленных запросов (setProfilingLevel).",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная цель — IXSCAN вместо COLLSCAN и минимизация totalDocsExamined. Профайлер находит медленные запросы для целевых улучшений.",
+                "example": "db.setProfilingLevel(1,{slowms:100}); db.system.profile.find().sort({ts:-1}).limit(10).",
+                "when_to_apply": "Регулярная производительная работа; деградации latency на проде.",
+                "edge_cases": "Skip + большой offset катастрофически медленно — переходите на keyset; in-memory sort > 100 МБ требует allowDiskUse.",
+                "related": "Q12 индексы; Q13 ESR; Q14 covered query."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Проекция не влияет на производительность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Проекция уменьшает объём передаваемых данных и может включать covered query — заметный эффект на сети и латентности.",
+                "source_of_confusion": "Идея, что серверу всё равно, что возвращать.",
+                "if_it_were_true": "Не было бы рекомендаций {field:1,_id:0} для covered queries.",
+                "how_it_should_be": "Возвращайте только нужные поля; это снижает I/O и сеть."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Change Streams в MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Change Streams — это batch-выгрузка данных через mongoexport.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Change Streams — потоковая подписка на изменения данных в реальном времени поверх oplog.",
+                "source_of_confusion": "Смешение CDC с экспортом.",
+                "if_it_were_true": "Не было бы примеров с collection.watch() и resumeToken.",
+                "how_it_should_be": "Streaming изменений через MongoDB API watch()."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Change Streams возвращают только операции insert.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возвращаются insert, update, replace, delete, invalidate, drop, rename — полный набор событий изменений.",
+                "source_of_confusion": "Поверхностный взгляд.",
+                "if_it_were_true": "Не было бы возможности отслеживать удаления и переименования.",
+                "how_it_should_be": "Любое изменение данных и метаданных коллекции отражается в потоке."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Change Streams работают на standalone-сервере без Replica Set.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Требуется Replica Set или Sharded Cluster, потому что Change Streams читают oplog.",
+                "source_of_confusion": "Локальный standalone в dev.",
+                "if_it_were_true": "Можно было бы тестировать CDC без RS.",
+                "how_it_should_be": "Запускать MongoDB в режиме Replica Set даже для одного узла (initiate с rs.initiate())."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Change Streams — подписка на изменения коллекции/БД/кластера в реальном времени поверх oplog: collection.watch() возвращает курсор с событиями (insert/update/replace/delete/invalidate); resumeToken позволяет продолжить с места остановки; требует Replica Set/Sharded Cluster.",
+              "correct": true,
+              "sections": {
+                "explanation": "Подходят для инвалидации кэша, синхронизации с Elasticsearch/Redis, публикации событий в Kafka, аудита.",
+                "example": "collection.watch().forEach(ev -> ...); сохранение resumeToken в Redis для возобновления.",
+                "when_to_apply": "Event-driven архитектуры на базе MongoDB как source of truth.",
+                "edge_cases": "В шардированном кластере порядок между шардами не гарантирован; resumeToken связан с oplog — устаревшие токены становятся невалидны.",
+                "related": "Q23 Oplog; Q20 Replica Set; Q42 Change Streams в Spring."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как мониторить производительность MongoDB в production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ключевые метрики: opcounters (RPS на insert/query/update/delete), connections.current, wiredTiger.cache utilization и eviction rate, repl.lag (отставание реплик), globalLock.currentQueue; инструменты: mongostat/mongotop, db.serverStatus(), profiler уровня 1, Prometheus + mongodb-exporter, в Spring Boot — Micrometer.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти метрики покрывают нагрузку, состояние пула соединений, эффективность кэша WiredTiger и здоровье репликации.",
+                "example": "Алерт на repl.lag > 10s; eviction rate > 0 — сигнал, что cache мал.",
+                "when_to_apply": "Production-мониторинг, диагностика инцидентов, SLA.",
+                "edge_cases": "Долгие queue на globalLock свидетельствуют о блокировках или большом писательском потоке; cache eviction говорит о нехватке памяти.",
+                "related": "Q35 оптимизация; Q21 concerns; Q20 Replica Set."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Profiler db.setProfilingLevel(1,{slowms:100}) включается только в dev и не нужен на проде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Profiler полезен и на проде с осторожностью: уровень 1 пишет только медленные запросы, нагрузка контролируема.",
+                "source_of_confusion": "Перенос практики тяжёлого профайлинга.",
+                "if_it_were_true": "На проде не находили бы медленные запросы для оптимизации.",
+                "how_it_should_be": "Profiler уровня 1 с настройкой slowms — стандартный инструмент prod-наблюдаемости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MongoDB не предоставляет средств мониторинга — нужно писать свои логи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Доступны mongostat, mongotop, db.serverStatus(), profiler, экспортёры для Prometheus, MongoDB Atlas-мониторинг.",
+                "source_of_confusion": "Незнание инструментов.",
+                "if_it_were_true": "Производственные кластеры были бы непрозрачны.",
+                "how_it_should_be": "Использовать встроенные команды + экспорт метрик в Prometheus/Grafana."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Прометей и mongodb-exporter невозможно подключить к MongoDB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "mongodb-exporter — официальный/community проект, стандартная связка с Prometheus и Grafana.",
+                "source_of_confusion": "Незнание экосистемы.",
+                "if_it_were_true": "Не было бы готовых дашбордов MongoDB в Grafana.",
+                "how_it_should_be": "Prometheus + mongodb-exporter + Grafana — стандартный стек наблюдаемости MongoDB."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать миграции данных в MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Поскольку MongoDB schema-less, миграции вообще не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Меняется не только схема, но и значения: переименования полей, заполнение новых обязательных полей, изменение форматов — это требует миграций.",
+                "source_of_confusion": "Идеализация гибкой схемы.",
+                "if_it_were_true": "Не существовало бы Mongock и migrate-mongo.",
+                "how_it_should_be": "Schema-less ≠ migration-less; миграции данных нужны."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В Spring используется Mongock (аналог Flyway/Liquibase) с @ChangeUnit/@Execution/@RollbackExecution; альтернативы — migrate-mongo (Node.js) или ручные скрипты с версионированием; лучшие практики — обратная совместимость, постепенная миграция bulkWrite-батчами, тесты на копии и откатные скрипты.",
+              "correct": true,
+              "sections": {
+                "explanation": "Постепенная миграция важна для больших коллекций: огромный updateMany без батчей блокирует реплики и сжигает oplog.",
+                "example": "@ChangeUnit добавляет поле status='ACTIVE' где его нет, по 10k документов за итерацию.",
+                "when_to_apply": "Любые семантические изменения данных, переход на новый формат полей.",
+                "edge_cases": "Обязательная обратная совместимость на время раскатки нескольких версий приложения; не делать миграции внутри транзакций.",
+                "related": "Q31 аннотации; Q33 транзакции; Q29 schema validation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для миграций MongoDB можно использовать Flyway без адаптации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Flyway ориентирован на SQL; для MongoDB используется Mongock или migrate-mongo.",
+                "source_of_confusion": "Знакомство с одним инструментом.",
+                "if_it_were_true": "Не существовало бы отдельных инструментов под MongoDB.",
+                "how_it_should_be": "Mongock — каноничный выбор в Spring; migrate-mongo — в Node.js."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Миграции больших коллекций нужно делать одним updateMany без батчей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это блокирует реплики и переполняет oplog; правильный подход — bulkWrite батчами.",
+                "source_of_confusion": "Желание «сделать одним запросом».",
+                "if_it_were_true": "Реплицирование не страдало бы от длинных операций.",
+                "how_it_should_be": "Постепенные батчи с контролем пауз и backpressure."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить безопасность кластера MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно открыть MongoDB в интернете без аутентификации — данные защищены сами по себе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Открытая MongoDB без auth — частая причина утечек; обязательны auth, TLS, сетевая изоляция.",
+                "source_of_confusion": "Старые дефолты без auth (давно изменены).",
+                "if_it_were_true": "Не было бы публичных кейсов утечек незащищённых MongoDB.",
+                "how_it_should_be": "Включать auth, ограничивать сеть, использовать TLS."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "RBAC в MongoDB не существует — все пользователи имеют права суперпользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть встроенные роли read/readWrite/dbAdmin/userAdmin/clusterAdmin и кастомные роли с привилегиями на ресурсы.",
+                "source_of_confusion": "Незнание системы ролей.",
+                "if_it_were_true": "MongoDB была бы непригодна для multi-tenant окружений.",
+                "how_it_should_be": "Принцип наименьших привилегий через RBAC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Безопасность: аутентификация (SCRAM-SHA-256/x.509/LDAP/Kerberos), ролевая авторизация (read/readWrite/dbAdmin/userAdmin/clusterAdmin + кастомные роли), TLS/SSL для трафика, сетевая изоляция (bindIp/firewall), audit log для compliance, регулярные обновления версии.",
+              "correct": true,
+              "sections": {
+                "explanation": "Многоуровневая защита: identity, RBAC, transport security, network, audit. Конкретные роли назначаются на уровне БД.",
+                "example": "db.createUser({user:'appUser', pwd:'...', roles:[{role:'readWrite', db:'myapp'}]}).",
+                "when_to_apply": "Любой production-кластер MongoDB, особенно в облаке.",
+                "edge_cases": "Кастомные роли с гранулярными privileges нужны для compliance; LDAP/Kerberos требуют Enterprise.",
+                "related": "Q21 concerns; Q34 connection; Q24 sharding."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TLS не поддерживается MongoDB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TLS/SSL поддерживается и обязателен в Atlas; на self-hosted настраивается через --tlsMode requireTLS и сертификаты.",
+                "source_of_confusion": "Недостаточно изученные настройки.",
+                "if_it_were_true": "Транзитный трафик был бы открытым.",
+                "how_it_should_be": "Шифрование трафика TLS — стандарт production."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каких сценариях MongoDB — плохой выбор?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Встроенный текстовый поиск MongoDB полностью заменяет Elasticsearch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "$text не имеет fuzzy/synonyms/autocomplete/facet; Atlas Search ближе к Lucene, но для self-hosted нужен Elasticsearch.",
+                "source_of_confusion": "Маркетинг $text как «полнотекстового поиска».",
+                "if_it_were_true": "Не существовало бы интеграции MongoDB ↔ Elasticsearch.",
+                "how_it_should_be": "Простой поиск — $text; продвинутый — Atlas Search/Elasticsearch."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MongoDB всегда хуже PostgreSQL для любых задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для полуструктурированных, иерархических данных и горизонтального масштабирования MongoDB часто удобнее.",
+                "source_of_confusion": "Чрезмерное предпочтение РСУБД.",
+                "if_it_were_true": "Не существовало бы продакшен-кейсов MongoDB.",
+                "how_it_should_be": "Каждая БД сильна в своих сценариях; выбор по требованиям."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MongoDB — лучшая БД для OLAP-аналитики по колонкам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для OLAP по колонкам сильнее колоночные БД ClickHouse/Cassandra/BigQuery.",
+                "source_of_confusion": "Принцип «MongoDB подходит для всего».",
+                "if_it_were_true": "ClickHouse и Snowflake не имели бы рыночной ниши.",
+                "how_it_should_be": "OLAP — колоночные БД; MongoDB — OLTP/полуструктурированные данные."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MongoDB не подходит для сложных many-to-many связей с большим количеством JOIN-ов (лучше РСУБД), строгих ACID на множестве сущностей с критичной производительностью, аналитики типа OLAP по колонкам (лучше ClickHouse/Cassandra), небольших данных с фиксированной схемой (нет преимуществ перед PostgreSQL), сильной нормализации, продвинутого полнотекстового поиска (нужен Elasticsearch).",
+              "correct": true,
+              "sections": {
+                "explanation": "MongoDB сильна в полуструктурированных данных и денормализации; в указанных сценариях её преимущества не реализуются или отсутствуют.",
+                "example": "Финансовая система с двойной записью и сложными JOIN — выбирайте PostgreSQL; OLAP-витрины — ClickHouse.",
+                "when_to_apply": "Выбор технологии хранения в начале проекта.",
+                "edge_cases": "Гибридные стеки: MongoDB как OLTP + ClickHouse как OLAP, синхронизация через Change Streams + Kafka.",
+                "related": "Q1 что такое MongoDB; Q2 vs РСУБД; Q27 транзакции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает $lookup с вложенным pipeline и $unwind в MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "$lookup с pipeline принимает let-переменные (значения текущего документа) и pipeline с фильтрацией ($expr) на стороне joined-коллекции; в паре с $unwind массив результатов разворачивается в отдельные документы; preserveNullAndEmptyArrays:true сохраняет документы с пустым массивом (LEFT JOIN-семантика).",
+              "correct": true,
+              "sections": {
+                "explanation": "Pipeline-форма позволяет передавать значения через $$var, фильтровать и проектировать поля joined-коллекции до возврата.",
+                "example": "$lookup:{from:'products', let:{pid:'$product_id'}, pipeline:[{$match:{$expr:{$eq:['$_id','$$pid']}}}, {$project:{name:1,price:1}}], as:'product_info'}, затем $unwind:'$product_info'.",
+                "when_to_apply": "Сложные JOIN с фильтрацией joined-данных, отчёты, агрегации по нескольким коллекциям.",
+                "edge_cases": "На шардированных from-коллекциях $lookup работает с ограничениями (до 5.1); $unwind по большому массиву экспоненциально увеличивает поток.",
+                "related": "Q18 $lookup; Q17 pipeline; Q19 $group/$unwind/$project."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "$lookup с let/pipeline всегда быстрее обычной формы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pipeline-форма гибче, но дороже простой формы localField/foreignField; «всегда быстрее» — миф.",
+                "source_of_confusion": "Идея «больше возможностей = больше производительности».",
+                "if_it_were_true": "Простая форма $lookup не использовалась бы.",
+                "how_it_should_be": "Для простого equality-JOIN — обычная форма; для сложных условий — pipeline."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "$unwind отбрасывает массивы только с null-значениями и не имеет настроек.",
+              "correct": false,
+              "sections": {
+                "what_actually": "$unwind поддерживает preserveNullAndEmptyArrays и includeArrayIndex — поведение настраивается.",
+                "source_of_confusion": "Незнание опций оператора.",
+                "if_it_were_true": "Не было бы рекомендаций сохранять документы с пустыми массивами.",
+                "how_it_should_be": "$unwind:{path:'$arr',preserveNullAndEmptyArrays:true} оставит документы без массива."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В вложенном pipeline $lookup нельзя использовать $expr.",
+              "correct": false,
+              "sections": {
+                "what_actually": "$expr — основной способ сравнивать let-переменные с полями joined-коллекции внутри pipeline.",
+                "source_of_confusion": "Неправильное прочтение документации.",
+                "if_it_were_true": "Не существовало бы примеров с $match:{$expr:{$eq:['$_id','$$pid']}}.",
+                "how_it_should_be": "$expr — стандартный паттерн для коррелированных $lookup."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать Change Streams в Spring Data MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring Data MongoDB не поддерживает Change Streams.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддерживаются и в блокирующем, и в реактивном вариантах через ReactiveMongoTemplate.changeStream или MessageListenerContainer.",
+                "source_of_confusion": "Незнание API.",
+                "if_it_were_true": "Не существовало бы примеров с ChangeStreamOptions.",
+                "how_it_should_be": "Стандартный механизм Spring Data: реактивный или контейнер на основе курсора."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Через ReactiveMongoTemplate.changeStream() с ChangeStreamOptions (фильтры на operationType, full document policy) или через MessageListenerContainer; resumeToken позволяет возобновить с места остановки; типичные применения — синхронизация кэша, аудит, CDC в Kafka/Elasticsearch.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реактивный подход даёт backpressure-поток событий, который можно подписать и обрабатывать асинхронно.",
+                "example": "mongoTemplate.changeStream('orders', ChangeStreamOptions.builder().filter(...).build(), Order.class).doOnNext(this::process).subscribe();",
+                "when_to_apply": "Event-driven архитектуры на базе MongoDB, инвалидация кэшей, синхронизация поисков.",
+                "edge_cases": "Требуется Replica Set; persist resumeToken во внешнем хранилище для восстановления после рестарта; устаревший token может стать невалидным после очистки oplog.",
+                "related": "Q23 Oplog; Q36 Change Streams; Q20 Replica Set."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Resume Token хранить не нужно — Change Streams сами восстанавливаются после рестарта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без resumeToken приложение пропустит события, происходившие во время простоя.",
+                "source_of_confusion": "Идея «сервис сам себя восстановит».",
+                "if_it_were_true": "Не нужны были бы API getResumeToken/resumeAfter.",
+                "how_it_should_be": "resumeToken хранится во внешнем сторе и применяется при перезапуске."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Change Streams в Spring работают только в блокирующем режиме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реактивный ReactiveMongoTemplate.changeStream — самый идиоматичный способ; блокирующий контейнер тоже доступен.",
+                "source_of_confusion": "Старые примеры до появления reactive support.",
+                "if_it_were_true": "Не было бы реактивных Flux потоков событий.",
+                "how_it_should_be": "Reactive ChangeStream — основной идиоматичный путь."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 43,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают транзакции на нескольких документах и коллекциях в MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Multi-document транзакции автоматически открываются вокруг любого updateOne.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Updates на одном документе атомарны без транзакции; для нескольких документов/коллекций нужно явно открыть session.withTransaction.",
+                "source_of_confusion": "Идея «всё в транзакции по умолчанию».",
+                "if_it_were_true": "Performance MongoDB пострадал бы для типовых случаев.",
+                "how_it_should_be": "Транзакции открываются явно через session/@Transactional."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Лимит размера транзакции в MongoDB — 256 МБ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лимит — 16 МБ oplog-записей на транзакцию; превышение даёт ошибку.",
+                "source_of_confusion": "Путаница с другими лимитами/системами.",
+                "if_it_were_true": "Long-running большие транзакции были бы нормой.",
+                "how_it_should_be": "Транзакции должны быть короткими и небольшими по объёму данных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "С 4.0 (Replica Set) и 4.2 (Sharded) MongoDB поддерживает multi-document ACID: session.withTransaction({...}) с readConcern:'snapshot' и writeConcern:'majority'; в Spring — MongoTransactionManager + @Transactional; ограничения: 60 сек таймаут, 16 МБ oplog, 3–5x overhead, DDL внутри транзакции (до 4.4) запрещён, рекомендуется денормализация для устранения транзакций между коллекциями.",
+              "correct": true,
+              "sections": {
+                "explanation": "withTransaction автоматически повторяет операцию при ошибках вроде TransientTransactionError. Snapshot read даёт согласованный снимок данных.",
+                "example": "session.withTransaction(()->{ orders.insertOne(session,o); inventory.updateOne(session,filter,inc); return null; }, opts).",
+                "when_to_apply": "Переводы между сущностями, операции с несколькими документами, где нужна атомарность.",
+                "edge_cases": "На sharded cluster транзакции дороже из-за inter-shard 2PC; обновления > 16 МБ oplog приведут к ошибке.",
+                "related": "Q27 транзакции; Q33 Spring; Q20 Replica Set."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "На sharded cluster транзакции стоят столько же, сколько на одиночном Replica Set.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На sharded cluster требуется координация между шардами (2PC), что увеличивает overhead.",
+                "source_of_confusion": "Идея «всё распределённое прозрачно».",
+                "if_it_were_true": "Не было бы предупреждений о цене inter-shard транзакций.",
+                "how_it_should_be": "Inter-shard транзакции значительно дороже single-shard."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 44,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Time Series Collections в MongoDB и для чего они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Time Series Collections — это обычные коллекции с TTL-индексом, без особой оптимизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это специальный тип коллекции с внутренней группировкой по временным бакетам и сильным сжатием; TTL — лишь одна из опций.",
+                "source_of_confusion": "Поверхностное знакомство.",
+                "if_it_were_true": "Не имело бы смысла отдельное API timeseries.",
+                "how_it_should_be": "Специализированная структура хранения для временных рядов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "TTL по полю timeField в Time Series Collection не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Через expireAfterSeconds TTL по timeField — нативная фича, удобно для ротации старых метрик.",
+                "source_of_confusion": "Незнание возможностей.",
+                "if_it_were_true": "Не существовало бы примеров с expireAfterSeconds в createCollection.",
+                "how_it_should_be": "TTL работает по timeField; данные старше TTL удаляются автоматически."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Time Series Collections поддерживают обновление отдельных документов так же легко, как обычные коллекции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Точечный updateOne для конкретного timestamp не поддерживается; меняются только bulk-операции по фильтру.",
+                "source_of_confusion": "Перенос привычек обычных коллекций.",
+                "if_it_were_true": "Не было бы предупреждений об ограничениях DML.",
+                "how_it_should_be": "Принять ограничения timeseries и проектировать пайплайны записи под них."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Специальный тип коллекции с MongoDB 5.0+, оптимизированный для временных рядов: задаются timeField, metaField (sensor_id/region) и granularity (seconds/minutes/hours); данные сжимаются и группируются по бакетам, экономия памяти 70–90%; range-запросы и TTL работают по timeField; ограничения — нет точечных update/delete отдельных документов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Документы с одинаковой metadata и близкими timestamp хранятся в едином внутреннем бакете, что резко уменьшает overhead.",
+                "example": "db.createCollection('sensor_readings', {timeseries:{timeField:'timestamp', metaField:'metadata', granularity:'seconds'}, expireAfterSeconds:2592000}).",
+                "when_to_apply": "Метрики IoT, мониторинг, логи с timestamp, аналитика временных рядов.",
+                "edge_cases": "Нельзя обновлять/удалять отдельные документы напрямую; схема плоская; рекомендованная granularity зависит от частоты данных.",
+                "related": "Q4 коллекции; Q16 TTL; Q35 оптимизация."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 45,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать стратегию шардирования: зональное vs хеш-шардирование?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Zone Sharding позволяет привязать диапазоны shard key к конкретным шардам (например, region:'EU' → шарды в Европе) для гео-локализации и data residency; Hash Sharding даёт равномерное распределение без локальности; Range Sharding — диапазоны без зон; выбор между ними определяется требованиями к range-запросам, локализации и нагрузке на запись.",
+              "correct": true,
+              "sections": {
+                "explanation": "Zone Sharding нужен для compliance (GDPR data residency) и минимизации сетевой задержки; Hash — для равномерности; Range — для range-запросов без локальности.",
+                "example": "sh.addShardToZone('shard0001','EU'); sh.updateZoneKeyRange('mydb.users', {country:'DE'}, {country:'DZ'}, 'EU').",
+                "when_to_apply": "Multi-region кластеры, регуляторные требования, гео-чувствительная маршрутизация.",
+                "edge_cases": "Неправильные диапазоны зон могут привести к jumbo chunks; смена зон требует ребалансировки.",
+                "related": "Q24 sharding; Q25 shard key; Q26 range vs hash."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Зональное и хеш-шардирование — синонимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Zone sharding привязывает диапазоны shard key к конкретным шардам (например, по странам), а hash распределяет по хешу.",
+                "source_of_confusion": "Слабое знание стратегий.",
+                "if_it_were_true": "Не было бы API addShardToZone/updateZoneKeyRange.",
+                "how_it_should_be": "Это разные стратегии с разными целями."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Zone Sharding нельзя комбинировать с range или hash стратегиями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Zone — это надстройка: можно комбинировать с range-ключом, чтобы зона привязывала диапазоны значений к шардам.",
+                "source_of_confusion": "Поверхностное понимание.",
+                "if_it_were_true": "Не было бы примеров zone + range key.",
+                "how_it_should_be": "Zone применяется поверх range-ключа для локализации диапазонов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Range-шардирование по монотонному ключу безопасно и не приводит к hot spots.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Монотонный ключ создаёт write hot spot — все новые записи идут в последний чанк/шард.",
+                "source_of_confusion": "Игнорирование известной ловушки.",
+                "if_it_were_true": "Не нужны были бы советы рандомизировать ключ или брать composite.",
+                "how_it_should_be": "Для монотонных данных — либо hash, либо composite-ключ с рандомизацией."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 46,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Atlas Search и чем он отличается от встроенного text-индекса MongoDB?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Atlas Search — это просто синоним для text-индекса MongoDB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Atlas Search — полнотекстовый поиск на Apache Lucene, доступный в MongoDB Atlas, значительно мощнее $text.",
+                "source_of_confusion": "Незнание дополнительных возможностей.",
+                "if_it_were_true": "Не имело бы смысла отдельного оператора $search.",
+                "how_it_should_be": "Atlas Search использует Lucene и предоставляет fuzzy, autocomplete, facet, highlight."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Atlas Search — поиск на Apache Lucene, встроенный в MongoDB Atlas: поддерживает fuzzy-search, autocomplete, фасетный поиск, highlight, синонимы и языковые анализаторы, доступен через $search в aggregation pipeline; встроенный text-индекс MongoDB лишён этих возможностей; для self-hosted альтернативой остаётся Elasticsearch с CDC через Change Streams/Kafka.",
+              "correct": true,
+              "sections": {
+                "explanation": "Atlas Search индексирует данные параллельно основной коллекции через Lucene, не нагружая основной WiredTiger-индекс.",
+                "example": "$search:{index:'products_search', compound:{must:[{text:{query:'детское кресло', path:['name','description'], fuzzy:{maxEdits:1}}}], filter:[{range:{path:'price', gte:1000, lte:10000}}]}}.",
+                "when_to_apply": "Полнотекстовый поиск с релевантностью, автодополнение, фасеты на Atlas; для self-hosted — связка с Elasticsearch.",
+                "edge_cases": "Atlas Search доступен только в Atlas; self-hosted равноценной встроенной альтернативы нет.",
+                "related": "Q15 text-индекс; Q40 когда не брать MongoDB; Q36 Change Streams."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Atlas Search работает и в self-hosted MongoDB без Atlas.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Atlas Search доступен только в MongoDB Atlas; в self-hosted его нет, используется Elasticsearch.",
+                "source_of_confusion": "Желание получить Lucene без Atlas.",
+                "if_it_were_true": "Atlas как продукт частично потерял бы дифференциацию.",
+                "how_it_should_be": "Self-hosted — встроенный $text + Elasticsearch как полноценная замена Atlas Search."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Встроенный text-индекс поддерживает fuzzy-search и автодополнение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "$text не поддерживает fuzzy и автодополнение; эти функции есть только в Atlas Search или Elasticsearch.",
+                "source_of_confusion": "Смешение возможностей.",
+                "if_it_were_true": "Не было бы дифференциации Atlas Search.",
+                "how_it_should_be": "fuzzy/autocomplete — Atlas Search или Elasticsearch."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
