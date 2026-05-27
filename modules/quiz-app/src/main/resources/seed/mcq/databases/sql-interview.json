@@ -1,0 +1,3185 @@
+{
+  "topic_slug": "sql-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `SQL` и какие подмножества языка существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SQL` — стандартный язык работы с реляционными БД, состоящий из подмножеств `DDL` (структура), `DML` (данные), `DCL` (доступ) и `TCL` (транзакции).",
+              "correct": true,
+              "sections": {
+                "explanation": "`DDL` — `CREATE`/`ALTER`/`DROP`/`TRUNCATE`; `DML` — `SELECT`/`INSERT`/`UPDATE`/`DELETE`; `DCL` — `GRANT`/`REVOKE`; `TCL` — `COMMIT`/`ROLLBACK`/`SAVEPOINT`. Это стандарт `ANSI/ISO` с диалектами `PostgreSQL`, `MySQL`, `Oracle`.",
+                "example": "`CREATE TABLE employees (...)` — `DDL`; `INSERT INTO employees VALUES (...)` — `DML`; `GRANT SELECT ON employees TO app_user` — `DCL`; `COMMIT` — `TCL`.",
+                "when_to_apply": "Понимание разбиения важно при проектировании прав доступа, миграций и обработки транзакций в `Spring`-приложении.",
+                "edge_cases": "`TRUNCATE` относится к `DDL` (не откатывается в `MySQL InnoDB`); в стандарте есть ещё `SQL/CLI` и `SQL/PSM`.",
+                "related": "Q15 разница `DELETE`/`TRUNCATE`/`DROP`; Q38 `ACID`; Q47 транзакции в `Spring`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SQL` — это процедурный язык программирования, в котором нет деления на подмножества операторов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SQL` декларативный (описывает «что», а не «как») и стандартно делится на `DDL`/`DML`/`DCL`/`TCL`.",
+                "source_of_confusion": "Путаница с `PL/pgSQL`, `T-SQL` — это процедурные расширения поверх `SQL`.",
+                "if_it_were_true": "Не было бы планировщика запросов и независимости диалектов от реализации.",
+                "how_it_should_be": "`SQL` — декларативный язык с подмножествами для разных задач."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SQL` содержит только два подмножества — `DDL` и `DML`, а транзакции и права доступа стандартом не описываются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандарт включает четыре подмножества; `DCL` и `TCL` стандартизированы давно (`SQL-92`).",
+                "source_of_confusion": "Упрощённое разделение из учебников.",
+                "if_it_were_true": "Не существовало бы `GRANT`/`REVOKE` и `COMMIT`/`ROLLBACK` в стандарте.",
+                "how_it_should_be": "Четыре подмножества: `DDL`/`DML`/`DCL`/`TCL`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SQL` — это диалект, специфичный для `PostgreSQL`, и в других СУБД используются принципиально другие языки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SQL` — стандарт `ANSI/ISO`, реализуемый всеми реляционными СУБД с локальными диалектами.",
+                "source_of_confusion": "Различия диалектов воспринимаются как разные языки.",
+                "if_it_were_true": "Не было бы переносимых `JDBC`-драйверов и `JPA`.",
+                "how_it_should_be": "`SQL` — стандарт, реализованный во многих СУБД с диалектными отличиями."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ограничения целостности данных существуют в `SQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `SQL` нет ограничений на уровне таблицы — целостность должна обеспечиваться только в приложении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SQL` поддерживает декларативные ограничения, которые СУБД проверяет автоматически.",
+                "source_of_confusion": "Опыт с `MongoDB`, где валидация по умолчанию ослаблена.",
+                "if_it_were_true": "Не существовало бы `PRIMARY KEY`/`FOREIGN KEY` в стандарте.",
+                "how_it_should_be": "Стандарт `SQL` определяет полный набор ограничений на уровне БД."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `NOT NULL`, `CHECK`, `DEFAULT` — стандартные ограничения; в `PostgreSQL` добавлен `EXCLUDE`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`PK` — уникальный идентификатор без `NULL`; `FK` — ссылочная целостность; `UNIQUE` — бизнес-уникальность с допуском `NULL`; `NOT NULL` — запрет пустых; `CHECK` — произвольное предикат; `DEFAULT` — значение по умолчанию.",
+                "example": "`CREATE TABLE orders (id SERIAL PRIMARY KEY, customer_id INT NOT NULL REFERENCES customers(id) ON DELETE CASCADE, status VARCHAR(20) DEFAULT 'NEW' CHECK (status IN ('NEW','PAID','SHIPPED')))`.",
+                "when_to_apply": "Проектирование схемы, гарантии целостности на уровне БД, защита от багов приложения.",
+                "edge_cases": "Стратегии `ON DELETE`: `CASCADE`/`SET NULL`/`SET DEFAULT`/`RESTRICT`/`NO ACTION`. `EXCLUDE USING GIST` — только в `PostgreSQL`.",
+                "related": "Q3 `PK` vs `UNIQUE`; Q4 `FK` и `NULL`; Q7 нормализация."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CHECK` — это синоним `PRIMARY KEY` и накладывает уникальность на столбец.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CHECK` — произвольное логическое условие; уникальность задаётся `PRIMARY KEY` или `UNIQUE`.",
+                "source_of_confusion": "Похожие ключевые слова в DDL.",
+                "if_it_were_true": "`CHECK (salary > 0)` запрещал бы дубликаты зарплаты.",
+                "how_it_should_be": "`CHECK` — predicate; `UNIQUE`/`PK` — уникальность."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`FOREIGN KEY` и `UNIQUE` — одно и то же ограничение с разным синтаксисом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FK` обеспечивает ссылочную целостность на другую таблицу; `UNIQUE` — уникальность значений в текущей.",
+                "source_of_confusion": "Оба создают индекс под капотом.",
+                "if_it_were_true": "Не нужно было бы два разных оператора в стандарте.",
+                "how_it_should_be": "`FK` — ссылка; `UNIQUE` — уникальность; разные семантики."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевая разница между `PRIMARY KEY` и `UNIQUE`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PRIMARY KEY` и `UNIQUE` идентичны во всех отношениях, включая поведение с `NULL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PK` запрещает `NULL`, `UNIQUE` — допускает; `PK` единственен, `UNIQUE` — несколько.",
+                "source_of_confusion": "Оба создают уникальный индекс.",
+                "if_it_were_true": "Не было бы смысла в двух разных конструкциях.",
+                "how_it_should_be": "`PK` ≠ `UNIQUE`: разное поведение с `NULL` и количеством."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`UNIQUE` строго запрещает `NULL`, а `PRIMARY KEY` допускает любое число `NULL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `PK` запрещает `NULL`, `UNIQUE` допускает.",
+                "source_of_confusion": "Перепутаны свойства.",
+                "if_it_were_true": "`email UNIQUE` нельзя было бы оставлять пустым для гостей.",
+                "how_it_should_be": "`PK` без `NULL`; `UNIQUE` с `NULL`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`PRIMARY KEY` единственен на таблицу и не допускает `NULL`; `UNIQUE` может быть несколько, и `NULL` допускается (в `PostgreSQL` — несколько `NULL` подряд).",
+              "correct": true,
+              "sections": {
+                "explanation": "`PK` идентифицирует строку и используется как цель `FK` по умолчанию. `UNIQUE` гарантирует бизнес-уникальность (email, ИНН). В `MySQL InnoDB` `PK` создаёт кластерный индекс; в `PostgreSQL` оба — обычные `B-tree`.",
+                "example": "`id SERIAL PRIMARY KEY` — `PK`; `email VARCHAR(255) UNIQUE` — допускает `NULL` для пользователей без email.",
+                "when_to_apply": "Решение: одно «техническое» поле для идентификации (`PK`) и несколько бизнес-уникальных (`UNIQUE`).",
+                "edge_cases": "В `SQL Server` `UNIQUE` допускает только один `NULL`; в `PostgreSQL` — несколько (трактуются как различные).",
+                "related": "Q2 ограничения; Q34 индексы; Q35 `Clustered` vs `Non-clustered`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`PRIMARY KEY` можно объявить несколько в одной таблице, а `UNIQUE` — только один.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `PK` — один на таблицу; `UNIQUE` — неограниченное число.",
+                "source_of_confusion": "Перепутана уникальность на уровне таблицы.",
+                "if_it_were_true": "У таблицы было бы несколько идентификаторов одновременно.",
+                "how_it_should_be": "`PK` единственен; `UNIQUE` — сколько угодно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Может ли столбец с `FOREIGN KEY` содержать `NULL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Нет, `FOREIGN KEY` всегда требует существующее значение в родительской таблице и `NULL` запрещён по стандарту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандарт явно разрешает `NULL`; `NOT NULL` нужно добавлять отдельно при необходимости.",
+                "source_of_confusion": "Подразумевание «связь обязательна» из реляционных диаграмм.",
+                "if_it_were_true": "Нельзя было бы моделировать необязательные связи без отдельной join-таблицы.",
+                "how_it_should_be": "`FK` допускает `NULL`, если нет `NOT NULL`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`FK` может быть `NULL`, только если в родительской таблице есть строка с `id = NULL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PK` не допускает `NULL`; для `FK = NULL` проверка ссылочной целостности просто пропускается.",
+                "source_of_confusion": "Попытка применить логику равенства к `NULL`.",
+                "if_it_were_true": "Нарушался бы принцип `PK NOT NULL`.",
+                "how_it_should_be": "`FK = NULL` → проверка `FK` пропущена."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`FK` всегда автоматически получает значение `0`, если не указано — `NULL` подменяется на дефолт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой автоподмены `NULL` на `0` нет; либо `NULL` (если разрешён), либо ошибка `NOT NULL`.",
+                "source_of_confusion": "Поведение языков программирования (Java int = 0).",
+                "if_it_were_true": "`0` нарушал бы `FK` (если нет строки с `id = 0`).",
+                "how_it_should_be": "`NULL` сохраняется как `NULL`; дефолт — только через `DEFAULT`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Да, если на столбце не задано `NOT NULL`: `NULL` означает «связь не установлена», и проверка `FK` пропускается для таких строк.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандарт `SQL` явно разрешает `NULL` в `FK`-колонке. СУБД пропускает проверку ссылочной целостности при `NULL`. Это позволяет моделировать необязательные связи (сотрудник без руководителя, заказ без купона).",
+                "example": "`manager_id INT REFERENCES employees(id)` — у `CEO` `manager_id = NULL`, у обычного сотрудника — id руководителя.",
+                "when_to_apply": "Самоссылочные иерархии, опциональные связи, схемы с разреженными отношениями.",
+                "edge_cases": "Составной `FK` с частичным `NULL` — поведение зависит от `MATCH FULL` / `MATCH SIMPLE` / `MATCH PARTIAL`.",
+                "related": "Q5 `NULL`-логика; Q2 ограничения; Q26 `SELF JOIN`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что означает `NULL` в `SQL` и какие правила работы с ним?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`NULL` — маркер отсутствия значения; сравнение с `NULL` даёт `UNKNOWN`, проверка — через `IS NULL`/`IS NOT NULL`, арифметика с `NULL` даёт `NULL`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`NULL` не равен ни нулю, ни пустой строке. Трёхзначная логика: `TRUE`/`FALSE`/`UNKNOWN`. Агрегаты (`SUM`, `AVG`, `COUNT(col)`) игнорируют `NULL`; `COUNT(*)` считает все строки.",
+                "example": "`WHERE email = NULL` всегда пуст; нужно `WHERE email IS NULL`. `COALESCE(phone, 'не указан')` заменяет `NULL`.",
+                "when_to_apply": "Любая фильтрация и обработка опциональных полей; защита от багов с `WHERE col != 'value'`.",
+                "edge_cases": "`NOT IN (... NULL ...)` всегда возвращает пустой результат — используйте `NOT EXISTS`. В `PostgreSQL` `UNIQUE` допускает несколько `NULL`.",
+                "related": "Q4 `FK` и `NULL`; Q17 `IN`/`EXISTS`; Q29 `COUNT(*)` vs `COUNT(col)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`NULL` равен пустой строке `''` и нулю `0`, поэтому `WHERE col = NULL` работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NULL` отличен от `0` и `''`; `col = NULL` всегда `UNKNOWN` → строки не возвращаются.",
+                "source_of_confusion": "Опыт с языками, где `null == 0`.",
+                "if_it_were_true": "`COUNT(col)` считал бы пустые строки.",
+                "how_it_should_be": "`NULL` — отсутствие значения; проверка через `IS NULL`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сравнение `NULL = NULL` даёт `TRUE`, потому что оба значения отсутствуют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NULL = NULL` даёт `UNKNOWN`; равенство двух «отсутствий» не определено.",
+                "source_of_confusion": "Логика обычного равенства.",
+                "if_it_were_true": "`JOIN` по `NULL`-колонкам соединял бы их.",
+                "how_it_should_be": "`NULL = NULL` → `UNKNOWN`; используйте `IS NOT DISTINCT FROM`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Агрегатные функции `SUM` и `AVG` падают с ошибкой, если столбец содержит `NULL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Агрегаты игнорируют `NULL` без ошибок: `SUM(NULL, 1, 2) = 3`, `AVG` считает по не-`NULL`.",
+                "source_of_confusion": "Опыт с `NullPointerException` в Java.",
+                "if_it_were_true": "`AVG(salary)` падал бы при первом отсутствующем значении.",
+                "how_it_should_be": "Агрегаты пропускают `NULL`; `COUNT(*)` — всё, `COUNT(col)` — без `NULL`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `DATETIME` и `TIMESTAMP` (особенно в `MySQL`/`PostgreSQL`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`DATETIME` и `TIMESTAMP` идентичны во всех СУБД — оба автоматически конвертируют в `UTC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DATETIME` (`MySQL`) НЕ конвертирует в `UTC` и не знает о таймзонах.",
+                "source_of_confusion": "Похожие имена типов.",
+                "if_it_were_true": "Не было бы багов с локальным временем при смене таймзоны сервера.",
+                "how_it_should_be": "`DATETIME` — без зоны; `TIMESTAMP` — с конверсией в `UTC`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`DATETIME` хранится «как есть» без учёта зоны; `TIMESTAMP` конвертируется в `UTC` и обратно по сессии; `TIMESTAMPTZ` в `PostgreSQL` — рекомендованный тип с зоной.",
+              "correct": true,
+              "sections": {
+                "explanation": "`MySQL DATETIME`: 8 байт, 1000–9999, не учитывает таймзону. `MySQL TIMESTAMP`: 4 байта, 1970–2038, авто-конверсия в `UTC`. `PostgreSQL TIMESTAMPTZ`: 8 байт, широкий диапазон, корректная работа с зонами.",
+                "example": "`created_at TIMESTAMPTZ DEFAULT NOW()` в `PostgreSQL` — лучшая практика. Java `Instant`/`OffsetDateTime` маппится на `TIMESTAMPTZ`.",
+                "when_to_apply": "Любые временные метки, аудит, события распределённых систем.",
+                "edge_cases": "`MySQL TIMESTAMP` ограничен 2038 годом (Y2K38). `PostgreSQL TIMESTAMP WITHOUT TZ` тоже не хранит зону.",
+                "related": "Q5 `NULL`; Q53 `MVCC` и `xmin`/`xmax`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`TIMESTAMP` в `MySQL` поддерживает диапазон от 1000 до 9999 года, как и `DATETIME`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MySQL TIMESTAMP` ограничен 1970-01-01 — 2038-01-19 (4 байта, Unix epoch).",
+                "source_of_confusion": "Перенос свойств `DATETIME` на `TIMESTAMP`.",
+                "if_it_were_true": "Y2K38-проблемы не существовало бы.",
+                "how_it_should_be": "`TIMESTAMP` (`MySQL`): 1970–2038; для широкого диапазона — `DATETIME`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TIMESTAMPTZ` в `PostgreSQL` хранит таймзону внутри значения вместе с временем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TIMESTAMPTZ` хранит время в `UTC` без таймзоны; зона применяется при выводе по `session timezone`.",
+                "source_of_confusion": "Название «`TZ`» воспринимается как «с зоной внутри».",
+                "if_it_were_true": "Размер был бы больше 8 байт.",
+                "how_it_should_be": "`TIMESTAMPTZ` = `UTC`-время + конверсия на вывод по сессии."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое нормализация и какие нормальные формы существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Нормализация — это процесс увеличения избыточности данных ради ускорения чтения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нормализация наоборот уменьшает избыточность; увеличение избыточности — это денормализация.",
+                "source_of_confusion": "Перепутаны термины.",
+                "if_it_were_true": "Не существовало бы аномалий обновления.",
+                "how_it_should_be": "Нормализация → меньше избыточности; денормализация → больше."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Существует только одна нормальная форма (`NF`), и `3NF`/`BCNF` — маркетинговые названия одного и того же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Существует строгая иерархия: `1NF` < `2NF` < `3NF` < `BCNF` < `4NF` < `5NF`.",
+                "source_of_confusion": "Поверхностное знакомство с темой.",
+                "if_it_were_true": "Не было бы споров о выборе формы для конкретной схемы.",
+                "how_it_should_be": "Иерархия из шести нормальных форм со строгими определениями."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Нормализация — пошаговое устранение избыточности и аномалий: `1NF` (атомарность), `2NF` (нет частичных зависимостей), `3NF` (нет транзитивных), `BCNF` (детерминант — кандидат-ключ).",
+              "correct": true,
+              "sections": {
+                "explanation": "`1NF`: атомарные значения, нет повторяющихся групп. `2NF`: `1NF` + полная зависимость не-ключевых атрибутов от всего составного `PK`. `3NF`: `2NF` + нет зависимостей не-ключевых атрибутов друг от друга. `BCNF`: строже `3NF` для перекрывающихся ключей.",
+                "example": "`phones = '111,222'` нарушает `1NF`; `city → country` через `zip_code` нарушает `3NF`.",
+                "when_to_apply": "Проектирование `OLTP`-схемы; устранение аномалий вставки/обновления/удаления.",
+                "edge_cases": "`4NF`/`5NF` — для многозначных и join-зависимостей, редко используются. `OLAP/DWH` сознательно денормализуют.",
+                "related": "Q8 денормализация; Q2 ограничения; Q23 `JOIN` vs подзапросы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`3NF` требует, чтобы каждая таблица содержала ровно один столбец и одну строку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`3NF` требует отсутствия транзитивных зависимостей не-ключевых атрибутов от `PK`.",
+                "source_of_confusion": "Фантастическое толкование «нормальной формы».",
+                "if_it_were_true": "Невозможно было бы хранить реальные данные.",
+                "how_it_should_be": "`3NF` = `2NF` + нет транзитивных зависимостей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое денормализация и когда она оправдана?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Денормализация — это синоним нормализации до `3NF` и обязательный шаг при проектировании.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это противоположный процесс: внесение избыточности, а не её устранение.",
+                "source_of_confusion": "Похожие термины.",
+                "if_it_were_true": "Не было бы выбора между схемами «звезда» и нормализованной.",
+                "how_it_should_be": "Денормализация ≠ нормализация; разные направления."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Денормализация всегда улучшает производительность во всех сценариях без побочных эффектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Денормализация ускоряет чтение, но замедляет запись и создаёт риск рассинхронизации.",
+                "source_of_confusion": "Игнорирование стоимости записи и поддержки.",
+                "if_it_were_true": "Все БД использовали бы только денормализованные схемы.",
+                "how_it_should_be": "Денормализация — компромисс; выбирается осознанно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Денормализация запрещена стандартом `SQL` и работает только в `NoSQL`-хранилищах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SQL` не запрещает денормализацию; это вопрос дизайна схемы, а не стандарта.",
+                "source_of_confusion": "Ассоциация «`SQL` = только нормализация».",
+                "if_it_were_true": "`Materialized View` не существовало бы в `SQL`-СУБД.",
+                "how_it_should_be": "Денормализация допустима в любой реляционной СУБД."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Денормализация — намеренное внесение избыточности (дублирование столбцов, предвычисленные агрегаты, материализованные представления) для ускорения чтения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Цена — усложнение записи и риск рассинхронизации. Поддерживается триггерами, `Materialized View`, фоновыми задачами или паттерном `CQRS`.",
+                "example": "Добавить `customer_name` в `orders` (избежать `JOIN`); хранить `total_orders` в `customers`; `monthly_sales` как `Materialized View`.",
+                "when_to_apply": "`OLAP/DWH` (звезда, снежинка), горячие dashboard-запросы, низкий `latency` на чтение, узкое место от множества `JOIN`.",
+                "edge_cases": "Риск рассинхронизации; нужен механизм обновления (`REFRESH`, триггеры, события).",
+                "related": "Q7 нормализация; Q9 `Materialized View`; Q42 `EXPLAIN` для оценки эффекта."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `View` и `Materialized View`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`View` — виртуальная таблица, запрос выполняется каждый раз; `Materialized View` — физически хранит результат и обновляется по команде `REFRESH`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`View` всегда актуален, но не быстрее запроса. `Materialized View` быстр для чтения, но требует обновления; поддерживает индексы (в отличие от обычного `View`).",
+                "example": "`CREATE MATERIALIZED VIEW monthly_sales AS SELECT date_trunc('month', order_date), SUM(total) FROM orders GROUP BY 1;` + `REFRESH MATERIALIZED VIEW CONCURRENTLY monthly_sales`.",
+                "when_to_apply": "`View` — для абстракции/безопасности/упрощения; `Materialized View` — для дорогих агрегатов с допустимой задержкой данных.",
+                "edge_cases": "`REFRESH` без `CONCURRENTLY` блокирует чтение. `View` нельзя индексировать в `PostgreSQL`. `MySQL` не поддерживает `Materialized View` нативно.",
+                "related": "Q8 денормализация; Q34 индексы; Q42 `EXPLAIN`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`View` всегда хранит данные физически и обновляется триггерами на исходных таблицах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`View` — виртуальная таблица: только запрос, без физического хранения.",
+                "source_of_confusion": "Путаница с `Materialized View`.",
+                "if_it_were_true": "`View` нельзя было бы создать на быстро меняющихся данных.",
+                "how_it_should_be": "`View` — запрос, выполняется при обращении."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Materialized View` в `PostgreSQL` автоматически обновляется при каждом `INSERT` в исходную таблицу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PostgreSQL Materialized View` требует ручного `REFRESH MATERIALIZED VIEW`; авто-обновления нет.",
+                "source_of_confusion": "Поведение `Oracle Materialized View` с `ON COMMIT`.",
+                "if_it_were_true": "Не было бы команды `REFRESH`.",
+                "how_it_should_be": "`PostgreSQL`: ручной `REFRESH`; `Oracle`: настраиваемое авто-обновление."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`View` и `Materialized View` — синонимы и поддерживаются одинаково всеми СУБД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные объекты: один виртуален, другой — физический снимок.",
+                "source_of_confusion": "Похожие имена.",
+                "if_it_were_true": "Не было бы разницы в скорости и актуальности.",
+                "how_it_should_be": "`View` — запрос; `Materialized View` — материализованные данные."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Stored Procedure` и `Function` в СУБД и чем они различаются?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Procedure` обязательно возвращает значение и используется в `SELECT`, а `Function` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Function` возвращает значение и используется в `SELECT`; `Procedure` — нет.",
+                "source_of_confusion": "Перепутаны свойства.",
+                "if_it_were_true": "`SELECT my_procedure(x)` работал бы.",
+                "how_it_should_be": "`Function` — возвращает и используется в `SELECT`; `Procedure` — вызывается через `CALL`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Обе хранятся на сервере и компилируются заранее; `Function` обязательно возвращает значение и используется в `SELECT`, `Procedure` может не возвращать и поддерживает `COMMIT`/`ROLLBACK` внутри (`PostgreSQL 11+`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`Function` обычно детерминистична и без сайд-эффектов; вызывается в `SELECT`/`WHERE`. `Procedure` управляет потоком и транзакциями; вызывается через `CALL`.",
+                "example": "`CREATE FUNCTION get_employee_count(dept_id INT) RETURNS INT AS $$ ... $$` → `SELECT get_employee_count(1)`. `CREATE PROCEDURE transfer_employee(...) LANGUAGE plpgsql AS $$ ... COMMIT; ... $$` → `CALL transfer_employee(42, 3)`.",
+                "when_to_apply": "Бизнес-логика на стороне БД, инкапсуляция сложных операций, оптимизация per-row вычислений.",
+                "edge_cases": "Избегайте сложной логики в БД — усложняет отладку и миграции. Версионируйте через `Flyway`.",
+                "related": "Q11 триггеры; Q47 транзакции в `Spring`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Function` и `Stored Procedure` — одно и то же; разные имена существуют только для обратной совместимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные конструкции с разной семантикой возврата и управления транзакциями.",
+                "source_of_confusion": "Поверхностное сходство как «куски кода на сервере».",
+                "if_it_were_true": "Не было бы двух операторов в стандарте.",
+                "how_it_should_be": "`Function` ≠ `Procedure`: возврат, использование, транзакции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Stored Procedure` нельзя создать в `PostgreSQL` — там есть только `Function`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PostgreSQL 11+` поддерживает `CREATE PROCEDURE` с `COMMIT`/`ROLLBACK` внутри.",
+                "source_of_confusion": "Историческое отсутствие `PROCEDURE` в старых версиях `PostgreSQL`.",
+                "if_it_were_true": "Нельзя было бы управлять транзакциями внутри хранимого кода.",
+                "how_it_should_be": "`PostgreSQL 11+`: и `FUNCTION`, и `PROCEDURE`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Trigger` в реляционной БД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Trigger` — это аналог `Materialized View`, который физически хранит результат запроса и обновляется по расписанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Trigger` — реактивный обработчик событий, а не снимок данных.",
+                "source_of_confusion": "Оба «автоматизируют» работу с данными.",
+                "if_it_were_true": "`Trigger` имел бы команду `REFRESH`.",
+                "how_it_should_be": "`Trigger` — обработчик `DML`-событий; `Materialized View` — снимок."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Trigger` срабатывает только на `SELECT`-запросы и используется для аудита чтения данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SELECT` не вызывает триггеры; для аудита чтения используются `Audit`-расширения или `pgaudit`.",
+                "source_of_confusion": "Идея «всё аудитить через триггеры».",
+                "if_it_were_true": "Каждый `SELECT` имел бы накладные расходы триггера.",
+                "how_it_should_be": "Триггеры — на `INSERT`/`UPDATE`/`DELETE`; не на `SELECT`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Trigger` — объект БД, автоматически выполняющий код при `INSERT`/`UPDATE`/`DELETE`, с разделением на `BEFORE`/`AFTER`/`INSTEAD OF` и `FOR EACH ROW`/`FOR EACH STATEMENT`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Триггер привязан к таблице и срабатывает на событие. `BEFORE` может модифицировать `NEW`-строку; `AFTER` — для аудита и каскадных действий; `INSTEAD OF` — для `View`. `OLD`/`NEW` дают доступ к старой и новой версии строки.",
+                "example": "`CREATE TRIGGER salary_change_trigger BEFORE UPDATE OF salary ON employees FOR EACH ROW WHEN (OLD.salary IS DISTINCT FROM NEW.salary) EXECUTE FUNCTION log_salary_change()`.",
+                "when_to_apply": "Аудит изменений, авто-вычисление полей (`updated_at`), enforcement бизнес-правил, недоступных через `CHECK`.",
+                "edge_cases": "Усложняет отладку и миграции; каскадные триггеры могут вызвать неожиданные побочные эффекты. Не срабатывают при `TRUNCATE` и bulk-load.",
+                "related": "Q10 `Procedure`/`Function`; Q15 `DELETE`/`TRUNCATE`; Q53 `MVCC`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Trigger` выполняется только если приложение явно вызвало его через специальный `CALL`-оператор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Триггер выполняется автоматически СУБД при наступлении события; явный вызов невозможен.",
+                "source_of_confusion": "Путаница с `Stored Procedure`.",
+                "if_it_were_true": "Триггеры не отличались бы от обычных процедур.",
+                "how_it_should_be": "Триггер срабатывает автоматически; вызывается СУБД."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Temporary` table и какова её область видимости?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Временная таблица доступна всем сессиям БД и удаляется только вручную через `DROP TABLE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TEMP` таблица видна только своей сессии и удаляется автоматически.",
+                "source_of_confusion": "Путаница с обычной таблицей.",
+                "if_it_were_true": "Между сессиями возникали бы конфликты имён.",
+                "how_it_should_be": "Локальна для сессии, авто-удаление при выходе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Временная таблица — это материализованное представление, обновляющееся при каждом `INSERT` в исходную таблицу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TEMP` таблица — обычная таблица в области сессии, не связана с другими автоматически.",
+                "source_of_confusion": "Путаница с `Materialized View`.",
+                "if_it_were_true": "Имело бы оператор `REFRESH`.",
+                "how_it_should_be": "`TEMP` ≠ `Materialized View`; разные сущности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `PostgreSQL` создаётся через `CREATE TEMPORARY TABLE`, а в `MySQL` — через `CREATE TEMP TABLE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `PostgreSQL` принимает `TEMP` (короче) и `TEMPORARY`; `MySQL` — только `TEMPORARY`.",
+                "source_of_confusion": "Перепутаны диалекты.",
+                "if_it_were_true": "Документация диалектов противоречила бы реальности.",
+                "how_it_should_be": "`PostgreSQL`: `TEMP`/`TEMPORARY`; `MySQL`: `TEMPORARY`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Временная таблица существует только в пределах сессии (или транзакции в `PostgreSQL ON COMMIT DROP`) и автоматически удаляется по завершении.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `PostgreSQL` — `CREATE TEMP TABLE` в схеме `pg_temp_*`; в `MySQL` — `CREATE TEMPORARY TABLE`; в `SQL Server` — префикс `#` (локальная) или `##` (глобальная).",
+                "example": "`CREATE TEMP TABLE temp_report (department VARCHAR(100), total_salary NUMERIC); INSERT INTO temp_report SELECT d.name, SUM(e.salary) FROM ... ;` — после отключения сессии исчезает.",
+                "when_to_apply": "Промежуточные результаты сложных отчётов, ETL-этапы, изоляция данных между сессиями.",
+                "edge_cases": "Имя может конфликтовать с обычной таблицей; видна только своей сессии. `PostgreSQL`: `ON COMMIT DELETE ROWS` / `DROP` / `PRESERVE ROWS`.",
+                "related": "Q19 `CTE`; Q9 `View`; Q47 транзакции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Sequence` и чем отличается от `AUTO_INCREMENT`/`SERIAL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Sequence` — отдельный объект БД, генерирующий уникальные числовые последовательности; `AUTO_INCREMENT`/`SERIAL`/`IDENTITY` — атрибуты столбца, часто реализованные поверх `Sequence`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Sequence` независим от таблиц: `nextval('seq')` возвращает следующее значение. `SERIAL` в `PostgreSQL` под капотом создаёт `Sequence` и `DEFAULT nextval(...)`. `Sequence` не откатывается при `ROLLBACK`.",
+                "example": "`CREATE SEQUENCE order_seq START 1000 INCREMENT 1; SELECT nextval('order_seq');` или `INSERT INTO orders (id, customer_id) VALUES (nextval('order_seq'), 42)`.",
+                "when_to_apply": "Глобальные идентификаторы между таблицами, кастомные шаги/циклы, явное управление пулом id.",
+                "edge_cases": "`Sequence` не откатывается → возможны «дыры» в id. Кэширование (`CACHE`) ускоряет, но увеличивает дыры при сбое.",
+                "related": "Q2 ограничения; Q15 `TRUNCATE` и сброс идентификатора."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Sequence` обязательно привязан к одной таблице и не может использоваться в нескольких.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Sequence` — независимый объект БД, может использоваться сколько угодно таблиц.",
+                "source_of_confusion": "Путаница с `IDENTITY`-столбцом, привязанным к таблице.",
+                "if_it_were_true": "Нельзя было бы делать «глобальные id» для нескольких таблиц.",
+                "how_it_should_be": "`Sequence` — самостоятельный объект; используется где угодно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Sequence` откатывается вместе с транзакцией при `ROLLBACK`, поэтому в id не может быть «дыр».",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Sequence` НЕ откатывается — это by design, чтобы не блокировать параллельные транзакции.",
+                "source_of_confusion": "Ожидание ACID-поведения от `Sequence`.",
+                "if_it_were_true": "`Sequence` блокировал бы параллельные `INSERT`.",
+                "how_it_should_be": "`Sequence` не откатывается; «дыры» в id — норма."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Sequence` — это синоним `PRIMARY KEY` и автоматически делает столбец уникальным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Sequence` сам по себе не накладывает уникальность; нужно `PRIMARY KEY`/`UNIQUE`.",
+                "source_of_confusion": "Совместное использование `Sequence` + `PK` в типичной таблице.",
+                "if_it_were_true": "`Sequence` отменял бы необходимость объявлять `PK`.",
+                "how_it_should_be": "`Sequence` ≠ `PK`; уникальность — отдельным ограничением."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каков логический порядок выполнения `SELECT`-запроса?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SELECT` выполняется первым, поэтому алиасы из него можно использовать в `WHERE` и `GROUP BY`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SELECT` выполняется после `FROM`/`WHERE`/`GROUP BY`/`HAVING`; алиасы в этих частях недоступны.",
+                "source_of_confusion": "Порядок записи в запросе.",
+                "if_it_were_true": "`WHERE alias = ...` всегда бы работало.",
+                "how_it_should_be": "`SELECT` — после фильтрации и группировки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`FROM`/`JOIN` → `WHERE` → `GROUP BY` → `HAVING` → `SELECT`/агрегаты → `DISTINCT` → `ORDER BY` → `LIMIT`/`OFFSET`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Логический порядок отличается от порядка записи. Это объясняет, почему алиасы из `SELECT` нельзя использовать в `WHERE` (вычисляется раньше), но можно в `ORDER BY` (вычисляется позже).",
+                "example": "`SELECT department, COUNT(*) AS cnt FROM employees JOIN departments ... WHERE salary > 50000 GROUP BY department HAVING COUNT(*) > 5 ORDER BY cnt DESC LIMIT 10`.",
+                "when_to_apply": "Понимание этапов запроса при отладке и оптимизации; объяснение ошибок «column does not exist» в `WHERE`.",
+                "edge_cases": "Оконные функции выполняются после `HAVING`, но до `ORDER BY` → не доступны в `WHERE` (Q33). `DISTINCT` идёт после `SELECT`.",
+                "related": "Q27 `GROUP BY`/`HAVING`; Q33 оконные функции в `WHERE`; Q42 `EXPLAIN`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ORDER BY` и `LIMIT` выполняются до `WHERE`, что объясняет работу пагинации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ORDER BY` и `LIMIT` идут в самом конце; иначе пагинация не имела бы смысла.",
+                "source_of_confusion": "Желание объяснить keyset-пагинацию.",
+                "if_it_were_true": "`LIMIT 10` возвращал бы 10 строк до фильтрации.",
+                "how_it_should_be": "`LIMIT` — последний шаг логического плана."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`HAVING` фильтрует строки до `GROUP BY`, аналогично `WHERE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HAVING` фильтрует группы ПОСЛЕ `GROUP BY`; `WHERE` — строки ДО.",
+                "source_of_confusion": "Похожие синтаксисы.",
+                "if_it_were_true": "`HAVING COUNT(*) > 5` без группировки имел бы смысл.",
+                "how_it_should_be": "`WHERE` — до `GROUP BY`; `HAVING` — после."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `DELETE`, `TRUNCATE` и `DROP`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`DELETE` без `WHERE` эквивалентен `DROP TABLE` и удаляет саму таблицу из схемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DELETE FROM t` удаляет ВСЕ строки, но оставляет таблицу со структурой.",
+                "source_of_confusion": "Поверхностное сравнение «всё удаляет».",
+                "if_it_were_true": "После `DELETE FROM t` пришлось бы `CREATE TABLE` заново.",
+                "how_it_should_be": "`DELETE` без `WHERE` — пустая таблица; `DROP` — нет таблицы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`TRUNCATE` всегда запускает `ON DELETE` триггеры, как и `DELETE`, и поддерживает `WHERE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TRUNCATE` НЕ срабатывает `DELETE`-триггеры (`TRUNCATE`-триггеры в `PG` отдельные) и не принимает `WHERE`.",
+                "source_of_confusion": "Ожидание единообразия с `DELETE`.",
+                "if_it_were_true": "Аудит через триггеры был бы корректным для `TRUNCATE`.",
+                "how_it_should_be": "`TRUNCATE` — без `WHERE`, без `DELETE`-триггеров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`DELETE` (DML) — удаляет строки с `WHERE` и триггерами; `TRUNCATE` (DDL) — быстрая очистка всей таблицы без триггеров с сбросом `IDENTITY`; `DROP` (DDL) — удаляет таблицу целиком.",
+              "correct": true,
+              "sections": {
+                "explanation": "`DELETE` помечает строки мёртвыми (в `PostgreSQL` — `MVCC`-tombstones), пишет `WAL` построчно. `TRUNCATE` обнуляет страницы метаданными — на порядки быстрее. `DROP` удаляет объект и зависимости.",
+                "example": "`DELETE FROM orders WHERE status = 'CANCELLED'`; `TRUNCATE TABLE temp_data`; `DROP TABLE IF EXISTS old_archive`.",
+                "when_to_apply": "`DELETE` — частичная очистка с триггерами; `TRUNCATE` — быстрая полная очистка таблицы; `DROP` — удаление неиспользуемой структуры.",
+                "edge_cases": "В `PostgreSQL` `TRUNCATE` можно откатить внутри транзакции; в `MySQL InnoDB` — нельзя. `TRUNCATE` не запускает `ON DELETE` триггеры.",
+                "related": "Q11 триггеры; Q53 `MVCC`; Q38 транзакции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`DROP TABLE` можно откатить через `ROLLBACK` во всех СУБД без ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Откат `DDL` зависит от СУБД: `PostgreSQL` допускает в транзакции; `MySQL` авто-коммитит `DDL`.",
+                "source_of_confusion": "Опыт только с одной СУБД.",
+                "if_it_were_true": "`DROP TABLE; ROLLBACK;` всегда восстанавливал бы таблицу.",
+                "how_it_should_be": "`DDL`-откат зависит от диалекта."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `MERGE` (`UPSERT`) и как он реализуется в `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`MERGE` — это команда `JOIN`-подобного слияния двух таблиц в одну новую таблицу с дедупликацией строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MERGE` модифицирует целевую таблицу по правилам `WHEN MATCHED`/`WHEN NOT MATCHED`; не создаёт новых таблиц.",
+                "source_of_confusion": "Слово «merge» = «слить».",
+                "if_it_were_true": "`MERGE` появлялся бы в DDL, а не в DML.",
+                "how_it_should_be": "`MERGE` — `DML` для условного `INSERT`/`UPDATE`/`DELETE`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`INSERT ... ON CONFLICT DO UPDATE` поддерживается только в `MySQL` и не работает в `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ON CONFLICT` — это синтаксис `PostgreSQL` (9.5+); в `MySQL` — `ON DUPLICATE KEY UPDATE`.",
+                "source_of_confusion": "Перепутаны диалекты.",
+                "if_it_were_true": "`PostgreSQL` не имел бы upsert до `MERGE` в 15.",
+                "how_it_should_be": "`PG`: `ON CONFLICT`; `MySQL`: `ON DUPLICATE KEY UPDATE`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`MERGE` не атомарен и состоит из нескольких независимых операторов, между которыми может вклиниться другая транзакция.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MERGE`/`UPSERT` атомарны и решают race-condition «check-then-insert» одним оператором.",
+                "source_of_confusion": "Ассоциация с эмуляцией upsert через `SELECT` + `IF` + `INSERT`.",
+                "if_it_were_true": "`UPSERT` не имел бы преимуществ перед ручной эмуляцией.",
+                "how_it_should_be": "`MERGE`/`UPSERT` — атомарный оператор."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`MERGE` — атомарное объединение `INSERT`/`UPDATE`/`DELETE` по условию; в `PostgreSQL` есть стандартный `MERGE` (15+) и упрощённый `INSERT ... ON CONFLICT DO UPDATE`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`MERGE`/`UPSERT` решает задачу «вставь, если нет, обнови, если есть» одним атомарным оператором без race-condition. В `PostgreSQL 9.5+` популярнее `ON CONFLICT (col) DO UPDATE SET ... = EXCLUDED.col`.",
+                "example": "`INSERT INTO products (sku, name, price) VALUES ('ABC-123', 'Widget', 29.99) ON CONFLICT (sku) DO UPDATE SET name = EXCLUDED.name, price = EXCLUDED.price, updated_at = NOW()`.",
+                "when_to_apply": "Идемпотентные API, синхронизация с внешними источниками, batch-загрузка с обновлениями.",
+                "edge_cases": "`ON CONFLICT` требует существующий уникальный индекс/`PK`. Не путать с `INSERT ... ON DUPLICATE KEY UPDATE` (MySQL).",
+                "related": "Q2 ограничения; Q15 `DELETE`/`TRUNCATE`; Q47 транзакции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `IN`, `EXISTS` и `JOIN` для фильтрации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`IN` — сравнение со списком/подзапросом (опасен с `NULL` в `NOT IN`); `EXISTS` — проверка существования с ранним выходом и `NULL`-безопасностью; `JOIN` — объединение наборов с возможными дубликатами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оптимизаторы (`PostgreSQL`, `MySQL 8+`) часто преобразуют `IN`/`EXISTS` в semi-join. Главное отличие — поведение с `NULL`: `NOT IN (subquery)` с `NULL` всегда возвращает пусто.",
+                "example": "`SELECT * FROM orders o WHERE EXISTS (SELECT 1 FROM vip_customers v WHERE v.id = o.customer_id)` — безопасный аналог `IN` для больших списков.",
+                "when_to_apply": "`IN` — короткий статический список; `EXISTS` — большие/коррелированные проверки существования; `JOIN` — нужны столбцы из второй таблицы.",
+                "edge_cases": "`NOT IN` + `NULL` = пустой результат; используйте `NOT EXISTS`. `JOIN` может создавать дубликаты, нужен `DISTINCT` или `EXISTS`.",
+                "related": "Q5 `NULL`; Q23 `JOIN` vs подзапросы; Q21 типы `JOIN`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`IN` всегда быстрее `EXISTS` и `JOIN`, потому что выполняется как индексный поиск.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Производительность зависит от индексов, селективности и оптимизатора; универсального лидера нет.",
+                "source_of_confusion": "Упрощённый совет из старых статей.",
+                "if_it_were_true": "`EXISTS` не имел бы причин существовать.",
+                "how_it_should_be": "Производительность зависит от плана; используйте `EXPLAIN`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`NOT IN` с подзапросом, который может вернуть `NULL`, корректно работает и фильтрует строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NOT IN (... NULL ...)` всегда возвращает пустой результат из-за трёхзначной логики.",
+                "source_of_confusion": "Опыт с `NOT IN` для статических списков без `NULL`.",
+                "if_it_were_true": "`NOT EXISTS` не был бы рекомендован вместо `NOT IN`.",
+                "how_it_should_be": "Используйте `NOT EXISTS`; `NOT IN` опасен с `NULL`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`EXISTS` сканирует все строки подзапроса перед возвратом результата, поэтому медленнее `IN`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EXISTS` короткозамкнут: возвращает `TRUE` при первой найденной строке.",
+                "source_of_confusion": "Ассоциация «подзапрос = полное сканирование».",
+                "if_it_were_true": "`EXISTS` не имел бы преимуществ для больших подзапросов.",
+                "how_it_should_be": "`EXISTS` — early-exit на первой строке."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CASE`-выражение в `SQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CASE` работает только в `WHERE` и не может возвращать значения в `SELECT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CASE` — выражение и работает в любой части запроса, включая `SELECT`/`ORDER BY`/`GROUP BY`.",
+                "source_of_confusion": "Путаница с `WHERE`-предикатами.",
+                "if_it_were_true": "Не было бы условных вычисляемых столбцов.",
+                "how_it_should_be": "`CASE` универсально как любое выражение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CASE` — условное выражение (аналог `if-else`/`switch`) с поисковой формой (`WHEN cond THEN ...`) и простой (`CASE expr WHEN val THEN ...`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`CASE` возвращает значение и может использоваться в `SELECT`, `WHERE`, `ORDER BY`, `GROUP BY`. Если `ELSE` не указан и ни одно условие не сработало — возвращает `NULL`.",
+                "example": "`SELECT name, CASE WHEN salary >= 200000 THEN 'Senior' WHEN salary >= 100000 THEN 'Middle' ELSE 'Junior' END AS grade FROM employees`.",
+                "when_to_apply": "Деривированные столбцы, условная агрегация (`SUM(CASE WHEN ...)`), мультиколоночная сортировка с приоритетом.",
+                "edge_cases": "Условия проверяются по порядку — первое истинное побеждает. Типы всех ветвей должны быть совместимы.",
+                "related": "Q5 `NULL`; Q14 порядок выполнения; Q27 `GROUP BY`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CASE` всегда требует обязательного `ELSE`; иначе СУБД выдаёт ошибку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ELSE` опционален; без него возвращается `NULL`, если ни одно условие не истинно.",
+                "source_of_confusion": "Опыт со `switch` в Java (где default рекомендован).",
+                "if_it_were_true": "Любой `CASE` без `ELSE` не компилировался бы.",
+                "how_it_should_be": "`ELSE` опционален; default = `NULL`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CASE` всегда вычисляет все ветви `WHEN`, даже если первая уже истинна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CASE` короткозамкнут: вычисляет условия по порядку и останавливается на первом истинном.",
+                "source_of_confusion": "Опыт с энергичным вычислением в скриптовых языках.",
+                "if_it_were_true": "Использование `CASE WHEN safe THEN risky_func() END` не имело бы смысла.",
+                "how_it_should_be": "Условия проверяются по порядку, первое истинное завершает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CTE` (`Common Table Expression`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CTE` — это постоянный объект БД, который создаётся через `CREATE CTE` и хранится на сервере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CTE` существует только в рамках одного запроса и объявляется через `WITH`.",
+                "source_of_confusion": "Путаница с `View`.",
+                "if_it_were_true": "Был бы оператор `DROP CTE`.",
+                "how_it_should_be": "`CTE` — локальный alias внутри запроса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CTE` не поддерживает рекурсию и неприменим к иерархическим данным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WITH RECURSIVE` — основной способ работать с деревьями и графами в `SQL`.",
+                "source_of_confusion": "Незнание формы `WITH RECURSIVE`.",
+                "if_it_were_true": "Иерархии в `SQL` решались бы только хранимыми процедурами.",
+                "how_it_should_be": "`CTE` поддерживает рекурсию через `WITH RECURSIVE`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CTE` — именованный временный набор данных в рамках одного запроса, объявленный через `WITH`; поддерживает рекурсию через `WITH RECURSIVE`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`CTE` улучшает читаемость, разбивая сложный запрос на шаги. В `PostgreSQL` до 12 был optimization fence (всегда материализуется), с 12 — оптимизатор может inline-ить.",
+                "example": "`WITH department_stats AS (SELECT department_id, AVG(salary) FROM employees GROUP BY department_id) SELECT d.name, ds.avg_salary FROM departments d JOIN department_stats ds ON d.id = ds.department_id`.",
+                "when_to_apply": "Сложные многоэтапные запросы, иерархии (рекурсивный `CTE`), повторное использование подзапроса в основном запросе.",
+                "edge_cases": "В `PG < 12` `CTE` мог быть медленнее подзапроса (фенс). В `MySQL` поддерживается с 8.0.",
+                "related": "Q48 рекурсивные `CTE`; Q33 окна в `WHERE`; Q23 `JOIN` vs подзапросы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CTE` обязательно создаёт временную таблицу на диске и не может быть быстрее подзапроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CTE` обычно в памяти; современные оптимизаторы могут inline-ить как обычный подзапрос.",
+                "source_of_confusion": "Старое поведение `PG < 12` с фенсом.",
+                "if_it_were_true": "Использование `CTE` всегда было бы пессимизацией.",
+                "how_it_should_be": "`CTE` чаще in-memory; в `PG 12+` оптимизируется."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `RETURNING` и где он применяется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`RETURNING` поддерживается всеми реляционными СУБД одинаково, включая `MySQL` и `SQLite`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MySQL` не поддерживает `RETURNING`; в `SQL Server` есть аналог `OUTPUT`.",
+                "source_of_confusion": "Ожидание стандартизованного поведения.",
+                "if_it_were_true": "Не существовало бы workaround через `LAST_INSERT_ID()`.",
+                "how_it_should_be": "`RETURNING` — `PG`/`Oracle`; в `MySQL` — `LAST_INSERT_ID()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RETURNING` работает только в `SELECT` и не применяется к `INSERT`/`UPDATE`/`DELETE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RETURNING` — атрибут DML; в `SELECT` его нет.",
+                "source_of_confusion": "Слово «return» воспринимается как «вернуть результат».",
+                "if_it_were_true": "`RETURNING` дублировал бы синтаксис `SELECT`.",
+                "how_it_should_be": "`RETURNING` — для `INSERT`/`UPDATE`/`DELETE`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`RETURNING` всегда возвращает старое значение строки до изменения, а не новое.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RETURNING` по умолчанию возвращает НОВОЕ состояние; для старого в `SQL Server OUTPUT` есть `DELETED`.",
+                "source_of_confusion": "Опыт с `OLD`/`NEW` в триггерах.",
+                "if_it_were_true": "`UPDATE ... RETURNING price` возвращал бы прежнюю цену.",
+                "how_it_should_be": "`RETURNING` — НОВЫЕ значения по умолчанию."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`RETURNING` возвращает значения из изменённых строк после `INSERT`/`UPDATE`/`DELETE`, экономя дополнительный `SELECT`; поддерживается в `PostgreSQL`, `Oracle`, `SQL Server` (через `OUTPUT`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Позволяет атомарно получить сгенерированные `SERIAL`/`uuid`, дефолтные значения, вычисленные триггерами поля без race-condition между `INSERT` и `SELECT`.",
+                "example": "`INSERT INTO users (name, email) VALUES ('Иванов', 'i@m.ru') RETURNING id, created_at`; `DELETE FROM sessions WHERE expires_at < NOW() RETURNING user_id`.",
+                "when_to_apply": "Получение auto-id, аудит изменений, удаление с возвратом списка пострадавших.",
+                "edge_cases": "Не поддерживается в `MySQL`. В `Spring Data JDBC` доступен через `@Modifying` + `@Query`.",
+                "related": "Q13 `Sequence`; Q15 `DELETE`; Q47 транзакции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы `JOIN` существуют в `SQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`INNER JOIN`, `LEFT/RIGHT OUTER JOIN`, `FULL OUTER JOIN`, `CROSS JOIN`; также `SELF JOIN` (соединение таблицы с собой) и `NATURAL`/`USING` варианты.",
+              "correct": true,
+              "sections": {
+                "explanation": "`INNER` — пересечение; `LEFT` — все из левой + совпадения; `RIGHT` — зеркально; `FULL OUTER` — обе таблицы целиком с `NULL` для непарных; `CROSS` — декартово произведение.",
+                "example": "`SELECT e.name, d.name FROM employees e LEFT JOIN departments d ON e.department_id = d.id` — сотрудник без отдела сохранится с `d.name = NULL`.",
+                "when_to_apply": "Любая работа с реляционной моделью: связи 1:1, 1:N, N:M; отчёты с включением пустых категорий.",
+                "edge_cases": "`FULL OUTER JOIN` не поддерживается в `MySQL` (нужна эмуляция `UNION`). `RIGHT JOIN` редок — обычно переписывают как `LEFT`.",
+                "related": "Q22 `WHERE` vs `ON`; Q25 `CROSS JOIN`; Q26 `SELF JOIN`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`INNER JOIN` возвращает все строки из обеих таблиц, включая непарные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`INNER JOIN` возвращает ТОЛЬКО совпадения по условию `ON`; непарные строки исключаются.",
+                "source_of_confusion": "Перепутано с `FULL OUTER JOIN`.",
+                "if_it_were_true": "Не было бы смысла в `OUTER JOIN`.",
+                "how_it_should_be": "`INNER` — только совпадения; `OUTER` — с непарными."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`LEFT JOIN` и `RIGHT JOIN` дают разные результаты для одних и тех же таблиц при одинаковом порядке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`A LEFT JOIN B` ≡ `B RIGHT JOIN A` — разница только в порядке таблиц.",
+                "source_of_confusion": "Кажется, что «left» и «right» делают разное.",
+                "if_it_were_true": "`RIGHT JOIN` имел бы уникальную семантику.",
+                "how_it_should_be": "`LEFT`/`RIGHT` симметричны при смене порядка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CROSS JOIN` поддерживает условие `ON` и фильтрует пары по нему.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CROSS JOIN` НЕ имеет условия; для условного соединения используется `INNER JOIN ... ON`.",
+                "source_of_confusion": "Все остальные `JOIN` имеют `ON`.",
+                "if_it_were_true": "`CROSS JOIN ... ON` не отличался бы от `INNER JOIN`.",
+                "how_it_should_be": "`CROSS JOIN` — декартово произведение, без `ON`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `WHERE` и `ON` в `JOIN`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`WHERE` и `ON` всегда взаимозаменяемы, даже в `LEFT JOIN`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `LEFT JOIN` перенос условия из `ON` в `WHERE` исключает непарные строки.",
+                "source_of_confusion": "Опыт с `INNER JOIN`, где это действительно эквивалентно.",
+                "if_it_were_true": "Не было бы тонкости в работе с `OUTER JOIN`.",
+                "how_it_should_be": "`INNER` — взаимозаменяемы; `OUTER` — нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `INNER JOIN` разницы нет; в `LEFT/RIGHT JOIN` `ON` фильтрует при соединении (непарные строки остаются с `NULL`), а `WHERE` фильтрует после — превращая `OUTER JOIN` в `INNER`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Условие в `ON` применяется к парам строк во время соединения; `WHERE` — к финальному набору. Размещение фильтра меняет семантику для `LEFT JOIN`.",
+                "example": "`LEFT JOIN d ON d.id = e.department_id AND d.active = true` — сотрудники без отдела сохранятся; перенос `AND d.active = true` в `WHERE` исключит их.",
+                "when_to_apply": "Отчёты «всё с пустыми категориями», фильтрация второй таблицы при сохранении строк первой.",
+                "edge_cases": "Оптимизатор может вытащить безопасные условия из `WHERE` в `ON` (predicate pushdown), но только для `INNER`.",
+                "related": "Q21 типы `JOIN`; Q17 `IN`/`EXISTS`; Q42 `EXPLAIN`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ON` применяется только к первичному ключу; для других столбцов нужен `WHERE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ON` может содержать любое логическое выражение, не только условие по `PK`/`FK`.",
+                "source_of_confusion": "Типичные примеры с `e.dept_id = d.id`.",
+                "if_it_were_true": "Нельзя было бы делать многоколоночные соединения.",
+                "how_it_should_be": "`ON` — любой предикат; обычно по ключам, но не обязательно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`WHERE` выполняется до `JOIN`, поэтому фильтрует строки первой таблицы до соединения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Логически `WHERE` после `FROM`/`JOIN` (Q14); семантически фильтрация — после соединения.",
+                "source_of_confusion": "Желание упростить порядок выполнения.",
+                "if_it_were_true": "`WHERE` действовал бы как push-down вручную.",
+                "how_it_should_be": "`WHERE` — после `JOIN` логически; оптимизатор может push-down."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что лучше — `JOIN` или подзапросы для одной задачи?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`JOIN` всегда строго быстрее любого подзапроса и должен использоваться везде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Производительность зависит от плана; нескоррелированные подзапросы часто эквивалентны `JOIN`.",
+                "source_of_confusion": "Упрощённый совет.",
+                "if_it_were_true": "`EXISTS` и `IN` не имели бы смысла в стандарте.",
+                "how_it_should_be": "Сравнивайте через `EXPLAIN`; нет универсального лидера."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Коррелированный подзапрос всегда быстрее `JOIN`, потому что выполняется только один раз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Коррелированный подзапрос выполняется для КАЖДОЙ строки внешнего запроса — потенциально O(n²).",
+                "source_of_confusion": "Путаница с нескоррелированным подзапросом.",
+                "if_it_were_true": "`JOIN` никогда не имел бы преимущества над коррелированными подзапросами.",
+                "how_it_should_be": "Коррелированный — N выполнений; `JOIN` обычно эффективнее."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Современные оптимизаторы часто эквивалентны для `JOIN` и нескоррелированных подзапросов; коррелированный подзапрос (зависимый от внешней строки) может быть O(n²) и обычно медленнее `JOIN`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`JOIN` лучше для извлечения столбцов из второй таблицы; подзапрос — для изолированных проверок и вычислений. `EXISTS` часто эффективнее `IN`/`JOIN` для проверки существования.",
+                "example": "Коррелированный: `SELECT (SELECT d.name FROM departments d WHERE d.id = e.department_id) FROM employees e`; лучше переписать как `LEFT JOIN`.",
+                "when_to_apply": "`JOIN` — нужны столбцы из второй таблицы; подзапрос — фильтр или агрегат без необходимости столбцов.",
+                "edge_cases": "`PG`/`MySQL 8+` часто разворачивают подзапросы в `JOIN` (subquery unnesting). Старые версии — нет.",
+                "related": "Q17 `IN`/`EXISTS`/`JOIN`; Q42 `EXPLAIN`; Q21 типы `JOIN`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подзапросы возвращают дубликаты, а `JOIN` всегда удаляет их автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JOIN` сам может создавать дубликаты при 1:N; `IN`-подзапрос — нет (semi-join).",
+                "source_of_confusion": "Перепутано направление.",
+                "if_it_were_true": "Не нужен был бы `DISTINCT` после `JOIN`.",
+                "how_it_should_be": "`JOIN` — возможные дубликаты; `IN`/`EXISTS` — нет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `UNION` и `UNION ALL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`UNION ALL` удаляет дубликаты, а `UNION` сохраняет их.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `UNION` удаляет, `UNION ALL` сохраняет.",
+                "source_of_confusion": "Перепутаны свойства.",
+                "if_it_were_true": "`UNION ALL` был бы дороже `UNION`.",
+                "how_it_should_be": "`UNION` — без дубликатов; `UNION ALL` — с дубликатами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`UNION` и `UNION ALL` требуют, чтобы столбцы имели абсолютно одинаковые имена в обоих `SELECT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достаточно совпадения количества и совместимости типов; имена берутся из первого `SELECT`.",
+                "source_of_confusion": "Логичное ожидание совпадения имён.",
+                "if_it_were_true": "`SELECT a, b UNION SELECT c, d` всегда падал бы.",
+                "how_it_should_be": "Имена — из первого `SELECT`; типы совместимы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`UNION` работает только с двумя `SELECT`-запросами; больше двух — недопустимо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`UNION` цепочкой объединяет любое число `SELECT`.",
+                "source_of_confusion": "Простые примеры в учебниках.",
+                "if_it_were_true": "ETL-пайплайны не могли бы склеивать N источников.",
+                "how_it_should_be": "`UNION` — N-арный."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`UNION` объединяет результаты и удаляет дубликаты (дороже — нужна сортировка/хеш); `UNION ALL` сохраняет дубликаты и работает быстрее.",
+              "correct": true,
+              "sections": {
+                "explanation": "Требования к обоим: одинаковое количество столбцов и совместимые типы. Если дубликаты невозможны или допустимы — всегда `UNION ALL` для производительности.",
+                "example": "`SELECT name, 'employee' AS type FROM employees UNION ALL SELECT name, 'contractor' FROM contractors`.",
+                "when_to_apply": "Слияние однородных наборов из разных таблиц/партиций; вертикальное «склеивание» разных подмножеств.",
+                "edge_cases": "`UNION` сортирует — может быть узким местом на больших наборах. `ORDER BY` ставится в конце последнего `SELECT`.",
+                "related": "Q21 типы `JOIN`; Q27 `GROUP BY`; Q42 `EXPLAIN`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CROSS JOIN` и когда он применяется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CROSS JOIN` — декартово произведение: каждая строка одной таблицы комбинируется с каждой строкой другой; используется для генерации комбинаций и заполнения пропусков.",
+              "correct": true,
+              "sections": {
+                "explanation": "Не имеет условия `ON`. Размер результата = N × M. Применяется с `generate_series` для построения календарей, матриц размеров/цветов и заполнения пустых периодов.",
+                "example": "`SELECT d.date, h.hour FROM generate_series('2026-01-01'::date, '2026-12-31', '1 day') d(date) CROSS JOIN generate_series(0, 23) h(hour)`.",
+                "when_to_apply": "Генерация комбинаций, календари, заполнение пропусков в отчётах, all-pairs тесты.",
+                "edge_cases": "Случайный `CROSS JOIN` (забытое `ON`) даёт огромный результат — типичный bug. В `PostgreSQL` есть `LATERAL` для зависимых cross-join.",
+                "related": "Q21 типы `JOIN`; Q22 `WHERE` vs `ON`; Q19 `CTE`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CROSS JOIN` возвращает только совпадения, как `INNER JOIN`, но без явного `ON`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CROSS JOIN` возвращает декартово произведение — все возможные пары, не фильтрует.",
+                "source_of_confusion": "Похожий синтаксис.",
+                "if_it_were_true": "`CROSS JOIN` без `ON` возвращал бы пустоту.",
+                "how_it_should_be": "`CROSS JOIN` — все пары без условия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CROSS JOIN` запрещён стандартом `SQL` и поддерживается только в `MySQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CROSS JOIN` — стандартный оператор, поддерживается всеми основными СУБД.",
+                "source_of_confusion": "Опыт случайных `CROSS JOIN` как багов.",
+                "if_it_were_true": "Не было бы способа породить декартово произведение.",
+                "how_it_should_be": "`CROSS JOIN` — стандарт; работает везде."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CROSS JOIN` дублирует поведение `UNION ALL` и объединяет таблицы вертикально.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`UNION` — вертикальное склеивание (по строкам); `CROSS JOIN` — горизонтальное (по парам столбцов).",
+                "source_of_confusion": "Поверхностное «объединяет таблицы».",
+                "if_it_were_true": "`CROSS JOIN` сохранял бы количество столбцов.",
+                "how_it_should_be": "`CROSS JOIN` — N×M пар; `UNION` — склейка строк."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `SELF JOIN`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SELF JOIN` — это специальный синтаксис `SELFJOIN` без обязательных алиасов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это обычный `JOIN` той же таблицы; алиасы обязательны для различения.",
+                "source_of_confusion": "Кажется, что нужен отдельный оператор.",
+                "if_it_were_true": "`SELFJOIN` существовал бы в стандарте.",
+                "how_it_should_be": "Обычный `JOIN` + алиасы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SELF JOIN` — соединение таблицы с самой собой через алиасы; применяется для иерархий, сравнений строк внутри одной таблицы и поиска пар.",
+              "correct": true,
+              "sections": {
+                "explanation": "Используются разные алиасы (`e`, `m`) для одной таблицы; условие соединения ссылается на оба алиаса. Часто комбинируется с `LEFT JOIN` для сохранения корневых узлов.",
+                "example": "`SELECT e.name AS employee, m.name AS manager FROM employees e LEFT JOIN employees m ON e.manager_id = m.id` — иерархия сотрудник→руководитель.",
+                "when_to_apply": "Иерархия (менеджер/подчинённые), сравнение строк (`a.id < b.id` для уникальных пар), поиск дубликатов.",
+                "edge_cases": "При большом ветвлении лучше использовать рекурсивный `CTE`. Алиасы обязательны — без них СУБД не различит таблицы.",
+                "related": "Q21 типы `JOIN`; Q48 рекурсивные `CTE`; Q19 `CTE`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SELF JOIN` не используется на практике и не имеет применения в реальных задачах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Иерархии, поиск дубликатов, all-pairs сравнения — частые задачи, решаемые `SELF JOIN`.",
+                "source_of_confusion": "Не сталкивались с иерархическими данными.",
+                "if_it_were_true": "Не было бы паттерна для employees(manager_id) и подобных.",
+                "how_it_should_be": "Распространённый паттерн для иерархий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SELF JOIN` всегда возвращает декартово произведение строк таблицы с самой собой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SELF JOIN` с условием `ON` фильтрует пары; без условия — это `CROSS JOIN`.",
+                "source_of_confusion": "Путаница с `CROSS JOIN`.",
+                "if_it_were_true": "Иерархия имела бы все возможные пары сотрудников.",
+                "how_it_should_be": "`SELF JOIN` фильтруется условием `ON`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `GROUP BY` и `HAVING`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`HAVING` фильтрует строки до агрегации, а `WHERE` — после.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `WHERE` до `GROUP BY`, `HAVING` после.",
+                "source_of_confusion": "Перепутана последовательность.",
+                "if_it_were_true": "`HAVING COUNT(*) > 5` не имел бы смысла.",
+                "how_it_should_be": "`WHERE` → строки до; `HAVING` → группы после."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`GROUP BY` нельзя комбинировать с `ORDER BY` — это синтаксическая ошибка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GROUP BY` отлично работает с `ORDER BY` (выполняется после); сортировка по агрегатам — частый паттерн.",
+                "source_of_confusion": "Незнание порядка выполнения.",
+                "if_it_were_true": "Нельзя было бы сортировать топ-N групп.",
+                "how_it_should_be": "`GROUP BY` → `ORDER BY` совместимы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`GROUP BY` группирует строки для агрегатных функций; `HAVING` фильтрует группы (после `GROUP BY`), в отличие от `WHERE`, фильтрующего строки до группировки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все столбцы в `SELECT`, не входящие в агрегаты, должны быть в `GROUP BY` (в строгом режиме). `HAVING` может использовать агрегаты (`COUNT(*) > 5`), `WHERE` — нет.",
+                "example": "`SELECT department, COUNT(*), AVG(salary) FROM employees WHERE status = 'ACTIVE' GROUP BY department HAVING COUNT(*) > 3 ORDER BY AVG(salary) DESC`.",
+                "when_to_apply": "Отчёты с агрегацией по категориям; фильтрация групп по агрегатным условиям.",
+                "edge_cases": "`GROUP BY` объединяет все `NULL` в одну группу. `MySQL` в нестрогом режиме допускает столбцы в `SELECT` без `GROUP BY` — нестандарт.",
+                "related": "Q14 порядок выполнения; Q28 `GROUP BY` vs `DISTINCT`; Q29 `COUNT(*)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`GROUP BY` создаёт новую таблицу на диске и поэтому медленнее `DISTINCT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GROUP BY` обычно работает в памяти; производительность похожа на `DISTINCT` без агрегатов.",
+                "source_of_confusion": "Ассоциация с временными таблицами.",
+                "if_it_were_true": "`GROUP BY` всегда был бы хуже.",
+                "how_it_should_be": "`GROUP BY` ≈ `DISTINCT` по скорости без агрегатов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `GROUP BY` и `DISTINCT`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`DISTINCT` всегда быстрее `GROUP BY` для тех же данных независимо от плана выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Производительность зависит от оптимизатора, индексов и наличия агрегатов; универсального лидера нет.",
+                "source_of_confusion": "Упрощённый совет.",
+                "if_it_were_true": "`GROUP BY` не использовали бы для дедупликации.",
+                "how_it_should_be": "Сравнивайте через `EXPLAIN`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`GROUP BY` не удаляет дубликаты, а только группирует — для дедупликации обязателен `DISTINCT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GROUP BY` по тем же столбцам, что и `DISTINCT`, даёт одинаковый набор уникальных строк.",
+                "source_of_confusion": "Логичное разделение «группировка ≠ дедупликация».",
+                "if_it_were_true": "`SELECT a FROM t GROUP BY a` возвращал бы дубликаты.",
+                "how_it_should_be": "`GROUP BY` неявно убирает дубликаты по группируемым столбцам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`DISTINCT` поддерживает агрегатные функции и можно писать `DISTINCT COUNT(*)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`COUNT(DISTINCT col)` — да; `DISTINCT COUNT(*)` — нет, неправильный синтаксис.",
+                "source_of_confusion": "Путаница в порядке ключевых слов.",
+                "if_it_were_true": "Все агрегаты дублировали бы синтаксис `DISTINCT`.",
+                "how_it_should_be": "`DISTINCT` внутри агрегата: `COUNT(DISTINCT col)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`DISTINCT` удаляет дубликаты в финальном наборе; `GROUP BY` группирует строки и позволяет применять агрегаты (`SUM`, `COUNT`, `AVG`); без агрегатов эквивалентны.",
+              "correct": true,
+              "sections": {
+                "explanation": "Производительность похожа в большинстве СУБД (оба обычно используют hash или sort). `GROUP BY` мощнее: даёт доступ к агрегатам и группировке для `HAVING`.",
+                "example": "`SELECT DISTINCT department FROM employees` ≡ `SELECT department FROM employees GROUP BY department`; но `GROUP BY` добавляет `SUM(salary)` без второго запроса.",
+                "when_to_apply": "`DISTINCT` — простое удаление дубликатов; `GROUP BY` — когда нужны агрегаты по группам.",
+                "edge_cases": "`DISTINCT ON (col)` в `PostgreSQL` — нестандартное расширение для получения первой строки в группе. В `MySQL` оптимизатор может использовать loose index scan.",
+                "related": "Q27 `GROUP BY`/`HAVING`; Q24 `UNION`; Q31 `ROW_NUMBER` для дедупликации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `COUNT(*)`, `COUNT(column)` и `COUNT(DISTINCT column)`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`COUNT(*)` считает все строки; `COUNT(column)` — строки, где столбец не `NULL`; `COUNT(DISTINCT column)` — уникальные ненулевые значения столбца.",
+              "correct": true,
+              "sections": {
+                "explanation": "`COUNT(*)` не зависит от значений и обычно быстрее. `COUNT(col)` пропускает `NULL`. `COUNT(DISTINCT col)` дополнительно дедуплицирует — самый дорогой вариант (нужен hash/sort).",
+                "example": "Для строк `(1,10,5), (2,10,NULL), (3,20,10), (4,20,5)`: `COUNT(*) = 4`, `COUNT(discount) = 3`, `COUNT(DISTINCT customer_id) = 2`, `COUNT(DISTINCT discount) = 2`.",
+                "when_to_apply": "`COUNT(*)` — общее количество строк; `COUNT(col)` — заполненные значения; `COUNT(DISTINCT)` — уникальные значения для аналитики.",
+                "edge_cases": "`COUNT(1)` ≡ `COUNT(*)` по скорости в современных СУБД (миф о «`COUNT(1)` быстрее» устарел).",
+                "related": "Q5 `NULL`; Q27 `GROUP BY`; Q28 `DISTINCT`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`COUNT(*)` пропускает `NULL`-строки, как и `COUNT(column)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`COUNT(*)` считает ВСЕ строки независимо от `NULL`; пропускает `NULL` только `COUNT(col)`.",
+                "source_of_confusion": "Обобщение поведения `COUNT(col)`.",
+                "if_it_were_true": "`COUNT(*)` всегда был бы ≤ числа строк таблицы.",
+                "how_it_should_be": "`COUNT(*)` — все строки; `COUNT(col)` — без `NULL`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`COUNT(1)` строго быстрее `COUNT(*)` во всех СУБД из-за оптимизации константного выражения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В современных СУБД `COUNT(1)` и `COUNT(*)` эквивалентны по плану и скорости; разница — миф.",
+                "source_of_confusion": "Устаревший совет из 90-х.",
+                "if_it_were_true": "`COUNT(*)` был бы deprecated.",
+                "how_it_should_be": "`COUNT(1)` ≡ `COUNT(*)` по производительности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`COUNT(DISTINCT col)` всегда быстрее обычного `COUNT(col)`, потому что обрабатывает меньше значений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`COUNT(DISTINCT)` дороже — нужна дедупликация (hash/sort) поверх обычного `COUNT`.",
+                "source_of_confusion": "Кажется, что «уникальных меньше = быстрее».",
+                "if_it_were_true": "Не было бы советов оптимизировать `COUNT(DISTINCT)`.",
+                "how_it_should_be": "`COUNT(DISTINCT)` дороже из-за дедупликации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое оконные функции (`Window Functions`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Оконные функции — это синоним `GROUP BY` и сворачивают строки в группы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Окна СОХРАНЯЮТ все строки и добавляют вычисленный столбец; `GROUP BY` сворачивает.",
+                "source_of_confusion": "Оба «работают с группами».",
+                "if_it_were_true": "`SELECT name, AVG(...) OVER (...)` возвращал бы по одной строке на отдел.",
+                "how_it_should_be": "Окна не сворачивают; каждая строка остаётся."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оконные функции вычисляют значения над набором связанных строк (окно) без группировки результата; определяются через `OVER (PARTITION BY ... ORDER BY ... ROWS/RANGE ...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от агрегатов с `GROUP BY`, окна сохраняют все строки результата и добавляют вычисленные значения. Поддерживают `PARTITION BY` (деление на группы), `ORDER BY` (порядок), `ROWS`/`RANGE` (рамка).",
+                "example": "`AVG(salary) OVER (PARTITION BY department) AS dept_avg` — средняя по отделу для каждой строки без `GROUP BY`. `SUM(...) OVER (ORDER BY date)` — нарастающий итог.",
+                "when_to_apply": "Рейтинги, нарастающие итоги, скользящие средние, сравнение с соседними строками, top-N в группах.",
+                "edge_cases": "Не работают в `WHERE`/`HAVING` (Q33) — только `SELECT`/`ORDER BY`. Без `ORDER BY` рамка по умолчанию — вся партиция.",
+                "related": "Q31 `ROW_NUMBER`/`RANK`; Q32 `LAG`/`LEAD`; Q33 окна в `WHERE`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оконные функции можно использовать в `WHERE`, чтобы фильтровать строки по их рангу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Окна вычисляются после `WHERE`; нужно обернуть в подзапрос/`CTE` и фильтровать снаружи.",
+                "source_of_confusion": "Логичное желание `WHERE row_number() < 10`.",
+                "if_it_were_true": "`WHERE ROW_NUMBER() OVER (...) < 10` работал бы.",
+                "how_it_should_be": "Используйте `CTE` или подзапрос для фильтрации по окну."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Оконные функции не имеют параметров `PARTITION BY` и `ORDER BY` — `OVER()` пуст всегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OVER` поддерживает `PARTITION BY`, `ORDER BY` и `ROWS/RANGE` для определения окна.",
+                "source_of_confusion": "Простой пример `COUNT(*) OVER ()`.",
+                "if_it_were_true": "Нельзя было бы делать рейтинги внутри групп.",
+                "how_it_should_be": "`OVER (PARTITION BY ... ORDER BY ... ROWS BETWEEN ...)`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `ROW_NUMBER`, `RANK` и `DENSE_RANK`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ROW_NUMBER`, `RANK` и `DENSE_RANK` дают одинаковый результат при наличии дубликатов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дубликаты — это и есть отличие функций: `ROW_NUMBER` уникален, `RANK`/`DENSE_RANK` — нет.",
+                "source_of_confusion": "Поверхностное «все ранжируют».",
+                "if_it_were_true": "Не было бы трёх разных функций.",
+                "how_it_should_be": "При дубликатах функции расходятся."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RANK` всегда даёт плотные ранги без пропусков (1, 1, 2, 3).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RANK` создаёт ПРОПУСКИ после ничьей (1, 1, 3); плотный вариант — `DENSE_RANK`.",
+                "source_of_confusion": "Перепутаны `RANK` и `DENSE_RANK`.",
+                "if_it_were_true": "`DENSE_RANK` дублировал бы `RANK`.",
+                "how_it_should_be": "`RANK` — с пропусками; `DENSE_RANK` — без."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ROW_NUMBER` — уникальный номер каждой строке (1,2,3,4); `RANK` — одинаковый ранг для равных значений с пропусками (1,1,3,4); `DENSE_RANK` — одинаковый ранг без пропусков (1,1,2,3).",
+              "correct": true,
+              "sections": {
+                "explanation": "Все три — оконные функции с `OVER (ORDER BY ...)`. `ROW_NUMBER` — для пагинации и дедупликации (выбрать первую строку группы). `RANK`/`DENSE_RANK` — для рейтингов с ничьими.",
+                "example": "Зарплаты 100, 100, 90, 80 → `ROW_NUMBER`: 1, 2, 3, 4; `RANK`: 1, 1, 3, 4; `DENSE_RANK`: 1, 1, 2, 3. Дедупликация: `DELETE WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY ts DESC) rn) WHERE rn > 1)`.",
+                "when_to_apply": "`ROW_NUMBER` — top-N в группе, пагинация; `RANK` — спортивные рейтинги; `DENSE_RANK` — плотные категории.",
+                "edge_cases": "`ROW_NUMBER` недетерминистичен при ничьих в `ORDER BY` — добавляйте tie-breaker. Без `ORDER BY` порядок не гарантирован.",
+                "related": "Q30 оконные функции; Q33 окна в `WHERE`; Q32 `LAG`/`LEAD`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ROW_NUMBER` работает только с `PARTITION BY`, а без него выдаёт ошибку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ROW_NUMBER() OVER (ORDER BY ...)` без `PARTITION BY` работает — нумерует весь набор.",
+                "source_of_confusion": "Опыт только с примерами `PARTITION BY`.",
+                "if_it_were_true": "`ROW_NUMBER` нельзя было бы использовать для глобальной пагинации.",
+                "how_it_should_be": "`PARTITION BY` опционален."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `LAG`, `LEAD` и навигационные оконные функции?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`LAG` возвращает значение из следующей строки, а `LEAD` — из предыдущей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `LAG` смотрит НАЗАД (previous), `LEAD` — ВПЕРЁД (next).",
+                "source_of_confusion": "Перепутаны направления.",
+                "if_it_were_true": "`LAG` показывал бы будущее.",
+                "how_it_should_be": "`LAG` = previous; `LEAD` = next."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`LAG` и `LEAD` не требуют `ORDER BY` и работают в любом порядке строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `ORDER BY` понятия «предыдущая»/«следующая» не определены; СУБД выдаст ошибку или непредсказуемый результат.",
+                "source_of_confusion": "Идея «функция сама знает порядок».",
+                "if_it_were_true": "Временные ряды нельзя было бы анализировать корректно.",
+                "how_it_should_be": "`LAG`/`LEAD` обязательно с `ORDER BY`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`FIRST_VALUE` и `LAST_VALUE` возвращают одинаковый результат, независимо от рамки окна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LAST_VALUE` без явной рамки часто даёт текущую строку (рамка по умолчанию `RANGE UNBOUNDED PRECEDING`).",
+                "source_of_confusion": "Симметричное название.",
+                "if_it_were_true": "Не было бы багов с `LAST_VALUE`.",
+                "how_it_should_be": "Уточняйте рамку через `ROWS BETWEEN ... AND ...`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`LAG(col, n)` — значение из предыдущей строки в окне; `LEAD(col, n)` — из следующей; `FIRST_VALUE`/`LAST_VALUE`/`NTH_VALUE` — фиксированные позиции в окне.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все требуют `ORDER BY` в `OVER`. Аргумент `n` — смещение (по умолчанию 1), второй аргумент — значение по умолчанию для краёв окна.",
+                "example": "`SELECT date, revenue, LAG(revenue) OVER (ORDER BY date) AS prev FROM daily_sales` — вчерашняя выручка рядом с сегодняшней. Процент изменения: `(revenue - LAG(revenue) OVER (...)) * 100.0 / LAG(revenue) OVER (...)`.",
+                "when_to_apply": "Расчёт дельт, временных рядов, day-over-day сравнений, поиск «перехода состояния» (когда значение изменилось).",
+                "edge_cases": "На границе окна `LAG`/`LEAD` возвращают `NULL` (или дефолт). `LAST_VALUE` без явной рамки часто даёт текущую строку — нужен `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`.",
+                "related": "Q30 оконные функции; Q31 `ROW_NUMBER`/`RANK`; Q33 окна в `WHERE`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему оконные функции нельзя использовать в `WHERE`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`WHERE` выполняется до вычисления оконных функций (см. порядок выполнения Q14); решение — обернуть запрос в подзапрос/`CTE` и фильтровать снаружи.",
+              "correct": true,
+              "sections": {
+                "explanation": "Логический порядок: `FROM` → `WHERE` → `GROUP BY` → `HAVING` → окна → `SELECT` → `DISTINCT` → `ORDER BY` → `LIMIT`. Окна вычисляются на этапе `SELECT`, поэтому в `WHERE`/`HAVING` ещё недоступны.",
+                "example": "`WITH ranked AS (SELECT *, ROW_NUMBER() OVER (ORDER BY salary DESC) AS rn FROM employees) SELECT * FROM ranked WHERE rn <= 10` — top-10 через `CTE`.",
+                "when_to_apply": "Любая фильтрация по результату окна: top-N, дедупликация, выбор первой/последней строки в группе.",
+                "edge_cases": "`QUALIFY` (Snowflake, BigQuery) — расширение для фильтрации по окнам без `CTE`; в `PostgreSQL`/`MySQL` нет.",
+                "related": "Q14 порядок выполнения; Q19 `CTE`; Q30 оконные функции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оконные функции можно использовать в `WHERE` без ограничений — это работает в любой СУБД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это синтаксическая ошибка в стандарте `SQL`: окна вычисляются после `WHERE`.",
+                "source_of_confusion": "Желаемое поведение, аналогичное агрегатам в `HAVING`.",
+                "if_it_were_true": "Не нужны были бы `CTE` для фильтрации по рангу.",
+                "how_it_should_be": "Окна вне `WHERE`; используйте `CTE`/подзапрос."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оконные функции запрещены в `WHERE` потому, что они недетерминированы и могут вернуть разные значения при повторе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Окна детерминированы при фиксированных входных данных; запрет — из-за порядка выполнения.",
+                "source_of_confusion": "Путаница с недетерминированными функциями (`RANDOM`).",
+                "if_it_were_true": "Окна нельзя было бы использовать в `SELECT` для индексации.",
+                "how_it_should_be": "Запрет — следствие порядка выполнения, не недетерминизма."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Оконные функции работают только в `WHERE` и не могут быть в `SELECT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Окна допустимы в `SELECT` и `ORDER BY`; в `WHERE`/`HAVING` — нет.",
+                "source_of_confusion": "Полностью перепутаны места использования.",
+                "if_it_were_true": "Не было бы примеров `SELECT ROW_NUMBER() OVER ...`.",
+                "how_it_should_be": "Окна — в `SELECT`/`ORDER BY`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое индекс и как он устроен в большинстве СУБД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Индекс — это копия таблицы, хранящаяся отдельно и обновляемая раз в сутки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Индекс — компактная структура (`B+tree`), синхронно обновляемая при каждом изменении данных.",
+                "source_of_confusion": "Путаница с `Materialized View` или репликой.",
+                "if_it_were_true": "После `INSERT` данные находились бы только спустя сутки.",
+                "how_it_should_be": "Индекс — синхронно поддерживается СУБД."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Индекс — структура данных для ускорения поиска строк; в большинстве СУБД — сбалансированное дерево `B+tree`, данные в листьях, поддерживается равенство, диапазон, `ORDER BY` и префиксы.",
+              "correct": true,
+              "sections": {
+                "explanation": "`B+tree` обеспечивает O(log N) поиск. Составной индекс `(A, B, C)` работает для `WHERE A`, `WHERE A AND B`, `WHERE A AND B AND C` (правило левого префикса), но не для `WHERE B`.",
+                "example": "`CREATE INDEX idx_emp_dept_salary ON employees (department_id, salary)`; `CREATE UNIQUE INDEX idx_users_email ON users (email)`.",
+                "when_to_apply": "Колонки в `WHERE`, `JOIN`, `ORDER BY`, `GROUP BY` с высокой селективностью; foreign keys.",
+                "edge_cases": "Каждый индекс замедляет `INSERT`/`UPDATE`/`DELETE`. Индексы по неуникальным значениям с низкой селективностью почти бесполезны.",
+                "related": "Q35 кластерный/некластерный; Q36 `Covering`/`Partial`; Q51 типы индексов в `PostgreSQL`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Составной индекс `(A, B, C)` одинаково работает для всех запросов, включая `WHERE C` и `WHERE B`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Действует правило левого префикса: индекс работает только если запрос содержит `A`, `A AND B`, `A AND B AND C`.",
+                "source_of_confusion": "Кажется, что «все столбцы доступны».",
+                "if_it_were_true": "Порядок столбцов в индексе был бы не важен.",
+                "how_it_should_be": "Левый префикс обязателен; порядок столбцов критичен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Индексы ускоряют все операции, включая `INSERT` и `UPDATE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Индексы ускоряют чтение, но ЗАМЕДЛЯЮТ запись (каждое изменение обновляет все индексы).",
+                "source_of_confusion": "Один аспект (чтение) обобщается на всё.",
+                "if_it_were_true": "Можно было бы создавать неограниченное число индексов без штрафа.",
+                "how_it_should_be": "Индексы — компромисс чтение/запись."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `Clustered` и `Non-clustered` индексами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Clustered` индекс может быть несколько на одну таблицу — все они определяют физический порядок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Физический порядок один → `Clustered` индекс только один на таблицу.",
+                "source_of_confusion": "Аналогия с `Non-clustered`, которых много.",
+                "if_it_were_true": "Таблица имела бы несколько физических порядков одновременно.",
+                "how_it_should_be": "`Clustered` — один; `Non-clustered` — много."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`PostgreSQL` использует кластерные индексы по умолчанию для всех `PRIMARY KEY`, как `MySQL InnoDB`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PostgreSQL` не имеет кластерных индексов в классическом смысле; команда `CLUSTER` — разовая перегруппировка.",
+                "source_of_confusion": "Обобщение поведения `MySQL` на `PostgreSQL`.",
+                "if_it_were_true": "`CLUSTER` команда не существовала бы.",
+                "how_it_should_be": "`MySQL InnoDB` — `PK` кластерный; `PG` — нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Clustered` определяет физический порядок строк в таблице (один на таблицу), `Non-clustered` — отдельная структура с указателями (несколько на таблицу); `MySQL InnoDB` — `PK` это кластерный, `PostgreSQL` — нет классического кластерного.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Clustered`: данные хранятся в листьях `B+tree` индекса; range-запросы быстрее (sequential I/O). `Non-clustered`: листья содержат указатели на heap; range-запросы — random I/O.",
+                "example": "`MySQL InnoDB`: `PRIMARY KEY` = кластерный индекс, вторичные индексы хранят значение `PK` → компактный `PK` (INT) лучше UUID. `PostgreSQL`: команда `CLUSTER tab USING idx` — разовая физическая перегруппировка.",
+                "when_to_apply": "Понимание архитектуры таблиц в `MySQL`; выбор `PK` (`BIGSERIAL` vs `UUID`); оценка стоимости вторичных индексов.",
+                "edge_cases": "`PostgreSQL` после `CLUSTER` не сохраняет порядок при `UPDATE`/`INSERT`. `SQL Server`: можно явно создать кластерный индекс на любом столбце.",
+                "related": "Q34 индексы; Q36 `Covering`; Q51 типы индексов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Non-clustered` индексы дают более быстрые range-запросы, чем `Clustered`, из-за отдельного хранилища.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Clustered` обычно быстрее для range — данные физически рядом (sequential I/O).",
+                "source_of_confusion": "Перепутаны направления преимуществ.",
+                "if_it_were_true": "Кластерные индексы были бы не нужны.",
+                "how_it_should_be": "`Clustered` лучше для range; `Non-clustered` — для точечного."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Covering Index` и `Partial Index`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Covering Index` — это индекс, покрывающий всю таблицу и заменяющий её на диске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Covering Index` содержит ВСЕ нужные ЗАПРОСУ столбцы; таблица не заменяется.",
+                "source_of_confusion": "Слово «covering» воспринимается как «закрывающий».",
+                "if_it_were_true": "Не было бы heap-fetches в плане.",
+                "how_it_should_be": "`Covering` — для конкретного запроса, не всей таблицы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Partial Index` индексирует все строки таблицы, но обновляется только раз в сутки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Partial Index` индексирует ПОДМНОЖЕСТВО строк по условию `WHERE`, обновляется синхронно.",
+                "source_of_confusion": "Слово «partial» воспринимается как «частично актуальный».",
+                "if_it_were_true": "Не было бы строгой консистентности по подмножеству.",
+                "how_it_should_be": "`Partial` — подмножество строк, синхронное обновление."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Covering Index` поддерживается только в `MySQL` и не работает в `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PostgreSQL 11+` поддерживает `INCLUDE`; Index-Only Scan был и раньше.",
+                "source_of_confusion": "Незнание возможностей `PG`.",
+                "if_it_were_true": "`Index Only Scan` не появлялся бы в `EXPLAIN`.",
+                "how_it_should_be": "`PG` и `MySQL` оба поддерживают covering."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Covering Index` содержит все столбцы запроса (через `INCLUDE`) — СУБД отвечает только из индекса (Index-Only Scan); `Partial Index` индексирует подмножество строк по `WHERE`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Covering` экономит I/O — heap не читается. `Partial` уменьшает размер индекса и стоимость поддержки, эффективен для горячего подмножества (active, recent).",
+                "example": "`CREATE INDEX idx_orders_covering ON orders (customer_id, status) INCLUDE (total, created_at)`; `CREATE INDEX idx_active_orders ON orders (customer_id) WHERE status = 'ACTIVE'`.",
+                "when_to_apply": "`Covering` — для частых запросов с фиксированным набором столбцов; `Partial` — для маленького активного подмножества.",
+                "edge_cases": "`Partial` индекс используется только если `WHERE` запроса включает условие индекса. `INCLUDE` в `PostgreSQL` появился в 11; раньше использовали все столбцы как ключевые.",
+                "related": "Q34 индексы; Q35 кластерный/некластерный; Q37 когда индекс не помогает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда индекс НЕ помогает или игнорируется оптимизатором?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Низкая селективность, функция над столбцом без функционального индекса, `LIKE '%suffix'`, маленькая таблица, большой процент возвращаемых строк (>10-15%), устаревшая статистика.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оптимизатор выбирает `Seq Scan`, если он дешевле индексного скана. Функция (`UPPER(name)`) делает индекс на `name` бесполезным — нужен `CREATE INDEX ON t (UPPER(name))`.",
+                "example": "`WHERE UPPER(name) = 'ИВАНОВ'` → `Seq Scan`. Решение: `CREATE INDEX idx_users_name_upper ON users (UPPER(name))`. Или `LIKE 'ivan%'` — индекс работает; `LIKE '%vanov'` — нет.",
+                "when_to_apply": "Диагностика «почему мой запрос медленный, ведь есть индекс»; решение через `EXPLAIN ANALYZE`.",
+                "edge_cases": "После массового обновления нужен `ANALYZE` для актуальной статистики. `pg_stat_user_indexes` показывает неиспользуемые индексы.",
+                "related": "Q34 индексы; Q42 `EXPLAIN`; Q52 `VACUUM`/`ANALYZE`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Индекс используется всегда, если он существует — оптимизатор не имеет права его игнорировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оптимизатор выбирает план по стоимости; индекс может быть проигнорирован, если `Seq Scan` дешевле.",
+                "source_of_confusion": "Идея «индекс = всегда быстрее».",
+                "if_it_were_true": "Не было бы советов проверять `EXPLAIN`.",
+                "how_it_should_be": "Использование индекса — решение оптимизатора по стоимости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Функция над столбцом (`UPPER(name)`) автоматически использует индекс на `name`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Индекс на `name` не подходит — значения в индексе не соответствуют `UPPER(name)`; нужен функциональный индекс.",
+                "source_of_confusion": "Ожидание «магического» поведения СУБД.",
+                "if_it_were_true": "Функциональные индексы не были бы нужны.",
+                "how_it_should_be": "Создавайте индекс на выражении: `ON t (UPPER(name))`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`LIKE '%text'` (поиск по суффиксу) использует обычный `B-tree` индекс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`B-tree` индексирует префиксы; `%suffix` не использует индекс. Решение — `GIN`/`pg_trgm` или reverse-индекс.",
+                "source_of_confusion": "Опыт с `LIKE 'prefix%'`.",
+                "if_it_were_true": "Не было бы советов использовать `pg_trgm`.",
+                "how_it_should_be": "`%suffix` → `GIN` с `gin_trgm_ops` или `tsvector`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `ACID` в реляционных СУБД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ACID` означает Availability, Consistency, Integrity, Durability — четыре свойства распределённых систем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ACID` = Atomicity, Consistency, Isolation, Durability. Свойства распределённых систем — `CAP` и `BASE`.",
+                "source_of_confusion": "Путаница с другими аббревиатурами.",
+                "if_it_were_true": "Не существовало бы термина `Availability` в `CAP`.",
+                "how_it_should_be": "`ACID` ≠ `CAP`/`BASE`; разные модели."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Atomicity` (всё или ничего), `Consistency` (валидное состояние), `Isolation` (изоляция параллельных транзакций), `Durability` (сохранность после `COMMIT`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`A`: либо все операции транзакции выполнены, либо ни одна (через `WAL`/undo). `C`: ограничения целостности соблюдены до и после. `I`: уровни изоляции защищают от dirty/non-repeatable/phantom reads. `D`: после `COMMIT` данные переживают сбой.",
+                "example": "`BEGIN; UPDATE accounts SET balance = balance - 1000 WHERE id = 1; UPDATE accounts SET balance = balance + 1000 WHERE id = 2; COMMIT;` — обе операции или ни одной.",
+                "when_to_apply": "Финансовые операции, бронирование, любая критическая бизнес-логика, требующая надёжности.",
+                "edge_cases": "В распределённых системах `ACID` сложно достигается — компромисс с `BASE`/`CAP`. `Durability` зависит от `fsync` и настроек репликации.",
+                "related": "Q39 уровни изоляции; Q40 deadlock; Q53 `MVCC`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Isolation` означает физическую изоляцию данных на разных дисках.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Isolation` — логическая изоляция параллельных транзакций друг от друга, не физическая.",
+                "source_of_confusion": "Слово «isolation» как «отделить».",
+                "if_it_were_true": "Уровни изоляции не имели бы смысла.",
+                "how_it_should_be": "`Isolation` — про конкурентный доступ, не про железо."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Durability` гарантирует, что данные хранятся вечно и не могут быть удалены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Durability` гарантирует, что после `COMMIT` изменения переживут сбой; удаление через `DELETE`/`DROP` — нормально.",
+                "source_of_confusion": "Слово «durable» как «постоянный».",
+                "if_it_were_true": "`DROP TABLE` нарушал бы `ACID`.",
+                "how_it_should_be": "`Durability` про переживание сбоя, не запрет удаления."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие уровни изоляции транзакций определяет стандарт `SQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`READ UNCOMMITTED` — самый строгий уровень изоляции с максимальными гарантиями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`READ UNCOMMITTED` — самый СЛАБЫЙ уровень, допускающий все аномалии включая dirty reads.",
+                "source_of_confusion": "Перепутана иерархия.",
+                "if_it_were_true": "`SERIALIZABLE` был бы слабее.",
+                "how_it_should_be": "От слабого к сильному: `RU` < `RC` < `RR` < `SERIALIZABLE`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SERIALIZABLE` обеспечивает максимальный throughput и используется по умолчанию во всех СУБД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SERIALIZABLE` имеет НАИМЕНЬШИЙ параллелизм; по умолчанию: `PG` — `RC`, `MySQL` — `RR`.",
+                "source_of_confusion": "Перепутаны направления.",
+                "if_it_were_true": "Не было бы advice использовать слабые уровни для производительности.",
+                "how_it_should_be": "`SERIALIZABLE` строгий, но медленный; по умолчанию слабее."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`READ UNCOMMITTED` (dirty reads), `READ COMMITTED` (без dirty), `REPEATABLE READ` (без non-repeatable), `SERIALIZABLE` (без phantom); `PostgreSQL` по умолчанию `READ COMMITTED`, `MySQL InnoDB` — `REPEATABLE READ`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аномалии: dirty read — чтение незакоммиченных данных; non-repeatable — повторное чтение даёт другое значение; phantom — повторный запрос возвращает новые строки. Чем выше уровень, тем меньше параллелизм.",
+                "example": "`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ; BEGIN; SELECT balance FROM accounts WHERE id = 1; -- другая транзакция COMMIT-ит UPDATE; -- наш SELECT всё ещё видит старое значение; COMMIT;`.",
+                "when_to_apply": "Финансовые транзакции — `SERIALIZABLE`/`REPEATABLE READ`; отчёты — `READ COMMITTED`; high-throughput чтение — `READ UNCOMMITTED` (редко).",
+                "edge_cases": "`PostgreSQL REPEATABLE READ` предотвращает phantom reads (через `MVCC/SSI`) — отличие от стандарта. `SERIALIZABLE` в `PG` использует `SSI` с возможным `serialization_failure`.",
+                "related": "Q38 `ACID`; Q40 deadlock; Q53 `MVCC`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Уровни изоляции одинаково реализованы во всех СУБД и не имеют диалектных отличий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PG` `REPEATABLE READ` блокирует phantom (через `MVCC`); стандарт допускает phantom на этом уровне.",
+                "source_of_confusion": "Ожидание единообразия.",
+                "if_it_were_true": "Не нужно было бы изучать особенности конкретной СУБД.",
+                "how_it_should_be": "Семантика уровней — диалект-зависима."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое deadlock и как его избежать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Deadlock — это ситуация, когда одна транзакция блокирует свои же ресурсы и не может продолжить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Deadlock — это ВЗАИМНАЯ блокировка двух (или более) транзакций; внутри одной транзакции это не deadlock.",
+                "source_of_confusion": "Упрощённое понимание термина.",
+                "if_it_were_true": "Detection не требовал бы графа ожидания.",
+                "how_it_should_be": "Deadlock — минимум 2 транзакции в цикле ожидания."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Deadlock автоматически разрешается СУБД, и приложению не нужно реагировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "СУБД откатывает одну транзакцию с ошибкой; приложение должно ловить и повторять.",
+                "source_of_confusion": "Опыт с `transparent` retry в фреймворках.",
+                "if_it_were_true": "`@Retryable` для deadlock не был бы нужен.",
+                "how_it_should_be": "Откат + retry на стороне приложения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Deadlock невозможен, если каждый запрос использует не более одной таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Deadlock возможен и на одной таблице — между разными строками или разными типами блокировок.",
+                "source_of_confusion": "Идея «одна таблица = один lock».",
+                "if_it_were_true": "Достаточно было бы ограничить запросы одной таблицей.",
+                "how_it_should_be": "Deadlock возможен на любых конкурентных ресурсах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Deadlock — взаимная блокировка двух транзакций, ждущих ресурсы друг друга; избегают через единый порядок блокировки, короткие транзакции, `SELECT FOR UPDATE NOWAIT`, retry-логику.",
+              "correct": true,
+              "sections": {
+                "explanation": "СУБД автоматически обнаруживает deadlock через граф ожидания и откатывает одну из транзакций (`deadlock detected`). Приложение должно ловить ошибку и повторять.",
+                "example": "T1: блокирует строку 1, ждёт 2. T2: блокирует строку 2, ждёт 1 → deadlock. Решение — всегда блокировать в порядке возрастания `id`.",
+                "when_to_apply": "Высокая конкуренция за общие ресурсы, multi-row updates, переводы между счетами.",
+                "edge_cases": "Deadlock-detection имеет таймаут (`deadlock_timeout` в `PG`). При высокой нагрузке возможны livelock и lock contention без формального deadlock.",
+                "related": "Q38 `ACID`; Q39 изоляция; Q41 оптимистичная/пессимистичная блокировка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между оптимистичной и пессимистичной блокировкой?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Пессимистичная блокирует строки (`SELECT ... FOR UPDATE`) до коммита; оптимистичная использует `version`/`@Version` и обнаруживает конфликт только при `UPDATE`/`COMMIT`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Пессимистичная: гарантирует «никто не вмешается», но снижает throughput и создаёт deadlock-риск. Оптимистичная: не блокирует, но при конфликте даёт `OptimisticLockException` — приложение повторяет.",
+                "example": "Пессимистичная: `SELECT * FROM products WHERE id = 42 FOR UPDATE; UPDATE products SET stock = stock - 1`. Оптимистичная: `@Entity class Product { @Version Integer version; }` — `Hibernate` автоматически проверяет.",
+                "when_to_apply": "Пессимистичная — высокая конкуренция за одни и те же данные; оптимистичная — низкая вероятность конфликта (большинство web-приложений).",
+                "edge_cases": "Пессимистичная требует длинной транзакции — плохо для веб (lock contention). Оптимистичная нуждается в retry-логике на стороне клиента.",
+                "related": "Q40 deadlock; Q39 изоляция; Q47 транзакции в `Spring`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оптимистичная блокировка использует `SELECT FOR UPDATE`, а пессимистичная — `@Version`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: пессимистичная — `SELECT FOR UPDATE`; оптимистичная — `@Version`/`OCC`.",
+                "source_of_confusion": "Перепутаны механизмы.",
+                "if_it_were_true": "`@Version` блокировал бы строки в БД.",
+                "how_it_should_be": "`FOR UPDATE` — пессимистичная; `@Version` — оптимистичная."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Пессимистичная блокировка имеет более высокий throughput, чем оптимистичная.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пессимистичная блокирует ресурсы → меньше параллелизма; оптимистичная не ждёт → выше throughput при низком конфликте.",
+                "source_of_confusion": "Перепутаны характеристики.",
+                "if_it_were_true": "Не было бы советов выбирать `OCC` для web.",
+                "how_it_should_be": "Оптимистичная масштабируется лучше при низком конфликте."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Оптимистичная блокировка может вызвать deadlock из-за конкуренции за один и тот же ресурс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OCC` не использует физические блокировки → deadlock невозможен; вместо него — `OptimisticLockException`.",
+                "source_of_confusion": "Желание унифицировать поведение.",
+                "if_it_were_true": "`OCC` имел бы те же ограничения, что и пессимистичная.",
+                "how_it_should_be": "`OCC` → нет deadlock; есть конфликт версий."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `EXPLAIN` и какие основные операции встречаются в плане выполнения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`EXPLAIN` выполняет запрос и возвращает результат, как обычный `SELECT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EXPLAIN` без `ANALYZE` НЕ выполняет запрос; показывает только план.",
+                "source_of_confusion": "Путаница с `EXPLAIN ANALYZE`.",
+                "if_it_were_true": "`EXPLAIN` на дорогом запросе всегда был бы медленным.",
+                "how_it_should_be": "`EXPLAIN` — план; `EXPLAIN ANALYZE` — план + выполнение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`EXPLAIN` показывает план выполнения; ключевые операции — `Seq Scan`, `Index Scan`, `Index Only Scan`, `Bitmap Heap Scan`, `Nested Loop`, `Hash Join`, `Merge Join`, `Sort`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`EXPLAIN` — только план; `EXPLAIN ANALYZE` — выполняет запрос и показывает реальное время и строки. `EXPLAIN (ANALYZE, BUFFERS)` — добавляет статистику I/O.",
+                "example": "`Hash Join (cost=1.09..2.19 rows=3 width=64) (actual time=0.025..0.027 rows=3 loops=1)` — `cost` оценка, `actual time` реальное, `rows` количество, `loops` повторения.",
+                "when_to_apply": "Любая оптимизация: проверка использования индексов, выбор `JOIN`-алгоритма, обнаружение `Seq Scan` там, где ожидали индекс.",
+                "edge_cases": "`rows` от планировщика может сильно отличаться от `actual rows` — нужен `ANALYZE` для актуальной статистики. `Buffers` показывает hit/read для page cache.",
+                "related": "Q34 индексы; Q43 стратегии оптимизации; Q49 чтение плана."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Seq Scan` всегда быстрее `Index Scan` независимо от размера таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Seq Scan` быстрее только на маленьких таблицах или при выборке большой доли строк; иначе `Index Scan` лучше.",
+                "source_of_confusion": "Идея «sequential read всегда быстрее».",
+                "if_it_were_true": "Индексы были бы бесполезны.",
+                "how_it_should_be": "Оптимизатор выбирает по стоимости; обычно `Index Scan` лучше для селективных запросов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`cost` в `EXPLAIN` измеряется в миллисекундах и точно соответствует реальному времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`cost` — условные единицы оценки, не миллисекунды; реальное время даёт `actual time` в `EXPLAIN ANALYZE`.",
+                "source_of_confusion": "Желание интерпретировать численное значение.",
+                "if_it_were_true": "Не было бы расхождений между планом и реальностью.",
+                "how_it_should_be": "`cost` — оценочные единицы; `actual time` — реальные мс."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 43,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные стратегии оптимизации `SQL`-запросов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SELECT *` всегда быстрее, потому что меньше работы для парсера запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SELECT *` тащит лишние столбцы и блокирует Index-Only Scan; нужно перечислять только необходимые поля.",
+                "source_of_confusion": "Краткость синтаксиса.",
+                "if_it_were_true": "Не было бы паттерна `Covering Index`.",
+                "how_it_should_be": "Явно перечисляйте столбцы для оптимизации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`OFFSET` всегда эффективнее keyset-пагинации, особенно на больших данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `OFFSET N` сканирует и отбрасывает N строк; keyset (`WHERE id > last_id`) сканирует только нужные.",
+                "source_of_confusion": "`OFFSET` синтаксически проще.",
+                "if_it_were_true": "Не было бы советов перейти на keyset для глубокой пагинации.",
+                "how_it_should_be": "Keyset лучше для глубокой пагинации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Индексы, покрывающие индексы, избегать `SELECT *`, keyset-пагинация вместо `OFFSET`, batch-операции, `EXISTS` вместо `IN`, `ANALYZE`, партиционирование, connection pooling, чтение `EXPLAIN`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Принцип: минимизировать I/O и CPU. Индексы — главный инструмент. Keyset (`WHERE id > last_id LIMIT N`) лучше `OFFSET`, который сканирует пропускаемые строки.",
+                "example": "`OFFSET 100000` сканирует 100020 строк; `WHERE id > 100000 LIMIT 20` — только 20. Batch: `INSERT INTO t VALUES (...), (...), (...)` вместо цикла из N запросов.",
+                "when_to_apply": "Любые медленные запросы; высоконагруженные эндпоинты; отчёты с большими объёмами.",
+                "edge_cases": "Слишком много индексов замедляют запись. `Connection pooling` (`HikariCP`/`PgBouncer`) критичен — открытие соединения дорого.",
+                "related": "Q42 `EXPLAIN`; Q44 `N+1`; Q49 чтение плана."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Создание максимально возможного числа индексов на каждой таблице — лучшая стратегия оптимизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый индекс замедляет `INSERT`/`UPDATE`/`DELETE`; нужен баланс между чтением и записью.",
+                "source_of_confusion": "«Индекс = быстрее».",
+                "if_it_were_true": "Не было бы советов удалять неиспользуемые индексы.",
+                "how_it_should_be": "Индексы выборочно, по реальным запросам."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 44,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `N+1` проблема в `ORM` и как её решить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`N+1` — это режим оптимизации, при котором ORM делает один большой запрос вместо нескольких маленьких.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`N+1` — антипаттерн, ПРОТИВОПОЛОЖНОСТЬ оптимизации; это N+1 отдельных запросов вместо одного.",
+                "source_of_confusion": "Слово «+1» воспринимается как улучшение.",
+                "if_it_were_true": "Не было бы советов «избегать `N+1`».",
+                "how_it_should_be": "`N+1` — проблема, не оптимизация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`N+1` решается через установку `fetch = FetchType.LAZY` для всех связей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LAZY` — причина `N+1`; решение — `JOIN FETCH`/`@EntityGraph`/`@BatchSize`.",
+                "source_of_confusion": "Желание упростить через ленивую загрузку.",
+                "if_it_were_true": "`LAZY` исключал бы дополнительные запросы.",
+                "how_it_should_be": "`LAZY` сама вызывает `N+1`; нужен eager-fetch для нужных связей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`N+1` возникает только в `JDBC` и не имеет отношения к `JPA`/`Hibernate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`N+1` — характерная проблема `ORM` с lazy loading; `JDBC` пишут явно и контролируют запросы.",
+                "source_of_confusion": "Перепутаны направления.",
+                "if_it_were_true": "`JOIN FETCH` не существовал бы в `JPA`.",
+                "how_it_should_be": "`N+1` — главная проблема `ORM`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`N+1` — антипаттерн: для N родительских записей выполняется N дополнительных запросов вместо одного `JOIN`; решается `JOIN FETCH`, `@EntityGraph`, `@BatchSize`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Возникает при lazy loading: `findAll` загружает родителей одним запросом, затем при доступе к связи каждая запись делает отдельный `SELECT`. Решение — eager-загрузка нужных связей или batch-fetch.",
+                "example": "`findAll` (1 запрос) + `for order: order.getCustomer().getName()` (N запросов). Решение: `@Query(\"SELECT o FROM Order o JOIN FETCH o.customer\")` или `@EntityGraph(attributePaths = {\"customer\"})`.",
+                "when_to_apply": "Любой обход коллекций сущностей в `JPA`/`Hibernate`; рендеринг списков с вложенными связями.",
+                "edge_cases": "`JOIN FETCH` для коллекций (`@OneToMany`) даёт дубликаты родителей — нужен `DISTINCT`. `@BatchSize(N)` группирует lazy-fetch в IN-запросы.",
+                "related": "Q23 `JOIN` vs подзапросы; Q42 `EXPLAIN`; Q45 `JDBC` vs `JPA`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 45,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевая разница между `JDBC` и `JPA`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`JDBC` — низкоуровневый API: SQL вручную, маппинг `ResultSet` → объект ручной; `JPA` — высокоуровневый ORM: аннотации, автогенерация SQL, L1/L2-кэш, lazy loading.",
+              "correct": true,
+              "sections": {
+                "explanation": "`JDBC` даёт максимальный контроль и производительность, но больше кода. `JPA`/`Hibernate` — продуктивность, кэширование, миграции через `Flyway`, но overhead и риск `N+1`/lazy issues.",
+                "example": "`JDBC`: `try (PreparedStatement ps = conn.prepareStatement(\"SELECT ...\")) { ps.setInt(1, id); ResultSet rs = ps.executeQuery(); ... }`. `JPA`: `@Entity class Employee {...}` + `repository.findById(id)`.",
+                "when_to_apply": "`JDBC`/`jdbcTemplate` — простые случаи, batch, кастомный SQL; `JPA` — сложные доменные модели с связями; `Spring Data JDBC` — упрощённый ORM без lazy.",
+                "edge_cases": "`JPA` имеет проблему `N+1` и сложности с performance debugging. `JDBC` требует ручного управления соединениями и `ResultSet`.",
+                "related": "Q44 `N+1`; Q46 индексы в `JPA`; Q47 транзакции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JPA` — это низкоуровневый API на основе `JDBC` без объектного маппинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JPA` — высокоуровневый ORM, реализованный поверх `JDBC` с автомаппингом.",
+                "source_of_confusion": "Перепутаны уровни.",
+                "if_it_were_true": "`@Entity` не имел бы смысла.",
+                "how_it_should_be": "`JPA` поверх `JDBC`; ORM-уровень."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JDBC` поддерживает L1/L2 кэширование и lazy loading из коробки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэши и lazy — фичи `JPA`/`Hibernate`; `JDBC` про прямые запросы без кэширования.",
+                "source_of_confusion": "Перепутаны фичи.",
+                "if_it_were_true": "Не нужно было бы `JPA` для кэша.",
+                "how_it_should_be": "L1/L2/lazy — это `JPA`; `JDBC` — сырой."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JPA` всегда быстрее `JDBC` благодаря автоматическим оптимизациям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JPA` имеет overhead (proxy, кэш, dirty checking); `JDBC` обычно быстрее в простых случаях.",
+                "source_of_confusion": "Идея «высокий уровень = лучше».",
+                "if_it_were_true": "`Spring Data JDBC` не имел бы смысла.",
+                "how_it_should_be": "`JDBC` обычно быстрее для простых запросов; `JPA` — продуктивнее."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 46,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как определить индексы в `JPA`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Index` в `JPA` автоматически создаёт индексы в production без необходимости миграций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Index` работает только с `ddl-auto = create/update`, что небезопасно для prod; нужны миграции.",
+                "source_of_confusion": "Желание положиться на ORM.",
+                "if_it_were_true": "`Flyway` не использовался бы для индексов.",
+                "how_it_should_be": "prod → миграции; `@Index` — для dev/test."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Через `@Table(indexes = {@Index(name=..., columnList=..., unique=...)})` на `@Entity`; в продакшене индексы управляются миграциями (`Flyway`/`Liquibase`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`JPA`-аннотации создают индексы только при `ddl-auto = create/update` — не для prod. В prod схему меняют через миграции с `CREATE INDEX CONCURRENTLY` (`PostgreSQL`) для избежания блокировок.",
+                "example": "`@Table(name = \"employees\", indexes = { @Index(name = \"idx_emp_department\", columnList = \"department_id\"), @Index(name = \"idx_emp_email\", columnList = \"email\", unique = true) })`.",
+                "when_to_apply": "Объявление индексов вместе с сущностью для разработки/тестов; синхронизация с реальной схемой через миграции.",
+                "edge_cases": "Составной индекс: `columnList = \"department_id, salary\"` (порядок важен). `@UniqueConstraint` отдельный — для бизнес-уникальности.",
+                "related": "Q34 индексы; Q35 кластерный; Q45 `JDBC` vs `JPA`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Индексы в `JPA` определяются только через `@Column(indexed = true)` на конкретном поле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартный синтаксис — `@Table(indexes = {@Index(...)})`; `@Column(indexed=true)` не входит в JPA-стандарт.",
+                "source_of_confusion": "Желание упростить через атрибут `@Column`.",
+                "if_it_were_true": "Документация JPA включала бы такой атрибут.",
+                "how_it_should_be": "`@Table(indexes = ...)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Index` в `JPA` поддерживает только одноколоночные индексы; составные нужно создавать вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`columnList = \"col1, col2\"` создаёт составной индекс.",
+                "source_of_confusion": "Неполное знание синтаксиса.",
+                "if_it_were_true": "Нельзя было бы оптимизировать многоколоночные запросы через `@Index`.",
+                "how_it_should_be": "Составной: `columnList = \"col1, col2\"`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 47,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как управлять транзакциями в `Spring`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Transactional` работает при любом вызове, включая self-invocation внутри того же класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Self-invocation обходит Spring AOP proxy → `@Transactional` НЕ срабатывает.",
+                "source_of_confusion": "Ожидание прозрачности аннотаций.",
+                "if_it_were_true": "Не было бы советов выносить методы в отдельные бины.",
+                "how_it_should_be": "Вызов через бин (другой объект), не через `this.method()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "По умолчанию `@Transactional` откатывает транзакцию при любом исключении, включая checked.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию rollback ТОЛЬКО на `RuntimeException`/`Error`; для checked нужен `rollbackFor`.",
+                "source_of_confusion": "Желание унифицировать поведение.",
+                "if_it_were_true": "`rollbackFor` был бы не нужен.",
+                "how_it_should_be": "Checked → нужен `rollbackFor = Exception.class`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Декларативно через `@Transactional` с параметрами `propagation`/`isolation`/`readOnly`/`timeout`/`rollbackFor`; программно через `TransactionTemplate`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Transactional` работает через Spring AOP proxy: метод обёрнут в `begin`/`commit`/`rollback`. По умолчанию: `Propagation.REQUIRED`, isolation БД-default, rollback только на `RuntimeException`/`Error`.",
+                "example": "`@Transactional(isolation = Isolation.REPEATABLE_READ, propagation = Propagation.REQUIRES_NEW, timeout = 5, rollbackFor = BusinessException.class) public void processPayment(...) {...}`.",
+                "when_to_apply": "Декларативный — стандарт для бизнес-логики; программный — для гранулярного контроля и `setRollbackOnly()`.",
+                "edge_cases": "Self-invocation: вызов метода `@Transactional` из того же класса НЕ создаёт транзакцию (proxy обходится). Решение — вынести в отдельный бин.",
+                "related": "Q38 `ACID`; Q39 изоляция; Q41 блокировки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Transactional(readOnly = true)` запрещает любые операции записи и кидает исключение при `INSERT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`readOnly = true` — оптимизационный hint (skip dirty checking, possibly read-only connection); запись формально не блокирует.",
+                "source_of_confusion": "Буквальное толкование «read only».",
+                "if_it_were_true": "Hibernate выбрасывал бы exception на каждый `INSERT`.",
+                "how_it_should_be": "`readOnly` — hint, не строгая защита; используйте права БД."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 48,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое рекурсивные `CTE` и когда их применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Рекурсивные `CTE` не поддерживаются в стандарте `SQL` и работают только в `Oracle`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WITH RECURSIVE` — стандарт `SQL:1999`; поддерживается `PG`, `MySQL 8+`, `SQL Server`, `Oracle`.",
+                "source_of_confusion": "Старый опыт с `CONNECT BY` в `Oracle`.",
+                "if_it_were_true": "Иерархии решались бы только хранимыми процедурами.",
+                "how_it_should_be": "`WITH RECURSIVE` — стандарт, поддерживается всеми основными СУБД."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Рекурсивный `CTE` обязательно использует `UNION` (с дедупликацией), `UNION ALL` запрещён.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычно используется `UNION ALL` (быстрее); `UNION` допустим, но дороже.",
+                "source_of_confusion": "Идея «рекурсия требует дедупликации».",
+                "if_it_were_true": "Все примеры в документации использовали бы `UNION`.",
+                "how_it_should_be": "`UNION ALL` — типично; `UNION` — опционально."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Рекурсивный `CTE` гарантированно завершается всегда, даже без условия остановки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без условия остановки или защиты от циклов рекурсия бесконечна → нужно ограничение глубины или массив пути.",
+                "source_of_confusion": "Идея «СУБД сама обнаружит цикл».",
+                "if_it_were_true": "`PostgreSQL` не имел бы `statement_timeout` для рекурсивных запросов.",
+                "how_it_should_be": "Защита через `WHERE level < N` или `NOT id = ANY(path)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`WITH RECURSIVE` — `CTE`, ссылающийся на самого себя через `UNION ALL` (якорь + рекурсивная часть); применяется для иерархий, графов, генерации последовательностей.",
+              "correct": true,
+              "sections": {
+                "explanation": "Якорь — базовые строки; рекурсивная часть — соединение с `cte_name` (саморекурсия). `UNION ALL` обычно используется (быстрее), `UNION` — для дедупликации. Защита от циклов — через массив пути.",
+                "example": "`WITH RECURSIVE org_chart AS (SELECT id, name, manager_id, 1 AS level FROM employees WHERE manager_id IS NULL UNION ALL SELECT e.id, e.name, e.manager_id, oc.level + 1 FROM employees e JOIN org_chart oc ON e.manager_id = oc.id) SELECT * FROM org_chart`.",
+                "when_to_apply": "Деревья (категории, оргструктура), графы (маршруты, зависимости), серии дат/чисел, обход связных списков.",
+                "edge_cases": "Бесконечные циклы — защита через `WHERE level < N` или `WHERE NOT id = ANY(path)`. Может быть медленным на больших графах.",
+                "related": "Q19 `CTE`; Q26 `SELF JOIN`; Q14 порядок выполнения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 49,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как читать план выполнения `EXPLAIN` и интерпретировать его узлы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "План — дерево узлов снизу вверх: листья (`Seq Scan`/`Index Scan`) → joins (`Nested Loop`/`Hash Join`/`Merge Join`) → агрегаты/сортировки → корень; `cost` — оценка, `actual time` — реальное время.",
+              "correct": true,
+              "sections": {
+                "explanation": "Читайте снизу вверх и слева направо. `cost=start..end` — стоимость первой и последней строки. `loops` — сколько раз выполнен узел (важно для `Nested Loop`).",
+                "example": "`Hash Join` (Hash Cond: e.dept_id = d.id) → `Seq Scan on employees` (Filter: salary > 100000) → `Hash` → `Seq Scan on departments`. Сначала строится hash из departments, потом scan employees.",
+                "when_to_apply": "Любая оптимизация запроса; диагностика «почему медленно»; выбор индекса.",
+                "edge_cases": "`Rows Removed by Filter` показывает неэффективную фильтрацию (без индекса). `Heap Fetches: 0` в `Index Only Scan` — covering index работает идеально.",
+                "related": "Q42 `EXPLAIN`; Q34 индексы; Q43 стратегии оптимизации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "План `EXPLAIN` читается сверху вниз — корень дерева выполняется первым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "План выполняется снизу вверх: листья (сканы) первыми, корень последним.",
+                "source_of_confusion": "Текстовое представление сверху вниз.",
+                "if_it_were_true": "`JOIN` мог бы соединять без сканированных таблиц.",
+                "how_it_should_be": "Снизу вверх: листья → joins → агрегаты → корень."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`cost` в плане измеряется в миллисекундах и точно соответствует реальному времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`cost` — условные единицы оценки планировщика; реальное время даёт `actual time` в `EXPLAIN ANALYZE`.",
+                "source_of_confusion": "Желание интерпретировать числа как мс.",
+                "if_it_were_true": "`actual time` дублировал бы `cost`.",
+                "how_it_should_be": "`cost` — оценочные единицы; `actual time` — реальные мс."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Index Scan` всегда лучше `Seq Scan` и должен использоваться в любом плане.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На маленьких таблицах или при выборке большой доли строк `Seq Scan` быстрее.",
+                "source_of_confusion": "Идея «индекс = всегда лучше».",
+                "if_it_were_true": "`Seq Scan` никогда бы не появлялся в плане.",
+                "how_it_should_be": "`Seq Scan` оправдан для маленьких таблиц и низкой селективности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 50,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое партиционирование таблиц и зачем оно нужно?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Партиционирование — это репликация таблицы на несколько серверов для отказоустойчивости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Партиционирование — разбиение НА ОДНОМ сервере на физически отдельные секции; репликация — копии на других серверах.",
+                "source_of_confusion": "Путаница с шардированием/репликацией.",
+                "if_it_were_true": "Не было бы разделения тем «partitioning vs sharding».",
+                "how_it_should_be": "Партиционирование — на одном сервере; репликация/шардинг — на разных."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Партиционирование — разбиение большой таблицы на физически отдельные части (`RANGE`/`LIST`/`HASH`) при сохранении логического единства; ускоряет фильтрацию через partition pruning и удаление через `DROP PARTITION`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`PostgreSQL 10+` поддерживает декларативное партиционирование. Запрос с `WHERE` по ключу партиционирования сканирует только подходящие партиции (partition pruning). Каждая партиция имеет свои индексы.",
+                "example": "`CREATE TABLE orders (id BIGINT, created_at DATE, ...) PARTITION BY RANGE (created_at); CREATE TABLE orders_2026 PARTITION OF orders FOR VALUES FROM ('2026-01-01') TO ('2027-01-01')`.",
+                "when_to_apply": "Таблицы >10-50 млн строк, чёткая логика партиционирования (по дате/региону/типу), retention с регулярным удалением старых данных.",
+                "edge_cases": "Запросы без ключа партиционирования сканируют все партиции (медленно). Глобальные индексы между партициями не поддерживаются нативно.",
+                "related": "Q34 индексы; Q42 `EXPLAIN`; Q53 `MVCC`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Партиционирование автоматически удаляет дубликаты строк между партициями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Партиционирование не дедуплицирует; за уникальность отвечают ограничения и логика.",
+                "source_of_confusion": "Желание дополнительных гарантий.",
+                "if_it_were_true": "`PK` через все партиции работал бы из коробки.",
+                "how_it_should_be": "Партиционирование — физическое разбиение, не дедупликация."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Партиционирование всегда даёт прирост производительности, независимо от запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Партиционирование помогает при фильтрации по ключу; запросы без ключа сканируют все партиции и могут стать медленнее.",
+                "source_of_confusion": "Упрощённый совет «партиционирование = быстро».",
+                "if_it_were_true": "Не было бы советов выбирать ключ под запросы.",
+                "how_it_should_be": "Партиционирование эффективно только при фильтрации по ключу."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 51,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы индексов существуют в `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `PostgreSQL` поддерживается только `B-tree`; остальные типы — экзотика и требуют расширений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`B-tree`, `Hash`, `GIN`, `GiST`, `BRIN`, `SP-GiST` — встроенные; `PostGIS` лишь расширяет `GiST` для гео.",
+                "source_of_confusion": "Опыт только с `B-tree`.",
+                "if_it_were_true": "`JSONB`-запросы не имели бы эффективных индексов.",
+                "how_it_should_be": "6+ встроенных типов индексов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`GIN` — это синоним `B-tree` и оба используются одинаково для всех типов данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GIN` — inverted index для составных типов (`JSONB`, массивы, tsvector); `B-tree` — для скалярных значений.",
+                "source_of_confusion": "Незнание специфики `GIN`.",
+                "if_it_were_true": "Не было бы советов «`GIN` для `JSONB`».",
+                "how_it_should_be": "`GIN` ≠ `B-tree`; разные алгоритмы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`B-tree` (по умолчанию), `Hash`, `GIN` (`JSONB`/массивы/full-text), `GiST` (геоданные/диапазоны), `BRIN` (огромные хронологические таблицы), `Partial`, `Expression`, `Covering` (`INCLUDE`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`B-tree`: универсальный, диапазоны и сортировка. `Hash`: только `=`. `GIN`: составные типы. `GiST`: overlap/расстояние. `BRIN`: 128 байт на блок — для гигантских таблиц с физической упорядоченностью.",
+                "example": "`CREATE INDEX idx_products_attrs ON products USING GIN (attributes)` для `JSONB`; `CREATE INDEX idx_logs_created BRIN (created_at)` для хронологических логов.",
+                "when_to_apply": "Выбор типа под запросы: `JSONB` → `GIN`; геоданные → `GiST`; точное равенство → `Hash`; диапазоны и сортировка → `B-tree`.",
+                "edge_cases": "`Hash` не поддерживает `WAL` до `PG 10`. `BRIN` бесполезен без физической корреляции данных с порядком вставки.",
+                "related": "Q34 индексы; Q35 кластерный; Q36 `Covering`/`Partial`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`BRIN`-индекс размером всегда больше `B-tree` за счёт хранения метаданных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BRIN` — НА ПОРЯДКИ меньше `B-tree` (~128 байт на range блоков), это его главное преимущество.",
+                "source_of_confusion": "Кажется, что «range = больше».",
+                "if_it_were_true": "`BRIN` был бы бесполезен.",
+                "how_it_should_be": "`BRIN` крошечный за счёт хранения min/max на блок."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 52,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `VACUUM` и `ANALYZE` в `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`VACUUM` удаляет данные пользователя и должен использоваться только в крайних случаях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`VACUUM` удаляет ТОЛЬКО dead tuples (мёртвые версии после `MVCC`); пользовательские данные не трогает.",
+                "source_of_confusion": "Название «vacuum» воспринимается как «пылесос всего».",
+                "if_it_were_true": "`autovacuum` был бы опасен.",
+                "how_it_should_be": "`VACUUM` чистит только dead tuples."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ANALYZE` физически перестраивает таблицу и блокирует чтение на время выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ANALYZE` собирает статистику и не блокирует чтение; перестроение — это `VACUUM FULL`/`CLUSTER`.",
+                "source_of_confusion": "Перепутаны команды.",
+                "if_it_were_true": "`ANALYZE` нельзя было бы запускать на проде.",
+                "how_it_should_be": "`ANALYZE` лёгкий и неблокирующий."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`autovacuum` срабатывает ровно раз в сутки в полночь и не настраивается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`autovacuum` запускается по порогам (`autovacuum_vacuum_threshold`, `scale_factor`); полностью настраивается.",
+                "source_of_confusion": "Желание чёткого расписания.",
+                "if_it_were_true": "Не было бы параметров `scale_factor` per-table.",
+                "how_it_should_be": "`autovacuum` — по порогам, настраивается."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`VACUUM` освобождает место от мёртвых строк (`MVCC`-tombstones); `ANALYZE` обновляет статистику для планировщика; `VACUUM ANALYZE` — и то и другое.",
+              "correct": true,
+              "sections": {
+                "explanation": "`PG` использует `MVCC`: `UPDATE`/`DELETE` не удаляют строки физически — старые версии остаются как dead tuples → table bloat. `VACUUM` помечает их как переиспользуемые; `VACUUM FULL` физически перезаписывает (блокирует).",
+                "example": "`VACUUM ANALYZE orders` — стандарт; `VACUUM FULL` — только в maintenance window; `ANALYZE orders (user_id, created_at)` — по конкретным столбцам.",
+                "when_to_apply": "Регулярно через `autovacuum`; вручную после массовых `UPDATE`/`DELETE`; после bulk-load — обязательно `ANALYZE`.",
+                "edge_cases": "`autovacuum` запускается по порогам (`scale_factor`). Транзакционный wraparound (`xid` ≈ 2 млрд) требует `VACUUM FREEZE` — если не делать, БД остановится.",
+                "related": "Q37 индексы не помогают; Q42 `EXPLAIN`; Q53 `MVCC`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 53,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `MVCC` (`Multi-Version Concurrency Control`) в `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Каждая строка имеет `xmin` (создающая транзакция) и `xmax` (удаляющая/обновляющая); видна snapshot-у, если `xmin <= snapshot < xmax`; читатели не блокируют писателей и наоборот.",
+              "correct": true,
+              "sections": {
+                "explanation": "При `UPDATE` создаётся новая версия строки с новым `xmin`; старая получает `xmax = current_xid` и становится мёртвой после commit. `VACUUM` удаляет мёртвые строки.",
+                "example": "Исходно `(id=1, name='Иван', xmin=100, xmax=0)`. После `UPDATE` в txid=200: старая `(name='Иван', xmin=100, xmax=200)` мёртвая, новая `(name='Ivan', xmin=200, xmax=0)`.",
+                "when_to_apply": "Понимание изоляции (Q39), отсутствия блокировок чтения, table bloat и необходимости `VACUUM`.",
+                "edge_cases": "Table bloat — мёртвые строки растут без `VACUUM`. `xid wraparound` (~2 млрд) — нужен `VACUUM FREEZE`. Snapshot захватывается на старте транзакции (для `REPEATABLE READ`/`SERIALIZABLE`).",
+                "related": "Q38 `ACID`; Q39 изоляция; Q52 `VACUUM`/`ANALYZE`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`MVCC` блокирует читателей при записи, как и pessimistic locking.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главное преимущество `MVCC` — читатели НЕ блокируют писателей и наоборот; видны разные версии строк.",
+                "source_of_confusion": "Перепутано с pessimistic locking.",
+                "if_it_were_true": "`PG` не имел бы высокого параллелизма для read-heavy.",
+                "how_it_should_be": "`MVCC` → нет блокировок между read/write."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`UPDATE` в `PostgreSQL` физически заменяет старую строку без создания новых версий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`UPDATE` создаёт НОВУЮ версию; старая помечается мёртвой и удаляется `VACUUM`.",
+                "source_of_confusion": "Опыт с `MySQL InnoDB` (rollback segment) или другими СУБД.",
+                "if_it_were_true": "Не было бы table bloat и необходимости `VACUUM`.",
+                "how_it_should_be": "`UPDATE` → новая версия; старая мёртвая до `VACUUM`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`MVCC` гарантирует, что транзакции никогда не конфликтуют и `SERIALIZABLE` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MVCC` устраняет блокировки read/write, но не устраняет логические конфликты; `SERIALIZABLE` использует `SSI` поверх `MVCC` для аномалий.",
+                "source_of_confusion": "Идея «`MVCC` решает всё».",
+                "if_it_were_true": "Не нужны были бы уровни изоляции.",
+                "how_it_should_be": "`MVCC` ≠ `SERIALIZABLE`; уровни изоляции дополняют."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
