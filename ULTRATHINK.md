@@ -322,312 +322,322 @@ Pass: `OK FILE.md`.
 
 ## Пофайловая таблица (304 строки)
 
-| # | Category | File | Q in MD | JSON Q | Size KB | Status |
-|---|---|---|---|---|---|---|
-| 1 | `ai-ml` | `agentic-patterns` | 30 | 30 | 168 | ⬜ TODO |
-| 2 | `ai-ml` | `ai-agents` | 38 | 38 | 280 | ⬜ TODO |
-| 3 | `ai-ml` | `ai-application-architecture` | 32 | 32 | 134 | ⬜ TODO |
-| 4 | `ai-ml` | `ai-compliance-governance` | 32 | 32 | 155 | ⬜ TODO |
-| 5 | `ai-ml` | `ai-observability` | 28 | 28 | 163 | ⬜ TODO |
-| 6 | `ai-ml` | `ai-safety-guardrails` | 32 | 32 | 154 | ⬜ TODO |
-| 7 | `ai-ml` | `code-agents` | 31 | 31 | 183 | ⬜ TODO |
-| 8 | `ai-ml` | `embeddings` | 39 | 39 | 288 | ⬜ TODO |
-| 9 | `ai-ml` | `fine-tuning-llm` | 35 | 35 | 157 | ⬜ TODO |
-| 10 | `ai-ml` | `function-calling` | 30 | 30 | 170 | ⬜ TODO |
-| 11 | `ai-ml` | `inference-optimization` | 36 | 36 | 177 | ⬜ TODO |
-| 12 | `ai-ml` | `llm-basics` | 30 | 30 | 168 | ⬜ TODO |
-| 13 | `ai-ml` | `llm-evaluation` | 30 | 30 | 161 | ⬜ TODO |
-| 14 | `ai-ml` | `llm-integration-patterns` | 38 | 38 | 303 | ⬜ TODO |
-| 15 | `ai-ml` | `long-context-vs-rag` | 30 | 30 | 180 | ⬜ TODO |
-| 16 | `ai-ml` | `mcp` | 30 | 30 | 149 | ⬜ TODO |
-| 17 | `ai-ml` | `mlops` | 38 | 38 | 270 | ⬜ TODO |
-| 18 | `ai-ml` | `model-serving` | 38 | 38 | 267 | ⬜ TODO |
-| 19 | `ai-ml` | `multi-agent-orchestration` | 30 | 30 | 190 | ⬜ TODO |
-| 20 | `ai-ml` | `multimodal-ai` | 31 | 31 | 140 | ⬜ TODO |
-| 21 | `ai-ml` | `open-source-llms` | 34 | 34 | 171 | ⬜ TODO |
-| 22 | `ai-ml` | `prompt-engineering` | 38 | 38 | 262 | ⬜ TODO |
-| 23 | `ai-ml` | `rag` | 40 | 40 | 290 | ⬜ TODO |
-| 24 | `ai-ml` | `reasoning-models` | 30 | 30 | 121 | ⬜ TODO |
-| 25 | `ai-ml` | `vector-databases` | 28 | 28 | 159 | ⬜ TODO |
-| 26 | `algorithms` | `algorithms` | 16 | 16 | 101 | ⬜ TODO |
-| 27 | `algorithms/algorithmic-paradigms` | `backtracking` | 24 | 23 | 166 | ⬜ TODO |
-| 28 | `algorithms/algorithmic-paradigms` | `divide-and-conquer` | 21 | 21 | 152 | ⬜ TODO |
-| 29 | `algorithms/algorithmic-paradigms` | `dynamic-programming` | 33 | 33 | 231 | ⬜ TODO |
-| 30 | `algorithms/algorithmic-paradigms` | `greedy-algorithms` | 1 | — | — | ⬜ TODO |
-| 31 | `algorithms/algorithmic-paradigms` | `recursion` | 27 | — | — | ⬜ TODO |
-| 32 | `algorithms/algorithmic-paradigms` | `two-pointers-sliding-window` | 1 | — | — | ⬜ TODO |
-| 33 | `algorithms/complexity` | `complexity-analysis` | 31 | 31 | 222 | ⬜ TODO |
-| 34 | `algorithms/data-structures` | `arrays-strings` | 36 | 36 | 238 | ⬜ TODO |
-| 35 | `algorithms/data-structures` | `graphs` | 33 | 31 | 263 | ⬜ TODO |
-| 36 | `algorithms/data-structures` | `hash-tables` | 34 | 32 | 247 | ⬜ TODO |
-| 37 | `algorithms/data-structures` | `heaps` | 29 | 29 | 198 | ⬜ TODO |
-| 38 | `algorithms/data-structures` | `linked-lists` | 32 | 32 | 233 | ⬜ TODO |
-| 39 | `algorithms/data-structures` | `stacks-queues` | 25 | 25 | 234 | ⬜ TODO |
-| 40 | `algorithms/data-structures` | `trees` | 34 | 34 | 258 | ⬜ TODO |
-| 41 | `algorithms/data-structures` | `tries` | 28 | 28 | 199 | ⬜ TODO |
-| 42 | `algorithms/sorting-searching` | `searching-algorithms` | 8 | — | — | ⬜ TODO |
-| 43 | `algorithms/sorting-searching` | `sorting-algorithms` | 1 | — | — | ⬜ TODO |
-| 44 | `api` | `api-design-best-practices` | 30 | — | — | ⬜ TODO |
-| 45 | `api` | `api-versioning` | 20 | 20 | 166 | ⬜ TODO |
-| 46 | `api` | `graphql` | 40 | — | — | ⬜ TODO |
-| 47 | `api` | `grpc` | 40 | — | — | ⬜ TODO |
-| 48 | `api` | `http-rest` | 43 | — | — | ⬜ TODO |
-| 49 | `api` | `openapi-swagger` | 33 | — | — | ⬜ TODO |
-| 50 | `api` | `rest-maturity` | 17 | 17 | 109 | ⬜ TODO |
-| 51 | `api` | `websocket` | 38 | — | — | ⬜ TODO |
-| 52 | `architecture` | `api-gateway` | 38 | — | — | ⬜ TODO |
-| 53 | `architecture` | `bff-pattern` | 17 | — | — | ⬜ TODO |
-| 54 | `architecture` | `caching-strategies` | 42 | — | — | ⬜ TODO |
-| 55 | `architecture` | `cap-theorem` | 41 | — | — | ⬜ TODO |
-| 56 | `architecture` | `cdn` | 30 | 30 | 168 | ⬜ TODO |
-| 57 | `architecture` | `clean-architecture` | 41 | — | — | ⬜ TODO |
-| 58 | `architecture` | `consistency-patterns` | 31 | — | — | ⬜ TODO |
-| 59 | `architecture` | `cqrs-event-sourcing` | 41 | — | — | ⬜ TODO |
-| 60 | `architecture` | `ddd` | 38 | — | — | ⬜ TODO |
-| 61 | `architecture` | `distributed-systems` | 40 | — | — | ⬜ TODO |
-| 62 | `architecture` | `dns` | 30 | 30 | 151 | ⬜ TODO |
-| 63 | `architecture` | `edge-computing` | 18 | — | — | ⬜ TODO |
-| 64 | `architecture` | `event-driven-patterns` | 40 | — | — | ⬜ TODO |
-| 65 | `architecture` | `hexagonal-architecture` | 45 | — | — | ⬜ TODO |
-| 66 | `architecture` | `latency-numbers` | 24 | 24 | 150 | ⬜ TODO |
-| 67 | `architecture` | `load-balancing` | 40 | — | — | ⬜ TODO |
-| 68 | `architecture` | `microservices` | 42 | — | — | ⬜ TODO |
-| 69 | `architecture` | `networking` | 43 | — | — | ⬜ TODO |
-| 70 | `architecture` | `resilience-patterns` | 43 | — | — | ⬜ TODO |
-| 71 | `architecture` | `reverse-proxy` | 30 | 30 | 172 | ⬜ TODO |
-| 72 | `architecture` | `saga-pattern` | 43 | — | — | ⬜ TODO |
-| 73 | `architecture` | `scalability-patterns` | 41 | — | — | ⬜ TODO |
-| 74 | `architecture` | `service-discovery` | 30 | 30 | 173 | ⬜ TODO |
-| 75 | `architecture` | `strangler-fig` | 18 | — | — | ⬜ TODO |
-| 76 | `behavioral` | `behavioral` | 38 | — | — | ⬜ TODO |
-| 77 | `behavioral` | `conflict-stories` | 22 | 22 | 181 | ⬜ TODO |
-| 78 | `behavioral` | `culture-fit` | 22 | 22 | 153 | ⬜ TODO |
-| 79 | `behavioral` | `failure-stories` | 22 | 22 | 179 | ⬜ TODO |
-| 80 | `behavioral` | `leadership-stories` | 22 | 22 | 184 | ⬜ TODO |
-| 81 | `behavioral` | `star-method` | 22 | 22 | 183 | ⬜ TODO |
-| 82 | `cicd` | `deployment-strategies` | 39 | — | — | ⬜ TODO |
-| 83 | `cicd` | `pipeline-design` | 38 | — | — | ⬜ TODO |
-| 84 | `cloud` | `aws` | 16 | — | — | ⬜ TODO |
-| 85 | `cloud` | `aws-lambda` | 1 | — | — | ⬜ TODO |
-| 86 | `cloud` | `azure` | 25 | — | — | ⬜ TODO |
-| 87 | `cloud` | `cloud-native-patterns` | 14 | — | — | ⬜ TODO |
-| 88 | `cloud` | `gcp` | 1 | — | — | ⬜ TODO |
-| 89 | `cloud` | `serverless` | 1 | — | — | ⬜ TODO |
-| 90 | `code-quality` | `clean-code-practices` | 1 | — | — | ⬜ TODO |
-| 91 | `code-quality` | `code-coverage` | 25 | — | — | ⬜ TODO |
-| 92 | `code-quality` | `code-review` | 1 | — | — | ⬜ TODO |
-| 93 | `code-quality` | `code-smells` | 1 | — | — | ⬜ TODO |
-| 94 | `code-quality` | `refactoring-patterns` | 1 | — | — | ⬜ TODO |
-| 95 | `code-quality` | `static-analysis` | 6 | — | — | ⬜ TODO |
-| 96 | `code-quality` | `technical-debt` | 1 | — | — | ⬜ TODO |
-| 97 | `data-engineering` | `apache-airflow` | 28 | — | — | ⬜ TODO |
-| 98 | `data-engineering` | `apache-flink` | 1 | — | — | ⬜ TODO |
-| 99 | `data-engineering` | `apache-spark` | 1 | — | — | ⬜ TODO |
-| 100 | `data-engineering` | `data-lake-lakehouse` | 28 | — | — | ⬜ TODO |
-| 101 | `data-engineering` | `data-warehousing` | 30 | — | — | ⬜ TODO |
-| 102 | `data-engineering` | `dbt` | 1 | — | — | ⬜ TODO |
-| 103 | `data-engineering` | `kafka-streams` | 1 | — | — | ⬜ TODO |
-| 104 | `data-engineering` | `stream-processing` | 1 | — | — | ⬜ TODO |
-| 105 | `databases` | `cassandra` | 44 | — | — | ⬜ TODO |
-| 106 | `databases` | `clickhouse` | 28 | — | — | ⬜ TODO |
-| 107 | `databases` | `cockroachdb` | 24 | — | — | ⬜ TODO |
-| 108 | `databases` | `database-architecture` | 41 | — | — | ⬜ TODO |
-| 109 | `databases` | `database-replication` | 31 | 31 | 191 | ⬜ TODO |
-| 110 | `databases` | `database-sharding` | 34 | 34 | 209 | ⬜ TODO |
-| 111 | `databases` | `database-transactions` | 42 | — | — | ⬜ TODO |
-| 112 | `databases` | `dynamodb` | 30 | — | — | ⬜ TODO |
-| 113 | `databases` | `elasticsearch` | 44 | — | — | ⬜ TODO |
-| 114 | `databases` | `flyway-liquibase` | 42 | — | — | ⬜ TODO |
-| 115 | `databases` | `hibernate-caching` | 15 | — | — | ⬜ TODO |
-| 116 | `databases` | `hibernate` | 48 | — | — | ⬜ TODO |
-| 117 | `databases` | `hibernate-jpql-criteria` | 15 | — | — | ⬜ TODO |
-| 118 | `databases` | `hibernate-relationships` | 15 | — | — | ⬜ TODO |
-| 119 | `databases` | `mongodb` | 46 | — | — | ⬜ TODO |
-| 120 | `databases` | `neo4j` | 30 | — | — | ⬜ TODO |
-| 121 | `databases` | `postgresql` | 55 | — | — | ⬜ TODO |
-| 122 | `databases` | `redis` | 43 | — | — | ⬜ TODO |
-| 123 | `databases` | `scylladb` | 23 | — | — | ⬜ TODO |
-| 124 | `databases` | `sql` | 53 | — | — | ⬜ TODO |
-| 125 | `design-patterns` | `design-patterns` | 48 | — | — | ⬜ TODO |
-| 126 | `devops` | `ansible` | 25 | — | — | ⬜ TODO |
-| 127 | `devops` | `argocd` | 42 | — | — | ⬜ TODO |
-| 128 | `devops` | `consul` | 24 | — | — | ⬜ TODO |
-| 129 | `devops` | `docker` | 41 | — | — | ⬜ TODO |
-| 130 | `devops` | `git` | 43 | — | — | ⬜ TODO |
-| 131 | `devops` | `gradle-maven` | 38 | — | — | ⬜ TODO |
-| 132 | `devops` | `helm` | 43 | — | — | ⬜ TODO |
-| 133 | `devops` | `istio-service-mesh` | 26 | — | — | ⬜ TODO |
-| 134 | `devops` | `kubernetes` | 45 | — | — | ⬜ TODO |
-| 135 | `devops` | `linkerd` | 20 | — | — | ⬜ TODO |
-| 136 | `devops` | `linux` | 33 | — | — | ⬜ TODO |
-| 137 | `devops` | `terraform` | 42 | — | — | ⬜ TODO |
-| 138 | `devops` | `vault` | 26 | — | — | ⬜ TODO |
-| 139 | `frameworks/jvm-alternatives` | `ktor` | 1 | — | — | ⬜ TODO |
-| 140 | `frameworks/jvm-alternatives` | `micronaut` | 25 | — | — | ⬜ TODO |
-| 141 | `frameworks/jvm-alternatives` | `quarkus` | 1 | — | — | ⬜ TODO |
-| 142 | `frameworks/jvm-alternatives` | `vertx` | 1 | — | — | ⬜ TODO |
-| 143 | `frameworks/spring` | `resilience4j` | 20 | — | — | ⬜ TODO |
-| 144 | `frameworks/spring` | `spring-ai` | 15 | — | — | ⬜ TODO |
-| 145 | `frameworks/spring` | `spring-aop` | 22 | — | — | ⬜ TODO |
-| 146 | `frameworks/spring` | `spring-async` | 15 | — | — | ⬜ TODO |
-| 147 | `frameworks/spring` | `spring-batch` | 43 | — | — | ⬜ TODO |
-| 148 | `frameworks/spring` | `spring-boot-3-migration` | 15 | — | — | ⬜ TODO |
-| 149 | `frameworks/spring` | `spring-boot-actuator` | 43 | — | — | ⬜ TODO |
-| 150 | `frameworks/spring` | `spring-boot` | 42 | — | — | ⬜ TODO |
-| 151 | `frameworks/spring` | `spring-cache` | 17 | — | — | ⬜ TODO |
-| 152 | `frameworks/spring` | `spring-cloud` | 43 | — | — | ⬜ TODO |
-| 153 | `frameworks/spring` | `spring-data-jdbc` | 16 | — | — | ⬜ TODO |
-| 154 | `frameworks/spring` | `spring-data-jpa` | 42 | — | — | ⬜ TODO |
-| 155 | `frameworks/spring` | `spring-events` | 16 | — | — | ⬜ TODO |
-| 156 | `frameworks/spring` | `spring-framework` | 40 | — | — | ⬜ TODO |
-| 157 | `frameworks/spring` | `spring-graphql` | 15 | — | — | ⬜ TODO |
-| 158 | `frameworks/spring` | `spring-integration` | 15 | — | — | ⬜ TODO |
-| 159 | `frameworks/spring` | `spring-kafka` | 15 | — | — | ⬜ TODO |
-| 160 | `frameworks/spring` | `spring-messaging` | 15 | — | — | ⬜ TODO |
-| 161 | `frameworks/spring` | `spring-modulith` | 2 | 15 | 146 | ⬜ TODO |
-| 162 | `frameworks/spring` | `spring-mvc` | 43 | — | — | ⬜ TODO |
-| 163 | `frameworks/spring` | `spring-r2dbc` | 15 | — | — | ⬜ TODO |
-| 164 | `frameworks/spring` | `spring-rest-client` | 13 | — | — | ⬜ TODO |
-| 165 | `frameworks/spring` | `spring-retry` | 17 | — | — | ⬜ TODO |
-| 166 | `frameworks/spring` | `spring-scheduling` | 16 | — | — | ⬜ TODO |
-| 167 | `frameworks/spring` | `spring-security` | 43 | — | — | ⬜ TODO |
-| 168 | `frameworks/spring` | `spring-session` | 15 | — | — | ⬜ TODO |
-| 169 | `frameworks/spring` | `spring-state-machine` | 15 | — | — | ⬜ TODO |
-| 170 | `frameworks/spring` | `spring-testing` | 1 | — | — | ⬜ TODO |
-| 171 | `frameworks/spring` | `spring-transaction` | 15 | — | — | ⬜ TODO |
-| 172 | `frameworks/spring` | `spring-validation` | 16 | — | — | ⬜ TODO |
-| 173 | `frameworks/spring` | `spring-vault` | 15 | — | — | ⬜ TODO |
-| 174 | `frameworks/spring` | `spring-webflux` | 43 | — | — | ⬜ TODO |
-| 175 | `jvm` | `graalvm-native` | 15 | — | — | ⬜ TODO |
-| 176 | `jvm` | `jvm` | 40 | — | — | ⬜ TODO |
-| 177 | `leadership` | `code-review-practices` | 1 | — | — | ⬜ TODO |
-| 178 | `leadership` | `conflict-resolution` | 20 | 20 | 181 | ⬜ TODO |
-| 179 | `leadership` | `estimations-planning` | 20 | 20 | 162 | ⬜ TODO |
-| 180 | `leadership` | `mentoring` | 1 | 25 | 207 | ⬜ TODO |
-| 181 | `leadership` | `team-leadership` | 1 | — | — | ⬜ TODO |
-| 182 | `leadership` | `teching` | 20 | 20 | 172 | ⬜ TODO |
-| 183 | `leadership` | `technical-decisions` | 1 | 22 | 195 | ⬜ TODO |
-| 184 | `logging` | `logging` | 9 | — | — | ⬜ TODO |
-| 185 | `messaging` | `aws-sqs-sns` | 1 | — | — | ⬜ TODO |
-| 186 | `messaging` | `kafka` | 50 | — | — | ⬜ TODO |
-| 187 | `messaging` | `message-brokers-comparison` | 1 | — | — | ⬜ TODO |
-| 188 | `messaging` | `nats` | 8 | — | — | ⬜ TODO |
-| 189 | `messaging` | `pulsar` | 1 | — | — | ⬜ TODO |
-| 190 | `messaging` | `rabbitmq` | 41 | — | — | ⬜ TODO |
-| 191 | `messaging` | `redpanda` | 20 | 20 | 141 | ⬜ TODO |
-| 192 | `monitoring` | `elk-stack` | 5 | — | — | ⬜ TODO |
-| 193 | `monitoring` | `jaeger-zipkin` | 1 | — | — | ⬜ TODO |
-| 194 | `monitoring` | `logging-strategies` | 1 | — | — | ⬜ TODO |
-| 195 | `monitoring` | `loki-grafana` | 1 | — | — | ⬜ TODO |
-| 196 | `monitoring` | `metrics-tracing` | 6 | — | — | ⬜ TODO |
-| 197 | `monitoring` | `micrometer` | 1 | — | — | ⬜ TODO |
-| 198 | `monitoring` | `observability` | 15 | — | — | ⬜ TODO |
-| 199 | `monitoring` | `opentelemetry` | 9 | — | — | ⬜ TODO |
-| 200 | `monitoring` | `prometheus-grafana` | 39 | — | — | ⬜ TODO |
-| 201 | `performance` | `application-profiling` | 42 | — | — | ⬜ TODO |
-| 202 | `performance` | `caching-performance` | 1 | — | — | ⬜ TODO |
-| 203 | `performance` | `database-performance` | 1 | — | — | ⬜ TODO |
-| 204 | `performance` | `jvm-performance-tuning` | 1 | — | — | ⬜ TODO |
-| 205 | `performance` | `memory-management` | 1 | — | — | ⬜ TODO |
-| 206 | `performance` | `network-performance` | 1 | — | — | ⬜ TODO |
-| 207 | `performance` | `performance-testing` | 1 | — | — | ⬜ TODO |
-| 208 | `programming-languages/go` | `go-concurrency` | 35 | — | — | ⬜ TODO |
-| 209 | `programming-languages/go` | `go-generics` | 1 | — | — | ⬜ TODO |
-| 210 | `programming-languages/go` | `go` | 1 | — | — | ⬜ TODO |
-| 211 | `programming-languages/go` | `go-memory-gc` | 1 | — | — | ⬜ TODO |
-| 212 | `programming-languages/go` | `go-modules` | 27 | — | — | ⬜ TODO |
-| 213 | `programming-languages/go` | `go-stdlib` | 30 | — | — | ⬜ TODO |
-| 214 | `programming-languages/go` | `go-testing` | 1 | — | — | ⬜ TODO |
-| 215 | `programming-languages/java` | `java-17-21` | 42 | — | — | ⬜ TODO |
-| 216 | `programming-languages/java` | `java-8` | 41 | 31 | 304 | ⬜ TODO |
-| 217 | `programming-languages/java` | `java-annotations` | 43 | — | — | ⬜ TODO |
-| 218 | `programming-languages/java` | `java-collections` | 46 | 34 | 307 | ⬜ TODO |
-| 219 | `programming-languages/java` | `java-completable-future` | 13 | 13 | 135 | ⬜ TODO |
-| 220 | `programming-languages/java` | `java-concurrency` | 56 | 56 | 246 | ⬜ TODO |
-| 221 | `programming-languages/java` | `java-conditional-statements` | 1 | — | — | ⬜ TODO |
-| 222 | `programming-languages/java` | `java-core` | 39 | 28 | 288 | ⬜ TODO |
-| 223 | `programming-languages/java` | `java-exceptions` | 42 | 7 | 78 | ⬜ TODO |
-| 224 | `programming-languages/java` | `java-functional-interface` | 14 | — | — | ⬜ TODO |
-| 225 | `programming-languages/java` | `java-generics` | 40 | 7 | 99 | ⬜ TODO |
-| 226 | `programming-languages/java` | `java-initialization` | 1 | — | — | ⬜ TODO |
-| 227 | `programming-languages/java` | `java-io-nio` | 40 | — | — | ⬜ TODO |
-| 228 | `programming-languages/java` | `java-jackson` | 1 | — | — | ⬜ TODO |
-| 229 | `programming-languages/java` | `java-lombok` | 5 | — | — | ⬜ TODO |
-| 230 | `programming-languages/java` | `java-mapstruct` | 1 | — | — | ⬜ TODO |
-| 231 | `programming-languages/java` | `java-modules` | 38 | — | — | ⬜ TODO |
-| 232 | `programming-languages/java` | `java-oop` | 43 | — | — | ⬜ TODO |
-| 233 | `programming-languages/java` | `java-optional` | 15 | 15 | 121 | ⬜ TODO |
-| 234 | `programming-languages/java` | `java-pattern-matching` | 15 | — | — | ⬜ TODO |
-| 235 | `programming-languages/java` | `java-records` | 15 | — | — | ⬜ TODO |
-| 236 | `programming-languages/java` | `java-reflection` | 1 | — | — | ⬜ TODO |
-| 237 | `programming-languages/java` | `java-serialization` | 40 | — | — | ⬜ TODO |
-| 238 | `programming-languages/java` | `java-stream` | 42 | 6 | 82 | ⬜ TODO |
-| 239 | `programming-languages/java` | `java-string` | 39 | — | — | ⬜ TODO |
-| 240 | `programming-languages/java` | `java-types` | 38 | — | — | ⬜ TODO |
-| 241 | `programming-languages/java` | `java-virtual-threads` | 15 | — | — | ⬜ TODO |
-| 242 | `programming-languages/kotlin` | `kotlin-collections` | 42 | — | — | ⬜ TODO |
-| 243 | `programming-languages/kotlin` | `kotlin-coroutines` | 19 | — | — | ⬜ TODO |
-| 244 | `programming-languages/kotlin` | `kotlin-dsl` | 1 | — | — | ⬜ TODO |
-| 245 | `programming-languages/kotlin` | `kotlin-exceptions` | 7 | — | — | ⬜ TODO |
-| 246 | `programming-languages/kotlin` | `kotlin-flow` | 17 | — | — | ⬜ TODO |
-| 247 | `programming-languages/kotlin` | `kotlin-interop-java` | 38 | — | — | ⬜ TODO |
-| 248 | `programming-languages/kotlin` | `kotlin` | 27 | — | — | ⬜ TODO |
-| 249 | `programming-languages/kotlin` | `kotlin-sealed-classes` | 15 | — | — | ⬜ TODO |
-| 250 | `programming-languages/kotlin` | `kotlin-serialization` | 1 | — | — | ⬜ TODO |
-| 251 | `programming-languages/kotlin` | `kotlin-spring` | 15 | — | — | ⬜ TODO |
-| 252 | `programming-languages/kotlin` | `kotlin-value-classes` | 15 | — | — | ⬜ TODO |
-| 253 | `programming-languages/scala` | `scala` | 1 | — | — | ⬜ TODO |
-| 254 | `reactive` | `project-reactor` | 47 | — | — | ⬜ TODO |
-| 255 | `reactive` | `reactive-patterns` | 26 | — | — | ⬜ TODO |
-| 256 | `reactive` | `reactive-streams` | 30 | — | — | ⬜ TODO |
-| 257 | `reactive` | `reactive-testing` | 28 | — | — | ⬜ TODO |
-| 258 | `reactive` | `rxjava` | 46 | — | — | ⬜ TODO |
-| 259 | `reactive` | `webflux` | 28 | — | — | ⬜ TODO |
-| 260 | `security` | `application-security` | 45 | — | — | ⬜ TODO |
-| 261 | `security` | `authentication-authorization-patterns` | 45 | — | — | ⬜ TODO |
-| 262 | `security` | `jwt` | 43 | — | — | ⬜ TODO |
-| 263 | `security` | `mtls` | 20 | — | — | ⬜ TODO |
-| 264 | `security` | `oauth2` | 42 | — | — | ⬜ TODO |
-| 265 | `security` | `owasp-top10` | 45 | — | — | ⬜ TODO |
-| 266 | `security` | `secrets-management` | 22 | — | — | ⬜ TODO |
-| 267 | `security` | `supply-chain-security` | 24 | — | — | ⬜ TODO |
-| 268 | `security` | `tls-ssl` | 45 | — | — | ⬜ TODO |
-| 269 | `security` | `zero-trust` | 19 | — | — | ⬜ TODO |
-| 270 | `system-design` | `design-chat-system` | 21 | — | — | ⬜ TODO |
-| 271 | `system-design` | `design-dropbox` | 30 | 30 | 160 | ⬜ TODO |
-| 272 | `system-design` | `design-elevator-oo` | 26 | 26 | 106 | ⬜ TODO |
-| 273 | `system-design` | `design-feed-system` | 30 | 30 | 193 | ⬜ TODO |
-| 274 | `system-design` | `design-google-maps` | 30 | 30 | 171 | ⬜ TODO |
-| 275 | `system-design` | `design-instagram` | 27 | 27 | 95 | ⬜ TODO |
-| 276 | `system-design` | `design-key-value-store` | 30 | 30 | 111 | ⬜ TODO |
-| 277 | `system-design` | `design-netflix` | 30 | 30 | 179 | ⬜ TODO |
-| 278 | `system-design` | `design-parking-lot-oo` | 28 | 28 | 114 | ⬜ TODO |
-| 279 | `system-design` | `design-pastebin` | 30 | 30 | 111 | ⬜ TODO |
-| 280 | `system-design` | `design-payment-system` | 30 | 30 | 201 | ⬜ TODO |
-| 281 | `system-design` | `design-rate-limiter` | 30 | 30 | 167 | ⬜ TODO |
-| 282 | `system-design` | `design-search` | 30 | 30 | 153 | ⬜ TODO |
-| 283 | `system-design` | `design-twitter` | 27 | 27 | 146 | ⬜ TODO |
-| 284 | `system-design` | `design-typeahead` | 30 | 30 | 129 | ⬜ TODO |
-| 285 | `system-design` | `design-uber` | 30 | 30 | 150 | ⬜ TODO |
-| 286 | `system-design` | `design-url-shortener` | 30 | 30 | 174 | ⬜ TODO |
-| 287 | `system-design` | `design-vending-machine-oo` | 24 | 24 | 99 | ⬜ TODO |
-| 288 | `system-design` | `design-web-crawler` | 26 | 26 | 98 | ⬜ TODO |
-| 289 | `system-design` | `design-youtube` | 28 | 28 | 101 | ⬜ TODO |
-| 290 | `system-design` | `system-design` | 1 | — | — | ⬜ TODO |
-| 291 | `testing` | `chaos-engineering` | 44 | — | — | ⬜ TODO |
-| 292 | `testing` | `contract-testing` | 20 | — | — | ⬜ TODO |
-| 293 | `testing` | `integration-testing` | 39 | — | — | ⬜ TODO |
-| 294 | `testing` | `junit` | 15 | — | — | ⬜ TODO |
-| 295 | `testing` | `load-testing` | 22 | — | — | ⬜ TODO |
-| 296 | `testing` | `mockito` | 45 | — | — | ⬜ TODO |
-| 297 | `testing` | `mutation-testing` | 20 | — | — | ⬜ TODO |
-| 298 | `testing` | `property-based-testing` | 1 | — | — | ⬜ TODO |
-| 299 | `testing` | `rest-assured` | 15 | — | — | ⬜ TODO |
-| 300 | `testing` | `selenium` | 15 | — | — | ⬜ TODO |
-| 301 | `testing` | `test-automation` | 7 | — | — | ⬜ TODO |
-| 302 | `testing` | `test-strategies` | 45 | — | — | ⬜ TODO |
-| 303 | `testing` | `testcontainers` | 40 | — | — | ⬜ TODO |
-| 304 | `testing` | `unit-testing` | 45 | — | — | ⬜ TODO |
+**Machine-audit status (critery A/B/D/E/F):**
+- 🟢 STRUCT-PASS: 16 (5%) — прошли все machine-checkable; semantic review (C, G) ещё не сделан.
+- ⚠️ PARTIAL: 47 (15%) — JSON есть, но E (importance markers) вне 10-45% диапазона.
+- ⚠️ JSON-ISSUES: 25 (8%) — Q count mismatch или schema invalid.
+- ❌ NO-JSON: 209 (69%) — нет парного JSON-сидера.
+- ❌ STUB: 3 (Q < 5).
+- ❌ THIN: 4 (5 ≤ Q < 20).
+
+Колонки: **A** frontmatter, **B** структура+seealso, **D** markdown clean, **E** Q count+importance, **F** JSON-сидер. Semantic critery C (content quality) и G (MCQ content quality) **не проверяются автоматически** — требуют ручного review.
+
+| # | Category | File | Q | JSON Q | A | B | D | E | F | Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | `ai-ml` | `agentic-patterns` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 2 | `ai-ml` | `ai-agents` | 38 | 28 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 3 | `ai-ml` | `ai-application-architecture` | 32 | 32 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 4 | `ai-ml` | `ai-compliance-governance` | 32 | 32 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 5 | `ai-ml` | `ai-observability` | 28 | 28 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 6 | `ai-ml` | `ai-safety-guardrails` | 32 | 32 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 7 | `ai-ml` | `code-agents` | 31 | 31 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 8 | `ai-ml` | `embeddings` | 39 | 29 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 9 | `ai-ml` | `fine-tuning-llm` | 35 | 35 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 10 | `ai-ml` | `function-calling` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 11 | `ai-ml` | `inference-optimization` | 36 | 36 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 12 | `ai-ml` | `llm-basics` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 13 | `ai-ml` | `llm-evaluation` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 14 | `ai-ml` | `llm-integration-patterns` | 38 | 28 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 15 | `ai-ml` | `long-context-vs-rag` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 16 | `ai-ml` | `mcp` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 17 | `ai-ml` | `mlops` | 38 | 28 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 18 | `ai-ml` | `model-serving` | 38 | 28 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 19 | `ai-ml` | `multi-agent-orchestration` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 20 | `ai-ml` | `multimodal-ai` | 31 | 31 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 21 | `ai-ml` | `open-source-llms` | 34 | 34 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 22 | `ai-ml` | `prompt-engineering` | 38 | 28 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 23 | `ai-ml` | `rag` | 40 | 30 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 24 | `ai-ml` | `reasoning-models` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 25 | `ai-ml` | `vector-databases` | 28 | 28 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 26 | `algorithms` | `algorithms` | 16 | 16 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ THIN |
+| 27 | `algorithms/algorithmic-paradigms` | `backtracking` | 24 | 23 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 28 | `algorithms/algorithmic-paradigms` | `divide-and-conquer` | 21 | 21 | ✅ | ❌ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 29 | `algorithms/algorithmic-paradigms` | `dynamic-programming` | 33 | 33 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 30 | `algorithms/algorithmic-paradigms` | `greedy-algorithms` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 31 | `algorithms/algorithmic-paradigms` | `recursion` | 27 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 32 | `algorithms/algorithmic-paradigms` | `two-pointers-sliding-window` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 33 | `algorithms/complexity` | `complexity-analysis` | 31 | 31 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 34 | `algorithms/data-structures` | `arrays-strings` | 36 | 36 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 35 | `algorithms/data-structures` | `graphs` | 33 | 31 | ✅ | ❌ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 36 | `algorithms/data-structures` | `hash-tables` | 34 | 32 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 37 | `algorithms/data-structures` | `heaps` | 29 | 29 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 38 | `algorithms/data-structures` | `linked-lists` | 32 | 32 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 39 | `algorithms/data-structures` | `stacks-queues` | 25 | 25 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 40 | `algorithms/data-structures` | `trees` | 34 | 34 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 41 | `algorithms/data-structures` | `tries` | 28 | 28 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 42 | `algorithms/sorting-searching` | `searching-algorithms` | 8 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 43 | `algorithms/sorting-searching` | `sorting-algorithms` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 44 | `api` | `api-design-best-practices` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 45 | `api` | `api-versioning` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 46 | `api` | `graphql` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 47 | `api` | `grpc` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 48 | `api` | `http-rest` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 49 | `api` | `openapi-swagger` | 33 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 50 | `api` | `rest-maturity` | 17 | 17 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ THIN |
+| 51 | `api` | `websocket` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 52 | `architecture` | `api-gateway` | 38 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 53 | `architecture` | `bff-pattern` | 17 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 54 | `architecture` | `caching-strategies` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 55 | `architecture` | `cap-theorem` | 41 | — | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 56 | `architecture` | `cdn` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 57 | `architecture` | `clean-architecture` | 41 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 58 | `architecture` | `consistency-patterns` | 31 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 59 | `architecture` | `cqrs-event-sourcing` | 41 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 60 | `architecture` | `ddd` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 61 | `architecture` | `distributed-systems` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 62 | `architecture` | `dns` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 63 | `architecture` | `edge-computing` | 18 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 64 | `architecture` | `event-driven-patterns` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 65 | `architecture` | `hexagonal-architecture` | 45 | 0 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
+| 66 | `architecture` | `latency-numbers` | 24 | 24 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 67 | `architecture` | `load-balancing` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 68 | `architecture` | `microservices` | 42 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 69 | `architecture` | `networking` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 70 | `architecture` | `resilience-patterns` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 71 | `architecture` | `reverse-proxy` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 72 | `architecture` | `saga-pattern` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 73 | `architecture` | `scalability-patterns` | 41 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 74 | `architecture` | `service-discovery` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 75 | `architecture` | `strangler-fig` | 18 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 76 | `behavioral` | `behavioral` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 77 | `behavioral` | `conflict-stories` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 78 | `behavioral` | `culture-fit` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 79 | `behavioral` | `failure-stories` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 80 | `behavioral` | `leadership-stories` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 81 | `behavioral` | `star-method` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 82 | `cicd` | `deployment-strategies` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 83 | `cicd` | `pipeline-design` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 84 | `cloud` | `aws` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 85 | `cloud` | `aws-lambda` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 86 | `cloud` | `azure` | 25 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 87 | `cloud` | `cloud-native-patterns` | 14 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 88 | `cloud` | `gcp` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 89 | `cloud` | `serverless` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 90 | `code-quality` | `clean-code-practices` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 91 | `code-quality` | `code-coverage` | 25 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 92 | `code-quality` | `code-review` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 93 | `code-quality` | `code-smells` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 94 | `code-quality` | `refactoring-patterns` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 95 | `code-quality` | `static-analysis` | 6 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 96 | `code-quality` | `technical-debt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 97 | `data-engineering` | `apache-airflow` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 98 | `data-engineering` | `apache-flink` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 99 | `data-engineering` | `apache-spark` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 100 | `data-engineering` | `data-lake-lakehouse` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 101 | `data-engineering` | `data-warehousing` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 102 | `data-engineering` | `dbt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 103 | `data-engineering` | `kafka-streams` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 104 | `data-engineering` | `stream-processing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 105 | `databases` | `cassandra` | 44 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 106 | `databases` | `clickhouse` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 107 | `databases` | `cockroachdb` | 24 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 108 | `databases` | `database-architecture` | 41 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 109 | `databases` | `database-replication` | 31 | 31 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 110 | `databases` | `database-sharding` | 34 | 34 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 111 | `databases` | `database-transactions` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 112 | `databases` | `dynamodb` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 113 | `databases` | `elasticsearch` | 44 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 114 | `databases` | `flyway-liquibase` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 115 | `databases` | `hibernate-caching` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 116 | `databases` | `hibernate` | 48 | 48 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 117 | `databases` | `hibernate-jpql-criteria` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 118 | `databases` | `hibernate-relationships` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 119 | `databases` | `mongodb` | 46 | 46 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 120 | `databases` | `neo4j` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 121 | `databases` | `postgresql` | 55 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 122 | `databases` | `redis` | 43 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 123 | `databases` | `scylladb` | 23 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 124 | `databases` | `sql` | 53 | 0 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
+| 125 | `design-patterns` | `design-patterns` | 48 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 126 | `devops` | `ansible` | 25 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 127 | `devops` | `argocd` | 42 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 128 | `devops` | `consul` | 24 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 129 | `devops` | `docker` | 41 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 130 | `devops` | `git` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 131 | `devops` | `gradle-maven` | 38 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 132 | `devops` | `helm` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 133 | `devops` | `istio-service-mesh` | 26 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 134 | `devops` | `kubernetes` | 45 | 45 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 135 | `devops` | `linkerd` | 20 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 136 | `devops` | `linux` | 33 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 137 | `devops` | `terraform` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 138 | `devops` | `vault` | 26 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 139 | `frameworks/jvm-alternatives` | `ktor` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 140 | `frameworks/jvm-alternatives` | `micronaut` | 25 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 141 | `frameworks/jvm-alternatives` | `quarkus` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 142 | `frameworks/jvm-alternatives` | `vertx` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 143 | `frameworks/spring` | `resilience4j` | 20 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 144 | `frameworks/spring` | `spring-ai` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 145 | `frameworks/spring` | `spring-aop` | 22 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 146 | `frameworks/spring` | `spring-async` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 147 | `frameworks/spring` | `spring-batch` | 43 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 148 | `frameworks/spring` | `spring-boot-3-migration` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 149 | `frameworks/spring` | `spring-boot-actuator` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 150 | `frameworks/spring` | `spring-boot` | 42 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 151 | `frameworks/spring` | `spring-cache` | 17 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 152 | `frameworks/spring` | `spring-cloud` | 43 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 153 | `frameworks/spring` | `spring-data-jdbc` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 154 | `frameworks/spring` | `spring-data-jpa` | 42 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 155 | `frameworks/spring` | `spring-events` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 156 | `frameworks/spring` | `spring-framework` | 40 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 157 | `frameworks/spring` | `spring-graphql` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 158 | `frameworks/spring` | `spring-integration` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 159 | `frameworks/spring` | `spring-kafka` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 160 | `frameworks/spring` | `spring-messaging` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 161 | `frameworks/spring` | `spring-modulith` | 2 | 15 | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ STUB |
+| 162 | `frameworks/spring` | `spring-mvc` | 43 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 163 | `frameworks/spring` | `spring-r2dbc` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 164 | `frameworks/spring` | `spring-rest-client` | 13 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 165 | `frameworks/spring` | `spring-retry` | 17 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 166 | `frameworks/spring` | `spring-scheduling` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 167 | `frameworks/spring` | `spring-security` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 168 | `frameworks/spring` | `spring-session` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 169 | `frameworks/spring` | `spring-state-machine` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 170 | `frameworks/spring` | `spring-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 171 | `frameworks/spring` | `spring-transaction` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 172 | `frameworks/spring` | `spring-validation` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 173 | `frameworks/spring` | `spring-vault` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 174 | `frameworks/spring` | `spring-webflux` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 175 | `jvm` | `graalvm-native` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 176 | `jvm` | `jvm` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 177 | `leadership` | `code-review-practices` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 178 | `leadership` | `conflict-resolution` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 179 | `leadership` | `estimations-planning` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 180 | `leadership` | `mentoring` | 1 | 25 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ STUB |
+| 181 | `leadership` | `team-leadership` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 182 | `leadership` | `teching` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 183 | `leadership` | `technical-decisions` | 1 | 22 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ STUB |
+| 184 | `logging` | `logging` | 9 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 185 | `messaging` | `aws-sqs-sns` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 186 | `messaging` | `kafka` | 50 | 50 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 187 | `messaging` | `message-brokers-comparison` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 188 | `messaging` | `nats` | 8 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 189 | `messaging` | `pulsar` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 190 | `messaging` | `rabbitmq` | 41 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 191 | `messaging` | `redpanda` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
+| 192 | `monitoring` | `elk-stack` | 5 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 193 | `monitoring` | `jaeger-zipkin` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 194 | `monitoring` | `logging-strategies` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 195 | `monitoring` | `loki-grafana` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 196 | `monitoring` | `metrics-tracing` | 6 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 197 | `monitoring` | `micrometer` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 198 | `monitoring` | `observability` | 15 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 199 | `monitoring` | `opentelemetry` | 9 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 200 | `monitoring` | `prometheus-grafana` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 201 | `performance` | `application-profiling` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 202 | `performance` | `caching-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 203 | `performance` | `database-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 204 | `performance` | `jvm-performance-tuning` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 205 | `performance` | `memory-management` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 206 | `performance` | `network-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 207 | `performance` | `performance-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 208 | `programming-languages/go` | `go-concurrency` | 35 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 209 | `programming-languages/go` | `go-generics` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 210 | `programming-languages/go` | `go` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 211 | `programming-languages/go` | `go-memory-gc` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 212 | `programming-languages/go` | `go-modules` | 27 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 213 | `programming-languages/go` | `go-stdlib` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 214 | `programming-languages/go` | `go-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 215 | `programming-languages/java` | `java-17-21` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 216 | `programming-languages/java` | `java-8` | 41 | 31 | ✅ | ❌ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
+| 217 | `programming-languages/java` | `java-annotations` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 218 | `programming-languages/java` | `java-collections` | 46 | 34 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
+| 219 | `programming-languages/java` | `java-completable-future` | 13 | 13 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ THIN |
+| 220 | `programming-languages/java` | `java-concurrency` | 56 | 56 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 221 | `programming-languages/java` | `java-conditional-statements` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 222 | `programming-languages/java` | `java-core` | 39 | 28 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
+| 223 | `programming-languages/java` | `java-exceptions` | 42 | 7 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
+| 224 | `programming-languages/java` | `java-functional-interface` | 14 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 225 | `programming-languages/java` | `java-generics` | 40 | 7 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
+| 226 | `programming-languages/java` | `java-initialization` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 227 | `programming-languages/java` | `java-io-nio` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 228 | `programming-languages/java` | `java-jackson` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 229 | `programming-languages/java` | `java-lombok` | 5 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 230 | `programming-languages/java` | `java-mapstruct` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 231 | `programming-languages/java` | `java-modules` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 232 | `programming-languages/java` | `java-oop` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 233 | `programming-languages/java` | `java-optional` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ THIN |
+| 234 | `programming-languages/java` | `java-pattern-matching` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 235 | `programming-languages/java` | `java-records` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 236 | `programming-languages/java` | `java-reflection` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 237 | `programming-languages/java` | `java-serialization` | 40 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 238 | `programming-languages/java` | `java-stream` | 42 | 6 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
+| 239 | `programming-languages/java` | `java-string` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 240 | `programming-languages/java` | `java-types` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 241 | `programming-languages/java` | `java-virtual-threads` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 242 | `programming-languages/kotlin` | `kotlin-collections` | 42 | — | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 243 | `programming-languages/kotlin` | `kotlin-coroutines` | 19 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 244 | `programming-languages/kotlin` | `kotlin-dsl` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 245 | `programming-languages/kotlin` | `kotlin-exceptions` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 246 | `programming-languages/kotlin` | `kotlin-flow` | 17 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 247 | `programming-languages/kotlin` | `kotlin-interop-java` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 248 | `programming-languages/kotlin` | `kotlin` | 27 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 249 | `programming-languages/kotlin` | `kotlin-sealed-classes` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 250 | `programming-languages/kotlin` | `kotlin-serialization` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 251 | `programming-languages/kotlin` | `kotlin-spring` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 252 | `programming-languages/kotlin` | `kotlin-value-classes` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 253 | `programming-languages/scala` | `scala` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 254 | `reactive` | `project-reactor` | 47 | 47 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 255 | `reactive` | `reactive-patterns` | 26 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 256 | `reactive` | `reactive-streams` | 30 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 257 | `reactive` | `reactive-testing` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 258 | `reactive` | `rxjava` | 46 | 46 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 259 | `reactive` | `webflux` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 260 | `security` | `application-security` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 261 | `security` | `authentication-authorization-patterns` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 262 | `security` | `jwt` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 263 | `security` | `mtls` | 20 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 264 | `security` | `oauth2` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 265 | `security` | `owasp-top10` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 266 | `security` | `secrets-management` | 22 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 267 | `security` | `supply-chain-security` | 24 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 268 | `security` | `tls-ssl` | 45 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 269 | `security` | `zero-trust` | 19 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 270 | `system-design` | `design-chat-system` | 21 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 271 | `system-design` | `design-dropbox` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 272 | `system-design` | `design-elevator-oo` | 26 | 26 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 273 | `system-design` | `design-feed-system` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 274 | `system-design` | `design-google-maps` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 275 | `system-design` | `design-instagram` | 27 | 27 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 276 | `system-design` | `design-key-value-store` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 277 | `system-design` | `design-netflix` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 278 | `system-design` | `design-parking-lot-oo` | 28 | 28 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 279 | `system-design` | `design-pastebin` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 280 | `system-design` | `design-payment-system` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 281 | `system-design` | `design-rate-limiter` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 282 | `system-design` | `design-search` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 283 | `system-design` | `design-twitter` | 27 | 27 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 284 | `system-design` | `design-typeahead` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 285 | `system-design` | `design-uber` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 286 | `system-design` | `design-url-shortener` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 287 | `system-design` | `design-vending-machine-oo` | 24 | 24 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 288 | `system-design` | `design-web-crawler` | 26 | 26 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
+| 289 | `system-design` | `design-youtube` | 28 | 28 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 290 | `system-design` | `system-design` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 291 | `testing` | `chaos-engineering` | 44 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 292 | `testing` | `contract-testing` | 20 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 293 | `testing` | `integration-testing` | 39 | — | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 294 | `testing` | `junit` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 295 | `testing` | `load-testing` | 22 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 296 | `testing` | `mockito` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 297 | `testing` | `mutation-testing` | 20 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 298 | `testing` | `property-based-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 299 | `testing` | `rest-assured` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 300 | `testing` | `selenium` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 301 | `testing` | `test-automation` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 302 | `testing` | `test-strategies` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 303 | `testing` | `testcontainers` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 304 | `testing` | `unit-testing` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 
 ---
 
