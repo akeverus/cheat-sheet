@@ -1,0 +1,2405 @@
+{
+  "topic_slug": "java-virtual-threads-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Virtual Thread и зачем его ввели в Java 21?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Лёгкий поток, управляемый JVM поверх небольшого пула carrier-потоков ОС; позволяет писать blocking-стиль код с non-blocking-производительностью, поддерживая миллионы одновременных задач.",
+              "correct": true,
+              "sections": {
+                "explanation": "Virtual Thread — пользовательский поток JVM. JVM монтирует его на короткий пул платформенных carrier-потоков и автоматически демонтирует при блокирующих вызовах. Стек растёт/сжимается динамически, создание стоит микросекунды.",
+                "example": "`Thread.ofVirtual().start(() -> httpClient.send(...))` — миллион таких потоков укладывается в обычный heap, тогда как миллион `Thread.ofPlatform()` уронит JVM по памяти.",
+                "when_to_apply": "I/O-bound сервисы с тысячами/миллионами одновременных соединений: HTTP-серверы, JDBC, gRPC-клиенты, fan-out к внешним API.",
+                "edge_cases": "На CPU-bound задачах прироста нет — упрётесь в ядра. `synchronized` и JNI приводят к pinning и блокируют carrier.",
+                "related": "Q2 carrier; Q3 mount/unmount; Q21 pinning; Q26 I/O-scaling."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это переименованный `ForkJoinPool.commonPool()`, в котором каждая задача исполняется в отдельном OS-потоке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Common ForkJoinPool — это пул фиксированного размера платформенных потоков. Virtual Thread, наоборот, мультиплексируется JVM на маленький набор carrier-потоков.",
+                "source_of_confusion": "Внутри VT действительно используется ForkJoinPool как scheduler, но это carrier-пул, а не сами виртуальные потоки.",
+                "if_it_were_true": "Тогда лимит был бы равен `Runtime.availableProcessors()`, и идея миллиона потоков теряла бы смысл.",
+                "how_it_should_be": "VT — это user-mode поток JVM, мультиплексируемый поверх carrier-пула; OS-поток создаётся только для carrier."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это реактивный примитив наподобие `Mono`/`Flux`, который требует переписать код в callback-стиль.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная цель Project Loom — сохранить обычный imperative blocking-стиль и не заставлять переходить на reactive API.",
+                "source_of_confusion": "VT решают ту же задачу масштабирования I/O, что и Reactive, поэтому их путают концептуально.",
+                "if_it_were_true": "Тогда не было бы метода `Thread.ofVirtual()` и обычного `Thread.sleep` — пришлось бы городить `.flatMap(...)`.",
+                "how_it_should_be": "VT — обычные `Thread`, blocking API остаётся как есть; reactive — отдельная альтернативная модель."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это режим JVM, в котором все потоки разделяют один общий стек и регистры процессора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У каждого Virtual Thread свой стек (continuation), просто хранится он в heap и может расти/сжиматься, а не выделяется фиксированным OS-блоком.",
+                "source_of_confusion": "Идея «лёгкости» иногда превращается в миф «без стека».",
+                "if_it_were_true": "Тогда было бы невозможно делать рекурсию и хранить локальные переменные между блокировками.",
+                "how_it_should_be": "Стек у каждого VT свой, но компактный, лежит в куче, snapshot/restore делается при mount/unmount."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой JEP сделал Virtual Threads стабильной фичей и в какой версии Java?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "JEP 425 в Java 17 — Virtual Threads сразу вышли как стабильный API без preview-стадии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JEP 425 — это первый preview в Java 19, а не финальная фича в Java 17.",
+                "source_of_confusion": "Java 17 — LTS-релиз с другими крупными фичами (sealed classes, pattern matching).",
+                "if_it_were_true": "Тогда `Thread.ofVirtual()` был бы доступен в Java 17 без `--enable-preview`, чего на практике нет.",
+                "how_it_should_be": "JEP 425 — Virtual Threads (Preview) в Java 19; стабилизация — позже."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "JEP 444 в Java 21 (LTS) — финализация Virtual Threads после двух preview-итераций (JEP 425 в JDK 19 и JEP 436 в JDK 20).",
+              "correct": true,
+              "sections": {
+                "explanation": "Эволюция: JEP 425 (preview, JDK 19) → JEP 436 (second preview, JDK 20) → JEP 444 (final, JDK 21). С Java 21 `Thread.ofVirtual()` доступен без флагов и считается production-ready.",
+                "example": "В Java 21+ достаточно `Thread.startVirtualThread(runnable)` — никакого `--enable-preview` не нужно.",
+                "when_to_apply": "Выбор LTS-версии для прод-сервиса с массовым I/O — минимум Java 21.",
+                "edge_cases": "Несовместимость со старыми библиотеками, использующими нативный `synchronized` для координации; до Java 24 это вызывало pinning.",
+                "related": "Q25 fix pinning в Java 24; Q38 эволюция JEP; Q40 ScopedValue."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "JEP 8 в Java 8 одновременно с лямбдами и Stream API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Java 8 не было ни Virtual Threads, ни Project Loom — это работа уже эпохи 2019-2023 годов.",
+                "source_of_confusion": "JEP 8 даже не существует в этой нумерации — JEP пронумерованы своим списком.",
+                "if_it_were_true": "Тогда `CompletableFuture` и реактивные стеки никогда бы не получили популярности.",
+                "how_it_should_be": "Project Loom — это JEP 425/436/444, эра JDK 19-21."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JEP 444 в Java 11 — Oracle бэкпортировал Virtual Threads в первый LTS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java 11 — это 2018 год, а Project Loom стартовал public-preview только с Java 19. Никакого бэкпорта в 11 не было.",
+                "source_of_confusion": "Java 11 — известный LTS, поэтому соблазн привязать к нему любую фичу.",
+                "if_it_were_true": "Тогда корпоративные приложения на Java 11 уже годами использовали бы VT.",
+                "how_it_should_be": "Минимальная LTS-версия с VT — Java 21."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Virtual Thread принципиально отличается от Platform Thread?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Virtual Thread имеет более высокий приоритет и всегда вытесняет Platform Thread на том же ядре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приоритет у `Thread.ofVirtual()` фиксирован и игнорируется; VT и Platform потоки не конкурируют по приоритету ОС.",
+                "source_of_confusion": "Аналогия с реактивными планировщиками, где задачи имеют веса.",
+                "if_it_were_true": "Тогда `setPriority(MAX_PRIORITY)` для VT влиял бы на planning, но он no-op.",
+                "how_it_should_be": "VT и Platform — две разные категории; VT не имеет приоритета, его планирует JVM."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Virtual Thread не может выбрасывать исключения, потому что live в user-space.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исключения в VT работают как обычно: `UncaughtExceptionHandler`, `try/catch`, `Future.get` — всё применимо.",
+                "source_of_confusion": "Аналогия с continuation-based корутинами, где иногда есть отдельная error-channel.",
+                "if_it_were_true": "Тогда нельзя было бы пользоваться обычным `try/catch` в blocking-стиле — что противоречит цели Loom.",
+                "how_it_should_be": "VT — обычный `Thread`, exceptions ведут себя стандартно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Platform Thread — это обёртка над OS-потоком 1:1, Virtual Thread — user-mode поток JVM, который мультиплексируется поверх carrier-пула в модели M:N; стек VT хранится в куче и динамически меняет размер.",
+              "correct": true,
+              "sections": {
+                "explanation": "Platform Thread соответствует pthread/Win-thread ОС с фиксированным стеком ~512KB-1MB. Virtual Thread — это объект JVM с continuation-стеком в heap. ОС видит только carrier-потоки, не VT.",
+                "example": "`Thread.ofPlatform().start(...)` создаёт OS-поток; `Thread.ofVirtual().start(...)` — объект JVM, который при первом запуске монтируется на carrier из ForkJoinPool.",
+                "when_to_apply": "Когда нужно понимать стоимость создания и масштабирование: миллион VT — ОК, миллион Platform — OOM.",
+                "edge_cases": "ThreadLocal у миллиона VT даёт миллион копий значения — это узкое место по памяти.",
+                "related": "Q4 carrier; Q5 M:N; Q17 размер стека; Q19 ThreadLocal."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Platform Thread не имеет своего стека и работает поверх carrier, а Virtual Thread — наоборот.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полностью наоборот: Platform Thread — это OS-поток со своим стеком, VT мультиплексируется на carrier.",
+                "source_of_confusion": "Зеркальная путаница терминов, особенно при беглом чтении JEP 444.",
+                "if_it_were_true": "Тогда не было бы смысла во всём Project Loom — Platform потоки и так были бы дёшевы.",
+                "how_it_should_be": "Platform = OS-thread; Virtual = JVM-thread поверх carrier."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое carrier thread в модели Virtual Threads?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это специальный поток операционной системы, доступный только администратору JVM через `sudo`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Carrier — обычный платформенный поток внутри ForkJoinPool, никаких прав ОС или sudo не требуется.",
+                "source_of_confusion": "Слово carrier ассоциируется с привилегированным транспортом.",
+                "if_it_were_true": "Тогда обычные приложения не могли бы использовать VT без root.",
+                "how_it_should_be": "Carrier — обычный java.lang.Thread, который JVM использует как «носитель» для VT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это асинхронный сетевой канал, через который VT обменивается данными с базой данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Carrier не связан с сетью или БД — это термин JVM для платформенного потока, исполняющего VT.",
+                "source_of_confusion": "Carrier звучит как «канал передачи», и это путают с Netty Channel.",
+                "if_it_were_true": "Тогда у каждого JDBC-запроса должен быть свой carrier — на деле один carrier обслуживает много VT.",
+                "how_it_should_be": "Carrier — поток-носитель JVM, а не сетевой канал."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это поток-демон, который собирает мусор для виртуальных потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сборкой мусора занимаются GC-потоки, никак не связанные с carrier. Carrier — это runner для VT.",
+                "source_of_confusion": "Любые внутренние JVM-потоки в голове сливаются в «системные», и GC — частый шаблон.",
+                "if_it_were_true": "Тогда без активного GC VT не выполнялись бы — что противоречит реальности.",
+                "how_it_should_be": "Carrier исполняет код VT; GC — отдельная подсистема."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Carrier thread — это платформенный поток (из ForkJoinPool по умолчанию), на который JVM монтирует Virtual Thread для физического выполнения; один carrier обслуживает многие VT по очереди.",
+              "correct": true,
+              "sections": {
+                "explanation": "JVM держит небольшой пул carrier-потоков (по умолчанию `Runtime.availableProcessors()`). Когда VT готов к работе, его монтируют на carrier; когда блокируется — демонтируют, и carrier берёт следующий VT.",
+                "example": "При 1000 VT, делающих `Thread.sleep`, JVM держит ~8-16 carrier-потоков, и они по очереди прокачивают всю тысячу.",
+                "when_to_apply": "Расчёт capacity: число carrier'ов = `jdk.virtualThreadScheduler.parallelism`, по умолчанию = CPU count.",
+                "edge_cases": "Если все carrier'ы pinned (например, `synchronized` в Java 21), новые VT не получат carrier и встанут в очередь.",
+                "related": "Q3 платформенный поток; Q5 M:N; Q14 ForkJoinPool; Q21 pinning."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая модель многопоточности реализована для Virtual Threads?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "M:N — M виртуальных потоков мультиплексируются JVM на пул из N carrier-потоков ОС; N обычно равно числу CPU-ядер, M может быть на несколько порядков больше.",
+              "correct": true,
+              "sections": {
+                "explanation": "M:N даёт лёгкое создание (M велико) и параллелизм на N ядрах. Планировщик VT — кооперативный: VT добровольно отдаёт carrier при блокирующих вызовах JDK.",
+                "example": "10 миллионов VT поверх 16 carrier'ов на 16-ядерной машине — нормальная картина в нагрузочном тесте Loom.",
+                "when_to_apply": "Когда нужно рассуждать о пропускной способности: bottleneck не в числе VT, а в carrier'ах и внешних ресурсах.",
+                "edge_cases": "Pinning делает M:N временно 1:1 для прижатого VT — он удерживает carrier до выхода из блока.",
+                "related": "Q4 carrier; Q14 ForkJoinPool; Q21 pinning; Q26 миллион VT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Модель N:1 — все Virtual Threads исполняются одним carrier'ом без параллелизма на ядрах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию carrier-пул содержит столько потоков, сколько CPU. Параллелизм есть, ограничен числом ядер.",
+                "source_of_confusion": "Старые green threads в JDK 1.x действительно были N:1; некоторые помнят это и переносят на Loom.",
+                "if_it_were_true": "Тогда CPU-bound нагрузка на VT была бы strictly последовательной — реально она параллельна на N ядер.",
+                "how_it_should_be": "Модель M:N с N = `availableProcessors()` по умолчанию."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Каждый Virtual Thread запускается в отдельном OS-процессе с собственным address space.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VT живут внутри JVM-процесса и разделяют heap. Отдельные процессы — это совсем другая категория (`Process`, `ProcessBuilder`).",
+                "source_of_confusion": "Смешение thread и process в общей модели «изолированных юнитов исполнения».",
+                "if_it_were_true": "Тогда `synchronized` и shared heap для VT не работали бы — а они работают.",
+                "how_it_should_be": "Все VT — внутри одного JVM-процесса, M:N поверх carrier-пула."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Модель 1:1 — каждый Virtual Thread жёстко привязан к отдельному OS-потоку на всё время жизни.",
+              "correct": false,
+              "sections": {
+                "what_actually": "1:1 — это модель Platform Thread. VT использует M:N, где M виртуальных потоков мультиплексируются на N carrier'ов.",
+                "source_of_confusion": "В Java 1.1-1.2 действительно были green threads с moделью N:1, потом всё перешло на 1:1, и людям трудно представить M:N снова.",
+                "if_it_were_true": "Тогда миллион VT требовал бы миллиона OS-потоков, и идея не имела бы смысла.",
+                "how_it_should_be": "VT — это M:N, а не 1:1."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что означают операции mount и unmount для Virtual Thread?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Mount копирует весь heap JVM в стек carrier'а, а unmount сохраняет его обратно в swap-файл на диске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mount/unmount не трогают heap и диск; переключается лишь continuation (стек VT) между carrier-стеком и heap-объектом VT.",
+                "source_of_confusion": "Слова mount/unmount ассоциируются с файловой системой и swap.",
+                "if_it_were_true": "Каждый блокирующий вызов сбрасывал бы heap на диск — VT не давали бы никакого выигрыша.",
+                "how_it_should_be": "Mount/unmount — это move continuation-стека VT на carrier и обратно в heap."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Mount — JVM назначает carrier-потоку конкретный VT и копирует его continuation-стек на стек carrier'а; unmount — обратная операция при блокирующем вызове или park, VT возвращается в heap-структуру и carrier берёт следующего готового.",
+              "correct": true,
+              "sections": {
+                "explanation": "Mount/unmount — основа M:N планировщика. JVM поддерживает в heap у каждого VT объект continuation, при mount стек переносится на carrier, при unmount — обратно.",
+                "example": "`Thread.sleep(1.s)` в VT: JVM делает unmount, ставит timer, carrier берёт следующий VT;",
+                "when_to_apply": "При анализе perf: высокая частота mount/unmount = много блокирующих вызовов, проверять через JFR `jdk.VirtualThreadPinned` и `jdk.VirtualThreadStart`.",
+                "edge_cases": "Pinning блокирует unmount: carrier остаётся занятым, даже если VT парится внутри `synchronized`.",
+                "related": "Q4 carrier; Q15 park/unpark; Q16 continuation; Q35 JFR."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это операции монтирования tmpfs для хранения стеков VT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Файловая система здесь ни при чём — всё в памяти JVM.",
+                "source_of_confusion": "Linux-привычка к mount, /proc, tmpfs.",
+                "if_it_were_true": "Тогда VT зависели бы от прав на ФС и mount-namespace.",
+                "how_it_should_be": "Mount/unmount — чисто in-memory операции JVM."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Mount = `Object.wait()`, а unmount = `Object.notifyAll()` — это новые имена для старых примитивов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "wait/notify — мониторы для синхронизации. Mount/unmount — внутренний механизм планировщика VT, никак не связанный с мониторами.",
+                "source_of_confusion": "Похожая пара «активация/деактивация».",
+                "if_it_were_true": "Тогда любой `wait` означал бы mount, и мы бы не могли использовать его без VT.",
+                "how_it_should_be": "Mount/unmount — это бинды VT к carrier; wait/notify — это monitor-семантика."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно создать Virtual Thread через билдер?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Thread.ofVirtual().build(runnable)` — метод `build` создаёт и сразу стартует VT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метода `build(Runnable)` в `Thread.Builder` нет; стартовые методы — `.start(runnable)` и `.unstarted(runnable)`. Есть `.factory()`, возвращающий `ThreadFactory`.",
+                "source_of_confusion": "Паттерн билдера обычно завершается `.build()`.",
+                "if_it_were_true": "Тогда `Thread.ofVirtual().build()` без аргументов тоже что-то возвращало бы — на деле такого метода нет.",
+                "how_it_should_be": "Финализирующие методы: `.start(runnable)`, `.unstarted(runnable)`, `.factory()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`new Thread(runnable, ThreadType.VIRTUAL).start()` — обычный конструктор с дополнительным enum-аргументом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конструктора `Thread(Runnable, ThreadType)` не существует. Для VT используют только `Thread.ofVirtual()` или `Thread.startVirtualThread`.",
+                "source_of_confusion": "По аналогии с `new Thread(group, runnable, name)`.",
+                "if_it_were_true": "Тогда не было бы выделенного билдера и executor'а.",
+                "how_it_should_be": "Используйте `Thread.ofVirtual()...start(runnable)` или `Thread.startVirtualThread(runnable)`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Thread.ofVirtual().name(\"vt-1\").start(runnable)` — билдер задаёт имя, тип потока и стартует его одним вызовом.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Thread.ofVirtual()` возвращает `Thread.Builder.OfVirtual`. Можно задать имя, `inheritInheritableThreadLocals`, `UncaughtExceptionHandler`, потом `.start(runnable)` или `.unstarted(runnable)`.",
+                "example": "`Thread vt = Thread.ofVirtual().name(\"worker-\", 0).start(task);` — счётчик `0` автоматически инкрементируется для каждого следующего потока.",
+                "when_to_apply": "Когда нужен именованный одиночный VT с настройками — без `Executor`.",
+                "edge_cases": "Билдер immutable: каждый `.name(...)` возвращает новый объект. `.start()` нельзя вызвать дважды на одном `Runnable`.",
+                "related": "Q8 `startVirtualThread`; Q9 executor; Q10 `ThreadFactory`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`VirtualThread.create(runnable).run()` — публичный класс `VirtualThread` со статическим фабричным методом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Класс `VirtualThread` есть в пакете `java.lang`, но не публичен и не должен использоваться напрямую — это внутренняя деталь JDK.",
+                "source_of_confusion": "Логично ожидать публичный класс по аналогии с `ScheduledExecutorService`.",
+                "if_it_were_true": "Тогда в JavaDoc был бы открытый класс `VirtualThread` с публичным API, чего нет.",
+                "how_it_should_be": "Публичные точки входа — `Thread.ofVirtual()` и `Thread.startVirtualThread`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает `Thread.startVirtualThread(Runnable)`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Регистрирует Runnable в очереди CompletableFuture для последующего асинхронного выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод сразу создаёт и стартует VT, не подключая `CompletableFuture` и не используя ForkJoinPool.commonPool как ExecutorService.",
+                "source_of_confusion": "Похоже на `CompletableFuture.runAsync`, потому что обе async.",
+                "if_it_were_true": "Тогда метод возвращал бы `CompletableFuture<Void>`, а не `Thread`.",
+                "how_it_should_be": "`Thread.startVirtualThread(runnable)` возвращает `Thread` (уже запущенный VT)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Создаёт VT и сразу делает `join()`, блокируя вызывающий поток до окончания задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод не блокирует: он стартует VT и возвращает управление. `join` нужно вызвать отдельно.",
+                "source_of_confusion": "Слово start у некоторых ассоциируется с «выполнить и подождать».",
+                "if_it_were_true": "Тогда метод был бы синхронным и идея «запусти миллион VT» теряла бы смысл.",
+                "how_it_should_be": "`startVirtualThread` асинхронен, `join()` — отдельный вызов на возвращённом `Thread`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Запускает Platform Thread, но помечает его флагом `isVirtual = true`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Платформенный поток нельзя задним числом превратить в виртуальный — это разные `Thread`-объекты с разной природой.",
+                "source_of_confusion": "Многие думают, что `isVirtual` — просто маркер.",
+                "if_it_were_true": "Тогда `Thread.currentThread().isVirtual()` в platform-thread можно было бы переключить — реально нельзя.",
+                "how_it_should_be": "VT и Platform — разные `Thread.Kind`; `startVirtualThread` создаёт именно VT."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Создаёт и сразу стартует новый Virtual Thread, эквивалентно `Thread.ofVirtual().start(runnable)`; возвращает `Thread`, на котором можно вызвать `join()`/`interrupt()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это короткая фабрика для самого частого сценария: запустить один VT без настройки имени/UncaughtExceptionHandler. Эквивалент — `Thread.ofVirtual().start(runnable)`.",
+                "example": "`Thread vt = Thread.startVirtualThread(() -> log.info(\"hi\")); vt.join();` — две строки против полноценного executor'а.",
+                "when_to_apply": "Тесты, демо, одиночные fire-and-forget задачи внутри метода.",
+                "edge_cases": "Имя по умолчанию пустое (`\"\"`), что неудобно в thread dump — для прода лучше билдер `.name(...)`.",
+                "related": "Q7 билдер; Q9 executor; Q34 thread dump."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что возвращает `Executors.newVirtualThreadPerTaskExecutor()` и как с ним работать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Возвращает `ExecutorService`, который создаёт новый Virtual Thread на каждую задачу (thread-per-task); правильно использовать с try-with-resources, чтобы `close()` дождался завершения всех VT.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый `submit(...)` стартует свежий VT. У `ExecutorService` есть `close()` (Java 19+), который делает `shutdown` + `awaitTermination`. try-with-resources гарантирует, что блок не выйдет до завершения всех задач.",
+                "example": "`try (var ex = Executors.newVirtualThreadPerTaskExecutor()) { for (int i=0;i<10_000;i++) ex.submit(task); }` — выход из try ждёт всех.",
+                "when_to_apply": "Когда есть batch I/O-задач: HTTP fan-out, parallel JDBC reads, обработка списка файлов.",
+                "edge_cases": "Если задача висит в `synchronized` (pinning) и блок try не закрывается — `close()` будет ждать долго или вечно.",
+                "related": "Q7 билдер; Q10 ThreadFactory; Q11 StructuredTaskScope; Q26 миллион VT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Возвращает пул из 200 платформенных потоков, между которыми распределяются задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не пул в классическом смысле, а ExecutorService, который под каждую задачу создаёт отдельный VT (без переиспользования).",
+                "source_of_confusion": "Слово «Executor» сразу намекает на пул фиксированного размера.",
+                "if_it_were_true": "Тогда метод имел бы аргумент `corePoolSize` и `LinkedBlockingQueue`.",
+                "how_it_should_be": "Это thread-per-task executor: новый VT на каждую submit'нутую задачу."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Возвращает `ForkJoinPool` с увеличенным `parallelism`, оптимизированным под Virtual Threads.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Под капотом VT-планировщик действительно использует ForkJoinPool, но `newVirtualThreadPerTaskExecutor()` возвращает обёртку `ExecutorService`, не сам пул.",
+                "source_of_confusion": "Понимание, что Loom-scheduler = FJP, переносится на возвращаемый тип.",
+                "if_it_were_true": "Тогда можно было бы вызвать `.getParallelism()` на результате — на деле такого метода у возвращаемого `ExecutorService` нет.",
+                "how_it_should_be": "Возвращается `ExecutorService` (`ThreadPerTaskExecutor`), а не `ForkJoinPool`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Возвращает `ScheduledExecutorService` с поддержкой задач по cron.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cron'а в JDK Executor нет, а `newVirtualThreadPerTaskExecutor()` возвращает не `ScheduledExecutorService`, а обычный `ExecutorService`.",
+                "source_of_confusion": "Похожий метод `newScheduledThreadPool` действительно даёт scheduled-вариант.",
+                "if_it_were_true": "Тогда у результата был бы `schedule(Runnable, long, TimeUnit)` — его нет.",
+                "how_it_should_be": "Это thread-per-task executor; для расписаний используйте `Executors.newScheduledThreadPool` + VT-ThreadFactory."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как получить `ThreadFactory` для Virtual Threads, чтобы передать в чужой пул?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Передать `Thread::new` — JVM сама определит, виртуальный поток создавать или платформенный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Thread::new` создаёт исключительно платформенный поток. JVM не делает автоматический выбор «виртуальный/платформенный».",
+                "source_of_confusion": "Желание, чтобы JDK сам подбирал тип потока «по контексту».",
+                "if_it_were_true": "Тогда выбор `ofVirtual()`/`ofPlatform()` был бы не нужен.",
+                "how_it_should_be": "Виртуальный поток создаёт только `Thread.ofVirtual()...factory()` или явные методы; конструктор `new Thread` всегда платформенный."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Через билдер: `ThreadFactory vtf = Thread.ofVirtual().name(\"vt-\", 0).factory();` — затем передать `vtf` в `new ScheduledThreadPoolExecutor(N, vtf)` или другой класс, ожидающий фабрику.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Thread.Builder.OfVirtual.factory()` возвращает `ThreadFactory`, который при каждом `newThread(runnable)` создаёт новый VT с настроенным шаблоном имени и атрибутами.",
+                "example": "`var sched = Executors.newScheduledThreadPool(1, Thread.ofVirtual().factory());` — `@Scheduled`-задачи теперь крутятся на VT.",
+                "when_to_apply": "Интеграция с библиотеками (Quartz, Netty, Tomcat), принимающими `ThreadFactory` извне.",
+                "edge_cases": "Имя задаётся через `.name(prefix, counterStart)`; если пропустить — будет пустая строка, что мешает в thread dump.",
+                "related": "Q7 билдер; Q9 thread-per-task; Q28 Tomcat."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать `Executors.defaultThreadFactory()` — после Java 21 он по умолчанию выдаёт VT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Executors.defaultThreadFactory()` по-прежнему отдаёт платформенные потоки для backward-совместимости.",
+                "source_of_confusion": "Логично ожидать, что дефолты сменятся вместе с появлением VT.",
+                "if_it_were_true": "Тогда все старые приложения, мигрирующие на Java 21, неожиданно начали бы получать VT с pinning'ами на `synchronized`.",
+                "how_it_should_be": "Default остался platform; VT нужен явный билдер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Нужно реализовать `ThreadFactory` руками: `return new Thread(r) { @Override public boolean isVirtual(){ return true; } }`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод `isVirtual()` финальный и не переопределяется. Тип VT/Platform определяется конкретным подклассом внутри JDK.",
+                "source_of_confusion": "Желание «обмануть» JVM через override.",
+                "if_it_were_true": "Тогда любой `Thread` можно было бы «сделать виртуальным» в одну строку — на деле нельзя.",
+                "how_it_should_be": "Только `Thread.ofVirtual().factory()` создаёт корректные VT."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `StructuredTaskScope` и какую проблему он решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это reactive primitive из проекта Helidon, не связанный с Loom.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`java.util.concurrent.StructuredTaskScope` — часть JDK, входит в Project Loom (JEP 428/437/453). Никакого Helidon в стандартной библиотеке нет.",
+                "source_of_confusion": "Helidon Nima действительно использует VT, и его API путают со стандартным.",
+                "if_it_were_true": "Тогда класс лежал бы в `io.helidon.*`, а не в `java.util.concurrent`.",
+                "how_it_should_be": "Это JDK API, ядро Structured Concurrency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это новый `ThreadGroup`, который автоматически даёт всем потокам общий `ClassLoader`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`StructuredTaskScope` не про загрузку классов, а про lifetime управление группой VT с детерминированным завершением.",
+                "source_of_confusion": "Слово «scope» иногда понимают в контексте class-loaders.",
+                "if_it_were_true": "Тогда метод назывался бы `ClassLoaderScope` и не имел бы `fork`/`join`.",
+                "how_it_should_be": "Это скоп для группы задач, не для классов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это `try`-блок для управления группой связанных Virtual Threads с гарантией, что все дочерние задачи завершатся (нормально, по ошибке или отменой) до выхода из блока — реализует Structured Concurrency.",
+              "correct": true,
+              "sections": {
+                "explanation": "`StructuredTaskScope` (JEP 453, preview) даёт скоп с детерминированным lifetime: `fork` запускает задачи как дочерние VT, `join`/`joinUntil` ждёт всех, `close` отменяет оставшиеся. Подкласс `ShutdownOnFailure` отменяет остальных при первой ошибке;",
+                "example": "`try (var scope = new StructuredTaskScope.ShutdownOnFailure()) { var f1 = scope.fork(this::fetchUser); var f2 = scope.fork(this::fetchOrders);",
+                "when_to_apply": "Fan-out к нескольким сервисам с гарантией не утечки потоков; иерархическая отмена;",
+                "edge_cases": "Скоп должен закрываться в том же потоке, что и создан;",
+                "related": "Q12 ShutdownOnFailure; Q13 ShutdownOnSuccess; Q36 отмена; Q40 ScopedValue."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это синоним `CompletableFuture.allOf(...)` с другим именем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`allOf` не даёт отмены, не имеет lifetime-границы и не отслеживает иерархию задач. `StructuredTaskScope` всё это даёт.",
+                "source_of_confusion": "Оба ждут несколько задач — поверхностное сходство.",
+                "if_it_were_true": "Тогда у `allOf` был бы автоматический cancellation при ошибке — реально нет.",
+                "how_it_should_be": "StructuredTaskScope — это lifetime-скоп с cancellation; `allOf` — простой барьер."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда стоит выбрать `StructuredTaskScope.ShutdownOnFailure` вместо `ShutdownOnSuccess`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Когда нужно всегда дождаться завершения каждой задачи, игнорируя любые ошибки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ShutdownOnFailure именно прерывает остальные задачи при первой ошибке, а не «игнорирует» ошибки.",
+                "source_of_confusion": "Слово failure ассоциируется с «не упасть».",
+                "if_it_were_true": "Тогда `throwIfFailed()` после `join()` ничего не делал бы.",
+                "how_it_should_be": "Чтобы дождаться всех независимо от исхода — нужен кастомный subclass `StructuredTaskScope`, а не ShutdownOnFailure."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Когда нужно полностью выключить JVM при первой ошибке в скопе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ShutdownOnFailure` отменяет только дочерние задачи скопа, JVM не трогает.",
+                "source_of_confusion": "Слово shutdown воспринимается как «погасить JVM».",
+                "if_it_were_true": "Тогда любая ошибка в одном HTTP-запросе клала бы весь сервис — катастрофично.",
+                "how_it_should_be": "Shutdown в имени касается только скопа задач, не JVM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Когда требуется получить результат самой быстрой задачи и отбросить остальные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это сценарий `ShutdownOnSuccess`, а не `ShutdownOnFailure`. Имя прямо говорит: shutdown on first success.",
+                "source_of_confusion": "Зеркальное смешение двух подклассов.",
+                "if_it_were_true": "Тогда оба подкласса были бы эквивалентны.",
+                "how_it_should_be": "Race-pattern (первый успешный ответ) — `ShutdownOnSuccess`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Когда обязательно получить все результаты (fail-fast композиция): любая ошибка в одной задаче делает остальные бесполезными, и их нужно отменить как можно раньше — например, агрегирование данных от нескольких микросервисов для одного ответа.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ShutdownOnFailure` отменяет (через `interrupt`) все остальные дочерние VT при первой ошибке и сохраняет её.",
+                "example": "Сбор страницы профиля: профиль + заказы + рекомендации — при ошибке в одном из вызовов нет смысла ждать остальные, отдаём клиенту 5xx.",
+                "when_to_apply": "Aggregator endpoints, parallel reads с обязательным consistency, batch-операции где нужны все ответы.",
+                "edge_cases": "После `throwIfFailed()` нельзя вызывать `resultNow()` у Future — оно бросит, надо вызывать `state() == SUCCESS`.",
+                "related": "Q11 StructuredTaskScope; Q13 ShutdownOnSuccess; Q36 cancellation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `ThreadLocal` ведёт себя с Virtual Threads и какая ему альтернатива?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ThreadLocal` работает на VT нормально, но при миллионах VT даёт миллионы копий значения; альтернатива — `ScopedValue` (JEP 446/487), immutable и видимый только внутри `ScopedValue.where(...).run(...)`-блока.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ThreadLocal` хранится в `Thread`-объекте, поэтому у миллиона VT — миллион копий. `ScopedValue` хранит значения в стеке/heap скопа, не размножает их по потокам, immutable, не утекает после выхода из блока.",
+                "example": "`ScopedValue<User> CURRENT = ScopedValue.newInstance(); ScopedValue.where(CURRENT, user).run(this::handle);` — внутри `handle()`: `CURRENT.get()` вернёт `user`, после `run` — `NoSuchElementException`.",
+                "when_to_apply": "Передача context (user, traceId, locale) сквозь сервисные цепочки на VT без mutable shared state.",
+                "edge_cases": "Старые библиотеки (MDC, SecurityContext) пока используют `ThreadLocal`;",
+                "related": "Q14 InheritableThreadLocal; Q19 утечки памяти; Q40 ScopedValue."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ThreadLocal` несовместим с VT и кидает `UnsupportedOperationException` при первом обращении из VT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ThreadLocal` полностью совместим с VT: `get`/`set` работают, а исключений не бросает.",
+                "source_of_confusion": "Слухи о «полной замене на ScopedValue».",
+                "if_it_were_true": "Тогда библиотеки вроде MDC, JDBC-драйверы, SecurityContext в Spring перестали бы работать на VT.",
+                "how_it_should_be": "ThreadLocal работает, но при миллионах VT даёт memory overhead — потому и предлагают ScopedValue."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ThreadLocal` автоматически копируется по carrier'ам, поэтому VT всегда читают значение, установленное в carrier'е.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ThreadLocal привязан к конкретному `Thread`, а у VT это сам VT, а не carrier. Carrier с VT не делит свои ThreadLocal.",
+                "source_of_confusion": "Логично ожидать, что carrier «делится» состоянием с VT.",
+                "if_it_were_true": "Тогда два VT на одном carrier «видели» бы общий ThreadLocal — опасный data race.",
+                "how_it_should_be": "ThreadLocal — у каждого VT свой; carrier-ThreadLocal не пробрасывается."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для совместимости с VT нужно использовать `ConcurrentHashMap<Thread, T>` вручную — JDK ничего не предоставляет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JDK предоставляет и `ThreadLocal`, и `ScopedValue`. Кастомная мапа с `Thread`-ключом — антипаттерн (утечки, неконтролируемый рост).",
+                "source_of_confusion": "Желание сделать «явное» решение без понимания, что есть готовое.",
+                "if_it_were_true": "Тогда такая мапа была бы рекомендована в JEP — реально она там названа антипаттерном.",
+                "how_it_should_be": "Используйте `ThreadLocal` или `ScopedValue` (Java 21+/24+)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой пул JVM использует как scheduler для Virtual Threads по умолчанию?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Executors.newCachedThreadPool()` — JVM создаёт carrier-потоки лениво по требованию без верхнего предела.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолтный scheduler — выделенный `ForkJoinPool`, а не cachedThreadPool. У него фиксированный parallelism, равный числу CPU.",
+                "source_of_confusion": "CachedThreadPool тоже «лёгкий» и часто упоминается рядом с VT.",
+                "if_it_were_true": "Тогда carrier'ов могло бы быть бесконечно много, и весь смысл маленького пула терялся бы.",
+                "how_it_should_be": "Carrier-scheduler — это dedicated `ForkJoinPool` с parallelism = `Runtime.availableProcessors()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Выделенный `ForkJoinPool` с параметром `parallelism = Runtime.availableProcessors()`; этот пул не общий `commonPool()`, а отдельный экземпляр, специально для carrier-потоков VT.",
+              "correct": true,
+              "sections": {
+                "explanation": "JVM держит отдельный ForkJoinPool именно как VT-scheduler, не путать с `ForkJoinPool.commonPool()`. Размер настраивается через `jdk.virtualThreadScheduler.parallelism`, `jdk.virtualThreadScheduler.maxPoolSize` и `jdk.virtualThreadScheduler.minRunnable`.",
+                "example": "На 16-ядерном хосте получаем 16 carrier'ов; при `-Djdk.virtualThreadScheduler.parallelism=32` — 32 carrier'а.",
+                "when_to_apply": "Тюнинг под профиль нагрузки: I/O-heavy сервис может вытянуть больше carrier'ов, чем CPU, если есть pinning.",
+                "edge_cases": "`commonPool()` остаётся отдельным и обслуживает parallel stream / `CompletableFuture.runAsync`;",
+                "related": "Q4 carrier; Q5 M:N; Q16 continuation; Q22 tracePinnedThreads."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Никакого пула — JVM создаёт OS-поток на каждый VT при mount и закрывает при unmount.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Создание OS-потока на каждый mount уничтожило бы всю экономию Loom. JVM держит маленький постоянный пул carrier'ов.",
+                "source_of_confusion": "Слово thread-per-task переносится с executor на сам scheduler.",
+                "if_it_were_true": "Тогда не было бы выигрыша против Platform Thread.",
+                "how_it_should_be": "Carrier-пул — persistent ForkJoinPool, потоки переиспользуются."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кастомный `ScheduledThreadPoolExecutor` с приоритетом потоков MAX_PRIORITY.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолтный scheduler — внутренний `ForkJoinPool`, не `ScheduledThreadPoolExecutor`; приоритеты OS-потоков на работу VT не влияют.",
+                "source_of_confusion": "Слово schedule пробуждает ассоциацию со `ScheduledExecutorService`.",
+                "if_it_were_true": "Тогда у VT-планировщика был бы delayed-API наподобие `schedule(runnable, delay)`.",
+                "how_it_should_be": "Это `ForkJoinPool`, не ScheduledThreadPoolExecutor."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что происходит, когда Virtual Thread вызывает `LockSupport.park()`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Carrier-поток блокируется в OS-вызове `pthread_cond_wait` и не может обслуживать другие VT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно для того и нужен Loom-aware `park`: VT демонтируется с carrier, и carrier берёт следующий готовый VT — ОС-блокировки нет.",
+                "source_of_confusion": "С Platform Thread `park` действительно блокирует OS-поток.",
+                "if_it_were_true": "Тогда миллион VT в `park` потребовали бы миллион carrier'ов — невозможно.",
+                "how_it_should_be": "VT-`park` делает unmount, carrier продолжает работать с другими VT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "VT сразу выбрасывает `IllegalStateException`, потому что `LockSupport` не работает с виртуальными потоками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LockSupport.park()` полностью поддерживается на VT. Никаких исключений нет.",
+                "source_of_confusion": "Желание провести границу «VT vs низкоуровневые примитивы».",
+                "if_it_were_true": "Тогда не работали бы `ReentrantLock`, `Semaphore` и т. п., которые используют `park` внутри.",
+                "how_it_should_be": "`LockSupport.park()` работает корректно и стандартно делает unmount."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "JVM выполняет unmount: сохраняет continuation VT в его heap-объект, освобождает carrier для другого VT и регистрирует «разблокировку по `unpark`»; когда придёт `LockSupport.unpark(thread)`, VT ставится в очередь scheduler'а и в какой-то момент будет смонтирован обратно.",
+              "correct": true,
+              "sections": {
+                "explanation": "`park` для VT — основная точка отдачи carrier'а. JVM знает, что park — потенциально долгая блокировка, делает unmount, ставит VT в waiting state.",
+                "example": "`Semaphore`, `ReentrantLock`, `CountDownLatch` используют `park`/`unpark` внутри — на VT все они работают без блокировки carrier'а.",
+                "when_to_apply": "Понимание того, почему `ReentrantLock` не вызывает pinning, в отличие от `synchronized` (до Java 24).",
+                "edge_cases": "Если VT находится внутри `synchronized` и зовёт `park`, происходит pinning: carrier остаётся занятым.",
+                "related": "Q6 mount/unmount; Q21 pinning; Q24 ReentrantLock; Q25 Java 24."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JVM сохраняет VT на диск через `Object.writeObject(...)` и поднимает обратно после `unpark`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VT не сериализуются на диск — continuation хранится в heap JVM.",
+                "source_of_confusion": "Аналогия с гибернацией процессов в ОС или с serialization фреймворками.",
+                "if_it_were_true": "Тогда `park` стоил бы милисекунды и был бы непригоден для горячих путей.",
+                "how_it_should_be": "Unmount — это in-memory операция, никакой сериализации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое continuation в контексте Virtual Threads?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это нативный системный вызов Linux `clone()` со специальным флагом `CLONE_VM`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Continuation — чисто JVM-конструкция, не системный вызов. ОС про continuations ничего не знает.",
+                "source_of_confusion": "Желание провести аналогию с ядерными примитивами планирования.",
+                "if_it_were_true": "Тогда VT работали бы только на Linux и не было бы Loom на Windows/macOS.",
+                "how_it_should_be": "Continuation — внутренний объект JVM с сохранённым стеком."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это `CompletableFuture`, у которого вызван `.thenApply(...)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`thenApply` — это композиция CF, не continuation Loom. CF и continuation — два разных мира.",
+                "source_of_confusion": "Слово «продолжение» в обоих контекстах.",
+                "if_it_were_true": "Тогда VT и CompletableFuture были бы одним и тем же.",
+                "how_it_should_be": "Continuation Loom — JVM-объект; thenApply — async композиция."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это JIT-оптимизация, которая объединяет несколько коротких методов в один inline-блок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inline'инг JIT никак не связан с continuation. Continuation — runtime-структура для сохранения стека.",
+                "source_of_confusion": "Похожие термины «продолжение» в контексте оптимизаций.",
+                "if_it_were_true": "Тогда continuation существовал бы и до JEP 425.",
+                "how_it_should_be": "Continuation — runtime-объект JVM, не JIT pass."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это объект JVM, в котором сохранён стек VT (frames + локальные переменные + program counter); JVM умеет приостанавливать (`yield`) и возобновлять (`run`) continuation, что и реализует unmount/mount Virtual Thread.",
+              "correct": true,
+              "sections": {
+                "explanation": "Continuation — основной примитив Project Loom (внутренний класс `jdk.internal.vm.Continuation`). У каждого VT есть свой continuation, который хранит стек как «массив frames» в heap. `Continuation.yield(...)` отдаёт управление, `Continuation.run()` продолжает.",
+                "example": "При `Thread.sleep` JVM делает `cont.yield(SLEEP_SCOPE)`;",
+                "when_to_apply": "Внутренний механизм;",
+                "edge_cases": "Continuation внутри `synchronized` нельзя yield'нуть (до Java 24) — это и есть pinning.",
+                "related": "Q6 mount/unmount; Q15 park; Q17 размер стека; Q25 fix Java 24."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой размер стека у Virtual Thread в сравнении с Platform Thread?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "У Platform Thread — фиксированный стек ~512 КБ — 1 МБ, выделенный сразу в адресном пространстве ОС; у Virtual Thread стек хранится в heap JVM, растёт и сжимается динамически, начиная с нескольких сотен байт и расширяясь по мере вызовов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Платформенный стек занимает место даже у простаивающего потока. VT-стек живёт в heap, начинается крошечным и расширяется по требованию, сжимается при unmount. Это и даёт возможность хранить миллионы VT в одной JVM.",
+                "example": "Один VT, спящий внутри обработчика HTTP — ~1-2 КБ heap.",
+                "when_to_apply": "Оценка capacity: «сколько VT поместится в N ГБ heap» — порядок 10⁶ при типичной нагрузке.",
+                "edge_cases": "Глубокая рекурсия на VT всё равно может выесть много heap;",
+                "related": "Q3 Platform vs Virtual; Q5 M:N; Q19 ThreadLocal-overhead; Q26 миллион VT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "У обоих типов стек ровно 256 КБ и менять его нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Platform Thread размер стека настраивается флагом `-Xss` (default 512KB-1MB), у VT — растёт и сжимается динамически.",
+                "source_of_confusion": "Желание упрощённой модели «у всех одинаково».",
+                "if_it_were_true": "Тогда `-Xss` не имел бы смысла.",
+                "how_it_should_be": "Размеры разные: Platform — фиксированный, VT — динамический."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "У VT фиксированный стек 8 МБ, у Platform Thread — динамический.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: у Platform Thread фиксированный стек ~512KB-1MB (зависит от ОС и `-Xss`), у VT динамический в heap.",
+                "source_of_confusion": "Зеркальная путаница, особенно при беглом чтении JEP.",
+                "if_it_were_true": "Тогда миллион VT занимал бы 8 ТБ памяти.",
+                "how_it_should_be": "У Platform — фиксированный стек, у VT — динамический в heap."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "VT не имеет стека вообще — все вызовы делаются в continuation-passing style без локальных переменных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VT имеет полноценный стек с локальными переменными и frame'ами. Просто этот стек живёт в heap, не на нативном стеке ОС.",
+                "source_of_confusion": "Слово continuation иногда понимают как «никакого стека, всё в замыканиях».",
+                "if_it_were_true": "Тогда нельзя было бы писать обычный код с локальными переменными.",
+                "how_it_should_be": "Стек у VT есть, просто динамический и в heap."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как JIT и continuations взаимодействуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "JIT откатывает все скомпилированные методы, как только встречает `yield` continuation, и переходит в интерпретатор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JIT-код не откатывается; HotSpot умеет deoptimize только конкретные frames, и то не на каждый yield. Yield работает на любом фрейме (JIT или интерпретатор).",
+                "source_of_confusion": "Аналогия с deoptimization на сложных конструкциях вроде on-stack replacement.",
+                "if_it_were_true": "Тогда производительность VT падала бы на каждом блокирующем вызове.",
+                "how_it_should_be": "JIT-код продолжает работать; yield делает freeze стека, в т. ч. JIT-frame'ов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "JIT компилирует код VT и Platform Thread одинаково; yield-точки (`Continuation.yield`) JVM умеет обрабатывать на JIT-frame'ах, делая freeze/thaw стека прозрачно. Производительность VT после прогрева сопоставима с Platform Thread.",
+              "correct": true,
+              "sections": {
+                "explanation": "HotSpot JIT не делает специальной перекомпиляции для VT. Continuation freezes JIT-frame в heap-структуру при yield и восстанавливает при resume. После warm-up VT-код выполняется JIT'ом с обычной производительностью.",
+                "example": "Микробенчмарк tight-loop CPU-bound кода: разница между VT и Platform Thread <2-3% (в основном на mount/unmount).",
+                "when_to_apply": "Оценка перфоманса: можно не бояться, что переход на VT катастрофически замедлит критический путь.",
+                "edge_cases": "Метод с `synchronized` или JNI приведёт к pinning — там JIT не виноват, ограничение в самом continuation.",
+                "related": "Q16 continuation; Q17 размер стека; Q21 pinning."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "JIT принципиально отключается для VT, потому что нельзя сохранять оптимизированные регистры в continuation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JIT работает для VT в полной мере. Сохранение регистров в continuation реализовано в JVM именно для интеграции с JIT.",
+                "source_of_confusion": "Желание представить VT как «интерпретатор-only».",
+                "if_it_were_true": "Тогда CPU-bench VT был бы в десятки раз медленнее.",
+                "how_it_should_be": "JIT не отключается, freeze/thaw совместим с JIT-frame."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JIT и continuation взаимоисключающи — нужно собирать JVM с флагом `-XX:+EnableVT`, который отключает C2.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого флага `EnableVT` не существует — VT включены по умолчанию в Java 21+. C2 работает нормально.",
+                "source_of_confusion": "Распространённая привычка ожидать «experimental flags».",
+                "if_it_were_true": "Тогда продакшен-сервисы не получили бы перформансных гарантий.",
+                "how_it_should_be": "VT включены по умолчанию, C2 продолжает оптимизировать код."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём опасность массового использования `InheritableThreadLocal` с Virtual Threads?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`InheritableThreadLocal` всегда обнуляется при mount на новый carrier.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Состояние ThreadLocal привязано к VT, не к carrier. При mount/unmount значения сохраняются.",
+                "source_of_confusion": "Желание представить ThreadLocal как «локальный для исполнителя».",
+                "if_it_were_true": "Тогда MDC и SecurityContext очищались бы после каждого блокирующего вызова.",
+                "how_it_should_be": "ThreadLocal сохраняется через mount/unmount, привязан к VT-объекту."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "JVM кидает `InheritableThreadLocalException` при попытке использовать его с VT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такого исключения в JDK нет. InheritableThreadLocal работает на VT.",
+                "source_of_confusion": "Желание увидеть жёсткое предупреждение от JDK.",
+                "if_it_were_true": "Тогда любая Spring-апликация на VT падала бы на старте.",
+                "how_it_should_be": "Работает, но даёт memory overhead — нужно использовать осознанно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Каждый созданный VT по умолчанию копирует все значения `InheritableThreadLocal` из родителя, и при миллионе VT это даёт миллион копий объектов в heap — серьёзный memory bloat.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поведение наследования сохранено для совместимости. При создании VT JDK копирует map InheritableThreadLocal по ссылке для каждого нового потока. Если значения — крупные объекты, миллион VT держит миллион ссылок и мешает GC.",
+                "example": "В Spring MDC + RequestContext часто базируются на `InheritableThreadLocal`.",
+                "when_to_apply": "Аудит библиотек на `InheritableThreadLocal`;",
+                "edge_cases": "Builder-флаг `inheritInheritableThreadLocals(false)` отключает наследование;",
+                "related": "Q13 ThreadLocal; Q33 утечки; Q40 ScopedValue."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все `InheritableThreadLocal`-значения автоматически конвертируются в `ScopedValue` при создании VT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой автоматической конвертации нет — `ScopedValue` и `ThreadLocal` живут параллельно, миграция делается вручную.",
+                "source_of_confusion": "Желание upgrade «бесплатно».",
+                "if_it_were_true": "Тогда не было бы memory bloat'а и проблем с миграцией.",
+                "how_it_should_be": "Конвертация только ручная: вытеснить ThreadLocal в ScopedValue в коде."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает флаг билдера `inheritInheritableThreadLocals(false)`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Полностью отключает использование `ThreadLocal` внутри Virtual Thread — `get()` всегда возвращает `null`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Флаг касается только наследования при создании потока — обычный `ThreadLocal.set/get` продолжает работать.",
+                "source_of_confusion": "Слово «inherit» путают с «использовать».",
+                "if_it_were_true": "Тогда MDC и подобные структуры были бы недоступны для VT.",
+                "how_it_should_be": "Флаг отключает только копирование значений от родителя при `start`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запускает только JIT-компилятор, отключая интерпретатор для VT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Билдер `Thread.Builder.OfVirtual` не управляет JIT'ом. JIT настраивается через `-XX:*` опции JVM.",
+                "source_of_confusion": "Похоже звучащее слово.",
+                "if_it_were_true": "Тогда `inheritInheritableThreadLocals` имел бы тип JIT-policy.",
+                "how_it_should_be": "Это про InheritableThreadLocal, не про JIT."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Запрещает создавать VT, у которых нет имени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя задаётся через `.name(...)`, никакого валидатора в `inheritInheritableThreadLocals` нет.",
+                "source_of_confusion": "Желание видеть «строгий режим» в одном флаге.",
+                "if_it_were_true": "Тогда `Thread.startVirtualThread(runnable)` без имени падал бы.",
+                "how_it_should_be": "Имя — отдельный параметр; этот флаг — про InheritableThreadLocal."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Отключает копирование значений `InheritableThreadLocal` от родительского потока при старте VT; это полезно при массовом создании VT, чтобы избежать memory overhead и неявных утечек контекста.",
+              "correct": true,
+              "sections": {
+                "explanation": "По умолчанию VT наследует `InheritableThreadLocal` от родителя (как и Platform Thread).",
+                "example": "`Thread.ofVirtual().inheritInheritableThreadLocals(false).start(runnable)` — стартует VT без копирования MDC от родителя.",
+                "when_to_apply": "Background-задачи, которые не должны видеть HTTP-контекст вызывающего, или массовый fan-out с миллионом VT.",
+                "edge_cases": "Не путать с обычным `ThreadLocal` — он и так не наследуется.",
+                "related": "Q13 ThreadLocal; Q19 наследование; Q40 ScopedValue."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое pinning в Virtual Threads?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ситуация, когда Virtual Thread не может быть демонтирован с carrier во время блокирующей операции (например, внутри `synchronized` или JNI); carrier остаётся занят, и преимущество VT теряется.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pinning возникает, когда continuation не может сделать `yield`. Основные причины: внутри монитора `synchronized` (до Java 24), внутри native-метода. Carrier удерживается на всё время блокирующего вызова, и пропускная способность падает до уровня Platform Thread.",
+                "example": "`synchronized(lock) { dbCall();",
+                "when_to_apply": "Аудит легаси-кода при миграции на Java 21+; замена `synchronized` на `ReentrantLock`.",
+                "edge_cases": "В Java 24 фикс для `synchronized` — pinning внутри обычных мониторов снят.",
+                "related": "Q22 trace; Q23 причины; Q24 ReentrantLock; Q25 Java 24."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это режим работы JFR, который логирует все события `mount` в течение секунды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JFR-событие `jdk.VirtualThreadPinned` действительно есть, но pinning — это явление, а не «режим логгирования».",
+                "source_of_confusion": "Имя JFR-события — основной источник путаницы.",
+                "if_it_were_true": "Тогда pinning «отключался бы» снятием JFR-флага.",
+                "how_it_should_be": "Pinning — runtime-явление, JFR только репортит его."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это ускоренный режим, в котором VT закрепляется за самым быстрым carrier'ом, минуя планировщик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pinning — это вредная ситуация, а не оптимизация: VT приклеен к carrier и не может быть демонтирован, блокируя carrier целиком.",
+                "source_of_confusion": "Слово pinned (закреплённый) звучит как «горячий поток» в некоторых системах.",
+                "if_it_were_true": "Тогда JVM ввела бы pinning как фичу, а не борьба с ним была бы в Java 24.",
+                "how_it_should_be": "Pinning — антипаттерн, который убивает преимущества VT."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это сохранение VT на disk при низком уровне памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VT не свопаются на диск — это runtime-структуры JVM в heap.",
+                "source_of_confusion": "Аналогия с pinning страниц в ОС (mlock).",
+                "if_it_were_true": "Тогда у JVM был бы swap-out механизм для потоков.",
+                "how_it_should_be": "Pinning — runtime-зацепка за carrier, никаких I/O."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как диагностировать pinning в работающем приложении на Java 21?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно посмотреть в `top` — pinning виден как высокая загрузка CPU одного потока.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pinning никак не отображается в `top`: carrier продолжает выглядеть обычно. Диагностируется только специальными JVM-средствами.",
+                "source_of_confusion": "Желание объяснить деградацию очевидной OS-метрикой.",
+                "if_it_were_true": "Тогда был бы простой метод диагностики и не понадобился бы tracePinnedThreads.",
+                "how_it_should_be": "Используются `-Djdk.tracePinnedThreads=full` или JFR-событие `jdk.VirtualThreadPinned`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запустить JVM с флагом `-Djdk.tracePinnedThreads=full` (или `=short`), который выводит стек VT в момент pinning; также подключить JFR и фильтровать событие `jdk.VirtualThreadPinned`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`tracePinnedThreads=short` печатает в stderr точку pinning'а, `=full` — полный стек. Включается через `-Djdk.tracePinnedThreads=full` без перекомпиляции. Параллельно JFR-event `jdk.VirtualThreadPinned` пишется в `.jfr`-файл с длительностью pinning'а.",
+                "example": "`java -Djdk.tracePinnedThreads=full -jar app.jar 2>&1 | grep -A 5 'Thread.*virtual.*pinned'` — быстрый smoke-чек в логах.",
+                "when_to_apply": "Pre-prod профилирование при миграции на VT; deep dive по падению throughput.",
+                "edge_cases": "tracePinnedThreads может замедлить hot path — не оставлять навсегда в проде.",
+                "related": "Q21 pinning; Q23 причины; Q35 JFR."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать `jstack -F`, который автоматически помечает pinned VT тегом `[PINNED]`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`jstack` показывает thread dump VT, но не выводит спец-тег `[PINNED]`. Pinning виден косвенно (синхронный stack frame внутри `synchronized`).",
+                "source_of_confusion": "Желание иметь однострочный тег в dump'е.",
+                "if_it_were_true": "Тогда был бы документированный формат `jstack`-вывода с `PINNED`.",
+                "how_it_should_be": "Используйте tracePinnedThreads + JFR."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключиться через JMX к MBean `com.oracle.vm.Pinning` и читать атрибут `count`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такого MBean в OpenJDK нет; счётчик pinning'ов наружу как JMX-атрибут не выставляется.",
+                "source_of_confusion": "Желание стандартизированной JMX-метрики.",
+                "if_it_were_true": "Тогда Grafana-дашборды собирали бы её через стандартный JMX exporter.",
+                "how_it_should_be": "Используйте JFR-event или tracePinnedThreads."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие конструкции до Java 24 приводили к pinning?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Использование `record` и `sealed class` внутри тела Virtual Thread.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`record` и `sealed` — фичи языка для типов данных, никак не влияют на mount/unmount.",
+                "source_of_confusion": "Желание привязать pinning к «новым фичам Java».",
+                "if_it_were_true": "Тогда вся современная Java несовместима с VT.",
+                "how_it_should_be": "Pinning связан с `synchronized` и native-методами, не с типами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использование `Stream.parallel()` — параллельные стримы автоматически переводят VT в pinned-режим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Parallel stream использует `ForkJoinPool.commonPool` с обычными платформенными потоками; pinning к нему отношения не имеет.",
+                "source_of_confusion": "Слово parallel у некоторых ассоциируется с любыми ограничениями параллелизма.",
+                "if_it_were_true": "Тогда любой `.parallel()` был бы вреден для VT.",
+                "how_it_should_be": "Pinning связан с `synchronized` и JNI, не с parallel stream."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Блокирующая операция внутри `synchronized`-блока/метода и вызов нативного метода (JNI); JVM не может выгрузить frame с monitor'ом или native-frame'ом из continuation.",
+              "correct": true,
+              "sections": {
+                "explanation": "Continuation не умеет yield'ить frame, у которого удерживается монитор `synchronized`, и не умеет yield'ить native-frame.",
+                "example": "`synchronized (this) { httpClient.send(...);",
+                "when_to_apply": "Аудит легаси на VT-миграции: grep по `synchronized`, искать JNI-вызовы в hot path.",
+                "edge_cases": "Сам по себе `synchronized` без блокировки внутри тоже pinned, но коротко — JFR может игнорировать ниже порога.",
+                "related": "Q21 pinning; Q22 trace; Q24 ReentrantLock; Q25 Java 24."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Любой вызов `Thread.sleep` блокирует carrier на всё время сна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Thread.sleep` на VT — Loom-aware, делает unmount; carrier не блокируется.",
+                "source_of_confusion": "По аналогии со sleep'ом Platform Thread, который блокирует OS-поток.",
+                "if_it_were_true": "Тогда VT не давали бы выигрыша на любой sleep-нагрузке.",
+                "how_it_should_be": "Sleep на VT не приводит к pinning'у."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как избежать pinning при необходимости синхронизации (до Java 24)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Полностью отказаться от любых блокировок и завернуть код в `CompletableFuture.runAsync`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runAsync` не убирает необходимости в координации доступа к shared state и сам по себе pinning не лечит.",
+                "source_of_confusion": "Желание «уйти в async» и забыть проблему.",
+                "if_it_were_true": "Тогда любой shared state можно было бы трогать без блокировок.",
+                "how_it_should_be": "Используйте `ReentrantLock` или `j.u.c`-структуры (`ConcurrentHashMap`, `AtomicReference`)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Заменить `synchronized` на `Thread.yield()` в начале блока — это снимает pinning.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Thread.yield()` — это hint планировщику, не замена блокировке. Семантику взаимоисключения он не даёт.",
+                "source_of_confusion": "Yield звучит как «отдай carrier» и кажется решением.",
+                "if_it_were_true": "Тогда `yield()` стал бы новой формой `synchronized`.",
+                "how_it_should_be": "Используйте `ReentrantLock` — он даёт и взаимоисключение, и unmount-friendly блокировку."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Поставить `-XX:+UseSpinLock` — JVM начнёт автоматически разворачивать `synchronized` в spin-lock без pinning'а.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого флага `UseSpinLock` в OpenJDK нет, и spin-lock не убирает pinning. Pinning связан с continuation, а не с реализацией монитора.",
+                "source_of_confusion": "Желание решить проблему «одним флагом».",
+                "if_it_were_true": "Тогда не было бы необходимости в JEP 491 (Java 24).",
+                "how_it_should_be": "Используйте `ReentrantLock` либо Java 24+."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Заменить `synchronized` на `ReentrantLock` (или `StampedLock`, `ReadWriteLock`); они построены на `LockSupport.park/unpark`, который корректно делает unmount VT.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ReentrantLock` внутри использует `AbstractQueuedSynchronizer`, который зовёт `LockSupport.park`. Park на VT — Loom-aware: делает unmount, carrier свободен. Это даёт ту же семантику взаимоисключения без pinning'а.",
+                "example": "Было: `synchronized (this) { db.update(); }`. Стало: `lock.lock(); try { db.update(); } finally { lock.unlock();",
+                "when_to_apply": "Миграция hot-path кода на Java 21-23; везде, где монитор удерживается во время blocking I/O.",
+                "edge_cases": "`ReentrantLock` тяжелее `synchronized` по байткоду и slightly медленнее в uncontended case (~5-10%).",
+                "related": "Q21 pinning; Q23 причины; Q25 Java 24."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое нововведение Java 24 (JEP 491) меняет ситуацию с pinning?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "JEP 491 «Synchronize Virtual Threads without Pinning» снимает основной источник pinning'а — блокирующие операции внутри `synchronized` больше не приклеивают VT к carrier; код, написанный для Java 5+, начинает корректно масштабироваться на VT без переписывания на `ReentrantLock`.",
+              "correct": true,
+              "sections": {
+                "explanation": "JVM теперь умеет yield'ить continuation с удерживаемым monitor'ом, корректно сохраняя/восстанавливая `ObjectMonitor`. JNI остаётся точкой pinning'а — но `synchronized` больше не проблема.",
+                "example": "Старый код `synchronized (this) { jdbc.executeQuery(...);",
+                "when_to_apply": "Большой плюс при миграции легаси: миллионы строк `synchronized` в библиотеках начинают «просто работать» с VT без аудита.",
+                "edge_cases": "JNI-pinning никуда не делся; библиотеки с native I/O (старые JDBC) могут продолжать страдать.",
+                "related": "Q21 pinning; Q23 причины; Q24 ReentrantLock; Q38 эволюция."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Java 24 запрещает использовать `synchronized` в любом коде и предлагает компилятору заменять его на `ReentrantLock` автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`synchronized` не запрещён и не заменяется автоматически. JEP 491 делает его дружелюбным к VT, оставляя семантику языка.",
+                "source_of_confusion": "Радикальная интерпретация «убрать pinning».",
+                "if_it_were_true": "Тогда любой код Java 1.0 на Java 24 не компилировался бы.",
+                "how_it_should_be": "Синтаксис остался, но runtime теперь умеет unmount при блокирующих вызовах внутри `synchronized`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Java 24 убирает класс `Thread` и заменяет его на `VirtualThread.runner`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JEP 491 не трогает публичный API `Thread`. Класс `Thread` остаётся стандартной точкой входа.",
+                "source_of_confusion": "Желание увидеть радикальные изменения в API.",
+                "if_it_were_true": "Тогда вся экосистема Java 21+ кода ломалась бы на Java 24.",
+                "how_it_should_be": "JEP 491 — внутренний фикс runtime, public API не меняется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Java 24 вводит флаг `-XX:+EnablePinning`, который превращает все VT в Platform Thread.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JEP 491 убирает pinning, а не «разрешает» его. Никакого `EnablePinning` нет.",
+                "source_of_confusion": "Противоположная интерпретация цели JEP.",
+                "if_it_were_true": "Тогда фича работала бы против самих VT.",
+                "how_it_should_be": "JEP 491 устраняет pinning при `synchronized`, ничего нового про Platform не добавляет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Virtual Threads позволяют масштабировать blocking I/O на миллионы соединений?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Потому что каждый VT по умолчанию работает в неблокирующем режиме `O_NONBLOCK` поверх epoll.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сами VT не делают сокеты nonblocking. Под капотом JDK переводит blocking I/O в non-blocking + parking, но это не «O_NONBLOCK везде по умолчанию».",
+                "source_of_confusion": "Желание увидеть «нативный async».",
+                "if_it_were_true": "Тогда `Socket.read` всегда возвращал бы 0 байт сразу.",
+                "how_it_should_be": "Блокирующее API сохраняется; внутри JDK делает unmount-friendly реализацию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Блокирующие вызовы JDK (Socket, JDBC через JDK, `Thread.sleep`) переписаны Loom-aware: при ожидании ввода-вывода JVM делает unmount VT, освобождает carrier для других VT и регистрирует поток в epoll/kqueue; разбудка идёт через scheduler, поэтому миллион VT с пустыми ожиданиями требуют только N carrier'ов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Цена «висящего» VT — пара КБ heap. ОС-ресурсов (тредов) тратится только на carrier-пул (= число CPU).",
+                "example": "Echo-сервер с `Thread.startVirtualThread(this::handle)` на 1M подключений требует ~16 carrier'ов и ~2-4 ГБ heap — невозможно на Platform Thread.",
+                "when_to_apply": "Сетевые шлюзы, long-poll endpoints, websocket-broker'ы, орчестрация микросервисов с fan-out.",
+                "edge_cases": "Не любой I/O Loom-aware: file I/O в некоторых ОС всё ещё блокирует carrier, JNI-сокеты не подхватываются.",
+                "related": "Q5 M:N; Q15 park; Q27 HTTP-сервер; Q31 JDBC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Потому что JVM автоматически использует libuv (как Node.js) при обнаружении блокирующих вызовов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "libuv — это библиотека Node.js, JVM её не использует. Под капотом JDK работает с epoll/kqueue/IOCP напрямую.",
+                "source_of_confusion": "Аналогия с другими «единственный поток, миллион соединений»-системами.",
+                "if_it_were_true": "Тогда у JDK была бы зависимость от libuv.",
+                "how_it_should_be": "JDK самостоятельно общается с OS event-loops через свои nio-каналы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Каждый VT получает свой собственный thread-pool, который при простое автоматически освобождается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У VT нет «своего пула» — наоборот, миллион VT использует общий carrier-пул.",
+                "source_of_confusion": "Желание представить «пул внутри потока».",
+                "if_it_were_true": "Тогда миллион VT означал бы миллион пулов — обратно к проблеме ресурсов.",
+                "how_it_should_be": "Один общий carrier-пул, миллион лёгких VT."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как включить Virtual Threads в Spring Boot 3.2+ для HTTP-обработчиков Tomcat?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно обновить зависимость на `spring-boot-starter-virtual` — Spring сам подключит VT-executor.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стартера `spring-boot-starter-virtual` не существует. Поддержка VT — это auto-configuration в основном стартере + property.",
+                "source_of_confusion": "Привычка решать всё через «новый стартер».",
+                "if_it_were_true": "Тогда в Spring Boot release notes был бы такой стартер.",
+                "how_it_should_be": "Используется `spring.threads.virtual.enabled=true`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Установить системное свойство `-Djdk.useVirtualThreads=true` — Spring подхватит автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Системного свойства `jdk.useVirtualThreads` нет, и Spring на него не реагирует.",
+                "source_of_confusion": "Привычка к JVM-флагам вроде `jdk.tracePinnedThreads`.",
+                "if_it_were_true": "Тогда фича работала бы и без Spring Boot.",
+                "how_it_should_be": "Через property `spring.threads.virtual.enabled=true`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Поставить в `application.yml` свойство `spring.threads.virtual.enabled: true` (Spring Boot 3.2+); это переключает Tomcat executor, `@Async`, `@Scheduled` и RabbitMQ-listener'ы на Virtual Threads через `TaskExecutor`-бины.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Boot Auto-configuration видит флаг и регистрирует `SimpleAsyncTaskExecutor` с `setVirtualThreads(true)`.",
+                "example": "`spring.threads.virtual.enabled=true` в `application.properties` — после рестарта `Thread.currentThread().isVirtual()` в контроллере возвращает `true`.",
+                "when_to_apply": "Java 21 + Spring Boot 3.2+.",
+                "edge_cases": "До Spring Boot 3.2 — нужны ручные `@Bean TomcatProtocolHandlerCustomizer<?>`.",
+                "related": "Q28 Tomcat customizer; Q29 @Async; Q31 JDBC."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Аннотировать каждый контроллер `@VirtualThread` — Spring создаст VT под каждый метод.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации `@VirtualThread` в Spring нет. Поддержка VT — на уровне Tomcat executor'а, а не отдельных методов.",
+                "source_of_confusion": "Желание иметь mark на уровне метода.",
+                "if_it_were_true": "Тогда документация Spring Boot 3.2 описывала бы эту аннотацию.",
+                "how_it_should_be": "Глобальный property; точечно — кастомный `@Async` executor."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить Tomcat на VT вручную (до Spring Boot 3.2)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Заменить `tomcat-embed-core` на `tomcat-virtual-core` через Maven exclusion.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Артефакта `tomcat-virtual-core` не существует. Tomcat и так поддерживает custom executor.",
+                "source_of_confusion": "Желание решить заменой зависимости.",
+                "if_it_were_true": "Тогда в Maven Central был бы такой артефакт.",
+                "how_it_should_be": "Использовать `TomcatProtocolHandlerCustomizer` с `setExecutor(...)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Установить `server.tomcat.thread-pool=virtual` в application.properties — Tomcat сам сделает остальное.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Свойства `server.tomcat.thread-pool=virtual` нет. Релевантное — `spring.threads.virtual.enabled=true` (Spring Boot 3.2+).",
+                "source_of_confusion": "Аналогия с настройками max/min Tomcat-пула.",
+                "if_it_were_true": "Тогда в Spring Boot документации был бы такой ключ.",
+                "how_it_should_be": "Используйте `spring.threads.virtual.enabled` или кастомайзер."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подменить классом конфигурации `WebMvcConfigurer.virtualMode()` через override.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метода `virtualMode()` в `WebMvcConfigurer` нет — это всё фантазии. Тор сетевого слоя настраивается через ProtocolHandler.",
+                "source_of_confusion": "Желание решить на уровне MVC, а не Tomcat.",
+                "if_it_were_true": "Тогда в JavaDoc был бы такой метод.",
+                "how_it_should_be": "Используется TomcatProtocolHandlerCustomizer."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Зарегистрировать бин `TomcatProtocolHandlerCustomizer<?>`, в котором вызвать `handler.setExecutor(Executors.newVirtualThreadPerTaskExecutor())`; Spring подхватит кастомизацию при старте embedded Tomcat.",
+              "correct": true,
+              "sections": {
+                "explanation": "`TomcatProtocolHandlerCustomizer` — точка расширения Spring Boot для настройки protocol handler embedded Tomcat.",
+                "example": "`@Bean TomcatProtocolHandlerCustomizer<?> v() { return h -> h.setExecutor(Executors.newVirtualThreadPerTaskExecutor());",
+                "when_to_apply": "Java 21 + Spring Boot 3.0/3.1 (до auto-config флага).",
+                "edge_cases": "Кастомный executor нужно `close()`-ить на shutdown — Tomcat это умеет через `StoppableExecutor`.",
+                "related": "Q27 spring.threads.virtual; Q9 thread-per-task; Q34 thread dump."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как ведёт себя HikariCP с Virtual Threads и какой размер пула выбирать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hikari выдаёт соединения через blocking semaphore; на VT этот `park` корректно делает unmount, поэтому пул остаётся маленьким (10-50 соединений), VT при отсутствии свободного коннекта просто ждут без удержания carrier'а.",
+              "correct": true,
+              "sections": {
+                "explanation": "Семафор HikariCP базируется на `AbstractQueuedSynchronizer` → `LockSupport.park`. На VT park делает unmount, carrier свободен. Размер пула определяется ёмкостью БД, не числом VT.",
+                "example": "`maximum-pool-size: 20` для PostgreSQL — при 1M VT, делающих короткие запросы, не будет деградации;",
+                "when_to_apply": "Любой high-fan-out сервис с JDBC; не увеличивать пул, ориентироваться на capacity БД.",
+                "edge_cases": "Длительная транзакция держит коннект — VT в этой транзакции блокируется надолго, но carrier при этом свободен.",
+                "related": "Q28 Tomcat; Q31 JDBC; Q32 миграция с CF."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поставить `maximum-pool-size` равным числу ожидаемых VT (например, 100 000) — иначе VT будут блокироваться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер DB-пула не должен расти под число VT; БД не выдержит 100K соединений. Параллелизм соединений ограничивается DB-сервером, а VT просто ждут разрешения.",
+                "source_of_confusion": "Желание увеличить пул, чтобы «не блокировать VT».",
+                "if_it_were_true": "Тогда любая БД захлёбывалась бы на трафике с VT.",
+                "how_it_should_be": "Пул ~10-50, VT ждут соединения через `LockSupport.park` — это не блокирует carrier."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hikari несовместим с VT и требует замены на `r2dbc` — реактивные драйверы единственный путь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hikari полностью совместим с VT. r2dbc — отдельная экосистема для reactive-стиля; для VT не обязателен.",
+                "source_of_confusion": "Маркетинг reactive-стека.",
+                "if_it_were_true": "Тогда Spring Boot 3.2 не интегрировал бы Hikari с `spring.threads.virtual.enabled`.",
+                "how_it_should_be": "Hikari + VT — рабочий стек."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При VT Hikari автоматически выставляет `maximum-pool-size = Integer.MAX_VALUE` — пул unbounded.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hikari не меняет размер пула из-за VT; конфигурация остаётся ручной. Unbounded пул был бы катастрофой для БД.",
+                "source_of_confusion": "Желание ожидать «магической» оптимизации.",
+                "if_it_were_true": "Тогда любая Hikari-настройка ломалась бы при `spring.threads.virtual.enabled`.",
+                "how_it_should_be": "Размер пула задаёт разработчик исходя из capacity БД."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда Virtual Threads не дают выигрыша?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Когда в сервисе есть хотя бы один `synchronized`-блок — выигрыш отсутствует во всём приложении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pinning локален: страдает только тот VT, который висит в `synchronized` с blocking call. Остальной код продолжает выигрывать. В Java 24+ и эта проблема снята.",
+                "source_of_confusion": "Жёсткое чёрно-белое мышление вокруг pinning.",
+                "if_it_were_true": "Тогда любое легаси-приложение бесполезно переводить на VT.",
+                "how_it_should_be": "Pinning влияет точечно, не на весь сервис."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Когда нагрузка CPU-bound (long-running computation, ML inference, parsing): число активных потоков не должно превышать число ядер, и VT тут не дают выигрыша, а лишний mount/unmount только добавляет overhead.",
+              "correct": true,
+              "sections": {
+                "explanation": "VT экономят на ожидании; если поток не ждёт, а считает — узкое место всегда в CPU. ForkJoinPool / parallelStream / Platform Thread с пулом по числу ядер дают тот же результат с меньшим overhead'ом mount/unmount.",
+                "example": "Сериализация JSON 10 МБ в цикле, рендеринг PDF, FFT — лучше Platform Thread + bounded pool. HTTP fan-out — VT.",
+                "when_to_apply": "Дифференцировать слои: I/O-frontend на VT, compute-batch на dedicated platform pool.",
+                "edge_cases": "Смешанные задачи (compute + I/O) — обычно тоже выигрывают на VT, потому что I/O-часть доминирует.",
+                "related": "Q26 миллион VT; Q33 monitoring; Q37 reactive."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Когда в коде используется любой `Lock` — VT и Lock несовместимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ReentrantLock` и компания — рекомендованная альтернатива `synchronized` именно из-за совместимости с VT.",
+                "source_of_confusion": "Перепутали `synchronized` (pinning) и `Lock` (нет pinning).",
+                "if_it_were_true": "Тогда JDK не рекомендовал бы `ReentrantLock` в JEP 444.",
+                "how_it_should_be": "Lock'и совместимы и желательны на Java 21-23."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Когда heap меньше 1 ГБ — JVM не разрешит создание VT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого нижнего порога heap для VT нет. На маленьких сервисах с 256 МБ VT работают, просто число одновременных потоков ограничено объёмом heap.",
+                "source_of_confusion": "Желание увидеть «минимальные требования».",
+                "if_it_were_true": "Тогда мелкие сервисы не могли бы использовать VT вообще.",
+                "how_it_should_be": "VT доступны при любом heap; вопрос только в capacity."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как мигрировать с `CompletableFuture`-чейнов на Virtual Threads?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто заменить `CompletableFuture.runAsync(task)` на `Thread.startVirtualThread(task)` — всё API эквивалентно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API не эквивалентно: `runAsync` возвращает `CompletableFuture<Void>`, у которого есть `thenApply`, `exceptionally`, и т. п. `startVirtualThread` возвращает `Thread`, у которого нет такой композиции.",
+                "source_of_confusion": "Внешнее сходство «запустить асинхронно».",
+                "if_it_were_true": "Тогда полная migration выглядела бы как механическая замена.",
+                "how_it_should_be": "Меняется не только запуск, но и стиль композиции: chained CF → straight-line blocking + StructuredTaskScope."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запустить `CompletableFuture.supplyAsync(...)` поверх `newVirtualThreadPerTaskExecutor()` — никаких других изменений не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Технически это сработает, но это просто прокидывает CF на VT-executor, не меняя callback-style. Идея миграции — упростить код, а не «обернуть в VT».",
+                "source_of_confusion": "Минимальное усилие = поменять executor.",
+                "if_it_were_true": "Тогда «миграция» была бы тривиальной правкой одной строки.",
+                "how_it_should_be": "Полная миграция — переписать chain в blocking-style + StructuredTaskScope."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Переписать `thenCompose/thenApply/exceptionally` цепочки в обычный последовательный код с try/catch внутри VT; параллельные ветки — через `StructuredTaskScope.ShutdownOnFailure().fork(...)` с `scope.join()` и `throwIfFailed()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Цель Loom — вернуть imperative-стиль. Цепочка `cf1.thenCompose(x -> cf2(x)).thenApply(y -> y.size())` превращается в `var x = cf1Task(); var y = cf2Task(x); return y.size();` — линейный код. Параллельные fan-out пишутся через StructuredTaskScope.",
+                "example": "`var scope = new ShutdownOnFailure(); var user = scope.fork(this::loadUser); var orders = scope.fork(this::loadOrders); scope.join().throwIfFailed();",
+                "when_to_apply": "Миграция callback hell-кода; повышение читаемости;",
+                "edge_cases": "`thenComposeAsync` с кастомным executor'ом — нужно проверить, что бизнес-логика не зависит от executor identity.",
+                "related": "Q11 StructuredTaskScope; Q12 ShutdownOnFailure; Q26 миллион VT."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать `CompletableFuture::asVirtual` — встроенный метод JDK 21.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метода `asVirtual` в `CompletableFuture` нет. Этот класс существовал задолго до Loom и не получил VT-специфичных методов.",
+                "source_of_confusion": "Желание видеть готовый bridge.",
+                "if_it_were_true": "Тогда в JavaDoc CF был бы такой метод.",
+                "how_it_should_be": "Bridge'а нет; миграция делается вручную в blocking-стиль."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой накладной расход на создание одного Virtual Thread по сравнению с Platform Thread?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "VT создаётся в 10 раз медленнее Platform Thread из-за continuation init.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: VT создаётся примерно в 100 раз быстрее Platform Thread. Init continuation короче, чем системный `clone()`.",
+                "source_of_confusion": "Желание видеть «дополнительный механизм = дороже».",
+                "if_it_were_true": "Тогда миллион VT занял бы часы, а не секунду.",
+                "how_it_should_be": "VT-create ~1 µs, Platform-create ~50-100 µs."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Создание VT требует обращения к ядру ОС через `syscall`, как у Platform Thread.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VT создаётся внутри JVM без системных вызовов. Syscall выполняется только при создании carrier'а (один раз на пул).",
+                "source_of_confusion": "Аналогия со всеми «потоками».",
+                "if_it_were_true": "Тогда профайлер показывал бы много clone()/CreateThread на каждое start.",
+                "how_it_should_be": "VT — pure JVM operation, syscall не нужен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Создание VT всегда занимает ровно 100 наносекунд независимо от настроек.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Время варьируется от JIT warm-up, GC, размера ThreadLocal-родителя. Точного «всегда 100 нс» нет.",
+                "source_of_confusion": "Желание услышать однозначный benchmark-результат.",
+                "if_it_were_true": "Тогда бенчмарки не зависели бы ни от чего.",
+                "how_it_should_be": "Порядок: единицы микросекунд, варьируется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Создание VT — порядка единиц микросекунд, по памяти — несколько сотен байт начального continuation; миллион VT можно создать за ~1 секунду без OOM. Platform Thread создаётся ~50-100 µs и тратит фиксированно ~1 МБ нативной памяти.",
+              "correct": true,
+              "sections": {
+                "explanation": "Время `Thread.startVirtualThread` доминируют allocation continuation + регистрация в scheduler. Это в 50-100 раз быстрее `Thread.ofPlatform().start`. Стек растёт от нескольких сотен байт, не фиксированный 1 МБ.",
+                "example": "Простой micro-benchmark создания 1M VT — около 1 секунды на современном CPU;",
+                "when_to_apply": "Оценка capacity;",
+                "edge_cases": "Если код активно использует `ThreadLocal` или `InheritableThreadLocal`, накладные расходы создания растут.",
+                "related": "Q17 размер стека; Q26 миллион VT; Q33 пул VT."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему антипаттерн — заворачивать Virtual Threads в `ThreadPoolExecutor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Пул нужен, чтобы ограничить число дорогих OS-потоков и переиспользовать их; у VT обе цели бессмысленны — создание дёшево, переиспользование переносит state (ThreadLocal) между задачами и ломает изоляцию. Ограничивать надо ресурсы (Semaphore, DB-pool), а не сами VT.",
+              "correct": true,
+              "sections": {
+                "explanation": "Пул VT-потоков убирает изоляцию: ThreadLocal предыдущей задачи виден следующей. Создание VT бесплатно, переиспользование не экономит.",
+                "example": "Антипаттерн: `new ThreadPoolExecutor(0, 200, ..., Thread.ofVirtual().factory())`.",
+                "when_to_apply": "При rate-limiting к внешнему API или БД — Semaphore;",
+                "edge_cases": "Старые библиотеки навязывают `Executor` — лучше передать `Executors.newVirtualThreadPerTaskExecutor()`, чем `ThreadPoolExecutor` с VT-фабрикой.",
+                "related": "Q9 thread-per-task; Q19 InheritableThreadLocal; Q30 capacity."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Потому что VT и `ThreadPoolExecutor` несовместимы — JVM кидает `IncompatibleThreadException` при первом submit.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Технически совместимы: `ThreadPoolExecutor` принимает любой `ThreadFactory`, включая `Thread.ofVirtual().factory()`. Но это бессмысленно.",
+                "source_of_confusion": "Желание видеть жёсткий запрет от JVM.",
+                "if_it_were_true": "Тогда не нужно было бы объяснять «почему это плохо».",
+                "how_it_should_be": "Совместимо, но антипаттерн по семантическим причинам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "JVM автоматически удваивает число carrier'ов при использовании пула, вызывая OOM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Число carrier'ов не меняется от использования пула задач. Carrier-пул отдельный.",
+                "source_of_confusion": "Желание выдумать причинно-следственную связь.",
+                "if_it_were_true": "Тогда любое использование пула с VT сразу падало бы в OOM.",
+                "how_it_should_be": "OOM не возникает, но смысл пула теряется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Пул VT работает только в `prod`-режиме и недоступен в dev.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JVM не различает режимы dev/prod для VT. Пул работает везде одинаково (и одинаково бесполезен).",
+                "source_of_confusion": "Аналогия со Spring profiles.",
+                "if_it_were_true": "Тогда `mvn spring-boot:run` ломался бы на пуле VT.",
+                "how_it_should_be": "Пул работает технически, но бессмыслен в любой среде."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как получить thread dump с поддержкой Virtual Threads?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Через `jstack <pid>` — он показывает только carrier-потоки и игнорирует VT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`jstack <pid>` показывает и carrier'ы, и VT, монтированные на carrier в момент дампа. Но он не показывает «спящие» unmounted VT.",
+                "source_of_confusion": "Слово «игнорирует» — преувеличение; jstack частично показывает VT.",
+                "if_it_were_true": "Тогда jstack был бы совсем непригоден для Loom-приложений.",
+                "how_it_should_be": "jstack видит mounted VT; для полной картины — `jcmd Thread.dump_to_file`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`jcmd <pid> Thread.dump_to_file -format=json file.json` — пишет полный дамп всех VT (включая unmounted) в JSON, который можно анализировать программно или открыть в VisualVM/IntelliJ.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандартный thread dump не вмещает миллион VT. `Thread.dump_to_file` — новая команда JDK 21+, экспортирует все VT (mounted и waiting) в JSON или plain-text формат. Это основной инструмент для отладки больших VT-приложений.",
+                "example": "`jcmd 12345 Thread.dump_to_file -format=json /tmp/dump.json` → файл со списком всех потоков, их состояния, стеков и принадлежности carrier'у.",
+                "when_to_apply": "Расследование зависших VT, инцидентов с pinning'ом, deadlock в JDBC-pool.",
+                "edge_cases": "Файл может быть гигабайт при миллионе VT — лучше `-format=plain` для grep'а.",
+                "related": "Q22 trace pinning; Q35 JFR; Q36 отладка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Запустить `kill -3 <pid>` — JVM напечатает все VT с цветным форматированием в stdout.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`kill -3` (SIGQUIT) триггерит thread dump в stdout, но без цветов и без явного выделения VT. При миллионах VT этот вывод нечитаем.",
+                "source_of_confusion": "Привычка к SIGQUIT как «надёжному способу».",
+                "if_it_were_true": "Тогда специальной команды `Thread.dump_to_file` не понадобилось бы.",
+                "how_it_should_be": "Использовать `jcmd Thread.dump_to_file -format=json` для VT-аппликаций."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключиться через JConsole — там есть кнопка «Dump all virtual threads».",
+              "correct": false,
+              "sections": {
+                "what_actually": "В JConsole такой кнопки нет; thread tab показывает Platform Thread, VT не имеют специального UI.",
+                "source_of_confusion": "Желание иметь GUI-решение.",
+                "if_it_were_true": "Тогда в release-notes JDK 21 это была бы заметная фича.",
+                "how_it_should_be": "Используйте `jcmd` или VisualVM с поддержкой JDK 21+."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие события JFR полезны для мониторинга Virtual Threads?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только событие `jdk.GarbageCollection` — оно покрывает все аспекты работы VT через анализ heap'а.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GC-события не дают информации о mount/unmount/pinning. Для VT есть отдельные события.",
+                "source_of_confusion": "Желание свести мониторинг к одному событию.",
+                "if_it_were_true": "Тогда не было бы добавлено отдельных событий в JFR при выходе JEP 444.",
+                "how_it_should_be": "Используются `jdk.VirtualThreadStart`, `jdk.VirtualThreadEnd`, `jdk.VirtualThreadPinned`, `jdk.VirtualThreadSubmitFailed`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "JFR в JDK 21 не поддерживает VT — нужны сторонние агенты вроде async-profiler.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JFR в JDK 21 имеет специальные события для VT (Pinned, Start, End, SubmitFailed). Сторонние агенты опциональны.",
+                "source_of_confusion": "Async-profiler популярен, но JFR родной.",
+                "if_it_were_true": "Тогда документация JEP 444 не упоминала бы JFR.",
+                "how_it_should_be": "JFR + JMC — родной стек."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Включить JFR `-XX:StartFlightRecording=...` и собирать `jdk.VirtualThreadPinned` (длительность pinning'а), `jdk.VirtualThreadStart`/`End` (rate создания/завершения), `jdk.VirtualThreadSubmitFailed` (исчерпание scheduler-очереди); JMC/IntelliJ Profiler умеют их визуализировать.",
+              "correct": true,
+              "sections": {
+                "explanation": "Project Loom добавил выделенные JFR-события для VT.",
+                "example": "`-XX:StartFlightRecording=duration=60s,filename=app.jfr,settings=profile` → открыть в JMC, фильтр `Event Type: jdk.VirtualThreadPinned` → видно методы, удерживающие carrier.",
+                "when_to_apply": "Pre-prod профилирование Loom-сервиса, поиск bottleneck'ов pinning, аудит нагрузочных тестов.",
+                "edge_cases": "`jdk.VirtualThreadPinned` пишется не на каждый pinning, а только если он дольше threshold'а (по умолчанию 20 ms) — короткие pinning'и не видны.",
+                "related": "Q22 tracePinnedThreads; Q34 thread dump; Q36 отладка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно `Thread.currentThread().getStackTrace()` в каждом VT — нет нужды в JFR.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сбор стектрейсов в hot path — это огромный overhead. JFR оптимизирован: профилирование с минимальным влиянием.",
+                "source_of_confusion": "Желание написать «свой профайлер».",
+                "if_it_were_true": "Тогда любой сервис на VT мог бы делать профилирование без падения throughput'а.",
+                "how_it_should_be": "JFR обеспечивает почти бесплатное профилирование, runtime-stack trace — only для отладки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются stack trace в Virtual Thread от Platform Thread?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Stack trace в VT короче, потому что continuation отбрасывает frame'ы старше 50 уровней.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Continuation не отрезает frame'ы. Stack trace VT полный, такой же глубины, как у Platform Thread с тем же кодом.",
+                "source_of_confusion": "Желание объяснить «лёгкость VT» отбрасыванием стека.",
+                "if_it_were_true": "Тогда `e.printStackTrace()` в VT терял бы важные кадры.",
+                "how_it_should_be": "Stack trace полный, ограничен только глубиной самих вызовов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Stack trace VT хранится в отдельной thread-local map и доступен только через `Thread.dump_to_file`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stack trace доступен через стандартный `Throwable.getStackTrace()` или `Thread.getStackTrace()`. `dump_to_file` — лишь утилита для bulk export.",
+                "source_of_confusion": "Желание выдумать «нестандартный путь доступа».",
+                "if_it_were_true": "Тогда `try/catch` не работал бы в VT (логировать exception нельзя).",
+                "how_it_should_be": "Доступен стандартным API; dump_to_file — bulk вариант."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "VT не имеет stack trace вообще; `Throwable.getStackTrace()` возвращает пустой массив.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`getStackTrace()` на VT возвращает полный стек так же, как и на Platform Thread.",
+                "source_of_confusion": "Желание видеть «другой мир» у VT.",
+                "if_it_were_true": "Тогда исключения в VT было бы невозможно отлаживать.",
+                "how_it_should_be": "Stack trace полный, иногда с Continuation-bootstrap кадром."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Stack trace в VT содержит специальный кадр `jdk.internal.vm.Continuation.enter`, что помогает увидеть точку входа continuation; в остальном стектрейс идентичен Platform Thread и может быть пробит до `main` через ту же иерархию вызовов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Frame `Continuation.enter` — внутренний bootstrap-кадр Loom. Появляется внизу стека VT. По остальной части — стандартный Java stack trace: классы, методы, номера строк, как обычно.",
+                "example": "В дампе: `... at app.Worker.process(Worker.java:42) ... at jdk.internal.vm.Continuation.enter(Continuation.java:...) ` — снизу всегда виден continuation entry.",
+                "when_to_apply": "При чтении дампов VT-приложений: отделять «бизнес-кадры» от bootstrap'а continuation.",
+                "edge_cases": "`StackWalker.walk(...)` корректно работает на VT;",
+                "related": "Q16 continuation; Q34 thread dump; Q35 JFR."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда Virtual Threads предпочтительнее WebFlux/Reactor и наоборот?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "VT — для blocking-API стек (JDBC, RestTemplate, legacy SDK) и простоты отладки/stack trace'ов; WebFlux — для реактивных downstream (R2DBC, Kafka reactive, SSE), пиковой загрузки на ограниченном железе и backpressure-сценариев.",
+              "correct": true,
+              "sections": {
+                "explanation": "Решение принимается по 3 осям: (а) downstream-стек — blocking или reactive; (б) команда — знает ли Reactor; (в) backpressure — нужно ли управляемое замедление продьюсера. VT покрывает (а) и (б) дёшево, WebFlux выигрывает на (в).",
+                "example": "Сервис: REST + JDBC + RabbitMQ + интеграция с legacy SOAP → VT. Сервис: SSE + R2DBC + Kafka Streams → WebFlux.",
+                "when_to_apply": "Дизайн нового сервиса; миграция legacy; стратегия команды на 2-3 года.",
+                "edge_cases": "WebFlux + VT можно сочетать (`webClient.block()` на VT), но это редко даёт выигрыш и часто запутывает.",
+                "related": "Q26 миллион VT; Q30 CPU-bound; Q31 миграция с CF."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "WebFlux абсолютно во всех случаях быстрее, поэтому VT не имеет смысла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эмпирически разница ~10-20% по throughput'у в пользу WebFlux на однотипных тестах, но это зависит от сценария. VT простоту чтения/отладки обычно перевешивают для большинства сервисов.",
+                "source_of_confusion": "Маркетинг реактивных стеков.",
+                "if_it_were_true": "Тогда не было бы смысла в Project Loom.",
+                "how_it_should_be": "VT выбираются за простоту, WebFlux — за пик throughput / интеграцию с reactive-libs."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "WebFlux требует Java 8, а VT — Java 21+, поэтому WebFlux всегда совместимее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring WebFlux требует Java 17+ (для последних версий) и активно следует за версией Spring. Совместимость по версиям не сильно отличается.",
+                "source_of_confusion": "Желание разделять по совместимости с Java.",
+                "if_it_were_true": "Тогда сравнение было бы только по версии.",
+                "how_it_should_be": "Совместимость по Java у обеих моделей примерно одинакова сейчас; выбор по другим критериям."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "VT — это просто медленный WebFlux, и от него всегда нужно отказываться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VT и WebFlux — две независимые модели. VT проще и допускают blocking-стиль; WebFlux эффективнее на экстремальных нагрузках, но сложнее.",
+                "source_of_confusion": "Поляризованные мнения в сообществе.",
+                "if_it_were_true": "Тогда не было бы поддержки VT в Spring Boot.",
+                "how_it_should_be": "Это сосуществующие модели; выбор зависит от команды и нагрузки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова эволюция JEP по Virtual Threads от preview до стандарта?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все три JEP вышли одновременно в Java 21 без preview-этапа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JEP 425 → 436 → 444 расположены в разных релизах (JDK 19, 20, 21). Это два цикла preview перед финализацией.",
+                "source_of_confusion": "Хочется видеть «всё в одной версии».",
+                "if_it_were_true": "Тогда JEP 425 и 436 не имели бы статуса preview.",
+                "how_it_should_be": "Эволюция растянута на три релиза JDK."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "JEP 425 (Virtual Threads Preview, JDK 19) → JEP 436 (Second Preview, JDK 20) → JEP 444 (Final, JDK 21); параллельно `StructuredTaskScope` шёл как JEP 428 → 437 → 453 (incubating). В Java 24 — JEP 491 устраняет pinning при `synchronized`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Project Loom — пример классической поэтапной финализации в OpenJDK: два preview-цикла на сбор фидбэка, затем стандарт. Структурная concurrency проходит более длинный путь incubator из-за изменений API.",
+                "example": "При выборе LTS-Java для прод-сервиса: только Java 21+ даёт стабильные Virtual Threads без `--enable-preview`.",
+                "when_to_apply": "Планирование апгрейда runtime'а команды, обоснование «нужна Java 21».",
+                "edge_cases": "На JDK 19-20 VT доступны только с `--enable-preview`.",
+                "related": "Q2 JEP 444; Q25 Java 24; Q40 ScopedValue."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Virtual Threads появились в Java 9 как часть Project Jigsaw.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Project Jigsaw (Java 9) — это модульная система, не имеющая отношения к Virtual Threads. Loom — отдельный проект.",
+                "source_of_confusion": "Оба слова на J, оба «большой проект OpenJDK».",
+                "if_it_were_true": "Тогда VT были бы в проде уже 6 лет.",
+                "how_it_should_be": "Loom — JDK 19/20/21; Jigsaw — JDK 9."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JEP 444 — это название всего проекта Loom и единственный JEP, нужный для VT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Project Loom — название инициативы, JEP 444 — конкретный JEP финализации VT. Loom также включает Structured Concurrency, Scoped Values.",
+                "source_of_confusion": "Желание свести проект к одному JEP.",
+                "if_it_were_true": "Тогда не было бы JEP 425, 436, 428, 437, 446 и т. д.",
+                "how_it_should_be": "Project Loom = несколько JEP'ов; JEP 444 — финализация VT."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `ScopedValue` и чем он лучше `ThreadLocal` для Virtual Threads?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это синоним `AtomicReference`, который потокобезопасен через CAS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ScopedValue` — это контекст, видимый только внутри `where(value).run(...)`-блока. Это не concurrent primitive, а структурный аналог ThreadLocal.",
+                "source_of_confusion": "«Scoped + Value» звучит как «volatile holder».",
+                "if_it_were_true": "Тогда `ScopedValue` имел бы `compareAndSet`, чего у него нет.",
+                "how_it_should_be": "`ScopedValue` — read-only контекст, не CAS-holder."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это новый сборщик стримов `Collectors.toScopedValue()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Collectors.toScopedValue()` в JDK нет. `ScopedValue` — независимый класс в `java.lang`, не Stream-API.",
+                "source_of_confusion": "Желание привязать к знакомым Stream API.",
+                "if_it_were_true": "Тогда `ScopedValue` использовался бы в `.collect(...)`.",
+                "how_it_should_be": "Самостоятельный класс для context propagation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Immutable per-thread контекст с явно ограниченным lifetime: значение устанавливается через `ScopedValue.where(VAR, value).run(...)` и доступно через `VAR.get()` только в пределах этого блока; после `run` значение исчезает; не размножает копии по миллиону VT, в отличие от ThreadLocal.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ScopedValue` (JEP 446 incubator → 481/487 preview → стандарт) хранит значения в стеке скопа, а не в `Thread`-объекте. Read-only: нет `set`, только rebinding через вложенный `where`.",
+                "example": "`ScopedValue<User> CURRENT = ScopedValue.newInstance();",
+                "when_to_apply": "Передача user-context, traceId, locale сквозь сервисную цепочку на VT без mutable-state.",
+                "edge_cases": "Дочерние VT, созданные внутри `run`, наследуют ScopedValue автоматически через `StructuredTaskScope`.",
+                "related": "Q13 ThreadLocal; Q11 StructuredTaskScope; Q40 будущее."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это replacement для `synchronized`, который не вызывает pinning.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ScopedValue` не связан с синхронизацией. Замена `synchronized` без pinning — `ReentrantLock` (или Java 24+).",
+                "source_of_confusion": "Желание объединить «всё новое в Loom».",
+                "if_it_were_true": "Тогда `ScopedValue.where(...).run(...)` обладал бы семантикой mutex.",
+                "how_it_should_be": "`ScopedValue` — про context propagation, не про блокировки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каковы основные направления развития Virtual Threads после Java 21?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Полный отказ от VT в Java 25 и возврат к Platform Thread'ам как единственной модели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Roadmap OpenJDK прямо противоположный: VT стандартизованы как основная модель concurrency, активно развиваются вспомогательные JEP'ы.",
+                "source_of_confusion": "Желание увидеть «отмену хайповой фичи».",
+                "if_it_were_true": "Тогда не выходили бы JEP 491, JEP 487 и т. п.",
+                "how_it_should_be": "VT — стратегическое направление JDK на ближайшие годы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все Java-приложения автоматически конвертируются в VT через bytecode-rewriting на старте JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоматической конвертации нет и не планируется — она ломала бы legacy. Миграция происходит точечно через property и executor.",
+                "source_of_confusion": "Желание «бесплатной миграции».",
+                "if_it_were_true": "Тогда любое легаси-приложение моментально получало бы все плюсы VT без рисков.",
+                "how_it_should_be": "Миграция явная; runtime улучшается, но семантика языка прежняя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Java удалит `synchronized` ключевое слово в Java 25.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`synchronized` остаётся в языке. JEP 491 (Java 24) убирает pinning, но не сам синтаксис.",
+                "source_of_confusion": "Преувеличение «pinning fix» до «удаления synchronized»; желание видеть «упразднение мониторов».",
+                "if_it_were_true": "Тогда вся экосистема Java перестала бы компилироваться.",
+                "how_it_should_be": "`synchronized` остаётся; меняется только runtime-поведение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Снятие оставшихся точек pinning'а (JEP 491 для `synchronized` в Java 24, дальше — work over JNI/Object.wait), стандартизация Structured Concurrency и `ScopedValue` (JEP 487), улучшение наблюдаемости через JFR-events, интеграция VT с GC и compiler-уровневыми оптимизациями.",
+              "correct": true,
+              "sections": {
+                "explanation": "Направления: (а) снятие последних pinning-кейсов; (б) финализация Structured Concurrency; (в) стабилизация `ScopedValue`; (г) улучшение JFR и thread dump для миллионов VT; (д) интеграция с GC (например, GenZ-aware GCs лучше работают с большим числом тредов).",
+                "example": "В JDK 24+: JEP 491 убирает pinning в `synchronized`.",
+                "when_to_apply": "Планирование апгрейда LTS; ожидание стабильных API для structured concurrency и scoped values; принятие решения о миграции на VT уже сейчас vs. подождать.",
+                "edge_cases": "Сроки конкретных JEP меняются;",
+                "related": "Q25 Java 24 JEP 491; Q38 эволюция JEP; Q39 ScopedValue."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
