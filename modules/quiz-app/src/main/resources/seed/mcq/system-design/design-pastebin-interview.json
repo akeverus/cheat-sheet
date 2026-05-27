@@ -30,7 +30,7 @@
                 "what_actually": "Pastebin read-heavy 100:1. 99.99% overkill для text-sharing. p99 create < 50 ms нереалистично из-за валидации+anti-abuse. 11 nines = банк-уровень.",
                 "source_of_confusion": "Кандидат экстраполирует финтех-требования на простой text-sharing.",
                 "if_it_were_true": "Если бы 11 nines, GitHub Gist держал бы 3+ datacenters с erasure coding — реально single-region S3 достаточно.",
-                "how_it_should_be": "Read-heavy + 99.9% + practical durability."
+                "how_it_should_be": "Read-heavy + 99.9% + practical durability. Pastebin read-heavy 100:1."
               }
             },
             {
@@ -48,11 +48,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Anonymous-only, public по умолчанию, single Postgres для всего.",
+              "text": "Anonymous-only, public по умолчанию, single Postgres для всего. Modern Pastebin поддерживает auth + privacy modes.",
               "correct": false,
               "sections": {
                 "what_actually": "Modern Pastebin поддерживает auth + privacy modes. Single Postgres не масштабируется на TB content.",
-                "source_of_confusion": "Кандидат описывает 2005-era Pastebin.",
+                "source_of_confusion": "Кандидат описывает 2005-era Pastebin. Modern Pastebin поддерживает auth + privacy modes.",
                 "if_it_were_true": "Если бы all public, любой leaked secret в Google за минуты.",
                 "how_it_should_be": "Anonymous + auth oba; privacy modes; metadata/blob separation."
               }
@@ -71,11 +71,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "100 GB raw blob, 10 GB metadata, single Redis достаточен, CDN не нужен.",
+              "text": "100 GB raw blob, 10 GB metadata, single Redis достаточен, CDN не нужен. 1M × 10 KB × 365 × 5 = 18 TB, не 100 GB.",
               "correct": false,
               "sections": {
                 "what_actually": "1M × 10 KB × 365 × 5 = 18 TB, не 100 GB. Single Redis = SPOF + memory limit. CDN критичен (95% hit) иначе bandwidth $$$.",
-                "source_of_confusion": "Недооценка retention или среднего размера.",
+                "source_of_confusion": "Недооценка retention или среднего размера. 1M × 10 KB × 365 × 5 = 18 TB, не 100 GB.",
                 "if_it_were_true": "Если бы 100 GB, single VPS хватало бы — реально десятки серверов.",
                 "how_it_should_be": "18 TB raw → 5-7 TB compressed; multi-tier storage; CDN."
               }
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "100 PB raw — paste'ы большие (10 MB avg).",
+              "text": "100 PB raw — paste'ы большие (10 MB avg). 10 MB avg нереалистично. Путает Dropbox (MB-GB files) с Pastebin (KB snippets).",
               "correct": false,
               "sections": {
                 "what_actually": "10 MB avg нереалистично. Hard limit 512 KB free / 10 MB Pro. Average 5-15 KB по Pastebin.com data.",
@@ -108,11 +108,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "1 PB raw, 100K writes/sec, 1M views/sec, 50 PB CDN/day.",
+              "text": "1 PB raw, 100K writes/sec, 1M views/sec, 50 PB CDN/day. 1M/day = 12 writes/sec, не 100K.",
               "correct": false,
               "sections": {
                 "what_actually": "1M/day = 12 writes/sec, не 100K. Views peak 6K QPS не 1M (это YouTube). 50 PB/day = 6 GB/sec — реально 60 MB/sec.",
-                "source_of_confusion": "Завышение на 3-4 порядка.",
+                "source_of_confusion": "Завышение на 3-4 порядка. 1M/day = 12 writes/sec, не 100K.",
                 "if_it_were_true": "Если бы 100K writes/sec, Pastebin был бы №2 после YouTube — реально нишевой.",
                 "how_it_should_be": "12 writes/sec, 6K QPS peak, 5-7 TB blob, 100 GB metadata."
               }
@@ -131,11 +131,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Только availability 99.9% и create success rate > 95%.",
+              "text": "Только availability 99.9% и create success rate > 95%. Two metrics недостаточно. Только uptime = observability.",
               "correct": false,
               "sections": {
                 "what_actually": "Two metrics недостаточно. Latency не отслеживается → users видят 5-сек p99 без alert. CDN hit ratio не tracked → bandwidth blow up. GC lag → storage growth.",
-                "source_of_confusion": "Только uptime = observability.",
+                "source_of_confusion": "Только uptime = observability. Two metrics недостаточно.",
                 "if_it_were_true": "Если бы только uptime, Twitch 2018 latency degradation был бы 'нормальным'.",
                 "how_it_should_be": "Multi-dimensional: latency p99 + hit ratio + success + GC lag."
               }
@@ -143,13 +143,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "p50/p95/p99/p99.9/p99.99 для всех endpoints.",
+              "text": "p50/p95/p99/p99.9/p99.99 для всех endpoints. Too many percentiles = paralysis. Overengineers measurement. p50/p95/p99 для key endpoints — оптимально.",
               "correct": false,
               "sections": {
                 "what_actually": "Too many percentiles = paralysis. SRE стандарт: p50 + p99. p99.99 на 6K QPS = 6 событий/min, статистический шум.",
-                "source_of_confusion": "Overengineers measurement.",
-                "if_it_were_true": "Если бы all percentiles, dashboards unreadable.",
-                "how_it_should_be": "p50/p95/p99 для key endpoints — оптимально."
+                "source_of_confusion": "Overengineers measurement. Too many percentiles = paralysis.",
+                "if_it_were_true": "Если бы all percentiles, dashboards unreadable. Too many percentiles = paralysis.",
+                "how_it_should_be": "p50/p95/p99 для key endpoints — оптимально. Too many percentiles = paralysis."
               }
             },
             {
@@ -160,7 +160,7 @@
               "sections": {
                 "explanation": "Multi-dimensional. Create включает validation + anti-abuse + blob write + metadata insert. View < 100 ms cached — main user path. CDN > 90% — origin не перегружен. GC lag показывает blob storage growth rate. Abuse block rate diagnostic — spike = coordinated attack.",
                 "example": "`Pastebin.com Statuspage`. `GitHub Status` partial outages on Gist отдельно.",
-                "when_to_apply": "Любой content-sharing с CDN; alerting per metric.",
+                "when_to_apply": "Любой content-sharing с CDN; alerting per metric. Multi-dimensional.",
                 "edge_cases": "Sampling: при low QPS p99 шумит — sliding window 1 hour. CDN hit ratio ~100% подозрительно (cache validation broken).",
                 "related": "Q22 storage tiering; Q23 CDN; Q25 anti-abuse."
               }
@@ -168,13 +168,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Только business metrics: DAU, retention, monetization.",
+              "text": "Только business metrics: DAU, retention, monetization. Product analytics, не operational. Смешивает PM perspective с SRE.",
               "correct": false,
               "sections": {
                 "what_actually": "Product analytics, не operational. Без latency/availability tracking operational issues invisible до fallout.",
-                "source_of_confusion": "Смешивает PM perspective с SRE.",
+                "source_of_confusion": "Смешивает PM perspective с SRE. Product analytics, не operational.",
                 "if_it_were_true": "Если бы только DAU, 2-часовой downtime замечен после DAU drop (часы delay).",
-                "how_it_should_be": "Operational SLO + business metrics обе нужны."
+                "how_it_should_be": "Operational SLO + business metrics обе нужны. Product analytics, не operational."
               }
             }
           ]
@@ -191,37 +191,37 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Auto-increment counter Postgres `INSERT...RETURNING id` → Base62.",
+              "text": "Auto-increment counter Postgres `INSERT...RETURNING id` → Base62. Sequential IDs → **enumerable** URLs `/1`.",
               "correct": false,
               "sections": {
                 "what_actually": "Sequential IDs → **enumerable** URLs `/1`, `/2` — scrapers переберут весь corpus, leak `unlisted` paste. Counter = bottleneck (write lock на sequence).",
-                "source_of_confusion": "Знает что counter простой, не security.",
+                "source_of_confusion": "Знает что counter простой, не security. Sequential IDs → **enumerable** URLs `/1`, `/2` — scrapers переберут весь corpus, leak `unlisted` paste.",
                 "if_it_were_true": "Если бы sequential, Pastebin scandal с массовым leak.",
-                "how_it_should_be": "Random Base62 с UNIQUE retry."
+                "how_it_should_be": "Random Base62 с UNIQUE retry. Sequential IDs → **enumerable** URLs `/1`, `/2` — scrapers переберут весь corpus, leak `unlisted` paste."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "MD5(content)[:7] — детерминированный hash от content.",
+              "text": "MD5(content)[:7] — детерминированный hash от content. Детерминированный → privacy leak (same content = same URL).",
               "correct": false,
               "sections": {
                 "what_actually": "Детерминированный → privacy leak (same content = same URL). 7 chars Base62 = 3.5T, collision на ~6B items возможны. MD5 broken.",
-                "source_of_confusion": "Хочет dedup-free dedup.",
+                "source_of_confusion": "Хочет dedup-free dedup. Детерминированный → privacy leak (same content = same URL).",
                 "if_it_were_true": "Если бы content-addressable, secret `API_KEY=xyz` имел бы guessable URL.",
-                "how_it_should_be": "Random без content derivation."
+                "how_it_should_be": "Random без content derivation. Детерминированный → privacy leak (same content = same URL)."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "UUID v4 (32 hex chars) для max unpredictability.",
+              "text": "UUID v4 (32 hex chars) для max unpredictability. 32 chars URL не 'short' — гадость для UX (`pastebin.",
               "correct": false,
               "sections": {
                 "what_actually": "32 chars URL не 'short' — гадость для UX (`pastebin.com/550e8400-e29b...`). Pastebin 8 chars Base62 = 218T хватает.",
-                "source_of_confusion": "Переусердствует на security, теряя core feature.",
+                "source_of_confusion": "Переусердствует на security, теряя core feature. 32 chars URL не 'short' — гадость для UX (`pastebin.",
                 "if_it_were_true": "Если бы UUID, embed widgets / mobile share — chains of gibberish.",
-                "how_it_should_be": "Base62 7-8 chars оптимально."
+                "how_it_should_be": "Base62 7-8 chars оптимально. 32 chars URL не 'short' — гадость для UX (`pastebin."
               }
             },
             {
@@ -232,7 +232,7 @@
               "sections": {
                 "explanation": "`crypto/rand` для каждого paste. Alphabet `[A-Za-z0-9]` 62 × 7 = 3.5T combinations. 6B pastes использует 0.2% пространства — collision вероятность 10^-12, handled UNIQUE retry. Unpredictable (security) + readable + short.",
                 "example": "`Pastebin.com` 8 chars; `Hastebin` 10; `Bitly` 7; `GitHub Gist` 32 hex.",
-                "when_to_apply": "Любой short URL service.",
+                "when_to_apply": "Любой short URL service. `crypto/rand` для каждого paste.",
                 "edge_cases": "Уменьшение до 6 chars (62^6 = 56B) рискованно при scale (collision ~10%). UNIQUE retry: после 3 fail — bump 9 chars. Crypto-secure vs `Math.random` — crypto обязательно.",
                 "related": "Q5 storage UNIQUE; design-url-shortener Q4 параллель."
               }
@@ -256,7 +256,7 @@
               "sections": {
                 "explanation": "Стандарт для content-sharing. Metadata: structured, ACID (UNIQUE short_code, transactions для visibility), индексы (`WHERE user_id`). Blob: immutable, CDN-able, дешёво S3 ($0.023/GB-month vs Postgres $0.10+/GB). S3 key = short_code + extension для compression algo.",
                 "example": "`Pastebin.com` MySQL + S3 (Amazon RDS + S3). `GitHub Gist` Git CAS storage. `Hastebin` Redis + MongoDB.",
-                "when_to_apply": "Любой content-sharing service.",
+                "when_to_apply": "Любой content-sharing service. Стандарт для content-sharing.",
                 "edge_cases": "Orphan blobs: если metadata insert fails after blob upload — фоновый job. Multi-region — S3 cross-region replication.",
                 "related": "Q6 schema; Q22 tiering; design-dropbox Q6 параллель."
               }
@@ -264,37 +264,37 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Всё в одном Postgres: content в TEXT column.",
+              "text": "Всё в одном Postgres: content в TEXT column. 10 KB blob в TEXT → Postgres TOAST + heap bloat.",
               "correct": false,
               "sections": {
                 "what_actually": "10 KB blob в TEXT → Postgres TOAST + heap bloat. 60 TB Postgres → repl/backup нерационально.",
-                "source_of_confusion": "Игнорирует storage cost / performance tradeoff.",
+                "source_of_confusion": "Игнорирует storage cost / performance tradeoff. 10 KB blob в TEXT → Postgres TOAST + heap bloat.",
                 "if_it_were_true": "Если бы single Postgres, `VACUUM FULL` стал бы недопустим на multi-TB.",
-                "how_it_should_be": "Разделение metadata + blob."
+                "how_it_should_be": "Разделение metadata + blob. 10 KB blob в TEXT → Postgres TOAST + heap bloat."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Всё в Redis: blob + metadata. Snapshot в S3 для backup.",
+              "text": "Всё в Redis: blob + metadata. Snapshot в S3 для backup. 60 TB в Redis = $$$. Хочет low latency, забывая cost.",
               "correct": false,
               "sections": {
                 "what_actually": "60 TB в Redis = $$$. Volatility — snapshots раз в час теряют до часа creates.",
-                "source_of_confusion": "Хочет low latency, забывая cost.",
-                "if_it_were_true": "Если бы Redis primary, расходы > выручка.",
-                "how_it_should_be": "Redis как cache, не primary."
+                "source_of_confusion": "Хочет low latency, забывая cost. 60 TB в Redis = $$$.",
+                "if_it_were_true": "Если бы Redis primary, расходы > выручка. 60 TB в Redis = $$$.",
+                "how_it_should_be": "Redis как cache, не primary. Если бы Redis primary, расходы > выручка."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "MongoDB single storage: документ с blob + metadata + indexes.",
+              "text": "MongoDB single storage: документ с blob + metadata + indexes. MongoDB на 60 TB sharded возможен, но cost roughly 2-3× S3+Postgres.",
               "correct": false,
               "sections": {
                 "what_actually": "MongoDB на 60 TB sharded возможен, но cost roughly 2-3× S3+Postgres. UNIQUE constraint requires unique index.",
                 "source_of_confusion": "MongoDB scales horizontally, но для structured Postgres лучше.",
                 "if_it_were_true": "Если бы MongoDB-only, costs выше при equal capacity.",
-                "how_it_should_be": "Postgres metadata + S3 blob — industry standard."
+                "how_it_should_be": "Postgres metadata + S3 blob — industry standard. MongoDB на 60 TB sharded возможен, но cost roughly 2-3× S3+Postgres."
               }
             }
           ]
@@ -311,11 +311,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Одна таблица `pastes` со всеми полями: views/comments в JSON column, edit history в JSON array.",
+              "text": "Одна таблица `pastes` со всеми полями: views/comments в JSON column, edit history в JSON array. JSON column не масштабируется — views per popular paste = миллионы records, cannot index.",
               "correct": false,
               "sections": {
                 "what_actually": "JSON column не масштабируется — views per popular paste = миллионы records, cannot index. Edit history в array → последнее состояние, без timestamps/diff.",
-                "source_of_confusion": "Хочет 'one table fits all'.",
+                "source_of_confusion": "Хочет 'one table fits all'. JSON column не масштабируется — views per popular paste = миллионы records, cannot index.",
                 "if_it_were_true": "Если бы JSON array на 100K views, single row мегабайтный.",
                 "how_it_should_be": "Нормализованная: pastes, paste_views partitioned, revisions, comments."
               }
@@ -336,23 +336,23 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Только `pastes` — без views/comments/revisions.",
+              "text": "Только `pastes` — без views/comments/revisions. Modern Pastebin включает analytics + comments + revisions. Видит 2005-era Pastebin. Multi-table с analytics + versioning + comments.",
               "correct": false,
               "sections": {
                 "what_actually": "Modern Pastebin включает analytics + comments + revisions. Без них продукт неконкурентен.",
-                "source_of_confusion": "Видит 2005-era Pastebin.",
+                "source_of_confusion": "Видит 2005-era Pastebin. Modern Pastebin включает analytics + comments + revisions.",
                 "if_it_were_true": "Если бы no analytics, Trending tab невозможен; без edit — Gist usecase impossible.",
-                "how_it_should_be": "Multi-table с analytics + versioning + comments."
+                "how_it_should_be": "Multi-table с analytics + versioning + comments. Modern Pastebin включает analytics + comments + revisions."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "DynamoDB вместо RDBMS: short_code → blob, user_id → profile.",
+              "text": "DynamoDB вместо RDBMS: short_code → blob, user_id → profile. DynamoDB хорош для primary key access, но 'my pastes ORDER BY created_at' требует GSI (cost), 'all expired' нет efficient scan.",
               "correct": false,
               "sections": {
                 "what_actually": "DynamoDB хорош для primary key access, но 'my pastes ORDER BY created_at' требует GSI (cost), 'all expired' нет efficient scan. Cost при scale × 3-5 vs Postgres.",
-                "source_of_confusion": "Хочет 'serverless DB'.",
+                "source_of_confusion": "Хочет 'serverless DB'. DynamoDB хорош для primary key access, но 'my pastes ORDER BY created_at' требует GSI (cost), 'all expired' нет efficient scan.",
                 "if_it_were_true": "Если бы DynamoDB, ORDER BY query — expensive GSI scan.",
                 "how_it_should_be": "Postgres primary; DynamoDB optional для simple cases."
               }
@@ -371,25 +371,25 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Gzip level 9 — максимальное сжатие.",
+              "text": "Gzip level 9 — максимальное сжатие. Gzip -9 ratio 2. Максимальный ratio = лучший выбор. zstd: лучше ratio + быстрее.",
               "correct": false,
               "sections": {
                 "what_actually": "Gzip -9 ratio 2.5× на текст, encode ~10 MB/s. Slower writes; cumulative CPU cost.",
-                "source_of_confusion": "Максимальный ratio = лучший выбор.",
+                "source_of_confusion": "Максимальный ratio = лучший выбор. Gzip -9 ratio 2.",
                 "if_it_were_true": "Если бы gzip -9, write throughput падал бы → backpressure на API spikes.",
-                "how_it_should_be": "zstd: лучше ratio + быстрее."
+                "how_it_should_be": "zstd: лучше ratio + быстрее. Если бы gzip -9, write throughput падал бы → backpressure на API spikes."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "LZ4 — самый быстрый, ratio ~1.5×.",
+              "text": "LZ4 — самый быстрый, ratio ~1.5×. LZ4 быстрый (500 MB/s) но ratio 1. Выбирает скорость, не учитывая storage > CPU cost.",
               "correct": false,
               "sections": {
                 "what_actually": "LZ4 быстрый (500 MB/s) но ratio 1.5× → 18 TB → 12 TB (мало saving). zstd 3-4× при 400 MB/s.",
                 "source_of_confusion": "Выбирает скорость, не учитывая storage > CPU cost.",
                 "if_it_were_true": "Если бы LZ4, storage bill 2× при незначительном CPU saving.",
-                "how_it_should_be": "zstd — баланс speed + ratio для текста."
+                "how_it_should_be": "zstd — баланс speed + ratio для текста. LZ4 быстрый (500 MB/s) но ratio 1."
               }
             },
             {
@@ -408,13 +408,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Brotli — highest ratio (4.5×), encode slow.",
+              "text": "Brotli — highest ratio (4.5×), encode slow. Brotli level 11 highest ratio но encode ~10 MB/s. Если бы Brotli, write CPU dominate;",
               "correct": false,
               "sections": {
                 "what_actually": "Brotli level 11 highest ratio но encode ~10 MB/s. Pastebin write rate 12/sec — Brotli работал бы, но zstd лучше на CPU economics.",
                 "source_of_confusion": "Browsers prefer Brotli (HTTP serving), но это не нужно для server-side storage.",
                 "if_it_were_true": "Если бы Brotli, write CPU dominate; на edge можно decompress + re-encode.",
-                "how_it_should_be": "zstd storage; Brotli optionally на edge HTTP."
+                "how_it_should_be": "zstd storage; Brotli optionally на edge HTTP. Brotli level 11 highest ratio но encode ~10 MB/s."
               }
             }
           ]
@@ -431,43 +431,43 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Только для аналитики — `/raw` traffic отдельно.",
+              "text": "Только для аналитики — `/raw` traffic отдельно. Аналитика — не main reason. Недопонимает дифференциацию.",
               "correct": false,
               "sections": {
                 "what_actually": "Аналитика — не main reason. Главное: Content-Type, access pattern (programmatic vs browser), caching strategy.",
-                "source_of_confusion": "Недопонимает дифференциацию.",
-                "if_it_were_true": "Если бы только аналитика, можно trace via header.",
+                "source_of_confusion": "Недопонимает дифференциацию. Аналитика — не main reason.",
+                "if_it_were_true": "Если бы только аналитика, можно trace via header. Аналитика — не main reason.",
                 "how_it_should_be": "Multiple reasons: Content-Type, caching, programmatic access."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Раздельные URLs для SEO.",
+              "text": "Раздельные URLs для SEO. Pastebin не SEO-optimized. Думает SEO-terms. /raw programmatic, обычно noindex.",
               "correct": false,
               "sections": {
                 "what_actually": "Pastebin не SEO-optimized. Google индексирует обе если linked. /raw обычно noindex для security.",
                 "source_of_confusion": "Думает SEO-terms.",
                 "if_it_were_true": "Если бы /raw SEO-optimized, content scraping вырос бы.",
-                "how_it_should_be": "/raw programmatic, обычно noindex."
+                "how_it_should_be": "/raw programmatic, обычно noindex. Pastebin не SEO-optimized."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Для legal — `/raw` имеет другие T&C.",
+              "text": "Для legal — `/raw` имеет другие T&C. T&C одинаковые. Overthinks regulatory. Single T&C;",
               "correct": false,
               "sections": {
                 "what_actually": "T&C одинаковые. Legal — product/policy, не technical separation.",
                 "source_of_confusion": "Overthinks regulatory.",
                 "if_it_were_true": "Если бы separate T&C, требовался бы separate consent.",
-                "how_it_should_be": "Single T&C; technical separation для другого."
+                "how_it_should_be": "Single T&C; technical separation для другого. T&C одинаковые."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`/raw` возвращает `Content-Type: text/plain` для curl/wget/IDE plugins/terminal pipes; `/{short_code}` text/html с syntax highlighting. Раздельные URLs — отдельный CDN cache strategy и programmatic access без HTML stripping.",
+              "text": "`/raw` возвращает `Content-Type: text/plain` для curl/wget/IDE plugins/terminal pipes;",
               "correct": true,
               "sections": {
                 "explanation": "Разделение для разных consumer types. `/raw` text/plain — programmatic (curl, IDE plugins, terminal `curl ... | bash`). `/{short_code}` text/html с Pygments syntax highlighting + nav + comments. CDN caching: `/raw` aggressive cache (immutable), HTML может invalidate чаще. Programmatic clients не парсят HTML.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "POST /api/v1/pastes с `Idempotency-Key` header + `Authorization: Bearer {api_token}`; body JSON с content, language, expires_in, visibility; idempotency гарантирует retry с тем же key возвращает existing paste без duplicate.",
+              "text": "POST /api/v1/pastes с `Idempotency-Key` header + `Authorization: Bearer {api_token}`; body JSON с content, language, expires_in, visibility;",
               "correct": true,
               "sections": {
                 "explanation": "Idempotency-Key — Stripe-style. Client генерирует UUID, отправляет в header. Server хранит `(idempotency_key, response)` на 24h. Retry на network failure → cached response, не duplicate. Authorization Bearer — OAuth 2.0; tokens hashed на DB side. JSON body для structured request, language tag для server-side highlight.",
@@ -504,35 +504,35 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Query parameters `POST /api/pastes?content=...&lang=...` без body, без auth.",
+              "text": "Query parameters `POST /api/pastes?content=...&lang=...` без body, без auth. URL params для content fail при > 2-8 KB. GET-style HTTP для всех операций.",
               "correct": false,
               "sections": {
                 "what_actually": "URL params для content fail при > 2-8 KB. Без auth → anonymous abuse, нет per-user quotas.",
-                "source_of_confusion": "GET-style HTTP для всех операций.",
+                "source_of_confusion": "GET-style HTTP для всех операций. URL params для content fail при > 2-8 KB.",
                 "if_it_were_true": "Если бы content в query, 90% pastes (>2 KB) не создавались.",
-                "how_it_should_be": "POST body + auth header."
+                "how_it_should_be": "POST body + auth header. URL params для content fail при > 2-8 KB."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "GraphQL вместо REST.",
+              "text": "GraphQL вместо REST. GraphQL гибкий для queries, но для simple CRUD — overkill. Экстраполирует GraphQL hype. REST для CRUD;",
               "correct": false,
               "sections": {
                 "what_actually": "GraphQL гибкий для queries, но для simple CRUD — overkill. REST проще для curl, простых scripts.",
-                "source_of_confusion": "Экстраполирует GraphQL hype.",
+                "source_of_confusion": "Экстраполирует GraphQL hype. GraphQL гибкий для queries, но для simple CRUD — overkill.",
                 "if_it_were_true": "Если бы GraphQL, IDE plugins требовали бы schema / writing queries для simple create.",
-                "how_it_should_be": "REST для CRUD; GraphQL для complex queries."
+                "how_it_should_be": "REST для CRUD; GraphQL для complex queries. GraphQL гибкий для queries, но для simple CRUD — overkill."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "WebSocket для streaming paste creation.",
+              "text": "WebSocket для streaming paste creation. WebSocket для real-time bidirectional;. Modern = WebSocket для всего. REST POST для create;",
               "correct": false,
               "sections": {
                 "what_actually": "WebSocket для real-time bidirectional; create — single request-response. Adds complexity.",
-                "source_of_confusion": "Modern = WebSocket для всего.",
+                "source_of_confusion": "Modern = WebSocket для всего. WebSocket для real-time bidirectional;",
                 "if_it_were_true": "Если бы WebSocket, mobile требовал persistent connection → battery drain.",
                 "how_it_should_be": "REST POST для create; WebSocket если live edit (Gist), не Pastebin."
               }
@@ -551,11 +551,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "URL в anchor tag.",
+              "text": "URL в anchor tag. Anchor tag не embed — это просто link. Не понимает разницу link vs embed. Embed = `<script>` или `<iframe>` с content rendering.",
               "correct": false,
               "sections": {
                 "what_actually": "Anchor tag не embed — это просто link. Embed = inline rendering content в page.",
-                "source_of_confusion": "Не понимает разницу link vs embed.",
+                "source_of_confusion": "Не понимает разницу link vs embed. Anchor tag не embed — это просто link.",
                 "if_it_were_true": "Если бы anchor = embed, любой `<a href=...>` стал бы iframe.",
                 "how_it_should_be": "Embed = `<script>` или `<iframe>` с content rendering."
               }
@@ -576,25 +576,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Только iframe без CSP — open для любого сайта.",
+              "text": "Только iframe без CSP — open для любого сайта. Без CSP frame-ancestors любой сайт может iframe → clickjacking (transparent overlay). Не учитывает security iframe.",
               "correct": false,
               "sections": {
                 "what_actually": "Без CSP frame-ancestors любой сайт может iframe → clickjacking (transparent overlay).",
-                "source_of_confusion": "Не учитывает security iframe.",
+                "source_of_confusion": "Не учитывает security iframe. Без CSP frame-ancestors любой сайт может iframe → clickjacking (transparent overlay).",
                 "if_it_were_true": "Если бы no CSP, malicious site wraps legit iframe и крадёт credentials.",
-                "how_it_should_be": "CSP frame-ancestors обязателен."
+                "how_it_should_be": "CSP frame-ancestors обязателен. Без CSP frame-ancestors любой сайт может iframe → clickjacking (transparent overlay)."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Server-side rendering — каждый embed через `/render` endpoint без caching.",
+              "text": "Server-side rendering — каждый embed через `/render` endpoint без caching. No caching = CPU overhead. Не учитывает scale. Rendered embed cached на CDN с short TTL.",
               "correct": false,
               "sections": {
                 "what_actually": "No caching = CPU overhead. Кешировать можно на CDN edge.",
-                "source_of_confusion": "Не учитывает scale.",
+                "source_of_confusion": "Не учитывает scale. Если бы no caching, popular paste на StackOverflow → тысячи render calls.",
                 "if_it_were_true": "Если бы no caching, popular paste на StackOverflow → тысячи render calls.",
-                "how_it_should_be": "Rendered embed cached на CDN с short TTL."
+                "how_it_should_be": "Rendered embed cached на CDN с short TTL. Не учитывает scale."
               }
             }
           ]
@@ -611,25 +611,25 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Только server-side всегда быстрее.",
+              "text": "Только server-side всегда быстрее. 'Always faster' зависит от cache. Не учитывает caching strategy. Зависит от cache stratagy и SEO.",
               "correct": false,
               "sections": {
                 "what_actually": "'Always faster' зависит от cache. Server-side initial render slower (CPU), но cache HTML быстрее subsequent. Client-side faster initial response (no rendering) но slower DOM ready.",
-                "source_of_confusion": "Не учитывает caching strategy.",
+                "source_of_confusion": "Не учитывает caching strategy. 'Always faster' зависит от cache.",
                 "if_it_were_true": "Если бы 'always faster', client-side не существовали.",
-                "how_it_should_be": "Зависит от cache stratagy и SEO."
+                "how_it_should_be": "Зависит от cache stratagy и SEO. 'Always faster' зависит от cache."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Только client-side — server CPU не тратится.",
+              "text": "Только client-side — server CPU не тратится. Client-side: SEO weaker (search engines не выполняют JS perfectly), initial paint slower (browser must parse + render syntax).",
               "correct": false,
               "sections": {
                 "what_actually": "Client-side: SEO weaker (search engines не выполняют JS perfectly), initial paint slower (browser must parse + render syntax). Mobile devices с weak CPU — bad UX.",
-                "source_of_confusion": "Server cost-optimization без учёта user metrics.",
+                "source_of_confusion": "Server cost-optimization без учёта user metrics. Client-side: SEO weaker (search engines не выполняют JS perfectly), initial paint slower (browser must parse + render syntax).",
                 "if_it_were_true": "Если бы client-side only, SEO traffic dropped + slow mobile UX.",
-                "how_it_should_be": "Server-side preferable для SEO + cached HTML."
+                "how_it_should_be": "Server-side preferable для SEO + cached HTML. Client-side: SEO weaker (search engines не выполняют JS perfectly), initial paint slower (browser must parse + render syntax)."
               }
             },
             {
@@ -648,13 +648,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Не делать syntax highlighting — plain text быстрее.",
+              "text": "Не делать syntax highlighting — plain text быстрее. Pastebin core feature = syntax highlight для readable code. Не понимает product value.",
               "correct": false,
               "sections": {
                 "what_actually": "Pastebin core feature = syntax highlight для readable code. Без неё product не конкурентоспособен.",
-                "source_of_confusion": "Не понимает product value.",
+                "source_of_confusion": "Не понимает product value. Pastebin core feature = syntax highlight для readable code.",
                 "if_it_were_true": "Если бы plain text only, users выберут конкурентов с highlight.",
-                "how_it_should_be": "Highlight критичен."
+                "how_it_should_be": "Highlight критичен. Pastebin core feature = syntax highlight для readable code."
               }
             }
           ]
@@ -671,23 +671,23 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Просто innerHTML — браузер сам всё рендерит.",
+              "text": "Просто innerHTML — браузер сам всё рендерит. innerHTML с user content = XSS hole. Не понимает security. Sanitize обязательно.",
               "correct": false,
               "sections": {
                 "what_actually": "innerHTML с user content = XSS hole. `<script>alert(1)</script>` выполнится. Любой paste может украсть cookies.",
-                "source_of_confusion": "Не понимает security.",
-                "if_it_were_true": "Если бы innerHTML, Pastebin = phishing site.",
-                "how_it_should_be": "Sanitize обязательно."
+                "source_of_confusion": "Не понимает security. innerHTML с user content = XSS hole.",
+                "if_it_were_true": "Если бы innerHTML, Pastebin = phishing site. innerHTML с user content = XSS hole.",
+                "how_it_should_be": "Sanitize обязательно. innerHTML с user content = XSS hole."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Регулярное выражение для strip `<script>` tags.",
+              "text": "Регулярное выражение для strip `<script>` tags. Regex не парсит HTML правильно. Регулярки кажутся простыми. Use DOMPurify (JS) или Bleach (Python) — proper HTML parsers.",
               "correct": false,
               "sections": {
                 "what_actually": "Regex не парсит HTML правильно. Bypasses: `<img onerror=...>`, `<svg onload=...>`, `<iframe src='javascript:...'>`. Hundreds of XSS vectors.",
-                "source_of_confusion": "Регулярки кажутся простыми.",
+                "source_of_confusion": "Регулярки кажутся простыми. Regex не парсит HTML правильно.",
                 "if_it_were_true": "Если бы regex strip, OWASP top XSS bypasses из 2010-х все работают.",
                 "how_it_should_be": "Use DOMPurify (JS) или Bleach (Python) — proper HTML parsers."
               }
@@ -695,11 +695,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Только CommonMark без HTML — disable raw HTML в Markdown.",
+              "text": "Только CommonMark без HTML — disable raw HTML в Markdown. Disable HTML mode in Markdown теряет flexibility (no GitHub-style alerts, tables, mentions).",
               "correct": false,
               "sections": {
                 "what_actually": "Disable HTML mode in Markdown теряет flexibility (no GitHub-style alerts, tables, mentions). Pastebin/Gist обычно поддерживают subset HTML.",
-                "source_of_confusion": "Безопасность через ограничение функциональности.",
+                "source_of_confusion": "Безопасность через ограничение функциональности. Disable HTML mode in Markdown теряет flexibility (no GitHub-style alerts, tables, mentions).",
                 "if_it_were_true": "Если бы no HTML, users переходят к Gist который supports.",
                 "how_it_should_be": "Allow safe HTML через sanitization (Bleach/DOMPurify allowlist)."
               }
@@ -707,7 +707,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "CommonMark/GFM parser + sanitization через Bleach (Python server-side) или DOMPurify (JS client-side) с whitelist разрешённых tags (`p, a, code, pre, ul, li, b, i, em, strong, h1-h6, blockquote`) и атрибутов.",
+              "text": "CommonMark/GFM parser + sanitization через Bleach (Python server-side) или DOMPurify (JS client-side) с whitelist разрешённых tags (`p, a, code, pre, ul, li, b, i, em, strong.",
               "correct": true,
               "sections": {
                 "explanation": "Proper HTML sanitization через AST parsing. CommonMark/GFM (GitHub Flavored Markdown) parses Markdown в HTML; Bleach/DOMPurify pass через whitelist allowed tags + atribs + URL schemes (no `javascript:`, `data:`). XSS защищён даже если markdown содержит `<script>` — sanitizer удаляет. Mermaid diagrams render отдельно через svg sanitization.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Hybrid: explicit user-selection в UI (dropdown 'Python', 'JavaScript', ...); если не указано — auto-detect через Pygments `guess_lexer` или GitHub Linguist ML; shebang line detection (`#!/usr/bin/python`) приоритет; fallback `text/plain`.",
+              "text": "Hybrid: explicit user-selection в UI (dropdown 'Python', 'JavaScript', ...); если не указано — auto-detect через Pygments `guess_lexer` или GitHub Linguist ML; shebang line detection (`#!/usr/bin/python`) приоритет;",
               "correct": true,
               "sections": {
                 "explanation": "Hybrid стратегия. UI dropdown для explicit (Pastebin показывает top 20 languages). Если user не выбрал — auto-detect: shebang line `#!` (highest priority, точно определяет), Pygments `guess_lexer` (Bayes-style scoring на keywords), GitHub Linguist ML (better quality, classifier с 600+ языками). Fallback plain text если confidence низкая. User overridable через URL `?lang=python`.",
@@ -744,37 +744,37 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Только auto-detect — все user-friendly, не нужно выбирать.",
+              "text": "Только auto-detect — все user-friendly, не нужно выбирать. Auto-detect ошибается на short pastes (10 lines) и similar languages. Optimizes UX без accuracy. Hybrid: explicit + auto fallback.",
               "correct": false,
               "sections": {
                 "what_actually": "Auto-detect ошибается на short pastes (10 lines) и similar languages. Explicit UI критичен для accuracy.",
-                "source_of_confusion": "Optimizes UX без accuracy.",
+                "source_of_confusion": "Optimizes UX без accuracy. Auto-detect ошибается на short pastes (10 lines) и similar languages.",
                 "if_it_were_true": "Если бы only auto, short Python snippets могут highlighted как Ruby.",
-                "how_it_should_be": "Hybrid: explicit + auto fallback."
+                "how_it_should_be": "Hybrid: explicit + auto fallback. Auto-detect ошибается на short pastes (10 lines) и similar languages."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Только explicit — user всегда выбирает.",
+              "text": "Только explicit — user всегда выбирает. Friction в UI: для quick paste users skip selection. Не учитывает quick-paste use case. Default auto-detect с override.",
               "correct": false,
               "sections": {
                 "what_actually": "Friction в UI: для quick paste users skip selection. Без default — fallback на plain text (no highlight).",
-                "source_of_confusion": "Не учитывает quick-paste use case.",
+                "source_of_confusion": "Не учитывает quick-paste use case. Friction в UI: для quick paste users skip selection.",
                 "if_it_were_true": "Если бы explicit only, conversion rate creates падает (extra step).",
-                "how_it_should_be": "Default auto-detect с override."
+                "how_it_should_be": "Default auto-detect с override. Friction в UI: для quick paste users skip selection."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "ML модель custom-trained на корпусе.",
+              "text": "ML модель custom-trained на корпусе. Custom ML overkill — Linguist/Pygments уже covers 99% cases. Заново изобретает велосипед. Off-the-shelf Pygments + Linguist.",
               "correct": false,
               "sections": {
                 "what_actually": "Custom ML overkill — Linguist/Pygments уже covers 99% cases. Cost тренировки и поддержки модели + accuracy не лучше.",
-                "source_of_confusion": "Заново изобретает велосипед.",
-                "if_it_were_true": "Если бы custom ML, maintenance cost dominate.",
-                "how_it_should_be": "Off-the-shelf Pygments + Linguist."
+                "source_of_confusion": "Заново изобретает велосипед. Custom ML overkill — Linguist/Pygments уже covers 99% cases.",
+                "if_it_were_true": "Если бы custom ML, maintenance cost dominate. Custom ML overkill — Linguist/Pygments уже covers 99% cases.",
+                "how_it_should_be": "Off-the-shelf Pygments + Linguist. Custom ML overkill — Linguist/Pygments уже covers 99% cases."
               }
             }
           ]
@@ -791,19 +791,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Cron job DELETE expired каждый день.",
+              "text": "Cron job DELETE expired каждый день. Cron daily может оставить expired pastes accessible на сутки (privacy issue для burn-after-read). Простое решение через cron.",
               "correct": false,
               "sections": {
                 "what_actually": "Cron daily может оставить expired pastes accessible на сутки (privacy issue для burn-after-read). На 1M pastes/day DELETE на S3 — большая операция. Storage GC lag растёт.",
-                "source_of_confusion": "Простое решение через cron.",
+                "source_of_confusion": "Простое решение через cron. Cron daily может оставить expired pastes accessible на сутки (privacy issue для burn-after-read).",
                 "if_it_were_true": "Если бы daily cron, expired private paste viewable на 24h после deadline.",
-                "how_it_should_be": "On-read check + S3 lifecycle policy."
+                "how_it_should_be": "On-read check + S3 lifecycle policy. Cron daily может оставить expired pastes accessible на сутки (privacy issue для burn-after-read)."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Two-tier: (1) on-read check `expires_at < NOW()` → return 410 Gone, (2) S3 Lifecycle Policy auto-expire blob через `expires_at` tag (или DynamoDB TTL attribute); metadata cleanup nightly batch.",
+              "text": "Two-tier: (1) on-read check `expires_at < NOW()` → return 410 Gone, (2) S3 Lifecycle Policy auto-expire blob через `expires_at` tag (или DynamoDB TTL attribute);",
               "correct": true,
               "sections": {
                 "explanation": "**On-read check** обеспечивает immediate enforcement: paste expired → 410 Gone immediately, даже если blob ещё на S3. **S3 Lifecycle Policy** — managed background deletion: tag blob с `expires_at=2026-06-01`, S3 автоматически удаляет items с tag после date. Metadata (Postgres rows) cleanup nightly через batch `DELETE WHERE expires_at < NOW() - INTERVAL '7 days'` (7-day grace для analytics queries). DynamoDB TTL attribute эквивалент — auto-delete items когда TTL attribute reached.",
@@ -816,25 +816,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "TTL через Redis EXPIRE — paste auto-удаляется из cache.",
+              "text": "TTL через Redis EXPIRE — paste auto-удаляется из cache. Redis EXPIRE удаляет из cache, но primary blob на S3 остаётся forever. Cache TTL ≠ data TTL.",
               "correct": false,
               "sections": {
                 "what_actually": "Redis EXPIRE удаляет из cache, но primary blob на S3 остаётся forever. Privacy issue + storage growth.",
-                "source_of_confusion": "Cache TTL ≠ data TTL.",
+                "source_of_confusion": "Cache TTL ≠ data TTL. Redis EXPIRE удаляет из cache, но primary blob на S3 остаётся forever.",
                 "if_it_were_true": "Если бы только Redis EXPIRE, S3 заполняется expired blobs.",
-                "how_it_should_be": "Redis cache + S3 lifecycle + on-read check."
+                "how_it_should_be": "Redis cache + S3 lifecycle + on-read check. Redis EXPIRE удаляет из cache, но primary blob на S3 остаётся forever."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Не нужно TTL — keep all pastes forever (storage cheap).",
+              "text": "Не нужно TTL — keep all pastes forever (storage cheap). Storage cost растёт linearly. Storage cost не вечно cheap. TTL обязательна;",
               "correct": false,
               "sections": {
                 "what_actually": "Storage cost растёт linearly. Privacy compliance (GDPR right-to-be-forgotten) требует deletion. Many pastes intended ephemeral (debugging snippets, secrets shared).",
-                "source_of_confusion": "Storage cost не вечно cheap.",
+                "source_of_confusion": "Storage cost не вечно cheap. Storage cost растёт linearly.",
                 "if_it_were_true": "Если бы no TTL, на 5 лет accumulate 50 TB → $$$ storage bill.",
-                "how_it_should_be": "TTL обязательна; default 30 days for free tier."
+                "how_it_should_be": "TTL обязательна; default 30 days for free tier. Storage cost растёт linearly."
               }
             }
           ]
@@ -851,25 +851,25 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Просто DELETE после render.",
+              "text": "Просто DELETE после render. Race condition: два concurrent view → оба получают content, потом оба DELETE. Простое решение без concurrency awareness.",
               "correct": false,
               "sections": {
                 "what_actually": "Race condition: два concurrent view → оба получают content, потом оба DELETE. Need atomic check-and-delete.",
-                "source_of_confusion": "Простое решение без concurrency awareness.",
+                "source_of_confusion": "Простое решение без concurrency awareness. Race condition: два concurrent view → оба получают content, потом оба DELETE.",
                 "if_it_were_true": "Если бы naive, leaked secret paste просматривался 2 раза до удаления.",
-                "how_it_should_be": "FOR UPDATE row lock или conditional update."
+                "how_it_should_be": "FOR UPDATE row lock или conditional update. Race condition: два concurrent view → оба получают content, потом оба DELETE."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Lock через app-level mutex.",
+              "text": "Lock через app-level mutex. App-level mutex не работает на multi-instance servers (Pastebin behind load balancer). Не учитывает distributed system.",
               "correct": false,
               "sections": {
                 "what_actually": "App-level mutex не работает на multi-instance servers (Pastebin behind load balancer). Distributed lock через Redis возможен, но дороже DB-native solution.",
-                "source_of_confusion": "Не учитывает distributed system.",
+                "source_of_confusion": "Не учитывает distributed system. App-level mutex не работает на multi-instance servers (Pastebin behind load balancer).",
                 "if_it_were_true": "Если бы app-level lock, multi-instance app не координируется.",
-                "how_it_should_be": "DB row lock или Redis distributed lock."
+                "how_it_should_be": "DB row lock или Redis distributed lock. App-level mutex не работает на multi-instance servers (Pastebin behind load balancer)."
               }
             },
             {
@@ -888,13 +888,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Mark deleted в Redis cache, S3 blob удалить asynchronously.",
+              "text": "Mark deleted в Redis cache, S3 blob удалить asynchronously. Если Redis crashed/restarted без persistence, paste 'reappears'. Cache-only solution без durability.",
               "correct": false,
               "sections": {
                 "what_actually": "Если Redis crashed/restarted без persistence, paste 'reappears'. Async deletion S3 имеет lag — paste available через direct S3 URL короткое время.",
-                "source_of_confusion": "Cache-only solution без durability.",
+                "source_of_confusion": "Cache-only solution без durability. Если Redis crashed/restarted без persistence, paste 'reappears'.",
                 "if_it_were_true": "Если бы Redis-only, persistence issues + S3 lag = leak.",
-                "how_it_should_be": "Postgres transaction + immediate S3 delete."
+                "how_it_should_be": "Postgres transaction + immediate S3 delete. Если Redis crashed/restarted без persistence, paste 'reappears'."
               }
             }
           ]
@@ -911,23 +911,23 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Просто UPDATE content — последняя версия.",
+              "text": "Просто UPDATE content — последняя версия. UPDATE без history теряет previous versions. Простое решение без history. INSERT new revision row с version increment.",
               "correct": false,
               "sections": {
                 "what_actually": "UPDATE без history теряет previous versions. Если paste accidentally overwritten, восстановить нельзя.",
-                "source_of_confusion": "Простое решение без history.",
+                "source_of_confusion": "Простое решение без history. UPDATE без history теряет previous versions.",
                 "if_it_were_true": "Если бы UPDATE-only, accidental overwrite irrevocable.",
-                "how_it_should_be": "INSERT new revision row с version increment."
+                "how_it_should_be": "INSERT new revision row с version increment. UPDATE без history теряет previous versions."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Хранить diffs (delta encoding) как Git.",
+              "text": "Хранить diffs (delta encoding) как Git. Diff storage возможен (Git approach), но для simple text pastes overhead complexity не нужен. Хочет Git-like efficiency. Full snapshots per revision проще для < 1 MB pastes.",
               "correct": false,
               "sections": {
                 "what_actually": "Diff storage возможен (Git approach), но для simple text pastes overhead complexity не нужен. На небольших pastes (< 100 KB) полные snapshots проще + быстрее retrieve.",
-                "source_of_confusion": "Хочет Git-like efficiency.",
+                "source_of_confusion": "Хочет Git-like efficiency. Diff storage возможен (Git approach), но для simple text pastes overhead complexity не нужен.",
                 "if_it_were_true": "Если бы delta encoding, retrieve требует replay diffs — slow.",
                 "how_it_should_be": "Full snapshots per revision проще для < 1 MB pastes."
               }
@@ -935,11 +935,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Только последние 3 revisions retain.",
+              "text": "Только последние 3 revisions retain. Arbitrary limit 3 — почему не 5?. Arbitrary product decision без user research. Unlimited (или по subscription) с storage cost monitoring.",
               "correct": false,
               "sections": {
                 "what_actually": "Arbitrary limit 3 — почему не 5? 10? User expectation = unlimited history (Gist хранит forever).",
-                "source_of_confusion": "Arbitrary product decision без user research.",
+                "source_of_confusion": "Arbitrary product decision без user research. Arbitrary limit 3 — почему не 5?",
                 "if_it_were_true": "Если бы 3 revisions, user который redo 4 раза теряет original.",
                 "how_it_should_be": "Unlimited (или по subscription) с storage cost monitoring."
               }
@@ -947,7 +947,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`paste_revisions` table: (paste_id, revision_number, blob_key, edited_by, edited_at). Каждый edit = новый row + UPDATE `pastes.current_revision`. Blobs unique per revision (immutable CAS — same content гарантирует same blob_key через SHA256, дедуп между revisions).",
+              "text": "`paste_revisions` table: (paste_id, revision_number, blob_key, edited_by, edited_at). Каждый edit = новый row + UPDATE `pastes.current_revision`. **Append-only revision history**.",
               "correct": true,
               "sections": {
                 "explanation": "**Append-only revision history**. Edit = INSERT new revision (не UPDATE). Каждый revision blob immutable; если paste edited 100 times но content idential — single blob (CAS dedup). `current_revision` pointer для O(1) latest. UI rendering — `https://gist.github.com/user/abc/raw/{revision}/file` для immutable URLs.",
@@ -971,12 +971,12 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Поле `visibility` enum (`public`, `unlisted`, `private`, `password`); ACL check на view: `public` всегда OK, `unlisted` OK (просто не в listings/search), `private` требует owner auth, `password` требует bcrypt-verified password.",
+              "text": "Поле `visibility` enum (`public`, `unlisted`, `private`, `password`); ACL check на view: `public` всегда OK, `unlisted` OK (просто не в listings/search), `private` требует owner auth.",
               "correct": true,
               "sections": {
                 "explanation": "Single column `visibility` с 4 значениями (или separate flags). Listing/search filters `visibility='public'` only. `unlisted` accessible через direct URL но не listed → semi-private. `private` requires `user_id = current_user_id` check. `password` — hashed password (bcrypt) stored separately; user provides password → bcrypt verify → render. URL share works для всех — visibility check на view endpoint.",
                 "example": "GitHub Gist: public / secret (similar to unlisted). Pastebin: public / unlisted / private. Privatebin: password-protected всегда.",
-                "when_to_apply": "Любой content-sharing требует privacy controls.",
+                "when_to_apply": "Любой content-sharing требует privacy controls. Single column `visibility` с 4 значениями (или separate flags).",
                 "edge_cases": "Search engines crawl `unlisted` если linked anywhere (e.g., в blog post). `private` paste shared с другим user — нужен share-as-link feature или email invite. Password rotation не trivial — paste content statyc, password change не invalidates existing access.",
                 "related": "Q21 architecture; Q26 auth."
               }
@@ -984,37 +984,37 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Только public/private — два mode достаточно.",
+              "text": "Только public/private — два mode достаточно. Many use cases требуют unlisted (share с friend через URL без public listing) и password (group access без individual accounts).",
               "correct": false,
               "sections": {
                 "what_actually": "Many use cases требуют unlisted (share с friend через URL без public listing) и password (group access без individual accounts).",
-                "source_of_confusion": "Simplifies UX без consideration.",
+                "source_of_confusion": "Simplifies UX без consideration. Many use cases требуют unlisted (share с friend через URL без public listing) и password (group access без individual accounts).",
                 "if_it_were_true": "Если бы only 2 modes, users используют hack — генерировать random long ID и считать его private (security through obscurity).",
-                "how_it_should_be": "4 modes как индустриальный стандарт."
+                "how_it_should_be": "4 modes как индустриальный стандарт. Many use cases требуют unlisted (share с friend через URL без public listing) и password (group access без individual accounts)."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Хранить пароли plaintext в DB.",
+              "text": "Хранить пароли plaintext в DB. Plaintext passwords = security hole. Игнорирует security best practice. bcrypt/argon2 hashing обязательно. DB breach → all passwords leaked.",
               "correct": false,
               "sections": {
                 "what_actually": "Plaintext passwords = security hole. DB breach → all passwords leaked. Mandatory bcrypt/argon2 hashing.",
-                "source_of_confusion": "Игнорирует security best practice.",
+                "source_of_confusion": "Игнорирует security best practice. Plaintext passwords = security hole.",
                 "if_it_were_true": "Если бы plaintext, любой DB dump = massive breach (covered в Equifax 2017 lessons).",
-                "how_it_should_be": "bcrypt/argon2 hashing обязательно."
+                "how_it_should_be": "bcrypt/argon2 hashing обязательно. Plaintext passwords = security hole."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "JWT с visibility claims вместо DB column.",
+              "text": "JWT с visibility claims вместо DB column. JWT для visibility сложен — токен expires, нужно re-generate, не работает offline. Overengineering simple feature. DB column для visibility, JWT для auth tokens.",
               "correct": false,
               "sections": {
                 "what_actually": "JWT для visibility сложен — токен expires, нужно re-generate, не работает offline. Простое column в DB sufficient.",
-                "source_of_confusion": "Overengineering simple feature.",
+                "source_of_confusion": "Overengineering simple feature. JWT для visibility сложен — токен expires, нужно re-generate, не работает offline.",
                 "if_it_were_true": "Если бы JWT-based, share-with-friend требовало бы передачи JWT в URL → long ugly URLs.",
-                "how_it_should_be": "DB column для visibility, JWT для auth tokens."
+                "how_it_should_be": "DB column для visibility, JWT для auth tokens. JWT для visibility сложен — токен expires, нужно re-generate, не работает offline."
               }
             }
           ]
@@ -1031,24 +1031,24 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Full-text search на всех pastes (public + private + unlisted).",
+              "text": "Full-text search на всех pastes (public + private + unlisted). Private/unlisted в search index = privacy violation. Не учитывает privacy. Index только public;",
               "correct": false,
               "sections": {
                 "what_actually": "Private/unlisted в search index = privacy violation. User expectation: unlisted/private не появляется в search results.",
-                "source_of_confusion": "Не учитывает privacy.",
+                "source_of_confusion": "Не учитывает privacy. Private/unlisted в search index = privacy violation.",
                 "if_it_were_true": "Если бы all indexed, unlisted paste с API key в content найден через search by anyone.",
-                "how_it_should_be": "Index только public; opt-in."
+                "how_it_should_be": "Index только public; opt-in. Private/unlisted в search index = privacy violation."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Elasticsearch index на public pastes opt-in (user может exclude конкретный paste из indexing); индекс fields: content, language, user_id, created_at; analyzer per-language (Russian stemmer для русских pastes, English standard для англ).",
+              "text": "Elasticsearch index на public pastes opt-in (user может exclude конкретный paste из indexing); индекс fields: content, language, user_id, created_at;",
               "correct": true,
               "sections": {
                 "explanation": "Public visibility = indexed by default. User checkbox 'Exclude from search' для opt-out конкретного paste. ES index: content (full-text, multi-language analyzers), language (filter facet), user_id (filter `my pastes`), created_at (sort). Per-language analyzer критичен: Russian stemmer для leme `говорить` ↔ `говорил`, English standard для `running` ↔ `run`.",
                 "example": "GitHub Code Search использует ES для public repos. Pastebin search public только. Hastebin not searchable (privacy default).",
-                "when_to_apply": "Любой content sharing с opt-in indexing.",
+                "when_to_apply": "Любой content sharing с opt-in indexing. Public visibility = indexed by default.",
                 "edge_cases": "BM25 relevance scoring default ES. Pasted secrets (API keys) detected via regex → blocked from indexing (Q25). Multi-language pastes (English code + Russian comments) — both analyzers applied (multi-field).",
                 "related": "Q22 tiering; Q25 anti-abuse."
               }
@@ -1056,25 +1056,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Постгрес `to_tsvector` достаточно — не нужен ES.",
+              "text": "Постгрес `to_tsvector` достаточно — не нужен ES. Postgres FTS работает на small corpus (< 10M records). Cost-optimization без scale planning. ES для search;",
               "correct": false,
               "sections": {
                 "what_actually": "Postgres FTS работает на small corpus (< 10M records). 1.8B pastes — ES масштабируется лучше, faster queries, dedicated infrastructure не блокирует main DB.",
-                "source_of_confusion": "Cost-optimization без scale planning.",
+                "source_of_confusion": "Cost-optimization без scale planning. Postgres FTS работает на small corpus (< 10M records).",
                 "if_it_were_true": "Если бы Postgres FTS, search queries slow main DB writes.",
-                "how_it_should_be": "ES для search; Postgres для transactional."
+                "how_it_should_be": "ES для search; Postgres для transactional. Postgres FTS работает на small corpus (< 10M records)."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Никакого search — Pastebin не нуждается.",
+              "text": "Никакого search — Pastebin не нуждается. Search — discovery feature. Underestimates product value. Search public opt-in критичен.",
               "correct": false,
               "sections": {
                 "what_actually": "Search — discovery feature. Без неё users не находят interesting public pastes (trending, by language).",
-                "source_of_confusion": "Underestimates product value.",
+                "source_of_confusion": "Underestimates product value. Search — discovery feature.",
                 "if_it_were_true": "Если бы no search, Trending tab невозможен, conversion to paid падает.",
-                "how_it_should_be": "Search public opt-in критичен."
+                "how_it_should_be": "Search public opt-in критичен. Search — discovery feature."
               }
             }
           ]
@@ -1091,25 +1091,25 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Просто concatenate files в один blob с разделителями.",
+              "text": "Просто concatenate files в один blob с разделителями. Concatenation теряет file structure: filename, language per file, syntax highlighting per file. Simplifies storage без UX consideration.",
               "correct": false,
               "sections": {
                 "what_actually": "Concatenation теряет file structure: filename, language per file, syntax highlighting per file. Search per file impossible.",
-                "source_of_confusion": "Simplifies storage без UX consideration.",
+                "source_of_confusion": "Simplifies storage без UX consideration. Concatenation теряет file structure: filename, language per file, syntax highlighting per file.",
                 "if_it_were_true": "Если бы concatenation, edit one file = re-upload whole blob.",
-                "how_it_should_be": "Separate blob per file + parent paste row."
+                "how_it_should_be": "Separate blob per file + parent paste row. Concatenation теряет file structure: filename, language per file, syntax highlighting per file."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Один paste = один file. Multi-file = N pastes linked.",
+              "text": "Один paste = один file. Multi-file = N pastes linked. Linked pastes не = atomic gist (delete parent — children orphaned). Не понимает gist abstraction. Multi-file as single parent paste + child files.",
               "correct": false,
               "sections": {
                 "what_actually": "Linked pastes не = atomic gist (delete parent — children orphaned). User expects single 'gist' entity с multiple files.",
-                "source_of_confusion": "Не понимает gist abstraction.",
+                "source_of_confusion": "Не понимает gist abstraction. Linked pastes не = atomic gist (delete parent — children orphaned).",
                 "if_it_were_true": "Если бы linked separate, comments на gist не привязаны.",
-                "how_it_should_be": "Multi-file as single parent paste + child files."
+                "how_it_should_be": "Multi-file as single parent paste + child files. Linked pastes не = atomic gist (delete parent — children orphaned)."
               }
             },
             {
@@ -1128,13 +1128,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "ZIP archive single blob с manifest.",
+              "text": "ZIP archive single blob с manifest. ZIP скрывает file structure — UI должен extract на view. Storage optimization без UX consideration. Separate blobs per file.",
               "correct": false,
               "sections": {
                 "what_actually": "ZIP скрывает file structure — UI должен extract на view. Worse for editing single file. Worse for diff.",
-                "source_of_confusion": "Storage optimization без UX consideration.",
+                "source_of_confusion": "Storage optimization без UX consideration. ZIP скрывает file structure — UI должен extract на view.",
                 "if_it_were_true": "Если бы ZIP, edit one file = download → extract → modify → re-zip → upload.",
-                "how_it_should_be": "Separate blobs per file."
+                "how_it_should_be": "Separate blobs per file. ZIP скрывает file structure — UI должен extract на view."
               }
             }
           ]
@@ -1151,43 +1151,43 @@
             {
               "order": 0,
               "label": "A",
-              "text": "На клиенте через DiffMerge.js.",
+              "text": "На клиенте через DiffMerge.js. Client-side diff для маленьких файлов OK, но > 1 MB transfers + computation в browser. Не учитывает large files. Hybrid: server для большого, client для small.",
               "correct": false,
               "sections": {
                 "what_actually": "Client-side diff для маленьких файлов OK, но > 1 MB transfers + computation в browser. Network cost. Slow на mobile.",
-                "source_of_confusion": "Не учитывает large files.",
+                "source_of_confusion": "Не учитывает large files. Client-side diff для маленьких файлов OK, но > 1 MB transfers + computation в browser.",
                 "if_it_were_true": "Если бы only client, mobile devices с slow CPU — bad UX.",
-                "how_it_should_be": "Hybrid: server для большого, client для small."
+                "how_it_should_be": "Hybrid: server для большого, client для small. Client-side diff для маленьких файлов OK, но > 1 MB transfers + computation в browser."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Только GitHub-style server-side с syntax highlighting.",
+              "text": "Только GitHub-style server-side с syntax highlighting. Server-side для всех diffs CPU expensive. Server-cost over user-experience. Hybrid с client fallback.",
               "correct": false,
               "sections": {
                 "what_actually": "Server-side для всех diffs CPU expensive. Small diffs (< 10 KB) easily client-side.",
-                "source_of_confusion": "Server-cost over user-experience.",
+                "source_of_confusion": "Server-cost over user-experience. Server-side для всех diffs CPU expensive.",
                 "if_it_were_true": "Если бы server-only, peak CPU при popular gist comparison.",
-                "how_it_should_be": "Hybrid с client fallback."
+                "how_it_should_be": "Hybrid с client fallback. Server-side для всех diffs CPU expensive."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Только Unified diff `+/-` format без UI.",
+              "text": "Только Unified diff `+/-` format без UI. Unified diff text-only — no syntax highlighting в diff view. Simplifies без UX. Side-by-side с syntax highlighting.",
               "correct": false,
               "sections": {
                 "what_actually": "Unified diff text-only — no syntax highlighting в diff view. UI без visual context хуже для code review.",
-                "source_of_confusion": "Simplifies без UX.",
-                "if_it_were_true": "Если бы text-only, code review on Gist неудобен.",
-                "how_it_should_be": "Side-by-side с syntax highlighting."
+                "source_of_confusion": "Simplifies без UX. Unified diff text-only — no syntax highlighting в diff view.",
+                "if_it_were_true": "Если бы text-only, code review on Gist неудобен. Unified diff text-only — no syntax highlighting в diff view.",
+                "how_it_should_be": "Side-by-side с syntax highlighting. Unified diff text-only — no syntax highlighting в diff view."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Hybrid: server-side computation через `diff-match-patch` algorithm (Myers diff O((N+M)D)) или `histogram diff` (GitHub-style); HTML output с syntax highlighting per language; cached для popular gist comparisons. Client-side fallback на small diffs (< 10 KB) для responsive UI.",
+              "text": "Hybrid: server-side computation через `diff-match-patch` algorithm (Myers diff O((N+M)D)) или `histogram diff` (GitHub-style); HTML output с syntax highlighting per language; cached для popular gist comparisons.",
               "correct": true,
               "sections": {
                 "explanation": "**Server-side computation** для accuracy + caching. Myers algorithm classic — O((N+M)D) где D = edit distance. Histogram diff (GitHub Linguist) — better на code (минимизирует irrelevant matches). Output: HTML с classes (`<span class='diff-add'>added line</span>`) + syntax highlighting per language. Cache rendered diff in Redis с key (`paste_id`, `from_revision`, `to_revision`). Client-side fallback для small diffs.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "CDN edge → Load Balancer → API Gateway (auth + rate limit) → Create/Read services → Postgres metadata + S3 blob + Redis cache; Search service (ES); Abuse Service (DMCA + ClamAV); Kafka для event log; OAuth GitHub для auth.",
+              "text": "CDN edge → Load Balancer → API Gateway (auth + rate limit) → Create/Read services → Postgres metadata + S3 blob + Redis cache; Search service (ES); Abuse Service (DMCA + ClamAV);",
               "correct": true,
               "sections": {
                 "explanation": "Multi-service architecture. Edge CDN (Cloudflare/CloudFront) для cache + DDoS protection. LB distribute → API Gateway (auth verification, rate limit per user/IP). Create Service: validate → anti-abuse scan → blob upload S3 → metadata insert Postgres → invalidate CDN. Read Service: Redis cache hit (95%) → S3 blob if miss → render with Pygments → cache in CDN. Search ES для public opt-in. Abuse Service async (Kafka events) для DMCA matching + ClamAV scan. OAuth GitHub primary login.",
@@ -1224,23 +1224,23 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Один монолит с embedded SQLite.",
+              "text": "Один монолит с embedded SQLite. SQLite не масштабируется на 1M pastes/day write rate. Simplifies без scale. Multi-service distributed.",
               "correct": false,
               "sections": {
                 "what_actually": "SQLite не масштабируется на 1M pastes/day write rate. Single instance = SPOF.",
-                "source_of_confusion": "Simplifies без scale.",
+                "source_of_confusion": "Simplifies без scale. SQLite не масштабируется на 1M pastes/day write rate.",
                 "if_it_were_true": "Если бы SQLite-monolith, max QPS ~100/sec single writer.",
-                "how_it_should_be": "Multi-service distributed."
+                "how_it_should_be": "Multi-service distributed. SQLite не масштабируется на 1M pastes/day write rate."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Lambda functions для всех endpoints без containers.",
+              "text": "Lambda functions для всех endpoints без containers. Lambda cold start latency (200-500 ms) убивает p99 < 100 ms view target. Serverless hype. Containers (ECS/K8s);",
               "correct": false,
               "sections": {
                 "what_actually": "Lambda cold start latency (200-500 ms) убивает p99 < 100 ms view target. Cost при scale > containers.",
-                "source_of_confusion": "Serverless hype.",
+                "source_of_confusion": "Serverless hype. Lambda cold start latency (200-500 ms) убивает p99 < 100 ms view target.",
                 "if_it_were_true": "Если бы Lambda-only, view latency p99 > 500 ms на cold starts.",
                 "how_it_should_be": "Containers (ECS/K8s); Lambda для batch jobs (GC, analytics)."
               }
@@ -1248,13 +1248,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Только nginx + static HTML — no application layer.",
+              "text": "Только nginx + static HTML — no application layer. Static не поддерживает create endpoint (POST), auth, anti-abuse, search. Не понимает dynamic requirements. Application layer обязателен.",
               "correct": false,
               "sections": {
                 "what_actually": "Static не поддерживает create endpoint (POST), auth, anti-abuse, search.",
-                "source_of_confusion": "Не понимает dynamic requirements.",
-                "if_it_were_true": "Если бы static-only, Pastebin = read-only museum.",
-                "how_it_should_be": "Application layer обязателен."
+                "source_of_confusion": "Не понимает dynamic requirements. Static не поддерживает create endpoint (POST), auth, anti-abuse, search.",
+                "if_it_were_true": "Если бы static-only, Pastebin = read-only museum. Static не поддерживает create endpoint (POST), auth, anti-abuse, search.",
+                "how_it_should_be": "Application layer обязателен. Static не поддерживает create endpoint (POST), auth, anti-abuse, search."
               }
             }
           ]
@@ -1271,19 +1271,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Только S3 — единый tier.",
+              "text": "Только S3 — единый tier. Hot pastes (top 0. Single-tier simplicity без cost optimization. Redis cache + S3 + Glacier.",
               "correct": false,
               "sections": {
                 "what_actually": "Hot pastes (top 0.1% accessed daily) на S3 incur cost per GET (~$0.0004). 100M views/day = $40K/month только GET fees. Redis cache snizhaet это в 100×.",
-                "source_of_confusion": "Single-tier simplicity без cost optimization.",
-                "if_it_were_true": "Если бы only S3, GET costs eat margin.",
-                "how_it_should_be": "Redis cache + S3 + Glacier."
+                "source_of_confusion": "Single-tier simplicity без cost optimization. Hot pastes (top 0.",
+                "if_it_were_true": "Если бы only S3, GET costs eat margin. Hot pastes (top 0.",
+                "how_it_should_be": "Redis cache + S3 + Glacier. Single-tier simplicity без cost optimization."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Hot tier Redis (top 1K viewed paste каждый день) → S3 Standard (active < 1 year) → S3 Glacier (archived > 1 year, rarely accessed). Lifecycle policy auto-transitions. Read flow: Redis → S3 → Glacier (slow restore 1-12 часов).",
+              "text": "Hot tier Redis (top 1K viewed paste каждый день) → S3 Standard (active < 1 year) → S3 Glacier (archived > 1 year, rarely accessed).",
               "correct": true,
               "sections": {
                 "explanation": "Three-tier. Redis caching popular pastes (LRU eviction) — sub-ms latency. S3 Standard для active (recent + occasionally accessed). Glacier для cold archive (older than 1 year + few views — paste created для backup, rarely read). Lifecycle policy: tag paste with `created_at` → S3 lifecycle rules: standard 1 year, glacier after. Cost: Standard $0.023/GB-month, Glacier $0.004 (5× cheaper).",
@@ -1296,25 +1296,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Только Redis — keep all pastes в memory.",
+              "text": "Только Redis — keep all pastes в memory. 60 TB в Redis = $$$ (~$50M/month). Optimize latency без cost. Redis cache, не primary storage.",
               "correct": false,
               "sections": {
                 "what_actually": "60 TB в Redis = $$$ (~$50M/month). Volatility — restart loses data.",
-                "source_of_confusion": "Optimize latency без cost.",
-                "if_it_were_true": "Если бы Redis-only, расходы > выручка.",
-                "how_it_should_be": "Redis cache, не primary storage."
+                "source_of_confusion": "Optimize latency без cost. 60 TB в Redis = $$$ (~$50M/month).",
+                "if_it_were_true": "Если бы Redis-only, расходы > выручка. 60 TB в Redis = $$$ (~$50M/month).",
+                "how_it_should_be": "Redis cache, не primary storage. 60 TB в Redis = $$$ (~$50M/month)."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Memcached + S3.",
+              "text": "Memcached + S3. Memcached менее feature-rich чем Redis (no persistence option, simpler eviction). Predecessor Redis выбор. Redis preferable для Pastebin.",
               "correct": false,
               "sections": {
                 "what_actually": "Memcached менее feature-rich чем Redis (no persistence option, simpler eviction). Redis better choice для structured data + persistence.",
-                "source_of_confusion": "Predecessor Redis выбор.",
+                "source_of_confusion": "Predecessor Redis выбор. Memcached менее feature-rich чем Redis (no persistence option, simpler eviction).",
                 "if_it_were_true": "Если бы Memcached, нет persistence (cache cold start после restart).",
-                "how_it_should_be": "Redis preferable для Pastebin."
+                "how_it_should_be": "Redis preferable для Pastebin. Memcached менее feature-rich чем Redis (no persistence option, simpler eviction)."
               }
             }
           ]
@@ -1331,36 +1331,36 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Origin direct без CDN.",
+              "text": "Origin direct без CDN. Direct = origin handles 100M views/day = 1200 QPS average, peak 6K. Simplifies architecture без scaling. CDN 95% hit critical.",
               "correct": false,
               "sections": {
                 "what_actually": "Direct = origin handles 100M views/day = 1200 QPS average, peak 6K. Without CDN bandwidth bill $$$, origin overloaded.",
-                "source_of_confusion": "Simplifies architecture без scaling.",
+                "source_of_confusion": "Simplifies architecture без scaling. Direct = origin handles 100M views/day = 1200 QPS average, peak 6K.",
                 "if_it_were_true": "Если бы no CDN, peak spike (viral paste) crash origin.",
-                "how_it_should_be": "CDN 95% hit critical."
+                "how_it_should_be": "CDN 95% hit critical. Direct = origin handles 100M views/day = 1200 QPS average, peak 6K."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "CDN для HTML view только, raw bypasses CDN.",
+              "text": "CDN для HTML view только, raw bypasses CDN. Raw endpoint просматривается curl/wget/IDE plugins — heavy traffic тоже. Думает что raw less popular. Both endpoints через CDN.",
               "correct": false,
               "sections": {
                 "what_actually": "Raw endpoint просматривается curl/wget/IDE plugins — heavy traffic тоже. Bypass CDN = origin bandwidth × 2.",
-                "source_of_confusion": "Думает что raw less popular.",
+                "source_of_confusion": "Думает что raw less popular. Raw endpoint просматривается curl/wget/IDE plugins — heavy traffic тоже.",
                 "if_it_were_true": "Если бы raw bypass, IDE plugins fetching pastes hit origin directly.",
-                "how_it_should_be": "Both endpoints через CDN."
+                "how_it_should_be": "Both endpoints через CDN. Raw endpoint просматривается curl/wget/IDE plugins — heavy traffic тоже."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "CDN aggressive cache для `/raw/{short_code}` (immutable content; cache forever); `/{short_code}` HTML cached с short TTL (5 min, для view counter updates); versioned URLs для invalidation; Brotli edge compression.",
+              "text": "CDN aggressive cache для `/raw/{short_code}` (immutable content; cache forever); `/{short_code}` HTML cached с short TTL (5 min, для view counter updates); versioned URLs для invalidation;",
               "correct": true,
               "sections": {
                 "explanation": "Raw endpoint immutable → cache forever (until paste deleted). HTML view changes (view count, comments) → short TTL. Versioned URLs (`/v2/raw/{short_code}`) для force invalidation on paste edit или delete. Brotli compression at edge — text content 70%+ size reduction для transfer (но storage zstd, see Q7). Hit ratio target 95%+; origin sees only 5% traffic.",
                 "example": "Cloudflare standard for static assets. Pastebin.com использует CloudFront. GitHub Gist на GitHub Pages CDN.",
-                "when_to_apply": "Любой content-sharing с high read-write ratio.",
+                "when_to_apply": "Любой content-sharing с high read-write ratio. Raw endpoint immutable → cache forever (until paste deleted).",
                 "edge_cases": "Cache invalidation на paste delete: API call к CDN purge endpoint. Geographic edge cache — Tokyo, Frankfurt, Sydney POPs. WAF на CDN level — DDoS + bot detection (Cloudflare Bot Management).",
                 "related": "Q22 storage tiering; Q27 rate limit; Q29 cost."
               }
@@ -1368,13 +1368,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Multi-CDN (CloudFront + Cloudflare) для redundancy.",
+              "text": "Multi-CDN (CloudFront + Cloudflare) для redundancy. Multi-CDN добавляет complexity, monitoring, billing. Hyperscaler redundancy без cost analysis. Single CDN;",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-CDN добавляет complexity, monitoring, billing. Single high-quality CDN (Cloudflare) достаточно для startup-mid scale. Multi-CDN — для critical infrastructure (Netflix scale).",
-                "source_of_confusion": "Hyperscaler redundancy без cost analysis.",
+                "source_of_confusion": "Hyperscaler redundancy без cost analysis. Multi-CDN добавляет complexity, monitoring, billing.",
                 "if_it_were_true": "Если бы multi-CDN на Pastebin scale, operational overhead доминирует.",
-                "how_it_should_be": "Single CDN; multi-CDN для billion-user scale."
+                "how_it_should_be": "Single CDN; multi-CDN для billion-user scale. Multi-CDN добавляет complexity, monitoring, billing."
               }
             }
           ]
@@ -1391,35 +1391,35 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Один US region для всех users.",
+              "text": "Один US region для всех users. GDPR требует EU user data в EU region. Cost-saves без compliance. Multi-region с GDPR-aware routing.",
               "correct": false,
               "sections": {
                 "what_actually": "GDPR требует EU user data в EU region. Single US violates → fines до 4% global revenue.",
-                "source_of_confusion": "Cost-saves без compliance.",
-                "if_it_were_true": "Если бы US-only, EU users sue + regulators fine.",
-                "how_it_should_be": "Multi-region с GDPR-aware routing."
+                "source_of_confusion": "Cost-saves без compliance. GDPR требует EU user data в EU region.",
+                "if_it_were_true": "Если бы US-only, EU users sue + regulators fine. GDPR требует EU user data в EU region.",
+                "how_it_should_be": "Multi-region с GDPR-aware routing. GDPR требует EU user data в EU region."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Все EU users в одном Frankfurt region.",
+              "text": "Все EU users в одном Frankfurt region. Single EU region работает но не optimal latency для UK / Spain / Nordic. GDPR-aware но не latency-optimized. Multiple EU regions с GeoDNS.",
               "correct": false,
               "sections": {
                 "what_actually": "Single EU region работает но не optimal latency для UK / Spain / Nordic. Better: multiple EU regions.",
-                "source_of_confusion": "GDPR-aware но не latency-optimized.",
+                "source_of_confusion": "GDPR-aware но не latency-optimized. Single EU region работает но не optimal latency для UK / Spain / Nordic.",
                 "if_it_were_true": "Если бы only Frankfurt, Madrid user latency +50ms vs Paris.",
-                "how_it_should_be": "Multiple EU regions с GeoDNS."
+                "how_it_should_be": "Multiple EU regions с GeoDNS. Single EU region работает но не optimal latency для UK / Spain / Nordic."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Все pastes replicated cross-region.",
+              "text": "Все pastes replicated cross-region. Cross-region replication of EU paste в US violates GDPR (data leaves EU). Disaster recovery без compliance. Replication within region;",
               "correct": false,
               "sections": {
                 "what_actually": "Cross-region replication of EU paste в US violates GDPR (data leaves EU). Replication only inside region.",
-                "source_of_confusion": "Disaster recovery без compliance.",
+                "source_of_confusion": "Disaster recovery без compliance. Cross-region replication of EU paste в US violates GDPR (data leaves EU).",
                 "if_it_were_true": "Если бы cross-region replication, GDPR violation + 4% fine.",
                 "how_it_should_be": "Replication within region; cross-region forbidden for EU."
               }
@@ -1427,12 +1427,12 @@
             {
               "order": 3,
               "label": "D",
-              "text": "GeoDNS routing → ближайший region (US-East, US-West, EU-Frankfurt, EU-Dublin, APAC-Tokyo); pastes stored в region nearest user creation; cross-region replication только within zone (US-* between, EU-* between); GDPR: EU paste никогда не leaves EU region.",
+              "text": "GeoDNS routing → ближайший region (US-East, US-West, EU-Frankfurt, EU-Dublin, APAC-Tokyo); pastes stored в region nearest user creation;",
               "correct": true,
               "sections": {
                 "explanation": "**GeoDNS + zone-aware replication**. User from Berlin → DNS routes к EU-Frankfurt. Paste created → stored в Frankfurt; replicated в Dublin (EU-EU). Paste никогда не replicated в US — GDPR Article 44 (transfer to third country). US user → US-East или US-West. APAC user → Tokyo. CDN edge caches paste content по всему миру (anyone with URL can view) — CDN caching НЕ counts как replication (transient).",
                 "example": "Cloudflare R2 has regional bucket option. AWS S3 region-aware. Stripe data residency model.",
-                "when_to_apply": "Любой service с EU users должен respect GDPR.",
+                "when_to_apply": "Любой service с EU users должен respect GDPR. **GeoDNS + zone-aware replication**.",
                 "edge_cases": "Cross-region access (US user views EU paste): allowed since GDPR прохода для viewing, не для storage. Account migration (EU → US user) — need consent + data transfer review. China presence — separate stack (data sovereignty laws, not just GDPR).",
                 "related": "Q21 architecture; Q23 CDN."
               }
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Multi-layer: (1) Real-time content scan на create (ClamAV для malware signatures, regex для credentials AWS/GitHub tokens, ML classifier для CSAM hashes PhotoDNA + NCMEC); (2) DMCA hash blocklist (rights-holders submit hashes of copyrighted content → reject upload + report); (3) Per-IP rate limit + CAPTCHA для anonymous abuse; (4) Async re-scan через Kafka events (model updates retroactively detect).",
+              "text": "Multi-layer: (1) Real-time content scan на create (ClamAV для malware signatures, regex для credentials AWS/GitHub tokens, ML classifier для CSAM hashes PhotoDNA + NCMEC);",
               "correct": true,
               "sections": {
                 "explanation": "Multi-layer defense. **ClamAV** scan для executable signatures (Windows PE, ELF, scripts с known malware patterns). **Regex/ML credential detection**: AWS `AKIA[0-9A-Z]{16}`, GitHub `ghp_[a-zA-Z0-9]{36}` → auto-mask или reject. **PhotoDNA hash** + NCMEC database для CSAM (PhotoDNA из Microsoft — perceptual hash, detect re-uploads even if cropped). DMCA: rights holder submits hash, paste с matching content auto-rejected; existing matches purged + sent такой list to authorities если CSAM. Async re-scan через Kafka: новая ML model deployed → reprocess all past 30 days pastes.",
@@ -1464,23 +1464,23 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Только user reporting — community moderates.",
+              "text": "Только user reporting — community moderates. Community moderation slow (часы-дни response). Open platform philosophy без responsibility. Multi-layer automated + user reports.",
               "correct": false,
               "sections": {
                 "what_actually": "Community moderation slow (часы-дни response). Active abuse (DDoS, malware distribution) requires immediate block. Self-moderation cannot detect bulk CSAM uploads.",
-                "source_of_confusion": "Open platform philosophy без responsibility.",
+                "source_of_confusion": "Open platform philosophy без responsibility. Community moderation slow (часы-дни response).",
                 "if_it_were_true": "Если бы только user reporting, в первый месяц accumulates 1000+ DMCA violations.",
-                "how_it_should_be": "Multi-layer automated + user reports."
+                "how_it_should_be": "Multi-layer automated + user reports. Community moderation slow (часы-дни response)."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Captcha на каждый paste — abuse blocked.",
+              "text": "Captcha на каждый paste — abuse blocked. CAPTCHA blocks honest users (программные API calls, CLI tools). UX-killer. Rate limit + CAPTCHA conditional (only after anomaly).",
               "correct": false,
               "sections": {
                 "what_actually": "CAPTCHA blocks honest users (программные API calls, CLI tools). Bot abuse circumvents (CAPTCHA-solving services $0.001/solve).",
-                "source_of_confusion": "UX-killer.",
+                "source_of_confusion": "UX-killer. CAPTCHA blocks honest users (программные API calls, CLI tools).",
                 "if_it_were_true": "Если бы CAPTCHA always, IDE plugins (Sublime PasteIt) перестают работать.",
                 "how_it_should_be": "Rate limit + CAPTCHA conditional (only after anomaly)."
               }
@@ -1488,13 +1488,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Только DMCA — другое не volume issue.",
+              "text": "Только DMCA — другое не volume issue. Malware distribution (Pastebin исторически hosted shells, exfiltration scripts), CSAM (legal mandatory report), credentials leak (recent Pastebin scrapes для AWS keys) — все critical.",
               "correct": false,
               "sections": {
                 "what_actually": "Malware distribution (Pastebin исторически hosted shells, exfiltration scripts), CSAM (legal mandatory report), credentials leak (recent Pastebin scrapes для AWS keys) — все critical.",
-                "source_of_confusion": "Underestimates abuse vectors.",
+                "source_of_confusion": "Underestimates abuse vectors. Malware distribution (Pastebin исторически hosted shells, exfiltration scripts), CSAM (legal mandatory report), credentials leak (recent Pastebin scrapes для AWS keys) — все critical.",
                 "if_it_were_true": "Если бы DMCA-only, Pastebin становится malware C2 channel.",
-                "how_it_should_be": "Multi-layer защита."
+                "how_it_should_be": "Multi-layer защита. Malware distribution (Pastebin исторически hosted shells, exfiltration scripts), CSAM (legal mandatory report), credentials leak (recent Pastebin scrapes для AWS keys) — все critical."
               }
             }
           ]
@@ -1511,13 +1511,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Только email/password authentication.",
+              "text": "Только email/password authentication. Email/password — friction для signup (verify email, remember password). Traditional auth без modern preferences. OAuth primary + email backup.",
               "correct": false,
               "sections": {
                 "what_actually": "Email/password — friction для signup (verify email, remember password). Modern users prefer OAuth (GitHub/Google) — faster onboarding.",
-                "source_of_confusion": "Traditional auth без modern preferences.",
+                "source_of_confusion": "Traditional auth без modern preferences. Email/password — friction для signup (verify email, remember password).",
                 "if_it_were_true": "Если бы email-only, signup conversion drops vs OAuth competitors.",
-                "how_it_should_be": "OAuth primary + email backup."
+                "how_it_should_be": "OAuth primary + email backup. Email/password — friction для signup (verify email, remember password)."
               }
             },
             {
@@ -1528,7 +1528,7 @@
               "sections": {
                 "explanation": "OAuth GitHub primary — developers уже есть GitHub account, no signup friction. Email backup для non-developers. API tokens generated в settings UI; hashed (bcrypt с appropriate cost factor) before storage — DB breach не reveal tokens. Prefix `pastebin_pat_` (Personal Access Token convention from GitHub) — позволяет scan для accidentally committed tokens (via GitHub secret scanning, gitleaks). Token rotation: generate new + revoke old, audit log.",
                 "example": "GitHub PAT с prefix `ghp_`. Stripe API tokens `sk_live_*`. Slack tokens `xoxb-*` — prefix conventions.",
-                "when_to_apply": "Любой service requiring programmatic API access.",
+                "when_to_apply": "Любой service requiring programmatic API access. OAuth GitHub primary — developers уже есть GitHub account, no signup friction.",
                 "edge_cases": "Token leakage: accidentally pushed to GitHub — secret scanning auto-revoke. Scopes (read-only, paste-create, paste-delete) — least privilege. Refresh tokens not standard for PAT (long-lived) vs OAuth (short-lived access + long-lived refresh).",
                 "related": "Q9 API contract; Q27 rate limit per token."
               }
@@ -1536,23 +1536,23 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Полностью anonymous — no auth.",
+              "text": "Полностью anonymous — no auth. Anonymous teryaet feature value (private pastes, per-user quotas, no edit history, no analytics). Privacy-first philosophy taken too far. Anonymous + auth oba modes.",
               "correct": false,
               "sections": {
                 "what_actually": "Anonymous teryaet feature value (private pastes, per-user quotas, no edit history, no analytics). All pastes public — abuse magnet.",
-                "source_of_confusion": "Privacy-first philosophy taken too far.",
+                "source_of_confusion": "Privacy-first philosophy taken too far. Anonymous teryaet feature value (private pastes, per-user quotas, no edit history, no analytics).",
                 "if_it_were_true": "Если бы anonymous-only, no premium tier monetization.",
-                "how_it_should_be": "Anonymous + auth oba modes."
+                "how_it_should_be": "Anonymous + auth oba modes. Anonymous teryaet feature value (private pastes, per-user quotas, no edit history, no analytics)."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "JWT с long expiration для всех auth.",
+              "text": "JWT с long expiration для всех auth. Long-lived JWT — revocation impossible without DB lookup (defeats stateless JWT). Stateless preferred без revocation. Session cookie для web + API tokens (hashed lookup) — combined.",
               "correct": false,
               "sections": {
                 "what_actually": "Long-lived JWT — revocation impossible without DB lookup (defeats stateless JWT). Short-lived JWT requires refresh — complex для API clients.",
-                "source_of_confusion": "Stateless preferred без revocation.",
+                "source_of_confusion": "Stateless preferred без revocation. Long-lived JWT — revocation impossible without DB lookup (defeats stateless JWT).",
                 "if_it_were_true": "Если бы long JWT, leaked token valid до expiration (часы-дни).",
                 "how_it_should_be": "Session cookie для web + API tokens (hashed lookup) — combined."
               }
@@ -1571,36 +1571,36 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Один global limit для всех.",
+              "text": "Один global limit для всех. Global limit fails: anonymous abuse uses fraction of bandwidth, legitimate API clients (IDE plugins, monitoring tools) hit limit unfairly.",
               "correct": false,
               "sections": {
                 "what_actually": "Global limit fails: anonymous abuse uses fraction of bandwidth, legitimate API clients (IDE plugins, monitoring tools) hit limit unfairly.",
-                "source_of_confusion": "Simplification без user differentiation.",
+                "source_of_confusion": "Simplification без user differentiation. Global limit fails: anonymous abuse uses fraction of bandwidth, legitimate API clients (IDE plugins, monitoring tools) hit limit unfairly.",
                 "if_it_were_true": "Если бы global, legit API users blocked при anonymous DDoS.",
-                "how_it_should_be": "Per-user / per-IP differentiated."
+                "how_it_should_be": "Per-user / per-IP differentiated. Global limit fails: anonymous abuse uses fraction of bandwidth, legitimate API clients (IDE plugins, monitoring tools) hit limit unfairly."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Только IP-based limit.",
+              "text": "Только IP-based limit. Carriers/NAT share single IP → all users behind it count as one (block legit users). Simplistic networking model. User+IP composite.",
               "correct": false,
               "sections": {
                 "what_actually": "Carriers/NAT share single IP → all users behind it count as one (block legit users). Conversely, attackers using residential proxies bypass IP limit.",
-                "source_of_confusion": "Simplistic networking model.",
+                "source_of_confusion": "Simplistic networking model. Carriers/NAT share single IP → all users behind it count as one (block legit users).",
                 "if_it_were_true": "Если бы IP-only, mobile carriers' IPs hit limit на usage from 1000 users.",
-                "how_it_should_be": "User+IP composite."
+                "how_it_should_be": "User+IP composite. Carriers/NAT share single IP → all users behind it count as one (block legit users)."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Tiered: anonymous IP-based 5 pastes/hour create, 100/hour view (Redis token bucket); authenticated user-based 25/hour create, 1000/hour view; Pro paid 250/hour create, unlimited view; Lua script in Redis для atomic check + increment.",
+              "text": "Tiered: anonymous IP-based 5 pastes/hour create, 100/hour view (Redis token bucket); authenticated user-based 25/hour create, 1000/hour view; Pro paid 250/hour create, unlimited view;",
               "correct": true,
               "sections": {
                 "explanation": "**Tiered limits** по user class. Anonymous IP-based (extract real IP через `X-Forwarded-For` если behind LB) — 5 creates/hour (deter spam), 100 views/hour. Authenticated free — 25/hour create. Pro paid — 250/hour. Redis token bucket (atomic Lua script): `INCR + EXPIRE` checks remaining vs limit. Return 429 с `Retry-After` header. Differentiated allows API clients (auth) to operate while limiting abuse vectors (anonymous).",
                 "example": "GitHub rate limits (5000/hour authenticated, 60/hour unauth). Stripe API rate limits per API key. Cloudflare WAF rate limiting rules.",
-                "when_to_apply": "Любой public API с potential abuse.",
+                "when_to_apply": "Любой public API с potential abuse. **Tiered limits** по user class.",
                 "edge_cases": "Distributed rate limit — Redis cluster shared across LB. Burst allowance (token bucket capacity > rate) для legit spikes. CAPTCHA escalation после repeated 429s для anonymous.",
                 "related": "Q21 architecture; Q25 anti-abuse; см. design-rate-limiter-interview Q12."
               }
@@ -1608,11 +1608,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Распределённый rate limit через Cassandra.",
+              "text": "Распределённый rate limit через Cassandra. Cassandra не оптимальна для counter operations (LWT slow). Wrong tool selection. Redis для rate limits;",
               "correct": false,
               "sections": {
                 "what_actually": "Cassandra не оптимальна для counter operations (LWT slow). Redis purpose-built для atomic INCR на microsecond latency.",
-                "source_of_confusion": "Wrong tool selection.",
+                "source_of_confusion": "Wrong tool selection. Cassandra не оптимальна для counter operations (LWT slow).",
                 "if_it_were_true": "Если бы Cassandra, rate-limit check latency 10ms vs Redis 0.5ms.",
                 "how_it_should_be": "Redis для rate limits; Cassandra для wide-column workloads."
               }
@@ -1631,11 +1631,11 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Только uptime monitoring через external service.",
+              "text": "Только uptime monitoring через external service. External pingdom-style видит only availability. External monitoring без internal. Both: external (synthetic) + internal (Prometheus).",
               "correct": false,
               "sections": {
                 "what_actually": "External pingdom-style видит only availability. Latency, error rate, business metrics — internal только.",
-                "source_of_confusion": "External monitoring без internal.",
+                "source_of_confusion": "External monitoring без internal. External pingdom-style видит only availability.",
                 "if_it_were_true": "Если бы только external, internal regression (slow query) недетектируется до full outage.",
                 "how_it_should_be": "Both: external (synthetic) + internal (Prometheus)."
               }
@@ -1643,11 +1643,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Только error logs через ELK.",
+              "text": "Только error logs через ELK. Logs без metrics → no aggregation, no alerts on threshold. Logs-only observability. Metrics (Prometheus) + logs (ELK) + traces (Jaeger).",
               "correct": false,
               "sections": {
                 "what_actually": "Logs без metrics → no aggregation, no alerts on threshold. Logs answer 'что произошло', metrics — 'насколько часто, тренды'.",
-                "source_of_confusion": "Logs-only observability.",
+                "source_of_confusion": "Logs-only observability. Logs без metrics → no aggregation, no alerts on threshold.",
                 "if_it_were_true": "Если бы only ELK, alert on p99 latency > 200ms невозможен.",
                 "how_it_should_be": "Metrics (Prometheus) + logs (ELK) + traces (Jaeger)."
               }
@@ -1655,24 +1655,24 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Только business metrics через Mixpanel.",
+              "text": "Только business metrics через Mixpanel. Product analytics видит conversion, не operational health. Product manager mindset без SRE. Operational + product analytics обе.",
               "correct": false,
               "sections": {
                 "what_actually": "Product analytics видит conversion, не operational health. Mixpanel не показывает API error rate, DB query latency.",
-                "source_of_confusion": "Product manager mindset без SRE.",
+                "source_of_confusion": "Product manager mindset без SRE. Product analytics видит conversion, не operational health.",
                 "if_it_were_true": "Если бы only Mixpanel, operational issues invisible до DAU drop.",
-                "how_it_should_be": "Operational + product analytics обе."
+                "how_it_should_be": "Operational + product analytics обе. Product analytics видит conversion, не operational health."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Multi-layer: Prometheus metrics (creation_latency_p99, view_latency_p99, cdn_hit_ratio, dmca_blocks_per_hour, expiration_gc_lag, abuse_block_rate, redis_memory_usage, postgres_replication_lag) + Grafana dashboards + alerts; structured logs Loki/ELK; distributed tracing Jaeger через OpenTelemetry; business metrics Mixpanel/Amplitude.",
+              "text": "Multi-layer: Prometheus metrics (creation_latency_p99, view_latency_p99, cdn_hit_ratio, dmca_blocks_per_hour, expiration_gc_lag, abuse_block_rate, redis_memory_usage, postgres_replication_lag) + Grafana dashboards + alerts;",
               "correct": true,
               "sections": {
                 "explanation": "**Three pillars observability**: metrics + logs + traces. Prometheus scrapes app + Redis + Postgres exporters; Grafana visualizes. Alert rules: creation_latency_p99 > 500ms 5 min → PagerDuty; cdn_hit_ratio < 80% → Slack warning; dmca_blocks spike → security team. Structured JSON logs к Loki (cheaper than ELK at scale). Distributed tracing через OpenTelemetry SDK — trace request от CDN edge через API через DB query. Business metrics в Mixpanel/Amplitude для product PM.",
                 "example": "Netflix Atlas + Spectator. Stripe internal observability stack (described in blog 2018). Cloudflare uses Prometheus + Grafana extensively.",
-                "when_to_apply": "Любая production service.",
+                "when_to_apply": "Любая production service. **Three pillars observability**: metrics + logs + traces.",
                 "edge_cases": "Cardinality explosion: Prometheus labels (user_id) → millions series cost. Use exemplars для linking metric spike к specific trace. SLO burn rate alerts (multi-window) лучше threshold-based.",
                 "related": "Q3 SLO; Q21 architecture."
               }
@@ -1691,12 +1691,12 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Storage: zstd compression 3-4× ratio → 70% storage saving (18 TB raw → 5-7 TB compressed = $115/month vs $415); S3 lifecycle policy moves old (>1 year) к Glacier (5× cheaper = $80→$15 для 5 TB cold); CDN: long cache TTL maximizes hit ratio → origin bandwidth → 0; Cloudflare R2 ($0.015/GB-month) cheaper than AWS S3 ($0.023) для blob storage; Postgres metadata small (100 GB) cheap; Redis cache only top-1K hot pastes (not all).",
+              "text": "Storage: zstd compression 3-4× ratio → 70% storage saving (18 TB raw → 5-7 TB compressed = $115/month vs $415); S3 lifecycle policy moves old (>1 year) к Glacier (5× cheaper = $80→$15 для 5 TB cold);",
               "correct": true,
               "sections": {
                 "explanation": "Multi-pronged cost reduction. **Compression**: zstd 3-4× on text → most impactful for blob cost. **Storage tiering**: S3 lifecycle policies auto-move 1-year-old к Glacier. **CDN cache** maximizes hit ratio (95%+) → origin bandwidth minimized. **R2 vs S3**: Cloudflare R2 priced $0.015/GB-month standard tier vs S3 $0.023 — 35% savings. Plus R2 no egress fee если served через Cloudflare (huge для CDN-heavy workload). Redis cache limited к hot set (LRU eviction) — not full corpus в memory.",
                 "example": "Reddit migration from S3 к R2 (2023, saved millions). Twitter использует похожий tiered approach.",
-                "when_to_apply": "Любая large-scale text/blob storage.",
+                "when_to_apply": "Любая large-scale text/blob storage. Multi-pronged cost reduction.",
                 "edge_cases": "Snapshot encryption costs (KMS per-operation fee). Egress fee comparison: AWS $0.09/GB → Cloudflare R2 $0/GB (when behind CF). Reserved Instances для Postgres RDS — 60% cheaper.",
                 "related": "Q7 compression; Q22 tiering; Q23 CDN."
               }
@@ -1704,23 +1704,23 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Просто использовать AWS — всё сразу cheap.",
+              "text": "Просто использовать AWS — всё сразу cheap. AWS pricing не cheapest. AWS = default без cost analysis. Multi-cloud cost analysis + reserved capacity.",
               "correct": false,
               "sections": {
                 "what_actually": "AWS pricing не cheapest. R2 / B2 (Backblaze) дешевле для cold storage. Reserved Instances + Spot Instances снижают compute cost 60-90%.",
-                "source_of_confusion": "AWS = default без cost analysis.",
+                "source_of_confusion": "AWS = default без cost analysis. AWS pricing не cheapest.",
                 "if_it_were_true": "Если бы AWS-default, монtly bill 2-3× против optimized stack.",
-                "how_it_should_be": "Multi-cloud cost analysis + reserved capacity."
+                "how_it_should_be": "Multi-cloud cost analysis + reserved capacity. AWS pricing не cheapest."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Никаких оптимизаций — fast scale первый.",
+              "text": "Никаких оптимизаций — fast scale первый. Без cost monitoring monthly bill blows up быстро. Move-fast-break-things без financial discipline. Cost optimization continuously, не only когда crisis.",
               "correct": false,
               "sections": {
                 "what_actually": "Без cost monitoring monthly bill blows up быстро. Early-stage саннятие 'scale first' приводит к operations крах когда runway ends.",
-                "source_of_confusion": "Move-fast-break-things без financial discipline.",
+                "source_of_confusion": "Move-fast-break-things без financial discipline. Без cost monitoring monthly bill blows up быстро.",
                 "if_it_were_true": "Если бы no optimization, $100K/month bill на $10M ARR Pastebin = unsustainable.",
                 "how_it_should_be": "Cost optimization continuously, не only когда crisis."
               }
@@ -1728,13 +1728,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Только compression — другие optimizations не critical.",
+              "text": "Только compression — другие optimizations не critical. Compression major но storage tiering + CDN + cloud provider selection collectively > compression saving. Single-knob optimization.",
               "correct": false,
               "sections": {
                 "what_actually": "Compression major но storage tiering + CDN + cloud provider selection collectively > compression saving.",
-                "source_of_confusion": "Single-knob optimization.",
+                "source_of_confusion": "Single-knob optimization. Compression major но storage tiering + CDN + cloud provider selection collectively > compression saving.",
                 "if_it_were_true": "Если бы compression-only, миссируем 50%+ saving from другие layers.",
-                "how_it_should_be": "Multi-pronged optimization."
+                "how_it_should_be": "Multi-pronged optimization. Compression major но storage tiering + CDN + cloud provider selection collectively > compression saving."
               }
             }
           ]
@@ -1751,19 +1751,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Хранение в S3, Postgres metadata, CDN, OAuth — это всё правильно, антипаттернов нет.",
+              "text": "Хранение в S3, Postgres metadata, CDN, OAuth — это всё правильно, антипаттернов нет. Список реальных антипаттернов: blob в Postgres TEXT column, sync syntax highlighting per view, no GC for expired, sequential IDs, sync view counter row contention, no CDN, no Idempotency-Key (duplicate paste), plain API token in DB, no anti-abuse, single Postgres for blob.",
               "correct": false,
               "sections": {
                 "what_actually": "Список реальных антипаттернов: blob в Postgres TEXT column, sync syntax highlighting per view, no GC for expired, sequential IDs, sync view counter row contention, no CDN, no Idempotency-Key (duplicate paste), plain API token in DB, no anti-abuse, single Postgres for blob.",
-                "source_of_confusion": "Overconfident в готовой архитектуре.",
+                "source_of_confusion": "Overconfident в готовой архитектуре. Список реальных антипаттернов: blob в Postgres TEXT column, sync syntax highlighting per view, no GC for expired, sequential IDs, sync view counter row contention, no CDN, no Idempotency-Key (duplicate paste), plain API token in DB, no anti-abuse, single Postgres for blob.",
                 "if_it_were_true": "Если бы 'no antipatterns', design review review без критики.",
-                "how_it_should_be": "Учиться на классических ошибках."
+                "how_it_should_be": "Учиться на классических ошибках. Список реальных антипаттернов: blob в Postgres TEXT column, sync syntax highlighting per view, no GC for expired, sequential IDs, sync view counter row contention, no CDN, no Idempotency-Key (duplicate paste), plain API token in DB, no anti-abuse, single Postgres for blob."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Frequent antipatterns: blob в Postgres TEXT column (bloats DB), sync syntax highlighting per view (CPU waste), no GC for expired pastes (storage growth), sequential auto-increment IDs (enumeration vulnerability), sync view counter row contention (Postgres lock), no CDN (origin overload), no Idempotency-Key (duplicate paste on retry), plain API token storage (DB breach leaks), no anti-abuse pipeline (DMCA pile-up), single Postgres for all data (no separation metadata/blob).",
+              "text": "Frequent antipatterns: blob в Postgres TEXT column (bloats DB), sync syntax highlighting per view (CPU waste), no GC for expired pastes (storage growth), sequential auto-increment IDs (enumeration vulnerability). Все эти — реальные мerge-blocking antipatterns.",
               "correct": true,
               "sections": {
                 "explanation": "Все эти — реальные мerge-blocking antipatterns. **Blob в Postgres**: bloats heap → VACUUM expensive, replication slow. **Sync syntax highlight**: каждый view = Pygments CPU; cache rendered HTML в Redis. **No GC**: expired flag set но physical delete never → storage grows linearly. **Sequential IDs**: scrapers iterate /1 /2 → leak unlisted. **Sync view counter**: `UPDATE pastes SET views = views + 1 WHERE id=?` causes row lock on popular paste; async через Kafka + batch update. **No CDN**: origin handles 100M views/day. **No Idempotency-Key**: client retry creates duplicate. **Plain API token**: DB dump leaks; bcrypt hash. **No anti-abuse**: DMCA, malware, CSAM accumulate.",
@@ -1776,23 +1776,23 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Только sequential IDs — другие OK для small scale.",
+              "text": "Только sequential IDs — другие OK для small scale. Все listed bite в production. Tolerates antipatterns до scale crisis. Address antipatterns proactively. Sync view counter создаёт row lock даже на 10 QPS popular paste. Если бы 'OK for small', technical debt accrues — refactor более expensive позже.",
               "correct": false,
               "sections": {
                 "what_actually": "Все listed bite в production. Sync view counter создаёт row lock даже на 10 QPS popular paste. No CDN incurs bandwidth cost from day 1.",
-                "source_of_confusion": "Tolerates antipatterns до scale crisis.",
+                "source_of_confusion": "Tolerates antipatterns до scale crisis. Все listed bite в production.",
                 "if_it_were_true": "Если бы 'OK for small', technical debt accrues — refactor более expensive позже.",
-                "how_it_should_be": "Address antipatterns proactively."
+                "how_it_should_be": "Address antipatterns proactively. Все listed bite в production."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Antipatterns relevant только для billion-user scale.",
+              "text": "Antipatterns relevant только для billion-user scale. Most antipatterns matter на 1K-1M scale: GC for expired (storage cost), CDN (latency UX), Idempotency-Key (client correctness). Premature optimization fallacy. Most antipatterns relevant from initial deployment.",
               "correct": false,
               "sections": {
                 "what_actually": "Most antipatterns matter на 1K-1M scale: GC for expired (storage cost), CDN (latency UX), Idempotency-Key (client correctness).",
-                "source_of_confusion": "Premature optimization fallacy.",
+                "source_of_confusion": "Premature optimization fallacy. Most antipatterns matter на 1K-1M scale: GC for expired (storage cost), CDN (latency UX), Idempotency-Key (client correctness).",
                 "if_it_were_true": "Если бы believe 'only at scale', startup struggles при early traction.",
                 "how_it_should_be": "Most antipatterns relevant from initial deployment."
               }
