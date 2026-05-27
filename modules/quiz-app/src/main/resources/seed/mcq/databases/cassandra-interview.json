@@ -1,0 +1,3005 @@
+{
+  "topic_slug": "cassandra-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Apache Cassandra` и какова её главная архитектурная особенность?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Apache Cassandra` — распределённая `NoSQL` СУБД с masterless-архитектурой и линейной горизонтальной масштабируемостью. Все узлы равноправны, нет single point of failure, данные шардируются и реплицируются по кольцу автоматически.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Cassandra` создана в `Facebook` для inbox search, открыта в 2008. Хранит wide-column данные, оптимизирована под запись, использует `LSM-tree` (commit log + memtable + SSTable). Подходит для миллионов операций в секунду на сотнях узлов.",
+                "example": "Кластер из 12 узлов в трёх дата-центрах: запись `INSERT INTO events (...) VALUES (...)` уходит на координатор и реплицируется на RF узлов параллельно за ~5–10 мс.",
+                "when_to_apply": "Когда нужна линейная масштабируемость записи, высокая доступность, multi-DC репликация и предсказуемая латентность под нагрузкой в сотни тысяч `RPS`.",
+                "edge_cases": "Не подходит для `JOIN`, ad-hoc аналитики и сильной согласованности по умолчанию; модель данных проектируется под запросы заранее.",
+                "related": "Q2 AP в CAP; Q3 masterless ring; Q47 Cassandra vs PostgreSQL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Cassandra` — реляционная СУБД с master-slave репликацией и поддержкой `ACID`-транзакций уровня `SERIALIZABLE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cassandra` — `NoSQL` wide-column, masterless, без полноценных `ACID`-транзакций; есть только lightweight transactions через `Paxos` для одной партиции.",
+                "source_of_confusion": "Слово «database» и наличие `CQL` (синтаксически похожего на `SQL`) создают иллюзию реляционности.",
+                "if_it_were_true": "Существовали бы `JOIN`, foreign keys и режим `SERIALIZABLE` поверх кольца — этого нет.",
+                "how_it_should_be": "Wide-column модель, masterless peer-to-peer, eventual consistency с tunable уровнем на запрос."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Cassandra` — это in-memory кэш поверх `MySQL` с автоматическим прогревом по `LRU`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cassandra` — самостоятельная распределённая СУБД с собственным хранилищем на диске (SSTable), не кэш и не надстройка над `MySQL`.",
+                "source_of_confusion": "Путаница с `Redis`/`Memcached` и общим термином «NoSQL».",
+                "if_it_were_true": "Нельзя было бы запустить кластер без `MySQL` и не было бы команд `CREATE KEYSPACE`/`CREATE TABLE`.",
+                "how_it_should_be": "Полноценное durable-хранилище с commit log и SSTable, работающее автономно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Cassandra` использует централизованный мастер-узел для маршрутизации всех запросов, что упрощает архитектуру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Архитектура `Cassandra` masterless: любой узел может быть координатором запроса, мастера нет вообще.",
+                "source_of_confusion": "Привычка к `HDFS NameNode` / `MongoDB` primary переносится на `Cassandra`.",
+                "if_it_were_true": "Падение мастера ломало бы кластер; в реальности `Cassandra` переживает потерю любого узла без потери доступности.",
+                "how_it_should_be": "Peer-to-peer ring через gossip, без выделенного мастер-узла."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую позицию занимает `Cassandra` в `CAP`-теореме и что это означает на практике?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Cassandra` — `CP`-система: всегда возвращает строго согласованные данные, жертвуя доступностью при разрывах сети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `Cassandra` — `AP`: при partition узлы продолжают отвечать, согласованность eventual.",
+                "source_of_confusion": "Lightweight transactions через `Paxos` создают иллюзию strong consistency на всю систему.",
+                "if_it_were_true": "Запись с CL=ONE возвращала бы ошибку при сетевом разрыве, чего не происходит.",
+                "how_it_should_be": "`AP` с tunable consistency: можно настроить `QUORUM` для сильнее согласованных операций."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Cassandra` — `AP`-система: при network partition приоритет отдаётся `Availability` и `Partition tolerance`, согласованность настраивается per-request через consistency level и достигается eventual.",
+              "correct": true,
+              "sections": {
+                "explanation": "`CAP`-теорема: из `Consistency`, `Availability`, `Partition tolerance` можно гарантировать только 2. Сетевые разрывы неизбежны, поэтому выбор между `CP` и `AP`. `Cassandra` выбирает `AP`: узлы отвечают, даже если не видят часть кластера.",
+                "example": "При CL=ONE запись завершается успешно, как только один реплика подтвердила приём; остальные догоняют асинхронно через hinted handoff и read repair.",
+                "when_to_apply": "Когда бизнес терпит short-term расхождения данных, но не терпит downtime: каталоги, события, IoT-телеметрия, аудит-логи.",
+                "edge_cases": "Через CL=QUORUM/ALL можно подкрутить consistency, но при partition такие запросы будут падать — это уже ближе к `CP`-поведению.",
+                "related": "Q23 RF и CL; Q25 R+W>N; Q24 tunable consistency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Cassandra` обходит `CAP`-теорему и обеспечивает одновременно `C`, `A` и `P` через quorum-репликацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CAP`-теорему обойти нельзя; quorum-репликация лишь даёт сильнее согласованность ценой доступности при partition.",
+                "source_of_confusion": "Маркетинг «multi-DC + repair = всё одновременно» перетолковывают как обход теоремы.",
+                "if_it_were_true": "Не существовало бы дискуссий о tunable consistency и не нужны были бы repair-операции.",
+                "how_it_should_be": "Чёткий выбор `AP` с настраиваемой жёсткостью согласованности per-query."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Cassandra` относится к `CA`-системам — она не поддерживает partition tolerance, поэтому требует надёжной сети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Распределённая СУБД обязана быть `P`-tolerant — сетевые разрывы неизбежны на масштабе. `CA` без `P` существует только в одной машине.",
+                "source_of_confusion": "Старые трактовки CAP, где `Oracle RAC` ставили в `CA`.",
+                "if_it_were_true": "Кластер `Cassandra` падал бы при любом split-brain — на практике он переживает разрывы.",
+                "how_it_should_be": "`AP` с gossip и hinted handoff для переживания partitions."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что означает masterless ring в архитектуре `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один узел является мастером и обрабатывает все записи, остальные — только реплики чтения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Cassandra` нет мастера: запись и чтение принимает любой узел, выступая координатором для конкретного запроса.",
+                "source_of_confusion": "Перенос модели `MySQL Replication` или `MongoDB` primary на `Cassandra`.",
+                "if_it_were_true": "Падение мастера блокировало бы запись — этого в `Cassandra` не происходит.",
+                "how_it_should_be": "Peer-to-peer кольцо без выделенных ролей; координатор выбирается клиентом или драйвером."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Узлы общаются через центральный `ZooKeeper`-ансамбль, который хранит топологию и owners токенов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cassandra` не использует `ZooKeeper`; топология распространяется через gossip-протокол peer-to-peer.",
+                "source_of_confusion": "Аналогия с `Kafka` (исторически) или `HBase`, где `ZooKeeper` — обязательный компонент.",
+                "if_it_were_true": "Падение `ZooKeeper`-ансамбля делало бы кластер недоступным — в `Cassandra` такой зависимости нет.",
+                "how_it_should_be": "Gossip-протокол: каждый узел рассказывает соседям о состоянии, информация сходится за секунды."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Masterless ring — топология, где все узлы равноправны и расположены на логическом кольце token range. Любой узел принимает запрос клиента и становится координатором; нет primary/secondary ролей.",
+              "correct": true,
+              "sections": {
+                "explanation": "Узлы делят token-пространство `Murmur3` (от -2^63 до 2^63-1); каждый владеет диапазоном токенов. Запросы маршрутизируются по token хешу partition key. Отказ любого узла не ломает кластер — реплики берут на себя нагрузку.",
+                "example": "Кластер из 6 узлов: клиент шлёт `SELECT * FROM users WHERE id=42` на любой узел; координатор вычисляет `Murmur3(42)`, находит владельцев токена, собирает ответ.",
+                "when_to_apply": "Когда нужна отказоустойчивость без сложной leader election, линейное масштабирование добавлением узлов и операционная простота failover.",
+                "edge_cases": "Любая координация (schema changes, repair) требует gossip-конвергенции; нет лидера, который мог бы централизованно принять решение.",
+                "related": "Q1 Cassandra основы; Q4 gossip; Q5 partitioner Murmur3."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все узлы хранят полную копию данных, и при чтении опрашиваются все одновременно для выбора актуальной версии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Данные шардируются по кольцу: каждый узел владеет только своими token ranges. Полная копия на всех была бы возможна только при RF = количество узлов.",
+                "source_of_confusion": "Путаница между репликацией и шардированием.",
+                "if_it_were_true": "Кластер не масштабировался бы по объёму — каждый узел держал бы весь объём данных.",
+                "how_it_should_be": "Шардирование по token, плюс репликация на RF узлов по правилу partitioner + replication strategy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Gossip`-протокол в `Cassandra` и какую задачу он решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Gossip` — это протокол репликации данных между дата-центрами с гарантией доставки и порядка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gossip распространяет только метаданные (статус, schema, токены). Данные реплицируются по write path через координатора и реплики.",
+                "source_of_confusion": "Слово «gossip» путают с термином «replication» — оба про распространение.",
+                "if_it_were_true": "Не нужен был бы commit log и hinted handoff — gossip сам доставлял бы данные.",
+                "how_it_should_be": "Метаданные — gossip; данные — write path с replication strategy."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Gossip` работает через выделенный мастер-узел, который рассылает heartbeats всем остальным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gossip децентрализован: каждый узел случайно выбирает соседей для обмена; мастера нет.",
+                "source_of_confusion": "Аналогия с health-check сервисом, где есть центральный пробник.",
+                "if_it_were_true": "Падение «мастера» парализовало бы failure detection — в `Cassandra` так не работает.",
+                "how_it_should_be": "Симметричный peer-to-peer обмен; любой узел может инициировать gossip-цикл."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Gossip` использует `TCP keepalive` и отправляет полное состояние всех таблиц соседям каждые 100 мс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gossip передаёт компактные state-векторы (диффы), интервал ~1 секунда, не данные таблиц.",
+                "source_of_confusion": "Смешение TCP-механизмов и application-level протокола.",
+                "if_it_were_true": "Сетевой трафик gossip на 100-узловом кластере был бы огромным — реально ~KB/s на узел.",
+                "how_it_should_be": "Per-second epidemic-style обмен компактным state."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Gossip` — peer-to-peer протокол распространения метаданных кластера: статус узлов, schema version, token ownership. Каждую секунду узел случайно выбирает 1–3 соседей и обменивается state-векторами, информация сходится за O(log N) раундов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Состояние каждого узла представлено `EndpointState` с heartbeat и `ApplicationState` (DC, rack, load, schema). При обмене сравниваются версии и применяются только более свежие. Отсутствие heartbeat дольше нескольких секунд переводит узел в `DOWN`.",
+                "example": "В кластере из 100 узлов изменение schema на одном узле через gossip распространяется на все ~за 1–2 секунды; в `nodetool gossipinfo` видно state каждого узла.",
+                "when_to_apply": "Везде в `Cassandra`: обнаружение узлов, failure detection, координация schema changes, выбор реплик при выполнении запроса.",
+                "edge_cases": "Gossip может временно показывать узел `UP`, когда он реально упал (latency `phi accrual` detector); долгие GC-паузы тоже выглядят как `DOWN`.",
+                "related": "Q3 masterless; Q5 partitioner; Q35 nodetool."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое partitioner в `Cassandra` и почему по умолчанию используется `Murmur3Partitioner`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Partitioner — функция, превращающая partition key в число (token), которое определяет, на каком узле кольца лежит партиция. `Murmur3Partitioner` — дефолтный с 64-битным выходом, быстрый и даёт равномерное распределение для любых типов ключей.",
+              "correct": true,
+              "sections": {
+                "explanation": "Token-пространство `Murmur3` — от -2^63 до 2^63-1. Узлы делят это пространство по vnodes (по умолчанию 256 vnodes на узел). Хеш по `Murmur3` не криптостойкий, но быстрый и хорошо рассеивает.",
+                "example": "Запрос `INSERT INTO users (id, name) VALUES (42, 'Иван')` вычисляет `Murmur3('42')` → токен → владелец токена → запись на него и RF-1 реплик по replication strategy.",
+                "when_to_apply": "Дефолт для всех новых кластеров; альтернативы (`RandomPartitioner` на MD5, `ByteOrderedPartitioner`) — legacy или специфичные кейсы с range-запросами.",
+                "edge_cases": "`ByteOrderedPartitioner` даёт hot spots при последовательных ключах (timestamps, sequential IDs) — почти не используется.",
+                "related": "Q3 masterless ring; Q11 partition key; Q42 hot partition."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Partitioner — это сервис, который физически перемещает данные между узлами при добавлении нового сервера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Partitioner — чистая хеш-функция от partition key к токену. Перемещение данных делают streaming-операции при bootstrap/decommission.",
+                "source_of_confusion": "Смешение функции хеширования и операции rebalancing.",
+                "if_it_were_true": "Partitioner можно было бы «запустить вручную» — он не сервис, а конфигурация уровня кластера.",
+                "how_it_should_be": "Функция: `token = Murmur3(partition_key)`; rebalancing — отдельный механизм streaming."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "По умолчанию `Cassandra` использует `RandomPartitioner` на базе `MD5`, потому что он криптографически стойкий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолт — `Murmur3Partitioner` (с версии 1.2). `RandomPartitioner` (MD5) считается legacy и медленнее.",
+                "source_of_confusion": "Документация старых версий до 1.2.",
+                "if_it_were_true": "Кластеры на 4.x использовали бы `MD5`-хеш — реально это `Murmur3`.",
+                "how_it_should_be": "`Murmur3Partitioner` как дефолт; смена partitioner после создания кластера невозможна."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Partitioner выбирает координатор запроса на основе round-robin по списку всех узлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Координатор выбирает драйвер (token-aware policy) или клиент произвольно. Partitioner вычисляет лишь токен партиции — это разные слои.",
+                "source_of_confusion": "Слова «partition» и «coordinator» воспринимаются как связанные, хотя относятся к разным аспектам.",
+                "if_it_were_true": "Не было бы token-aware маршрутизации в драйверах, которая снижает hops.",
+                "how_it_should_be": "Partitioner → token; драйвер по token-aware policy → ближайший владелец токена как координатор."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `keyspace` в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Keyspace` — это физическая директория на диске узла, в которой `Cassandra` хранит SSTables всех таблиц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Keyspace — логическая абстракция в schema. На диске данные лежат в `data/<keyspace>/<table>/`, но keyspace сам по себе — концепт schema, а не filesystem.",
+                "source_of_confusion": "Слово «space» намекает на физическое пространство.",
+                "if_it_were_true": "Нельзя было бы менять расположение data dir без миграции schema.",
+                "how_it_should_be": "Логическая группировка таблиц с общим replication; физическое размещение управляется отдельно через `data_file_directories`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Keyspace` — top-level namespace кластера, аналог database в реляционной СУБД. Содержит таблицы и определяет replication strategy и replication factor — параметры, общие для всех таблиц внутри.",
+              "correct": true,
+              "sections": {
+                "explanation": "Создаётся как `CREATE KEYSPACE my_app WITH replication = {'class':'NetworkTopologyStrategy','dc1':3,'dc2':3}`. Стратегии: `SimpleStrategy` (только для одного DC, dev), `NetworkTopologyStrategy` (prod, per-DC RF).",
+                "example": "Для multi-DC деплоя: `CREATE KEYSPACE app WITH replication = {'class':'NetworkTopologyStrategy','dc_eu':3,'dc_us':3}` даёт 6 копий каждой партиции.",
+                "when_to_apply": "Один keyspace на приложение или на bounded context; отдельные keyspaces для разных RF (например, hot vs cold данные).",
+                "edge_cases": "Изменение RF на existing keyspace требует ручного `nodetool repair`, иначе старые данные не реплицируются автоматически.",
+                "related": "Q7 table; Q23 RF и стратегии; Q39 datacenter-aware replication."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Keyspace` — это пользовательская роль с правами доступа к таблицам, аналог schema в `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли и права — отдельный механизм через `CREATE ROLE`/`GRANT`. Keyspace — структурный namespace без привязки к пользователю.",
+                "source_of_confusion": "В `PostgreSQL` schema часто привязана к роли по умолчанию.",
+                "if_it_were_true": "У каждого keyspace был бы owner с эксклюзивным доступом — этого нет.",
+                "how_it_should_be": "Keyspace — namespace; роли и permissions описываются отдельно через RBAC."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Один keyspace может иметь разные replication factor для разных таблиц внутри него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RF задаётся на уровне keyspace и общий для всех таблиц внутри. Для разного RF нужен отдельный keyspace.",
+                "source_of_confusion": "Желание гибкости как в реляционной модели с per-table настройками.",
+                "if_it_were_true": "`CREATE TABLE ... WITH replication = ...` было бы валидным синтаксисом — это не так.",
+                "how_it_should_be": "Группируем по RF: hot keyspace с RF=3, cold keyspace с RF=2 и т. п."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое table в `Cassandra` и чем она отличается от таблицы в реляционной СУБД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Table в `Cassandra` поддерживает `FOREIGN KEY` и `JOIN` так же, как `PostgreSQL`, для нормализации данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ни `FOREIGN KEY`, ни `JOIN` в `Cassandra` нет. Связи моделируются денормализацией или несколькими таблицами под разные запросы.",
+                "source_of_confusion": "`CQL` синтаксически похож на `SQL`, что создаёт иллюзию полной совместимости.",
+                "if_it_were_true": "Существовали бы запросы `SELECT a.*, b.* FROM a JOIN b ON ...` — их нет в `CQL`.",
+                "how_it_should_be": "Денормализация: дублирование данных в несколько таблиц под каждый query pattern."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Table — это просто файл на диске, и `Cassandra` пишет все строки последовательно без структуры partitions/clustering.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Физически данные лежат в SSTable, но логически структурированы по partitions и clustering rows внутри них.",
+                "source_of_confusion": "Низкоуровневое представление SSTable как «просто файла» игнорирует индексы и bloom filters.",
+                "if_it_were_true": "Любой запрос требовал бы полного сканирования файла — этого не происходит благодаря partition key.",
+                "how_it_should_be": "Логически — wide-column с partitions; физически — отсортированные SSTable с индексами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Table в `Cassandra` — wide-column структура с обязательным primary key. Внешне напоминает SQL-таблицу, но: нет `JOIN`, нет foreign keys, нет схемы без ключа, доступ только по partition key (с опциональным clustering).",
+              "correct": true,
+              "sections": {
+                "explanation": "Таблица состоит из partitions (по hash partition key), внутри которых строки сортируются по clustering key. Колонки могут быть статическими (`STATIC`) — общими на всю партицию. Schema нужна, но эволюционирует через `ALTER TABLE`.",
+                "example": "`CREATE TABLE events (user_id uuid, ts timestamp, type text, payload text, PRIMARY KEY (user_id, ts)) WITH CLUSTERING ORDER BY (ts DESC)` — партиция на пользователя, сортировка по времени.",
+                "when_to_apply": "Одна таблица на один query pattern; не пытаться нормализовать как в реляционной модели.",
+                "edge_cases": "`ALTER TABLE` дешёвая для добавления колонок, но смена типа или primary key — невозможна, нужно создавать новую таблицу.",
+                "related": "Q6 keyspace; Q8 partition key; Q11 denormalization."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Таблица в `Cassandra` может существовать без primary key, как `MongoDB` collection.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Primary key обязателен в `Cassandra`: без partition key неоткуда взять token для распределения по кольцу.",
+                "source_of_confusion": "Сравнение со schemaless `NoSQL` (`MongoDB`), где `_id` опционален при insert.",
+                "if_it_were_true": "`CREATE TABLE x (a int)` без `PRIMARY KEY` было бы валидным — оно отклоняется парсером.",
+                "how_it_should_be": "PRIMARY KEY всегда; минимум — один partition key column."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова роль partition key в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Partition key — это автоинкрементное поле, генерируемое `Cassandra` для каждой строки автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Partition key задаёт разработчик в `PRIMARY KEY`. `Cassandra` не имеет автоинкрементов; для уникальности используется `uuid()`/`timeuuid()`.",
+                "source_of_confusion": "Привычка к `AUTO_INCREMENT` в `MySQL` или `SERIAL` в `PostgreSQL`.",
+                "if_it_were_true": "Не нужно было бы указывать partition key в DDL — это требование `CQL`.",
+                "how_it_should_be": "Разработчик выбирает поле(а) для partition key явно при `CREATE TABLE`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Partition key хранится только в индексе и не влияет на физическое размещение данных по узлам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно partition key через хеш определяет физическое размещение: token → владельцы → реплики. Это его основная функция.",
+                "source_of_confusion": "Перенос модели B-tree индекса из реляционных СУБД, где ключ — лишь способ поиска.",
+                "if_it_were_true": "Данные распределялись бы случайно — не было бы возможности роутить запрос на нужный узел.",
+                "how_it_should_be": "Partition key → token → owner node; основа sharding в `Cassandra`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Partition key должен меняться при каждой записи, иначе строки переписывают друг друга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Строки с одинаковым partition key, но разным clustering key — это разные строки внутри одной партиции. Перезапись происходит только при полном совпадении primary key.",
+                "source_of_confusion": "Путаница между partition key и полным primary key.",
+                "if_it_were_true": "Не было бы wide rows и time-series моделей по одному ключу.",
+                "how_it_should_be": "Partition key группирует, clustering key упорядочивает внутри партиции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Partition key определяет, на каком узле хранится строка: его хеш через partitioner даёт token, по которому ищется владелец. Все строки с одинаковым partition key лежат на одних и тех же RF узлах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Partition key — первый компонент primary key. Если PK составной — `((a, b), c)` — то partition key это `(a, b)`. Запросы без partition key (полное сканирование) почти всегда — анти-паттерн.",
+                "example": "Для `PRIMARY KEY ((user_id), event_id)` все события одного пользователя — в одной партиции. Запрос `WHERE user_id = ?` идёт на нужный узел напрямую.",
+                "when_to_apply": "Выбирается так, чтобы дать равномерное распределение и поддержать основные запросы по равенству; кардинальность должна быть высокой.",
+                "edge_cases": "Низкокардинальный partition key (например, `country`) приводит к hot partition; высокий объём данных в одной партиции — к wide row проблеме.",
+                "related": "Q5 partitioner; Q9 clustering key; Q42 hot partition."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова роль clustering key в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Clustering key определяет порядок строк внутри одной партиции и позволяет делать range-запросы по этим полям. Это все компоненты primary key после partition key.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для `PRIMARY KEY ((user_id), ts, event_id)` partition key — `user_id`, clustering — `(ts, event_id)`. Строки физически отсортированы по `ts ASC, event_id ASC` (или `DESC` через `CLUSTERING ORDER BY`).",
+                "example": "Запрос `SELECT * FROM events WHERE user_id = ? AND ts >= ? AND ts < ?` эффективен — сканирует часть отсортированной партиции, без full scan.",
+                "when_to_apply": "Для запросов по диапазону, последних N событий, сортированных лент, time-series — всегда часть clustering key.",
+                "edge_cases": "Нельзя пропустить prefix clustering: запрос `WHERE user_id=? AND event_id=?` без `ts` будет отклонён или потребует `ALLOW FILTERING`.",
+                "related": "Q8 partition key; Q12 composite PK; Q44 ALLOW FILTERING."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Clustering key — это поле, по которому `Cassandra` физически распределяет данные между узлами кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Распределение между узлами делает partition key. Clustering key упорядочивает только внутри партиции на одном узле.",
+                "source_of_confusion": "Слово «cluster» ассоциируется со всем кластером, хотя в `Cassandra` это про группировку внутри партиции.",
+                "if_it_were_true": "Запросы по clustering key без partition key были бы локальными — на деле они требуют scatter-gather.",
+                "how_it_should_be": "Distribution — partition key; in-partition order — clustering key."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Clustering key обязателен — без него таблица не может быть создана.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Clustering key опционален. Таблица с `PRIMARY KEY (id)` (только partition key) валидна, в партиции будет ровно одна строка.",
+                "source_of_confusion": "Шаблонные примеры с time-series, где clustering всегда есть.",
+                "if_it_were_true": "`CREATE TABLE users (id uuid PRIMARY KEY, name text)` отклонялось бы — это валидный DDL.",
+                "how_it_should_be": "Обязателен только partition key; clustering добавляется при необходимости порядка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Clustering key поддерживает только один компонент; для нескольких полей нужно создавать отдельные таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Clustering key может быть из нескольких полей: `PRIMARY KEY ((user_id), ts, event_type, event_id)` — нормальная практика.",
+                "source_of_confusion": "Аналогия с `MongoDB` _id, где он один.",
+                "if_it_were_true": "Сложные time-series модели с многомерной сортировкой были бы невозможны.",
+                "how_it_should_be": "Несколько clustering columns; порядок определяется их позицией в DDL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое composite primary key в `Cassandra` и как он записывается?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PRIMARY KEY (a, b, c)` и `PRIMARY KEY ((a, b, c))` — синонимы и означают одно и то же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные конструкции. Первая — `a` partition key, `b, c` clustering. Вторая — `(a, b, c)` целиком partition key, clustering нет.",
+                "source_of_confusion": "Невнимательность к скобкам — скобки несут смысл, а не косметику.",
+                "if_it_were_true": "Не было бы способа отличить partition key от clustering в DDL — это критичное различие.",
+                "how_it_should_be": "Внешние скобки явно выделяют partition key; всё, что снаружи — clustering."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Composite primary key — primary key из нескольких колонок: первая группа (в скобках) — partition key, остальные — clustering columns. Например, `PRIMARY KEY ((a, b), c, d)` — partition key `(a, b)`, clustering `(c, d)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Если внешние скобки опущены — `PRIMARY KEY (a, b, c)` — partition key это только `a`, а `b, c` — clustering. Это частая ошибка: данные кладутся в одну партицию вместо предполагаемого распределения.",
+                "example": "`PRIMARY KEY ((tenant_id, day), ts)` — партиция на (tenant_id, day), сортировка по `ts`. Запрос `WHERE tenant_id=? AND day=? AND ts > ?` локален и эффективен.",
+                "when_to_apply": "Когда нужно явное составное partition key (например, разбить wide partition по дням) или сложное упорядочивание clustering.",
+                "edge_cases": "Composite partition key требует указания ВСЕХ его компонентов в `WHERE` — нельзя искать только по `tenant_id`, нужен и `day`.",
+                "related": "Q8 partition key; Q9 clustering; Q42 hot partition."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В composite PK можно искать по любой колонке отдельно без `ALLOW FILTERING`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WHERE` должно содержать все partition key columns и prefix clustering columns. Иначе — отклонение или `ALLOW FILTERING`.",
+                "source_of_confusion": "Привычка к B-tree индексам в `SQL`, где любой prefix композитного индекса работает.",
+                "if_it_were_true": "Хеш partition был бы лишним — `Cassandra` не могла бы локализовать запрос.",
+                "how_it_should_be": "Все компоненты partition key + prefix clustering; нарушение требует `ALLOW FILTERING` (опасно)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Composite PK может содержать только одну partition key column и сколько угодно clustering, но не наоборот.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Можно несколько partition key columns: `((a, b))`. Ограничения наоборот нет — partition key из нескольких полей валиден.",
+                "source_of_confusion": "Старые примеры из документации с простым partition key.",
+                "if_it_were_true": "`PRIMARY KEY ((tenant_id, day), ts)` отклонялся бы — он валиден.",
+                "how_it_should_be": "Любое количество partition key columns + любое clustering, оба компонента опциональны кроме partition key."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему в `Cassandra` принято денормализовать данные?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Денормализация в `Cassandra` запрещена и считается анти-паттерном; нужно стремиться к 3NF.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Cassandra` денормализация — рекомендуемый подход. Нормализация (3NF) неприменима без `JOIN` и приводит к неэффективным запросам.",
+                "source_of_confusion": "Перенос теории реляционного дизайна (Codd) на NoSQL модель.",
+                "if_it_were_true": "Не существовало бы паттерна «table per query» и `MATERIALIZED VIEW` — а они стандарт.",
+                "how_it_should_be": "Денормализация — норма; нормализация только когда обновлений мало и `JOIN` нужны редко (через приложение)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Денормализация автоматически выполняется `Cassandra` через background процесс, разработчику делать ничего не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cassandra` не делает автоматическую денормализацию. Materialized views — единственная встроенная форма, но и она имеет ограничения.",
+                "source_of_confusion": "Маркетинг «smart database» создаёт иллюзию автомагии.",
+                "if_it_were_true": "Не нужно было бы проектировать несколько таблиц вручную — а это основная работа в моделировании.",
+                "how_it_should_be": "Разработчик создаёт денормализованные таблицы вручную или использует материализованные view."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Cassandra` нет `JOIN`, а запросы должны попадать в одну партицию для эффективности. Поэтому данные дублируются в несколько таблиц, каждая оптимизирована под конкретный запрос — это и есть денормализация.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реляционная модель экономит место и поддерживает консистентность через FK. `Cassandra` платит дисковым пространством за скорость: одна и та же сущность пишется в N таблиц, каждая со своим primary key, под свой query pattern.",
+                "example": "Для запросов «события по пользователю» и «события по типу» делают `events_by_user (user_id, ts, ...)` и `events_by_type (type, ts, ...)` — одна запись пишется в обе.",
+                "when_to_apply": "Всегда при моделировании в `Cassandra`: query-driven design, отдельная таблица под каждый существенный запрос.",
+                "edge_cases": "Денормализация требует поддержания консистентности на стороне приложения — обновление сущности должно идти во все её таблицы (batch или event-driven).",
+                "related": "Q12 query-driven design; Q14 materialized views; Q7 table."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Денормализация в `Cassandra` нужна только для аналитических запросов, для `OLTP` достаточно одной нормализованной таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Cassandra` денормализация именно для `OLTP`-доступа по разным ключам. Аналитика обычно делается через `Spark`/`Presto`.",
+                "source_of_confusion": "Аналогия с data warehouse, где денормализация — про star schema для analytics.",
+                "if_it_were_true": "Не нужны были бы `events_by_user` и `events_by_type` — но именно так моделируют `OLTP`-запросы.",
+                "how_it_should_be": "Денормализация — основа `OLTP` access pattern; analytics — отдельный путь через batch."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что означает «query-driven design» при моделировании в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Query-driven design — это автоматическая оптимизация запросов планировщиком `Cassandra`, аналог `EXPLAIN` в `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это методология проектирования schema разработчиком. `Cassandra` не имеет умного оптимизатора, выбирающего план — путь чтения предопределён primary key.",
+                "source_of_confusion": "Похожие термины «query optimizer» в реляционных СУБД.",
+                "if_it_were_true": "Можно было бы написать любые запросы и СУБД сама бы оптимизировала — на практике нужны подходящие таблицы.",
+                "how_it_should_be": "Это методология: список запросов → DDL под них; оптимизатор тут не при чём."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Query-driven design в `Cassandra` означает использование сложных `WHERE` с `ALLOW FILTERING` для любых запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ALLOW FILTERING` — анти-паттерн в проде. Query-driven наоборот избегает фильтрации, проектируя таблицу под нужный запрос.",
+                "source_of_confusion": "`ALLOW FILTERING` встречается в туториалах и кажется лёгким решением.",
+                "if_it_were_true": "Денормализация не понадобилась бы — но `ALLOW FILTERING` сканирует все партиции и не масштабируется.",
+                "how_it_should_be": "Создать таблицу с правильным primary key; `ALLOW FILTERING` — только для админских скриптов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Query-driven design противоположен паттерну «table per query» и предполагает одну универсальную таблицу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это и есть «table per query» — отдельная таблица под каждый существенный access pattern.",
+                "source_of_confusion": "Семантическая путаница: «driven by» воспринимается как «руководствуется одной таблицей».",
+                "if_it_were_true": "Одной таблицей нельзя покрыть все access patterns без анти-паттернов — это противоречит подходу.",
+                "how_it_should_be": "Множество таблиц, каждая под свой запрос; одна и та же сущность дублируется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Query-driven design — подход, при котором сначала собираются все access patterns (запросы приложения), и под каждый создаётся отдельная таблица с подходящим primary key. Схема следует за запросами, а не наоборот.",
+              "correct": true,
+              "sections": {
+                "explanation": "В реляционной модели идут от сущностей к схеме, потом думают о запросах. В `Cassandra` это даёт wide partitions или `ALLOW FILTERING`. Поэтому идут обратно: список запросов → таблицы → DDL → денормализация записи.",
+                "example": "Для запросов «events by user», «events by type», «events by day» получаем три таблицы со своими PK; одна запись события идёт `BATCH` во все три.",
+                "when_to_apply": "На этапе проектирования любого нового приложения на `Cassandra`; собирать access patterns до DDL.",
+                "edge_cases": "Если запросы меняются, нужно мигрировать данные в новые таблицы — это операция уровня batch, не транзакции.",
+                "related": "Q11 denormalization; Q13 materialized views; Q44 ALLOW FILTERING."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое materialized views в `Cassandra` и какие у них ограничения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Materialized View` — встроенная производная таблица, автоматически синхронизируемая `Cassandra` при изменениях базовой таблицы. Позволяет иметь второй access pattern без ручной денормализации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Создаётся как `CREATE MATERIALIZED VIEW v AS SELECT ... FROM base WHERE ... PRIMARY KEY (...)`. Ограничения: primary key view должен включать все колонки PK базы, можно добавить ровно одну новую non-PK колонку в PK view.",
+                "example": "`CREATE MATERIALIZED VIEW users_by_email AS SELECT * FROM users WHERE email IS NOT NULL AND id IS NOT NULL PRIMARY KEY (email, id)` даёт поиск по email.",
+                "when_to_apply": "Когда есть устойчивый дополнительный access pattern по одной колонке; для сложных — лучше ручная денормализация.",
+                "edge_cases": "Materialized views в проде до `4.0` считались экспериментальными — известные баги с repair и rebuild; обновления view eventually consistent.",
+                "related": "Q11 denormalization; Q12 query-driven; Q15 secondary indexes."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Materialized views в `Cassandra` идентичны view в `PostgreSQL` и пересчитываются только при `REFRESH`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cassandra` MV обновляются автоматически при каждой записи в базовую таблицу. `REFRESH` не нужен и не существует.",
+                "source_of_confusion": "Термин «materialized view» из реляционного мира с явным refresh.",
+                "if_it_were_true": "Данные в view устаревали бы до явного `REFRESH` — но в `Cassandra` они eventually свежие.",
+                "how_it_should_be": "Автоматическая синхронизация на write path; view меняется параллельно с базой."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В materialized view можно добавить любое количество новых колонок в primary key относительно базы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Можно добавить ровно одну новую колонку в PK view (не считая колонок PK базы). Это жёсткое ограничение схемы.",
+                "source_of_confusion": "Желание гибкости как в денормализации.",
+                "if_it_were_true": "MV покрывали бы все access patterns — на практике сложные кейсы решает только ручная денормализация.",
+                "how_it_should_be": "Одна новая колонка в PK view; для большего — отдельная таблица под управлением приложения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Materialized view гарантирует strong consistency с базовой таблицей — данные всегда совпадают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MV обновляется асинхронно, eventually consistent; возможно временное расхождение при сбоях узлов.",
+                "source_of_confusion": "Слово «materialized» намекает на синхронную материализацию.",
+                "if_it_were_true": "Запись в базу блокировала бы клиента до подтверждения от всех view — было бы медленно и не масштабируемо.",
+                "how_it_should_be": "Eventually consistent; для критичных данных лучше ручная денормализация с control над consistency."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен write path в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Запись в `Cassandra` идёт сразу в SSTable на диск с in-place update существующих строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SSTable неизменяемы; in-place update в `Cassandra` отсутствует. Новые записи идут в memtable; SSTable создаются только при flush.",
+                "source_of_confusion": "Перенос модели B-tree СУБД (`MySQL`, `PostgreSQL`) с in-place update.",
+                "if_it_were_true": "Не нужен был бы compaction — он существует именно из-за неизменяемых SSTable.",
+                "how_it_should_be": "Append-only: commit log + memtable → периодический flush → compaction."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Координатор отправляет запись на RF реплик. Каждая реплика: 1) пишет в `commit log` (append-only, для durability), 2) обновляет `memtable` в RAM, 3) подтверждает координатору. Memtable периодически flush'ится в `SSTable` на диск.",
+              "correct": true,
+              "sections": {
+                "explanation": "`LSM-tree` модель: записи всегда последовательные (commit log + flush), без in-place update. SSTable неизменяемы; повторные записи добавляют новые версии, старые убираются compaction'ом.",
+                "example": "`INSERT INTO events (...)` → commit log fsync (по умолчанию periodic 10s) → memtable update в RAM → ACK. При достижении порога memtable → flush в новый SSTable.",
+                "when_to_apply": "Понимание write path критично для tuning durability (`commitlog_sync`), latency (size of memtable) и compaction strategy.",
+                "edge_cases": "При `commitlog_sync: periodic` можно потерять до 10s данных при крахе; `batch` режим даёт fsync на каждую запись, но снижает throughput.",
+                "related": "Q15 read path; Q16 SSTable compaction; Q19 tombstones."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Координатор пишет только на один узел, остальные реплики получают данные через background-репликацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Координатор шлёт запись параллельно на все RF реплик; ждёт ответа стольких, сколько требует CL. Background — это hinted handoff для отказавших.",
+                "source_of_confusion": "Аналогия с master-slave async replication (`MySQL`).",
+                "if_it_were_true": "Запись с CL=ALL не работала бы — она требует синхронных ACK от всех реплик.",
+                "how_it_should_be": "Параллельная рассылка координатором; hinted handoff — для temporary unreachable реплик."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Memtable располагается на диске и flushится в commit log при переполнении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Memtable — структура в RAM; flush идёт в SSTable на диск. Commit log пишется параллельно с memtable update, не из неё.",
+                "source_of_confusion": "Перепутана direction потока: memtable → SSTable (не → commit log).",
+                "if_it_were_true": "Memtable не давала бы выигрыша по latency — в RAM она именно для скорости.",
+                "how_it_should_be": "Memtable в RAM, flush в новый SSTable; commit log независимая durability-структура."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `commit log` в `Cassandra` и какую роль он играет в durability?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Commit log — это распределённый журнал, реплицируемый между узлами для consensus.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Commit log локален на каждом узле; никакой репликации между узлами нет. Распределённый consensus — отдельный механизм (Paxos для LWT).",
+                "source_of_confusion": "Аналогия с `Raft log` или `Kafka log`.",
+                "if_it_were_true": "Запись с CL=ONE требовала бы координации commit log на нескольких узлах — она этого не делает.",
+                "how_it_should_be": "Locally per-node для durability; replication — отдельный механизм write path."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Commit log используется только при репликации hinted handoff, обычные записи в нём не сохраняются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждая обычная запись попадает в commit log до подтверждения. Hints — отдельная структура (`hints/`).",
+                "source_of_confusion": "Путаница разных журналов на диске.",
+                "if_it_were_true": "После краха теряли бы все memtable-данные — restart восстанавливает их именно из commit log.",
+                "how_it_should_be": "Commit log = ВСЕ mutations узла; hints = отложенные mutations для других узлов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Commit log` — append-only журнал на диске, в который записывается каждая mutation до подтверждения клиенту. Гарантирует durability: при крахе узла журнал воспроизводится при старте, восстанавливая memtable.",
+              "correct": true,
+              "sections": {
+                "explanation": "Файлы commit log в `commitlog/`; ротация по сегментам. `commitlog_sync` определяет момент fsync: `periodic` (дефолт, каждые 10s — баланс), `batch` (на каждую запись — строгая durability, но дорого), `group` (компромисс).",
+                "example": "Запись идёт в commit log → memtable → ACK. Crash → restart → replay commit log → memtable восстанавливается → flush в SSTable.",
+                "when_to_apply": "Прозрачно. Tuning `commitlog_sync` — компромисс durability vs throughput; для финансовых данных — `batch` mode, для метрик — `periodic`.",
+                "edge_cases": "При `periodic` можно потерять до 10s записей при крахе; `batch` снижает throughput в разы. Commit log не реплицируется — это локальный durability механизм узла.",
+                "related": "Q14 write path; Q15 compaction; Q40 nodetool."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Commit log заменяется на SSTable после flush memtable, поэтому хранится бесконечно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Commit log сегменты удаляются по мере того, как соответствующие memtables flush'нуты в SSTable; их роль восстановления исчерпана.",
+                "source_of_confusion": "Логика «всё на диске вечно».",
+                "if_it_were_true": "Disk usage commit log рос бы бесконечно — он ограничен `commitlog_total_space_in_mb`.",
+                "how_it_should_be": "Сегменты удаляются после flush соответствующих memtables; размер контролируется лимитом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужен `compaction` в `Cassandra` и какие основные стратегии существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Compaction в `Cassandra` — это просто сжатие данных алгоритмом `LZ4`/`Snappy` для экономии диска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сжатие (`compression`) и compaction — разные вещи. Compaction объединяет SSTable; compression — алгоритм сжатия блоков SSTable.",
+                "source_of_confusion": "Похожие слова и оба относятся к диску.",
+                "if_it_were_true": "Compaction strategy не было бы выбора — только алгоритм компрессии.",
+                "how_it_should_be": "Compaction — merge SSTable; compression — настраивается отдельно через `WITH compression = {...}`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Compaction нужен только для производительности и его можно безопасно выключить навсегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без compaction число SSTable бесконечно растёт, read path деградирует, tombstones не удаляются — данные физически остаются.",
+                "source_of_confusion": "Желание избежать пиков `I/O` в проде приводит к мысли выключить compaction.",
+                "if_it_were_true": "Можно было бы накопить тысячи SSTable и не платить за это.",
+                "how_it_should_be": "Compaction обязателен; tuning через выбор стратегии и параметров, но не выключение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`LCS` (`LevelledCompactionStrategy`) всегда лучше `STCS`, потому что использует уровни — это современный стандарт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LCS` оптимизирует чтение, но платит большим write amplification и более интенсивным `I/O`. Для write-heavy `STCS` обычно лучше.",
+                "source_of_confusion": "«Levelled» звучит как «новее, продвинутее».",
+                "if_it_were_true": "Дефолт был бы `LCS` — но это `STCS`.",
+                "how_it_should_be": "Выбор по профилю нагрузки: чтение vs запись; не «всегда лучше»."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Compaction объединяет несколько SSTable в один, удаляя устаревшие версии и tombstones. Без compaction число SSTable растёт, read path замедляется (нужно проверять каждую таблицу). Основные стратегии: `STCS`, `LCS`, `TWCS`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`STCS` (`SizeTieredCompactionStrategy`) — дефолт, объединяет SSTable близких размеров; хорошо для write-heavy. `LCS` (`LevelledCompactionStrategy`) — уровни, гарантирует малое число SSTable на чтение; read-heavy. `TWCS` (`TimeWindowCompactionStrategy`) — окна времени, для time-series.",
+                "example": "Для time-series: `WITH compaction = {'class':'TimeWindowCompactionStrategy','compaction_window_unit':'DAYS','compaction_window_size':1}` — отдельный SSTable на день, дешёвый drop старых данных.",
+                "when_to_apply": "`STCS` — дефолт; `LCS` — таблицы с частыми обновлениями и низкой латентностью чтения; `TWCS` — append-only time-series с TTL.",
+                "edge_cases": "Compaction временно удваивает дисковый объём; пик `I/O` и CPU; на write-heavy узлах нужен достаточный запас по диску.",
+                "related": "Q14 write path; Q19 tombstones; Q15 read path."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен read path в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Координатор отправляет запрос на нужное число реплик согласно CL. На реплике: 1) проверка `bloom filter` per SSTable, 2) `key cache`, 3) `partition index`, 4) чтение из всех релевантных SSTable + memtable, 5) merge по timestamp, 6) ответ.",
+              "correct": true,
+              "sections": {
+                "explanation": "Из-за неизменяемых SSTable одна партиция может лежать в нескольких файлах; нужен merge. Bloom filter отсеивает SSTable без ключа, key cache сокращает дисковый seek, partition index указывает offset.",
+                "example": "`SELECT * FROM events WHERE user_id = ? AND ts = ?`: координатор → 1 реплика (CL=ONE) → bloom filter каждой SSTable → отфильтрованные SSTable + memtable → merge → ответ.",
+                "when_to_apply": "Понимание read path критично для tuning: настройка `key_cache_size`, выбор compaction strategy для уменьшения числа SSTable, оптимизация bloom filter false positive rate.",
+                "edge_cases": "Если ключ есть в N SSTable, read latency растёт ~линейно с N; читать слишком много SSTable — основная причина медленного чтения.",
+                "related": "Q14 write path; Q15 compaction; Q18 bloom filter."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При чтении `Cassandra` загружает всю партицию целиком в RAM и ищет нужную строку линейно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используется partition index и bloom filter; целиком партиция в RAM не грузится. При чтении большой wide partition это было бы катастрофой.",
+                "source_of_confusion": "Упрощённое представление о NoSQL как «загрузил документ — нашёл поле».",
+                "if_it_were_true": "Запросы по wide partition с миллионами строк падали бы по памяти — на практике они работают.",
+                "how_it_should_be": "Чтение по offset из partition index; merge только релевантных частей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Read path всегда читает только одну SSTable — последнюю по времени записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Партиция может быть распределена по нескольким SSTable из-за compaction; нужен merge по timestamp всех релевантных.",
+                "source_of_confusion": "Аналогия с in-place update СУБД, где данные в одном месте.",
+                "if_it_were_true": "Compaction был бы не нужен — но он именно сводит партицию в одну SSTable.",
+                "how_it_should_be": "Merge всех SSTable, содержащих ключ; bloom filter отсеивает заведомо отсутствующие."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтение в `Cassandra` всегда идёт через мастер-узел партиции, остальные реплики не используются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Cassandra` нет мастера. Координатор шлёт запрос на нужное число реплик по CL; для CL=QUORUM это (RF/2 + 1) реплик параллельно.",
+                "source_of_confusion": "Перенос модели single-leader replication.",
+                "if_it_were_true": "Запросы с CL=ALL/QUORUM не работали бы — они требуют ответа от нескольких реплик.",
+                "how_it_should_be": "Координатор → реплики (по CL); никаких мастеров."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `bloom filter` в `Cassandra` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Bloom filter` гарантирует, что ключ есть в SSTable, без false positives.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bloom filter — вероятностная структура: «возможно есть» (может быть false positive) или «точно нет» (без false negative).",
+                "source_of_confusion": "Слово «filter» воспринимается как точный фильтр.",
+                "if_it_were_true": "Bloom filter заменял бы partition index — но реально нужен и индекс, и filter.",
+                "how_it_should_be": "Probabilistic: FP — да, FN — нет; финальное подтверждение через partition index."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Bloom filter` — компактная вероятностная структура per SSTable, отвечающая «возможно, ключ есть» или «точно нет». Позволяет пропустить SSTable без партиции без обращения к диску.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая SSTable имеет бит-массив; partition key хешируется несколькими функциями, биты выставляются при записи. На read: если хотя бы один бит=0 — ключа точно нет. False positive rate настраивается (`bloom_filter_fp_chance`, дефолт 0.01).",
+                "example": "Партиция в 5 SSTable: bloom filter говорит «возможно есть» только в 2 → читаем индекс этих двух, остальные пропускаем без disk seek.",
+                "when_to_apply": "Работает прозрачно; tuning — уменьшение `bloom_filter_fp_chance` для read-heavy таблиц ценой большей RAM.",
+                "edge_cases": "Bloom filter хранится в off-heap; на большой таблице может занимать сотни МБ. Слишком жёсткий FP rate раздувает память без значимого выигрыша.",
+                "related": "Q17 read path; Q15 compaction; Q33 secondary indexes."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Bloom filter существует один на всю таблицу и хранится централизованно в координаторе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bloom filter — per SSTable, локальный на каждом узле; нет центрального хранилища.",
+                "source_of_confusion": "Аналогия с глобальным индексом.",
+                "if_it_were_true": "Координатор стал бы bottleneck — это противоречит masterless архитектуре.",
+                "how_it_should_be": "Per-SSTable bloom filter в off-heap memory узла-владельца."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Bloom filter в `Cassandra` используется только для secondary indexes, не для основного read path.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bloom filter — основной механизм read path для отсева SSTable. Secondary indexes — отдельная история.",
+                "source_of_confusion": "Bloom filter упоминается в контексте поиска, что путают с индексами.",
+                "if_it_were_true": "Read path был бы намного медленнее на партициях, размазанных по многим SSTable.",
+                "how_it_should_be": "Bloom filter — обязательная часть read path для каждой SSTable."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `tombstone` в `Cassandra` и какие проблемы он создаёт?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Tombstone` — это резервная копия строки перед удалением, для отката изменений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tombstone — не backup, а маркер удаления с timestamp; восстановить из него удалённые данные нельзя.",
+                "source_of_confusion": "Слово «tombstone» (надгробие) метафорически воспринимается как «памятник старым данным».",
+                "if_it_were_true": "Существовала бы команда «откатить tombstone» — её нет.",
+                "how_it_should_be": "Маркер удаления для синхронизации между репликами; реальные данные удаляются compaction после `gc_grace_seconds`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tombstones удаляются мгновенно после `DELETE` и не влияют на производительность чтения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tombstones живут минимум `gc_grace_seconds` (дефолт 10 дней), участвуют в merge при чтении и замедляют его.",
+                "source_of_confusion": "Ожидание поведения in-place delete как в реляционной СУБД.",
+                "if_it_were_true": "Не было бы проблемы `TombstoneOverwhelmingException` — она хорошо известна.",
+                "how_it_should_be": "Tombstones живут пока repair не завершится; их влияние на latency — реальная проблема."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Tombstone` — маркер удаления: при `DELETE` физически данные не стираются, пишется специальная запись со временем удаления. Tombstones живут до `gc_grace_seconds` (дефолт 10 дней), потом удаляются compaction'ом.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tombstones нужны для распределённой согласованности: иначе старая реплика, не получившая `DELETE`, при repair воскресит данные. Но при чтении они проходят через merge с реальными строками, увеличивая latency и потребление памяти.",
+                "example": "`SELECT * FROM events WHERE user_id = ?` по партиции с 100k tombstones может выдать warning в логах `Read 100000 tombstones for a single partition`.",
+                "when_to_apply": "Понимание tombstones важно при моделировании удалений; для bulk delete лучше TTL или TWCS вместо явных `DELETE`.",
+                "edge_cases": "Слишком много tombstones приводит к `TombstoneOverwhelmingException`. Лимит `tombstone_failure_threshold` по умолчанию 100k.",
+                "related": "Q15 compaction; Q31 TTL; Q26 anti-entropy repair."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Tombstones создаются только при `DELETE`; `UPDATE` и `INSERT` их не порождают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tombstones также возникают при `UPDATE` с `NULL`, `DELETE` отдельной колонки, истечении TTL, удалении партиции — почти любая «отрицательная» операция.",
+                "source_of_confusion": "Очевидная ассоциация tombstone только с `DELETE`.",
+                "if_it_were_true": "TTL не создавал бы tombstones — на практике он генерирует expired-tombstones.",
+                "how_it_should_be": "Любая операция «не существует» порождает tombstone того или иного scope (cell, row, range, partition)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `hinted handoff` в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hinted handoff — это сторонний сервис, который синхронизирует данные между дата-центрами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hinted handoff — встроенный механизм `Cassandra`, работает внутри одного DC и между DC автоматически.",
+                "source_of_confusion": "Слово «handoff» ассоциируется с инфраструктурным компонентом.",
+                "if_it_were_true": "Нужен был бы deployment отдельного сервиса — а это часть `Cassandra` core.",
+                "how_it_should_be": "Встроенный механизм; настраивается через `cassandra.yaml`, без отдельного процесса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hinted handoff гарантирует zero data loss при любом сценарии отказа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При отказе дольше `max_hint_window_in_ms` (3 часа дефолт) hints удаляются; синхронизация требует `nodetool repair`.",
+                "source_of_confusion": "Маркетинг «no data loss» как абсолютное обещание.",
+                "if_it_were_true": "`Repair` был бы не нужен — но он именно для случаев, когда hints не сработали.",
+                "how_it_should_be": "Hinted handoff покрывает short outages; для длинных — repair."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hints хранятся на отказавшем узле и применяются при его собственном старте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hints хранятся у живых узлов-координаторов и отправляются обратно на узел, когда он возвращается.",
+                "source_of_confusion": "Логическая инверсия: «принимающий хранит сам себе» звучит правдоподобно.",
+                "if_it_were_true": "Отказавший узел не имел бы доступа к данным, которые писались в его отсутствие.",
+                "how_it_should_be": "Hints на координаторах; replay при возврате узла."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Hinted handoff` — механизм отложенной доставки записей на временно недоступные реплики. Координатор сохраняет hint у себя; когда узел возвращается, hints воспроизводятся, и реплика догоняет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hint содержит mutation (INSERT/UPDATE/DELETE) и target node ID. Хранится в `hints` директории. Если узел не возвращается за `max_hint_window_in_ms` (по умолчанию 3 часа), hints удаляются; восстановление через `nodetool repair`.",
+                "example": "Узел B перезагрузился, узел A (координатор) копит hints. Через 5 минут B возвращается → A отправляет накопленные mutations → B применяет → согласован.",
+                "when_to_apply": "Прозрачно работает по умолчанию; обеспечивает быструю eventual consistency для кратких отказов узлов.",
+                "edge_cases": "При длительном отказе узла hints растут и забивают диск координатора; нужно репарить вручную после возврата.",
+                "related": "Q24 read repair; Q26 anti-entropy repair; Q40 nodetool."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `read repair` в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Read repair` — механизм согласования реплик во время чтения. При чтении с CL > ONE координатор сравнивает ответы реплик; если расхождение — на отстающие реплики асинхронно отправляется свежая версия.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реализуется через digest-сравнение (хеш ответов) или полное сравнение. Background read repair (`read_repair_chance`) исторически срабатывал и для CL=ONE — в новых версиях параметр deprecated, repair работает per-query при CL>ONE.",
+                "example": "Запрос с CL=QUORUM на RF=3 → 2 реплики ответили. Версии разные → координатор отправляет последнюю обоим, асинхронно — третьей.",
+                "when_to_apply": "Работает прозрачно; повышает consistency для часто читаемых данных без явного repair.",
+                "edge_cases": "Не заменяет полный `nodetool repair` — данные, которые не читают, останутся неконсистентными.",
+                "related": "Q23 hinted handoff; Q26 anti-entropy repair; Q24 consistency levels."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Read repair выполняется один раз в сутки по расписанию, независимо от запросов клиентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Read repair срабатывает на каждый read с CL>ONE при обнаружении расхождений; это per-query, не по расписанию.",
+                "source_of_confusion": "Путаница с `nodetool repair`, который запускается по cron.",
+                "if_it_were_true": "Существовала бы настройка «время read repair» — её нет.",
+                "how_it_should_be": "Per-request, реактивно на divergence реплик."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Read repair исправляет данные на ВСЕХ репликах, даже на тех, что не участвовали в чтении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На запросе с CL=QUORUM координатор сравнивает только опрошенные реплики. Полное согласование — задача `nodetool repair`.",
+                "source_of_confusion": "Ожидание, что один механизм решит всё.",
+                "if_it_were_true": "`Anti-entropy repair` не понадобился бы — он именно для не-опрошенных реплик.",
+                "how_it_should_be": "Read repair только для опрошенных реплик; полная согласованность — отдельная операция."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Read repair — это синонимично hinted handoff: оба восстанавливают данные после отказа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hinted handoff применяется когда реплика была недоступна; read repair — когда реплики доступны, но отстают.",
+                "source_of_confusion": "Оба про согласование данных.",
+                "if_it_were_true": "Был бы один механизм — а реально их три (hints, read repair, anti-entropy).",
+                "how_it_should_be": "Три комплементарных механизма: hints (offline-recovery), read repair (on-read), anti-entropy (proactive)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `anti-entropy repair` в `Cassandra` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Anti-entropy repair автоматически выполняется `Cassandra` без участия оператора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Repair запускается оператором (cron, `Reaper`, ручной `nodetool repair`). Автоматически работают только read repair и hinted handoff.",
+                "source_of_confusion": "Ожидание «database сама себя чинит».",
+                "if_it_were_true": "Команда `nodetool repair` была бы лишней — а это базовый ops-инструмент.",
+                "how_it_should_be": "Оператор настраивает регулярный repair: cron, `Cassandra Reaper`, или вручную."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Anti-entropy repair` — операция полного сравнения реплик и согласования всех расхождений. Запускается командой `nodetool repair`. Использует Merkle trees для эффективного выявления различий.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реплики строят Merkle tree от своих данных; координатор сравнивает деревья и стримит только различающиеся диапазоны. Нужен для данных, которые не читают (значит, read repair не сработал) и hints истекли.",
+                "example": "`nodetool repair -pr keyspace` на каждом узле кластера раз в `gc_grace_seconds - 1 день` (например, раз в 9 дней при дефолтном 10).",
+                "when_to_apply": "Регулярно по cron на каждом узле; обязательно перед `gc_grace_seconds`, иначе удалённые данные могут воскреснуть.",
+                "edge_cases": "Полный repair — тяжёлая операция: стримит много данных, нагружает CPU/диск/сеть. Используют incremental или subrange repair для разгрузки.",
+                "related": "Q23 hinted handoff; Q24 read repair; Q19 tombstones."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Anti-entropy repair можно запускать как угодно редко — раз в год достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Repair обязан завершаться внутри `gc_grace_seconds` (дефолт 10 дней), иначе удалённые данные могут воскреснуть.",
+                "source_of_confusion": "Восприятие repair как «опциональной оптимизации».",
+                "if_it_were_true": "Не было бы рекомендации «repair раз в неделю» — она стандартная.",
+                "how_it_should_be": "Repair минимум раз в `gc_grace_seconds - 1`; для дефолтных 10 дней — раз в 9 дней."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Repair копирует данные с одного «главного» узла на остальные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Cassandra` нет «главных» узлов. Repair сравнивает Merkle trees и стримит только различия между узлами симметрично.",
+                "source_of_confusion": "Аналогия с master-slave replication.",
+                "if_it_were_true": "Repair зависел бы от выбора мастера — а он симметричный.",
+                "how_it_should_be": "Симметричный peer-to-peer обмен различающимися диапазонами по Merkle trees."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое replication factor в `Cassandra` и как он задаётся?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Replication factor — это число дата-центров, между которыми данные синхронизируются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RF — число копий партиции внутри одного DC (для `NetworkTopologyStrategy` — per-DC). Число DC задаётся отдельно ключами в replication map.",
+                "source_of_confusion": "Слово «replication» намекает на DC-репликацию.",
+                "if_it_were_true": "Нельзя было бы иметь RF=3 в одном DC — а это стандартный случай.",
+                "how_it_should_be": "RF — копии в DC; multi-DC — список DC и их RF в replication map."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "RF можно задать на уровне отдельной таблицы внутри keyspace.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RF задаётся только на уровне keyspace; все таблицы внутри имеют один RF.",
+                "source_of_confusion": "Желание per-table настроек как в реляционных СУБД.",
+                "if_it_were_true": "Синтаксис `CREATE TABLE ... WITH replication = ...` был бы валидным — он невалиден.",
+                "how_it_should_be": "Хочешь разные RF — отдельные keyspaces."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Replication factor (RF) — число копий каждой партиции в кластере (или в DC при `NetworkTopologyStrategy`). Задаётся на уровне keyspace: `CREATE KEYSPACE ... WITH replication = {'class':'NetworkTopologyStrategy','dc1':3}`.",
+              "correct": true,
+              "sections": {
+                "explanation": "При RF=3 и кластере из 5 узлов каждая партиция хранится на трёх (определяются по token range + replication strategy). RF=1 — без репликации (только для dev), RF=3 — стандарт прод, RF=5 — критичные данные.",
+                "example": "`ALTER KEYSPACE app WITH replication = {'class':'NetworkTopologyStrategy','dc_ru':3,'dc_eu':3}` — 6 копий каждой партиции total.",
+                "when_to_apply": "RF=3 — дефолт прод; multi-DC — RF=3 в каждом DC; меньше RF — для архивных или временных данных.",
+                "edge_cases": "Изменение RF на существующем keyspace требует `nodetool repair` для копирования данных на новые реплики; иначе они появятся только при последующих записях.",
+                "related": "Q24 consistency levels; Q39 datacenter-aware; Q25 R+W>N."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При RF=3 кластер должен иметь ровно 3 узла; добавить четвёртый невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RF и количество узлов в кластере независимы. RF=3 в кластере из 10 узлов — норма; каждая партиция реплицируется на 3 из 10.",
+                "source_of_confusion": "Путаница между «копии данных» и «общее число узлов».",
+                "if_it_were_true": "Нельзя было бы масштабировать кластер без увеличения RF — а это базовая операция.",
+                "how_it_should_be": "RF независим от размера кластера; узлы добавляются без изменения RF."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие consistency levels существуют в `Cassandra` и в чём разница между `ONE`, `QUORUM` и `ALL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CL=ALL гарантирует, что данные попадут на ВСЕ узлы кластера, не только на реплики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CL=ALL требует подтверждения от всех RF реплик, не всех узлов кластера. RF узлов — те, кто владеет партицией.",
+                "source_of_confusion": "Буквальное прочтение «ALL» как «все узлы вообще».",
+                "if_it_were_true": "Запись с CL=ALL в кластере из 100 узлов требовала бы 100 ACK — это было бы медленно и не имело смысла.",
+                "how_it_should_be": "CL=ALL = все RF реплик партиции, не все узлы кластера."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CL=ONE и CL=QUORUM эквивалентны по семантике, отличаются только скоростью.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CL=ONE — одна реплика подтвердила, остальные могут отстать; CL=QUORUM — большинство подтвердило, есть гарантия пересечения с QUORUM-чтением.",
+                "source_of_confusion": "Восприятие CL как «настройки скорости».",
+                "if_it_were_true": "Формула R+W>N была бы тривиальной — на практике она именно про разные CL.",
+                "how_it_should_be": "CL — семантика согласованности, не только скорость."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CL устанавливается на уровне keyspace и не может меняться per-query.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CL — per-query параметр. Один и тот же клиент может для одной операции использовать `ONE`, для другой — `QUORUM`.",
+                "source_of_confusion": "Аналогия с уровнями изоляции `SQL`, которые часто на уровне сессии.",
+                "if_it_were_true": "Не было бы паттерна «tunable consistency» — он именно про per-query выбор.",
+                "how_it_should_be": "CL динамически указывается в запросе или через настройки prepared statement."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Consistency level (CL) — сколько реплик должны подтвердить операцию. `ONE` — одна реплика, `QUORUM` — большинство (RF/2 + 1), `ALL` — все RF. Есть DC-варианты: `LOCAL_ONE`, `LOCAL_QUORUM`, `EACH_QUORUM`.",
+              "correct": true,
+              "sections": {
+                "explanation": "CL задаётся per-query: `SELECT ... CONSISTENCY QUORUM` в `cqlsh` или через driver. Выбор — компромисс latency vs consistency: `ONE` быстрее, `ALL` строже. `LOCAL_QUORUM` — стандарт для multi-DC, чтобы не ждать удалённый DC.",
+                "example": "При RF=3: CL=QUORUM требует 2 ACK (быстро + строго); CL=ALL — 3 ACK (если один узел упал — ошибка); CL=ONE — 1 ACK (минимальная latency, eventual).",
+                "when_to_apply": "`LOCAL_QUORUM` — баланс для multi-DC прод; `ONE` — для метрик/логов, где скорость важнее; `ALL` — критичные операции, где доступность вторична.",
+                "edge_cases": "CL=ALL даёт высокую latency и падает при отказе любого узла; CL=ONE при отказе координатора может вернуть устаревшие данные.",
+                "related": "Q23 RF; Q25 R+W>N; Q39 datacenter-aware."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что означает «tunable consistency» в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tunable consistency — возможность выбирать уровень согласованности (CL) для каждого запроса отдельно. Тот же клиент может писать с CL=ONE для скорости, читать критичные данные с CL=QUORUM для строгости.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это уникальная особенность `Cassandra`: компромисс между latency, доступностью и согласованностью — решение на стороне приложения per-operation. Strong consistency, eventual consistency и всё между ними — настраивается.",
+                "example": "Сервис записывает метрики с CL=ONE (быстро), но при чтении баланса пользователя — CL=QUORUM (актуальность важна).",
+                "when_to_apply": "При проектировании: разделить операции по критичности, для каждой выбрать минимальный достаточный CL.",
+                "edge_cases": "Tunable не значит «всегда можно получить strong»: при partition CL=QUORUM просто упадёт; не панацея.",
+                "related": "Q24 consistency levels; Q25 R+W>N; Q26 LWT."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tunable consistency означает, что `Cassandra` сама выбирает оптимальный CL на основе нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбор CL делает разработчик/клиент per-query. Автоматики нет — это explicit decision.",
+                "source_of_confusion": "Слово «tunable» воспринимается как «адаптивная».",
+                "if_it_were_true": "Не нужно было бы указывать CL в запросах — но это обязательный параметр (с дефолтом).",
+                "how_it_should_be": "Разработчик явно указывает CL под каждый use case."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Tunable consistency — это переключение между сильной (`SERIALIZABLE`) и слабой согласованностью на уровне keyspace.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tunable — per-query, не per-keyspace. И уровни — это CL=ONE/QUORUM/ALL, а не `SERIALIZABLE`.",
+                "source_of_confusion": "Перенос терминологии уровней изоляции `SQL`.",
+                "if_it_were_true": "Существовали бы isolation levels в `Cassandra` — их нет в реляционном смысле.",
+                "how_it_should_be": "Tunable per-query CL; isolation в `Cassandra` другой природы (LWT для linearizability)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Tunable consistency гарантирует strong consistency при любом CL, разница только в скорости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только определённые комбинации (R+W>N) дают strong consistency. CL=ONE/ONE — eventual, не strong.",
+                "source_of_confusion": "Маркетинговое «вы выбираете уровень» воспринимается как «всегда strong доступен».",
+                "if_it_were_true": "Eventual consistency была бы не нужна — но она используется массово.",
+                "how_it_should_be": "Strong consistency — только при R+W>N (например, QUORUM/QUORUM при RF=3)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что означает формула `R + W > N` в контексте `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`R + W > N` означает, что общая нагрузка не должна превышать ёмкости кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не про нагрузку, а про consistency. R, W — это consistency levels операций чтения/записи; N — replication factor.",
+                "source_of_confusion": "Буквы R, W, N звучат как параметры производительности.",
+                "if_it_were_true": "Формула не имела бы смысла в контексте consistency — она именно про consistency.",
+                "how_it_should_be": "R = read CL, W = write CL, N = RF; сумма R+W > N → strong consistency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`R + W > N` — условие strong consistency: сумма read CL (R) и write CL (W) больше replication factor (N). При выполнении гарантируется, что множества реплик чтения и записи пересекаются хотя бы в одной точке.",
+              "correct": true,
+              "sections": {
+                "explanation": "Пример: RF=N=3, W=QUORUM=2, R=QUORUM=2 → 2+2>3 → strong consistency. При W=ONE=1, R=ONE=1 → 1+1<3 → eventual. Стандартная комбинация для прод — `QUORUM`/`QUORUM` на RF=3.",
+                "example": "RF=3: пишем с CL=QUORUM (2 ACK), читаем с CL=QUORUM (2 ответа). Хотя бы одна из 2 реплик чтения видела последнюю запись — данные актуальны.",
+                "when_to_apply": "При выборе CL для критичных данных: рассчитать `R+W>N` чтобы получить strong consistency.",
+                "edge_cases": "Формула справедлива при отсутствии partitions; при разрыве сети CL=QUORUM просто упадёт. И при clock skew между узлами возможны аномалии.",
+                "related": "Q24 consistency levels; Q26 LWT; Q23 RF."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы получить strong consistency, нужно W=ALL и R=ALL независимо от RF.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Strong consistency достигается любой парой (R, W) с R+W>N. `QUORUM`/`QUORUM` на RF=3 даёт strong consistency и быстрее ALL/ALL.",
+                "source_of_confusion": "Интуиция «строже = ALL».",
+                "if_it_were_true": "`LOCAL_QUORUM` не давал бы strong consistency в DC — но даёт при `R+W>N`.",
+                "how_it_should_be": "Любая комбинация с пересечением реплик; обычно `QUORUM`/`QUORUM`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Формула `R + W > N` гарантирует, что данные не теряются при отказе любого узла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это про consistency, а не про durability. Durability определяется RF и `commitlog_sync`. Формула про то, что read увидит последний write.",
+                "source_of_confusion": "Смешение consistency и durability.",
+                "if_it_were_true": "RF был бы не нужен для durability — а он именно про durability.",
+                "how_it_should_be": "R+W>N → read-your-writes consistency; durability — отдельный аспект."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое lightweight transactions (LWT) в `Cassandra` и как они работают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "LWT — это полноценные `ACID`-транзакции `Cassandra`, включая `JOIN` и multi-table операции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LWT работает только на одной партиции одной таблицы; никаких `JOIN` или multi-table. Это compare-and-set, а не полноценная транзакция.",
+                "source_of_confusion": "Слово «transaction» в названии создаёт ожидание `ACID`.",
+                "if_it_were_true": "`Cassandra` была бы реляционной СУБД с `ACID` — но она `AP`-NoSQL.",
+                "how_it_should_be": "LWT — single-partition compare-and-set через `Paxos`, не полноценные транзакции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "LWT по производительности эквивалентны обычной записи — overhead минимален.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LWT требует 4 round-trip (`Paxos` фазы) против 1 для обычной записи; latency примерно в 4 раза выше.",
+                "source_of_confusion": "Слово «lightweight» намекает на лёгкость.",
+                "if_it_were_true": "LWT использовали бы для каждой записи — на практике это исключение для редких операций.",
+                "how_it_should_be": "Использовать LWT точечно: для уникальности и compare-and-set, не для массовых операций."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "LWT — операции `INSERT ... IF NOT EXISTS` и `UPDATE ... IF ...`, реализующие compare-and-set на одной партиции через `Paxos`. Дают linearizability за счёт ~4× больше round-trips, чем обычные операции.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Paxos` выполняется в 4 фазы: prepare, promise, propose, accept. Состояние хранится в специальной системной таблице. Возможен `[applied]` (успех) или возврат текущего значения (failure).",
+                "example": "`INSERT INTO users (email, name) VALUES ('a@b.com', 'Иван') IF NOT EXISTS` — если email занят, вернёт `[applied]=false` и текущую запись; иначе — успешная вставка.",
+                "when_to_apply": "Для гарантии уникальности (email, username), оптимистичной блокировки, idempotent инициализации; точечно — массово LWT слишком дорого.",
+                "edge_cases": "LWT работает только в пределах одной партиции; cross-partition транзакций нет. Latency в 4 раза выше обычной записи.",
+                "related": "Q24 consistency; Q25 R+W>N; Q28 Paxos."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "LWT обходят `Paxos` и реализованы через локальные блокировки таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LWT основаны именно на `Paxos`; локальные блокировки не работают в распределённой системе без координации.",
+                "source_of_confusion": "Аналогия с `SELECT ... FOR UPDATE` в реляционных СУБД.",
+                "if_it_were_true": "Не было бы накладных расходов на 4 round-trip — но они именно из-за `Paxos`.",
+                "how_it_should_be": "Координация через distributed consensus (`Paxos`), не локальные lock'и."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую роль играет `Paxos` в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Paxos` в `Cassandra` отвечает за репликацию данных между узлами при обычной записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычная запись идёт через write path без `Paxos`. `Paxos` только в LWT — operations с `IF`-условием.",
+                "source_of_confusion": "Слово «consensus» воспринимается как «обо всём договариваются».",
+                "if_it_were_true": "Каждая запись стоила бы 4 round-trip — на практике обычная запись это 1 RT.",
+                "how_it_should_be": "`Paxos` только для LWT; обычная запись — async по write path с CL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Paxos` в `Cassandra` обеспечивает strong consistency между дата-центрами без задержек.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Paxos` локален к одной партиции и работает с её репликами. Multi-DC LWT возможен, но добавляет cross-DC latency.",
+                "source_of_confusion": "Маркетинг «strong consistency».",
+                "if_it_were_true": "Multi-DC LWT были бы быстрыми — реально они даже медленнее single-DC.",
+                "how_it_should_be": "`Paxos` — partition-scope; cross-DC требует cross-DC сетевых обменов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Paxos` в `Cassandra` устаревший и заменён на `Raft` начиная с версии 4.0.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Replace `Paxos` на `Raft` — это направление развития (Project Accord), но в стабильных версиях 4.x используется именно `Paxos` для LWT.",
+                "source_of_confusion": "Знание про `Raft` в `etcd`/`CockroachDB` создаёт ассоциацию.",
+                "if_it_were_true": "Документация `Cassandra 4.x` упоминала бы `Raft` — она упоминает `Paxos`.",
+                "how_it_should_be": "В стабильных релизах — `Paxos`; `Accord`/`Raft` в roadmap для следующих версий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Paxos` — алгоритм distributed consensus, используется `Cassandra` для реализации lightweight transactions: гарантирует linearizability compare-and-set на одной партиции среди реплик.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Paxos` решает: как несколько узлов согласовали единое значение, даже при отказах. В `Cassandra` запускается для LWT: prepare → promise → propose → accept. Ballot хранится в `system.paxos`.",
+                "example": "`UPDATE accounts SET balance = 100 WHERE id = 1 IF balance = 50` — `Paxos` координирует, что только один из конкурирующих писателей увидит `balance = 50` и победит.",
+                "when_to_apply": "Прозрачно для пользователя, когда используется LWT (`IF` clauses); не нужно вручную инициировать.",
+                "edge_cases": "`Paxos`-состояние хранится в `system.paxos` и подвержено tombstones при истечении; long-running LWT contention может привести к unprepared-replies.",
+                "related": "Q26 LWT; Q24 CL; Q27 tunable consistency."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как создать таблицу в `Cassandra` через `CQL` для time-series событий пользователя?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CREATE TABLE events (user_id uuid, ts timeuuid, type text, payload text, PRIMARY KEY ((user_id), ts)) WITH CLUSTERING ORDER BY (ts DESC)` — partition key `user_id`, clustering `ts` с обратной сортировкой для быстрых последних N событий.",
+              "correct": true,
+              "sections": {
+                "explanation": "`timeuuid` (`TIMEUUID`) даёт строго возрастающие уникальные значения с встроенным timestamp. `CLUSTERING ORDER BY ... DESC` ставит физический порядок строк, чтобы `LIMIT 10` без `ORDER BY` отдавал последние.",
+                "example": "Запрос `SELECT * FROM events WHERE user_id = ? LIMIT 10` отдаст 10 последних событий без full scan, читая prefix отсортированной партиции.",
+                "when_to_apply": "Time-series данные с доступом по сущности и сортировкой по времени; для длинных историй — composite partition key с day для ограничения partition size.",
+                "edge_cases": "Если событий на пользователя миллионы, нужно разбить партицию: `PRIMARY KEY ((user_id, day), ts)` — иначе wide partition.",
+                "related": "Q11 wide row; Q12 composite PK; Q49 time-series."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CREATE TABLE events (id int PRIMARY KEY, user_id int, ts timestamp, payload text)` — каждое событие со своим автоинкрементным id.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Cassandra` нет автоинкремента. Если id — partition key, все события рассыпаны по узлам, и запросов «по пользователю» эффективно не сделать.",
+                "source_of_confusion": "Шаблон из реляционных СУБД.",
+                "if_it_were_true": "`AUTO_INCREMENT` или `SERIAL` существовали бы в `CQL` — их нет.",
+                "how_it_should_be": "Partition key — сущность, по которой группируем (user_id); clustering — упорядочивающее (ts)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CREATE TABLE events (user_id uuid, ts timestamp, type text, payload text, PRIMARY KEY (user_id))` — этого достаточно для time-series.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С таким PK на одного пользователя будет всего одна строка — каждая новая запись перезапишет предыдущую.",
+                "source_of_confusion": "Невнимание к различию partition vs clustering.",
+                "if_it_were_true": "Можно было бы хранить много событий без clustering key — но нельзя.",
+                "how_it_should_be": "Добавить clustering column (ts) для хранения нескольких строк в партиции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Cassandra` для time-series нужно `CREATE INDEX ON events(ts)` — без индекса по времени нельзя сделать range-запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Range по clustering column работает без индекса. Secondary index на ts — лишний и неэффективный (он распределённый и плохо масштабируется).",
+                "source_of_confusion": "Перенос модели реляционных индексов.",
+                "if_it_were_true": "Все time-series примеры включали бы `CREATE INDEX` — они не включают.",
+                "how_it_should_be": "Clustering column обеспечивает range-запрос без явного индекса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличается `INSERT` от `UPDATE` в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`UPDATE` в `Cassandra` отказывает, если строки не существует — нужно сначала `INSERT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`UPDATE` всегда успешен (upsert), даже если строки нет. Никакой проверки существования.",
+                "source_of_confusion": "Семантика `UPDATE` в реляционных СУБД (где он не создаёт строки).",
+                "if_it_were_true": "Все примеры использовали бы `INSERT ... ON CONFLICT` или подобное — в `CQL` этого нет.",
+                "how_it_should_be": "`UPDATE` = upsert; для строгой проверки — LWT `IF EXISTS`/`IF NOT EXISTS`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Cassandra` `INSERT` и `UPDATE` семантически эквивалентны: оба делают upsert — если строка с таким primary key есть, обновят; нет — создадут. Различие лишь синтаксическое; нет проверки существования.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это следствие LSM-tree: запись просто добавляет новую версию ячеек с timestamp, merge на read определяет итоговое значение. Для проверки существования — LWT `INSERT ... IF NOT EXISTS`.",
+                "example": "`INSERT INTO users (id, name) VALUES (1, 'Иван')` и `UPDATE users SET name = 'Иван' WHERE id = 1` дают идентичный результат на пустой таблице и на существующей строке.",
+                "when_to_apply": "Использовать любой синтаксис по читаемости; для проверки существования — `IF NOT EXISTS` (LWT, дорого).",
+                "edge_cases": "`UPDATE` не может создать строку с `NULL` в обязательных PK-полях; `INSERT` требует значения для всех PK columns.",
+                "related": "Q26 LWT; Q19 tombstones; Q14 write path."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`INSERT` всегда быстрее `UPDATE`, так как не проверяет существование строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они эквивалентны по работе с диском: обе добавляют ячейки с timestamp в memtable. Никакой проверки в обоих нет.",
+                "source_of_confusion": "Аналогия с реляционными СУБД, где UPDATE требует поиск строки.",
+                "if_it_were_true": "Существовали бы рекомендации «всегда INSERT» — их нет.",
+                "how_it_should_be": "Производительность одинакова; выбор по читаемости намерения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только `INSERT` создаёт tombstone на старое значение; `UPDATE` модифицирует in-place.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ни одна из операций не создаёт tombstone на old значение — просто пишется новая ячейка с большим timestamp. Tombstones — только при явном `DELETE` или TTL.",
+                "source_of_confusion": "Желание понять, «куда девается старое значение».",
+                "if_it_were_true": "Каждый UPDATE генерировал бы tombstones — это засоряло бы партицию мгновенно.",
+                "how_it_should_be": "LSM семантика: новая версия побеждает по timestamp; tombstones только при DELETE/TTL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `LOGGED` и `UNLOGGED` batch в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`BATCH` в `Cassandra` всегда быстрее одиночных запросов, аналогично `INSERT INTO ... VALUES (...), (...)` в `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BATCH в `Cassandra` НЕ оптимизация производительности. Часто batch медленнее серии async-запросов, особенно мульти-партиционный.",
+                "source_of_confusion": "Перенос семантики batch из реляционных СУБД.",
+                "if_it_were_true": "Все рекомендации были бы «используйте BATCH везде» — на практике наоборот.",
+                "how_it_should_be": "BATCH = атомарность, не производительность; для bulk — async parallel запросы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`UNLOGGED BATCH` гарантирует атомарность на одной партиции, но не на нескольких.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`UNLOGGED BATCH` атомарен только когда все mutations попадают в одну partition (тогда применяется как одна запись). На нескольких партициях — никакой атомарности.",
+                "source_of_confusion": "Слово «BATCH» подразумевает «все вместе».",
+                "if_it_were_true": "`LOGGED` не понадобился бы для multi-partition — он именно для этого.",
+                "how_it_should_be": "Multi-partition атомарность — только `LOGGED BATCH`; `UNLOGGED` лишь когда всё в одной партиции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`LOGGED BATCH` гарантирует атомарность: либо все mutations применятся, либо ни одна (через batchlog на 2 узлах). `UNLOGGED BATCH` — просто группировка отправки, без атомарности; быстрее, но при отказе часть может не примениться.",
+              "correct": true,
+              "sections": {
+                "explanation": "LOGGED batch стоит дорого: запись в batchlog + replay. Используется для multi-partition атомарности (например, обновить денормализованные таблицы согласованно). UNLOGGED — для batch одной партиции (тогда эквивалентен одной записи) или независимых ops без требований атомарности.",
+                "example": "Для обновления `users_by_id` + `users_by_email` одновременно: `BEGIN BATCH ... APPLY BATCH` (LOGGED). Для bulk-вставки event'ов одной партиции: `UNLOGGED`.",
+                "when_to_apply": "`LOGGED` — мульти-партиционная атомарность денормализованных таблиц; `UNLOGGED` — single-partition групповая запись.",
+                "edge_cases": "BATCH в `Cassandra` ≠ batch в реляционном SQL: не оптимизация производительности, а механизм атомарности. Большой batch (>5 KB по умолчанию) выдаёт warning.",
+                "related": "Q29 INSERT/UPDATE; Q26 LWT; Q14 write path."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`LOGGED BATCH` обеспечивает изоляцию параллельных транзакций уровня `SERIALIZABLE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LOGGED BATCH` даёт только атомарность (all-or-nothing), не изоляцию. Параллельные batch могут чередоваться, частичные результаты — видимы другим запросам.",
+                "source_of_confusion": "Свойство `ACID` атомарность путают с изоляцией.",
+                "if_it_were_true": "BATCH был бы аналогом `BEGIN TRANSACTION ... COMMIT` с isolation — он только atomicity.",
+                "how_it_should_be": "Atomicity — да; isolation — нет, через LWT для compare-and-set."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое counter columns в `Cassandra` и какие у них особенности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Counter columns можно смешивать с обычными колонками в одной таблице.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В таблице с counter все non-PK columns должны быть counter. Mix с обычными — отклонение DDL.",
+                "source_of_confusion": "Желание иметь «универсальную» таблицу.",
+                "if_it_were_true": "Можно было бы добавить `last_updated timestamp` рядом с counter — на практике это две разные таблицы.",
+                "how_it_should_be": "Отдельная таблица под counters; другие данные — отдельно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Counter columns поддерживают `INSERT INTO ... VALUES (1)` для установки начального значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Counters не поддерживают INSERT. Начальное значение задаётся первым `UPDATE counter = counter + N`.",
+                "source_of_confusion": "Аналогия с реляционными СУБД, где INSERT начальное.",
+                "if_it_were_true": "Cassandra принимала бы такой синтаксис — он отклоняется.",
+                "how_it_should_be": "Только `UPDATE ... = counter + N`; для сброса — `DELETE` и новый UPDATE."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Counters в `Cassandra` гарантируют strong consistency и подходят для финансовых операций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Counters non-idempotent: повтор операции при сбое может удвоить значение. Для финансов нужны LWT или внешние транзакционные системы.",
+                "source_of_confusion": "Атомарность инкремента воспринимается как полная надёжность.",
+                "if_it_were_true": "Все рекомендации были бы «используйте counters для денег» — обратное.",
+                "how_it_should_be": "Counters — для приближённых метрик; деньги — LWT или другой transactional store."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Counter — специальный тип столбца для атомарных инкрементов/декрементов. Объявляется через тип `counter`. Не поддерживает обычные `INSERT` — только `UPDATE counter_col = counter_col + N`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Counters реализованы поверх `PaxosLike` механизма и `Read-Before-Write` (медленнее обычной записи). При репликации возможны редкие аномалии из-за non-idempotent природы; нельзя `TTL` или mix с обычными колонками в той же таблице.",
+                "example": "`CREATE TABLE views (page text PRIMARY KEY, count counter); UPDATE views SET count = count + 1 WHERE page = 'home'` — атомарный инкремент.",
+                "when_to_apply": "Счётчики просмотров, лайков, метрик; для критичных данных (баланс счёта) использовать LWT, не counters.",
+                "edge_cases": "Counters менее надёжны: при отказе узла во время записи возможен double-count; не подходят для денежных операций.",
+                "related": "Q26 LWT; Q14 write path; Q43 hot partition."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое TTL (Time-To-Live) в `Cassandra` и как с ним работать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "TTL — срок жизни данных в секундах, после которого они автоматически становятся expired-tombstones и удаляются при compaction. Задаётся через `USING TTL` или на уровне таблицы (`default_time_to_live`).",
+              "correct": true,
+              "sections": {
+                "explanation": "TTL применяется к ячейке: `INSERT INTO sessions (id, data) VALUES (?, ?) USING TTL 3600` — сессия живёт 1 час. На уровне таблицы — дефолт для всех записей. После expiry создаётся tombstone, сами данные удаляются compaction'ом.",
+                "example": "Кеш сессий: `INSERT ... USING TTL 1800` (30 минут). После истечения данные исчезают автоматически без явного DELETE.",
+                "when_to_apply": "Кеши, сессии, временные токены, time-series с retention. Особенно хорошо с TWCS — целые SSTable expired-окон удаляются drop'ом.",
+                "edge_cases": "TTL создаёт tombstones, которые остаются до `gc_grace_seconds` после expiry. Массовый expiry в одной партиции — источник tombstone-overhead.",
+                "related": "Q19 tombstones; Q15 TWCS; Q49 time-series."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "TTL в `Cassandra` удаляет данные мгновенно в момент истечения без оверхеда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL создаёт expired-tombstone; физическое удаление — при следующем compaction; до `gc_grace_seconds` tombstone участвует в read merge.",
+                "source_of_confusion": "Аналогия с `Redis TTL`, где данные правда удаляются по таймеру.",
+                "if_it_were_true": "Не было бы проблемы tombstone overhead от TTL — она хорошо известна.",
+                "how_it_should_be": "Логически данные «исчезают» по таймеру, физически удаляются compaction'ом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "TTL применим только к таблицам с counter columns.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL применим к любым обычным колонкам и таблицам. Counters наоборот НЕ поддерживают TTL.",
+                "source_of_confusion": "Путаница между двумя независимыми фичами.",
+                "if_it_were_true": "Кеш сессий и токенов на `Cassandra` был бы невозможен — а это базовый use case.",
+                "how_it_should_be": "TTL для обычных таблиц; counters TTL не поддерживают."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TTL задаётся только на уровне таблицы и не может быть переопределён в запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL можно задать per-row через `USING TTL` в `INSERT`/`UPDATE`, переопределяя table-level default.",
+                "source_of_confusion": "Желание единого правила.",
+                "if_it_were_true": "Не было бы синтаксиса `USING TTL` в `INSERT` — он есть и широко используется.",
+                "how_it_should_be": "Table-level default + per-query override через `USING TTL N`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда secondary indexes в `Cassandra` плохо работают и какие у них альтернативы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Secondary indexes в `Cassandra` работают так же эффективно, как в `PostgreSQL` B-tree, для любых запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Распределённая природа `Cassandra` делает глобальный secondary index дорогим: поиск без partition key — scatter-gather на все узлы.",
+                "source_of_confusion": "Слово «index» вызывает ожидания B-tree производительности.",
+                "if_it_were_true": "Денормализация не была бы нужна — на практике это основной паттерн.",
+                "how_it_should_be": "Secondary index = локальный per-node; для глобального поиска — денормализация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Secondary indexes плохо работают на колонках с низкой кардинальностью (`gender`, `status`) и при поиске «глобально»: запрос идёт на все узлы (scatter-gather). Альтернативы — денормализация в отдельную таблицу или `MATERIALIZED VIEW`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Secondary index в `Cassandra` хранит индекс локально на каждом узле (по своим партициям). Поиск без partition key опрашивает все узлы. Эффективен только в комбинации с partition key: `WHERE pk = ? AND indexed_col = ?`.",
+                "example": "Плохо: `SELECT * FROM users WHERE city = 'Москва'` (scatter-gather, медленно). Хорошо: отдельная таблица `users_by_city ((city), id, ...)`.",
+                "when_to_apply": "Secondary index — только когда уже есть partition key в `WHERE` и нужен дополнительный фильтр на партицию; для глобальных запросов — отдельная таблица.",
+                "edge_cases": "На high-cardinality колонке (например, email) индекс генерирует много мелких партиций индекса; на low-cardinality — wide rows в индексе. Оба плохи.",
+                "related": "Q11 denormalization; Q13 materialized views; Q44 ALLOW FILTERING."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Secondary index ускоряет любой запрос с фильтром на indexed column, даже без partition key.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без partition key запрос идёт на все узлы (scatter-gather), не масштабируется и часто медленнее `ALLOW FILTERING`.",
+                "source_of_confusion": "Ожидание поведения реляционного индекса.",
+                "if_it_were_true": "`ALLOW FILTERING` не требовался бы при использовании индекса — а часто всё равно требуется.",
+                "how_it_should_be": "Индекс эффективен только с partition key в `WHERE`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Альтернатива secondary index — `ALLOW FILTERING`, и это рекомендуемая практика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ALLOW FILTERING` — анти-паттерн для прод: сканирует все партиции. Рекомендуемая альтернатива — денормализация или materialized view.",
+                "source_of_confusion": "`ALLOW FILTERING` выглядит как простое решение.",
+                "if_it_were_true": "Документация рекомендовала бы `ALLOW FILTERING` — она его наоборот предостерегает.",
+                "how_it_should_be": "Денормализация / MV — да; `ALLOW FILTERING` — только для админских скриптов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `nodetool` и какие основные команды важны для оператора?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`nodetool` — это веб-интерфейс администрирования `Cassandra`, аналог `pgAdmin`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`nodetool` — CLI-утилита, не веб-интерфейс. Веб-инструменты (`DataStax OpsCenter`, `Cassandra Reaper`) — отдельные продукты.",
+                "source_of_confusion": "Слово «tool» воспринимается широко.",
+                "if_it_were_true": "Была бы команда `nodetool start-ui` — её нет.",
+                "how_it_should_be": "CLI через JMX; UI — сторонние тулы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`nodetool status` показывает данные ВСЕГО кластера за счёт обращения к каждому узлу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`nodetool status` показывает кластер с точки зрения подключённого узла на основе gossip-state, без отдельных запросов на узлы.",
+                "source_of_confusion": "Ожидание «свежих» данных через прямой опрос.",
+                "if_it_were_true": "Команда работала бы долго на больших кластерах — она почти мгновенная.",
+                "how_it_should_be": "Чтение локального gossip cache; для актуальных — `nodetool gossipinfo` или прямой запрос на узлы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`nodetool` — CLI-утилита для администрирования `Cassandra`-узла: статус, compaction, repair, snapshot, drain. Подключается через JMX к локальному узлу или удалённо по `-h`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Самые частые команды: `status` (состояние кластера), `info` (статистика узла), `repair` (anti-entropy), `compact` (ручной compaction), `flush` (memtable → SSTable), `drain` (перед остановкой), `snapshot` (резервная копия).",
+                "example": "`nodetool status` показывает все узлы: `UN` — up/normal, `DN` — down/normal, `UJ` — joining, и их load + token ownership.",
+                "when_to_apply": "Ежедневная эксплуатация: проверка статуса, плановые repair, диагностика после инцидентов, snapshot перед миграциями.",
+                "edge_cases": "`nodetool` требует JMX-доступа; в проде защищается auth или ограничением сетевого доступа. Локально — без auth по умолчанию.",
+                "related": "Q26 anti-entropy repair; Q36 bootstrap; Q41 snapshots."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`nodetool drain` — это команда полного удаления данных с узла перед decommission.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`drain` останавливает приём новых записей и flushит memtables в SSTable; не удаляет данные. Удаление при decommission — отдельная стадия.",
+                "source_of_confusion": "Слово «drain» (слить) ассоциируется с очисткой.",
+                "if_it_were_true": "После `drain` диск был бы пуст — он остаётся полным, узел готов к остановке.",
+                "how_it_should_be": "`drain` = подготовка к остановке; `decommission` = удаление узла из кольца с streaming данных на другие узлы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие стратегии запуска `repair` существуют в `Cassandra` и в чём их различие?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`nodetool repair` без флагов и `nodetool repair -pr` — это одно и то же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `-pr` узел репарит все свои ranges (включая реплики чужих) — работа дублируется на других узлах. `-pr` репарит только primary range — нужно запускать на всех узлах.",
+                "source_of_confusion": "Кажется, что repair и так репарит «всё нужное».",
+                "if_it_were_true": "Не нужно было бы запускать `-pr` на всех узлах — а это базовая практика.",
+                "how_it_should_be": "Полная repair-стратегия = `-pr` на каждом узле; общая работа делится между узлами без дублирования."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Incremental repair всегда лучше full и полностью заменяет его.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Incremental экономнее, но в `Cassandra` <4.0 имел известные баги. Даже сейчас сочетают: incremental чаще + full периодически.",
+                "source_of_confusion": "«Incremental» звучит как «современный, оптимальный».",
+                "if_it_were_true": "Документация рекомендовала бы только incremental — она рекомендует комбинацию.",
+                "how_it_should_be": "Incremental + периодический full на устойчивых данных; для критичных данных — full."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Repair можно запускать раз в `gc_grace_seconds * 2` без последствий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Repair ОБЯЗАН завершиться внутри `gc_grace_seconds`. Иначе удалённые данные могут воскреснуть после tombstone-cleanup.",
+                "source_of_confusion": "Догадка о «безопасной» периодичности без расчёта.",
+                "if_it_were_true": "Можно было бы репарить раз в 20 дней при дефолтных 10 — это вызовет zombie data.",
+                "how_it_should_be": "Repair-period < `gc_grace_seconds`; для дефолта 10 дней — раз в 7–9 дней."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Полный `nodetool repair` — все диапазоны узла. `repair -pr` (primary range) — только основной диапазон, нужен на каждом узле. Incremental — только изменения с прошлого repair. Subrange — конкретные token ranges.",
+              "correct": true,
+              "sections": {
+                "explanation": "`repair -pr` — стандарт: запускать на каждом узле, общая работа делится. Incremental экономит ресурсы (через repaired/unrepaired SSTable метки), но имел баги до 4.0. Subrange — для больших кластеров или recovery.",
+                "example": "Cron на каждом узле: `nodetool repair -pr keyspace` раз в 9 дней. Альтернатива — `Cassandra Reaper`, который автоматически разбивает на subranges.",
+                "when_to_apply": "Регулярный full repair `-pr` — обязательная практика; incremental — для больших кластеров; subrange — для гранулярного контроля.",
+                "edge_cases": "Параллельный repair на нескольких узлах создаёт нагрузку cross-node; `Reaper` сериализует. Long-running repair блокирует compaction на тех же ranges.",
+                "related": "Q26 anti-entropy; Q40 nodetool; Q19 tombstones."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что происходит при добавлении нового узла в `Cassandra`-кластер (`bootstrap`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "При bootstrap новый узел получает свои token ranges от существующих узлов и стримит данные с реплик. Кольцо перераспределяется автоматически, существующие узлы отдают часть данных и продолжают работать.",
+              "correct": true,
+              "sections": {
+                "explanation": "Процесс: узел стартует с `auto_bootstrap: true` → gossip знакомит с кластером → vnodes присваиваются → streaming данных от реплик-владельцев → узел готов принимать запросы. Время — от часов до суток на больших данных.",
+                "example": "Кластер из 5 узлов добавляет 6-й: каждый из 5 отдаёт ~1/6 своих данных на новый, кольцо балансируется по vnodes.",
+                "when_to_apply": "Масштабирование кластера, замена отказавшего узла (через replace_address), миграция железа.",
+                "edge_cases": "Бутстрап нагружает сеть и диск; на проде делают `nodetool cleanup` на старых узлах после bootstrap для удаления данных, которые теперь не принадлежат им.",
+                "related": "Q3 ring; Q38 add/remove node; Q40 nodetool."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Новый узел копирует данные со всех существующих узлов одинаково, независимо от replication factor.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Узел получает данные только из своих новых token ranges от их реплик, не со всех. Объём зависит от RF и размера кластера.",
+                "source_of_confusion": "Упрощённое представление «новый узел = копия всего».",
+                "if_it_were_true": "Новый узел хранил бы всю базу — на практике лишь свою долю.",
+                "how_it_should_be": "Streaming только нужных ranges от их текущих владельцев."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Bootstrap требует остановки всего кластера, потому что меняется token-mapping.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bootstrap — online операция: кластер продолжает обслуживать запросы, существующие узлы остаются доступны.",
+                "source_of_confusion": "Аналогия с традиционными СУБД, где scaling часто требует downtime.",
+                "if_it_were_true": "Не было бы преимущества «линейного масштабирования» — оно именно про zero-downtime.",
+                "how_it_should_be": "Online bootstrap; кластер доступен, performance временно деградирует из-за streaming."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После bootstrap старые узлы автоматически удаляют данные, которые теперь принадлежат новому узлу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Старые узлы оставляют данные на диске. Удаление — вручную через `nodetool cleanup` после успешного bootstrap.",
+                "source_of_confusion": "Ожидание «полной автоматики».",
+                "if_it_were_true": "Не было бы команды `nodetool cleanup` — она именно для этого.",
+                "how_it_should_be": "После bootstrap — `nodetool cleanup` на старых узлах вручную."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое snitch в `Cassandra` и какие основные типы существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Snitch — это компонент безопасности, фильтрующий запросы клиентов к `Cassandra`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Snitch — топологический информатор, не security. Auth/authz — отдельные механизмы.",
+                "source_of_confusion": "Слово «snitch» ассоциируется с надзором.",
+                "if_it_were_true": "Существовали бы security-настройки в snitch — там только DC/rack.",
+                "how_it_should_be": "Snitch = знание топологии; security = `authenticator`/`authorizer`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Snitch — компонент, информирующий `Cassandra` о топологии: какой узел в каком DC и rack. От snitch зависят replication placement и маршрутизация. Основные: `SimpleSnitch`, `GossipingPropertyFileSnitch`, `Ec2Snitch`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`SimpleSnitch` — для single-DC dev (всё одно). `GossipingPropertyFileSnitch` — стандарт для prod, читает `cassandra-rackdc.properties`, распространяет через gossip. `Ec2Snitch`/`Ec2MultiRegionSnitch` — для AWS, использует EC2 metadata.",
+                "example": "`cassandra-rackdc.properties`: `dc=dc_eu` `rack=rack1`. С `GossipingPropertyFileSnitch` `NetworkTopologyStrategy` будет размещать реплики на разные racks.",
+                "when_to_apply": "`GossipingPropertyFileSnitch` — выбор по умолчанию для prod. EC2 snitch — для облака AWS, удобно при автоматическом определении AZ.",
+                "edge_cases": "Менять snitch на работающем кластере опасно: топология меняется, репликация перераспределяется. Делается через ручной migration plan.",
+                "related": "Q39 datacenter-aware; Q23 replication strategy; Q3 ring."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SimpleSnitch` подходит для production multi-DC деплоя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SimpleSnitch` не различает DC/rack; для multi-DC обязательно `GossipingPropertyFileSnitch` или EC2 snitch.",
+                "source_of_confusion": "Желание «простоты» в проде.",
+                "if_it_were_true": "`NetworkTopologyStrategy` работала бы с `SimpleSnitch` — она требует topology-aware snitch.",
+                "how_it_should_be": "`GossipingPropertyFileSnitch` (или Ec2Snitch) для любого multi-DC прод."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Snitch назначается на уровне keyspace, разные таблицы могут иметь разные snitch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Snitch — глобальная настройка узла (`cassandra.yaml`), одна на весь кластер; per-keyspace или per-table настройки нет.",
+                "source_of_confusion": "Желание гранулярных настроек.",
+                "if_it_were_true": "Можно было бы менять snitch без рестарта — он применяется только при старте.",
+                "how_it_should_be": "Snitch единый для узла; топология единая для кластера; replication strategy уже учитывает её per-keyspace."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает datacenter-aware replication в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "При `NetworkTopologyStrategy` все DC получают копии одновременно синхронно для strong consistency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cross-DC replication по умолчанию async (eventual). Sync поведение между DC возможно только через `EACH_QUORUM`, что значительно медленнее.",
+                "source_of_confusion": "Маркетинг «multi-DC consistency» воспринимается как sync.",
+                "if_it_were_true": "LOCAL_QUORUM не давал бы выигрыша по latency — он именно потому, что cross-DC async.",
+                "how_it_should_be": "Async cross-DC по умолчанию; EACH_QUORUM — опция для строгой sync между DC."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SimpleStrategy` поддерживает multi-DC так же, как `NetworkTopologyStrategy`, просто проще в настройке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SimpleStrategy` не различает DC; распределяет реплики по token ring без учёта топологии. Для multi-DC неподходяща.",
+                "source_of_confusion": "Слово «strategy» воспринимается одинаково.",
+                "if_it_were_true": "DataStax не рекомендовал бы NetworkTopologyStrategy для prod — рекомендация однозначна.",
+                "how_it_should_be": "Multi-DC = `NetworkTopologyStrategy`; SimpleStrategy только для dev/test single-DC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`NetworkTopologyStrategy` реплицирует данные с учётом DC и rack: `{'class':'NetworkTopologyStrategy','dc1':3,'dc2':3}` создаёт 3 реплики в каждом DC. Внутри DC реплики раскладываются по разным rack.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый DC независимо удовлетворяет RF; rack-aware размещение защищает от отказа стойки. Запросы с CL=LOCAL_QUORUM не выходят за границу DC, что критично для latency и cross-DC трафика.",
+                "example": "Multi-region setup: EU (3 узла, RF=3) + US (3 узла, RF=3). Запись с LOCAL_QUORUM в EU — 2 ACK из EU, async-replication в US.",
+                "when_to_apply": "Multi-region deployment, DR, географическое распределение клиентов; обязательно использовать `LOCAL_QUORUM`/`LOCAL_ONE` для минимизации cross-DC latency.",
+                "edge_cases": "Cross-DC replication eventual; при разрыве между DC запись с EACH_QUORUM падает, LOCAL_QUORUM продолжает работать.",
+                "related": "Q24 CL (LOCAL_*); Q38 snitch; Q23 RF."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`LOCAL_QUORUM` всегда требует cross-DC сетевого обмена для подтверждения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LOCAL_QUORUM` — кворум только внутри локального DC; не выходит за границу DC. Это его смысл — низкая latency.",
+                "source_of_confusion": "Слово «quorum» путают с глобальным.",
+                "if_it_were_true": "`LOCAL_QUORUM` не отличался бы от `QUORUM` — это разные семантики.",
+                "how_it_should_be": "LOCAL_* — внутри своего DC; cross-DC — отдельные CL (EACH_QUORUM)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как заменить отказавший узел в `Cassandra`-кластере?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно просто запустить новый узел с тем же IP, что у мёртвого, и он автоматически примет его место.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra по gossip-состоянию помнит мёртвый узел; новый с тем же IP вызовет конфликт. Нужен флаг `replace_address` для явной замены.",
+                "source_of_confusion": "Желание простоты «то же место — то же поведение».",
+                "if_it_were_true": "Не существовала бы опция `replace_address_first_boot` — она нужна именно для этого.",
+                "how_it_should_be": "Новый IP + флаг `replace_address` с указанием старого IP."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нужно сначала `nodetool removenode` мёртвого узла, потом bootstrap нового — иначе сломается token-mapping.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`removenode` + bootstrap нового — это «удалить + добавить», балансирует кольцо иначе и стримит больше данных. Replace быстрее и точнее.",
+                "source_of_confusion": "Очевидная двух-шаговая логика.",
+                "if_it_were_true": "Replace был бы излишним механизмом — он именно сокращает работу.",
+                "how_it_should_be": "Replace — оптимизированная процедура: одна операция, меньше стриминга, тот же token range."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Замена дохлого узла невозможна — нужно decommission всего DC и пересоздать с нуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Замена одного узла — стандартная online-операция; никакого DC-rebuild не требуется.",
+                "source_of_confusion": "Преувеличение сложности.",
+                "if_it_were_true": "Production-эксплуатация была бы катастрофой — она spокойно живёт.",
+                "how_it_should_be": "Online replace через `replace_address`; кластер обслуживает запросы во время процедуры."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Поднимается новый узел с `JVM_OPTS=\"-Dcassandra.replace_address_first_boot=<dead_node_ip>\"`. Он принимает token ranges погибшего узла и стримит данные с реплик; старый удаляется из кольца автоматически.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандартная процедура замены: новое железо с такой же ролью, флаг `replace_address` указывает IP мёртвого узла. После bootstrap новый узел владеет теми же ranges, что и старый.",
+                "example": "Сценарий: узел `10.0.0.5` сгорел. Поднимаем новый узел: `JVM_OPTS=\"-Dcassandra.replace_address_first_boot=10.0.0.5\"` → старт → bootstrap → новый узел в кольце под новым IP.",
+                "when_to_apply": "Hardware failure, плановая замена железа, миграция; альтернатива «удалить + добавить», которая балансирует кольцо иначе.",
+                "edge_cases": "При замене нельзя использовать тот же IP, что у мёртвого; replace_address работает только если у нового узла другой IP. Auth tokens и сертификаты копируются вручную.",
+                "related": "Q37 bootstrap; Q41 decommission; Q40 nodetool."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `snapshot` в `Cassandra` и как им пользоваться?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Snapshot` — point-in-time резервная копия SSTable через hard links (мгновенно, без копирования данных). Создаётся `nodetool snapshot`, используется для backup и safe-net перед опасными операциями.",
+              "correct": true,
+              "sections": {
+                "explanation": "Snapshot создаёт hard links в `data/<keyspace>/<table>/snapshots/<name>/`. Не занимает дополнительное место сразу, но удерживает старые SSTable после compaction, не давая их удалить. Удаление — `nodetool clearsnapshot`.",
+                "example": "`nodetool snapshot -t before_migration mykeyspace` — мгновенный snapshot. Можно скопировать SSTable из snapshots/ на S3 или другой узел.",
+                "when_to_apply": "Регулярный backup, перед `ALTER TABLE`/`DROP`, перед апгрейдом версии, для восстановления случайно удалённых данных.",
+                "edge_cases": "Если не чистить snapshots, диск заполняется удерживаемыми старыми SSTable; нужен retention policy и `clearsnapshot`.",
+                "related": "Q40 nodetool; Q15 compaction; Q41 decommission."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Snapshot полностью копирует данные узла в отдельную директорию, занимая то же место.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Snapshot использует hard links, изначально не занимает места. Реальное место растёт постепенно по мере того, как новые SSTable замещают старые.",
+                "source_of_confusion": "Понимание «копия = дубликат».",
+                "if_it_were_true": "Snapshot был бы медленным (копирование TB данных) — он мгновенный.",
+                "how_it_should_be": "Hard links, копирование O(1); реальный disk usage растёт по мере замещения SSTable."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Snapshot восстанавливается командой `nodetool restore` автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Команды `nodetool restore` нет. Восстановление — ручное: остановить узел, скопировать SSTable из snapshots/ в data/, запустить.",
+                "source_of_confusion": "Ожидание полного цикла backup/restore.",
+                "if_it_were_true": "Команда была бы в `nodetool help` — её там нет.",
+                "how_it_should_be": "Ручное восстановление: stop, copy SSTable, restart, repair."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Snapshot работает только на уровне всего keyspace, нельзя snapshot одной таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Snapshot можно сделать per-table: `nodetool snapshot -t name keyspace.table`. Также можно snapshot всех keyspaces.",
+                "source_of_confusion": "Желание «всё или ничего».",
+                "if_it_were_true": "Параметра выбора таблицы не было бы — он есть.",
+                "how_it_should_be": "Granular: per-keyspace, per-table, или все таблицы; флаги `nodetool snapshot`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно удалить узел из кластера `Cassandra` (`decommission`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`nodetool decommission` мгновенно удаляет узел из кластера без переноса данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Decommission переносит данные на другие реплики, что может занимать часы. Без переноса данных потерялись бы реплики ranges.",
+                "source_of_confusion": "Желание мгновенной операции.",
+                "if_it_were_true": "Данные исчезали бы пропорционально удаляемым узлам — кластер сохраняет полный объём.",
+                "how_it_should_be": "Streaming данных перед удалением; время зависит от объёма."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`nodetool decommission` на удаляемом узле: его token ranges стримятся на другие реплики, после чего узел можно остановить. Кластер продолжает работать без даунтайма.",
+              "correct": true,
+              "sections": {
+                "explanation": "Процесс: узел переходит в `LEAVING` → stream данных на узлы, которые теперь будут реплицировать его ranges → состояние `LEFT` → можно `stop`. Для отказавшего узла, который не может сам decommission, — `nodetool removenode <uuid>`.",
+                "example": "`nodetool decommission` (на удаляемом) → ждать `nodetool status` показывает узел как `LEFT` → остановить сервис `Cassandra` → удалить из инфры.",
+                "when_to_apply": "Уменьшение кластера, замена железа, миграция; `removenode` — когда узел недоступен и не отвечает.",
+                "edge_cases": "Decommission может занимать часы на больших объёмах. Если узел отказал и недоступен, `decommission` не выполнится — используют `removenode` (с принудительным `force` при необходимости).",
+                "related": "Q37 bootstrap; Q40 nodetool; Q3 ring."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Decommission и `nodetool removenode` идентичны — оба используются на любом узле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Decommission запускается НА удаляемом узле (когда он жив); removenode — НА другом узле, когда удаляемый недоступен.",
+                "source_of_confusion": "Похожие цели — удалить узел.",
+                "if_it_were_true": "Существовала бы одна команда — но есть две для разных сценариев.",
+                "how_it_should_be": "`decommission` для живого; `removenode` для мёртвого."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После decommission старые узлы автоматически удаляют данные decommission'ed узла, восстановленные на них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Decommission стримит данные на узлы, которые будут их реплицировать. Они принимают эти данные как свои — никаких «удалений данных» не происходит.",
+                "source_of_confusion": "Сложно понять направление потока данных.",
+                "if_it_were_true": "Decommission был бы бессмысленным — он именно перераспределяет.",
+                "how_it_should_be": "Streaming with permanent ownership transfer; на новых владельцах данные остаются навсегда."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 43,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое hot partition в `Cassandra` и как с ней бороться?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hot partition — это партиция, которая часто кешируется в RAM и поэтому быстро отвечает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hot partition — проблема, а не оптимизация: перекос нагрузки. Кеширование никак не связано с термином.",
+                "source_of_confusion": "«Hot» воспринимается положительно (как hot cache).",
+                "if_it_were_true": "Не было бы рекомендаций «избегать hot partitions» — они стандартные.",
+                "how_it_should_be": "Hot partition = bottleneck; цель — равномерное распределение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hot partition лечится только увеличением RF — больше реплик распределяют нагрузку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Увеличение RF добавляет копии, но трафик всё равно идёт на те же узлы (владельцы партиции). Не помогает; помогает изменение partition key.",
+                "source_of_confusion": "Логика «больше реплик = больше пропускной способности» неверна для одной партиции.",
+                "if_it_were_true": "Hot partition не было бы при RF=ALL — но оно остаётся.",
+                "how_it_should_be": "Распределить данные по разным partition keys через salt, time-bucket или composite key."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hot partition — партиция, на которую приходится непропорционально много трафика или объёма данных. Создаёт перекос нагрузки между узлами и ухудшает latency. Лечится изменением partition key (добавление salt, time-bucket, более кардинальная колонка).",
+              "correct": true,
+              "sections": {
+                "explanation": "Все запросы по одному partition key идут на одни и те же RF узлов. Если key популярен (топовый пользователь) или низкокардинальный (country='Россия'), эти узлы перегружены. Метрики: `nodetool tablestats`, метрики partition size, top partition.",
+                "example": "Плохо: `PRIMARY KEY ((country), id)` — Россия = миллионы строк на 3 узла. Хорошо: `PRIMARY KEY ((country, day), id)` — разбивка по дню.",
+                "when_to_apply": "Любое моделирование с потенциально неравномерным распределением; всегда проверять кардинальность partition key.",
+                "edge_cases": "Salt-ключ (random shard) распределяет, но ломает естественный порядок и требует scatter-gather на read; компромисс по запросу.",
+                "related": "Q42 wide row; Q5 partitioner; Q11 partition key."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Cassandra` автоматически детектит hot partitions и перераспределяет данные между узлами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого автоматического rebalancing по горячести нет. Размещение определяется token-маппингом, который не меняется на основе трафика.",
+                "source_of_confusion": "Желание «умной» базы данных.",
+                "if_it_were_true": "Не было бы инструментов вроде `top partitions` и нужды их мониторить.",
+                "how_it_should_be": "Архитектурное решение разработчика; мониторинг и ручной redesign."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 44,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое wide row анти-паттерн в `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Wide row — это рекомендуемый паттерн `Cassandra`, она специально оптимизирована под широкие партиции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Wide row до разумного размера (десятки МБ) — нормально, но «гигантские» партиции — анти-паттерн. Cassandra оптимизирована под умеренные wide rows, не безграничные.",
+                "source_of_confusion": "Маркетинг «wide column store» воспринимается как «чем шире, тем лучше».",
+                "if_it_were_true": "Не было бы warning'ов и hard-лимитов на partition size.",
+                "how_it_should_be": "Wide row до ~100 МБ — ок; дальше — bucketing."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Wide row замедляет только запись, чтение её не затрагивает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Wide row влияет именно на чтение: merge между SSTable, memory pressure, latency proportional partition size. Запись остаётся быстрой.",
+                "source_of_confusion": "«Большой объём = медленная запись» интуитивно.",
+                "if_it_were_true": "Чтение бесконечно широких партиций было бы быстрым — реально оно деградирует.",
+                "how_it_should_be": "Запись быстра (LSM); чтение деградирует с размером партиции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Wide partition можно безопасно превратить в обычную через `nodetool repair`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Repair не меняет model: партиция как была wide, так и осталась. Решение — миграция в новую таблицу с другим PK.",
+                "source_of_confusion": "Желание «волшебной кнопки».",
+                "if_it_were_true": "Не было бы рекомендации перепроектировать схему при wide partition.",
+                "how_it_should_be": "Migration: новая таблица с bucketed PK, скрипт миграции данных, переключение приложения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Wide row — партиция, разросшаяся до сотен МБ или миллионов строк. Создаёт проблемы: read latency растёт линейно с размером партиции, GC давление, риск OOM при сборке партиции на координаторе.",
+              "correct": true,
+              "sections": {
+                "explanation": "Рекомендованный лимит partition size — 100 МБ или 100k строк (мягкие границы; hard fail на 2 ГБ). На read merge между SSTable требует memory proportional к partition size. Compaction wide partition также медленнее.",
+                "example": "Плохо: `PRIMARY KEY ((sensor_id), ts)` для IoT-сенсора с 10 событий/сек — за год 315M строк в одной партиции. Хорошо: `PRIMARY KEY ((sensor_id, month), ts)`.",
+                "when_to_apply": "При проектировании time-series или historical data — всегда оценить рост партиции и разбить на bucket'ы (day/month/year).",
+                "edge_cases": "При warning'ах в логах `Compacting large partition` или `Read N tombstones`— срочно ремоделировать; миграция данных в новую таблицу.",
+                "related": "Q42 hot partition; Q31 TTL; Q49 time-series."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 45,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `ALLOW FILTERING` в `Cassandra` и почему его обычно избегают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ALLOW FILTERING` — разрешение запросу выполнять фильтрацию без partition key или нарушая prefix clustering. Заставляет `Cassandra` сканировать все партиции на всех узлах — медленно и не масштабируется.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без `ALLOW FILTERING` `CQL` отклоняет запросы, которые не могут быть выполнены через partition key. Флаг включает full scan: на больших таблицах — минуты или таймауты. Стандартный анти-паттерн в проде.",
+                "example": "`SELECT * FROM users WHERE city = 'Москва' ALLOW FILTERING` — на 100M строк сканирует всё. Решение: отдельная таблица `users_by_city` с `PRIMARY KEY ((city), id)`.",
+                "when_to_apply": "Только для админских скриптов на маленьких данных или ad-hoc analytics с известно ограниченным объёмом; никогда в prod-API.",
+                "edge_cases": "Запрос с `ALLOW FILTERING` и partition key (`WHERE pk = ? AND other = ? ALLOW FILTERING`) — менее болезненный (фильтрация в пределах партиции), но всё равно sub-optimal.",
+                "related": "Q12 query-driven; Q34 secondary indexes; Q11 denormalization."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ALLOW FILTERING` — это оптимизация запросов: `Cassandra` использует индексы для ускорения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямо наоборот: `ALLOW FILTERING` отключает оптимизацию через partition key и делает полный сканирование. Это «разрешение на неэффективность».",
+                "source_of_confusion": "Слово «filtering» воспринимается как улучшение.",
+                "if_it_were_true": "Документация рекомендовала бы `ALLOW FILTERING` — она его отговаривает.",
+                "how_it_should_be": "`ALLOW FILTERING` = «я знаю, что это медленно, но мне очень нужно»; используется как админ-инструмент."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ALLOW FILTERING` нужен для запросов с `LIMIT` — без него `LIMIT` не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LIMIT` работает в обычных запросах без `ALLOW FILTERING`. `ALLOW FILTERING` нужен только при отсутствии partition key или нарушении prefix clustering.",
+                "source_of_confusion": "Случайные синтаксические шаблоны.",
+                "if_it_were_true": "Не было бы запросов `SELECT ... WHERE pk=? LIMIT 10` без `ALLOW FILTERING`.",
+                "how_it_should_be": "`LIMIT` — самостоятельная конструкция; не требует `ALLOW FILTERING`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Использовать `ALLOW FILTERING` безопасно, если таблица помещается в RAM узла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже на «небольших» таблицах `ALLOW FILTERING` не масштабируется с ростом данных; решение не отговаривает анти-паттерн, а замораживает scale.",
+                "source_of_confusion": "Иллюзия «локально быстро = всегда ок».",
+                "if_it_were_true": "Не было бы предостережений в документации DataStax — они стандартны.",
+                "how_it_should_be": "Не использовать в продакшен-логике; для роста использовать денормализацию."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 46,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать пагинацию в `Cassandra` и что такое paging state?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Пагинация в `Cassandra` делается через `LIMIT N OFFSET M` так же, как в `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OFFSET` в `CQL` отсутствует. Пагинация — через paging state, не offset.",
+                "source_of_confusion": "Аналогия с SQL.",
+                "if_it_were_true": "Запрос `SELECT ... LIMIT 100 OFFSET 200` был бы валидным — отклоняется парсером.",
+                "how_it_should_be": "PagingState или cursor через clustering column."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pagination в `Cassandra` идёт через `paging state` — opaque-токен от сервера, передаваемый в следующий запрос как «продолжить отсюда». Драйверы (Java, Python, Go) реализуют это автоматически через iterator/cursor API.",
+              "correct": true,
+              "sections": {
+                "explanation": "`OFFSET` в `CQL` отсутствует. Сервер при запросе с `fetchSize` отдаёт первый chunk и pagingState; клиент передаёт его в следующий запрос. State содержит position в результате — обычно последний ключ.",
+                "example": "Java driver: `Statement s = ...withFetchSize(100); ResultSet rs = session.execute(s); while (!rs.isFullyFetched()) { rs.fetchMoreResults(); }` — прозрачная пагинация.",
+                "when_to_apply": "Любое чтение больших результатов: списки, экспорт, batch-обработка. Стандартный паттерн.",
+                "edge_cases": "Paging state не stable между запросами с разным query plan; нельзя кешировать на долго. Не подходит для random-access пагинации (page 50 без обхода 1–49).",
+                "related": "Q33 secondary indexes; Q44 ALLOW FILTERING; Q12 query-driven."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Paging state хранится на сервере и автоматически освобождается по таймауту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Paging state передаётся клиенту в каждом ответе и хранится клиентом. Сервер не держит state между запросами.",
+                "source_of_confusion": "Аналогия с серверными курсорами в реляционных СУБД.",
+                "if_it_were_true": "Был бы лимит на количество одновременных пагинаций — его нет.",
+                "how_it_should_be": "Stateless server; state на клиенте в opaque-байтах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для пагинации в `Cassandra` нужно использовать `MATERIALIZED VIEW` с offset-полем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MV не нужны для пагинации; стандартный `fetchSize` + paging state работают в любой таблице.",
+                "source_of_confusion": "Желание «специальной структуры» для специфичной задачи.",
+                "if_it_were_true": "Любая таблица требовала бы дополнительную MV — на практике нет.",
+                "how_it_should_be": "Driver-level pagination через fetchSize; никаких дополнительных схем."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 47,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбирать `Cassandra` вместо `PostgreSQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Cassandra` всегда лучше `PostgreSQL` благодаря NoSQL-архитектуре и горизонтальному масштабированию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra и Postgres решают разные задачи. На малых нагрузках Postgres быстрее и проще; Cassandra выигрывает только при scale и write-heavy.",
+                "source_of_confusion": "Маркетинг «NoSQL > SQL».",
+                "if_it_were_true": "Все стартапы начинали бы с Cassandra — реально большинство с Postgres.",
+                "how_it_should_be": "Выбор по требованиям; Postgres — default до достижения scale limits."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Cassandra` подходит для приложений с `JOIN` и сложными аналитическими запросами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra не поддерживает `JOIN` и плохо подходит для ad-hoc analytics. Для analytics используют отдельные системы (Spark, Presto, ClickHouse).",
+                "source_of_confusion": "Желание «универсальной БД».",
+                "if_it_were_true": "`CQL` содержал бы `JOIN` — не содержит.",
+                "how_it_should_be": "Cassandra для point-queries и time-series; analytics — отдельный stack."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Cassandra` — когда нужна линейная масштабируемость записи (десятки и сотни тысяч RPS), multi-DC active-active, write-heavy нагрузка и tolerance к eventual consistency. `PostgreSQL` — для `JOIN`, ad-hoc запросов, `ACID` транзакций и умеренного объёма.",
+              "correct": true,
+              "sections": {
+                "explanation": "`PostgreSQL` вертикально масштабируется до ~100k TPS на топовом железе. Дальше — шардирование вручную. `Cassandra` шардирует автоматически и линейно растёт до десятков узлов. Цена — отсутствие `JOIN`, query-driven design.",
+                "example": "Cassandra: события клиентов, IoT-телеметрия, аудит-логи, time-series метрики. PostgreSQL: финансы с транзакциями, бизнес-логика с FK, аналитика.",
+                "when_to_apply": "Не «либо-либо», а по нагрузке: маленький проект → Postgres; ставка на масштаб + write-heavy → Cassandra; часто гибрид (Postgres для transactional + Cassandra для logs/events).",
+                "edge_cases": "Cassandra проигрывает Postgres на сложных запросах и в team learning curve; миграция Postgres → Cassandra сложна из-за разных моделей данных.",
+                "related": "Q11 denormalization; Q48 Cassandra vs MongoDB; Q49 time-series."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Cassandra` подходит для проектов до 10k строк — её простота превосходит PostgreSQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra сложнее PostgreSQL в эксплуатации и моделировании; для маленьких объёмов overhead не окупается.",
+                "source_of_confusion": "Восприятие «современный NoSQL = проще».",
+                "if_it_were_true": "Маленькие проекты не запускали бы Postgres — большинство именно с него начинают.",
+                "how_it_should_be": "Cassandra оправдана при scale; маленькие — Postgres."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 48,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Cassandra` отличается от `MongoDB`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Cassandra` и `MongoDB` идентичны в плане архитектуры — оба distributed NoSQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Принципиально разные: Cassandra masterless wide-column AP; MongoDB primary-secondary document store CP-leaning.",
+                "source_of_confusion": "Общий ярлык «NoSQL» скрывает фундаментальные различия.",
+                "if_it_were_true": "Не было бы трейдоффов в выборе — есть.",
+                "how_it_should_be": "Разные модели данных, разные consistency, разные failure modes; глубокое различие."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`MongoDB` лучше для time-series, потому что поддерживает гибкую схему.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для time-series обычно лучше Cassandra: append-only, TWCS compaction, линейный scale записи. MongoDB time-series есть, но не такие масштабируемые.",
+                "source_of_confusion": "«Гибкая схема = универсальность».",
+                "if_it_were_true": "Большие IoT-проекты использовали бы MongoDB — чаще Cassandra или InfluxDB.",
+                "how_it_should_be": "Time-series масштаб → Cassandra/InfluxDB; гибкие документы → MongoDB."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Cassandra` поддерживает ad-hoc JSON-запросы со сложной агрегацией, как MongoDB aggregation pipeline.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra CQL — ограниченный subset; никакого aggregation pipeline. Для аналитики нужен Spark/Presto.",
+                "source_of_confusion": "Желание гибких queries.",
+                "if_it_were_true": "Существовал бы `db.collection.aggregate(...)` в Cassandra — нет.",
+                "how_it_should_be": "Cassandra — predefined access patterns; MongoDB — flexible queries и aggregation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Cassandra` — wide-column AP-система с masterless архитектурой и tunable consistency. `MongoDB` — document store с primary-secondary replication, transactions с 4.x, более гибкими ad-hoc запросами через query language.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cassandra: масштабирование линейное write-heavy, нет master, query-driven design. MongoDB: гибкие документы, secondary indexes работают глобально, есть aggregation pipeline; масштабирование через sharding (сложнее настраивается).",
+                "example": "Cassandra — события платформы (сотни тысяч RPS, multi-DC). MongoDB — каталог с разными атрибутами товаров (гибкая схема, поиск по любым полям).",
+                "when_to_apply": "Cassandra: write-heavy, predictable queries, multi-DC. MongoDB: гибкие документы, ad-hoc queries, схема меняется часто.",
+                "edge_cases": "MongoDB до 4.x был только eventual consistency; теперь есть multi-document transactions, но дороже Cassandra LWT. Cassandra богаче в multi-DC native поддержке.",
+                "related": "Q47 Cassandra vs Postgres; Q11 denormalization; Q39 datacenter-aware."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 49,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему `Cassandra` хорошо подходит для time-series и IoT данных?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Append-only LSM-tree даёт высокую скорость записи (миллионы RPS на кластер). Clustering by timestamp + TWCS compaction позволяют эффективно хранить и быстро удалять старые данные через TTL. Multi-DC поддержка — для географически распределённых сенсоров.",
+              "correct": true,
+              "sections": {
+                "explanation": "Time-series идеально ложится на model: partition key = sensor_id (или (sensor_id, day) для bucketing), clustering = timestamp. TTL автоматически удаляет старые данные; TWCS делает drop expired окон cheap.",
+                "example": "IoT сенсоры: `CREATE TABLE telemetry (sensor_id text, day date, ts timestamp, value double, PRIMARY KEY ((sensor_id, day), ts)) WITH default_time_to_live = 7776000` (90 дней).",
+                "when_to_apply": "Метрики, IoT-телеметрия, логи, события, audit trails — любые append-mostly данные с time-range запросами.",
+                "edge_cases": "Без bucketing wide partition при долгих историях; нужно следить за partition size и распределением sensor_id по узлам.",
+                "related": "Q15 TWCS; Q31 TTL; Q43 wide row."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Cassandra` сама автоматически индексирует time-series данные по времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой автоматической time-series оптимизации нет. Эффективность даёт правильное моделирование: timestamp в clustering key.",
+                "source_of_confusion": "Желание «умной» БД.",
+                "if_it_were_true": "Не нужно было бы вручную указывать `ts` в clustering — нужно.",
+                "how_it_should_be": "Time-series эффективность — следствие правильного PK, не автомагия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для time-series в `Cassandra` обязательно использовать MATERIALIZED VIEW для индексов по времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Базовая таблица с timestamp в clustering key даёт эффективные time-range запросы без MV.",
+                "source_of_confusion": "Идея «нужен индекс для скорости».",
+                "if_it_were_true": "Все time-series туториалы включали бы MV — они их не включают.",
+                "how_it_should_be": "Простая таблица: partition = sensor + bucket, clustering = ts; никаких MV для основного access pattern."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TWCS compaction подходит только для финансовых данных, не для time-series.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TWCS создан именно для time-series с TTL: каждое окно времени = отдельная SSTable, expired окна дропаются.",
+                "source_of_confusion": "Перепутаны use cases.",
+                "if_it_were_true": "Документация TWCS говорила бы про финансы — она про time-series.",
+                "how_it_should_be": "TWCS = time-series + TTL; финансы — STCS/LCS на маленьких таблицах с ACID-логикой через LWT/внешние стораджи."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 50,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `ScyllaDB` и чем он отличается от `Cassandra`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ScyllaDB` — это fork `Cassandra` на Java с минимальными изменениями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scylla переписан полностью на C++ с использованием Seastar framework; не fork Cassandra, а независимая реализация совместимого протокола.",
+                "source_of_confusion": "Многие drop-in replacements действительно forks.",
+                "if_it_were_true": "Не было бы заявленных 5–10× performance gain — он именно от смены runtime.",
+                "how_it_should_be": "Независимая реализация на C++/Seastar с CQL-совместимостью."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ScyllaDB` — drop-in замена `Cassandra` с тем же `CQL` и протоколом. Написан на C++ (вместо JVM), использует shared-nothing per-core архитектуру (`Seastar`), даёт 5–10× больше throughput на том же железе и предсказуемую latency без GC pauses.",
+              "correct": true,
+              "sections": {
+                "explanation": "Scylla сохраняет совместимость с Cassandra-драйверами и DDL. Главные плюсы: отсутствие JVM GC, sharding per-core внутри узла, лучшая utilization железа. Минусы: меньше community, новые фичи Cassandra появляются позже.",
+                "example": "Миграция Cassandra → Scylla обычно cluster-to-cluster через `sstableloader` или dual-write; приложение часто меняется минимально.",
+                "when_to_apply": "Когда нужна максимальная производительность на узел и предсказуемая latency без GC tail; meet тех же use cases, что Cassandra.",
+                "edge_cases": "Не все Cassandra-фичи поддерживаются (materialized views, lightweight transactions с особенностями); версии Scylla отстают на новые CQL features.",
+                "related": "Q1 Cassandra основы; Q47 Cassandra vs Postgres; Q15 compaction."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ScyllaDB` использует свой собственный query language вместо `CQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scylla использует `CQL`, идентичный Cassandra-CQL по большей части. Цель — drop-in замена.",
+                "source_of_confusion": "Ожидание, что новая БД = новый язык.",
+                "if_it_were_true": "Миграция Cassandra → Scylla требовала бы переписывания запросов — она этого не требует.",
+                "how_it_should_be": "Тот же CQL; драйверы Cassandra работают со Scylla (с опциональным shard-aware driver)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ScyllaDB` всегда медленнее `Cassandra` из-за дополнительной слой абстракции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scylla наоборот быстрее: 5–10× throughput на узел за счёт C++ и shared-nothing per-core. Никаких дополнительных слоёв.",
+                "source_of_confusion": "Догадка наугад про «новые системы медленнее проверенных».",
+                "if_it_were_true": "Бенчмарки показали бы это — реально Scylla опережает Cassandra по throughput.",
+                "how_it_should_be": "Scylla — оптимизированная реализация; быстрее на том же железе."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
