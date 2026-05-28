@@ -574,7 +574,7 @@ Pass: `OK FILE.md`.
 | 238 | `programming-languages/java` | `java-stream` | 42 | 6 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 239 | `programming-languages/java` | `java-string` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 240 | `programming-languages/java` | `java-types` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 241 | `programming-languages/java` | `java-virtual-threads` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 241 | `programming-languages/java` | `java-virtual-threads` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 242 | `programming-languages/kotlin` | `kotlin-collections` | 42 | — | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 243 | `programming-languages/kotlin` | `kotlin-coroutines` | 19 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 244 | `programming-languages/kotlin` | `kotlin-dsl` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
