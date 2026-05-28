@@ -489,7 +489,7 @@ Pass: `OK FILE.md`.
 | 153 | `frameworks/spring` | `spring-data-jdbc` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 154 | `frameworks/spring` | `spring-data-jpa` | 42 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 155 | `frameworks/spring` | `spring-events` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 156 | `frameworks/spring` | `spring-framework` | 55 | 55 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 156 | `frameworks/spring` | `spring-framework` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 157 | `frameworks/spring` | `spring-graphql` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 158 | `frameworks/spring` | `spring-integration` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 159 | `frameworks/spring` | `spring-kafka` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
