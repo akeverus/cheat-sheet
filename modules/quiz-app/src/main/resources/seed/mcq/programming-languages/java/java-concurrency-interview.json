@@ -1476,13 +1476,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Race condition всегда выбрасывает ConcurrentModificationException и легко диагностируется.",
+              "text": "Race condition можно полностью устранить, объявив все участвующие переменные `volatile`.",
               "correct": false,
               "sections": {
-                "what_actually": "Race condition обычно молчалив — порча данных без исключения; CME — только частный случай (fail-fast iterator).",
-                "source_of_confusion": "Перепутаны CME и race condition.",
-                "if_it_were_true": "Не было бы Heisenbug'ов — реально воспроизводятся редко.",
-                "how_it_should_be": "Race может быть silent corruption; CME — отдельный механизм."
+                "what_actually": "`volatile` гарантирует видимость записей между потоками, но не атомарность. Составные операции (`check-then-act`, `i++`) остаются гонкой даже на `volatile`-полях.",
+                "source_of_confusion": "Путают видимость (visibility) с атомарностью (atomicity).",
+                "if_it_were_true": "Тогда `volatile int i; i++` был бы потокобезопасным, но это классический пример гонки.",
+                "how_it_should_be": "Для атомарности нужны `Atomic*`-классы, `synchronized` или `Lock`; `volatile` — только для флагов видимости."
               }
             },
             {
@@ -1716,13 +1716,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Все фабричные методы Executors безопасны для production без дополнительной настройки.",
+              "text": "`newSingleThreadExecutor()` можно скастовать к `ThreadPoolExecutor` и увеличить пул через `setCorePoolSize`.",
               "correct": false,
               "sections": {
-                "what_actually": "newFixedThreadPool с unbounded queue и newCachedThreadPool с unbounded threads — опасны и могут привести к OOM.",
-                "source_of_confusion": "Доверие к JDK-фабрикам.",
-                "if_it_were_true": "Goetz не писал бы про это в JCIP — реально один из главных pitfalls.",
-                "how_it_should_be": "В production: ThreadPoolExecutor вручную с bounded queue + RejectedExecutionHandler."
+                "what_actually": "`newSingleThreadExecutor` оборачивается в `FinalizableDelegatedExecutorService`; каст к `ThreadPoolExecutor` бросит `ClassCastException`.",
+                "source_of_confusion": "У `newFixedThreadPool` каст к `ThreadPoolExecutor` работает — ждут того же от single.",
+                "if_it_were_true": "Можно было бы превратить однопоточный executor в многопоточный, нарушив гарантию последовательного выполнения.",
+                "how_it_should_be": "Для настраиваемого пула создавать `new ThreadPoolExecutor(...)` напрямую."
               }
             },
             {
@@ -1788,13 +1788,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "awaitTermination() прерывает выполняющиеся задачи через timeout.",
+              "text": "После `shutdown()` можно продолжать отправлять задачи через `execute()`, пока пул не опустеет.",
               "correct": false,
               "sections": {
-                "what_actually": "awaitTermination только БЛОКИРУЕТСЯ до завершения или истечения таймаута; никого не прерывает.",
-                "source_of_confusion": "Аналогия с Future.get(timeout) который умеет cancel.",
-                "if_it_were_true": "shutdownNow не понадобился бы — реально нужен.",
-                "how_it_should_be": "awaitTermination = только ожидание; прерывание — shutdownNow."
+                "what_actually": "После `shutdown()` пул перестаёт принимать новые задачи — `execute()` бросит `RejectedExecutionException`.",
+                "source_of_confusion": "Слово «graceful» наводит на мысль, что новые задачи ещё принимаются.",
+                "if_it_were_true": "`shutdown()` ничем не отличался бы от обычной работы пула.",
+                "how_it_should_be": "`shutdown()` запрещает новые задачи и доделывает принятые; для новых нужен новый executor."
               }
             }
           ]
@@ -1956,13 +1956,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Future.get() неблокирующий — возвращает Optional пока задача не готова.",
+              "text": "Повторный вызов `Future.get()` перезапускает задачу заново и возвращает свежий результат.",
               "correct": false,
               "sections": {
-                "what_actually": "Future.get() блокирует до готовности или таймаута; не возвращает Optional.",
-                "source_of_confusion": "Желание non-blocking API.",
-                "if_it_were_true": "CompletableFuture не понадобился бы — реально создан для этого.",
-                "how_it_should_be": "get() блокирует; non-blocking — CompletableFuture.thenApply."
+                "what_actually": "Задача выполняется один раз; `get()` возвращает уже вычисленный (закэшированный) результат при каждом вызове.",
+                "source_of_confusion": "Путают с реактивным `Mono`, где новая подписка перезапускает цепочку.",
+                "if_it_were_true": "Один `Future` давал бы разные результаты при каждом `get()` — недетерминизм.",
+                "how_it_should_be": "`Future` вычисляется однократно; результат кэшируется и переиспользуется."
               }
             },
             {
@@ -2028,13 +2028,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "CompletableFuture по умолчанию выполняет всё в новых потоках через Executors.newFixedThreadPool.",
+              "text": "`thenApply` и `thenApplyAsync` идентичны — оба всегда выполняются в `ForkJoinPool.commonPool()`.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию — ForkJoinPool.commonPool(); НЕ newFixedThreadPool.",
-                "source_of_confusion": "Аналогия с newCachedThreadPool.",
-                "if_it_were_true": "Не было бы дискуссий «не используй commonPool для I/O» — реально стандартная проблема.",
-                "how_it_should_be": "По умолчанию commonPool; для I/O — свой Executor."
+                "what_actually": "`thenApply` выполняется в потоке, завершившем предыдущий этап (или в вызывающем); `thenApplyAsync` — в `commonPool` или переданном `Executor`.",
+                "source_of_confusion": "Имена почти одинаковые, разницу в потоке выполнения упускают.",
+                "if_it_were_true": "Не было бы смысла в двух разных вариантах метода.",
+                "how_it_should_be": "`*Async`-варианты выносят выполнение в отдельный executor; не-async продолжают в текущем потоке."
               }
             }
           ]
@@ -2196,13 +2196,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "allOf возвращает список результатов List<T>, без необходимости вызывать join.",
+              "text": "`allOf` сразу бросает исключение, если хотя бы один `CompletableFuture` ещё не завершён.",
               "correct": false,
               "sections": {
-                "what_actually": "allOf возвращает CF<Void> — результаты надо извлекать join'ом из каждого исходного CF.",
-                "source_of_confusion": "Желаемое поведение.",
-                "if_it_were_true": "Был бы готовый CF<List<T>> — реально приходится строить вручную.",
-                "how_it_should_be": "allOf → CF<Void>; join() на каждом для результата."
+                "what_actually": "`allOf` возвращает `CompletableFuture<Void>`, который завершается когда готовы ВСЕ; он не бросает из-за незавершённости.",
+                "source_of_confusion": "Путают с `get(timeout)`, бросающим `TimeoutException`.",
+                "if_it_were_true": "`allOf` был бы бесполезен как инструмент ожидания группы задач.",
+                "how_it_should_be": "`allOf(...).join()` блокируется до завершения всех; затем собрать результаты `join()` на каждом CF."
               }
             },
             {
@@ -2268,13 +2268,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "CountDownLatch можно сбросить и переиспользовать через reset().",
+              "text": "В `CyclicBarrier` нельзя задать barrier action — он умеет только блокировать потоки.",
               "correct": false,
               "sections": {
-                "what_actually": "Latch одноразовый, не имеет reset(); reset есть у CyclicBarrier.",
-                "source_of_confusion": "Перепутаны API.",
-                "if_it_were_true": "Latch назывался бы CyclicLatch — реально одноразовый.",
-                "how_it_should_be": "Latch одноразовый; для повторного — новый объект или Phaser/CyclicBarrier."
+                "what_actually": "`CyclicBarrier(n, barrierAction)` принимает `Runnable`, который выполняется последним пришедшим потоком при срабатывании барьера.",
+                "source_of_confusion": "У `CountDownLatch` нет action — переносят это ограничение на barrier.",
+                "if_it_were_true": "Нельзя было бы агрегировать результаты фазы прямо на барьере.",
+                "how_it_should_be": "`new CyclicBarrier(n, () -> merge())` — action запускается на каждом срабатывании барьера."
               }
             }
           ]
@@ -2436,13 +2436,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Concurrent collections — это просто обёртки с synchronized над обычными коллекциями.",
+              "text": "`ConcurrentHashMap` допускает `null` в качестве ключа и значения, как обычный `HashMap`.",
               "correct": false,
               "sections": {
-                "what_actually": "Это специализированные структуры с fine-grained lock, CAS, COW; не synchronized wrapper.",
-                "source_of_confusion": "Аналогия с Collections.synchronizedMap.",
-                "if_it_were_true": "Не было бы разницы в производительности — реально на порядки.",
-                "how_it_should_be": "Concurrent collections ≠ synchronizedXxx; разный механизм и performance."
+                "what_actually": "`ConcurrentHashMap` запрещает `null` ключи и значения — бросает `NullPointerException`.",
+                "source_of_confusion": "`HashMap` допускает один `null`-ключ и `null`-значения — ждут того же.",
+                "if_it_were_true": "При конкурентном доступе нельзя было бы отличить «нет ключа» от «значение `null`».",
+                "how_it_should_be": "Использовать sentinel-объект или `Optional`; `null` в `ConcurrentHashMap` недопустим."
               }
             },
             {
@@ -2688,13 +2688,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Thread dump автоматически генерируется JVM при каждом исключении.",
+              "text": "Снятие thread dump останавливает JVM, пока её не перезапустят вручную.",
               "correct": false,
               "sections": {
-                "what_actually": "JVM генерирует stack trace для исключения, но не thread dump всех потоков — это разные понятия.",
-                "source_of_confusion": "Смешение stack trace и thread dump.",
-                "if_it_were_true": "Лог приложения был бы заспамлен дампами — реально нет.",
-                "how_it_should_be": "Stack trace ≠ thread dump; dump — по запросу."
+                "what_actually": "`jstack`/`jcmd Thread.print`/`kill -3` снимают дамп без остановки приложения — это безопасная live-диагностика.",
+                "source_of_confusion": "Путают с heap dump на `OutOfMemoryError` или с паузой при full GC.",
+                "if_it_were_true": "Диагностика на проде была бы недопустима из-за простоя.",
+                "how_it_should_be": "Thread dump снимается на лету без остановки процесса."
               }
             }
           ]
@@ -2748,13 +2748,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Virtual threads ускоряют CPU-bound вычисления за счёт параллелизма.",
+              "text": "Каждый virtual thread занимает отдельный поток ОС, просто с меньшим размером стека.",
               "correct": false,
               "sections": {
-                "what_actually": "VT не дают преимуществ для CPU-bound — там работают platform threads. VT для I/O-bound.",
-                "source_of_confusion": "Маркетинговое «более быстрые потоки».",
-                "if_it_were_true": "Можно было бы заменить ForkJoinPool на VT — реально хуже для CPU-bound.",
-                "how_it_should_be": "VT для I/O; CPU-bound — platform threads / ForkJoinPool."
+                "what_actually": "Virtual threads НЕ привязаны 1:1 к потокам ОС; миллионы VT мультиплексируются на немногих carrier-потоках (M:N).",
+                "source_of_confusion": "Слово «thread» наводит на мысль об отдельном ОС-потоке.",
+                "if_it_were_true": "Не было бы выигрыша в масштабируемости — упёрлись бы в лимит ОС-потоков.",
+                "how_it_should_be": "VT работают по схеме M:N поверх пула carrier-потоков (`ForkJoinPool`)."
               }
             }
           ]
@@ -2916,13 +2916,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Structured Concurrency — это синоним synchronized.",
+              "text": "`StructuredTaskScope` требует ручного `Thread.join()` для каждой подзадачи.",
               "correct": false,
               "sections": {
-                "what_actually": "Структурная конкурентность — про lifecycle подзадач, не про mutex; не имеет отношения к synchronized.",
-                "source_of_confusion": "Слово «структура» применённое некорректно.",
-                "if_it_were_true": "JEP 453 был бы дубликатом существующего API — реально новая концепция.",
-                "how_it_should_be": "Structured concurrency = lifecycle scope; synchronized = mutex."
+                "what_actually": "`scope.join()` ждёт все подзадачи разом; ручной join каждого потока не нужен.",
+                "source_of_confusion": "Привычка к ручному `join()` из классической потоковой модели.",
+                "if_it_were_true": "Терялась бы главная ценность — автоматическое управление жизненным циклом дочерних задач.",
+                "how_it_should_be": "`fork()` запускает подзадачи, `scope.join()` ждёт всех, закрытие scope отменяет оставшиеся."
               }
             },
             {
