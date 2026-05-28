@@ -483,7 +483,7 @@ Pass: `OK FILE.md`.
 | 147 | `frameworks/spring` | `spring-batch` | 43 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 148 | `frameworks/spring` | `spring-boot-3-migration` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 149 | `frameworks/spring` | `spring-boot-actuator` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 150 | `frameworks/spring` | `spring-boot` | 42 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 150 | `frameworks/spring` | `spring-boot` | 42 | 50 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 151 | `frameworks/spring` | `spring-cache` | 17 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 152 | `frameworks/spring` | `spring-cloud` | 43 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 153 | `frameworks/spring` | `spring-data-jdbc` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
