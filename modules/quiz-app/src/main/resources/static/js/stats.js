@@ -40,13 +40,35 @@
       }
     }
 
-    var labels = topicStats.map(shortName);
-    var learned = topicStats.map(function (t) { return t.learned; });
-    var total = topicStats.map(function (t) { return t.total || 1; });
-    var accuracy = topicStats.map(function (t) {
-      var sum = t.correct + t.wrong;
-      return sum === 0 ? 0 : Math.round((t.correct / sum) * 100);
+    // Графики строим не по всем ~305 темам (нечитаемая каша из тонких баров),
+    // а по релевантному топу. Полные данные — в сортируемой таблице ниже.
+    var MAX_BARS = 25;
+    var enriched = topicStats.map(function (t) {
+      var attempts = (t.correct || 0) + (t.wrong || 0);
+      return {
+        name: shortName(t),
+        learned: t.learned || 0,
+        total: t.total || 1,
+        attempts: attempts,
+        accuracy: attempts === 0 ? 0 : Math.round(((t.correct || 0) / attempts) * 100),
+        activity: (t.learned || 0) + attempts
+      };
     });
+
+    // Прогресс: только темы, с которыми работали (выучено/попытки), топ по
+    // активности. Нетронутые темы в график не тащим — это и есть основной шум.
+    var progressData = enriched
+      .filter(function (t) { return t.activity > 0; })
+      .sort(function (a, b) { return b.activity - a.activity; })
+      .slice(0, MAX_BARS);
+
+    // Точность: только отвеченные темы, слабые первыми (actionable). Тему без
+    // попыток НЕ показываем как 0% (красным) — это путало бы «не трогал» с
+    // «всё провалил».
+    var accuracyData = enriched
+      .filter(function (t) { return t.attempts > 0; })
+      .sort(function (a, b) { return a.accuracy - b.accuracy || b.attempts - a.attempts; })
+      .slice(0, MAX_BARS);
 
     var commonOpts = {
       responsive: true,
@@ -59,15 +81,15 @@
     };
 
     var el1 = document.getElementById('topicProgressChart');
-    if (el1 && typeof Chart !== 'undefined') {
+    if (el1 && typeof Chart !== 'undefined' && progressData.length > 0) {
       try {
         new Chart(el1, {
         type: 'bar',
         data: {
-          labels: labels,
+          labels: progressData.map(function (t) { return t.name; }),
           datasets: [
-            { label: 'Выучено', data: learned, backgroundColor: 'rgba(34,197,94,0.6)', borderRadius: 3 },
-            { label: 'Осталось', data: total.map(function (t, i) { return Math.max(0, t - learned[i]); }), backgroundColor: 'rgba(148,163,184,0.35)', borderRadius: 3 }
+            { label: 'Выучено', data: progressData.map(function (t) { return t.learned; }), backgroundColor: 'rgba(34,197,94,0.6)', borderRadius: 3 },
+            { label: 'Осталось', data: progressData.map(function (t) { return Math.max(0, t.total - t.learned); }), backgroundColor: 'rgba(148,163,184,0.35)', borderRadius: 3 }
           ]
         },
         options: { scales: { x: Object.assign({}, commonOpts.scales.x, { stacked: true }), y: Object.assign({}, commonOpts.scales.y, { stacked: true }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
@@ -75,21 +97,24 @@
       } catch (_) {
         showChartFallback(el1, progressFallback, 'Не удалось отрисовать график прогресса. Используй таблицу ниже.');
       }
+    } else if (el1 && typeof Chart !== 'undefined') {
+      showChartFallback(el1, progressFallback, 'Пока нет активных тем. Начни отвечать — и здесь появится твой прогресс.');
     } else {
       showChartFallback(el1, progressFallback, 'График прогресса недоступен в текущем окружении. Используй таблицу ниже.');
     }
 
     var el2 = document.getElementById('topicAccuracyChart');
-    if (el2 && typeof Chart !== 'undefined') {
+    if (el2 && typeof Chart !== 'undefined' && accuracyData.length > 0) {
       try {
+        var accVals = accuracyData.map(function (t) { return t.accuracy; });
         new Chart(el2, {
         type: 'bar',
         data: {
-          labels: labels,
+          labels: accuracyData.map(function (t) { return t.name; }),
           datasets: [{
             label: 'Точность %',
-            data: accuracy,
-            backgroundColor: accuracy.map(function (v) { return v >= 80 ? 'rgba(34,197,94,0.6)' : v >= 50 ? 'rgba(234,179,8,0.6)' : 'rgba(239,68,68,0.6)'; }),
+            data: accVals,
+            backgroundColor: accVals.map(function (v) { return v >= 80 ? 'rgba(34,197,94,0.6)' : v >= 50 ? 'rgba(234,179,8,0.6)' : 'rgba(239,68,68,0.6)'; }),
             borderRadius: 3
           }]
         },
@@ -98,6 +123,8 @@
       } catch (_) {
         showChartFallback(el2, accuracyFallback, 'Не удалось отрисовать график точности. Используй таблицу ниже.');
       }
+    } else if (el2 && typeof Chart !== 'undefined') {
+      showChartFallback(el2, accuracyFallback, 'Пока нет отвеченных вопросов. Ответь на несколько — и увидишь точность по темам.');
     } else {
       showChartFallback(el2, accuracyFallback, 'График точности недоступен в текущем окружении. Используй таблицу ниже.');
     }
