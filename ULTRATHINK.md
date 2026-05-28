@@ -1,15 +1,17 @@
 ---
 title: "ULTRATHINK v5 — exhaustive per-file audit plan (всё с нуля)"
 description: "Полный план аудита всех 304 interview-файлов. Прогресс сброшен в ноль. Детализированные критерии по 8 группам (A-H) с конкретными метриками."
-updated: "2026-05-27"
+updated: "2026-05-28"
 status: "active"
 audit_version: 5
-progress: "RESET — 0/304 проверено"
+progress: "MCQ-сидеры: 103/304 .md имеют выровненный JSON; 201 NO-JSON в работе (Phase 2). Spring-кластер (28 тем) генерируется батчем."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
 
-> **Прогресс сброшен.** Все 304 interview-файла помечены `⬜ TODO`. Каждый должен пройти полный checklist A-H **с нуля**, независимо от истории работы в любой сессии.
+> **Текущий фокус (2026-05-28):** Phase 2 — генерация выровненных MCQ-JSON-сидеров для 201 NO-JSON файла. Инвариант: JSON `q_number` = `## Q<N>` в .md (опции привязываются по номеру, `question_text` не отображается). Каждый сидер проходит gate: schema-valid + alignment 1.0 (0 orphans/missing) + строгая ротация `ABCD[(N-1)%4]` + 0 дубликатов дистракторов + 0 self-contradiction + info-ratio ≤ 4 + adversarial семантическая сверка + BUILD SUCCESSFUL. Метод генерации — чанкованный Python-генератор (sub-agent/workflow), иначе падение на 32k output-лимите.
+>
+> Полный per-file checklist A-H (ниже) применяется к каждому .md независимо от истории.
 
 ## Зачем v5
 
