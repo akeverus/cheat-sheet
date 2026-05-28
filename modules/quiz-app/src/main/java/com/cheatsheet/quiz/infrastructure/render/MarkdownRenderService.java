@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Service;
 
@@ -54,6 +55,13 @@ public class MarkdownRenderService {
 
     private final AppProperties appProperties;
 
+    // prettyPrint=false: Jsoup НЕ переформатирует пробелы при выводе. Критично
+    // для <div class="mermaid"> — иначе Jsoup схлопывал переводы строк в
+    // mermaid-источнике в пробелы, и mermaid.js не мог распарсить диаграмму
+    // (каждый statement должен быть на своей строке) → диаграмма не рисовалась.
+    private static final Document.OutputSettings NO_PRETTY_PRINT =
+            new Document.OutputSettings().prettyPrint(false);
+
     /** Safelist для HTML после markdown: только безопасные теги, без script/iframe/form. Подходит для th:utext. */
     private static final Safelist HTML_SAFELIST = Safelist.relaxed()
             .addTags("pre", "code", "table", "thead", "tbody", "tr", "th", "td")
@@ -87,7 +95,7 @@ public class MarkdownRenderService {
         processed = preprocessWikiLinks(processed);
         Node document = PARSER.parse(processed);
         String html = HTML_RENDERER.render(document);
-        return Jsoup.clean(html, HTML_SAFELIST);
+        return Jsoup.clean(html, "", HTML_SAFELIST, NO_PRETTY_PRINT);
     }
 
     /** Заменяет ```mermaid ... ``` блоки на <div class="mermaid"> для рендеринга mermaid.js. */

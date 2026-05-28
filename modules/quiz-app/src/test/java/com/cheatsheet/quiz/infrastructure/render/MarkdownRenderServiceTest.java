@@ -66,6 +66,19 @@ class MarkdownRenderServiceTest {
     }
 
     @Test
+    void preservesNewlinesInMermaidSource() {
+        // Регрессия: Jsoup prettyPrint схлопывал переводы строк в mermaid-источнике
+        // в пробелы → mermaid.js не мог распарсить многострочную диаграмму.
+        String md = "```mermaid\nflowchart LR\n    A --> B\n    B --> C\n```";
+        String html = service.toHtml(md);
+
+        assertThat(html).contains("<div class=\"mermaid\">");
+        // statements должны остаться на разных строках (а не «flowchart LR A --> B B --> C»)
+        assertThat(html).contains("flowchart LR\n");
+        assertThat(html).doesNotContain("flowchart LR     A");
+    }
+
+    @Test
     void rendersGfmTableAsHtmlTable() {
         // Регрессия: без TablesExtension flexmark схлопывал строки таблицы в <p>,
         // и пользователь видел сырой pipe-текст в пояснениях/чек-листах.
