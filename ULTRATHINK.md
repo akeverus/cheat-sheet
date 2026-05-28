@@ -401,7 +401,7 @@ Pass: `OK FILE.md`.
 | 65 | `architecture` | `hexagonal-architecture` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 66 | `architecture` | `latency-numbers` | 24 | 24 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 67 | `architecture` | `load-balancing` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 68 | `architecture` | `microservices` | 50 | 50 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 68 | `architecture` | `microservices` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 69 | `architecture` | `networking` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 70 | `architecture` | `resilience-patterns` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 71 | `architecture` | `reverse-proxy` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
