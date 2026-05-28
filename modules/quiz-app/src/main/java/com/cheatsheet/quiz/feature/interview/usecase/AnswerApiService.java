@@ -68,7 +68,10 @@ public class AnswerApiService {
 
     private List<OptionExplanationDto> toOptionExplanations(InterviewSessionSupport.AnswerContext ctx) {
         return ctx.result().options().stream()
-                .map(opt -> new OptionExplanationDto(opt.id(), opt.explanation(), opt.correct()))
+                .map(opt -> new OptionExplanationDto(
+                        opt.id(),
+                        facade.renderMarkdown(opt.explanation()),
+                        opt.correct()))
                 .toList();
     }
 

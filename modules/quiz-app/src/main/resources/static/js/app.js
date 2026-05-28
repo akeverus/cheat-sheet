@@ -1000,42 +1000,53 @@
     }
   });
 
-  const ALLOWED_TAGS = new Set(['P', 'BR', 'STRONG', 'EM', 'B', 'I', 'UL', 'OL', 'LI', 'CODE', 'PRE', 'A', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4']);
+  // Теги таблиц включены: сервер (MarkdownRenderService) рендерит GFM-таблицы
+  // в <table>, а Jsoup-safelist их уже отсанитайзил. Без них этот клиентский
+  // sanitizeHtml схлопывал таблицу в плоский текст ячеек — пользователь видел
+  // мешанину вместо разметки в пояснениях и чек-листах.
+  const ALLOWED_TAGS = new Set(['P', 'BR', 'STRONG', 'EM', 'B', 'I', 'UL', 'OL', 'LI', 'CODE', 'PRE', 'A', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD', 'HR']);
+
+  function sanitizeNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return document.createTextNode(node.textContent || '');
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return document.createTextNode('');
+    }
+
+    const tagName = node.tagName.toUpperCase();
+    if (!ALLOWED_TAGS.has(tagName)) {
+      const fragment = document.createDocumentFragment();
+      Array.from(node.childNodes).forEach(child => fragment.appendChild(sanitizeNode(child)));
+      return fragment;
+    }
+
+    const clean = document.createElement(tagName.toLowerCase());
+    if (tagName === 'A') {
+      const href = node.getAttribute('href') || '';
+      if (/^(https?:|\/)/i.test(href)) {
+        clean.setAttribute('href', href);
+      }
+      clean.setAttribute('rel', 'noopener noreferrer');
+    }
+    Array.from(node.childNodes).forEach(child => clean.appendChild(sanitizeNode(child)));
+    return clean;
+  }
+
+  // Парсим через DOMParser (скрипты не исполняются) и пересобираем дерево
+  // только из разрешённых тегов — возвращаем готовый DocumentFragment, чтобы
+  // вставлять узлы через appendChild без присваивания innerHTML на живой элемент.
+  function sanitizeToFragment(html) {
+    const fragment = document.createDocumentFragment();
+    if (!html) return fragment;
+    const parsed = new DOMParser().parseFromString(String(html), 'text/html');
+    Array.from(parsed.body.childNodes).forEach(child => fragment.appendChild(sanitizeNode(child)));
+    return fragment;
+  }
 
   function sanitizeHtml(html) {
-    if (!html) return '';
-    const template = document.createElement('template');
-    template.innerHTML = String(html);
-
-    const sanitizeNode = (node) => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        return document.createTextNode(node.textContent || '');
-      }
-      if (node.nodeType !== Node.ELEMENT_NODE) {
-        return document.createTextNode('');
-      }
-
-      const tagName = node.tagName.toUpperCase();
-      if (!ALLOWED_TAGS.has(tagName)) {
-        const fragment = document.createDocumentFragment();
-        Array.from(node.childNodes).forEach(child => fragment.appendChild(sanitizeNode(child)));
-        return fragment;
-      }
-
-      const clean = document.createElement(tagName.toLowerCase());
-      if (tagName === 'A') {
-        const href = node.getAttribute('href') || '';
-        if (/^(https?:|\/)/i.test(href)) {
-          clean.setAttribute('href', href);
-        }
-        clean.setAttribute('rel', 'noopener noreferrer');
-      }
-      Array.from(node.childNodes).forEach(child => clean.appendChild(sanitizeNode(child)));
-      return clean;
-    };
-
     const wrapper = document.createElement('div');
-    Array.from(template.content.childNodes).forEach(child => wrapper.appendChild(sanitizeNode(child)));
+    wrapper.appendChild(sanitizeToFragment(html));
     return wrapper.innerHTML;
   }
 
@@ -1152,10 +1163,14 @@
       }
 
       const optExpl = explanationMap[optionId];
-      if (optExpl && optExpl.explanation) {
+      if (optExpl && optExpl.explanationHtml) {
         const explDiv = document.createElement('div');
-        explDiv.className = 'option-explanation ' + (optExpl.correct ? 'explanation-correct' : 'explanation-wrong');
-        explDiv.textContent = optExpl.explanation;
+        // markdown-content — те же стили, что у takeaway: таблицы/код/списки
+        // в пояснении варианта выглядят согласованно. Контент пришёл с сервера
+        // уже отрендеренным из markdown и отсанитайзенным (Jsoup), плюс здесь
+        // повторно прогоняется через allowlist-санитайзер (defense-in-depth).
+        explDiv.className = 'option-explanation markdown-content ' + (optExpl.correct ? 'explanation-correct' : 'explanation-wrong');
+        explDiv.appendChild(sanitizeToFragment(optExpl.explanationHtml));
         label.appendChild(explDiv);
         label.classList.remove('option-dimmed');
         label.classList.add(optExpl.correct ? 'option-correct' : (optionId === data.selectedOptionId ? 'option-wrong' : 'option-other'));

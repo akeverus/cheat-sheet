@@ -4,6 +4,10 @@ import lombok.Builder;
 
 /**
  * DTO объяснения варианта ответа для API.
+ *
+ * <p>{@code explanationHtml} — уже отрендеренный из markdown и санитайзенный
+ * HTML (см. {@code MarkdownRenderService}); клиент вставляет его как fragment,
+ * аналогично {@code AnswerResponse.answerHtml}.</p>
  */
 @Builder(toBuilder = true)
-public record OptionExplanationDto(long id, String explanation, boolean correct) {}
+public record OptionExplanationDto(long id, String explanationHtml, boolean correct) {}

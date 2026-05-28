@@ -1,10 +1,13 @@
 package com.cheatsheet.quiz.infrastructure.render;
 
 import com.cheatsheet.quiz.config.app.AppProperties;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
+
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,7 +30,17 @@ public class MarkdownRenderService {
     /** Regex: один и более пробельных символов. */
     private static final String REGEX_WHITESPACE = "\\s+";
 
-    private static final MutableDataSet MARKDOWN_OPTIONS = new MutableDataSet();
+    // GFM-таблицы (| col | col |). Без TablesExtension flexmark схлопывал
+    // строки таблицы в один <p> и пользователь видел сырой markdown-pipe-текст
+    // в пояснениях/чек-листах. GFM-флаги выравнивают поведение с GitHub:
+    // лишние колонки отбрасываются, недостающие добиваются, шапка матчится
+    // по разделителю — это устойчивее к слегка кривым таблицам в контенте.
+    private static final MutableDataSet MARKDOWN_OPTIONS = new MutableDataSet()
+            .set(Parser.EXTENSIONS, List.of(TablesExtension.create()))
+            .set(TablesExtension.COLUMN_SPANS, false)
+            .set(TablesExtension.APPEND_MISSING_COLUMNS, true)
+            .set(TablesExtension.DISCARD_EXTRA_COLUMNS, true)
+            .set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, true);
     private static final Parser PARSER = Parser.builder(MARKDOWN_OPTIONS).build();
     private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder(MARKDOWN_OPTIONS).build();
 

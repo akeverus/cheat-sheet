@@ -66,6 +66,19 @@ class MarkdownRenderServiceTest {
     }
 
     @Test
+    void rendersGfmTableAsHtmlTable() {
+        // Регрессия: без TablesExtension flexmark схлопывал строки таблицы в <p>,
+        // и пользователь видел сырой pipe-текст в пояснениях/чек-листах.
+        String md = "| Вопрос | Зачем |\n|--------|-------|\n| Размер входа? | Сложность |\n";
+        String html = service.toHtml(md);
+
+        assertThat(html).contains("<table>");
+        assertThat(html).contains("<th>Вопрос</th>");
+        assertThat(html).contains("<td>Размер входа?</td>");
+        assertThat(html).doesNotContain("| Вопрос | Зачем |");
+    }
+
+    @Test
     void returnsEmptyOnNullOrBlankInput() {
         assertThat(service.toHtml(null)).isEmpty();
         assertThat(service.toHtml("")).isEmpty();
