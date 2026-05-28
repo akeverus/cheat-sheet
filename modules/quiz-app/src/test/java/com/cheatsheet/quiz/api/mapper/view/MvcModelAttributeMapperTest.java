@@ -109,6 +109,40 @@ class MvcModelAttributeMapperTest {
     }
 
     @Test
+    void flashcardChipAndHintWhenQuestionHasNoOptionsInTrainingMode() {
+        // Вопрос без вариантов форсит флешкарту даже при session-mode=TRAINING.
+        // Чип/подсказка обязаны отражать флешкарту, а не «Выбери один вариант».
+        FocusTrainingPageService.FocusPageState trainingFlashcard = new FocusTrainingPageService.FocusPageState(
+                Optional.empty(),
+                false,
+                false,
+                true,
+                false,
+                null,
+                null,
+                null,
+                0.0,
+                new FocusTrainingPageService.SurfaceState(
+                        new InterviewStats(0, 0, 0, 0, 0),
+                        List.of(),
+                        List.of(),
+                        null,
+                        new InterviewFilter(null, null, false, false, false, true),
+                        InterviewMode.TRAINING,
+                        null,
+                        false
+                )
+        );
+
+        ExtendedModelMap model = new ExtendedModelMap();
+        mapper.applyFocusPageState(model, trainingFlashcard, false);
+
+        assertThat(model.getAttribute("focusModeChipText")).isEqualTo("Flashcard mode");
+        assertThat(model.getAttribute("focusModeHintText"))
+                .isEqualTo("Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.");
+    }
+
+    @Test
     void appliesAnswerAndStatsAndSummaryStates() {
         ExtendedModelMap model = new ExtendedModelMap();
         AnswerPageService.AnswerPageState answerState = new AnswerPageService.AnswerPageState(

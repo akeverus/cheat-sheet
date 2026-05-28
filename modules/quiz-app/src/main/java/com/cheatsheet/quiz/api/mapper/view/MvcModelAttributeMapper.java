@@ -58,17 +58,21 @@ public class MvcModelAttributeMapper {
         model.addAttribute("progressPercent", pageState.progressPercent());
         model.addAttribute("reviewMode", reviewMode);
         InterviewMode mode = pageState.surface().mode();
-        model.addAttribute("focusModeChipText", resolveFocusModeChipText(reviewMode, mode));
-        model.addAttribute("focusModeHintText", resolveFocusModeHintText(reviewMode, mode));
+        // flashcardMode — фактическое состояние UI: вопрос без вариантов форсит
+        // флешкарту при любом session-mode. Чип/подсказка должны отражать именно
+        // его, иначе над флешкардой висело «Выбери один вариант» (MCQ-копирайт).
+        boolean flashcard = pageState.flashcardMode();
+        model.addAttribute("focusModeChipText", resolveFocusModeChipText(reviewMode, mode, flashcard));
+        model.addAttribute("focusModeHintText", resolveFocusModeHintText(reviewMode, mode, flashcard));
         model.addAttribute("focusEmptyRetryHref", resolveFocusEmptyRetryHref(reviewMode, mode));
         model.addAttribute("focusEmptyRetryText", resolveFocusEmptyRetryText(reviewMode, mode));
     }
 
-    private String resolveFocusModeChipText(boolean reviewMode, InterviewMode mode) {
+    private String resolveFocusModeChipText(boolean reviewMode, InterviewMode mode, boolean flashcard) {
         if (reviewMode) {
             return "Review mode";
         }
-        if (mode == InterviewMode.FLASHCARD) {
+        if (flashcard || mode == InterviewMode.FLASHCARD) {
             return "Flashcard mode";
         }
         if (mode == InterviewMode.STUDY) {
@@ -77,11 +81,11 @@ public class MvcModelAttributeMapper {
         return "Focus mode";
     }
 
-    private String resolveFocusModeHintText(boolean reviewMode, InterviewMode mode) {
+    private String resolveFocusModeHintText(boolean reviewMode, InterviewMode mode, boolean flashcard) {
         if (reviewMode) {
             return "Режим review: отвечай на вопросы с ошибками.";
         }
-        if (mode == InterviewMode.FLASHCARD) {
+        if (flashcard || mode == InterviewMode.FLASHCARD) {
             return "Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.";
         }
         if (mode == InterviewMode.STUDY) {
