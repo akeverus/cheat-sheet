@@ -832,7 +832,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "Deployment.spec.strategy задаёт стратегию обновления; scheduler этим не управляет.",
-                "source_of_confusion": "Незнание spec.",
+                "source_of_confusion": "Не знают про поле `spec.strategy` и думают, что обновлением управляет планировщик, как при ручном scale.",
                 "if_it_were_true": "Все деплои выглядели бы одинаково — реально настраиваются.",
                 "how_it_should_be": "strategy: RollingUpdate | Recreate."
               }
@@ -1012,7 +1012,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "У обоих spec.replicas — основное поле.",
-                "source_of_confusion": "Догадка.",
+                "source_of_confusion": "Путают управление `replicas` (одинаковое у обоих) с настоящим отличием — стабильной идентичностью и хранилищем у `StatefulSet`.",
                 "if_it_were_true": "kubectl scale deployment не работал бы.",
                 "how_it_should_be": "replicas доступно в обоих контроллерах."
               }
@@ -1252,7 +1252,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "ClusterIP — приватный, доступен только внутри кластера.",
-                "source_of_confusion": "Слово IP.",
+                "source_of_confusion": "Слово «IP» в `ClusterIP` наводит на мысль о публичном адресе, хотя это внутрикластерный виртуальный IP.",
                 "if_it_were_true": "Любой Service сразу был бы публичным — было бы небезопасно.",
                 "how_it_should_be": "ClusterIP — внутренний; внешний — NodePort или LoadBalancer."
               }
@@ -1540,7 +1540,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "ConfigMap — API-объект для конфигурации; не связан с kube-proxy.",
-                "source_of_confusion": "Слово Config.",
+                "source_of_confusion": "Слово «Config» ассоциируют с любой конфигурацией, включая внутренние настройки `kube-proxy`.",
                 "if_it_were_true": "kubectl get configmap показывал бы network rules — реально показывает ключи.",
                 "how_it_should_be": "ConfigMap — данные конфигурации приложения, не сетевой кеш."
               }
@@ -1575,7 +1575,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "Это разные kind с разной семантикой: Secret имеет тип (Opaque, tls, dockerconfigjson), хранит данные в base64 и поддерживает шифрование etcd at-rest.",
-                "source_of_confusion": "Оба key-value.",
+                "source_of_confusion": "И `ConfigMap`, и `Secret` хранят пары ключ-значение, поэтому их ошибочно считают одним и тем же объектом.",
                 "if_it_were_true": "kubectl get secret выводил бы данные открыто — реально маскирует.",
                 "how_it_should_be": "Secret — отдельный kind для конфиденциальных данных."
               }
@@ -1659,7 +1659,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "exec — для дебага, не для конфигурации; декларативно конфигурация задаётся в Pod spec.",
-                "source_of_confusion": "Незнание spec.",
+                "source_of_confusion": "`kubectl exec` знаком как способ «зайти внутрь пода», и его принимают за канал доставки конфигурации.",
                 "if_it_were_true": "Каждый рестарт Pod терял бы конфигурацию.",
                 "how_it_should_be": "Конфигурация в spec → env/volume/Downward API."
               }
@@ -1708,7 +1708,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "PV — ресурс хранилища; PVC — запрос пользователя на хранилище. Они связаны через binding.",
-                "source_of_confusion": "Похожие имена.",
+                "source_of_confusion": "Похожие аббревиатуры `PV` и `PVC` создают впечатление, что это одно поле под двумя именами.",
                 "if_it_were_true": "Не было бы binding между ними — реально есть.",
                 "how_it_should_be": "PV — provisioned storage; PVC — claim на него."
               }
@@ -1899,7 +1899,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "DaemonSet вообще не масштабируется через replicas — он по одной копии на ноду.",
-                "source_of_confusion": "Догадка.",
+                "source_of_confusion": "`DaemonSet` упоминается рядом с автоскейлерами, и его ошибочно считают объектом масштабирования через `replicas`.",
                 "if_it_were_true": "HPA для Deployment не работал бы — реально работает.",
                 "how_it_should_be": "HPA — Deployment/StatefulSet; CA — ноды; KEDA — широкий список workload."
               }
@@ -2379,7 +2379,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "OpenShift — полноценный distribution K8s, не просто CLI.",
-                "source_of_confusion": "Слово Open.",
+                "source_of_confusion": "Слово «Open» в `OpenShift` ассоциируют с лёгким open-source CLI вроде `oc`, а не с полноценным дистрибутивом K8s.",
                 "if_it_were_true": "Не было бы OpenShift Container Platform / Online — реально есть.",
                 "how_it_should_be": "Распространение K8s + платформенные сервисы."
               }
@@ -2595,7 +2595,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "LimitRange применяется к любому Pod в namespace, независимо от типа контроллера.",
-                "source_of_confusion": "Догадка.",
+                "source_of_confusion": "`LimitRange` путают с ограничением для конкретного типа контроллера, хотя он применяется к любому Pod в namespace.",
                 "if_it_were_true": "В LimitRange был бы podSelector — его нет, селектор только по типу (Container/Pod/PVC).",
                 "how_it_should_be": "LimitRange применяется ко всем Pod в namespace."
               }
@@ -2619,7 +2619,7 @@
               "correct": false,
               "sections": {
                 "what_actually": "LimitRange — на resources (cpu/memory/storage) одного Pod/Container; ResourceQuota может ограничивать число Pod/Service/PVC и суммарные resources namespace.",
-                "source_of_confusion": "Догадка.",
+                "source_of_confusion": "Слова «Limit»/«Quota» наводят на мысль об ограничении числа объектов, а не ресурсов одного Pod.",
                 "if_it_were_true": "Был бы maxNodes в LimitRange — такого поля нет.",
                 "how_it_should_be": "LimitRange — на единичные объекты; ResourceQuota — на namespace в целом."
               }
