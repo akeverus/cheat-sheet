@@ -438,7 +438,7 @@ Pass: `OK FILE.md`.
 | 102 | `data-engineering` | `dbt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 103 | `data-engineering` | `kafka-streams` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 104 | `data-engineering` | `stream-processing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 105 | `databases` | `cassandra` | 50 | 50 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 105 | `databases` | `cassandra` | 44 | 44 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 106 | `databases` | `clickhouse` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 107 | `databases` | `cockroachdb` | 24 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 108 | `databases` | `database-architecture` | 41 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
