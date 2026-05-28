@@ -203,13 +203,19 @@ management:
       # liveness намеренно МИНИМАЛЕН: жив, если JVM не зависла. Не должен
       # упасть от деградации БД или сидеров — иначе K8s рестартанёт под
       # без шанса на самовосстановление.
-      # readiness включает реальные зависимости: если БД отключилась или
-      # сиды не загрузились — под выключается из трафика, но не рестартится.
+      # readiness = «может ли инстанс принимать трафик». Включает БД (нет
+      # коннекта — обслуживать нечего), но НЕ seedCoverage: неполнота MCQ —
+      # это про контент, а не про трафик. Приложение корректно отдаёт вопросы
+      # во flashcard-режиме при любом coverage, поэтому гейтить readiness
+      # долей сидеров — category error: контейнер навсегда оставался unhealthy
+      # на честной in-progress миграции, оркестратор не пускал трафик.
+      # seedCoverage остаётся в агрегатном /actuator/health как сигнал
+      # мониторинга (см. SeedCoverageHealthIndicator), но не блокирует трафик.
       group:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState,db,seedCoverage
+          include: readinessState,db
   info:
     env:
       enabled: false

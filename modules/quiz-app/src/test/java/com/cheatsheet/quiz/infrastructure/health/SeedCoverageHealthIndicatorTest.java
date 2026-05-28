@@ -47,18 +47,36 @@ class SeedCoverageHealthIndicatorTest {
     }
 
     @Test
-    void lowCoverageReportsDown() {
+    void catastrophicImportFailureReportsDown() {
+        // 2% покрытия — сидеры практически не загрузились (реальный сбой импорта),
+        // а не штатная in-progress миграция. Индикатор обязан дать DOWN.
         when(jdbc.queryForObject(startsWith("SELECT COUNT(*) FROM questions"), eq(Integer.class)))
                 .thenReturn(100);
         when(jdbc.queryForObject(startsWith("SELECT COUNT(DISTINCT question_id)"), eq(Integer.class)))
-                .thenReturn(20);
+                .thenReturn(2);
 
         Health health = indicator.health();
 
         assertThat(health.getStatus()).isEqualTo(Status.DOWN);
         assertThat(health.getDetails()).containsEntry("questionsTotal", 100);
-        assertThat(health.getDetails()).containsEntry("questionsWithOptions", 20);
-        assertThat(health.getDetails()).containsEntry("coverageRatio", 0.2);
+        assertThat(health.getDetails()).containsEntry("questionsWithOptions", 2);
+        assertThat(health.getDetails()).containsEntry("coverageRatio", 0.02);
+    }
+
+    @Test
+    void partialMigrationCoverageReportsUp() {
+        // ~40% покрытия — текущая реальность in-progress миграции на v3-сидеры.
+        // Это НЕ сбой: индикатор должен быть UP, чтобы не давать false-alarm и
+        // не валить агрегатный /actuator/health на здоровой системе.
+        when(jdbc.queryForObject(startsWith("SELECT COUNT(*) FROM questions"), eq(Integer.class)))
+                .thenReturn(100);
+        when(jdbc.queryForObject(startsWith("SELECT COUNT(DISTINCT question_id)"), eq(Integer.class)))
+                .thenReturn(40);
+
+        Health health = indicator.health();
+
+        assertThat(health.getStatus()).isEqualTo(Status.UP);
+        assertThat(health.getDetails()).containsEntry("coverageRatio", 0.4);
     }
 
     @Test
@@ -77,14 +95,16 @@ class SeedCoverageHealthIndicatorTest {
 
     @Test
     void exactlyAtThresholdReportsUp() {
+        // Ровно 5% (порог) — граница «не катастрофа»: ratio < 0.05 даёт DOWN,
+        // равенство порогу остаётся UP.
         when(jdbc.queryForObject(startsWith("SELECT COUNT(*) FROM questions"), eq(Integer.class)))
-                .thenReturn(10);
+                .thenReturn(100);
         when(jdbc.queryForObject(startsWith("SELECT COUNT(DISTINCT question_id)"), eq(Integer.class)))
                 .thenReturn(5);
 
         Health health = indicator.health();
 
         assertThat(health.getStatus()).isEqualTo(Status.UP);
-        assertThat(health.getDetails()).containsEntry("coverageRatio", 0.5);
+        assertThat(health.getDetails()).containsEntry("coverageRatio", 0.05);
     }
 }

@@ -40,8 +40,8 @@ class NoAiModeStartupIntegrationTest {
     @Test
     void readinessProbeIsUp_inNoAiMode() throws Exception {
         // Без AI-ключей и при дефолтном AI_FALLBACK_ENABLED=false:
-        // readiness обязан быть UP (db + seedCoverage оба ОК), потому что
-        // sample-interview сидер уже загружен из test-resources.
+        // readiness обязан быть UP (включает readinessState + db; seedCoverage
+        // намеренно вынесен из группы — он про полноту контента, не про трафик).
         mockMvc.perform(get("/actuator/health/readiness"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"));

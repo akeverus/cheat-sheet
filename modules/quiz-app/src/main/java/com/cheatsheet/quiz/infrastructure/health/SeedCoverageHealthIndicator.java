@@ -8,14 +8,26 @@ import org.springframework.stereotype.Component;
 
 /**
  * Health-indicator, отражающий долю вопросов, для которых в базу загружены
- * варианты ответа (через JSON-сидеры). Если seed-импорт молча сломался —
- * coverage упадёт ниже порога и общий статус /actuator/health станет DOWN.
+ * варианты ответа (через JSON-сидеры). Назначение — поймать <b>катастрофический
+ * сбой seed-импорта</b> (сидеры вообще не загрузились), а не неполноту контента.
+ *
+ * <p>Порог намеренно низкий ({@value #MIN_COVERAGE_RATIO}): проект мигрирует на
+ * v3-сидеры постепенно, и значительная доля вопросов осознанно остаётся
+ * flashcard-only (без MCQ). Высокий порог давал бы постоянный false-alarm на
+ * здоровой in-progress миграции. DOWN означает «импорт реально сломан»
+ * (почти ноль вариантов), а не «контент ещё не дозалит».
+ *
+ * <p>Этот индикатор НЕ входит в readiness-группу (см. application.yml): он не
+ * гейтит трафик, а служит сигналом мониторинга в агрегатном
+ * {@code /actuator/health}. Приложение обслуживает запросы во flashcard-режиме
+ * при любом coverage.
  *
  * <p>Пороги:
  * <ul>
  *   <li>{@code total == 0} → UP с пометкой «no questions imported yet»
  *       (валидное состояние для свежего пустого контейнера).</li>
- *   <li>{@code coverageRatio &lt; 0.5} → DOWN.</li>
+ *   <li>{@code coverageRatio &lt; }{@value #MIN_COVERAGE_RATIO} → DOWN
+ *       (катастрофический сбой импорта).</li>
  *   <li>иначе → UP с деталями.</li>
  * </ul>
  *
@@ -26,7 +38,7 @@ import org.springframework.stereotype.Component;
 @Component("seedCoverage")
 public class SeedCoverageHealthIndicator implements HealthIndicator {
 
-    private static final double MIN_COVERAGE_RATIO = 0.5;
+    private static final double MIN_COVERAGE_RATIO = 0.05;
 
     private final JdbcTemplate jdbcTemplate;
 
