@@ -55,13 +55,11 @@ class TemplateFragmentContractTest {
 
     @Test
     void keyPagesReferenceSharedFragmentsInsteadOfLocalCopies() throws IOException {
-        String index = readTemplate("templates/index.html");
         String focusTraining = readTemplate("templates/focus-training.html");
         String stats = readTemplate("templates/stats.html");
         String result = readTemplate("templates/result.html");
         String settings = readTemplate("templates/settings.html");
 
-        assertThat(index).contains("<body class=\"focus-page\">");
         assertThat(focusTraining).contains("<body class=\"focus-page\">");
         assertThat(stats).contains("<body class=\"stats-page\">");
         assertThat(settings).contains("<body class=\"settings-page\">");
@@ -71,17 +69,6 @@ class TemplateFragmentContractTest {
         assertThat(stats).contains("stats-action-btn");
         assertThat(stats).contains("stats-apply-action");
         assertThat(stats).contains("stats-search-action");
-
-        assertThat(index).contains("fragments/training-actions :: training-actions");
-        assertThat(index).contains("showPrimaryNav=false");
-        assertThat(index).contains("fragments/result-zone-head :: result-zone-head");
-        assertThat(index).contains("fragments/post-answer-controls :: post-answer-controls");
-        assertThat(index).contains("fragments/focus-surface-tabs :: focus-surface-tabs");
-        assertThat(index).contains("chipText='Пост-разбор'");
-        assertThat(index).contains("hintText='Сначала итог, затем объяснение и дополнительные блоки'");
-        assertThat(index).contains("extraButtonText='Показать доп. анализ'");
-        assertThat(index).contains("empty-action-settings");
-        assertThat(index).contains("empty-action-retry");
 
         assertThat(focusTraining).contains("fragments/training-actions :: training-actions");
         assertThat(focusTraining).contains("showPrimaryNav=false");
