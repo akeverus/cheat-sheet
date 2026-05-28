@@ -398,10 +398,10 @@ Pass: `OK FILE.md`.
 | 62 | `architecture` | `dns` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 63 | `architecture` | `edge-computing` | 18 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 64 | `architecture` | `event-driven-patterns` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 65 | `architecture` | `hexagonal-architecture` | 45 | 0 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
+| 65 | `architecture` | `hexagonal-architecture` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 66 | `architecture` | `latency-numbers` | 24 | 24 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 67 | `architecture` | `load-balancing` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 68 | `architecture` | `microservices` | 42 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 68 | `architecture` | `microservices` | 50 | 50 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 69 | `architecture` | `networking` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 70 | `architecture` | `resilience-patterns` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 71 | `architecture` | `reverse-proxy` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
@@ -438,7 +438,7 @@ Pass: `OK FILE.md`.
 | 102 | `data-engineering` | `dbt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 103 | `data-engineering` | `kafka-streams` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 104 | `data-engineering` | `stream-processing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 105 | `databases` | `cassandra` | 44 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 105 | `databases` | `cassandra` | 50 | 50 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 106 | `databases` | `clickhouse` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 107 | `databases` | `cockroachdb` | 24 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 108 | `databases` | `database-architecture` | 41 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
@@ -454,11 +454,11 @@ Pass: `OK FILE.md`.
 | 118 | `databases` | `hibernate-relationships` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 119 | `databases` | `mongodb` | 46 | 46 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 120 | `databases` | `neo4j` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 121 | `databases` | `postgresql` | 55 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 122 | `databases` | `redis` | 43 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 121 | `databases` | `postgresql` | 55 | 55 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 122 | `databases` | `redis` | 50 | 50 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 123 | `databases` | `scylladb` | 23 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 124 | `databases` | `sql` | 53 | 0 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
-| 125 | `design-patterns` | `design-patterns` | 48 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 125 | `design-patterns` | `design-patterns` | 48 | 48 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 126 | `devops` | `ansible` | 25 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 127 | `devops` | `argocd` | 42 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 128 | `devops` | `consul` | 24 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
@@ -489,7 +489,7 @@ Pass: `OK FILE.md`.
 | 153 | `frameworks/spring` | `spring-data-jdbc` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 154 | `frameworks/spring` | `spring-data-jpa` | 42 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 155 | `frameworks/spring` | `spring-events` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 156 | `frameworks/spring` | `spring-framework` | 40 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 156 | `frameworks/spring` | `spring-framework` | 55 | 55 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 157 | `frameworks/spring` | `spring-graphql` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 158 | `frameworks/spring` | `spring-integration` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 159 | `frameworks/spring` | `spring-kafka` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
@@ -574,7 +574,7 @@ Pass: `OK FILE.md`.
 | 238 | `programming-languages/java` | `java-stream` | 42 | 6 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 239 | `programming-languages/java` | `java-string` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 240 | `programming-languages/java` | `java-types` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 241 | `programming-languages/java` | `java-virtual-threads` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 241 | `programming-languages/java` | `java-virtual-threads` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 242 | `programming-languages/kotlin` | `kotlin-collections` | 42 | — | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 243 | `programming-languages/kotlin` | `kotlin-coroutines` | 19 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 244 | `programming-languages/kotlin` | `kotlin-dsl` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
@@ -661,6 +661,21 @@ Mass batch — Python скрипт удаляет MCQ-callouts/Tier1/wikilinks. 
 
 ### Phase 6: JSON-MISMATCH fix (12 файлов)
 JSON Q count меньше MD — extends existing JSON недостающими Q.
+
+## QA-проход по человекочитаемости (обновлено 2026-05-28)
+
+Сделан сплошной самореview всех сгенерированных в этой волне JSON (17 файлов).
+
+**Что проверялось и как:**
+- Обрыв прозы на полуфразе (dangling): эвристика «секция не кончается на `.?!;:)»` + фильтр код-сниппетов. Результат: **0 реальных обрывов** (trimming целыми предложениями работает).
+- `**bold**` / `[[wikilinks]]` / эмодзи в JSON: bold и wikilinks — это **НЕ дефекты**. `MarkdownRenderService` (infrastructure/render) рендерит markdown в HTML и конвертит `[[topic#Qn]]` → кликабельную ссылку `/?topic=...`. Стрелки `→` тоже норм.
+- Дубли-дистракторы (две wrong-опции с идентичным текстом): найдено и исправлено **11 в java-concurrency** (Q25/29/30/33/34/37/38/41/45/46/49). В остальных файлах дублей нет.
+- Пустоватые `source_of_confusion` (<15 симв): расширено **11 в kubernetes**. Краткие «Похожие имена.»/«Незнание API.» в прочих — оставлены как приемлемые.
+
+**Вывод:** wikilink-формат related — конвенция проекта (58 старых файлов используют его). Новые 17 файлов приведены к этому формату (2237 ссылок).
+
+### Phase 2 прогресс (волна 2026-05-27/28)
+Закрыто NO-JSON → STRUCT-PASS: design-pastebin, java-concurrency, mongodb, hibernate, kafka, kubernetes, rxjava, project-reactor, sql, hexagonal-architecture, design-patterns, postgresql, java-virtual-threads, redis, cassandra, spring-framework, microservices = **17 файлов**. В работе: spring-boot.
 
 ## Note про `/compact`
 
