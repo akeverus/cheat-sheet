@@ -455,7 +455,7 @@ Pass: `OK FILE.md`.
 | 119 | `databases` | `mongodb` | 46 | 46 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 120 | `databases` | `neo4j` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 121 | `databases` | `postgresql` | 55 | 55 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 122 | `databases` | `redis` | 50 | 50 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
+| 122 | `databases` | `redis` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 123 | `databases` | `scylladb` | 23 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 124 | `databases` | `sql` | 53 | 0 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 125 | `design-patterns` | `design-patterns` | 48 | 48 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
