@@ -1548,7 +1548,15 @@
   window.toggleCode = function toggleCode() {
     const block = document.getElementById('codeBlock');
     if (!block) return;
-    block.classList.toggle('hidden');
+    const hidden = block.classList.toggle('hidden');
+    // Кнопка-тоггл должна отражать состояние: текст + aria-expanded.
+    // Иначе после раскрытия она оставалась «Показать пример» — путало и
+    // не озвучивалось скринридерам.
+    const btn = document.getElementById('toggle-code-btn');
+    if (btn) {
+      btn.textContent = hidden ? 'Показать пример' : 'Скрыть пример';
+      btn.setAttribute('aria-expanded', String(!hidden));
+    }
   };
 
   window.submitAnswer = function submitAnswer() {
