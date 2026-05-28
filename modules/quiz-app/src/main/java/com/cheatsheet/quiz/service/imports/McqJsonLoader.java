@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.service.imports;
 
+import com.cheatsheet.quiz.domain.AnswerOption;
 import com.cheatsheet.quiz.domain.OptionSource;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository.AnswerOptionCreate;
@@ -26,8 +27,10 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -147,6 +150,7 @@ public class McqJsonLoader {
         String topic = categoryPath + "/" + seed.topicSlug();
         int totalInserted = 0;
         int skipped = 0;
+        int unchanged = 0;
         for (McqSeedQuestion question : seed.questions()) {
             Optional<Long> questionId = questionRepository.findIdByTopicAndQuestionNumber(
                     topic, question.qNumber());
@@ -157,28 +161,72 @@ public class McqJsonLoader {
                 continue;
             }
             long qId = questionId.get();
-            answerOptionRepository.deleteByQuestionId(qId);
-            for (McqSeedBlock block : question.blocks()) {
-                List<AnswerOptionCreate> creates = new ArrayList<>(block.options().size());
-                for (McqSeedOption opt : block.options()) {
-                    creates.add(new AnswerOptionCreate(
-                            opt.label() + ". " + opt.text(),
-                            opt.correct(),
-                            opt.order(),
-                            OptionSource.MARKDOWN.name(),
-                            renderExplanation(opt),
-                            1, 2, block.blockIdx()));
-                }
-                answerOptionRepository.insertAll(qId, creates);
-                totalInserted += creates.size();
-                optionsInsertedCounter.increment(creates.size());
+            List<AnswerOptionCreate> desired = buildDesiredOptions(question);
+            // Идемпотентность: если в БД уже ровно те же варианты — не делаем
+            // delete+insert. Иначе на каждом старте варианты пересоздавались с
+            // новыми auto-increment id; открытая страница после рестарта/деплоя
+            // ловила "Вариант не найден", плюс лишняя запись ~3000 строк за старт.
+            if (optionsUnchanged(answerOptionRepository.findByQuestionId(qId), desired)) {
+                unchanged++;
+                continue;
             }
+            answerOptionRepository.deleteByQuestionId(qId);
+            answerOptionRepository.insertAll(qId, desired);
+            totalInserted += desired.size();
+            optionsInsertedCounter.increment(desired.size());
         }
-        if (totalInserted > 0 || skipped > 0) {
-            log.info("MCQ seed loaded topic={} questions={} options={} skipped={}",
-                    topic, seed.questions().size(), totalInserted, skipped);
+        if (totalInserted > 0 || skipped > 0 || unchanged > 0) {
+            log.info("MCQ seed loaded topic={} questions={} options={} skipped={} unchanged={}",
+                    topic, seed.questions().size(), totalInserted, skipped, unchanged);
         }
         return McqLoadResult.ok(totalInserted, skipped);
+    }
+
+    /** Разворачивает блоки seed-вопроса в плоский список вариантов для вставки. */
+    private List<AnswerOptionCreate> buildDesiredOptions(McqSeedQuestion question) {
+        List<AnswerOptionCreate> desired = new ArrayList<>();
+        for (McqSeedBlock block : question.blocks()) {
+            for (McqSeedOption opt : block.options()) {
+                desired.add(new AnswerOptionCreate(
+                        opt.label() + ". " + opt.text(),
+                        opt.correct(),
+                        opt.order(),
+                        OptionSource.MARKDOWN.name(),
+                        renderExplanation(opt),
+                        1, 2, block.blockIdx()));
+            }
+        }
+        return desired;
+    }
+
+    /**
+     * Совпадают ли уже загруженные в БД варианты с тем, что хочет seed
+     * (по содержимому, без учёта id). {@code existing} уже отсортирован
+     * репозиторием по (mcq_block_idx, display_order).
+     */
+    private boolean optionsUnchanged(List<AnswerOption> existing, List<AnswerOptionCreate> desired) {
+        if (existing.size() != desired.size()) {
+            return false;
+        }
+        List<AnswerOptionCreate> sortedDesired = desired.stream()
+                .sorted(Comparator.comparingInt(AnswerOptionCreate::mcqBlockIdx)
+                        .thenComparingInt(AnswerOptionCreate::displayOrder))
+                .toList();
+        for (int i = 0; i < existing.size(); i++) {
+            AnswerOption e = existing.get(i);
+            AnswerOptionCreate d = sortedDesired.get(i);
+            if (e.correct() != d.correct()
+                    || e.displayOrder() != d.displayOrder()
+                    || e.mcqBlockIdx() != d.mcqBlockIdx()
+                    || e.promptVersion() != d.promptVersion()
+                    || e.qualityProfileVersion() != d.qualityProfileVersion()
+                    || !Objects.equals(e.optionText(), d.optionText())
+                    || !Objects.equals(e.source(), d.source())
+                    || !Objects.equals(e.explanation(), d.explanation())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String renderExplanation(McqSeedOption opt) {

@@ -7,6 +7,7 @@ import com.cheatsheet.quiz.persistence.QuestionRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -16,18 +17,11 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Полный путь сидера: McqJsonLoader читает {@code seed/mcq/programming/java-strings.json}
- * (test fixture), сопоставляет с вопросами из {@code test-interview/programming/java-strings.md},
- * вставляет 12 опций (3 вопроса × 4 опции) в реальную PostgreSQL через Testcontainers.
- *
- * <p>Unit-тест {@code McqJsonLoaderTest} мокает репозитории; этот тест проверяет
- * что вся цепочка (classpath load → schema validate → SQL insert → выборка)
- * работает end-to-end.
- */
 @SpringBootTest
 @ActiveProfiles("test")
 class McqJsonLoaderIntegrationTest {
+
+    private static final String TOPIC = "programming/java-strings";
 
     @DynamicPropertySource
     static void setInterviewPath(DynamicPropertyRegistry registry) {
@@ -43,31 +37,95 @@ class McqJsonLoaderIntegrationTest {
     @Autowired
     AnswerOptionRepository answerOptionRepository;
 
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+
     @Test
     void loadJavaStringsSeedInsertsAllOptions() {
         // Java-strings фикстура — 3 вопроса, по 4 опции каждый = 12 строк.
+        // Чистим опции тем вопросов, т.к. стартовый seed-загрузчик уже мог
+        // их вставить (тогда идемпотентная загрузка вернула бы 0 inserted).
+        clearTopicOptions();
+
         McqLoadResult result = loader.loadForTopic("programming", "java-strings");
 
         assertThat(result.found()).isTrue();
         assertThat(result.questionsSkipped()).isZero();
         assertThat(result.optionsInserted()).isEqualTo(12);
 
-        // Q1 = «Почему String в Java immutable?»
-        Optional<Long> q1 = questionRepository.findIdByTopicAndQuestionNumber(
-                "programming/java-strings", 1);
+        Optional<Long> q1 = questionRepository.findIdByTopicAndQuestionNumber(TOPIC, 1);
         assertThat(q1).isPresent();
         List<AnswerOption> options = answerOptionRepository.findByQuestionId(q1.get());
         assertThat(options).hasSize(4);
-        assertThat(options.stream().filter(AnswerOption::correct).count()).isEqualTo(1L);
-        // Контракт imports: option_text = "<label>. <text>"
+        assertThat(options.stream().filter(AnswerOption::correct).count()).isEqualTo(1);
         assertThat(options.get(0).optionText()).startsWith("A. ");
     }
 
     @Test
-    void loadNonExistentTopicReturnsNotFoundAndInsertsNothing() {
-        McqLoadResult result = loader.loadForTopic("programming", "no-such-topic");
+    void reloadingIdenticalSeedIsIdempotentAndPreservesOptionIds() {
+        // Регрессия: раньше upsertOptions делал delete+insert на каждом старте,
+        // и id вариантов менялись (открытая страница после рестарта ловила
+        // "Вариант не найден"). Теперь повторная загрузка тех же опций —
+        // no-op: 0 inserted, id сохраняются.
+        clearTopicOptions();
 
+        McqLoadResult first = loader.loadForTopic("programming", "java-strings");
+        assertThat(first.optionsInserted()).isEqualTo(12);
+
+        long qId = questionRepository.findIdByTopicAndQuestionNumber(TOPIC, 1).orElseThrow();
+        List<Long> idsBefore = answerOptionRepository.findByQuestionId(qId).stream()
+                .map(AnswerOption::id)
+                .toList();
+
+        // Повторная загрузка без изменений в seed → ничего не вставляется.
+        McqLoadResult second = loader.loadForTopic("programming", "java-strings");
+        assertThat(second.found()).isTrue();
+        assertThat(second.optionsInserted()).isZero();
+
+        List<Long> idsAfter = answerOptionRepository.findByQuestionId(qId).stream()
+                .map(AnswerOption::id)
+                .toList();
+        assertThat(idsAfter).isEqualTo(idsBefore);
+    }
+
+    @Test
+    void changedSeedContentTriggersReinsert() {
+        // Адверсариальная проверка обратного направления: если содержимое опции
+        // в БД отличается от seed, upsertOptions ОБЯЗАН переинсёртить (иначе при
+        // обновлении seed пользователь видел бы устаревшие варианты навсегда).
+        // Гард против регрессии, где optionsUnchanged перестанет ловить изменение.
+        clearTopicOptions();
+        loader.loadForTopic("programming", "java-strings");
+
+        long qId = questionRepository.findIdByTopicAndQuestionNumber(TOPIC, 1).orElseThrow();
+        // Портим текст одной опции в БД — теперь содержимое != seed.
+        jdbcTemplate.update(
+                "UPDATE answer_options SET option_text = ? WHERE question_id = ? AND display_order = 0",
+                "СТАРЫЙ УСТАРЕВШИЙ ТЕКСТ", qId);
+
+        McqLoadResult reload = loader.loadForTopic("programming", "java-strings");
+
+        // Изменение поймано → переинсёрт всех 12 опций.
+        assertThat(reload.optionsInserted()).isEqualTo(12);
+        List<AnswerOption> options = answerOptionRepository.findByQuestionId(qId);
+        assertThat(options).hasSize(4);
+        assertThat(options.stream().map(AnswerOption::optionText))
+                .noneMatch(t -> t.contains("СТАРЫЙ УСТАРЕВШИЙ ТЕКСТ"));
+        assertThat(options.get(0).optionText()).startsWith("A. ");
+    }
+
+    @Test
+    void unknownTopicReturnsNotFound() {
+        // Запрос несуществующего топика → found=false, без вставок и без падения.
+        McqLoadResult result = loader.loadForTopic("programming", "no-such-topic");
         assertThat(result.found()).isFalse();
         assertThat(result.optionsInserted()).isZero();
+    }
+
+    private void clearTopicOptions() {
+        for (int qNumber = 1; qNumber <= 3; qNumber++) {
+            questionRepository.findIdByTopicAndQuestionNumber(TOPIC, qNumber)
+                    .ifPresent(answerOptionRepository::deleteByQuestionId);
+        }
     }
 }
