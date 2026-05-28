@@ -18,7 +18,7 @@
                 "example": "LinkedIn использует Kafka для агрегации логов и метрик; Uber — для real-time ETA. Типичная конфигурация: 3 брокера, replication factor 3.",
                 "when_to_apply": "Event-driven архитектуры, change data capture (CDC), log aggregation, метрики, integration backbone между сервисами.",
                 "edge_cases": "Kafka не RPC — задержка чтения 5-20мс. Для request-reply подходит хуже, чем gRPC. Хранение долгое — диск растёт быстро без compaction.",
-                "related": "Q2 компоненты; Q22 семантики; Q44 production-советы."
+                "related": "[[kafka-interview#Q2]] компоненты; [[kafka-interview#Q22]] семантики; [[kafka-interview#Q44]] production-советы."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "Кластер из 3 брокеров, 1 topic с 6 партициями и RF=3 → 18 реплик распределены по брокерам.",
                 "when_to_apply": "Архитектурное проектирование: понимание, что без брокера и координатора не обойтись.",
                 "edge_cases": "В KRaft нет ZooKeeper — controller сам сидит на брокерах. С Kafka 4.x ZooKeeper удалён полностью.",
-                "related": "Q4 ZooKeeper; Q5 KRaft; Q35 Schema Registry."
+                "related": "[[kafka-interview#Q4]] ZooKeeper; [[kafka-interview#Q5]] KRaft; [[kafka-interview#Q35]] Schema Registry."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "orders-topic с 12 партициями и RF=3; retention.ms=604800000 (7 дней). Producer публикует OrderCreated; разные сервисы читают параллельно.",
                 "when_to_apply": "Один topic на тип события или на bounded context; не делать catch-all топик.",
                 "edge_cases": "Количество партиций нельзя уменьшить, только увеличить. Изменение партиций нарушает ordering для существующих ключей.",
-                "related": "Q6 Partition; Q41 топология; Q46 compaction."
+                "related": "[[kafka-interview#Q6]] Partition; [[kafka-interview#Q41]] топология; [[kafka-interview#Q46]] compaction."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "Команда zookeeper-shell.sh ls /brokers/ids показывает список зарегистрированных брокеров. В KRaft эту роль играет controller quorum.",
                 "when_to_apply": "Legacy Kafka < 3.x; миграция с ZooKeeper на KRaft требует отдельной процедуры.",
                 "edge_cases": "ZK ensemble должен быть нечётным (3 или 5), кворум большинства. Потеря кворума ZK блокирует выборы leader-ов в Kafka.",
-                "related": "Q5 KRaft; Q20 падение leader; Q38 масштабирование."
+                "related": "[[kafka-interview#Q5]] KRaft; [[kafka-interview#Q20]] падение leader; [[kafka-interview#Q38]] масштабирование."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "process.roles=broker,controller; controller.quorum.voters=1@host1:9093,2@host2:9093,3@host3:9093. Запуск: kafka-storage.sh format перед первым startup.",
                 "when_to_apply": "Все новые кластеры Kafka 3.3+ — KRaft production-ready; в 4.0 ZooKeeper удалён.",
                 "edge_cases": "Миграция с ZK на KRaft — отдельная процедура с dual-write фазой. Mixed-mode временно поддерживается.",
-                "related": "Q4 ZooKeeper; Q20 leader election; Q44 production."
+                "related": "[[kafka-interview#Q4]] ZooKeeper; [[kafka-interview#Q20]] leader election; [[kafka-interview#Q44]] production."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "Topic orders с 12 partitions: orders-0, orders-1, ..., orders-11. На диске: /var/kafka-logs/orders-0/00000000000000000000.log.",
                 "when_to_apply": "Параллелизация чтения (consumer на partition), масштабирование throughput, partition key для ordering по сущности.",
                 "edge_cases": "Партиций должно быть не меньше, чем consumer-ов в group, иначе часть consumer простаивает. Увеличение partitions нарушает ordering по ключам.",
-                "related": "Q3 Topic; Q8 ordering; Q9 partition key."
+                "related": "[[kafka-interview#Q3]] Topic; [[kafka-interview#Q8]] ordering; [[kafka-interview#Q9]] partition key."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "topic=orders, partition=3, offset=12345 — конкретное сообщение. Команда: kafka-consumer-groups.sh --describe показывает current-offset и lag.",
                 "when_to_apply": "Reprocessing с конкретного места, мониторинг lag, ручной commit для at-least-once.",
                 "edge_cases": "Offset не глобален между partitions; для глобальной последовательности нужна одна partition. Reset через kafka-consumer-groups.sh --reset-offsets.",
-                "related": "Q14 Consumer Group; Q16 commit; Q36 lag."
+                "related": "[[kafka-interview#Q14]] Consumer Group; [[kafka-interview#Q16]] commit; [[kafka-interview#Q36]] lag."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "ProducerRecord<>(\"orders\", orderId, payload) — все события одного заказа в одной partition.",
                 "when_to_apply": "Event sourcing, CDC, любая логика по бизнес-сущности (заказ, пользователь, счёт).",
                 "edge_cases": "Изменение количества partitions ломает ordering — старые ключи могут попасть в другие partition. Без key используется sticky/round-robin.",
-                "related": "Q6 partition; Q9 partition key; Q12 idempotent."
+                "related": "[[kafka-interview#Q6]] partition; [[kafka-interview#Q9]] partition key; [[kafka-interview#Q12]] idempotent."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "ProducerRecord<>(\"orders\", \"user-42\", payload) → всегда одна partition. Без ключа — батч из 100 сообщений в одной partition, следующий — в другой.",
                 "when_to_apply": "Партиционирование по бизнес-ключу для ordering; кастомный partitioner — для геораспределения или приоритета.",
                 "edge_cases": "При изменении numPartitions hash меняется — старые ключи попадают в другие partition. Использовать sticky.partitioning.linger.ms для тюнинга.",
-                "related": "Q8 ordering; Q13 батчинг; Q10 producer."
+                "related": "[[kafka-interview#Q8]] ordering; [[kafka-interview#Q13]] батчинг; [[kafka-interview#Q10]] producer."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "KafkaProducer<String, String> p = new KafkaProducer<>(props); p.send(new ProducerRecord<>(\"orders\", key, payload), (md, ex) -> {...});",
                 "when_to_apply": "Любая публикация события; в Spring Boot — KafkaTemplate.send() оборачивает Producer.",
                 "edge_cases": "buffer.memory переполнен → block.on.buffer.full. linger.ms=0 — мгновенная отправка без батчинга, ниже throughput. Producer thread-safe.",
-                "related": "Q11 acks; Q12 idempotent; Q13 батчинг."
+                "related": "[[kafka-interview#Q11]] acks; [[kafka-interview#Q12]] idempotent; [[kafka-interview#Q13]] батчинг."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "props.put(ProducerConfig.ACKS_CONFIG, \"all\"); + min.insync.replicas=2 на topic → выдерживает падение 1 брокера без потерь.",
                 "when_to_apply": "Финансовые/аудит-события → acks=all; метрики/телеметрия → acks=1 или 0.",
                 "edge_cases": "acks=all без min.insync.replicas защиту не даёт; при ISR=1 запись принимается одним брокером.",
-                "related": "Q18 репликация; Q19 ISR; Q22 семантики."
+                "related": "[[kafka-interview#Q18]] репликация; [[kafka-interview#Q19]] ISR; [[kafka-interview#Q22]] семантики."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "props.put(ENABLE_IDEMPOTENCE_CONFIG, true); это автоматически выставляет acks=all, retries=Integer.MAX_VALUE, max.in.flight.requests.per.connection=5.",
                 "when_to_apply": "Все critical-сценарии, где retry не должен приводить к дубликатам.",
                 "edge_cases": "Идемпотентность только в пределах одной producer-сессии и одной partition; через transactional.id — между сессиями. PID сбрасывается при рестарте producer.",
-                "related": "Q11 acks; Q22 семантики; Q23 EOS."
+                "related": "[[kafka-interview#Q11]] acks; [[kafka-interview#Q22]] семантики; [[kafka-interview#Q23]] EOS."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "linger.ms=20, batch.size=65536, compression.type=lz4 — типичная high-throughput конфигурация. На 100K msg/s даёт x3-x5 throughput vs no-batch.",
                 "when_to_apply": "Любой high-throughput producer; financial/critical — linger.ms=0 для минимальной задержки.",
                 "edge_cases": "buffer.memory (по умолчанию 32MB) ограничивает общий buffer. При переполнении send() блокирует или бросает TimeoutException по max.block.ms.",
-                "related": "Q10 producer; Q44 production-tuning; Q38 throughput."
+                "related": "[[kafka-interview#Q10]] producer; [[kafka-interview#Q44]] production-tuning; [[kafka-interview#Q38]] throughput."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "Topic с 6 partitions, group analytics-v1 из 3 consumer → каждый получает 2 partitions. Группа billing-v1 параллельно читает все 6.",
                 "when_to_apply": "Масштабирование чтения через consumer per partition; fanout через разные группы для разных сервисов.",
                 "edge_cases": "Consumer не thread-safe — один consumer per thread. При увеличении consumer-ов сверх partitions появляются idle-инстансы.",
-                "related": "Q15 rebalance; Q17 assignor; Q41 топология."
+                "related": "[[kafka-interview#Q15]] rebalance; [[kafka-interview#Q17]] assignor; [[kafka-interview#Q41]] топология."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "session.timeout.ms=10000, heartbeat.interval.ms=3000. Если consumer не шлёт heartbeat — через 10с rebalance. partition.assignment.strategy=cooperative-sticky.",
                 "when_to_apply": "Понимание задержек при деплое и автомасштабировании consumer-ов.",
                 "edge_cases": "Долгий poll loop (max.poll.interval.ms=300000) приводит к eviction. Static Group Membership через group.instance.id уменьшает rebalance при рестарте.",
-                "related": "Q17 cooperative; Q45 static membership; Q14 group."
+                "related": "[[kafka-interview#Q17]] cooperative; [[kafka-interview#Q45]] static membership; [[kafka-interview#Q14]] group."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "while (running) { records = consumer.poll(Duration.ofMillis(100)); for (r : records) handle(r); consumer.commitAsync(); } finally { consumer.commitSync(); }",
                 "when_to_apply": "Любая critical-обработка → manual commit; быстрые pipeline без важности дубликатов → auto-commit.",
                 "edge_cases": "commitAsync без retry может потерять commit при ошибке. Commit per record даёт максимум гарантий, но просаживает throughput.",
-                "related": "Q22 семантики; Q40 DLQ; Q14 group."
+                "related": "[[kafka-interview#Q22]] семантики; [[kafka-interview#Q40]] DLQ; [[kafka-interview#Q14]] group."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "props.put(PARTITION_ASSIGNMENT_STRATEGY_CONFIG, \"org.apache.kafka.clients.consumer.CooperativeStickyAssignor\");",
                 "when_to_apply": "Все новые consumer; особенно с большим in-flight state или дорогим setup при partition revoke.",
                 "edge_cases": "При апгрейде нужно plan-and-execute: сначала добавить cooperative-sticky в список, потом убрать старую. Не работает с старыми consumer < 2.4.",
-                "related": "Q15 rebalance; Q45 static membership; Q14 group."
+                "related": "[[kafka-interview#Q15]] rebalance; [[kafka-interview#Q45]] static membership; [[kafka-interview#Q14]] group."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "topic orders, 6 partitions, RF=3 → 18 реплик на 3-х брокерах; каждый брокер хранит 6 реплик и является leader-ом для ~2 partitions.",
                 "when_to_apply": "RF=3 для production; RF=1 только для dev/test или некритичных топиков.",
                 "edge_cases": "Чтение только с leader (до KIP-392); Kafka 2.4+ — fetch from follower (read replica) опционально. RF=N выдерживает N-1 падений теоретически, на практике min.insync.replicas ограничивает.",
-                "related": "Q19 ISR; Q20 падение leader; Q21 unclean."
+                "related": "[[kafka-interview#Q19]] ISR; [[kafka-interview#Q20]] падение leader; [[kafka-interview#Q21]] unclean."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "RF=3, ISR=[1,2,3], HW=100; если broker 2 отстал и ISR стал [1,3], HW все равно растёт пока 1 и 3 догоняют.",
                 "when_to_apply": "Понимание durability/availability компромиссов, настройка min.insync.replicas.",
                 "edge_cases": "При ISR=1 (только leader) и acks=all + min.insync.replicas=2 producer получит NotEnoughReplicasException. Sad state — кластер блокирует запись для сохранения durability.",
-                "related": "Q18 репликация; Q11 acks; Q21 unclean."
+                "related": "[[kafka-interview#Q18]] репликация; [[kafka-interview#Q11]] acks; [[kafka-interview#Q21]] unclean."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "Broker 1 падает, был leader для orders-0 с ISR=[1,2,3]. Controller назначает broker 2 новым leader. Producer retry → находит нового leader.",
                 "when_to_apply": "Любая HA-конфигурация; настройка min.insync.replicas, replication factor.",
                 "edge_cases": "Если все ISR упали — partition unavailable; unclean.leader.election.enable=true позволяет выбрать OSR (данные могут потеряться).",
-                "related": "Q19 ISR; Q21 unclean; Q44 production."
+                "related": "[[kafka-interview#Q19]] ISR; [[kafka-interview#Q21]] unclean; [[kafka-interview#Q44]] production."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "RF=3, ISR=[1,2,3]. 2 и 3 упали → ISR=[1]. Затем 1 падает. Если unclean=true — broker 2 или 3 при возврате становится leader без догонки.",
                 "when_to_apply": "Системы где доступность важнее consistency (метрики, телеметрия). Финансовые системы — всегда unclean=false.",
                 "edge_cases": "После unclean election ISR-реплики при возврате должны truncate свой лог до нового leader — это разрушительно для durability.",
-                "related": "Q19 ISR; Q20 leader fail; Q44 production."
+                "related": "[[kafka-interview#Q19]] ISR; [[kafka-interview#Q20]] leader fail; [[kafka-interview#Q44]] production."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "Платежи → exactly-once (транзакции). Логи → at-least-once. Метрики → at-most-once допустимо.",
                 "when_to_apply": "Подбор по бизнес-требованиям: критичность данных vs throughput vs сложность.",
                 "edge_cases": "EOS работает Kafka-to-Kafka; за пределами Kafka (запись в SQL/REST) нужно application-level idempotency.",
-                "related": "Q11 acks; Q12 idempotent; Q23 EOS."
+                "related": "[[kafka-interview#Q11]] acks; [[kafka-interview#Q12]] idempotent; [[kafka-interview#Q23]] EOS."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "props.put(TRANSACTIONAL_ID_CONFIG, \"tx-\"+instanceId); producer.initTransactions(); producer.beginTransaction(); producer.send(...); producer.sendOffsetsToTransaction(offsets, groupMetadata); producer.commitTransaction();",
                 "when_to_apply": "Платежи, финансовые операции, события, которые нельзя дублировать или потерять.",
                 "edge_cases": "EOS работает только внутри Kafka; запись в внешние системы требует application-level idempotency (например idempotency key в SQL). Производительность EOS на 10-20% ниже at-least-once.",
-                "related": "Q12 idempotent; Q24 транзакции; Q48 транзакции в production."
+                "related": "[[kafka-interview#Q12]] idempotent; [[kafka-interview#Q24]] транзакции; [[kafka-interview#Q48]] транзакции в production."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "Process record → produce 3 events → commit consumer offset — всё атомарно. Если в середине ошибка — abortTransaction(), сообщения не видны consumer-у.",
                 "when_to_apply": "Read-process-write pipeline; Kafka Streams; любой EOS-сценарий внутри Kafka.",
                 "edge_cases": "Long-running транзакции блокируют LSO (Last Stable Offset) — consumer с read_committed не видит свежие данные. transaction.timeout.ms лимитирует.",
-                "related": "Q23 EOS; Q48 EOS с транзакциями; Q22 семантики."
+                "related": "[[kafka-interview#Q23]] EOS; [[kafka-interview#Q48]] EOS с транзакциями; [[kafka-interview#Q22]] семантики."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "kafkaTemplate.send(\"orders\", order.getId(), order); @KafkaListener(topics=\"orders\") void onOrder(OrderEvent e) {...}",
                 "when_to_apply": "Любой Spring Boot сервис с Kafka; быстрый старт без бойлерплейта.",
                 "edge_cases": "Batch listener (containerFactory.setBatchListener(true)) для bulk-обработки. Error handler через DefaultErrorHandler с DLQ. Manual ack через AckMode.MANUAL_IMMEDIATE.",
-                "related": "Q26 producer config; Q27 listener; Q28 errors."
+                "related": "[[kafka-interview#Q26]] producer config; [[kafka-interview#Q27]] listener; [[kafka-interview#Q28]] errors."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "spring.kafka.producer.acks=all\\nspring.kafka.producer.properties.enable.idempotence=true\\nspring.kafka.producer.compression-type=lz4",
                 "when_to_apply": "Стандартный setup; для специфичных serializer и нескольких ProducerFactory — Java config.",
                 "edge_cases": "JsonSerializer добавляет __TypeId__ header — отключайте через add.type.headers=false для kafka-clients-приёма из других языков.",
-                "related": "Q11 acks; Q13 батчинг; Q25 spring-kafka."
+                "related": "[[kafka-interview#Q11]] acks; [[kafka-interview#Q13]] батчинг; [[kafka-interview#Q25]] spring-kafka."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "@KafkaListener(topics=\"orders\", groupId=\"billing\", concurrency=\"3\") public void onOrder(@Payload Order o, Acknowledgment ack) { process(o); ack.acknowledge(); }",
                 "when_to_apply": "Любая обработка событий из Kafka в Spring Boot.",
                 "edge_cases": "В batch mode возвращается List; ack.acknowledge() коммитит весь батч. KafkaListenerEndpointRegistry даёт runtime control (start/stop/pause).",
-                "related": "Q14 consumer group; Q28 error handler; Q16 manual commit."
+                "related": "[[kafka-interview#Q14]] consumer group; [[kafka-interview#Q28]] error handler; [[kafka-interview#Q16]] manual commit."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "DefaultErrorHandler eh = new DefaultErrorHandler(new DeadLetterPublishingRecoverer(template), new FixedBackOff(1000L, 3L)); eh.addNotRetryableExceptions(JsonParseException.class);",
                 "when_to_apply": "Production-ready listener — обязательно с error handler и DLT.",
                 "edge_cases": "DLT topic должен быть pre-created с RF≥3. Headers содержат orig-topic/partition/offset/exception-message для дебага.",
-                "related": "Q40 DLQ; Q43 retry patterns; Q27 listener."
+                "related": "[[kafka-interview#Q40]] DLQ; [[kafka-interview#Q43]] retry patterns; [[kafka-interview#Q27]] listener."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "@SpringBootTest @EmbeddedKafka(topics={\"orders\"}) class IntegrationTest { @Autowired KafkaTemplate<String,Order> template; @Test void shouldProcess() { template.send(\"orders\", order); await().untilAsserted(() -> ...); } }",
                 "when_to_apply": "Integration тесты сервисов с Kafka; CI/CD pipeline.",
                 "edge_cases": "@EmbeddedKafka быстрее, но не идентичен production; Testcontainers медленнее (стартует Docker), но точнее. Параллельные тесты конфликтуют по портам.",
-                "related": "Q25 spring-kafka; Q27 listener."
+                "related": "[[kafka-interview#Q25]] spring-kafka; [[kafka-interview#Q27]] listener."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "KStream<String, Order> orders = builder.stream(\"orders\"); orders.filter((k,v) -> v.amount() > 1000).to(\"large-orders\");",
                 "when_to_apply": "ETL внутри Kafka, агрегация в реальном времени, joins между топиками, обогащение событий.",
                 "edge_cases": "EOS включается через processing.guarantee=exactly_once_v2. Rebalance тяжелее из-за state migration. Не подходит для очень больших окон агрегации (better Flink).",
-                "related": "Q31 абстракции; Q32 в Spring Boot; Q49 state store."
+                "related": "[[kafka-interview#Q31]] абстракции; [[kafka-interview#Q32]] в Spring Boot; [[kafka-interview#Q49]] state store."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "KTable<String,User> users = builder.table(\"users\"); KStream<String,Order> orders = builder.stream(\"orders\"); orders.join(users, (o,u) -> enrich(o,u)).to(\"enriched-orders\");",
                 "when_to_apply": "KStream для событий; KTable для состояния; GlobalKTable для reference data (countries, currencies).",
                 "edge_cases": "KTable требует ключа; null value = tombstone (удаление). GlobalKTable дублирует данные на все инстансы — большие GlobalKTable — память.",
-                "related": "Q30 streams; Q32 spring; Q49 state store."
+                "related": "[[kafka-interview#Q30]] streams; [[kafka-interview#Q32]] spring; [[kafka-interview#Q49]] state store."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "@Configuration @EnableKafkaStreams class StreamsConfig { @Bean KStream<String,Order> orderStream(StreamsBuilder b) { KStream<String,Order> stream = b.stream(\"orders\"); stream.filter(...).to(\"filtered\"); return stream; } }",
                 "when_to_apply": "Stream processing внутри Spring Boot сервиса; не отдельный standalone Streams app.",
                 "edge_cases": "Streams и обычный @KafkaListener могут работать в одном приложении, но с разными group.id. State store mount path требует persistent volume в Kubernetes.",
-                "related": "Q30 streams; Q31 абстракции; Q49 state store."
+                "related": "[[kafka-interview#Q30]] streams; [[kafka-interview#Q31]] абстракции; [[kafka-interview#Q49]] state store."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "Debezium PostgreSQL Source: читает WAL → пишет в Kafka. ElasticsearchSink: читает Kafka → индексирует в ES. JDBC Sink: пишет batch в RDBMS.",
                 "when_to_apply": "Любая интеграция Kafka ↔ external system без написания custom-кода.",
                 "edge_cases": "Debezium требует replication slot в Postgres. Sink connector чувствителен к схеме — нужен Schema Registry. Distributed mode требует своих топиков: connect-configs, connect-offsets, connect-status.",
-                "related": "Q34 source/sink; Q35 schema registry."
+                "related": "[[kafka-interview#Q34]] source/sink; [[kafka-interview#Q35]] schema registry."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "{\"name\":\"pg-source\",\"config\":{\"connector.class\":\"io.debezium.connector.postgresql.PostgresConnector\",\"database.hostname\":\"...\"}}. {\"name\":\"es-sink\",\"config\":{\"connector.class\":\"io.confluent.connect.elasticsearch.ElasticsearchSinkConnector\",\"topics\":\"orders\"}}",
                 "when_to_apply": "CDC из БД → Source (Debezium); индексация в ES → Sink (Elasticsearch).",
                 "edge_cases": "Source хранит offset в connect-offsets topic (не Kafka consumer offset). Sink использует обычный consumer offset. Schema evolution критична для Sink.",
-                "related": "Q33 Kafka Connect; Q35 schema registry."
+                "related": "[[kafka-interview#Q33]] Kafka Connect; [[kafka-interview#Q35]] schema registry."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "AvroSerializer пишет {magic:0, schema_id:42, binary_data}. Consumer ходит GET /schemas/ids/42 → получает Avro schema → десериализует.",
                 "when_to_apply": "Multi-team Kafka где producer и consumer развиваются независимо; контракты между сервисами.",
                 "edge_cases": "BACKWARD compatibility — старые consumer читают новые сообщения; FORWARD — наоборот. FULL — оба направления. Default — BACKWARD. Удаление поля — breaking change при FORWARD.",
-                "related": "Q47 schema registry детали; Q33 connect; Q34 sink."
+                "related": "[[kafka-interview#Q47]] schema registry детали; [[kafka-interview#Q33]] connect; [[kafka-interview#Q34]] sink."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group billing → видим LAG=12345 per partition.",
                 "when_to_apply": "SRE monitoring; SLA на real-time обработку; capacity planning.",
                 "edge_cases": "Lag = 0 не значит обработка завершена — означает только нет новых для чтения. Кратковременные скачки lag нормальны при batch-обработке.",
-                "related": "Q44 production; Q50 lag alerting."
+                "related": "[[kafka-interview#Q44]] production; [[kafka-interview#Q50]] lag alerting."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "Prometheus + JMX Exporter собирают kafka.server.ReplicaManager.UnderReplicatedPartitions. Grafana dashboard: UnderReplicated, lag, throughput.",
                 "when_to_apply": "Production-ready monitoring; SLA-driven alerting.",
                 "edge_cases": "Network saturation между брокерами приводит к ISR shrink. Disk fills up бесшумно если retention=infinity. Consumer lag растёт при медленной обработке.",
-                "related": "Q36 lag; Q44 production; Q50 alerting."
+                "related": "[[kafka-interview#Q36]] lag; [[kafka-interview#Q44]] production; [[kafka-interview#Q50]] alerting."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "Был кластер 3 брокера, 6 partitions per topic. Добавили broker 4 → reassign-partitions.json распределяет реплики 4 partitions на новый broker.",
                 "when_to_apply": "Когда disk fills up, throughput не вытягивает, lag растёт.",
                 "edge_cases": "Reassignment генерирует большой network traffic — нужно throttle. Увеличение partitions ломает ordering по ключам.",
-                "related": "Q44 production; Q41 топология; Q37 метрики."
+                "related": "[[kafka-interview#Q44]] production; [[kafka-interview#Q41]] топология; [[kafka-interview#Q37]] метрики."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "security.protocol=SASL_SSL, sasl.mechanism=SCRAM-SHA-512, sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username=\"app\" password=\"...\".",
                 "when_to_apply": "Production кластер с multi-tenant; финансовые/medical данные; compliance (GDPR/HIPAA).",
                 "edge_cases": "SSL handshake снижает throughput на 20-30%. Kerberos требует KDC. ACL не работает по умолчанию — нужен allow.everyone.if.no.acl.found=false.",
-                "related": "Q44 production; Q33 connect security."
+                "related": "[[kafka-interview#Q44]] production; [[kafka-interview#Q33]] connect security."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "@KafkaListener настроен с DefaultErrorHandler(new DeadLetterPublishingRecoverer(template), new FixedBackOff(1000, 3)). После 3 retry → publish в orders.DLT.",
                 "when_to_apply": "Production listener — обязательно. Особенно при риске schema mismatch, network failure при write в downstream.",
                 "edge_cases": "DLT должен быть создан заранее с правильным RF. Бесконечный retry в DLT возможен — нужен monitoring lag в DLT. Структура DLT — несколько уровней (DLT-1, DLT-2) для exponential retry.",
-                "related": "Q28 error handling; Q43 retry patterns."
+                "related": "[[kafka-interview#Q28]] error handling; [[kafka-interview#Q43]] retry patterns."
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "orders.order.created.v1 (24 partitions, RF=3, retention=7d). users.user.updated.v1 (12 partitions, compaction). payment.transaction.completed.v1 (48 partitions, 30 days).",
                 "when_to_apply": "Дизайн event-driven архитектуры; согласование с командами на schema и naming.",
                 "edge_cases": "Слишком много мелких топиков — управление превращается в кошмар. Один topic с null key — round-robin = ничего не идемпотентно.",
-                "related": "Q6 partition; Q44 production; Q3 topic."
+                "related": "[[kafka-interview#Q6]] partition; [[kafka-interview#Q44]] production; [[kafka-interview#Q3]] topic."
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "Kafka: event sourcing, CDC, log aggregation, real-time analytics. RabbitMQ: task processing (Celery), RPC, complex routing, dead letter exchanges, priority queues.",
                 "when_to_apply": "High throughput + replay + multi-consumer → Kafka. Сложный routing + priorities + classic task queue → RabbitMQ.",
                 "edge_cases": "Kafka хуже на small messages с высокой latency требованиями. RabbitMQ хуже на >100k msg/s. Streams в RMQ — это Streams (новая фича 3.9+), но не такой зрелой.",
-                "related": "Q3 topic; Q22 семантики; Q1 что такое kafka."
+                "related": "[[kafka-interview#Q3]] topic; [[kafka-interview#Q22]] семантики; [[kafka-interview#Q1]] что такое kafka."
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "@RetryableTopic(attempts=\"3\", backoff=@Backoff(delay=1000,multiplier=2), include={TransientException.class}, exclude={ValidationException.class}, dltTopicSuffix=\".DLT\").",
                 "when_to_apply": "External calls в обработчике (HTTP/DB) — retryable; validation errors — non-retryable (сразу DLT).",
                 "edge_cases": "Non-blocking retry-топики ломают ordering. In-memory retry с большой задержкой блокирует partition и приводит к session timeout (rebalance).",
-                "related": "Q28 error handling; Q40 DLT; Q22 семантики."
+                "related": "[[kafka-interview#Q28]] error handling; [[kafka-interview#Q40]] DLT; [[kafka-interview#Q22]] семантики."
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "topic orders.order.created.v1 (24 part, RF=3, retention=7d, min.isr=2). Prometheus alerts на UnderReplicated>0, lag>10000, ISR_shrink_rate>5/min.",
                 "when_to_apply": "Любой production deployment Kafka.",
                 "edge_cases": "При migration ZK→KRaft нужен dual-write подход. Topic naming замораживается рано — переименование требует пересоздания. min.insync.replicas=RF блокирует запись при единственном падении.",
-                "related": "Q11 acks; Q18 репликация; Q37 метрики."
+                "related": "[[kafka-interview#Q11]] acks; [[kafka-interview#Q18]] репликация; [[kafka-interview#Q37]] метрики."
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "props.put(GROUP_INSTANCE_ID_CONFIG, \"billing-pod-1\") в Kubernetes StatefulSet. При рестарте pod-а — same ID — без rebalance.",
                 "when_to_apply": "Stateful consumer (Streams), Kubernetes deployments с rolling restart, дорогой setup при revoke.",
                 "edge_cases": "session.timeout.ms должно быть >= rolling restart time; иначе rebalance всё равно сработает. group.instance.id обязан быть уникальным per consumer.",
-                "related": "Q14 group; Q15 rebalance; Q17 cooperative."
+                "related": "[[kafka-interview#Q14]] group; [[kafka-interview#Q15]] rebalance; [[kafka-interview#Q17]] cooperative."
               }
             },
             {
@@ -2730,7 +2730,7 @@
                 "example": "compacted topic users: (user-1, name=Alice), (user-1, name=Bob), (user-1, name=Charlie) → после compaction остаётся только (user-1, name=Charlie). Tombstone: (user-1, null) → удаление при следующей compaction.",
                 "when_to_apply": "Changelog topics для Kafka Streams, master data (users, products), __consumer_offsets, __transaction_state.",
                 "edge_cases": "Compaction не моментальная — active segment не compactится. min.cleanable.dirty.ratio (0.5) определяет когда чистить. Compacted topic может быть и delete (cleanup.policy=compact,delete) — hybrid.",
-                "related": "Q50 __consumer_offsets monitoring; Q41 топология; Q49 state store."
+                "related": "[[kafka-interview#Q50]] __consumer_offsets monitoring; [[kafka-interview#Q41]] топология; [[kafka-interview#Q49]] state store."
               }
             },
             {
@@ -2802,7 +2802,7 @@
                 "example": "POST /subjects/orders-value/versions с Avro schema. Если breaking change — 409 Conflict. GET /schemas/ids/42 — получить схему по id. Compatibility set: PUT /config/orders-value {\"compatibility\":\"BACKWARD\"}.",
                 "when_to_apply": "Multi-team Kafka где producer и consumer релизятся независимо; контракты данных.",
                 "edge_cases": "Удаление required-поля — breaking для BACKWARD. Добавление required без default — breaking для FORWARD. NONE отключает проверку — опасно. Schema Registry должен быть HA (минимум 2 инстанса).",
-                "related": "Q35 schema registry; Q33 connect."
+                "related": "[[kafka-interview#Q35]] schema registry; [[kafka-interview#Q33]] connect."
               }
             },
             {
@@ -2874,7 +2874,7 @@
                 "example": "props.put(TRANSACTIONAL_ID_CONFIG, \"orders-processor-1\"); producer.initTransactions(); while(true){ records = consumer.poll(...); producer.beginTransaction(); for(r:records) producer.send(...); producer.sendOffsetsToTransaction(offsets, consumer.groupMetadata()); producer.commitTransaction(); }",
                 "when_to_apply": "Read-process-write pipeline с критичностью exactly-once: payments, financial events, audit logs.",
                 "edge_cases": "Performance EOS на 10-20% ниже at-least-once из-за coordination overhead. transaction.timeout.ms (1 min default) ограничивает длительность транзакции — long-running обработка не подходит. external systems (DB/REST) — нужны свои idempotency keys.",
-                "related": "Q23 EOS; Q24 транзакции; Q22 семантики."
+                "related": "[[kafka-interview#Q23]] EOS; [[kafka-interview#Q24]] транзакции; [[kafka-interview#Q22]] семантики."
               }
             }
           ]
@@ -2898,7 +2898,7 @@
                 "example": "builder.stream(\"orders\").groupByKey().aggregate(initial, aggregator, Materialized.as(\"order-totals\")); — создаёт store \"order-totals\" с changelog \"app1-order-totals-changelog\".",
                 "when_to_apply": "Аггрегации (count per user), joins (KStream-KTable), window operations, lookup tables.",
                 "edge_cases": "Recovery state из changelog топика может занять минуты при больших store. Standby replicas снимают эту проблему ценой дублирования. Local state теряется при удалении pod-а — нужен persistent volume.",
-                "related": "Q30 streams; Q31 абстракции; Q32 spring streams."
+                "related": "[[kafka-interview#Q30]] streams; [[kafka-interview#Q31]] абстракции; [[kafka-interview#Q32]] spring streams."
               }
             },
             {
@@ -2970,7 +2970,7 @@
                 "example": "Prometheus alert: max_over_time(kafka_consumergroup_lag{group=\"billing\"}[5m]) > 100000. PagerDuty integration через AlertManager. Grafana panel: lag per group/topic/partition heatmap.",
                 "when_to_apply": "SRE production-мониторинг; SLA-критичные pipelines; capacity planning.",
                 "edge_cases": "Высокий lag на стартапе нормален (consumer догоняет). При commit reset lag прыгает. __consumer_offsets compaction может замедлить чтение метрик — увеличить cache.",
-                "related": "Q36 lag; Q44 production; Q37 метрики."
+                "related": "[[kafka-interview#Q36]] lag; [[kafka-interview#Q44]] production; [[kafka-interview#Q37]] метрики."
               }
             },
             {

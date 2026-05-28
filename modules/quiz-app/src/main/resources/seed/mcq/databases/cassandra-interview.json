@@ -18,7 +18,7 @@
                 "example": "Кластер из 12 узлов в трёх дата-центрах: запись `INSERT INTO events (...) VALUES (...)` уходит на координатор и реплицируется на RF узлов параллельно за ~5–10 мс.",
                 "when_to_apply": "Когда нужна линейная масштабируемость записи, высокая доступность, multi-DC репликация и предсказуемая латентность под нагрузкой в сотни тысяч `RPS`.",
                 "edge_cases": "Не подходит для `JOIN`, ad-hoc аналитики и сильной согласованности по умолчанию; модель данных проектируется под запросы заранее.",
-                "related": "Q2 AP в CAP; Q3 masterless ring; Q47 Cassandra vs PostgreSQL."
+                "related": "[[cassandra-interview#Q2]] AP в CAP; [[cassandra-interview#Q3]] masterless ring; [[cassandra-interview#Q47]] Cassandra vs PostgreSQL."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "При CL=ONE запись завершается успешно, как только один реплика подтвердила приём; остальные догоняют асинхронно через hinted handoff и read repair.",
                 "when_to_apply": "Когда бизнес терпит short-term расхождения данных, но не терпит downtime: каталоги, события, IoT-телеметрия, аудит-логи.",
                 "edge_cases": "Через CL=QUORUM/ALL можно подкрутить consistency, но при partition такие запросы будут падать — это уже ближе к `CP`-поведению.",
-                "related": "Q23 RF и CL; Q25 R+W>N; Q24 tunable consistency."
+                "related": "[[cassandra-interview#Q23]] RF и CL; [[cassandra-interview#Q25]] R+W>N; [[cassandra-interview#Q24]] tunable consistency."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "Кластер из 6 узлов: клиент шлёт `SELECT * FROM users WHERE id=42` на любой узел; координатор вычисляет `Murmur3(42)`, находит владельцев токена, собирает ответ.",
                 "when_to_apply": "Когда нужна отказоустойчивость без сложной leader election, линейное масштабирование добавлением узлов и операционная простота failover.",
                 "edge_cases": "Любая координация (schema changes, repair) требует gossip-конвергенции; нет лидера, который мог бы централизованно принять решение.",
-                "related": "Q1 Cassandra основы; Q4 gossip; Q5 partitioner Murmur3."
+                "related": "[[cassandra-interview#Q1]] Cassandra основы; [[cassandra-interview#Q4]] gossip; [[cassandra-interview#Q5]] partitioner Murmur3."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "В кластере из 100 узлов изменение schema на одном узле через gossip распространяется на все ~за 1–2 секунды; в `nodetool gossipinfo` видно state каждого узла.",
                 "when_to_apply": "Везде в `Cassandra`: обнаружение узлов, failure detection, координация schema changes, выбор реплик при выполнении запроса.",
                 "edge_cases": "Gossip может временно показывать узел `UP`, когда он реально упал (latency `phi accrual` detector); долгие GC-паузы тоже выглядят как `DOWN`.",
-                "related": "Q3 masterless; Q5 partitioner; Q35 nodetool."
+                "related": "[[cassandra-interview#Q3]] masterless; [[cassandra-interview#Q5]] partitioner; [[cassandra-interview#Q35]] nodetool."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "Запрос `INSERT INTO users (id, name) VALUES (42, 'Иван')` вычисляет `Murmur3('42')` → токен → владелец токена → запись на него и RF-1 реплик по replication strategy.",
                 "when_to_apply": "Дефолт для всех новых кластеров; альтернативы (`RandomPartitioner` на MD5, `ByteOrderedPartitioner`) — legacy или специфичные кейсы с range-запросами.",
                 "edge_cases": "`ByteOrderedPartitioner` даёт hot spots при последовательных ключах (timestamps, sequential IDs) — почти не используется.",
-                "related": "Q3 masterless ring; Q11 partition key; Q42 hot partition."
+                "related": "[[cassandra-interview#Q3]] masterless ring; [[cassandra-interview#Q11]] partition key; [[cassandra-interview#Q42]] hot partition."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "Для multi-DC деплоя: `CREATE KEYSPACE app WITH replication = {'class':'NetworkTopologyStrategy','dc_eu':3,'dc_us':3}` даёт 6 копий каждой партиции.",
                 "when_to_apply": "Один keyspace на приложение или на bounded context; отдельные keyspaces для разных RF (например, hot vs cold данные).",
                 "edge_cases": "Изменение RF на existing keyspace требует ручного `nodetool repair`, иначе старые данные не реплицируются автоматически.",
-                "related": "Q7 table; Q23 RF и стратегии; Q39 datacenter-aware replication."
+                "related": "[[cassandra-interview#Q7]] table; [[cassandra-interview#Q23]] RF и стратегии; [[cassandra-interview#Q39]] datacenter-aware replication."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "`CREATE TABLE events (user_id uuid, ts timestamp, type text, payload text, PRIMARY KEY (user_id, ts)) WITH CLUSTERING ORDER BY (ts DESC)` — партиция на пользователя, сортировка по времени.",
                 "when_to_apply": "Одна таблица на один query pattern; не пытаться нормализовать как в реляционной модели.",
                 "edge_cases": "`ALTER TABLE` дешёвая для добавления колонок, но смена типа или primary key — невозможна, нужно создавать новую таблицу.",
-                "related": "Q6 keyspace; Q8 partition key; Q11 denormalization."
+                "related": "[[cassandra-interview#Q6]] keyspace; [[cassandra-interview#Q8]] partition key; [[cassandra-interview#Q11]] denormalization."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "Для `PRIMARY KEY ((user_id), event_id)` все события одного пользователя — в одной партиции. Запрос `WHERE user_id = ?` идёт на нужный узел напрямую.",
                 "when_to_apply": "Выбирается так, чтобы дать равномерное распределение и поддержать основные запросы по равенству; кардинальность должна быть высокой.",
                 "edge_cases": "Низкокардинальный partition key (например, `country`) приводит к hot partition; высокий объём данных в одной партиции — к wide row проблеме.",
-                "related": "Q5 partitioner; Q9 clustering key; Q42 hot partition."
+                "related": "[[cassandra-interview#Q5]] partitioner; [[cassandra-interview#Q9]] clustering key; [[cassandra-interview#Q42]] hot partition."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "Запрос `SELECT * FROM events WHERE user_id = ? AND ts >= ? AND ts < ?` эффективен — сканирует часть отсортированной партиции, без full scan.",
                 "when_to_apply": "Для запросов по диапазону, последних N событий, сортированных лент, time-series — всегда часть clustering key.",
                 "edge_cases": "Нельзя пропустить prefix clustering: запрос `WHERE user_id=? AND event_id=?` без `ts` будет отклонён или потребует `ALLOW FILTERING`.",
-                "related": "Q8 partition key; Q12 composite PK; Q44 ALLOW FILTERING."
+                "related": "[[cassandra-interview#Q8]] partition key; [[cassandra-interview#Q12]] composite PK; [[cassandra-interview#Q44]] ALLOW FILTERING."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "`PRIMARY KEY ((tenant_id, day), ts)` — партиция на (tenant_id, day), сортировка по `ts`. Запрос `WHERE tenant_id=? AND day=? AND ts > ?` локален и эффективен.",
                 "when_to_apply": "Когда нужно явное составное partition key (например, разбить wide partition по дням) или сложное упорядочивание clustering.",
                 "edge_cases": "Composite partition key требует указания ВСЕХ его компонентов в `WHERE` — нельзя искать только по `tenant_id`, нужен и `day`.",
-                "related": "Q8 partition key; Q9 clustering; Q42 hot partition."
+                "related": "[[cassandra-interview#Q8]] partition key; [[cassandra-interview#Q9]] clustering; [[cassandra-interview#Q42]] hot partition."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "Для запросов «события по пользователю» и «события по типу» делают `events_by_user (user_id, ts, ...)` и `events_by_type (type, ts, ...)` — одна запись пишется в обе.",
                 "when_to_apply": "Всегда при моделировании в `Cassandra`: query-driven design, отдельная таблица под каждый существенный запрос.",
                 "edge_cases": "Денормализация требует поддержания консистентности на стороне приложения — обновление сущности должно идти во все её таблицы (batch или event-driven).",
-                "related": "Q12 query-driven design; Q14 materialized views; Q7 table."
+                "related": "[[cassandra-interview#Q12]] query-driven design; [[cassandra-interview#Q14]] materialized views; [[cassandra-interview#Q7]] table."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "Для запросов «events by user», «events by type», «events by day» получаем три таблицы со своими PK; одна запись события идёт `BATCH` во все три.",
                 "when_to_apply": "На этапе проектирования любого нового приложения на `Cassandra`; собирать access patterns до DDL.",
                 "edge_cases": "Если запросы меняются, нужно мигрировать данные в новые таблицы — это операция уровня batch, не транзакции.",
-                "related": "Q11 denormalization; Q13 materialized views; Q44 ALLOW FILTERING."
+                "related": "[[cassandra-interview#Q11]] denormalization; [[cassandra-interview#Q13]] materialized views; [[cassandra-interview#Q44]] ALLOW FILTERING."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "`CREATE MATERIALIZED VIEW users_by_email AS SELECT * FROM users WHERE email IS NOT NULL AND id IS NOT NULL PRIMARY KEY (email, id)` даёт поиск по email.",
                 "when_to_apply": "Когда есть устойчивый дополнительный access pattern по одной колонке; для сложных — лучше ручная денормализация.",
                 "edge_cases": "Materialized views в проде до `4.0` считались экспериментальными — известные баги с repair и rebuild; обновления view eventually consistent.",
-                "related": "Q11 denormalization; Q12 query-driven; Q15 secondary indexes."
+                "related": "[[cassandra-interview#Q11]] denormalization; [[cassandra-interview#Q12]] query-driven; [[cassandra-interview#Q15]] secondary indexes."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "`INSERT INTO events (...)` → commit log fsync (по умолчанию periodic 10s) → memtable update в RAM → ACK. При достижении порога memtable → flush в новый SSTable.",
                 "when_to_apply": "Понимание write path критично для tuning durability (`commitlog_sync`), latency (size of memtable) и compaction strategy.",
                 "edge_cases": "При `commitlog_sync: periodic` можно потерять до 10s данных при крахе; `batch` режим даёт fsync на каждую запись, но снижает throughput.",
-                "related": "Q15 read path; Q16 SSTable compaction; Q19 tombstones."
+                "related": "[[cassandra-interview#Q15]] read path; [[cassandra-interview#Q16]] SSTable compaction; [[cassandra-interview#Q19]] tombstones."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "Запись идёт в commit log → memtable → ACK. Crash → restart → replay commit log → memtable восстанавливается → flush в SSTable.",
                 "when_to_apply": "Прозрачно. Tuning `commitlog_sync` — компромисс durability vs throughput; для финансовых данных — `batch` mode, для метрик — `periodic`.",
                 "edge_cases": "При `periodic` можно потерять до 10s записей при крахе; `batch` снижает throughput в разы. Commit log не реплицируется — это локальный durability механизм узла.",
-                "related": "Q14 write path; Q15 compaction; Q40 nodetool."
+                "related": "[[cassandra-interview#Q14]] write path; [[cassandra-interview#Q15]] compaction; [[cassandra-interview#Q40]] nodetool."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "Для time-series: `WITH compaction = {'class':'TimeWindowCompactionStrategy','compaction_window_unit':'DAYS','compaction_window_size':1}` — отдельный SSTable на день, дешёвый drop старых данных.",
                 "when_to_apply": "`STCS` — дефолт; `LCS` — таблицы с частыми обновлениями и низкой латентностью чтения; `TWCS` — append-only time-series с TTL.",
                 "edge_cases": "Compaction временно удваивает дисковый объём; пик `I/O` и CPU; на write-heavy узлах нужен достаточный запас по диску.",
-                "related": "Q14 write path; Q19 tombstones; Q15 read path."
+                "related": "[[cassandra-interview#Q14]] write path; [[cassandra-interview#Q19]] tombstones; [[cassandra-interview#Q15]] read path."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "`SELECT * FROM events WHERE user_id = ? AND ts = ?`: координатор → 1 реплика (CL=ONE) → bloom filter каждой SSTable → отфильтрованные SSTable + memtable → merge → ответ.",
                 "when_to_apply": "Понимание read path критично для tuning: настройка `key_cache_size`, выбор compaction strategy для уменьшения числа SSTable, оптимизация bloom filter false positive rate.",
                 "edge_cases": "Если ключ есть в N SSTable, read latency растёт ~линейно с N; читать слишком много SSTable — основная причина медленного чтения.",
-                "related": "Q14 write path; Q15 compaction; Q18 bloom filter."
+                "related": "[[cassandra-interview#Q14]] write path; [[cassandra-interview#Q15]] compaction; [[cassandra-interview#Q18]] bloom filter."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "Партиция в 5 SSTable: bloom filter говорит «возможно есть» только в 2 → читаем индекс этих двух, остальные пропускаем без disk seek.",
                 "when_to_apply": "Работает прозрачно; tuning — уменьшение `bloom_filter_fp_chance` для read-heavy таблиц ценой большей RAM.",
                 "edge_cases": "Bloom filter хранится в off-heap; на большой таблице может занимать сотни МБ. Слишком жёсткий FP rate раздувает память без значимого выигрыша.",
-                "related": "Q17 read path; Q15 compaction; Q33 secondary indexes."
+                "related": "[[cassandra-interview#Q17]] read path; [[cassandra-interview#Q15]] compaction; [[cassandra-interview#Q33]] secondary indexes."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "`SELECT * FROM events WHERE user_id = ?` по партиции с 100k tombstones может выдать warning в логах `Read 100000 tombstones for a single partition`.",
                 "when_to_apply": "Понимание tombstones важно при моделировании удалений; для bulk delete лучше TTL или TWCS вместо явных `DELETE`.",
                 "edge_cases": "Слишком много tombstones приводит к `TombstoneOverwhelmingException`. Лимит `tombstone_failure_threshold` по умолчанию 100k.",
-                "related": "Q15 compaction; Q31 TTL; Q26 anti-entropy repair."
+                "related": "[[cassandra-interview#Q15]] compaction; [[cassandra-interview#Q31]] TTL; [[cassandra-interview#Q26]] anti-entropy repair."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "Узел B перезагрузился, узел A (координатор) копит hints. Через 5 минут B возвращается → A отправляет накопленные mutations → B применяет → согласован.",
                 "when_to_apply": "Прозрачно работает по умолчанию; обеспечивает быструю eventual consistency для кратких отказов узлов.",
                 "edge_cases": "При длительном отказе узла hints растут и забивают диск координатора; нужно репарить вручную после возврата.",
-                "related": "Q24 read repair; Q26 anti-entropy repair; Q40 nodetool."
+                "related": "[[cassandra-interview#Q24]] read repair; [[cassandra-interview#Q26]] anti-entropy repair; [[cassandra-interview#Q40]] nodetool."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "Запрос с CL=QUORUM на RF=3 → 2 реплики ответили. Версии разные → координатор отправляет последнюю обоим, асинхронно — третьей.",
                 "when_to_apply": "Работает прозрачно; повышает consistency для часто читаемых данных без явного repair.",
                 "edge_cases": "Не заменяет полный `nodetool repair` — данные, которые не читают, останутся неконсистентными.",
-                "related": "Q23 hinted handoff; Q26 anti-entropy repair; Q24 consistency levels."
+                "related": "[[cassandra-interview#Q23]] hinted handoff; [[cassandra-interview#Q26]] anti-entropy repair; [[cassandra-interview#Q24]] consistency levels."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "`nodetool repair -pr keyspace` на каждом узле кластера раз в `gc_grace_seconds - 1 день` (например, раз в 9 дней при дефолтном 10).",
                 "when_to_apply": "Регулярно по cron на каждом узле; обязательно перед `gc_grace_seconds`, иначе удалённые данные могут воскреснуть.",
                 "edge_cases": "Полный repair — тяжёлая операция: стримит много данных, нагружает CPU/диск/сеть. Используют incremental или subrange repair для разгрузки.",
-                "related": "Q23 hinted handoff; Q24 read repair; Q19 tombstones."
+                "related": "[[cassandra-interview#Q23]] hinted handoff; [[cassandra-interview#Q24]] read repair; [[cassandra-interview#Q19]] tombstones."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "`ALTER KEYSPACE app WITH replication = {'class':'NetworkTopologyStrategy','dc_ru':3,'dc_eu':3}` — 6 копий каждой партиции total.",
                 "when_to_apply": "RF=3 — дефолт прод; multi-DC — RF=3 в каждом DC; меньше RF — для архивных или временных данных.",
                 "edge_cases": "Изменение RF на существующем keyspace требует `nodetool repair` для копирования данных на новые реплики; иначе они появятся только при последующих записях.",
-                "related": "Q24 consistency levels; Q39 datacenter-aware; Q25 R+W>N."
+                "related": "[[cassandra-interview#Q24]] consistency levels; [[cassandra-interview#Q39]] datacenter-aware; [[cassandra-interview#Q25]] R+W>N."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "При RF=3: CL=QUORUM требует 2 ACK (быстро + строго); CL=ALL — 3 ACK (если один узел упал — ошибка); CL=ONE — 1 ACK (минимальная latency, eventual).",
                 "when_to_apply": "`LOCAL_QUORUM` — баланс для multi-DC прод; `ONE` — для метрик/логов, где скорость важнее; `ALL` — критичные операции, где доступность вторична.",
                 "edge_cases": "CL=ALL даёт высокую latency и падает при отказе любого узла; CL=ONE при отказе координатора может вернуть устаревшие данные.",
-                "related": "Q23 RF; Q25 R+W>N; Q39 datacenter-aware."
+                "related": "[[cassandra-interview#Q23]] RF; [[cassandra-interview#Q25]] R+W>N; [[cassandra-interview#Q39]] datacenter-aware."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "Сервис записывает метрики с CL=ONE (быстро), но при чтении баланса пользователя — CL=QUORUM (актуальность важна).",
                 "when_to_apply": "При проектировании: разделить операции по критичности, для каждой выбрать минимальный достаточный CL.",
                 "edge_cases": "Tunable не значит «всегда можно получить strong»: при partition CL=QUORUM просто упадёт; не панацея.",
-                "related": "Q24 consistency levels; Q25 R+W>N; Q26 LWT."
+                "related": "[[cassandra-interview#Q24]] consistency levels; [[cassandra-interview#Q25]] R+W>N; [[cassandra-interview#Q26]] LWT."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "RF=3: пишем с CL=QUORUM (2 ACK), читаем с CL=QUORUM (2 ответа). Хотя бы одна из 2 реплик чтения видела последнюю запись — данные актуальны.",
                 "when_to_apply": "При выборе CL для критичных данных: рассчитать `R+W>N` чтобы получить strong consistency.",
                 "edge_cases": "Формула справедлива при отсутствии partitions; при разрыве сети CL=QUORUM просто упадёт. И при clock skew между узлами возможны аномалии.",
-                "related": "Q24 consistency levels; Q26 LWT; Q23 RF."
+                "related": "[[cassandra-interview#Q24]] consistency levels; [[cassandra-interview#Q26]] LWT; [[cassandra-interview#Q23]] RF."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "`INSERT INTO users (email, name) VALUES ('a@b.com', 'Иван') IF NOT EXISTS` — если email занят, вернёт `[applied]=false` и текущую запись; иначе — успешная вставка.",
                 "when_to_apply": "Для гарантии уникальности (email, username), оптимистичной блокировки, idempotent инициализации; точечно — массово LWT слишком дорого.",
                 "edge_cases": "LWT работает только в пределах одной партиции; cross-partition транзакций нет. Latency в 4 раза выше обычной записи.",
-                "related": "Q24 consistency; Q25 R+W>N; Q28 Paxos."
+                "related": "[[cassandra-interview#Q24]] consistency; [[cassandra-interview#Q25]] R+W>N; [[cassandra-interview#Q28]] Paxos."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "`UPDATE accounts SET balance = 100 WHERE id = 1 IF balance = 50` — `Paxos` координирует, что только один из конкурирующих писателей увидит `balance = 50` и победит.",
                 "when_to_apply": "Прозрачно для пользователя, когда используется LWT (`IF` clauses); не нужно вручную инициировать.",
                 "edge_cases": "`Paxos`-состояние хранится в `system.paxos` и подвержено tombstones при истечении; long-running LWT contention может привести к unprepared-replies.",
-                "related": "Q26 LWT; Q24 CL; Q27 tunable consistency."
+                "related": "[[cassandra-interview#Q26]] LWT; [[cassandra-interview#Q24]] CL; [[cassandra-interview#Q27]] tunable consistency."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "Запрос `SELECT * FROM events WHERE user_id = ? LIMIT 10` отдаст 10 последних событий без full scan, читая prefix отсортированной партиции.",
                 "when_to_apply": "Time-series данные с доступом по сущности и сортировкой по времени; для длинных историй — composite partition key с day для ограничения partition size.",
                 "edge_cases": "Если событий на пользователя миллионы, нужно разбить партицию: `PRIMARY KEY ((user_id, day), ts)` — иначе wide partition.",
-                "related": "Q11 wide row; Q12 composite PK; Q49 time-series."
+                "related": "[[cassandra-interview#Q11]] wide row; [[cassandra-interview#Q12]] composite PK; [[cassandra-interview#Q49]] time-series."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "`INSERT INTO users (id, name) VALUES (1, 'Иван')` и `UPDATE users SET name = 'Иван' WHERE id = 1` дают идентичный результат на пустой таблице и на существующей строке.",
                 "when_to_apply": "Использовать любой синтаксис по читаемости; для проверки существования — `IF NOT EXISTS` (LWT, дорого).",
                 "edge_cases": "`UPDATE` не может создать строку с `NULL` в обязательных PK-полях; `INSERT` требует значения для всех PK columns.",
-                "related": "Q26 LWT; Q19 tombstones; Q14 write path."
+                "related": "[[cassandra-interview#Q26]] LWT; [[cassandra-interview#Q19]] tombstones; [[cassandra-interview#Q14]] write path."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "Для обновления `users_by_id` + `users_by_email` одновременно: `BEGIN BATCH ... APPLY BATCH` (LOGGED). Для bulk-вставки event'ов одной партиции: `UNLOGGED`.",
                 "when_to_apply": "`LOGGED` — мульти-партиционная атомарность денормализованных таблиц; `UNLOGGED` — single-partition групповая запись.",
                 "edge_cases": "BATCH в `Cassandra` ≠ batch в реляционном SQL: не оптимизация производительности, а механизм атомарности. Большой batch (>5 KB по умолчанию) выдаёт warning.",
-                "related": "Q29 INSERT/UPDATE; Q26 LWT; Q14 write path."
+                "related": "[[cassandra-interview#Q29]] INSERT/UPDATE; [[cassandra-interview#Q26]] LWT; [[cassandra-interview#Q14]] write path."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "`CREATE TABLE views (page text PRIMARY KEY, count counter); UPDATE views SET count = count + 1 WHERE page = 'home'` — атомарный инкремент.",
                 "when_to_apply": "Счётчики просмотров, лайков, метрик; для критичных данных (баланс счёта) использовать LWT, не counters.",
                 "edge_cases": "Counters менее надёжны: при отказе узла во время записи возможен double-count; не подходят для денежных операций.",
-                "related": "Q26 LWT; Q14 write path; Q43 hot partition."
+                "related": "[[cassandra-interview#Q26]] LWT; [[cassandra-interview#Q14]] write path; [[cassandra-interview#Q43]] hot partition."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "Кеш сессий: `INSERT ... USING TTL 1800` (30 минут). После истечения данные исчезают автоматически без явного DELETE.",
                 "when_to_apply": "Кеши, сессии, временные токены, time-series с retention. Особенно хорошо с TWCS — целые SSTable expired-окон удаляются drop'ом.",
                 "edge_cases": "TTL создаёт tombstones, которые остаются до `gc_grace_seconds` после expiry. Массовый expiry в одной партиции — источник tombstone-overhead.",
-                "related": "Q19 tombstones; Q15 TWCS; Q49 time-series."
+                "related": "[[cassandra-interview#Q19]] tombstones; [[cassandra-interview#Q15]] TWCS; [[cassandra-interview#Q49]] time-series."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "Плохо: `SELECT * FROM users WHERE city = 'Москва'` (scatter-gather, медленно). Хорошо: отдельная таблица `users_by_city ((city), id, ...)`.",
                 "when_to_apply": "Secondary index — только когда уже есть partition key в `WHERE` и нужен дополнительный фильтр на партицию; для глобальных запросов — отдельная таблица.",
                 "edge_cases": "На high-cardinality колонке (например, email) индекс генерирует много мелких партиций индекса; на low-cardinality — wide rows в индексе. Оба плохи.",
-                "related": "Q11 denormalization; Q13 materialized views; Q44 ALLOW FILTERING."
+                "related": "[[cassandra-interview#Q11]] denormalization; [[cassandra-interview#Q13]] materialized views; [[cassandra-interview#Q44]] ALLOW FILTERING."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "`nodetool status` показывает все узлы: `UN` — up/normal, `DN` — down/normal, `UJ` — joining, и их load + token ownership.",
                 "when_to_apply": "Ежедневная эксплуатация: проверка статуса, плановые repair, диагностика после инцидентов, snapshot перед миграциями.",
                 "edge_cases": "`nodetool` требует JMX-доступа; в проде защищается auth или ограничением сетевого доступа. Локально — без auth по умолчанию.",
-                "related": "Q26 anti-entropy repair; Q36 bootstrap; Q41 snapshots."
+                "related": "[[cassandra-interview#Q26]] anti-entropy repair; [[cassandra-interview#Q36]] bootstrap; [[cassandra-interview#Q41]] snapshots."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "Cron на каждом узле: `nodetool repair -pr keyspace` раз в 9 дней. Альтернатива — `Cassandra Reaper`, который автоматически разбивает на subranges.",
                 "when_to_apply": "Регулярный full repair `-pr` — обязательная практика; incremental — для больших кластеров; subrange — для гранулярного контроля.",
                 "edge_cases": "Параллельный repair на нескольких узлах создаёт нагрузку cross-node; `Reaper` сериализует. Long-running repair блокирует compaction на тех же ranges.",
-                "related": "Q26 anti-entropy; Q40 nodetool; Q19 tombstones."
+                "related": "[[cassandra-interview#Q26]] anti-entropy; [[cassandra-interview#Q40]] nodetool; [[cassandra-interview#Q19]] tombstones."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "Кластер из 5 узлов добавляет 6-й: каждый из 5 отдаёт ~1/6 своих данных на новый, кольцо балансируется по vnodes.",
                 "when_to_apply": "Масштабирование кластера, замена отказавшего узла (через replace_address), миграция железа.",
                 "edge_cases": "Бутстрап нагружает сеть и диск; на проде делают `nodetool cleanup` на старых узлах после bootstrap для удаления данных, которые теперь не принадлежат им.",
-                "related": "Q3 ring; Q38 add/remove node; Q40 nodetool."
+                "related": "[[cassandra-interview#Q3]] ring; [[cassandra-interview#Q38]] add/remove node; [[cassandra-interview#Q40]] nodetool."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "`cassandra-rackdc.properties`: `dc=dc_eu` `rack=rack1`. С `GossipingPropertyFileSnitch` `NetworkTopologyStrategy` будет размещать реплики на разные racks.",
                 "when_to_apply": "`GossipingPropertyFileSnitch` — выбор по умолчанию для prod. EC2 snitch — для облака AWS, удобно при автоматическом определении AZ.",
                 "edge_cases": "Менять snitch на работающем кластере опасно: топология меняется, репликация перераспределяется. Делается через ручной migration plan.",
-                "related": "Q39 datacenter-aware; Q23 replication strategy; Q3 ring."
+                "related": "[[cassandra-interview#Q39]] datacenter-aware; [[cassandra-interview#Q23]] replication strategy; [[cassandra-interview#Q3]] ring."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "Multi-region setup: EU (3 узла, RF=3) + US (3 узла, RF=3). Запись с LOCAL_QUORUM в EU — 2 ACK из EU, async-replication в US.",
                 "when_to_apply": "Multi-region deployment, DR, географическое распределение клиентов; обязательно использовать `LOCAL_QUORUM`/`LOCAL_ONE` для минимизации cross-DC latency.",
                 "edge_cases": "Cross-DC replication eventual; при разрыве между DC запись с EACH_QUORUM падает, LOCAL_QUORUM продолжает работать.",
-                "related": "Q24 CL (LOCAL_*); Q38 snitch; Q23 RF."
+                "related": "[[cassandra-interview#Q24]] CL (LOCAL_*); [[cassandra-interview#Q38]] snitch; [[cassandra-interview#Q23]] RF."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "Сценарий: узел `10.0.0.5` сгорел. Поднимаем новый узел: `JVM_OPTS=\"-Dcassandra.replace_address_first_boot=10.0.0.5\"` → старт → bootstrap → новый узел в кольце под новым IP.",
                 "when_to_apply": "Hardware failure, плановая замена железа, миграция; альтернатива «удалить + добавить», которая балансирует кольцо иначе.",
                 "edge_cases": "При замене нельзя использовать тот же IP, что у мёртвого; replace_address работает только если у нового узла другой IP. Auth tokens и сертификаты копируются вручную.",
-                "related": "Q37 bootstrap; Q41 decommission; Q40 nodetool."
+                "related": "[[cassandra-interview#Q37]] bootstrap; [[cassandra-interview#Q41]] decommission; [[cassandra-interview#Q40]] nodetool."
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "`nodetool snapshot -t before_migration mykeyspace` — мгновенный snapshot. Можно скопировать SSTable из snapshots/ на S3 или другой узел.",
                 "when_to_apply": "Регулярный backup, перед `ALTER TABLE`/`DROP`, перед апгрейдом версии, для восстановления случайно удалённых данных.",
                 "edge_cases": "Если не чистить snapshots, диск заполняется удерживаемыми старыми SSTable; нужен retention policy и `clearsnapshot`.",
-                "related": "Q40 nodetool; Q15 compaction; Q41 decommission."
+                "related": "[[cassandra-interview#Q40]] nodetool; [[cassandra-interview#Q15]] compaction; [[cassandra-interview#Q41]] decommission."
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "`nodetool decommission` (на удаляемом) → ждать `nodetool status` показывает узел как `LEFT` → остановить сервис `Cassandra` → удалить из инфры.",
                 "when_to_apply": "Уменьшение кластера, замена железа, миграция; `removenode` — когда узел недоступен и не отвечает.",
                 "edge_cases": "Decommission может занимать часы на больших объёмах. Если узел отказал и недоступен, `decommission` не выполнится — используют `removenode` (с принудительным `force` при необходимости).",
-                "related": "Q37 bootstrap; Q40 nodetool; Q3 ring."
+                "related": "[[cassandra-interview#Q37]] bootstrap; [[cassandra-interview#Q40]] nodetool; [[cassandra-interview#Q3]] ring."
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "Плохо: `PRIMARY KEY ((country), id)` — Россия = миллионы строк на 3 узла. Хорошо: `PRIMARY KEY ((country, day), id)` — разбивка по дню.",
                 "when_to_apply": "Любое моделирование с потенциально неравномерным распределением; всегда проверять кардинальность partition key.",
                 "edge_cases": "Salt-ключ (random shard) распределяет, но ломает естественный порядок и требует scatter-gather на read; компромисс по запросу.",
-                "related": "Q42 wide row; Q5 partitioner; Q11 partition key."
+                "related": "[[cassandra-interview#Q42]] wide row; [[cassandra-interview#Q5]] partitioner; [[cassandra-interview#Q11]] partition key."
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "Плохо: `PRIMARY KEY ((sensor_id), ts)` для IoT-сенсора с 10 событий/сек — за год 315M строк в одной партиции. Хорошо: `PRIMARY KEY ((sensor_id, month), ts)`.",
                 "when_to_apply": "При проектировании time-series или historical data — всегда оценить рост партиции и разбить на bucket'ы (day/month/year).",
                 "edge_cases": "При warning'ах в логах `Compacting large partition` или `Read N tombstones`— срочно ремоделировать; миграция данных в новую таблицу.",
-                "related": "Q42 hot partition; Q31 TTL; Q49 time-series."
+                "related": "[[cassandra-interview#Q42]] hot partition; [[cassandra-interview#Q31]] TTL; [[cassandra-interview#Q49]] time-series."
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "`SELECT * FROM users WHERE city = 'Москва' ALLOW FILTERING` — на 100M строк сканирует всё. Решение: отдельная таблица `users_by_city` с `PRIMARY KEY ((city), id)`.",
                 "when_to_apply": "Только для админских скриптов на маленьких данных или ad-hoc analytics с известно ограниченным объёмом; никогда в prod-API.",
                 "edge_cases": "Запрос с `ALLOW FILTERING` и partition key (`WHERE pk = ? AND other = ? ALLOW FILTERING`) — менее болезненный (фильтрация в пределах партиции), но всё равно sub-optimal.",
-                "related": "Q12 query-driven; Q34 secondary indexes; Q11 denormalization."
+                "related": "[[cassandra-interview#Q12]] query-driven; [[cassandra-interview#Q34]] secondary indexes; [[cassandra-interview#Q11]] denormalization."
               }
             },
             {
@@ -2730,7 +2730,7 @@
                 "example": "Java driver: `Statement s = ...withFetchSize(100); ResultSet rs = session.execute(s); while (!rs.isFullyFetched()) { rs.fetchMoreResults(); }` — прозрачная пагинация.",
                 "when_to_apply": "Любое чтение больших результатов: списки, экспорт, batch-обработка. Стандартный паттерн.",
                 "edge_cases": "Paging state не stable между запросами с разным query plan; нельзя кешировать на долго. Не подходит для random-access пагинации (page 50 без обхода 1–49).",
-                "related": "Q33 secondary indexes; Q44 ALLOW FILTERING; Q12 query-driven."
+                "related": "[[cassandra-interview#Q33]] secondary indexes; [[cassandra-interview#Q44]] ALLOW FILTERING; [[cassandra-interview#Q12]] query-driven."
               }
             },
             {
@@ -2802,7 +2802,7 @@
                 "example": "Cassandra: события клиентов, IoT-телеметрия, аудит-логи, time-series метрики. PostgreSQL: финансы с транзакциями, бизнес-логика с FK, аналитика.",
                 "when_to_apply": "Не «либо-либо», а по нагрузке: маленький проект → Postgres; ставка на масштаб + write-heavy → Cassandra; часто гибрид (Postgres для transactional + Cassandra для logs/events).",
                 "edge_cases": "Cassandra проигрывает Postgres на сложных запросах и в team learning curve; миграция Postgres → Cassandra сложна из-за разных моделей данных.",
-                "related": "Q11 denormalization; Q48 Cassandra vs MongoDB; Q49 time-series."
+                "related": "[[cassandra-interview#Q11]] denormalization; [[cassandra-interview#Q48]] Cassandra vs MongoDB; [[cassandra-interview#Q49]] time-series."
               }
             },
             {
@@ -2874,7 +2874,7 @@
                 "example": "Cassandra — события платформы (сотни тысяч RPS, multi-DC). MongoDB — каталог с разными атрибутами товаров (гибкая схема, поиск по любым полям).",
                 "when_to_apply": "Cassandra: write-heavy, predictable queries, multi-DC. MongoDB: гибкие документы, ad-hoc queries, схема меняется часто.",
                 "edge_cases": "MongoDB до 4.x был только eventual consistency; теперь есть multi-document transactions, но дороже Cassandra LWT. Cassandra богаче в multi-DC native поддержке.",
-                "related": "Q47 Cassandra vs Postgres; Q11 denormalization; Q39 datacenter-aware."
+                "related": "[[cassandra-interview#Q47]] Cassandra vs Postgres; [[cassandra-interview#Q11]] denormalization; [[cassandra-interview#Q39]] datacenter-aware."
               }
             }
           ]
@@ -2898,7 +2898,7 @@
                 "example": "IoT сенсоры: `CREATE TABLE telemetry (sensor_id text, day date, ts timestamp, value double, PRIMARY KEY ((sensor_id, day), ts)) WITH default_time_to_live = 7776000` (90 дней).",
                 "when_to_apply": "Метрики, IoT-телеметрия, логи, события, audit trails — любые append-mostly данные с time-range запросами.",
                 "edge_cases": "Без bucketing wide partition при долгих историях; нужно следить за partition size и распределением sensor_id по узлам.",
-                "related": "Q15 TWCS; Q31 TTL; Q43 wide row."
+                "related": "[[cassandra-interview#Q15]] TWCS; [[cassandra-interview#Q31]] TTL; [[cassandra-interview#Q43]] wide row."
               }
             },
             {
@@ -2970,7 +2970,7 @@
                 "example": "Миграция Cassandra → Scylla обычно cluster-to-cluster через `sstableloader` или dual-write; приложение часто меняется минимально.",
                 "when_to_apply": "Когда нужна максимальная производительность на узел и предсказуемая latency без GC tail; meet тех же use cases, что Cassandra.",
                 "edge_cases": "Не все Cassandra-фичи поддерживаются (materialized views, lightweight transactions с особенностями); версии Scylla отстают на новые CQL features.",
-                "related": "Q1 Cassandra основы; Q47 Cassandra vs Postgres; Q15 compaction."
+                "related": "[[cassandra-interview#Q1]] Cassandra основы; [[cassandra-interview#Q47]] Cassandra vs Postgres; [[cassandra-interview#Q15]] compaction."
               }
             },
             {

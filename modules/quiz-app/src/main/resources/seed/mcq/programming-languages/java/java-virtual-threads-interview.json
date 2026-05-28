@@ -18,7 +18,7 @@
                 "example": "`Thread.ofVirtual().start(() -> httpClient.send(...))` — миллион таких потоков укладывается в обычный heap, тогда как миллион `Thread.ofPlatform()` уронит JVM по памяти.",
                 "when_to_apply": "I/O-bound сервисы с тысячами/миллионами одновременных соединений: HTTP-серверы, JDBC, gRPC-клиенты, fan-out к внешним API.",
                 "edge_cases": "На CPU-bound задачах прироста нет — упрётесь в ядра. `synchronized` и JNI приводят к pinning и блокируют carrier.",
-                "related": "Q2 carrier; Q3 mount/unmount; Q21 pinning; Q26 I/O-scaling."
+                "related": "[[java-virtual-threads-interview#Q2]] carrier; [[java-virtual-threads-interview#Q3]] mount/unmount; [[java-virtual-threads-interview#Q21]] pinning; [[java-virtual-threads-interview#Q26]] I/O-scaling."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "В Java 21+ достаточно `Thread.startVirtualThread(runnable)` — никакого `--enable-preview` не нужно.",
                 "when_to_apply": "Выбор LTS-версии для прод-сервиса с массовым I/O — минимум Java 21.",
                 "edge_cases": "Несовместимость со старыми библиотеками, использующими нативный `synchronized` для координации; до Java 24 это вызывало pinning.",
-                "related": "Q25 fix pinning в Java 24; Q38 эволюция JEP; Q40 ScopedValue."
+                "related": "[[java-virtual-threads-interview#Q25]] fix pinning в Java 24; [[java-virtual-threads-interview#Q38]] эволюция JEP; [[java-virtual-threads-interview#Q40]] ScopedValue."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "`Thread.ofPlatform().start(...)` создаёт OS-поток; `Thread.ofVirtual().start(...)` — объект JVM, который при первом запуске монтируется на carrier из ForkJoinPool.",
                 "when_to_apply": "Когда нужно понимать стоимость создания и масштабирование: миллион VT — ОК, миллион Platform — OOM.",
                 "edge_cases": "ThreadLocal у миллиона VT даёт миллион копий значения — это узкое место по памяти.",
-                "related": "Q4 carrier; Q5 M:N; Q17 размер стека; Q19 ThreadLocal."
+                "related": "[[java-virtual-threads-interview#Q4]] carrier; [[java-virtual-threads-interview#Q5]] M:N; [[java-virtual-threads-interview#Q17]] размер стека; [[java-virtual-threads-interview#Q19]] ThreadLocal."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "При 1000 VT, делающих `Thread.sleep`, JVM держит ~8-16 carrier-потоков, и они по очереди прокачивают всю тысячу.",
                 "when_to_apply": "Расчёт capacity: число carrier'ов = `jdk.virtualThreadScheduler.parallelism`, по умолчанию = CPU count.",
                 "edge_cases": "Если все carrier'ы pinned (например, `synchronized` в Java 21), новые VT не получат carrier и встанут в очередь.",
-                "related": "Q3 платформенный поток; Q5 M:N; Q14 ForkJoinPool; Q21 pinning."
+                "related": "[[java-virtual-threads-interview#Q3]] платформенный поток; [[java-virtual-threads-interview#Q5]] M:N; [[java-virtual-threads-interview#Q14]] ForkJoinPool; [[java-virtual-threads-interview#Q21]] pinning."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "10 миллионов VT поверх 16 carrier'ов на 16-ядерной машине — нормальная картина в нагрузочном тесте Loom.",
                 "when_to_apply": "Когда нужно рассуждать о пропускной способности: bottleneck не в числе VT, а в carrier'ах и внешних ресурсах.",
                 "edge_cases": "Pinning делает M:N временно 1:1 для прижатого VT — он удерживает carrier до выхода из блока.",
-                "related": "Q4 carrier; Q14 ForkJoinPool; Q21 pinning; Q26 миллион VT."
+                "related": "[[java-virtual-threads-interview#Q4]] carrier; [[java-virtual-threads-interview#Q14]] ForkJoinPool; [[java-virtual-threads-interview#Q21]] pinning; [[java-virtual-threads-interview#Q26]] миллион VT."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "`Thread.sleep(1.s)` в VT: JVM делает unmount, ставит timer, carrier берёт следующий VT;",
                 "when_to_apply": "При анализе perf: высокая частота mount/unmount = много блокирующих вызовов, проверять через JFR `jdk.VirtualThreadPinned` и `jdk.VirtualThreadStart`.",
                 "edge_cases": "Pinning блокирует unmount: carrier остаётся занятым, даже если VT парится внутри `synchronized`.",
-                "related": "Q4 carrier; Q15 park/unpark; Q16 continuation; Q35 JFR."
+                "related": "[[java-virtual-threads-interview#Q4]] carrier; [[java-virtual-threads-interview#Q15]] park/unpark; [[java-virtual-threads-interview#Q16]] continuation; [[java-virtual-threads-interview#Q35]] JFR."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "`Thread vt = Thread.ofVirtual().name(\"worker-\", 0).start(task);` — счётчик `0` автоматически инкрементируется для каждого следующего потока.",
                 "when_to_apply": "Когда нужен именованный одиночный VT с настройками — без `Executor`.",
                 "edge_cases": "Билдер immutable: каждый `.name(...)` возвращает новый объект. `.start()` нельзя вызвать дважды на одном `Runnable`.",
-                "related": "Q8 `startVirtualThread`; Q9 executor; Q10 `ThreadFactory`."
+                "related": "[[java-virtual-threads-interview#Q8]] `startVirtualThread`; [[java-virtual-threads-interview#Q9]] executor; [[java-virtual-threads-interview#Q10]] `ThreadFactory`."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "`Thread vt = Thread.startVirtualThread(() -> log.info(\"hi\")); vt.join();` — две строки против полноценного executor'а.",
                 "when_to_apply": "Тесты, демо, одиночные fire-and-forget задачи внутри метода.",
                 "edge_cases": "Имя по умолчанию пустое (`\"\"`), что неудобно в thread dump — для прода лучше билдер `.name(...)`.",
-                "related": "Q7 билдер; Q9 executor; Q34 thread dump."
+                "related": "[[java-virtual-threads-interview#Q7]] билдер; [[java-virtual-threads-interview#Q9]] executor; [[java-virtual-threads-interview#Q34]] thread dump."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "`try (var ex = Executors.newVirtualThreadPerTaskExecutor()) { for (int i=0;i<10_000;i++) ex.submit(task); }` — выход из try ждёт всех.",
                 "when_to_apply": "Когда есть batch I/O-задач: HTTP fan-out, parallel JDBC reads, обработка списка файлов.",
                 "edge_cases": "Если задача висит в `synchronized` (pinning) и блок try не закрывается — `close()` будет ждать долго или вечно.",
-                "related": "Q7 билдер; Q10 ThreadFactory; Q11 StructuredTaskScope; Q26 миллион VT."
+                "related": "[[java-virtual-threads-interview#Q7]] билдер; [[java-virtual-threads-interview#Q10]] ThreadFactory; [[java-virtual-threads-interview#Q11]] StructuredTaskScope; [[java-virtual-threads-interview#Q26]] миллион VT."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "`var sched = Executors.newScheduledThreadPool(1, Thread.ofVirtual().factory());` — `@Scheduled`-задачи теперь крутятся на VT.",
                 "when_to_apply": "Интеграция с библиотеками (Quartz, Netty, Tomcat), принимающими `ThreadFactory` извне.",
                 "edge_cases": "Имя задаётся через `.name(prefix, counterStart)`; если пропустить — будет пустая строка, что мешает в thread dump.",
-                "related": "Q7 билдер; Q9 thread-per-task; Q28 Tomcat."
+                "related": "[[java-virtual-threads-interview#Q7]] билдер; [[java-virtual-threads-interview#Q9]] thread-per-task; [[java-virtual-threads-interview#Q28]] Tomcat."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "`try (var scope = new StructuredTaskScope.ShutdownOnFailure()) { var f1 = scope.fork(this::fetchUser); var f2 = scope.fork(this::fetchOrders);",
                 "when_to_apply": "Fan-out к нескольким сервисам с гарантией не утечки потоков; иерархическая отмена;",
                 "edge_cases": "Скоп должен закрываться в том же потоке, что и создан;",
-                "related": "Q12 ShutdownOnFailure; Q13 ShutdownOnSuccess; Q36 отмена; Q40 ScopedValue."
+                "related": "[[java-virtual-threads-interview#Q12]] ShutdownOnFailure; [[java-virtual-threads-interview#Q13]] ShutdownOnSuccess; [[java-virtual-threads-interview#Q36]] отмена; [[java-virtual-threads-interview#Q40]] ScopedValue."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "Сбор страницы профиля: профиль + заказы + рекомендации — при ошибке в одном из вызовов нет смысла ждать остальные, отдаём клиенту 5xx.",
                 "when_to_apply": "Aggregator endpoints, parallel reads с обязательным consistency, batch-операции где нужны все ответы.",
                 "edge_cases": "После `throwIfFailed()` нельзя вызывать `resultNow()` у Future — оно бросит, надо вызывать `state() == SUCCESS`.",
-                "related": "Q11 StructuredTaskScope; Q13 ShutdownOnSuccess; Q36 cancellation."
+                "related": "[[java-virtual-threads-interview#Q11]] StructuredTaskScope; [[java-virtual-threads-interview#Q13]] ShutdownOnSuccess; [[java-virtual-threads-interview#Q36]] cancellation."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "`ScopedValue<User> CURRENT = ScopedValue.newInstance(); ScopedValue.where(CURRENT, user).run(this::handle);` — внутри `handle()`: `CURRENT.get()` вернёт `user`, после `run` — `NoSuchElementException`.",
                 "when_to_apply": "Передача context (user, traceId, locale) сквозь сервисные цепочки на VT без mutable shared state.",
                 "edge_cases": "Старые библиотеки (MDC, SecurityContext) пока используют `ThreadLocal`;",
-                "related": "Q14 InheritableThreadLocal; Q19 утечки памяти; Q40 ScopedValue."
+                "related": "[[java-virtual-threads-interview#Q14]] InheritableThreadLocal; [[java-virtual-threads-interview#Q19]] утечки памяти; [[java-virtual-threads-interview#Q40]] ScopedValue."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "На 16-ядерном хосте получаем 16 carrier'ов; при `-Djdk.virtualThreadScheduler.parallelism=32` — 32 carrier'а.",
                 "when_to_apply": "Тюнинг под профиль нагрузки: I/O-heavy сервис может вытянуть больше carrier'ов, чем CPU, если есть pinning.",
                 "edge_cases": "`commonPool()` остаётся отдельным и обслуживает parallel stream / `CompletableFuture.runAsync`;",
-                "related": "Q4 carrier; Q5 M:N; Q16 continuation; Q22 tracePinnedThreads."
+                "related": "[[java-virtual-threads-interview#Q4]] carrier; [[java-virtual-threads-interview#Q5]] M:N; [[java-virtual-threads-interview#Q16]] continuation; [[java-virtual-threads-interview#Q22]] tracePinnedThreads."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "`Semaphore`, `ReentrantLock`, `CountDownLatch` используют `park`/`unpark` внутри — на VT все они работают без блокировки carrier'а.",
                 "when_to_apply": "Понимание того, почему `ReentrantLock` не вызывает pinning, в отличие от `synchronized` (до Java 24).",
                 "edge_cases": "Если VT находится внутри `synchronized` и зовёт `park`, происходит pinning: carrier остаётся занятым.",
-                "related": "Q6 mount/unmount; Q21 pinning; Q24 ReentrantLock; Q25 Java 24."
+                "related": "[[java-virtual-threads-interview#Q6]] mount/unmount; [[java-virtual-threads-interview#Q21]] pinning; [[java-virtual-threads-interview#Q24]] ReentrantLock; [[java-virtual-threads-interview#Q25]] Java 24."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "При `Thread.sleep` JVM делает `cont.yield(SLEEP_SCOPE)`;",
                 "when_to_apply": "Внутренний механизм;",
                 "edge_cases": "Continuation внутри `synchronized` нельзя yield'нуть (до Java 24) — это и есть pinning.",
-                "related": "Q6 mount/unmount; Q15 park; Q17 размер стека; Q25 fix Java 24."
+                "related": "[[java-virtual-threads-interview#Q6]] mount/unmount; [[java-virtual-threads-interview#Q15]] park; [[java-virtual-threads-interview#Q17]] размер стека; [[java-virtual-threads-interview#Q25]] fix Java 24."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "Один VT, спящий внутри обработчика HTTP — ~1-2 КБ heap.",
                 "when_to_apply": "Оценка capacity: «сколько VT поместится в N ГБ heap» — порядок 10⁶ при типичной нагрузке.",
                 "edge_cases": "Глубокая рекурсия на VT всё равно может выесть много heap;",
-                "related": "Q3 Platform vs Virtual; Q5 M:N; Q19 ThreadLocal-overhead; Q26 миллион VT."
+                "related": "[[java-virtual-threads-interview#Q3]] Platform vs Virtual; [[java-virtual-threads-interview#Q5]] M:N; [[java-virtual-threads-interview#Q19]] ThreadLocal-overhead; [[java-virtual-threads-interview#Q26]] миллион VT."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "Микробенчмарк tight-loop CPU-bound кода: разница между VT и Platform Thread <2-3% (в основном на mount/unmount).",
                 "when_to_apply": "Оценка перфоманса: можно не бояться, что переход на VT катастрофически замедлит критический путь.",
                 "edge_cases": "Метод с `synchronized` или JNI приведёт к pinning — там JIT не виноват, ограничение в самом continuation.",
-                "related": "Q16 continuation; Q17 размер стека; Q21 pinning."
+                "related": "[[java-virtual-threads-interview#Q16]] continuation; [[java-virtual-threads-interview#Q17]] размер стека; [[java-virtual-threads-interview#Q21]] pinning."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "В Spring MDC + RequestContext часто базируются на `InheritableThreadLocal`.",
                 "when_to_apply": "Аудит библиотек на `InheritableThreadLocal`;",
                 "edge_cases": "Builder-флаг `inheritInheritableThreadLocals(false)` отключает наследование;",
-                "related": "Q13 ThreadLocal; Q33 утечки; Q40 ScopedValue."
+                "related": "[[java-virtual-threads-interview#Q13]] ThreadLocal; [[java-virtual-threads-interview#Q33]] утечки; [[java-virtual-threads-interview#Q40]] ScopedValue."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "`Thread.ofVirtual().inheritInheritableThreadLocals(false).start(runnable)` — стартует VT без копирования MDC от родителя.",
                 "when_to_apply": "Background-задачи, которые не должны видеть HTTP-контекст вызывающего, или массовый fan-out с миллионом VT.",
                 "edge_cases": "Не путать с обычным `ThreadLocal` — он и так не наследуется.",
-                "related": "Q13 ThreadLocal; Q19 наследование; Q40 ScopedValue."
+                "related": "[[java-virtual-threads-interview#Q13]] ThreadLocal; [[java-virtual-threads-interview#Q19]] наследование; [[java-virtual-threads-interview#Q40]] ScopedValue."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "`synchronized(lock) { dbCall();",
                 "when_to_apply": "Аудит легаси-кода при миграции на Java 21+; замена `synchronized` на `ReentrantLock`.",
                 "edge_cases": "В Java 24 фикс для `synchronized` — pinning внутри обычных мониторов снят.",
-                "related": "Q22 trace; Q23 причины; Q24 ReentrantLock; Q25 Java 24."
+                "related": "[[java-virtual-threads-interview#Q22]] trace; [[java-virtual-threads-interview#Q23]] причины; [[java-virtual-threads-interview#Q24]] ReentrantLock; [[java-virtual-threads-interview#Q25]] Java 24."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "`java -Djdk.tracePinnedThreads=full -jar app.jar 2>&1 | grep -A 5 'Thread.*virtual.*pinned'` — быстрый smoke-чек в логах.",
                 "when_to_apply": "Pre-prod профилирование при миграции на VT; deep dive по падению throughput.",
                 "edge_cases": "tracePinnedThreads может замедлить hot path — не оставлять навсегда в проде.",
-                "related": "Q21 pinning; Q23 причины; Q35 JFR."
+                "related": "[[java-virtual-threads-interview#Q21]] pinning; [[java-virtual-threads-interview#Q23]] причины; [[java-virtual-threads-interview#Q35]] JFR."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "`synchronized (this) { httpClient.send(...);",
                 "when_to_apply": "Аудит легаси на VT-миграции: grep по `synchronized`, искать JNI-вызовы в hot path.",
                 "edge_cases": "Сам по себе `synchronized` без блокировки внутри тоже pinned, но коротко — JFR может игнорировать ниже порога.",
-                "related": "Q21 pinning; Q22 trace; Q24 ReentrantLock; Q25 Java 24."
+                "related": "[[java-virtual-threads-interview#Q21]] pinning; [[java-virtual-threads-interview#Q22]] trace; [[java-virtual-threads-interview#Q24]] ReentrantLock; [[java-virtual-threads-interview#Q25]] Java 24."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "Было: `synchronized (this) { db.update(); }`. Стало: `lock.lock(); try { db.update(); } finally { lock.unlock();",
                 "when_to_apply": "Миграция hot-path кода на Java 21-23; везде, где монитор удерживается во время blocking I/O.",
                 "edge_cases": "`ReentrantLock` тяжелее `synchronized` по байткоду и slightly медленнее в uncontended case (~5-10%).",
-                "related": "Q21 pinning; Q23 причины; Q25 Java 24."
+                "related": "[[java-virtual-threads-interview#Q21]] pinning; [[java-virtual-threads-interview#Q23]] причины; [[java-virtual-threads-interview#Q25]] Java 24."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "Старый код `synchronized (this) { jdbc.executeQuery(...);",
                 "when_to_apply": "Большой плюс при миграции легаси: миллионы строк `synchronized` в библиотеках начинают «просто работать» с VT без аудита.",
                 "edge_cases": "JNI-pinning никуда не делся; библиотеки с native I/O (старые JDBC) могут продолжать страдать.",
-                "related": "Q21 pinning; Q23 причины; Q24 ReentrantLock; Q38 эволюция."
+                "related": "[[java-virtual-threads-interview#Q21]] pinning; [[java-virtual-threads-interview#Q23]] причины; [[java-virtual-threads-interview#Q24]] ReentrantLock; [[java-virtual-threads-interview#Q38]] эволюция."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "Echo-сервер с `Thread.startVirtualThread(this::handle)` на 1M подключений требует ~16 carrier'ов и ~2-4 ГБ heap — невозможно на Platform Thread.",
                 "when_to_apply": "Сетевые шлюзы, long-poll endpoints, websocket-broker'ы, орчестрация микросервисов с fan-out.",
                 "edge_cases": "Не любой I/O Loom-aware: file I/O в некоторых ОС всё ещё блокирует carrier, JNI-сокеты не подхватываются.",
-                "related": "Q5 M:N; Q15 park; Q27 HTTP-сервер; Q31 JDBC."
+                "related": "[[java-virtual-threads-interview#Q5]] M:N; [[java-virtual-threads-interview#Q15]] park; [[java-virtual-threads-interview#Q27]] HTTP-сервер; [[java-virtual-threads-interview#Q31]] JDBC."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "`spring.threads.virtual.enabled=true` в `application.properties` — после рестарта `Thread.currentThread().isVirtual()` в контроллере возвращает `true`.",
                 "when_to_apply": "Java 21 + Spring Boot 3.2+.",
                 "edge_cases": "До Spring Boot 3.2 — нужны ручные `@Bean TomcatProtocolHandlerCustomizer<?>`.",
-                "related": "Q28 Tomcat customizer; Q29 @Async; Q31 JDBC."
+                "related": "[[java-virtual-threads-interview#Q28]] Tomcat customizer; [[java-virtual-threads-interview#Q29]] @Async; [[java-virtual-threads-interview#Q31]] JDBC."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "`@Bean TomcatProtocolHandlerCustomizer<?> v() { return h -> h.setExecutor(Executors.newVirtualThreadPerTaskExecutor());",
                 "when_to_apply": "Java 21 + Spring Boot 3.0/3.1 (до auto-config флага).",
                 "edge_cases": "Кастомный executor нужно `close()`-ить на shutdown — Tomcat это умеет через `StoppableExecutor`.",
-                "related": "Q27 spring.threads.virtual; Q9 thread-per-task; Q34 thread dump."
+                "related": "[[java-virtual-threads-interview#Q27]] spring.threads.virtual; [[java-virtual-threads-interview#Q9]] thread-per-task; [[java-virtual-threads-interview#Q34]] thread dump."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "`maximum-pool-size: 20` для PostgreSQL — при 1M VT, делающих короткие запросы, не будет деградации;",
                 "when_to_apply": "Любой high-fan-out сервис с JDBC; не увеличивать пул, ориентироваться на capacity БД.",
                 "edge_cases": "Длительная транзакция держит коннект — VT в этой транзакции блокируется надолго, но carrier при этом свободен.",
-                "related": "Q28 Tomcat; Q31 JDBC; Q32 миграция с CF."
+                "related": "[[java-virtual-threads-interview#Q28]] Tomcat; [[java-virtual-threads-interview#Q31]] JDBC; [[java-virtual-threads-interview#Q32]] миграция с CF."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "Сериализация JSON 10 МБ в цикле, рендеринг PDF, FFT — лучше Platform Thread + bounded pool. HTTP fan-out — VT.",
                 "when_to_apply": "Дифференцировать слои: I/O-frontend на VT, compute-batch на dedicated platform pool.",
                 "edge_cases": "Смешанные задачи (compute + I/O) — обычно тоже выигрывают на VT, потому что I/O-часть доминирует.",
-                "related": "Q26 миллион VT; Q33 monitoring; Q37 reactive."
+                "related": "[[java-virtual-threads-interview#Q26]] миллион VT; [[java-virtual-threads-interview#Q33]] monitoring; [[java-virtual-threads-interview#Q37]] reactive."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "`var scope = new ShutdownOnFailure(); var user = scope.fork(this::loadUser); var orders = scope.fork(this::loadOrders); scope.join().throwIfFailed();",
                 "when_to_apply": "Миграция callback hell-кода; повышение читаемости;",
                 "edge_cases": "`thenComposeAsync` с кастомным executor'ом — нужно проверить, что бизнес-логика не зависит от executor identity.",
-                "related": "Q11 StructuredTaskScope; Q12 ShutdownOnFailure; Q26 миллион VT."
+                "related": "[[java-virtual-threads-interview#Q11]] StructuredTaskScope; [[java-virtual-threads-interview#Q12]] ShutdownOnFailure; [[java-virtual-threads-interview#Q26]] миллион VT."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "Простой micro-benchmark создания 1M VT — около 1 секунды на современном CPU;",
                 "when_to_apply": "Оценка capacity;",
                 "edge_cases": "Если код активно использует `ThreadLocal` или `InheritableThreadLocal`, накладные расходы создания растут.",
-                "related": "Q17 размер стека; Q26 миллион VT; Q33 пул VT."
+                "related": "[[java-virtual-threads-interview#Q17]] размер стека; [[java-virtual-threads-interview#Q26]] миллион VT; [[java-virtual-threads-interview#Q33]] пул VT."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "Антипаттерн: `new ThreadPoolExecutor(0, 200, ..., Thread.ofVirtual().factory())`.",
                 "when_to_apply": "При rate-limiting к внешнему API или БД — Semaphore;",
                 "edge_cases": "Старые библиотеки навязывают `Executor` — лучше передать `Executors.newVirtualThreadPerTaskExecutor()`, чем `ThreadPoolExecutor` с VT-фабрикой.",
-                "related": "Q9 thread-per-task; Q19 InheritableThreadLocal; Q30 capacity."
+                "related": "[[java-virtual-threads-interview#Q9]] thread-per-task; [[java-virtual-threads-interview#Q19]] InheritableThreadLocal; [[java-virtual-threads-interview#Q30]] capacity."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "`jcmd 12345 Thread.dump_to_file -format=json /tmp/dump.json` → файл со списком всех потоков, их состояния, стеков и принадлежности carrier'у.",
                 "when_to_apply": "Расследование зависших VT, инцидентов с pinning'ом, deadlock в JDBC-pool.",
                 "edge_cases": "Файл может быть гигабайт при миллионе VT — лучше `-format=plain` для grep'а.",
-                "related": "Q22 trace pinning; Q35 JFR; Q36 отладка."
+                "related": "[[java-virtual-threads-interview#Q22]] trace pinning; [[java-virtual-threads-interview#Q35]] JFR; [[java-virtual-threads-interview#Q36]] отладка."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "`-XX:StartFlightRecording=duration=60s,filename=app.jfr,settings=profile` → открыть в JMC, фильтр `Event Type: jdk.VirtualThreadPinned` → видно методы, удерживающие carrier.",
                 "when_to_apply": "Pre-prod профилирование Loom-сервиса, поиск bottleneck'ов pinning, аудит нагрузочных тестов.",
                 "edge_cases": "`jdk.VirtualThreadPinned` пишется не на каждый pinning, а только если он дольше threshold'а (по умолчанию 20 ms) — короткие pinning'и не видны.",
-                "related": "Q22 tracePinnedThreads; Q34 thread dump; Q36 отладка."
+                "related": "[[java-virtual-threads-interview#Q22]] tracePinnedThreads; [[java-virtual-threads-interview#Q34]] thread dump; [[java-virtual-threads-interview#Q36]] отладка."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "В дампе: `... at app.Worker.process(Worker.java:42) ... at jdk.internal.vm.Continuation.enter(Continuation.java:...) ` — снизу всегда виден continuation entry.",
                 "when_to_apply": "При чтении дампов VT-приложений: отделять «бизнес-кадры» от bootstrap'а continuation.",
                 "edge_cases": "`StackWalker.walk(...)` корректно работает на VT;",
-                "related": "Q16 continuation; Q34 thread dump; Q35 JFR."
+                "related": "[[java-virtual-threads-interview#Q16]] continuation; [[java-virtual-threads-interview#Q34]] thread dump; [[java-virtual-threads-interview#Q35]] JFR."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "Сервис: REST + JDBC + RabbitMQ + интеграция с legacy SOAP → VT. Сервис: SSE + R2DBC + Kafka Streams → WebFlux.",
                 "when_to_apply": "Дизайн нового сервиса; миграция legacy; стратегия команды на 2-3 года.",
                 "edge_cases": "WebFlux + VT можно сочетать (`webClient.block()` на VT), но это редко даёт выигрыш и часто запутывает.",
-                "related": "Q26 миллион VT; Q30 CPU-bound; Q31 миграция с CF."
+                "related": "[[java-virtual-threads-interview#Q26]] миллион VT; [[java-virtual-threads-interview#Q30]] CPU-bound; [[java-virtual-threads-interview#Q31]] миграция с CF."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "При выборе LTS-Java для прод-сервиса: только Java 21+ даёт стабильные Virtual Threads без `--enable-preview`.",
                 "when_to_apply": "Планирование апгрейда runtime'а команды, обоснование «нужна Java 21».",
                 "edge_cases": "На JDK 19-20 VT доступны только с `--enable-preview`.",
-                "related": "Q2 JEP 444; Q25 Java 24; Q40 ScopedValue."
+                "related": "[[java-virtual-threads-interview#Q2]] JEP 444; [[java-virtual-threads-interview#Q25]] Java 24; [[java-virtual-threads-interview#Q40]] ScopedValue."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "`ScopedValue<User> CURRENT = ScopedValue.newInstance();",
                 "when_to_apply": "Передача user-context, traceId, locale сквозь сервисную цепочку на VT без mutable-state.",
                 "edge_cases": "Дочерние VT, созданные внутри `run`, наследуют ScopedValue автоматически через `StructuredTaskScope`.",
-                "related": "Q13 ThreadLocal; Q11 StructuredTaskScope; Q40 будущее."
+                "related": "[[java-virtual-threads-interview#Q13]] ThreadLocal; [[java-virtual-threads-interview#Q11]] StructuredTaskScope; [[java-virtual-threads-interview#Q40]] будущее."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "В JDK 24+: JEP 491 убирает pinning в `synchronized`.",
                 "when_to_apply": "Планирование апгрейда LTS; ожидание стабильных API для structured concurrency и scoped values; принятие решения о миграции на VT уже сейчас vs. подождать.",
                 "edge_cases": "Сроки конкретных JEP меняются;",
-                "related": "Q25 Java 24 JEP 491; Q38 эволюция JEP; Q39 ScopedValue."
+                "related": "[[java-virtual-threads-interview#Q25]] Java 24 JEP 491; [[java-virtual-threads-interview#Q38]] эволюция JEP; [[java-virtual-threads-interview#Q39]] ScopedValue."
               }
             }
           ]

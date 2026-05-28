@@ -18,7 +18,7 @@
                 "example": "EntityManager.persist(user) — JPA-стандарт; SessionFactory.openSession().save(user) — Hibernate-специфика.",
                 "when_to_apply": "Понимание уровней абстракции: какой код переносим между реализациями, а какой завязан на Hibernate.",
                 "edge_cases": "HQL поддерживает фишки вроде динамической инстанцирования, которых нет в JPQL; такие запросы не запустятся на EclipseLink.",
-                "related": "Q2 преимущества над JDBC; Q3 ключевые интерфейсы; Q28 HQL vs JPQL."
+                "related": "[[hibernate-interview#Q2]] преимущества над JDBC; [[hibernate-interview#Q3]] ключевые интерфейсы; [[hibernate-interview#Q28]] HQL vs JPQL."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "session.get(User.class, id) против десятка строк JDBC с открытием соединения, биндингом параметров и маппингом колонок.",
                 "when_to_apply": "Когда важна продуктивность разработки, переносимость между СУБД и работа на уровне объектной модели.",
                 "edge_cases": "Для тяжёлой аналитики и bulk-load чистый JDBC или StatelessSession часто эффективнее; ORM не отменяет понимание SQL.",
-                "related": "Q1 JPA vs Hibernate; Q3 ключевые интерфейсы; Q46 StatelessSession."
+                "related": "[[hibernate-interview#Q1]] JPA vs Hibernate; [[hibernate-interview#Q3]] ключевые интерфейсы; [[hibernate-interview#Q46]] StatelessSession."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "SessionFactory sf = new Configuration().configure().buildSessionFactory(); try (Session s = sf.openSession()) { ... }.",
                 "when_to_apply": "Понимание скоупов и жизненных циклов: что синглтон, что per-thread, что per-request.",
                 "edge_cases": "SessionFactory — тяжёлая (парсинг маппингов); создавать её на каждый запрос — типичная ошибка.",
-                "related": "Q4 Session vs SessionFactory; Q5 потокобезопасность; Q41 getCurrentSession vs openSession."
+                "related": "[[hibernate-interview#Q4]] Session vs SessionFactory; [[hibernate-interview#Q5]] потокобезопасность; [[hibernate-interview#Q41]] getCurrentSession vs openSession."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "Один SessionFactory на JVM, тысячи Session на HTTP-запросы в течение жизни приложения.",
                 "when_to_apply": "Понимание стоимости создания и правильного скоупа этих объектов.",
                 "edge_cases": "В кластере при connection pool важно следить, что Session всегда закрывается, иначе соединение не вернётся в пул.",
-                "related": "Q3 ключевые интерфейсы; Q5 потокобезопасность; Q41 getCurrentSession vs openSession."
+                "related": "[[hibernate-interview#Q3]] ключевые интерфейсы; [[hibernate-interview#Q5]] потокобезопасность; [[hibernate-interview#Q41]] getCurrentSession vs openSession."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "В Spring каждый поток получает свою Session через ThreadLocal благодаря @Transactional.",
                 "when_to_apply": "Любое многопоточное приложение, использующее Hibernate напрямую или через Spring.",
                 "edge_cases": "Хранение Session в static-поле или ленивая инициализация Session в singleton-бине — типичные ошибки, приводящие к плавающим багам.",
-                "related": "Q4 Session vs SessionFactory; Q22 LazyInitializationException; Q41 getCurrentSession."
+                "related": "[[hibernate-interview#Q4]] Session vs SessionFactory; [[hibernate-interview#Q22]] LazyInitializationException; [[hibernate-interview#Q41]] getCurrentSession."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "Application → SessionFactory (с L2) → Session (с L1) → Transaction → JDBC → PostgreSQL.",
                 "when_to_apply": "Понимание, где происходят кэширование, синхронизация и трансляция SQL, помогает находить узкие места.",
                 "edge_cases": "JTA-режим меняет координацию транзакций (двухфазный коммит), что критично для распределённых сценариев.",
-                "related": "Q3 ключевые интерфейсы; Q24 L1 vs L2; Q42 Hibernate Dialect."
+                "related": "[[hibernate-interview#Q3]] ключевые интерфейсы; [[hibernate-interview#Q24]] L1 vs L2; [[hibernate-interview#Q42]] Hibernate Dialect."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "User u = new User(); // transient. em.persist(u); // persistent. em.detach(u); // detached. em.remove(em.merge(u)); // removed.",
                 "when_to_apply": "Понимание, какие изменения попадают в БД, а какие — нет; почему dirty checking работает только для managed.",
                 "edge_cases": "Изменения detached-сущности не синхронизируются с БД; merge возвращает новый managed объект, а не делает managed исходный.",
-                "related": "Q8 dirty checking; Q9 persist/save/merge; Q22 LazyInitializationException."
+                "related": "[[hibernate-interview#Q8]] dirty checking; [[hibernate-interview#Q9]] persist/save/merge; [[hibernate-interview#Q22]] LazyInitializationException."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "user.setName(\"Bob\"); // Hibernate сам сделает UPDATE users SET name=? WHERE id=? при commit.",
                 "when_to_apply": "Любая работа с managed-сущностями в транзакции; нет нужды звать save/update вручную.",
                 "edge_cases": "FlushMode.COMMIT не вызывает flush перед запросом — запрос увидит устаревшие данные; FlushMode.MANUAL требует ручного flush.",
-                "related": "Q7 entity states; Q9 persist vs merge; Q38 @Immutable."
+                "related": "[[hibernate-interview#Q7]] entity states; [[hibernate-interview#Q9]] persist vs merge; [[hibernate-interview#Q38]] @Immutable."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "User managed = em.merge(detached); managed.setName(\"X\"); // detached.setName не попадёт в БД.",
                 "when_to_apply": "Предпочитать JPA-стандарт: persist для transient, merge для detached.",
                 "edge_cases": "persist на detached бросает PersistenceException; update игнорируется на @Immutable; merge может выполнить SELECT для проверки существования.",
-                "related": "Q7 entity states; Q8 dirty checking; Q10 get vs load."
+                "related": "[[hibernate-interview#Q7]] entity states; [[hibernate-interview#Q8]] dirty checking; [[hibernate-interview#Q10]] get vs load."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "order.setUser(em.getReference(User.class, userId)); — установить FK без SELECT для User.",
                 "when_to_apply": "Микрооптимизация ассоциаций: getReference избавляет от лишнего SELECT при сохранении связей.",
                 "edge_cases": "getReference на final-класс не сможет создать proxy и фактически выполнит SELECT; обращение к detached proxy бросит LazyInitializationException.",
-                "related": "Q12 final entity; Q19 lazy loading; Q22 LazyInitializationException."
+                "related": "[[hibernate-interview#Q12]] final entity; [[hibernate-interview#Q19]] lazy loading; [[hibernate-interview#Q22]] LazyInitializationException."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "protected User() {} — допустимо для инкапсуляции; public User(String name) — для бизнес-логики.",
                 "when_to_apply": "Любой @Entity класс, в том числе если уже есть конструктор с параметрами.",
                 "edge_cases": "Lombok @NoArgsConstructor(access = PROTECTED) решает задачу автоматически; для record-классов JPA-стандарт поддержки нет.",
-                "related": "Q12 final entity; Q13 базовые аннотации; Q18 @Embeddable."
+                "related": "[[hibernate-interview#Q12]] final entity; [[hibernate-interview#Q13]] базовые аннотации; [[hibernate-interview#Q18]] @Embeddable."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "@Entity @Immutable public class Country { ... } — рекомендованный вариант для справочников.",
                 "when_to_apply": "Когда хочется выразить неизменяемость данных без потери lazy loading.",
                 "edge_cases": "Bytecode enhancement (Hibernate-плагин Gradle/Maven) позволяет обойти необходимость proxy и поддержать lazy без подклассов.",
-                "related": "Q10 getReference; Q19 lazy loading; Q38 @Immutable."
+                "related": "[[hibernate-interview#Q10]] getReference; [[hibernate-interview#Q19]] lazy loading; [[hibernate-interview#Q38]] @Immutable."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "@Entity @Table(name=\"orders\") @Id @GeneratedValue(strategy=GenerationType.SEQUENCE) Long id; @ManyToOne(fetch=LAZY) @JoinColumn(name=\"user_id\") User user;",
                 "when_to_apply": "Любая работа с JPA-сущностями: от простых таблиц до сложных ассоциаций и наследования.",
                 "edge_cases": "@Enumerated(EnumType.ORDINAL) хрупкий — добавление значения в середину enum ломает данные; всегда используйте STRING.",
-                "related": "Q14 наследование; Q15 OneToMany; Q33 @Version."
+                "related": "[[hibernate-interview#Q14]] наследование; [[hibernate-interview#Q15]] OneToMany; [[hibernate-interview#Q33]] @Version."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "@Inheritance(strategy=SINGLE_TABLE) @DiscriminatorColumn(name=\"vehicle_type\") public abstract class Vehicle; @DiscriminatorValue(\"TRUCK\") public class Truck extends Vehicle.",
                 "when_to_apply": "Когда модель действительно полиморфна и наследники сильно пересекаются по полям.",
                 "edge_cases": "TABLE_PER_CLASS не позволяет использовать GenerationType.IDENTITY (нужен SEQUENCE или TABLE), потому что id уникален по всей иерархии.",
-                "related": "Q13 базовые аннотации; Q15 OneToMany; Q17 mappedBy."
+                "related": "[[hibernate-interview#Q13]] базовые аннотации; [[hibernate-interview#Q15]] OneToMany; [[hibernate-interview#Q17]] mappedBy."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "addEmployee(e) { employees.add(e); e.setDepartment(this); } — для синхронизации в памяти.",
                 "when_to_apply": "Любые иерархические связи: департамент-сотрудники, заказ-позиции, пост-комментарии.",
                 "edge_cases": "Без helper-методов изменения на inverse-стороне не попадают в БД; orphanRemoval=true удаляет дочерние при удалении из коллекции.",
-                "related": "Q17 mappedBy; Q19 lazy loading; Q20 N+1."
+                "related": "[[hibernate-interview#Q17]] mappedBy; [[hibernate-interview#Q19]] lazy loading; [[hibernate-interview#Q20]] N+1."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "@ManyToMany @JoinTable(name=\"student_course\", joinColumns=@JoinColumn(name=\"student_id\"), inverseJoinColumns=@JoinColumn(name=\"course_id\")) Set<Course> courses.",
                 "when_to_apply": "Простая связь многие-ко-многим без атрибутов на связь.",
                 "edge_cases": "MultipleBagFetchException при двух JOIN FETCH с List; List под капотом — bag; Set решает проблему.",
-                "related": "Q15 OneToMany; Q17 mappedBy; Q47 типичные ошибки."
+                "related": "[[hibernate-interview#Q15]] OneToMany; [[hibernate-interview#Q17]] mappedBy; [[hibernate-interview#Q47]] типичные ошибки."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "@ManyToOne @JoinColumn(name=\"department_id\") Department department; на другой стороне @OneToMany(mappedBy=\"department\") List<Employee>.",
                 "when_to_apply": "Любые двунаправленные ассоциации.",
                 "edge_cases": "Изменение коллекции на inverse-стороне без обновления owning-стороны приводит к рассинхрону в БД; нужны helper-методы.",
-                "related": "Q15 OneToMany; Q16 ManyToMany; Q47 типичные ошибки."
+                "related": "[[hibernate-interview#Q15]] OneToMany; [[hibernate-interview#Q16]] ManyToMany; [[hibernate-interview#Q47]] типичные ошибки."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "@Embeddable class Address { String city; String street; } @Embedded Address homeAddress; @Embedded @AttributeOverrides({...}) Address workAddress;",
                 "when_to_apply": "Группировка полей с value-семантикой; не имеет смысла без собственного идентификатора.",
                 "edge_cases": "Equals/hashCode на @Embeddable должны учитывать все поля; null-значения всех полей внутри @Embedded — не то же самое, что null самого Embedded.",
-                "related": "Q13 базовые аннотации; Q15 OneToMany; Q45 проекции."
+                "related": "[[hibernate-interview#Q13]] базовые аннотации; [[hibernate-interview#Q15]] OneToMany; [[hibernate-interview#Q45]] проекции."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name=\"user_id\") User user; — рекомендованный default.",
                 "when_to_apply": "Любая ассоциация; явное указание стратегии — обязательная практика.",
                 "edge_cases": "Proxy не работает для final-классов; обращение после закрытия сессии — LazyInitializationException; getId proxy возвращает без SELECT.",
-                "related": "Q12 final entity; Q20 N+1; Q22 LazyInitializationException."
+                "related": "[[hibernate-interview#Q12]] final entity; [[hibernate-interview#Q20]] N+1; [[hibernate-interview#Q22]] LazyInitializationException."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "List<Author> authors = ...; for (Author a : authors) a.getBooks().size(); // 1 + N запросов.",
                 "when_to_apply": "Любая работа с коллекциями и циклами поверх ассоциаций.",
                 "edge_cases": "@ManyToOne(fetch=EAGER) тоже даёт N+1 без JOIN FETCH; включённый L2 cache может скрыть проблему до миграции на другой инстанс.",
-                "related": "Q19 lazy loading; Q21 решения N+1; Q47 типичные ошибки."
+                "related": "[[hibernate-interview#Q19]] lazy loading; [[hibernate-interview#Q21]] решения N+1; [[hibernate-interview#Q47]] типичные ошибки."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "SELECT a FROM Author a JOIN FETCH a.books — один запрос для авторов и их книг.",
                 "when_to_apply": "Каждое место, где итерация по списку приводит к доступу к ассоциации.",
                 "edge_cases": "Два JOIN FETCH к двум коллекциям одной сущности (List) → MultipleBagFetchException; решается Set или @EntityGraph.",
-                "related": "Q20 N+1; Q23 EntityGraph; Q47 типичные ошибки."
+                "related": "[[hibernate-interview#Q20]] N+1; [[hibernate-interview#Q23]] EntityGraph; [[hibernate-interview#Q47]] типичные ошибки."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "User u = repo.findById(id).get(); txEnd(); u.getOrders().size(); // LazyInitializationException.",
                 "when_to_apply": "Любое использование LAZY-ассоциаций между слоями service и web.",
                 "edge_cases": "open-in-view=true маскирует проблему, но прячет N+1; в Spring Boot OSIV включён по умолчанию.",
-                "related": "Q19 lazy loading; Q23 EntityGraph; Q43 OSIV antipattern."
+                "related": "[[hibernate-interview#Q19]] lazy loading; [[hibernate-interview#Q23]] EntityGraph; [[hibernate-interview#Q43]] OSIV antipattern."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "@NamedEntityGraph(name=\"Order.withItems\", attributeNodes={@NamedAttributeNode(\"items\"), @NamedAttributeNode(\"user\")}).",
                 "when_to_apply": "Когда нужно избежать N+1 декларативно, без переписывания запросов.",
                 "edge_cases": "Hint setHint(\"jakarta.persistence.fetchgraph\", graph) ведёт себя строго; loadgraph учитывает дефолтные FetchType.",
-                "related": "Q20 N+1; Q21 решения; Q43 OSIV."
+                "related": "[[hibernate-interview#Q20]] N+1; [[hibernate-interview#Q21]] решения; [[hibernate-interview#Q43]] OSIV."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "В одной сессии два get на тот же id вернут == объект; в L2 разные сессии получат одни и те же данные без обращения к БД.",
                 "when_to_apply": "L1 — всегда; L2 — для часто читаемых и редко изменяемых сущностей.",
                 "edge_cases": "L2 в кластере требует распределённого провайдера, иначе инстансы расходятся по данным.",
-                "related": "Q25 настройка L2; Q26 query cache; Q27 concurrency strategy."
+                "related": "[[hibernate-interview#Q25]] настройка L2; [[hibernate-interview#Q26]] query cache; [[hibernate-interview#Q27]] concurrency strategy."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "@Cacheable @Cache(usage=CacheConcurrencyStrategy.READ_WRITE) для @Entity Country.",
                 "when_to_apply": "Справочники, конфигурации, редко меняющиеся read-heavy сущности.",
                 "edge_cases": "Прямые UPDATE через JPQL/native SQL минуют L2 и приводят к stale-данным; нужна явная инвалидация или избегание прямых модификаций.",
-                "related": "Q24 L1 vs L2; Q26 query cache; Q27 concurrency strategy."
+                "related": "[[hibernate-interview#Q24]] L1 vs L2; [[hibernate-interview#Q26]] query cache; [[hibernate-interview#Q27]] concurrency strategy."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "createQuery(...).setHint(\"org.hibernate.cacheable\", true).getResultList();",
                 "when_to_apply": "Справочники и редко меняющиеся данные с типовыми запросами.",
                 "edge_cases": "На часто изменяемых таблицах инвалидация сводит на нет выигрыш; bulk DELETE/UPDATE инвалидирует кэш целиком.",
-                "related": "Q24 L1 vs L2; Q25 L2 setup; Q27 concurrency strategy."
+                "related": "[[hibernate-interview#Q24]] L1 vs L2; [[hibernate-interview#Q25]] L2 setup; [[hibernate-interview#Q27]] concurrency strategy."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "@Cache(usage=READ_ONLY) для Currency; @Cache(usage=READ_WRITE) для Product.",
                 "when_to_apply": "Выбирается по профилю изменений сущности: чем реже меняется, тем строже можно гарантировать через READ_ONLY.",
                 "edge_cases": "TRANSACTIONAL требует JTA и совместимого провайдера (Infinispan); READ_WRITE даёт небольшой overhead на soft-lock.",
-                "related": "Q24 L1 vs L2; Q25 L2 setup; Q26 query cache."
+                "related": "[[hibernate-interview#Q24]] L1 vs L2; [[hibernate-interview#Q25]] L2 setup; [[hibernate-interview#Q26]] query cache."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "SELECT u FROM User u WHERE u.name LIKE :name — корректный JPQL и HQL.",
                 "when_to_apply": "JPQL — когда важна переносимость; HQL — когда нужны фишки Hibernate.",
                 "edge_cases": "Bulk UPDATE/DELETE в JPQL не очищают L1 cache — нужно делать em.clear() после.",
-                "related": "Q29 Criteria API; Q30 NamedQuery; Q31 native SQL."
+                "related": "[[hibernate-interview#Q29]] Criteria API; [[hibernate-interview#Q30]] NamedQuery; [[hibernate-interview#Q31]] native SQL."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "cb.equal(root.get(User_.name), nameFilter) — compile-time safety через Metamodel.",
                 "when_to_apply": "Поисковые формы, фильтры, сортировки, страничные запросы с разными параметрами.",
                 "edge_cases": "Сложные запросы с большим числом условий легко становятся нечитаемыми; альтернатива — QueryDSL или Specification API.",
-                "related": "Q28 HQL/JPQL; Q30 NamedQuery; Q32 SQL injection."
+                "related": "[[hibernate-interview#Q28]] HQL/JPQL; [[hibernate-interview#Q30]] NamedQuery; [[hibernate-interview#Q32]] SQL injection."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "@NamedQuery(name=\"User.findByEmail\", query=\"SELECT u FROM User u WHERE u.email=:email\").",
                 "when_to_apply": "Многократно используемые запросы; ранняя валидация на старте; стандартизация.",
                 "edge_cases": "Имя пространства имён — обычно EntityName.queryName, чтобы не пересекаться; динамические запросы NamedQuery не покрывает.",
-                "related": "Q28 HQL/JPQL; Q29 Criteria API; Q31 native SQL."
+                "related": "[[hibernate-interview#Q28]] HQL/JPQL; [[hibernate-interview#Q29]] Criteria API; [[hibernate-interview#Q31]] native SQL."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "em.createNativeQuery(\"SELECT * FROM users WHERE created_at>?\", User.class).",
                 "when_to_apply": "Window functions, CTE, рекурсивные запросы, специфичные функции СУБД, оптимизация под конкретный план.",
                 "edge_cases": "Bulk INSERT/UPDATE native не очищают L1 cache; параметры через ?1/?2 для positional, :name для именованных; диалект СУБД меняет синтаксис.",
-                "related": "Q28 JPQL/HQL; Q32 SQL injection; Q42 диалект."
+                "related": "[[hibernate-interview#Q28]] JPQL/HQL; [[hibernate-interview#Q32]] SQL injection; [[hibernate-interview#Q42]] диалект."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "session.createQuery(\"FROM User WHERE name=:name\").setParameter(\"name\", userInput) — безопасно.",
                 "when_to_apply": "Любой запрос, использующий внешние данные.",
                 "edge_cases": "Динамические имена колонок или таблиц нельзя биндить параметрами — нужна белый список значений; ORDER BY :col не работает корректно.",
-                "related": "Q28 JPQL/HQL; Q29 Criteria API; Q31 native SQL."
+                "related": "[[hibernate-interview#Q28]] JPQL/HQL; [[hibernate-interview#Q29]] Criteria API; [[hibernate-interview#Q31]] native SQL."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "@Version Integer version; — Hibernate добавит version в WHERE и инкремент в SET автоматически.",
                 "when_to_apply": "Большинство web-сценариев с редкими конфликтами; счётчики просмотров, корзины, профили.",
                 "edge_cases": "Timestamp-версии страдают от точности millis на быстрых обновлениях; нужно ловить OptimisticLockException и повторять операцию.",
-                "related": "Q34 пессимистичная блокировка; Q35 транзакции; Q47 типичные ошибки."
+                "related": "[[hibernate-interview#Q34]] пессимистичная блокировка; [[hibernate-interview#Q35]] транзакции; [[hibernate-interview#Q47]] типичные ошибки."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "PESSIMISTIC_WRITE: em.find(Product.class, id, LockModeType.PESSIMISTIC_WRITE) — SELECT ... FOR UPDATE.",
                 "when_to_apply": "Низкая частота конфликтов — оптимистика; высокая частота или финансовая критичность — пессимистика.",
                 "edge_cases": "Пессимистика может ждать на блокировке (timeout) или попасть в deadlock; OPTIMISTIC_FORCE_INCREMENT увеличивает version даже без изменений.",
-                "related": "Q33 @Version; Q35 транзакции; Q47 типичные ошибки."
+                "related": "[[hibernate-interview#Q33]] @Version; [[hibernate-interview#Q35]] транзакции; [[hibernate-interview#Q47]] типичные ошибки."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "@Transactional public void createUsers(List<String> names) { names.forEach(n -> repo.save(new User(n))); } — atomic.",
                 "when_to_apply": "Любая операция записи; чтение можно делать в @Transactional(readOnly=true) для оптимизации.",
                 "edge_cases": "Checked-исключения по умолчанию не вызывают rollback — нужно rollbackFor; вложенные транзакции — через propagation.",
-                "related": "Q33 @Version; Q34 блокировки; Q41 getCurrentSession."
+                "related": "[[hibernate-interview#Q33]] @Version; [[hibernate-interview#Q34]] блокировки; [[hibernate-interview#Q41]] getCurrentSession."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "for (int i=0; i<dtos.size(); i++) { em.persist(toEntity(dtos.get(i))); if (i % 50 == 0) { em.flush(); em.clear(); } }.",
                 "when_to_apply": "Массовая загрузка, миграции, импорт данных, ETL.",
                 "edge_cases": "Без flush+clear все сущности копятся в L1 cache — OOM при больших объёмах; IDENTITY запрещает batch insert.",
-                "related": "Q13 GeneratedValue; Q46 StatelessSession; Q47 типичные ошибки."
+                "related": "[[hibernate-interview#Q13]] GeneratedValue; [[hibernate-interview#Q46]] StatelessSession; [[hibernate-interview#Q47]] типичные ошибки."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "createQuery(...).setMaxResults(10) — top 10; session.createQuery(...).setFetchSize(100).scroll() — потоковая обработка.",
                 "when_to_apply": "MaxResults — пагинация; FetchSize — стриминг больших выборок.",
                 "edge_cases": "В PostgreSQL fetchSize работает через cursor только в транзакции и с autoCommit=false; MySQL имеет свои нюансы поддержки.",
-                "related": "Q31 native SQL; Q46 StatelessSession; Q47 типичные ошибки."
+                "related": "[[hibernate-interview#Q31]] native SQL; [[hibernate-interview#Q46]] StatelessSession; [[hibernate-interview#Q47]] типичные ошибки."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "@Entity @Immutable @Cache(usage=READ_ONLY) public class Country { @Id Long id; String name; String isoCode; }.",
                 "when_to_apply": "Справочные данные, которые не меняются в рантайме; исторические снимки.",
                 "edge_cases": "Прямой UPDATE через JPQL/native обходит @Immutable и меняет БД, но Hibernate не узнает об этом; @Immutable можно применять и к коллекциям.",
-                "related": "Q12 final entity; Q24 L1 vs L2; Q27 concurrency strategy."
+                "related": "[[hibernate-interview#Q12]] final entity; [[hibernate-interview#Q24]] L1 vs L2; [[hibernate-interview#Q27]] concurrency strategy."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "stats.getQueryExecutionCount(); stats.getSecondLevelCacheHitCount(); stats.getQueryExecutionMaxTimeQueryString();",
                 "when_to_apply": "Диагностика производительности, проверка N+1 в тестах, мониторинг кэша.",
                 "edge_cases": "generate_statistics добавляет небольшой overhead; в highly-concurrent сценариях лучше держать выключенным и включать только при отладке.",
-                "related": "Q20 N+1; Q24 L1 vs L2; Q48 тестирование."
+                "related": "[[hibernate-interview#Q20]] N+1; [[hibernate-interview#Q24]] L1 vs L2; [[hibernate-interview#Q48]] тестирование."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "spring.jpa.hibernate.ddl-auto: validate — рекомендованное значение для production с Flyway/Liquibase.",
                 "when_to_apply": "validate — production; update — dev; create-drop — тесты; none — когда миграции управляются вне Hibernate.",
                 "edge_cases": "update не удаляет колонки и не меняет типы; для серьёзных миграций — Flyway/Liquibase, а ddl-auto=validate.",
-                "related": "Q35 транзакции; Q42 dialect; Q43 OSIV."
+                "related": "[[hibernate-interview#Q35]] транзакции; [[hibernate-interview#Q42]] dialect; [[hibernate-interview#Q43]] OSIV."
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "В Spring @Transactional public void doWork() { Session s = sf.getCurrentSession(); s.persist(...); } — закрытие автоматическое.",
                 "when_to_apply": "Spring — getCurrentSession; standalone batch-скрипт — openSession; bulk-импорт — openStatelessSession.",
                 "edge_cases": "Без current_session_context_class getCurrentSession бросит исключение; openSession без close утечёт соединение из пула.",
-                "related": "Q4 Session vs SessionFactory; Q5 потокобезопасность; Q46 StatelessSession."
+                "related": "[[hibernate-interview#Q4]] Session vs SessionFactory; [[hibernate-interview#Q5]] потокобезопасность; [[hibernate-interview#Q46]] StatelessSession."
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "spring.jpa.properties.hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect.",
                 "when_to_apply": "При работе с конкретной СУБД; обычно автоопределение в Hibernate 6 достаточно.",
                 "edge_cases": "Версионные диалекты (PostgreSQL10Dialect и т.п.) устарели в Hibernate 6 в пользу единого PostgreSQLDialect, который определяет версию автоматически.",
-                "related": "Q1 JPA vs Hibernate; Q6 архитектура; Q40 Spring Boot setup."
+                "related": "[[hibernate-interview#Q1]] JPA vs Hibernate; [[hibernate-interview#Q6]] архитектура; [[hibernate-interview#Q40]] Spring Boot setup."
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "@Transactional(readOnly=true) public UserDto getUser(Long id) { User u = repo.findByIdWithOrders(id); return mapper.toDto(u); }.",
                 "when_to_apply": "Production-приложения с измеримой производительностью; API, где важна предсказуемость SQL.",
                 "edge_cases": "Отключение OSIV может сломать существующий код с lazy-доступом в сериализаторе; миграция должна быть постепенной.",
-                "related": "Q19 lazy loading; Q22 LazyInitializationException; Q45 проекции."
+                "related": "[[hibernate-interview#Q19]] lazy loading; [[hibernate-interview#Q22]] LazyInitializationException; [[hibernate-interview#Q45]] проекции."
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "@Entity @Audited public class Product { ... } — Envers создаст products_aud и пишет историю автоматически.",
                 "when_to_apply": "Финансовые операции, compliance-требования, история изменений документов.",
                 "edge_cases": "Объём audit-таблиц растёт быстро; нужен план архивации; @NotAudited исключает поля; RelationTargetAuditMode.NOT_AUDITED — для связей.",
-                "related": "Q33 @Version; Q40 Spring Boot setup; Q47 типичные ошибки."
+                "related": "[[hibernate-interview#Q33]] @Version; [[hibernate-interview#Q40]] Spring Boot setup; [[hibernate-interview#Q47]] типичные ошибки."
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "@Query(\"SELECT new com.example.OrderStats(o.category, COUNT(o), SUM(o.amount)) FROM Order o GROUP BY o.category\") List<OrderStats> findStats();",
                 "when_to_apply": "Списки, read-only API, аналитика, отчёты — везде, где не нужны все поля Entity.",
                 "edge_cases": "Открытая interface projection (с SpEL) тянет всю Entity и не оптимизирует SELECT; record-классы как DTO работают, но требуют конструктора с теми же типами.",
-                "related": "Q23 EntityGraph; Q28 JPQL; Q43 OSIV."
+                "related": "[[hibernate-interview#Q23]] EntityGraph; [[hibernate-interview#Q28]] JPQL; [[hibernate-interview#Q43]] OSIV."
               }
             },
             {
@@ -2730,7 +2730,7 @@
                 "example": "try (StatelessSession s = sf.openStatelessSession()) { Transaction tx = s.beginTransaction(); for (...) s.insert(entity); tx.commit(); }.",
                 "when_to_apply": "Bulk import, ETL, миграции данных, batch-обработка без необходимости отслеживать изменения.",
                 "edge_cases": "Версии (@Version) нужно увеличивать вручную; cascade не работает — связи нужно сохранять отдельно; secondary tables требуют отдельных insert.",
-                "related": "Q36 batch processing; Q41 getCurrentSession; Q47 типичные ошибки."
+                "related": "[[hibernate-interview#Q36]] batch processing; [[hibernate-interview#Q41]] getCurrentSession; [[hibernate-interview#Q47]] типичные ошибки."
               }
             },
             {
@@ -2802,7 +2802,7 @@
                 "example": "@OneToMany(fetch=EAGER) — провоцирует N+1 во всех запросах; flush в цикле — N round-trip-ов вместо одного batch.",
                 "when_to_apply": "Performance review, нагрузочное тестирование, аудит существующего кода.",
                 "edge_cases": "Bulk JPQL UPDATE/DELETE не обновляют L1 cache — нужен em.clear после; @Transactional на private/self-call не работает из-за proxy.",
-                "related": "Q20 N+1; Q21 решения; Q36 batch processing; Q45 проекции."
+                "related": "[[hibernate-interview#Q20]] N+1; [[hibernate-interview#Q21]] решения; [[hibernate-interview#Q36]] batch processing; [[hibernate-interview#Q45]] проекции."
               }
             },
             {
@@ -2874,7 +2874,7 @@
                 "example": "@DataJpaTest tem.persist(e); tem.flush(); tem.clear(); — гарантирует чистый SELECT; assertSelectCount(1, () -> svc.method()) ловит N+1.",
                 "when_to_apply": "Любой Hibernate-код, особенно репозитории, запросы и сложные ассоциации.",
                 "edge_cases": "Без tem.clear L1 cache отдаёт ту же сущность без SELECT, скрывая ошибки маппинга; Testcontainers тяжелее in-memory и нужен Docker.",
-                "related": "Q20 N+1; Q24 L1 vs L2; Q39 Statistics."
+                "related": "[[hibernate-interview#Q20]] N+1; [[hibernate-interview#Q24]] L1 vs L2; [[hibernate-interview#Q39]] Statistics."
               }
             }
           ]

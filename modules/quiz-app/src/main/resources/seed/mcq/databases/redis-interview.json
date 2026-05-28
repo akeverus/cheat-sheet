@@ -18,7 +18,7 @@
                 "example": "`redis-cli SET user:1 \"Иван\"` записывает значение за ~50 мкс на localhost; `redis-cli ping` отвечает `PONG`.",
                 "when_to_apply": "Когда нужен предсказуемо быстрый доступ к небольшим объектам (профили, токены, счётчики) и реляционная СУБД не справляется с латентностью под нагрузкой.",
                 "edge_cases": "Объём данных ограничен RAM узла; при потере питания без `AOF`+`fsync` теряются последние операции.",
-                "related": "Q2 типы данных; Q13 `RDB`/`AOF`; Q38 `Redis` vs `Memcached`."
+                "related": "[[redis-interview#Q2]] типы данных; [[redis-interview#Q13]] `RDB`/`AOF`; [[redis-interview#Q38]] `Redis` vs `Memcached`."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "Один узел `Redis` с 64 ГБ RAM держит около 60 ГБ данных; `PostgreSQL` на том же железе спокойно держит 1 ТБ с горячим набором в `shared_buffers`.",
                 "when_to_apply": "При выборе хранилища для горячих данных: латентность критичнее объёма — `Redis`; объём и `ACID` важнее — реляционная СУБД.",
                 "edge_cases": "Если рабочий набор `Redis` не помещается в RAM и включён swap, латентность деградирует в сотни раз.",
-                "related": "Q6 eviction policies; Q34 оптимизация памяти; Q38 `Redis` vs `Memcached`."
+                "related": "[[redis-interview#Q6]] eviction policies; [[redis-interview#Q34]] оптимизация памяти; [[redis-interview#Q38]] `Redis` vs `Memcached`."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "`SET counter 0` + `INCR counter` — атомарный счётчик; `ZADD leaderboard 100 player1` + `ZREVRANGE leaderboard 0 9` — топ-10.",
                 "when_to_apply": "Выбирайте тип под задачу: сессии — `Hash`, очереди — `List` или `Stream`, теги — `Set`, рейтинги — `Sorted Set`.",
                 "edge_cases": "`String` до 512 МБ — но хранить «один большой ключ» вредно: блокирует event loop при удалении и репликации.",
-                "related": "Q7 `String`; Q11 `Sorted Set`; Q18 `Streams`; Q40 `HyperLogLog`."
+                "related": "[[redis-interview#Q7]] `String`; [[redis-interview#Q11]] `Sorted Set`; [[redis-interview#Q18]] `Streams`; [[redis-interview#Q40]] `HyperLogLog`."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "`io-threads 4` + `io-threads-do-reads yes` в `redis.conf` включают многопоточный сетевой `I/O`; саму команду по-прежнему исполняет один поток.",
                 "when_to_apply": "При проектировании нагрузки нужно избегать долгих команд (`O(N)` на большом ключе) — они задерживают всех остальных.",
                 "edge_cases": "Lua-скрипт также блокирует event loop; длинные скрипты ограничивайте `lua-time-limit`.",
-                "related": "Q15 `MULTI/EXEC`; Q16 Lua; Q35 best practices; Q50 типичные ошибки."
+                "related": "[[redis-interview#Q15]] `MULTI/EXEC`; [[redis-interview#Q16]] Lua; [[redis-interview#Q35]] best practices; [[redis-interview#Q50]] типичные ошибки."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "В `INFO` секция `events` показывает счётчики `event_loop_count`; библиотека `ae` лежит в `src/ae.c`.",
                 "when_to_apply": "Понимание event loop нужно при отладке latency: любая блокирующая команда задерживает всю очередь событий.",
                 "edge_cases": "Команда вроде `DEBUG SLEEP 5` заморозит весь сервер на 5 секунд — это сразу видно по `slowlog`.",
-                "related": "Q4 однопоточность; Q33 pipelining; Q37 мониторинг."
+                "related": "[[redis-interview#Q4]] однопоточность; [[redis-interview#Q33]] pipelining; [[redis-interview#Q37]] мониторинг."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "`SETEX session:abc 60 \"data\"` создаёт сессию с автоудалением через 60 секунд; `INCR views:article:42` — счётчик просмотров.",
                 "when_to_apply": "Счётчики, флаги, токены сессий, кэш-ключи с фиксированным `TTL`. Условная запись — через `SET key value NX EX 30`.",
                 "edge_cases": "При значениях ~2^63 `INCR` приведёт к переполнению и вернёт ошибку.",
-                "related": "Q3 типы данных; Q5 `TTL`; Q29 distributed lock."
+                "related": "[[redis-interview#Q3]] типы данных; [[redis-interview#Q5]] `TTL`; [[redis-interview#Q29]] distributed lock."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "`HSET user:1001 name \"Иван\" email \"i@x.ru\" age 30` против трёх `SET user:1001:name`/`:email`/`:age` — экономит десятки байт overhead на ключ.",
                 "when_to_apply": "Карточки пользователей, профили сессий, конфигурация фич-флагов на запись, любые объекты с 2–20 полями.",
                 "edge_cases": "При большом числе полей (>1000) `HGETALL` блокирует event loop; используйте `HSCAN` или избегайте таких структур.",
-                "related": "Q3 типы данных; Q34 оптимизация памяти; Q26 `RedisTemplate`."
+                "related": "[[redis-interview#Q3]] типы данных; [[redis-interview#Q34]] оптимизация памяти; [[redis-interview#Q26]] `RedisTemplate`."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "`LPUSH queue:emails msg1` + `BRPOP queue:emails 30` — простая очередь с блокировкой воркера до 30 секунд.",
                 "when_to_apply": "Простые очереди задач, недавние события (`LPUSH` + `LTRIM 0 99`), стек undo (`LPUSH`+`LPOP`).",
                 "edge_cases": "`BRPOP` с большим таймаутом удерживает соединение; для надёжной доставки лучше `Streams`.",
-                "related": "Q3 типы; Q18 `Streams`; Q32 очереди задач."
+                "related": "[[redis-interview#Q3]] типы; [[redis-interview#Q18]] `Streams`; [[redis-interview#Q32]] очереди задач."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "`SADD tags:art:1 java spring`; `SADD tags:art:2 java docker`; `SDIFF tags:art:1 tags:art:2` → `spring`.",
                 "when_to_apply": "Когда важна уникальность элементов и нужны теоретико-множественные операции — теги, друзья, онлайн-пользователи.",
                 "edge_cases": "На больших множествах `SINTER`/`SDIFF` `O(N)` блокируют event loop; используйте `SINTERCARD` или `SINTERSTORE` отдельной задачей.",
-                "related": "Q3 типы; Q10 `Sorted Set`; Q40 `HyperLogLog`."
+                "related": "[[redis-interview#Q3]] типы; [[redis-interview#Q10]] `Sorted Set`; [[redis-interview#Q40]] `HyperLogLog`."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "`ZADD leaderboard 100 alice 200 bob`; `ZREVRANGE leaderboard 0 9 WITHSCORES` — топ-10 за `O(log N + 10)`; `ZRANGEBYSCORE leaderboard 150 250` — диапазон по `score`.",
                 "when_to_apply": "Лидерборды, временные шкалы (`score` = timestamp), приоритетные очереди, sliding window rate limiter.",
                 "edge_cases": "`ZRANGE 0 -1` на миллион элементов вернёт всё за `O(N)` и заблокирует event loop — используйте курсорный `ZSCAN`.",
-                "related": "Q3 типы; Q30 rate limiting; Q44 лидерборд."
+                "related": "[[redis-interview#Q3]] типы; [[redis-interview#Q30]] rate limiting; [[redis-interview#Q44]] лидерборд."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "`SETBIT active:2026-05-28 1001 1` — пользователь `1001` был активен; `BITCOUNT active:2026-05-28` — число DAU; `BITOP AND week d1 d2 d3 d4 d5 d6 d7` — кто активен все 7 дней.",
                 "when_to_apply": "Когда `member` представим как целое ≤ нескольких сотен миллионов и нужен компактный учёт булевых флагов.",
                 "edge_cases": "`SETBIT key 4294967296 1` пытается выделить `512+ МБ` — это один большой ключ и медленная репликация.",
-                "related": "Q3 типы; Q40 `HyperLogLog`; Q34 оптимизация памяти."
+                "related": "[[redis-interview#Q3]] типы; [[redis-interview#Q40]] `HyperLogLog`; [[redis-interview#Q34]] оптимизация памяти."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "`PFADD visitors:2026-05-28 user:1 user:2 user:1` + `PFCOUNT visitors:2026-05-28` → `2`; `PFMERGE week d1 d2 ... d7` объединяет дни.",
                 "when_to_apply": "Когда нужна оценка количества уникальных значений, а точный список не нужен и память на `Set` непосильна.",
                 "edge_cases": "На малых множествах (<100 элементов) погрешность относительно выше; для точного подсчёта используйте `Set`.",
-                "related": "Q3 типы; Q11 `Bitmap`; Q41 `Bloom Filter`."
+                "related": "[[redis-interview#Q3]] типы; [[redis-interview#Q11]] `Bitmap`; [[redis-interview#Q41]] `Bloom Filter`."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "`XADD orders * id 1 status created` + `XGROUP CREATE orders workers $` + `XREADGROUP GROUP workers w1 COUNT 1 BLOCK 5000 STREAMS orders >`.",
                 "when_to_apply": "Когда нужна гарантия at-least-once, история сообщений, несколько независимых групп консьюмеров — для надёжных очередей и event sourcing.",
                 "edge_cases": "Без `MAXLEN` стрим растёт бесконечно; ставьте `XADD orders MAXLEN ~ 1000000 * ...` для ограничения.",
-                "related": "Q14 `Pub/Sub`; Q32 очереди; Q46 `Streams` vs `Kafka`."
+                "related": "[[redis-interview#Q14]] `Pub/Sub`; [[redis-interview#Q32]] очереди; [[redis-interview#Q46]] `Streams` vs `Kafka`."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "`GEOADD shops 37.6173 55.7558 \"Moscow\"`; `GEOSEARCH shops FROMLONLAT 37.62 55.75 BYRADIUS 50 km ASC` — поиск в радиусе 50 км.",
                 "when_to_apply": "Поиск ближайших магазинов, водителей, точек интереса — когда нужны простые operations по координатам и не требуются полигоны.",
                 "edge_cases": "Нет поддержки полигонов и маршрутов; для сложной геометрии — `PostGIS` или `Elasticsearch Geo`.",
-                "related": "Q3 типы; Q10 `Sorted Set`."
+                "related": "[[redis-interview#Q3]] типы; [[redis-interview#Q10]] `Sorted Set`."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "Терминал 1: `SUBSCRIBE notifications`; терминал 2: `PUBLISH notifications \"order #123 created\"` — первый получит сообщение немедленно.",
                 "when_to_apply": "Real-time уведомления, инвалидация кэшей между инстансами, простые сигналы. Не для надёжной доставки.",
                 "edge_cases": "Если подписчик медленно читает, у него растёт client output buffer; `client-output-buffer-limit pubsub` обрывает таких клиентов.",
-                "related": "Q13 `Streams`; Q24 инвалидация кэша."
+                "related": "[[redis-interview#Q13]] `Streams`; [[redis-interview#Q24]] инвалидация кэша."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "В `redis.conf`: `save 900 1` означает «снапшот, если за 15 мин было ≥1 изменение». `redis-cli BGSAVE` запускает снапшот вручную.",
                 "when_to_apply": "Для быстрых ночных бэкапов и быстрого restart-recovery; при допустимой потере данных в окне между снапшотами.",
                 "edge_cases": "На больших инстансах `fork()` может занять секунду и удвоить пиковую память; в `swap` это даёт катастрофическую латентность.",
-                "related": "Q17 `AOF`; Q18 гибридный режим; Q35 best practices."
+                "related": "[[redis-interview#Q17]] `AOF`; [[redis-interview#Q18]] гибридный режим; [[redis-interview#Q35]] best practices."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "`redis.conf`: `appendonly yes`, `appendfsync everysec`, `auto-aof-rewrite-percentage 100`, `auto-aof-rewrite-min-size 64mb`.",
                 "when_to_apply": "Когда нельзя терять более секунды записей: кошельки, заказы, метрики; финансы любят `always`, кэши — `everysec` или вообще `RDB`.",
                 "edge_cases": "`fsync always` снижает throughput в десятки раз из-за дисковой синхронизации каждого write.",
-                "related": "Q16 `RDB`; Q18 гибридный режим; Q19 fsync политики."
+                "related": "[[redis-interview#Q16]] `RDB`; [[redis-interview#Q18]] гибридный режим; [[redis-interview#Q19]] fsync политики."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "`appendonly yes` + `aof-use-rdb-preamble yes` + `auto-aof-rewrite-percentage 100` — стандартная боевая конфигурация.",
                 "when_to_apply": "Любой продакшен, где важны и скорость восстановления, и durability — большинство кейсов.",
                 "edge_cases": "Во время `BGREWRITEAOF` память может временно вырасти из-за copy-on-write страниц и буфера команд.",
-                "related": "Q16 `RDB`; Q17 `AOF`; Q35 best practices."
+                "related": "[[redis-interview#Q16]] `RDB`; [[redis-interview#Q17]] `AOF`; [[redis-interview#Q35]] best practices."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "В `redis.conf`: `appendfsync everysec`; проверить — `CONFIG GET appendfsync` → `everysec`.",
                 "when_to_apply": "Финансы и платежи — `always` (или вообще внешний `WAL`); типовые сервисы — `everysec`; чистые кэши — `no` (или вовсе без `AOF`).",
                 "edge_cases": "При `everysec` если фоновый поток `fsync` отстаёт, основной поток вынужден ждать, что даёт всплески латентности.",
-                "related": "Q17 `AOF`; Q35 best practices."
+                "related": "[[redis-interview#Q17]] `AOF`; [[redis-interview#Q35]] best practices."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "`redis-check-aof --fix /var/lib/redis/appendonly.aof` исправляет конец файла после kill -9; `redis-check-rdb /var/lib/redis/dump.rdb` валидирует снапшот.",
                 "when_to_apply": "Понимание важно при настройке `liveness probe` в Kubernetes — `Redis` может не отвечать минуты при загрузке большого `AOF`.",
                 "edge_cases": "Если ни `RDB`, ни `AOF` не настроены, `Redis` стартует с пустой базой — данные потеряны навсегда.",
-                "related": "Q16 `RDB`; Q17 `AOF`; Q18 гибридный режим."
+                "related": "[[redis-interview#Q16]] `RDB`; [[redis-interview#Q17]] `AOF`; [[redis-interview#Q18]] гибридный режим."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "`INFO replication` показывает `role:master`, `connected_slaves:2`, `slave0:ip=...,offset=12345,lag=0`; на реплике — `master_link_status:up`.",
                 "when_to_apply": "Чтобы масштабировать чтение, разнести нагрузку, делать бэкапы с реплики без влияния на мастер, готовиться к failover.",
                 "edge_cases": "Асинхронность означает возможную потерю последних команд при падении мастера; реплика может отставать на десятки секунд под нагрузкой.",
-                "related": "Q22 Sentinel; Q23 failover; Q24 Cluster."
+                "related": "[[redis-interview#Q22]] Sentinel; [[redis-interview#Q23]] failover; [[redis-interview#Q24]] Cluster."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "`sentinel.conf`: `sentinel monitor mymaster 10.0.0.1 6379 2` + `sentinel down-after-milliseconds mymaster 5000`; запуск — `redis-sentinel /etc/sentinel.conf` на порту 26379.",
                 "when_to_apply": "Когда нужна HA для standalone-топологии без шардирования: одна логическая база, реплики для чтения, автоматический failover.",
                 "edge_cases": "Нужен нечётный кворум для split-brain; асинхронная репликация → возможна потеря последних команд при failover.",
-                "related": "Q21 репликация; Q23 failover; Q24 Cluster."
+                "related": "[[redis-interview#Q21]] репликация; [[redis-interview#Q23]] failover; [[redis-interview#Q24]] Cluster."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "`sentinel monitor mymaster 10.0.0.1 6379 2` — `quorum=2`; `SENTINEL CKQUORUM mymaster` проверяет достижимость кворума.",
                 "when_to_apply": "При настройке HA-кластера: `quorum` обычно равен большинству Sentinel; `down-after-milliseconds` подбирается под сетевую стабильность (5–30 сек).",
                 "edge_cases": "Сетевой раздел может изолировать клиентов со старым мастером (split brain); ставьте `min-replicas-to-write 1` на мастере, чтобы старый мастер при изоляции перестал принимать запись.",
-                "related": "Q22 Sentinel; Q21 репликация."
+                "related": "[[redis-interview#Q22]] Sentinel; [[redis-interview#Q21]] репликация."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "`redis-cli --cluster create n1:6379 n2:6379 n3:6379 n4:6379 n5:6379 n6:6379 --cluster-replicas 1` — кластер из 3 мастеров и 3 реплик; `CLUSTER SLOTS` / `CLUSTER NODES` показывают топологию.",
                 "when_to_apply": "Когда нужно горизонтальное масштабирование по записи и памяти, объём данных не помещается в один узел или RPS превышает возможности одного процесса.",
                 "edge_cases": "`MULTI/EXEC`, Lua и multi-key команды требуют, чтобы все ключи лежали в одном слоте (через `hash tag`).",
-                "related": "Q22 Sentinel; Q25 hash slots; Q26 resharding."
+                "related": "[[redis-interview#Q22]] Sentinel; [[redis-interview#Q25]] hash slots; [[redis-interview#Q26]] resharding."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "`redis-cli --cluster reshard 127.0.0.1:6379 --cluster-from <node1> --cluster-to <node2> --cluster-slots 1000` — перенос 1000 слотов; `CLUSTER COUNTKEYSINSLOT 5000` — сколько ключей в слоте.",
                 "when_to_apply": "При добавлении нового узла, удалении узла, балансировке нагрузки между мастерами или переезде на новое железо.",
                 "edge_cases": "Во время миграции операция с ключом из слота может вернуть `ASK`-редирект; клиент должен прозрачно следовать ему один раз без обновления slot-map.",
-                "related": "Q24 Cluster; Q26 CLUSTER SLOTS."
+                "related": "[[redis-interview#Q24]] Cluster; [[redis-interview#Q26]] CLUSTER SLOTS."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "`redis-cli -c -h node1 CLUSTER SLOTS` → `[0,5460,[\"10.0.0.1\",6379,\"id1\"], [5461,10922,...]`; в Spring `lettuce.cluster.refresh.adaptive: true` включает фоновое обновление карты.",
                 "when_to_apply": "При диагностике распределения нагрузки, проверке после resharding, настройке адаптивного обновления топологии в клиенте.",
                 "edge_cases": "Если slot-map устарела (после failover/resharding), клиент будет ходить по `MOVED` пока не обновит карту.",
-                "related": "Q24 Cluster; Q25 hash slots."
+                "related": "[[redis-interview#Q24]] Cluster; [[redis-interview#Q25]] hash slots."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "Spring Data Redis: `redisTemplate.executePipelined(callback -> { for (int i=0; i<1000; i++) connection.set(\"k\"+i, \"v\"+i); return null; })` — 1000 `SET` в одном RTT.",
                 "when_to_apply": "Массовая загрузка данных, прогрев кэша, батчевые операции; везде где есть сотни команд подряд от одного клиента.",
                 "edge_cases": "Очень большой pipeline (десятки тысяч команд) увеличивает память на client output buffer и может вызвать `client-output-buffer-limit` обрыв.",
-                "related": "Q28 MULTI/EXEC; Q4 однопоточность; Q35 best practices."
+                "related": "[[redis-interview#Q28]] MULTI/EXEC; [[redis-interview#Q4]] однопоточность; [[redis-interview#Q35]] best practices."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "`WATCH balance:1` → `GET balance:1` → `MULTI` → `DECRBY balance:1 100` → `INCRBY balance:2 100` → `EXEC`. Если кто-то изменил `balance:1`, `EXEC` вернёт `nil` — повтор цикла.",
                 "when_to_apply": "Атомарные мульти-ключевые операции в standalone; в Cluster все ключи должны лежать в одном слоте через `hash tag`.",
                 "edge_cases": "Нет rollback: проверять корректность типов и значений нужно до `EXEC` или использовать Lua, где можно реализовать условную логику.",
-                "related": "Q27 pipelining; Q29 Lua; Q24 Cluster."
+                "related": "[[redis-interview#Q27]] pipelining; [[redis-interview#Q29]] Lua; [[redis-interview#Q24]] Cluster."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "Atomic rate limiter: `EVAL \"local c = redis.call('INCR', KEYS[1]); if c == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end; return c\" 1 ratelimit:user:1 60`.",
                 "when_to_apply": "Distributed lock release с проверкой владельца, sliding window rate limiter, атомарные операции над несколькими ключами, любые сценарии CAS с произвольной логикой.",
                 "edge_cases": "Lua блокирует event loop на время исполнения; ограничивайте `lua-time-limit 5000`; не делайте долгих циклов и тяжёлых вычислений.",
-                "related": "Q28 MULTI/EXEC; Q30 distributed lock; Q31 rate limiting."
+                "related": "[[redis-interview#Q28]] MULTI/EXEC; [[redis-interview#Q30]] distributed lock; [[redis-interview#Q31]] rate limiting."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "Итерация: `SCAN 0 MATCH cache:* COUNT 100` → `(cursor=42, [k1,k2,...])`; повторять с новым курсором до `cursor=0`.",
                 "when_to_apply": "Любой обход ключей в продакшене: миграции форматов, очистка устаревших ключей, диагностика, аналитика.",
                 "edge_cases": "Pattern `*` сначала фильтруется на стороне сервера — `MATCH` экономит трафик, но не работу по сканированию; ключи всё равно перебираются все.",
-                "related": "Q4 однопоточность; Q35 best practices; Q50 типичные ошибки."
+                "related": "[[redis-interview#Q4]] однопоточность; [[redis-interview#Q35]] best practices; [[redis-interview#Q50]] типичные ошибки."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "`SET k v EX 1` — через секунду `GET k` вернёт `nil` и удалит ключ; параллельно цикл сам зачищает истёкшие. `SCAN` тоже триггерит lazy expiration попутно.",
                 "when_to_apply": "Понимание важно при оценке потребления памяти: число ключей `INFO keyspace.expires` может временно превышать «живые» ключи.",
                 "edge_cases": "При мощной массовой просрочке active expiration может занимать заметное время CPU — параметр `maxmemory-eviction-tenacity` управляет агрессивностью.",
-                "related": "Q5 TTL; Q32 maxmemory; Q35 best practices."
+                "related": "[[redis-interview#Q5]] TTL; [[redis-interview#Q32]] maxmemory; [[redis-interview#Q35]] best practices."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "`CONFIG SET maxmemory 2gb` + `CONFIG SET maxmemory-policy allkeys-lru`. Проверка `INFO memory` → `used_memory_human:1.8G`, `evicted_keys:12345`.",
                 "when_to_apply": "Всегда настраивайте `maxmemory` и политику для прод-инстанса, иначе при `noeviction` запись начнёт падать с `OOM command not allowed`.",
                 "edge_cases": "При маленькой выборке (`maxmemory-samples 5`) LRU/LFU неточны; увеличение до 10 даёт лучший результат за счёт CPU.",
-                "related": "Q31 expiration; Q34 оптимизация памяти; Q35 best practices."
+                "related": "[[redis-interview#Q31]] expiration; [[redis-interview#Q34]] оптимизация памяти; [[redis-interview#Q35]] best practices."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "`String json = redis.opsForValue().get(key); if (json == null) { Product p = repo.findById(id).orElseThrow(); redis.opsForValue().set(key, mapper.writeValueAsString(p), Duration.ofMinutes(30)); return p; } else return mapper.readValue(json, Product.class);`.",
                 "when_to_apply": "Чтения >> записей, нет требований к строгой консистентности, БД дорогая по латентности, кэш-сущность хорошо ключуется.",
                 "edge_cases": "При высокой конкуренции на популярный ключ возможен cache stampede при истечении `TTL` — используйте mutex lock или early refresh.",
-                "related": "Q34 cache stampede; Q36 инвалидация; Q42 @Cacheable."
+                "related": "[[redis-interview#Q34]] cache stampede; [[redis-interview#Q36]] инвалидация; [[redis-interview#Q42]] @Cacheable."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "`Boolean got = redis.opsForValue().setIfAbsent(\"lock:\"+key, \"1\", Duration.ofSeconds(10)); if (got) { reload(); } else { Thread.sleep(50); return getProduct(id); }`.",
                 "when_to_apply": "Когда популярный ключ имеет фиксированный `TTL` и БД не справляется с пиком cache miss; типично для главных страниц, рейтингов, конфигураций фич.",
                 "edge_cases": "Mutex lock через простой `SET NX` уязвим к зависшему клиенту; всегда ставьте `EX` для таймаута и `DEL` через Lua с проверкой владельца.",
-                "related": "Q33 cache-aside; Q35 cache penetration; Q36 инвалидация."
+                "related": "[[redis-interview#Q33]] cache-aside; [[redis-interview#Q35]] cache penetration; [[redis-interview#Q36]] инвалидация."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "Avalanche: `redis.opsForValue().set(key, value, Duration.ofMinutes(30).plusSeconds(ThreadLocalRandom.current().nextLong(0, 600)));` — TTL = 30 мин ± 10 мин. Penetration: `if (cached == \"__NULL__\") return null; if (cached == null) { val = db.find(id); redis.set(key, val != null ?",
                 "when_to_apply": "Penetration — везде где ID берутся из недоверенного источника; avalanche — везде где много ключей одного типа создаются массово.",
                 "edge_cases": "Кэширование `null` с коротким `TTL` уязвимо к атаке по большому числу несуществующих ID — растёт память; защита — `Bloom Filter` модулем `RedisBloom`.",
-                "related": "Q33 cache-aside; Q34 stampede; Q44 Bloom Filter."
+                "related": "[[redis-interview#Q33]] cache-aside; [[redis-interview#Q34]] stampede; [[redis-interview#Q44]] Bloom Filter."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "Write-behind через очередь: `LPUSH writes:queue '{\"id\":1,\"value\":...}'`; воркер раз в секунду делает `LRANGE` + `LTRIM` и `BATCH INSERT` в БД.",
                 "when_to_apply": "Write-through — финансы, заказы; write-behind — лайки, просмотры, метрики; чистый кэш-aside — большинство read-heavy сценариев.",
                 "edge_cases": "Write-behind теряет последние записи при падении `Redis` без `AOF`/`always`; write-through имеет худший latency записи из-за двух операций.",
-                "related": "Q33 cache-aside; Q34 stampede; Q35 penetration/avalanche."
+                "related": "[[redis-interview#Q33]] cache-aside; [[redis-interview#Q34]] stampede; [[redis-interview#Q35]] penetration/avalanche."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "Java: `String owner = UUID.randomUUID().toString(); Boolean ok = redis.opsForValue().setIfAbsent(\"lock:order:123\", owner, Duration.ofSeconds(30)); try { ... } finally { redis.execute(unlockScript, List.of(\"lock:order:123\"), owner); }`.",
                 "when_to_apply": "Координация worker-ов в распределённой системе: не запускать одновременно две перезагрузки кэша, не отправлять заказ дважды, не дублировать cron в кластере.",
                 "edge_cases": "Lock без `TTL` опасен — упавший владелец оставит вечный lock; всегда ставьте `EX`. Если работа дольше `TTL` — нужно отдельно продлевать (`RLock` Redisson делает это автоматически).",
-                "related": "Q29 Lua; Q38 Redlock; Q31 rate limiting."
+                "related": "[[redis-interview#Q29]] Lua; [[redis-interview#Q38]] Redlock; [[redis-interview#Q31]] rate limiting."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "Java-реализация — `Redisson RedissonRedLock`: `RLock lock1 = redisson1.getLock(\"key\"); RLock lock2 = redisson2.getLock(\"key\"); ... new RedissonRedLock(lock1,lock2,lock3,lock4,lock5).tryLock(10, 30, SECONDS)`.",
                 "when_to_apply": "Когда корректность критична и нельзя допускать «двойного владения» при failover; финансовые операции, уникальные write в внешние системы, эксклюзивные cron-задачи.",
                 "edge_cases": "Martin Kleppmann критиковал Redlock за неустойчивость к GC-паузам и clock drift; для строгой корректности нужен fencing token из источника типа Zookeeper/etcd.",
-                "related": "Q37 distributed lock; Q22 Sentinel; Q24 Cluster."
+                "related": "[[redis-interview#Q37]] distributed lock; [[redis-interview#Q22]] Sentinel; [[redis-interview#Q24]] Cluster."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "Fixed window Lua: `local c = redis.call('INCR', KEYS[1]); if c == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end; return c` — атомарно увеличивает счётчик и ставит `TTL` при первом запросе.",
                 "when_to_apply": "Защита API от перегрузки, защита от brute force паролей, биллинг по тарифу запросов, защита от парсеров — везде где нужно ограничить RPS на пользователя/IP/ключ.",
                 "edge_cases": "При очень большом числе уникальных пользователей и коротком окне `Sorted Set` распухает; используйте короткие `TTL` и periodic cleanup.",
-                "related": "Q29 Lua; Q10 sorted set; Q37 distributed lock."
+                "related": "[[redis-interview#Q29]] Lua; [[redis-interview#Q10]] sorted set; [[redis-interview#Q37]] distributed lock."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "`@EnableRedisHttpSession(maxInactiveIntervalInSeconds = 1800)` + `spring.session.store-type=redis` + `spring.session.redis.namespace=spring:session` в `application.yml`.",
                 "when_to_apply": "Любой кластеризованный Spring Boot сервис, где сессии должны переживать перезапуск инстанса и быть доступны с разных нод.",
                 "edge_cases": "При больших сессиях (>100 KB) их сериализация замедляет каждый запрос; держите в сессии только идентификаторы, тяжёлые данные — в БД/кэше отдельно.",
-                "related": "Q33 cache-aside; Q42 @Cacheable; Q47 Spring Boot config."
+                "related": "[[redis-interview#Q33]] cache-aside; [[redis-interview#Q42]] @Cacheable; [[redis-interview#Q47]] Spring Boot config."
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "`ZADD leaderboard 1500 alice 2300 bob 1800 charlie` + `ZREVRANGE leaderboard 0 2 WITHSCORES` → `bob 2300, charlie 1800, alice 1500`; `ZREVRANK leaderboard alice` → `2`.",
                 "when_to_apply": "Игровые рейтинги, топ покупателей, hot articles по просмотрам, ранжированный feed, любая задача «упорядочить по числовому значению с быстрым доступом по позиции».",
                 "edge_cases": "На миллионах игроков `ZRANGE 0 -1` блокирует event loop; всегда используйте узкие диапазоны (`0 9`, `0 99`) или `ZSCAN` для полного обхода.",
-                "related": "Q10 sorted set; Q3 типы данных."
+                "related": "[[redis-interview#Q10]] sorted set; [[redis-interview#Q3]] типы данных."
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "`@Cacheable(value = \"products\", key = \"#id\", unless = \"#result == null\")` + `RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(30)).serializeValuesWith(SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()))`.",
                 "when_to_apply": "Когда нужно прозрачное кэширование read-операций без ручного кода; типично для лукапов по справочникам, ленивой подгрузки часто читаемых сущностей.",
                 "edge_cases": "`@Cacheable` не работает при self-invocation (вызов одного метода бина из другого внутри того же бина) — proxy не перехватывает; либо `AspectJ` mode, либо инжектить себя.",
-                "related": "Q33 cache-aside; Q47 Spring Boot config; Q40 Spring Session."
+                "related": "[[redis-interview#Q33]] cache-aside; [[redis-interview#Q47]] Spring Boot config; [[redis-interview#Q40]] Spring Session."
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "Spring Boot autodetects Lettuce. Чтобы переключиться на Jedis: `<exclusion><artifactId>lettuce-core</artifactId></exclusion>` + `<dependency><artifactId>jedis</artifactId></dependency>`.",
                 "when_to_apply": "Lettuce — почти всегда (cluster, reactive, async); Jedis — legacy-проекты или специфические сценарии, где привычнее sync-API.",
                 "edge_cases": "Lettuce при потере соединения автоматически переподключается и переиспользует команды; в Jedis нужен пул с retry-логикой.",
-                "related": "Q44 RedisTemplate; Q47 Spring Boot config."
+                "related": "[[redis-interview#Q44]] RedisTemplate; [[redis-interview#Q47]] Spring Boot config."
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "`BF.RESERVE users 0.01 1000000` (error 1%, capacity 1M) + `BF.ADD users alice@x.ru` + `BF.EXISTS users alice@x.ru` → `1`; `BF.EXISTS users unknown@x.ru` → `0`.",
                 "when_to_apply": "Cache penetration protection — проверять ключ в Bloom Filter перед обращением к БД; дедупликация событий в стриминге; защита от повторных email-рассылок; проверка известности URL в краулерах.",
                 "edge_cases": "Размер Bloom Filter нужно оценить заранее по capacity; при переполнении error rate начинает расти.",
-                "related": "Q35 cache penetration; Q12 HyperLogLog."
+                "related": "[[redis-interview#Q35]] cache penetration; [[redis-interview#Q12]] HyperLogLog."
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "`CONFIG SET notify-keyspace-events Ex` (только `expired`-события) + `PSUBSCRIBE __keyevent@0__:expired` — получаем имена истёкших ключей; обработчик выполняет cleanup действия.",
                 "when_to_apply": "Отслеживание истечения сессий и заказов с TTL, инвалидация локальных кэшей других инстансов, реактивная обработка изменений; Spring Cache `expired` events.",
                 "edge_cases": "Pub/Sub fire-and-forget: если подписчик упадёт, события потеряются; для гарантированной обработки лучше `Streams`. Также события `expired` срабатывают по факту удаления (lazy + active), а не точно в момент истечения.",
-                "related": "Q15 Pub/Sub; Q31 expiration; Q36 инвалидация."
+                "related": "[[redis-interview#Q15]] Pub/Sub; [[redis-interview#Q31]] expiration; [[redis-interview#Q36]] инвалидация."
               }
             },
             {
@@ -2730,7 +2730,7 @@
                 "example": "Streams: `XADD orders * id 1 status created` + `XREADGROUP GROUP workers w1 COUNT 1 BLOCK 5000 STREAMS orders >` + `XACK orders workers <id>`. Kafka — `kafka-console-producer` + `kafka-console-consumer --group workers`.",
                 "when_to_apply": "Streams — нужна простая надёжная очередь в существующем `Redis`-стеке, объёмы средние, retention в часы; Kafka — большие объёмы, долгий retention, аналитика, репликация в DC.",
                 "edge_cases": "Streams без `MAXLEN` или `XADD ... MAXLEN ~ 1000000 ...` будут расти до OOM; Kafka хранит данные на диске и спокойно держит ТБ.",
-                "related": "Q13 Streams; Q15 Pub/Sub; Q32 maxmemory."
+                "related": "[[redis-interview#Q13]] Streams; [[redis-interview#Q15]] Pub/Sub; [[redis-interview#Q32]] maxmemory."
               }
             },
             {
@@ -2802,7 +2802,7 @@
                 "example": "`spring.data.redis.host: redis.prod.internal` + `port: 6379` + `password: ${REDIS_PASSWORD}` + `timeout: 2000ms` + `lettuce.pool.max-active: 16` + `lettuce.pool.min-idle: 2`.",
                 "when_to_apply": "Любая прод-конфигурация: всегда задавайте `timeout` (иначе зависшее соединение блокирует поток навечно), `password`, и явно адрес узлов для Cluster/Sentinel.",
                 "edge_cases": "При работе через VPN/proxy латентность может превысить дефолтный `timeout`; увеличивайте до 5–10s для проблемных сетей.",
-                "related": "Q43 Lettuce vs Jedis; Q44 RedisTemplate; Q22 Sentinel."
+                "related": "[[redis-interview#Q43]] Lettuce vs Jedis; [[redis-interview#Q44]] RedisTemplate; [[redis-interview#Q22]] Sentinel."
               }
             },
             {
@@ -2874,7 +2874,7 @@
                 "example": "Поиск больших ключей: `redis-cli --bigkeys` → отчёт по типам с топ-N; `MEMORY USAGE user:1` → `1024` (1 КБ); `INFO memory` → `used_memory_human:2.3G`.",
                 "when_to_apply": "На любом prod-инстансе с миллионом+ ключей; при росте `used_memory` ближе к `maxmemory`; при подозрении на big keys (latency spikes на удаление/репликацию).",
                 "edge_cases": "`--bigkeys` сам сканирует через `SCAN` — это безопасно, но небыстро на миллионных инстансах; на больших базах используйте `MEMORY USAGE` точечно по подозрительным ключам.",
-                "related": "Q7 Hash; Q32 maxmemory; Q50 big keys."
+                "related": "[[redis-interview#Q7]] Hash; [[redis-interview#Q32]] maxmemory; [[redis-interview#Q50]] big keys."
               }
             }
           ]
@@ -2898,7 +2898,7 @@
                 "example": "`redis-cli INFO memory | grep used_memory_human` → `1.2G`; `redis-cli SLOWLOG GET 10` → `[id, timestamp, exec_time_us, [command]]`; для мониторинга — `redis_exporter` + Prometheus.",
                 "when_to_apply": "Любая production-эксплуатация: настройте экспорт `INFO` метрик, алерт на медленные команды, latency-мониторинг и периодический разбор `SLOWLOG`.",
                 "edge_cases": "`MONITOR` сам существенно нагружает event loop и удваивает latency остальных команд; никогда не оставляйте включённым надолго.",
-                "related": "Q34 оптимизация памяти; Q50 типичные ошибки."
+                "related": "[[redis-interview#Q34]] оптимизация памяти; [[redis-interview#Q50]] типичные ошибки."
               }
             },
             {
@@ -2970,7 +2970,7 @@
                 "example": "Big key: `LLEN events:user:1` → `5000000` — нужно разбить на `events:user:1:2026:05` шарды по дням; hot key: `INCR counter:global` на 100k RPS — заменить на `INCR counter:global:${random%16}` с агрегацией.",
                 "when_to_apply": "Перед запуском в прод: ревью моделей данных на big/hot keys; пост-факт — мониторинг через `--bigkeys`, `slowlog`, `latency` и `commandstats`.",
                 "edge_cases": "В `Cluster` hot key полностью убивает производительность одного мастера и не балансируется; единственное решение — изменить ключевую схему.",
-                "related": "Q30 KEYS vs SCAN; Q32 maxmemory; Q48 оптимизация памяти; Q49 мониторинг."
+                "related": "[[redis-interview#Q30]] KEYS vs SCAN; [[redis-interview#Q32]] maxmemory; [[redis-interview#Q48]] оптимизация памяти; [[redis-interview#Q49]] мониторинг."
               }
             },
             {

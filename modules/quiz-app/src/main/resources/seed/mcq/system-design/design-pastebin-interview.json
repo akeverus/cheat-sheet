@@ -18,7 +18,7 @@
                 "example": "`Pastebin.com` декларирует 99.9% SLA. `GitHub Gist` 99.95% в составе GitHub.",
                 "when_to_apply": "Любой code/text sharing service: Pastebin, GitHub Gist, Hastebin.",
                 "edge_cases": "Burn-after-read требует атомарного view+delete. Multi-region GDPR — отдельный slot для EU residency.",
-                "related": "Q2 capacity; Q3 SLA; Q14 TTL."
+                "related": "[[design-pastebin-interview#Q2]] capacity; [[design-pastebin-interview#Q3]] SLA; [[design-pastebin-interview#Q14]] TTL."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "`Pastebin.com` ~10 PB на S3+CDN. `GitHub Gist` — Git CAS dedup.",
                 "when_to_apply": "Любой text-sharing с long-tail content и hot top-N.",
                 "edge_cases": "Tiered storage: hot 30 дней Redis + 5 лет S3 + Glacier. Compression: code 5×, JSON 4×, base64 2×.",
-                "related": "Q5 storage separation; Q7 zstd; Q22 tiering; Q23 CDN."
+                "related": "[[design-pastebin-interview#Q5]] storage separation; [[design-pastebin-interview#Q7]] zstd; [[design-pastebin-interview#Q22]] tiering; [[design-pastebin-interview#Q23]] CDN."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "`Pastebin.com Statuspage`. `GitHub Status` partial outages on Gist отдельно.",
                 "when_to_apply": "Любой content-sharing с CDN; alerting per metric.",
                 "edge_cases": "Sampling: при low QPS p99 шумит — sliding window 1 hour. CDN hit ratio ~100% подозрительно (cache validation broken).",
-                "related": "Q22 storage tiering; Q23 CDN; Q25 anti-abuse."
+                "related": "[[design-pastebin-interview#Q22]] storage tiering; [[design-pastebin-interview#Q23]] CDN; [[design-pastebin-interview#Q25]] anti-abuse."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "`Pastebin.com` 8 chars; `Hastebin` 10; `Bitly` 7; `GitHub Gist` 32 hex.",
                 "when_to_apply": "Любой short URL service.",
                 "edge_cases": "Уменьшение до 6 chars (62^6 = 56B) рискованно при scale (collision ~10%). UNIQUE retry: после 3 fail — bump 9 chars. Crypto-secure vs `Math.random` — crypto обязательно.",
-                "related": "Q5 storage UNIQUE; design-url-shortener Q4 параллель."
+                "related": "[[design-pastebin-interview#Q5]] storage UNIQUE; design-url-shortener Q4 параллель."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "`Pastebin.com` MySQL + S3 (Amazon RDS + S3). `GitHub Gist` Git CAS storage. `Hastebin` Redis + MongoDB.",
                 "when_to_apply": "Любой content-sharing service.",
                 "edge_cases": "Orphan blobs: если metadata insert fails after blob upload — фоновый job. Multi-region — S3 cross-region replication.",
-                "related": "Q6 schema; Q22 tiering; design-dropbox Q6 параллель."
+                "related": "[[design-pastebin-interview#Q6]] schema; [[design-pastebin-interview#Q22]] tiering; design-dropbox Q6 параллель."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "`GitHub Gist` schema аналогична (gists, revisions, comments). `Pastebin.com` MySQL похожий.",
                 "when_to_apply": "Content service с time-series analytics + versioning + threads.",
                 "edge_cases": "Sharding by user_id или short_code prefix если single Postgres не хватает. Partition pruning critical иначе query сканит все месяцы.",
-                "related": "Q5 storage; Q14 expires_at; Q16 revisions."
+                "related": "[[design-pastebin-interview#Q5]] storage; [[design-pastebin-interview#Q14]] expires_at; [[design-pastebin-interview#Q16]] revisions."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "Facebook Zstandard 2016. GitHub использует zstd для repository compression. Cloudflare для web content.",
                 "when_to_apply": "Любая система с large text content: pastebin, logs, JSON dumps.",
                 "edge_cases": "Level tuning: 3 real-time; 19 batch. Multi-threaded -T0 для > 1 MB. Dictionary mode для similar pastes.",
-                "related": "Q8 raw endpoints; Q22 tiering; Q29 cost."
+                "related": "[[design-pastebin-interview#Q8]] raw endpoints; [[design-pastebin-interview#Q22]] tiering; [[design-pastebin-interview#Q29]] cost."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "`Pastebin.com` /raw/{id}. `GitHub Gist` /raw/{revision}/{filename}. `Hastebin` /raw/{key}.",
                 "when_to_apply": "Любая system с human (browser) + machine (CLI, API) consumers.",
                 "edge_cases": "Content negotiation alternative: один URL с `Accept: text/plain`. Но раздельные URLs проще для curl без custom headers.",
-                "related": "Q11 syntax highlighting; Q23 CDN."
+                "related": "[[design-pastebin-interview#Q11]] syntax highlighting; [[design-pastebin-interview#Q23]] CDN."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "Stripe API популяризовал Idempotency-Key. GitHub Gist API использует PAT. Pastebin.com API — api_dev_key + api_user_key (legacy).",
                 "when_to_apply": "Любой API с side effects где duplicates вредны: payments, email send, paste create.",
                 "edge_cases": "TTL idempotency cache: 24h balance retry window + storage. Schema validation: language enum, visibility enum, expires_in numeric.",
-                "related": "Q26 API tokens; Q27 rate limiting."
+                "related": "[[design-pastebin-interview#Q26]] API tokens; [[design-pastebin-interview#Q27]] rate limiting."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "GitHub Gist (script, most common). Pastebin.com Pro iframe embed. JSFiddle iframe для interactive previews.",
                 "when_to_apply": "Tech blogs, Stack Overflow answers с code references.",
                 "edge_cases": "XSS risk: paste content может содержать `</script>` который break out. Pastebin/Gist sanitize через escape. Iframe sandbox = better isolation. Per-domain allowlist CSP.",
-                "related": "Q21 architecture; Q25 anti-abuse XSS attempts."
+                "related": "[[design-pastebin-interview#Q21]] architecture; [[design-pastebin-interview#Q25]] anti-abuse XSS attempts."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "GitHub Gist использует server-side highlighting через Linguist + Rouge (Ruby). GitLab — Rouge. Pastebin.com — server-side geshi (PHP).",
                 "when_to_apply": "Любой code-display product требует high SEO + fast mobile.",
                 "edge_cases": "Cache invalidation на theme changes — versioned CSS file. Multi-language detect: GitHub Linguist ML определяет язык если не указан.",
-                "related": "Q5 storage; Q22 CDN."
+                "related": "[[design-pastebin-interview#Q5]] storage; [[design-pastebin-interview#Q22]] CDN."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "GitHub использует custom GFM + sanitize-html. Markdown-it + DOMPurify — стандарт для JS. Bleach used by Mozilla MDN.",
                 "when_to_apply": "Любой user-content rendering: comments, pastes, blog posts.",
                 "edge_cases": "Allowlist слишком permissive (`style` attribute) = CSS injection. URL whitelist: `http`, `https`, `mailto` — не `javascript:`, `data:`. Custom tags для product: `<gist-embed>` requires server-side resolution before render.",
-                "related": "Q25 anti-abuse XSS detection."
+                "related": "[[design-pastebin-interview#Q25]] anti-abuse XSS detection."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "GitHub использует Linguist для language detection в repos. Pastebin.com explicit dropdown + 'auto-detect' option. Hastebin client-side highlight.js auto-detect.",
                 "when_to_apply": "Любой code-sharing требует language tag для highlight + analytics.",
                 "edge_cases": "Mislabeled language → wrong highlight (Python vs Ruby — похожи). Mixed-language paste (HTML + JS + CSS) — приоритет содержимого `<script>`. Domain-specific languages (Cypher, GraphQL schema) — fallback на text.",
-                "related": "Q11 syntax highlight; Q18 search by language."
+                "related": "[[design-pastebin-interview#Q11]] syntax highlight; [[design-pastebin-interview#Q18]] search by language."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "Snapchat использует похожую модель для ephemeral messages. AWS S3 Lifecycle Rules для cost optimization. DynamoDB TTL attribute для auto-cleanup.",
                 "when_to_apply": "Любой content service с retention: Pastebin, Stories (Instagram, Snapchat), temp files.",
                 "edge_cases": "Grace period 7 days для analytics (last view count). Burn-after-read особый случай — atomic delete после view (Q15). Multi-region — replication перед deletion для consistency.",
-                "related": "Q15 burn-after-read; Q17 trash retention; Q22 storage tiering."
+                "related": "[[design-pastebin-interview#Q15]] burn-after-read; [[design-pastebin-interview#Q17]] trash retention; [[design-pastebin-interview#Q22]] storage tiering."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "0bin использует client-side encryption + server delete. Privatebin аналогично. Pastebin Pro имеет burn-after-read feature.",
                 "when_to_apply": "Confidential temporary sharing: passwords, API keys, one-time messages.",
                 "edge_cases": "Crawler bots (Slack link preview, Twitter Card) trigger burn если access first — нужен whitelist для preview bots OR delay TTL after first view (2 min для preview). Logged-in user — другой view counted.",
-                "related": "Q14 expiration; Q17 trash; Q21 architecture."
+                "related": "[[design-pastebin-interview#Q14]] expiration; [[design-pastebin-interview#Q17]] trash; [[design-pastebin-interview#Q21]] architecture."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "GitHub Gist хранит unlimited revisions через Git internally. Pastebin Pro поддерживает edit history. CodeSandbox, JSFiddle saves snapshots.",
                 "when_to_apply": "Content-sharing service с edit feature: gists, snippets с versioning.",
                 "edge_cases": "Storage cost grows linearly per edit. Garbage collection orphan blobs (revisions deleted, blob refs counted) — refcount tracking. Diff UI — server-side compute diff между revisions on demand.",
-                "related": "Q5 storage; Q20 diff; Q22 tiering."
+                "related": "[[design-pastebin-interview#Q5]] storage; [[design-pastebin-interview#Q20]] diff; [[design-pastebin-interview#Q22]] tiering."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "GitHub Gist: public / secret (similar to unlisted). Pastebin: public / unlisted / private. Privatebin: password-protected всегда.",
                 "when_to_apply": "Любой content-sharing требует privacy controls.",
                 "edge_cases": "Search engines crawl `unlisted` если linked anywhere (e.g., в blog post). `private` paste shared с другим user — нужен share-as-link feature или email invite. Password rotation не trivial — paste content statyc, password change не invalidates existing access.",
-                "related": "Q21 architecture; Q26 auth."
+                "related": "[[design-pastebin-interview#Q21]] architecture; [[design-pastebin-interview#Q26]] auth."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "GitHub Code Search использует ES для public repos. Pastebin search public только. Hastebin not searchable (privacy default).",
                 "when_to_apply": "Любой content sharing с opt-in indexing.",
                 "edge_cases": "BM25 relevance scoring default ES. Pasted secrets (API keys) detected via regex → blocked from indexing (Q25). Multi-language pastes (English code + Russian comments) — both analyzers applied (multi-field).",
-                "related": "Q22 tiering; Q25 anti-abuse."
+                "related": "[[design-pastebin-interview#Q22]] tiering; [[design-pastebin-interview#Q25]] anti-abuse."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "GitHub Gist: множественные files в одном gist (e.g., docker-compose.yml + Dockerfile + README.md). CodeSandbox multi-file projects. JSFiddle html/css/js tabs.",
                 "when_to_apply": "Anyone sharing related files: configs, multi-file projects, code + docs.",
                 "edge_cases": "Max files per gist — Pastebin/Gist limit (~10 files). File rename — UPDATE filename + потенциально preserve revision history per filename. Atomic transaction для multi-file edit.",
-                "related": "Q6 schema; Q16 revisions."
+                "related": "[[design-pastebin-interview#Q6]] schema; [[design-pastebin-interview#Q16]] revisions."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "GitHub diff view (server-side rendered). VS Code Source Control (Myers diff). diff-match-patch (Google library) — JavaScript and Java.",
                 "when_to_apply": "Code review tools: GitHub, GitLab, Gerrit; gist comparison; revision history UIs.",
                 "edge_cases": "Word-level diff vs line-level — choice affects readability. Whitespace handling (`ignore whitespace` option). Renames detection — Git uses similarity threshold (50%).",
-                "related": "Q16 revisions; Q22 caching."
+                "related": "[[design-pastebin-interview#Q16]] revisions; [[design-pastebin-interview#Q22]] caching."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "Pastebin.com architecture (described в blog 2014). GitHub Gist использует GitHub-shared infrastructure (Spinnaker, Vitess).",
                 "when_to_apply": "Любой content-sharing service с auth + privacy + abuse mitigation.",
                 "edge_cases": "CQRS-style separation read/write. Multi-region: CDN edge + replicated S3. Kafka для downstream (analytics, ML training for abuse detection, embed cache invalidation).",
-                "related": "Q22 tiering; Q23 CDN; Q25 anti-abuse; Q26 OAuth."
+                "related": "[[design-pastebin-interview#Q22]] tiering; [[design-pastebin-interview#Q23]] CDN; [[design-pastebin-interview#Q25]] anti-abuse; [[design-pastebin-interview#Q26]] OAuth."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "Netflix tiering (hot/warm/cold для streaming content). AWS S3 Intelligent-Tiering. Pastebin.com использует похожую модель.",
                 "when_to_apply": "Любая system с power-law access distribution (80/20).",
                 "edge_cases": "Glacier restore 1-12 hours — bad UX для view. Mitigation: Glacier Deep Archive только для backup/compliance, не для active views. Edge case: viral old paste restored from Glacier → user wait.",
-                "related": "Q5 storage; Q14 expiration; Q29 cost."
+                "related": "[[design-pastebin-interview#Q5]] storage; [[design-pastebin-interview#Q14]] expiration; [[design-pastebin-interview#Q29]] cost."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "Cloudflare standard for static assets. Pastebin.com использует CloudFront. GitHub Gist на GitHub Pages CDN.",
                 "when_to_apply": "Любой content-sharing с high read-write ratio.",
                 "edge_cases": "Cache invalidation на paste delete: API call к CDN purge endpoint. Geographic edge cache — Tokyo, Frankfurt, Sydney POPs. WAF на CDN level — DDoS + bot detection (Cloudflare Bot Management).",
-                "related": "Q22 storage tiering; Q27 rate limit; Q29 cost."
+                "related": "[[design-pastebin-interview#Q22]] storage tiering; [[design-pastebin-interview#Q27]] rate limit; [[design-pastebin-interview#Q29]] cost."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "Cloudflare R2 has regional bucket option. AWS S3 region-aware. Stripe data residency model.",
                 "when_to_apply": "Любой service с EU users должен respect GDPR.",
                 "edge_cases": "Cross-region access (US user views EU paste): allowed since GDPR прохода для viewing, не для storage. Account migration (EU → US user) — need consent + data transfer review. China presence — separate stack (data sovereignty laws, not just GDPR).",
-                "related": "Q21 architecture; Q23 CDN."
+                "related": "[[design-pastebin-interview#Q21]] architecture; [[design-pastebin-interview#Q23]] CDN."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "GitHub использует похожую infrastructure (Secret Scanning, Push Protection). Pastebin.com integrated с PhotoDNA. AWS S3 Object Scanning + ClamAV.",
                 "when_to_apply": "Любой user-content service: paste, comment, file upload.",
                 "edge_cases": "False positive: legitimate paste содержит pattern похожий на AWS key — needs human review queue. Adversarial: malware encoded в base64 в paste — ClamAV scans decoded variants. Privacy: scanning encrypted private content impossible (server can't read encrypted blobs — see 0bin/Privatebin client-side encryption).",
-                "related": "Q22 tiering (deleted goes to compliance archive); Q27 rate limit; Q28 monitoring."
+                "related": "[[design-pastebin-interview#Q22]] tiering (deleted goes to compliance archive); [[design-pastebin-interview#Q27]] rate limit; [[design-pastebin-interview#Q28]] monitoring."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "GitHub PAT с prefix `ghp_`. Stripe API tokens `sk_live_*`. Slack tokens `xoxb-*` — prefix conventions.",
                 "when_to_apply": "Любой service requiring programmatic API access.",
                 "edge_cases": "Token leakage: accidentally pushed to GitHub — secret scanning auto-revoke. Scopes (read-only, paste-create, paste-delete) — least privilege. Refresh tokens not standard for PAT (long-lived) vs OAuth (short-lived access + long-lived refresh).",
-                "related": "Q9 API contract; Q27 rate limit per token."
+                "related": "[[design-pastebin-interview#Q9]] API contract; [[design-pastebin-interview#Q27]] rate limit per token."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "GitHub rate limits (5000/hour authenticated, 60/hour unauth). Stripe API rate limits per API key. Cloudflare WAF rate limiting rules.",
                 "when_to_apply": "Любой public API с potential abuse.",
                 "edge_cases": "Distributed rate limit — Redis cluster shared across LB. Burst allowance (token bucket capacity > rate) для legit spikes. CAPTCHA escalation после repeated 429s для anonymous.",
-                "related": "Q21 architecture; Q25 anti-abuse; см. design-rate-limiter-interview Q12."
+                "related": "[[design-pastebin-interview#Q21]] architecture; [[design-pastebin-interview#Q25]] anti-abuse; см. design-rate-limiter-interview Q12."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "Netflix Atlas + Spectator. Stripe internal observability stack (described in blog 2018). Cloudflare uses Prometheus + Grafana extensively.",
                 "when_to_apply": "Любая production service.",
                 "edge_cases": "Cardinality explosion: Prometheus labels (user_id) → millions series cost. Use exemplars для linking metric spike к specific trace. SLO burn rate alerts (multi-window) лучше threshold-based.",
-                "related": "Q3 SLO; Q21 architecture."
+                "related": "[[design-pastebin-interview#Q3]] SLO; [[design-pastebin-interview#Q21]] architecture."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "Reddit migration from S3 к R2 (2023, saved millions). Twitter использует похожий tiered approach.",
                 "when_to_apply": "Любая large-scale text/blob storage.",
                 "edge_cases": "Snapshot encryption costs (KMS per-operation fee). Egress fee comparison: AWS $0.09/GB → Cloudflare R2 $0/GB (when behind CF). Reserved Instances для Postgres RDS — 60% cheaper.",
-                "related": "Q7 compression; Q22 tiering; Q23 CDN."
+                "related": "[[design-pastebin-interview#Q7]] compression; [[design-pastebin-interview#Q22]] tiering; [[design-pastebin-interview#Q23]] CDN."
               }
             },
             {

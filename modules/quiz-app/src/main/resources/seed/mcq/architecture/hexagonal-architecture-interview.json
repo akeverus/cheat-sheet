@@ -18,7 +18,7 @@
                 "example": "`HTTP` → `WebAdapter` → `PlaceOrderUseCase` (driving port) → `Order` (domain). На исходящей стороне: `OrderRepository` (driven port) ← `JpaOrderAdapter` ← `PostgreSQL`.",
                 "when_to_apply": "Сложный домен, долгоживущая система, несколько каналов входа (`REST`+`Kafka`+`CLI`), ожидаемая замена инфраструктуры.",
                 "edge_cases": "Hexagonal — про направление зависимостей, а не про количество слоёв.",
-                "related": "Q4 Application Core;"
+                "related": "[[hexagonal-architecture-interview#Q4]] Application Core"
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "На доске удобно нарисовать шесть граней и около каждой расположить адаптер; пятиугольник или восьмиугольник работал бы так же.",
                 "when_to_apply": "Объяснение паттерна на доске или в документации, демонстрация равноправия каналов ввода.",
                 "edge_cases": "Не обязательно «одна грань = один порт» — число портов произвольно.",
-                "related": "Q1 проблема;"
+                "related": "[[hexagonal-architecture-interview#Q1]] проблема"
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "Цитата Кокбёрна: «Создайте приложение так, чтобы оно работало одинаково под пользователями, программами, тестами и batch-скриптами».",
                 "when_to_apply": "Объяснение происхождения паттерна, отсылка к первоисточнику в обсуждениях терминологии.",
                 "edge_cases": "Hexagonal Architecture и Ports & Adapters — синонимы;",
-                "related": "Q32 vs Clean;"
+                "related": "[[hexagonal-architecture-interview#Q32]] vs Clean"
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "`public class Order { void submit() { if (lines.isEmpty()) throw new EmptyOrderException(); } }` плюс `interface PlaceOrderUseCase` (driving) и `interface OrderRepository` (driven).",
                 "when_to_apply": "Любая реализация Hexagonal — ядро всегда отделяется первым.",
                 "edge_cases": "Прагматичный компромисс — `@Transactional` на Use Case (минимальное протекание Spring).",
-                "related": "Q5 три зоны;"
+                "related": "[[hexagonal-architecture-interview#Q5]] три зоны"
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "Driving: `adapter/in/web` (REST), `adapter/in/cli`. Core: `domain/`, `application/`. Driven: `adapter/out/persistence`, `adapter/out/messaging`.",
                 "when_to_apply": "Базовая раскладка пакетов и модулей в начале проекта.",
                 "edge_cases": "Один адаптер изредка может быть и driving, и driven (например, Kafka listener + producer), но это нужно разделять.",
-                "related": "Q4 application core;"
+                "related": "[[hexagonal-architecture-interview#Q4]] application core"
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "`interface LoadAccountPort { Account loadAccount(AccountId id); }` — это port. `interface AccountDao extends JpaRepository<AccountEntity, Long>` — это технический интерфейс инфраструктуры, не port.",
                 "when_to_apply": "При проектировании ядра: каждое взаимодействие с миром выражается через port.",
                 "edge_cases": "Port возвращает доменную модель, а не JPA-сущность — это ключевая граница абстракции.",
-                "related": "Q7 driving vs driven;"
+                "related": "[[hexagonal-architecture-interview#Q7]] driving vs driven"
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "Driving: `interface SendMoneyUseCase` (реализация `SendMoneyService` в `application/service`). Driven: `interface LoadAccountPort` (реализация `AccountPersistenceAdapter` в `adapter/out/persistence`).",
                 "when_to_apply": "При любой проектировке: сначала отделяем входные сценарии (driving) от исходящих потребностей (driven).",
                 "edge_cases": "Один Use Case может зависеть от нескольких driven-портов;",
-                "related": "Q6 что такое port;"
+                "related": "[[hexagonal-architecture-interview#Q6]] что такое port"
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "Хорошо: `LoadAccountPort`, `SendMoneyUseCase`, `OrderRepository`. Плохо: `IAccountService`, `AccountDAO`, `OrderServiceInterface`.",
                 "when_to_apply": "Каждый раз при создании нового порта — имя задаёт контракт и тон обсуждения с командой.",
                 "edge_cases": "Совет Хомбергса — один порт, один метод (ISP);",
-                "related": "Q9 гранулярность портов;"
+                "related": "[[hexagonal-architecture-interview#Q9]] гранулярность портов"
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "`interface LoadAccountPort { Account load(AccountId id); }`, `interface UpdateAccountStatePort { void update(Account a); }` — отдельные интерфейсы, реализуемые одним адаптером.",
                 "when_to_apply": "При проектировании Use Case;",
                 "edge_cases": "Прагматичный компромисс Хомбергса — один `OrderRepository` (DDD-style) для CRUD;",
-                "related": "Q8 именование портов;"
+                "related": "[[hexagonal-architecture-interview#Q8]] именование портов"
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "`@Component class AccountPersistenceAdapter implements LoadAccountPort, UpdateAccountStatePort { ... }` — один класс реализует оба порта через общий `accountRepo` и `mapper`.",
                 "when_to_apply": "Когда есть общий агрегат, общая транзакция и общий mapping — объединение снижает дублирование.",
                 "edge_cases": "Разные bounded contexts → разные адаптеры;",
-                "related": "Q12 secondary adapter;"
+                "related": "[[hexagonal-architecture-interview#Q12]] secondary adapter"
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "`@RestController class SendMoneyController { @PostMapping ResponseEntity<Void> send(.",
                 "when_to_apply": "Каждый раз при добавлении нового канала входа: REST, gRPC, Kafka listener, CLI, scheduler.",
                 "edge_cases": "Не вызывать напрямую репозиторий;",
-                "related": "Q12 secondary;"
+                "related": "[[hexagonal-architecture-interview#Q12]] secondary"
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "`@Component class AccountPersistenceAdapter implements LoadAccountPort { Account load(AccountId id) { var entity = jpaRepo.findById(id.value()).orElseThrow(); return mapper.toDomain(entity); } }`.",
                 "when_to_apply": "Каждое исходящее взаимодействие с внешним миром: PostgreSQL, REST-клиент, Kafka producer, S3, email-сервис.",
                 "edge_cases": "Возврат — доменная модель, не JPA-entity;",
-                "related": "Q11 primary;"
+                "related": "[[hexagonal-architecture-interview#Q11]] primary"
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "`@KafkaListener payment.confirmed → ConfirmPaymentUseCase ← @PostMapping /orders/{id}/confirm` — один Use Case, два primary канала.",
                 "when_to_apply": "Демонстрация преимуществ Hexagonal на интервью: один Use Case + множество каналов = ключевая выгода паттерна.",
                 "edge_cases": "Scheduler (`@Scheduled`) — тоже primary адаптер;",
-                "related": "Q11 primary;"
+                "related": "[[hexagonal-architecture-interview#Q11]] primary"
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "`class OrderJpaMapper { OrderJpaEntity toJpa(Order o); Order toDomain(OrderJpaEntity e); }` — преобразование двусторонее.",
                 "when_to_apply": "На границе адаптер ↔ ядро: всегда явный mapper, не общий «universal»-mapper.",
                 "edge_cases": "Mapper не должен содержать бизнес-логику — только трансформацию структуры;",
-                "related": "Q12 secondary adapter;"
+                "related": "[[hexagonal-architecture-interview#Q12]] secondary adapter"
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "`OrderKafkaListener` (primary, `@KafkaListener` → `ProcessOrderUseCase`) + `OrderEventKafkaPublisher` (secondary, реализует `OrderEventPublisherPort`).",
                 "when_to_apply": "При использовании Kafka, RabbitMQ, шин сообщений — два класса вместо одного.",
                 "edge_cases": "Технология (KafkaTemplate, KafkaListenerContainer) общая, но разделена на два бина — это нормально.",
-                "related": "Q10 несколько портов в одном;"
+                "related": "[[hexagonal-architecture-interview#Q10]] несколько портов в одном"
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "`com.company.bookkeeper.account.domain.Account`, `account.application.port.in.SendMoneyUseCase`, `account.adapter.out.persistence.AccountPersistenceAdapter`.",
                 "when_to_apply": "Любой проект Hexagonal в монорепо;",
                 "edge_cases": "В пакете `domain/` запрещены `@Component`, `@Entity`, `@JsonProperty`;",
-                "related": "Q4 application core;"
+                "related": "[[hexagonal-architecture-interview#Q4]] application core"
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "`public record SendMoneyCommand(AccountId src, AccountId tgt, Money amount) { public SendMoneyCommand { requireNonNull(src); if (!amount.isPositive()) throw new IllegalArgumentException(); } }`.",
                 "when_to_apply": "Любой Use Case в гексагональной архитектуре;",
                 "edge_cases": "Если Use Case принимает 8+ портов — это сигнал разбить на несколько (нарушение SRP).",
-                "related": "Q4 application core;"
+                "related": "[[hexagonal-architecture-interview#Q4]] application core"
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "`interface AccountJpaRepository extends JpaRepository<AccountJpaEntity, Long> {}` — технический;",
                 "when_to_apply": "Каждый раз при добавлении нового исходящего интегратора: БД, HTTP-клиент, Kafka producer.",
                 "edge_cases": "Не передавать `AccountJpaEntity` за пределы адаптера;",
-                "related": "Q12 secondary adapter;"
+                "related": "[[hexagonal-architecture-interview#Q12]] secondary adapter"
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "`@Target(TYPE) @Retention(RUNTIME) @Service public @interface UseCase {}` — затем `@UseCase @Transactional public class SendMoneyService implements SendMoneyUseCase { ... }`.",
                 "when_to_apply": "Любой Spring Boot проект;",
                 "edge_cases": "Зависимость на `spring-context` минимальная и часто оправдана.",
-                "related": "Q4 чистое ядро;"
+                "related": "[[hexagonal-architecture-interview#Q4]] чистое ядро"
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "`@UseCase @Transactional class SendMoneyService { public boolean sendMoney(...) { Account src = load(...); src.withdraw(...); update(src); } }` — транзакция охватывает load + изменение + save.",
                 "when_to_apply": "Каждый command-Use Case;",
                 "edge_cases": "Альтернативы для чистого ядра: декоратор `TransactionalUseCaseDecorator`, ручное управление через `TransactionTemplate` как зависимость.",
-                "related": "Q17 Use Case;"
+                "related": "[[hexagonal-architecture-interview#Q17]] Use Case"
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "`@Configuration class BookkeeperConfiguration { @Bean SendMoneyUseCase send(LoadAccountPort lp, ...) { return new SendMoneyService(lp, ...); } }`.",
                 "when_to_apply": "В корневом модуле приложения;",
                 "edge_cases": "Можно разделить на несколько `@Configuration`-классов по Bounded Context для лучшей читаемости.",
-                "related": "Q19 @Service на Use Case;"
+                "related": "[[hexagonal-architecture-interview#Q19]] @Service на Use Case"
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "`bookkeeper-domain/build.gradle` без Spring; `bookkeeper-application` → `implementation project(':bookkeeper-domain')`; `bookkeeper-app` → все.",
                 "when_to_apply": "Крупные проекты, команды 5+ разработчиков, долгоживущие монорепо;",
                 "edge_cases": "Минус — больше `build.",
-                "related": "Q16 структура пакетов;"
+                "related": "[[hexagonal-architecture-interview#Q16]] структура пакетов"
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "`domain/Order` (aggregate) + `application/port/in/PlaceOrderUseCase` + `application/service/PlaceOrderService` + `adapter/out/persistence/OrderJpaAdapter` — каноническая раскладка DDD+Hexagonal.",
                 "when_to_apply": "Сложный домен с богатой бизнес-логикой;",
                 "edge_cases": "Anti-Corruption Layer (ACL) — secondary adapter, скрывающий внешний DTO от домена.",
-                "related": "Q24 агрегаты;"
+                "related": "[[hexagonal-architecture-interview#Q24]] агрегаты"
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "`record Money(BigDecimal amount) { Money add(Money o); boolean isPositive(); }` — VO. `class Account { boolean withdraw(Money, AccountId) { if (!mayWithdraw(money)) return false; ... } }` — Aggregate.",
                 "when_to_apply": "Каждая доменная концепция в Hexagonal-приложении;",
                 "edge_cases": "Если логика требует двух агрегатов — выносить в Domain Service, не в Application Service.",
-                "related": "Q23 DDD;"
+                "related": "[[hexagonal-architecture-interview#Q23]] DDD"
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "`SendMoneyService` (Application) загружает аккаунты через port и вызывает `MoneyTransferDomainService.transfer(src, tgt, amount)` (Domain) — чистая логика трансфера.",
                 "when_to_apply": "Когда логика затрагивает 2+ агрегата (Domain Service);",
                 "edge_cases": "Не путать с DTO-mapper-ами;",
-                "related": "Q23 DDD;"
+                "related": "[[hexagonal-architecture-interview#Q23]] DDD"
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "`@Override public OrderId placeOrder(cmd) { var order = Order.create(...); order.place(); orderRepo.save(order); eventPublisher.publish(order.pullDomainEvents()); return order.getId(); }`.",
                 "when_to_apply": "Любая система с доменными событиями;",
                 "edge_cases": "Не публиковать события из репозитория-адаптера (магия Spring Data);",
-                "related": "Q12 secondary adapter;"
+                "related": "[[hexagonal-architecture-interview#Q12]] secondary adapter"
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "`AccountTest` (domain, JUnit без Spring) → `SendMoneyServiceTest` (Mockito, моки портов) → `AccountPersistenceAdapterTest` (`@DataJpaTest` + Testcontainers).",
                 "when_to_apply": "С первого дня проекта — пирамида формирует архитектурное мышление команды.",
                 "edge_cases": "Anti-pattern — писать только `@SpringBootTest` (медленно, не проверяет изоляцию ядра).",
-                "related": "Q28 Use Case тесты;"
+                "related": "[[hexagonal-architecture-interview#Q28]] Use Case тесты"
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "`var service = new SendMoneyService(loadAccount, lock, update, props); var ok = service.sendMoney(cmd); then(lock).should().lockAccount(sourceId); then(lock).should().releaseAccount(sourceId);`.",
                 "when_to_apply": "Любой Use Case в Hexagonal-приложении;",
                 "edge_cases": "Для проверки бизнес-состояния (а не вызовов) — использовать fake-реализации (см.",
-                "related": "Q27 пирамида;"
+                "related": "[[hexagonal-architecture-interview#Q27]] пирамида"
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "`@WebMvcTest(SendMoneyController.class) class Test { @Autowired MockMvc mvc; @MockBean SendMoneyUseCase uc; @Test void test() { mvc.perform(post(...)).andExpect(status().isOk()); } }`.",
                 "when_to_apply": "Для каждого primary и secondary адаптера;",
                 "edge_cases": "Testcontainers требует Docker daemon;",
-                "related": "Q27 пирамида;"
+                "related": "[[hexagonal-architecture-interview#Q27]] пирамида"
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "`abstract class LoadAccountPortContractTest { protected abstract LoadAccountPort createPort(); @Test void returnsAccountWhenExists() { ... } }` — затем JPA и Fake наследники.",
                 "when_to_apply": "Для портов с fake-реализациями в Use Case тестах;",
                 "edge_cases": "Аналог Consumer-Driven Contract Testing (Pact) для внутренних портов;",
-                "related": "Q29 адаптеры;"
+                "related": "[[hexagonal-architecture-interview#Q29]] адаптеры"
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "`var repo = new InMemoryAccountRepository(); repo.given(Account.withBalance(id, Money.of(1000))); service.sendMoney(cmd); assertThat(repo.loadAccount(id).balance()).isEqualTo(Money.of(700));`.",
                 "when_to_apply": "Use Case тесты, где важно проверить итоговое состояние агрегатов;",
                 "edge_cases": "Fake несинхронный с реальным адаптером — риск баг;",
-                "related": "Q28 Use Case тесты;"
+                "related": "[[hexagonal-architecture-interview#Q28]] Use Case тесты"
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "В Clean: `Use Case` не возвращает `Order`, а вызывает `Presenter.present(order)`; `Presenter` форматирует для UI. В Hexagonal: `Use Case` возвращает `Order` напрямую, контроллер сам форматирует.",
                 "when_to_apply": "Hexagonal — для backend-сервисов и микросервисов;",
                 "edge_cases": "На практике их часто смешивают: пакетная структура Hexagonal + Entities/Use Cases разделение из Clean.",
-                "related": "Q33 vs Onion;"
+                "related": "[[hexagonal-architecture-interview#Q33]] vs Onion"
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "Onion: 4 ring layers вложены друг в друга. Hexagonal: ядро + 2 стороны (driving/driven). На практике в коде их часто трудно отличить.",
                 "when_to_apply": "Onion — когда команда привыкла мыслить кольцами и слоями;",
                 "edge_cases": "Оба — проявление Dependency Inversion Principle;",
-                "related": "Q32 vs Clean;"
+                "related": "[[hexagonal-architecture-interview#Q32]] vs Clean"
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "Layered: `Controller → Service → @Entity Order`. Hexagonal: `Controller → UseCase → Order` + `OrderRepository ← OrderJpaAdapter`. Clean дополнительно вводит `OrderPresenter`.",
                 "when_to_apply": "Layered — простые CRUD/прототипы.",
                 "edge_cases": "Layered — это «N-tier», его не стоит путать с Hexagonal только потому, что в обоих есть несколько уровней.",
-                "related": "Q32 Clean;"
+                "related": "[[hexagonal-architecture-interview#Q32]] Clean"
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "Layered Monolith → Tests Added → Bounded Contexts → domain/ package → Split Use Cases → Invert Repository → Move Adapters → ArchUnit rules → Hexagonal.",
                 "when_to_apply": "Когда система достаточно большая, чтобы migration окупила усилия;",
                 "edge_cases": "Если система работает и команда счастлива — не трогать.",
-                "related": "Q36 разделение Service;"
+                "related": "[[hexagonal-architecture-interview#Q36]] разделение Service"
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "Было: `OrderService { create, update, cancel, find, findByCustomer, confirmPayment, ship, ... }`. Стало: `PlaceOrderService`, `CancelOrderService`, `ConfirmPaymentService`, `GetOrderQueryService`, ...",
                 "when_to_apply": "Каждый `@Service` с >5 методами — кандидат на разделение;",
                 "edge_cases": "Не делить ради деления — если методы тесно связаны и используют те же зависимости, разделение может быть искусственным.",
-                "related": "Q9 гранулярность портов;"
+                "related": "[[hexagonal-architecture-interview#Q9]] гранулярность портов"
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "`class OrderJpaMapper { OrderJpaEntity toJpa(Order o); Order toDomain(OrderJpaEntity e); }` — отдельные классы в `adapter/out/persistence/`.",
                 "when_to_apply": "Любой Hexagonal-проект с JPA;",
                 "edge_cases": "При богатых ассоциациях (`@OneToMany` lazy) разделение сложнее — нужно явно подгружать связанные данные в адаптере.",
-                "related": "Q14 mapper;"
+                "related": "[[hexagonal-architecture-interview#Q14]] mapper"
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "АНТИПАТТЕРН: `interface LoadAccountPort { AccountJpaEntity loadAccount(Long id); }`. ПРАВИЛЬНО: `interface LoadAccountPort { Account loadAccount(AccountId id); }`.",
                 "when_to_apply": "На каждом code review — проверять, что port возвращает domain, а не JPA Entity;",
                 "edge_cases": "ArchUnit ловит большинство анти-паттернов автоматически: запрет `jakarta.",
-                "related": "Q39 анемичная модель;"
+                "related": "[[hexagonal-architecture-interview#Q39]] анемичная модель"
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "Анемично: `order.setStatus(SUBMITTED)` в сервисе. Богато: `order.submit()` внутри агрегата, метод проверяет инварианты (lines.isEmpty → exception) и обновляет state.",
                 "when_to_apply": "Каждый раз при добавлении метода в Use Case — спросить: «не должен ли этот метод быть в агрегате?».",
                 "edge_cases": "Иногда логика требует знания нескольких агрегатов — тогда выносится в Domain Service, не в Application Service.",
-                "related": "Q24 агрегаты;"
+                "related": "[[hexagonal-architecture-interview#Q24]] агрегаты"
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "АНТИПАТТЕРН: `class Money { @Column private BigDecimal amount; }`. ПРАВИЛЬНО: `class Money { BigDecimal amount; }` + `@Embeddable class MoneyJpa { BigDecimal amount; }` в адаптере.",
                 "when_to_apply": "На каждом code review и при настройке CI — ArchUnit-правила в первую очередь.",
                 "edge_cases": "`@Transactional` на Use Case — формально утечка Spring в application;",
-                "related": "Q4 application core;"
+                "related": "[[hexagonal-architecture-interview#Q4]] application core"
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "Простой CRUD: `Controller → @Service → JpaRepository → @Entity`. Hexagonal был бы overkill: 3 уровня индирекции, mapper, два класса (domain + entity).",
                 "when_to_apply": "Оценить сложность задачи и долговечность системы;",
                 "edge_cases": "Правило Fowler: «Сложность архитектуры должна соответствовать сложности задачи».",
-                "related": "Q1 паттерн;"
+                "related": "[[hexagonal-architecture-interview#Q1]] паттерн"
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "`@ArchTest static final ArchRule domainHasNoSpringDependencies = noClasses().that().resideInAPackage('..domain..').should().dependOnClassesThat().resideInAnyPackage('org.springframework..', 'jakarta.persistence..');`.",
                 "when_to_apply": "С самого начала проекта;",
                 "edge_cases": "ArchUnit ловит зависимости через рефлексию неточно;",
-                "related": "Q22 multi-module;"
+                "related": "[[hexagonal-architecture-interview#Q22]] multi-module"
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "`OrderService` Hexagon → publish `OrderPlaced` через `EventPublisherPort` → Kafka → `PaymentService` Hexagon принимает событие через primary Kafka adapter → `ConfirmPaymentUseCase`.",
                 "when_to_apply": "Любая микросервисная архитектура со сложным доменом;",
                 "edge_cases": "Не плодить модули внутри одного микросервиса — один сервис, один гексагон.",
-                "related": "Q41 когда overkill;"
+                "related": "[[hexagonal-architecture-interview#Q41]] когда overkill"
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "`@ControllerAdvice class Handler { @ExceptionHandler(InsufficientFundsException.",
                 "when_to_apply": "Каждое доменное исключение → отдельная стратегия в `@ControllerAdvice`;",
                 "edge_cases": "Не использовать `RuntimeException` без конкретики;",
-                "related": "Q11 primary adapter;"
+                "related": "[[hexagonal-architecture-interview#Q11]] primary adapter"
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "`@Override public Mono<OrderId> placeOrder(cmd) { return customerRepo.findById(cmd.customerId()).switchIfEmpty(Mono.error(...)).flatMap(c -> orderRepo.save(order).thenReturn(order.getId())); }`.",
                 "when_to_apply": "Когда выбран реактивный стек (WebFlux + R2DBC);",
                 "edge_cases": "Сама бизнес-логика может оставаться синхронной внутри `.",
-                "related": "Q20 транзакции;"
+                "related": "[[hexagonal-architecture-interview#Q20]] транзакции"
               }
             },
             {

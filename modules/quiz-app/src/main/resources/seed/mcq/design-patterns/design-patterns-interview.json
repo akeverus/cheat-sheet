@@ -18,7 +18,7 @@
                 "example": "Вместо длинного описания «класс, который сначала проверяет кэш, а потом обращается к БД», достаточно сказать `CachingProxy` — все коллеги поймут структуру.",
                 "when_to_apply": "При обсуждении архитектуры, code review, проектировании новых модулей. Особенно полезны, когда задача типичная и уже имеет каноническое решение.",
                 "edge_cases": "Паттерны не заменяют продуманный дизайн. Применение паттерна «потому что в книге написано» — антипаттерн `Golden Hammer`. С `Java 8+` многие паттерны упростились до лямбд.",
-                "related": "Q2 категории GoF; Q4 преимущества и риски; Q5 связь с SOLID; Q47 когда не применять."
+                "related": "[[design-patterns-interview#Q2]] категории GoF; [[design-patterns-interview#Q4]] преимущества и риски; [[design-patterns-interview#Q5]] связь с SOLID; [[design-patterns-interview#Q47]] когда не применять."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "`Singleton` (Creational) → один экземпляр; `Adapter` (Structural) → совмещение интерфейсов; `Strategy` (Behavioral) → выбор алгоритма в runtime.",
                 "when_to_apply": "Категоризация помогает при выборе паттерна: если задача о создании объекта — смотрим Creational, если об их связях — Structural, если об их взаимодействии — Behavioral.",
                 "edge_cases": "Паттерны вне `GoF` (например, `Object Pool`, `Null Object`, `Specification`) не попадают в эти три категории, но часто причисляются к ним по аналогии.",
-                "related": "Q1 определение Design Patterns; Q14 Structural overview; Q24 Behavioral overview; Q40 связи между паттернами."
+                "related": "[[design-patterns-interview#Q1]] определение Design Patterns; [[design-patterns-interview#Q14]] Structural overview; [[design-patterns-interview#Q24]] Behavioral overview; [[design-patterns-interview#Q40]] связи между паттернами."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "Класс `OrderManager` на 3000 строк с методами для расчёта цены, отправки email, генерации PDF и записи в БД — `God Object`. Решение: разбить на `OrderPricingService`, `OrderNotifier`, `OrderPdfGenerator`, `OrderRepository`.",
                 "when_to_apply": "Распознавание антипаттернов важно на code review, при онбординге в legacy-проект и при планировании рефакторинга. Знание антипаттернов ценится не меньше, чем знание паттернов.",
                 "edge_cases": "Иногда «антипаттерн» — оправданный выбор: `God Object` допустим в скрипте на 100 строк; `Magic Numbers` — в одноразовых утилитах. Контекст важнее правил.",
-                "related": "Q4 риски паттернов; Q47 когда не применять; Q9 недостатки Singleton (часто становится God Object)."
+                "related": "[[design-patterns-interview#Q4]] риски паттернов; [[design-patterns-interview#Q47]] когда не применять; [[design-patterns-interview#Q9]] недостатки Singleton (часто становится God Object)."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "В `Spring` `Template Method` (`JdbcTemplate`) экономит сотни строк boilerplate. Но если в проекте 5 место использования, и они все разные — паттерн не нужен, достаточно прямого кода.",
                 "when_to_apply": "Применять паттерн, когда: 1) есть реальная повторяемость, 2) альтернатива даёт `O(N²)` рост классов, 3) команда знает паттерн. Не применять «впрок».",
                 "edge_cases": "С `Java 8+` многие паттерны (Strategy, Command, Observer) свернулись в лямбды/функциональные интерфейсы — это уже не «классическая ООП-реализация», но семантика та же.",
-                "related": "Q1 определение; Q5 SOLID; Q41 Java 8 изменения; Q47 когда не применять."
+                "related": "[[design-patterns-interview#Q1]] определение; [[design-patterns-interview#Q5]] SOLID; [[design-patterns-interview#Q41]] Java 8 изменения; [[design-patterns-interview#Q47]] когда не применять."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "В `Spring` `@Autowired` (`DI` через инверсию управления) реализует `DIP`. `BeanPostProcessor` (`Decorator`) — `OCP`: можно добавить поведение без изменения существующих бинов.",
                 "when_to_apply": "Понимание связки SOLID↔Patterns помогает на собеседовании и при ревью: можно объяснить, какой принцип `SOLID` нарушает плохой код, и предложить паттерн, восстанавливающий принцип.",
                 "edge_cases": "Один паттерн может реализовать несколько принципов: `Strategy` — `SRP` + `OCP` + `DIP`. И наоборот: один принцип — много паттернов.",
-                "related": "Q1 определение паттернов; Q4 преимущества; Q19 Decorator vs наследование (OCP); Q37 DI vs Service Locator (DIP)."
+                "related": "[[design-patterns-interview#Q1]] определение паттернов; [[design-patterns-interview#Q4]] преимущества; [[design-patterns-interview#Q19]] Decorator vs наследование (OCP); [[design-patterns-interview#Q37]] DI vs Service Locator (DIP)."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "`public enum DbConnection { INSTANCE; public void query(...) {...} }` — `DbConnection.INSTANCE.query(...)`. В `JDK`: `Runtime.getRuntime()`, `Desktop.getDesktop()`.",
                 "when_to_apply": "Когда действительно нужен один экземпляр на JVM: пул соединений, реестр конфигурации, logger-фасад. В Spring-приложениях вместо ручного `Singleton` использовать `@Component` со `scope=singleton`.",
                 "edge_cases": "В средах с несколькими `ClassLoader` (application servers) каждый ClassLoader может создать свой экземпляр. `enum` нельзя наследовать — если нужно `extends`, используйте Bill Pugh.",
-                "related": "Q7 enum-Singleton; Q8 thread-safety; Q9 недостатки; Q38 Spring singleton scope."
+                "related": "[[design-patterns-interview#Q7]] enum-Singleton; [[design-patterns-interview#Q8]] thread-safety; [[design-patterns-interview#Q9]] недостатки; [[design-patterns-interview#Q38]] Spring singleton scope."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "`public enum CurrencyConverter { INSTANCE; private final Map<String, BigDecimal> rates = loadRates(); public BigDecimal convert(...) {...} } — CurrencyConverter.INSTANCE.convert(...)`.",
                 "when_to_apply": "Когда требуется простой Singleton без необходимости наследования и с гарантиями безопасности. Особенно подходит для stateless-сервисов и реестров.",
                 "edge_cases": "Невозможно наследовать (`enum extends ...` не работает). Невозможно ленивая инициализация полей через external trigger. Если нужно — используйте Bill Pugh Holder.",
-                "related": "Q6 способы реализации; Q8 thread-safety; Q9 недостатки Singleton."
+                "related": "[[design-patterns-interview#Q6]] способы реализации; [[design-patterns-interview#Q8]] thread-safety; [[design-patterns-interview#Q9]] недостатки Singleton."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "DCL: `private static volatile Singleton instance; ... if (instance == null) { synchronized (Singleton.class) { if (instance == null) instance = new Singleton(); } }` — `volatile` гарантирует happens-before для остальных потоков.",
                 "when_to_apply": "Любая lazy-реализация Singleton требует синхронизации. Eager init проблем не имеет (создание на этапе загрузки класса гарантирует видимость).",
                 "edge_cases": "До `Java 5` DCL работал ненадёжно (старая модель памяти). С Java 5+ `volatile` стал корректным барьером. Bill Pugh Holder обходит DCL через ленивую загрузку inner-class.",
-                "related": "Q6 способы реализации; Q7 enum как решение; Q9 недостатки."
+                "related": "[[design-patterns-interview#Q6]] способы реализации; [[design-patterns-interview#Q7]] enum как решение; [[design-patterns-interview#Q9]] недостатки."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "`OrderService` вызывает `DatabaseSingleton.getInstance().query(...)`. В тесте `OrderService` нельзя проверить логику без реальной БД. Решение: внедрить `Database` через конструктор (DI) — становится `OrderService(Database db)`.",
                 "when_to_apply": "Использовать Singleton, когда есть техническая необходимость в одном экземпляре (например, JVM-wide cache, hardware connection). В Spring-приложениях предпочитать `@Component` + DI вместо ручного Singleton.",
                 "edge_cases": "В application servers (Tomcat, WebLogic) разные web-контексты могут иметь свои ClassLoader → возможно несколько «Singleton» на JVM. Spring singleton scope привязан к `ApplicationContext`, что снимает часть проблем.",
-                "related": "Q6 способы реализации; Q8 thread-safety; Q38 Spring singleton scope."
+                "related": "[[design-patterns-interview#Q6]] способы реализации; [[design-patterns-interview#Q8]] thread-safety; [[design-patterns-interview#Q38]] Spring singleton scope."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "Абстрактный `NotificationFactory` с методом `createNotification()`. Подклассы `EmailNotificationFactory`, `SmsNotificationFactory` возвращают соответствующий тип. В `JDK`: `Calendar.getInstance()`, `NumberFormat.getInstance()`.",
                 "when_to_apply": "Когда заранее неизвестен конкретный тип создаваемого продукта, а тип зависит от подкласса/конфигурации; когда нужно соблюсти `OCP` при добавлении новых вариантов.",
                 "edge_cases": "Излишество для пары вариантов: для двух типов проще `if`/`enum`. Когда нужно создавать семейства связанных объектов — переход к `Abstract Factory`.",
-                "related": "Q11 Abstract Factory; Q12 Builder; Q41 Java 8 Factory через Supplier."
+                "related": "[[design-patterns-interview#Q11]] Abstract Factory; [[design-patterns-interview#Q12]] Builder; [[design-patterns-interview#Q41]] Java 8 Factory через Supplier."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "`UIFactory { createButton(); createCheckbox(); }` с реализациями `MaterialUIFactory`, `IosUIFactory`. Все продукты `Material` совместимы между собой; нельзя случайно смешать `MaterialButton` с `IosCheckbox`.",
                 "when_to_apply": "Когда есть несколько связанных продуктов с общим вариантом (тема UI, СУБД, протокол): меняя фабрику, переключаем всю семью одной строкой. В `JDK`: `DocumentBuilderFactory`, `TransformerFactory`.",
                 "edge_cases": "Если в семействе только один продукт — достаточно `Factory Method`. Сложнее тестировать и расширять (добавление нового продукта в семью требует менять интерфейс фабрики). С `Java 8+` упрощается через `Map<Variant, Supplier<Product>>`.",
-                "related": "Q10 Factory Method; Q40 связь Abstract Factory → Factory Method; Q43 Abstract Factory + Singleton."
+                "related": "[[design-patterns-interview#Q10]] Factory Method; [[design-patterns-interview#Q40]] связь Abstract Factory → Factory Method; [[design-patterns-interview#Q43]] Abstract Factory + Singleton."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "`new HttpRequest.Builder(\"https://api\").method(\"POST\").header(\"Auth\", \"...\").timeout(5000).build()`. В `JDK`: `StringBuilder`, `Stream.Builder`, `Locale.Builder`, `HttpRequest.Builder` (Java 11+).",
                 "when_to_apply": "Когда у объекта >4 параметров, особенно опциональных; когда объект должен быть immutable; когда нужна валидация перед созданием (внутри `build()`). С `Lombok` — аннотация `@Builder` генерирует автоматически.",
                 "edge_cases": "Для 2-3 обязательных параметров — overengineering, достаточно `record` или конструктора. Java 16+ предлагает `record` + `with`-методы как альтернативу. Иммутабельность нарушается, если builder сохраняет ссылку на mutable-коллекцию.",
-                "related": "Q11 Abstract Factory; Q13 Prototype (другой подход к созданию); Q41 Java 8+ изменения; Q47 когда не нужен."
+                "related": "[[design-patterns-interview#Q11]] Abstract Factory; [[design-patterns-interview#Q13]] Prototype (другой подход к созданию); [[design-patterns-interview#Q41]] Java 8+ изменения; [[design-patterns-interview#Q47]] когда не нужен."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "В игре `GameUnit` создаётся 1000 экземпляров для отряда; вместо `new` (с инициализацией способностей из БД) клонируется один прототип. В `JDK`: `Object.clone()`, `ArrayList.clone()`, `Calendar.clone()`.",
                 "when_to_apply": "Когда создание объекта дороже клонирования (загрузка из БД, парсинг XML, сложная инициализация). Когда нужны вариации одного шаблона с минимальными отличиями.",
                 "edge_cases": "`Cloneable` — broken design (по словам Joshua Bloch): лучше использовать `copy constructor` (`new GameUnit(other)`) или статический `copy()`-метод. С `record` в Java 14+ доступны `with`-методы для иммутабельных копий.",
-                "related": "Q12 Builder; Q35 JDK-паттерны (`Cloneable`); Q40 связь Prototype → Factory Method."
+                "related": "[[design-patterns-interview#Q12]] Builder; [[design-patterns-interview#Q35]] JDK-паттерны (`Cloneable`); [[design-patterns-interview#Q40]] связь Prototype → Factory Method."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "`InputStream` в JDK: `BufferedInputStream` (`Decorator`) оборачивает `FileInputStream` (`Composite` иерархия), `InputStreamReader` (`Adapter`) преобразует к `Reader`. Несколько паттернов работают вместе.",
                 "when_to_apply": "При проектировании сложных объектных графов, интеграции с legacy-кодом, оптимизации памяти при большом числе объектов, контроле доступа к ресурсам.",
                 "edge_cases": "Часть паттернов структурно похожи (`Decorator`, `Proxy`, `Adapter` — все «оборачивают» объект): различия — в намерении, а не в коде. `Composite` и `Decorator` имеют общую рекурсивную структуру.",
-                "related": "Q15 Adapter; Q18 Decorator; Q20 Proxy; Q22 Composite; Q40 связи между паттернами."
+                "related": "[[design-patterns-interview#Q15]] Adapter; [[design-patterns-interview#Q18]] Decorator; [[design-patterns-interview#Q20]] Proxy; [[design-patterns-interview#Q22]] Composite; [[design-patterns-interview#Q40]] связи между паттернами."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "`Arrays.asList(array)` адаптирует массив к `List`. `InputStreamReader` адаптирует `InputStream` к `Reader` (байты → символы). Своя интеграция: legacy `XmlSoapClient` адаптируется к новому `RestClient`-интерфейсу через `SoapToRestAdapter`.",
                 "when_to_apply": "Когда нельзя менять код существующего класса (`Adaptee`), но клиенту нужен другой интерфейс. При интеграции систем, мигрирующих с одного API на другое. При работе с библиотеками сторонних вендоров.",
                 "edge_cases": "Слишком много адаптеров — признак плохого дизайна (надо менять интерфейс системы). Адаптер не должен добавлять бизнес-логику — только трансляцию вызовов. `Two-way Adapter` — редкая разновидность для двустороннего преобразования.",
-                "related": "Q16 Bridge; Q17 разница Bridge vs Adapter; Q18 Decorator (похож структурно)."
+                "related": "[[design-patterns-interview#Q16]] Bridge; [[design-patterns-interview#Q17]] разница Bridge vs Adapter; [[design-patterns-interview#Q18]] Decorator (похож структурно)."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "`Notification` (`abstract`, хранит `MessageSender`) — абстракция; `EmailSender`/`SmsSender` — реализации. Подклассы `UrgentNotification`/`RegularNotification` варьируют поведение, не зная конкретного sender-а. В `JDK`: JDBC `Driver` + `Connection`.",
                 "when_to_apply": "Когда есть два или более ортогональных измерения изменчивости и они должны эволюционировать независимо. На этапе проектирования (не post-factum, как `Adapter`).",
                 "edge_cases": "Если измерений нет — Bridge избыточен. Часто путают с `Strategy` (тоже использует композицию); различие — `Bridge` про архитектурное разделение двух иерархий, `Strategy` про runtime-смену алгоритма.",
-                "related": "Q15 Adapter; Q17 разница Bridge vs Adapter; Q25 Strategy."
+                "related": "[[design-patterns-interview#Q15]] Adapter; [[design-patterns-interview#Q17]] разница Bridge vs Adapter; [[design-patterns-interview#Q25]] Strategy."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "`Adapter`: интеграция legacy SOAP-клиента с новым REST-интерфейсом — `SoapToRestAdapter`. `Bridge`: JDBC, где `Connection` (абстракция) и `Driver` (реализация) живут в параллельных иерархиях, развивающихся независимо.",
                 "when_to_apply": "Adapter — когда система уже существует и нужно соединить с другой. Bridge — на этапе архитектурного дизайна, когда видны несколько осей расширения.",
                 "edge_cases": "На уровне UML диаграммы похожи. Различие лучше видно на временной шкале: Adapter появляется позже, Bridge — изначально. Иногда Adapter эволюционирует в Bridge при появлении новых иерархий.",
-                "related": "Q15 Adapter; Q16 Bridge; Q18 Decorator (тоже композиция, но другая цель)."
+                "related": "[[design-patterns-interview#Q15]] Adapter; [[design-patterns-interview#Q16]] Bridge; [[design-patterns-interview#Q18]] Decorator (тоже композиция, но другая цель)."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "Своя реализация: `EncryptionDecorator implements DataSource` оборачивает `FileDataSource`, шифрует данные перед записью и расшифровывает при чтении. `Collections.unmodifiableList()` — декоратор для read-only.",
                 "when_to_apply": "Когда нужно расширять поведение без наследования; когда комбинации поведений могут быть многомерными; когда расширения должны включаться/выключаться в runtime.",
                 "edge_cases": "Слишком много декораторов усложняют отладку (длинная цепочка вызовов). `equals()`/`hashCode()` могут вести себя неожиданно — декоратор и оригинал могут быть «equal» или нет в зависимости от реализации.",
-                "related": "Q19 Decorator vs наследование; Q20 Proxy (похож структурно); Q22 Composite (общая основа)."
+                "related": "[[design-patterns-interview#Q19]] Decorator vs наследование; [[design-patterns-interview#Q20]] Proxy (похож структурно); [[design-patterns-interview#Q22]] Composite (общая основа)."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "Нужно: шифрование + сжатие + буферизация. Наследование: 7 подклассов (1+1+1+2+2+2+1 комбинаций). Декоратор: 3 класса; собирается как `new Buffered(new Compressed(new Encrypted(source)))`.",
                 "when_to_apply": "Декоратор предпочтителен, когда расширения ортогональны (могут комбинироваться) и должны выбираться в runtime. Наследование — для строго иерархических is-a отношений.",
                 "edge_cases": "Декоратор не имеет доступа к `protected`-полям оригинала (только к публичному API). Если нужно тесно интегрироваться — наследование. Если пишете `class EncryptedCompressedBufferedFileDataSource extends ...` — знак, что нужен Decorator.",
-                "related": "Q18 Decorator; Q22 Composite; Q20 Proxy (похож структурно)."
+                "related": "[[design-patterns-interview#Q18]] Decorator; [[design-patterns-interview#Q22]] Composite; [[design-patterns-interview#Q20]] Proxy (похож структурно)."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "В `Spring`: `@Transactional` создаёт `CGLIB`-прокси, который оборачивает вызов в транзакцию. В `Hibernate`: lazy loading — `User` имеет `Proxy`-ссылку на `List<Order>`, БД запрашивается при первом обращении.",
                 "when_to_apply": "Когда нужно контролировать доступ к объекту, а не менять его поведение: кэширование, авторизация, удалённые вызовы, логирование. В `Spring`/`Hibernate` прокси создаются автоматически.",
                 "edge_cases": "JDK `Proxy` (`java.lang.reflect.Proxy`) работает только с интерфейсами. `CGLIB` создаёт байт-код наследника класса, поэтому final-классы не проксируются. Прокси через self-invocation (вызов метода `this.foo()` внутри класса) не перехватывает.",
-                "related": "Q18 Decorator (структурно похож); Q19 Decorator vs наследование; Q36 Proxy в Spring."
+                "related": "[[design-patterns-interview#Q18]] Decorator (структурно похож); [[design-patterns-interview#Q19]] Decorator vs наследование; [[design-patterns-interview#Q36]] Proxy в Spring."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "`VideoPlayerFacade.play(file)` скрывает `VideoCodec.decode()`, `AudioMixer.mix()`, `SubtitleParser.parse()`, `VideoRenderer.render()`. В JDK: `DriverManager.getConnection()` — facade поверх драйверов; `Files` (Java 7+) — facade над `Files`/`Paths`/`FileSystem`.",
                 "when_to_apply": "Когда подсистема стала сложной и большинство клиентов используют один-два типичных сценария; когда нужно изолировать legacy-код от нового; при создании библиотек/SDK для упрощения API.",
                 "edge_cases": "Facade не должен скрывать всё — должна оставаться возможность работать с подсистемой напрямую при необходимости (например, для тонкой настройки). `God Facade` — антипаттерн, когда фасад разрастается до самостоятельного God Object.",
-                "related": "Q15 Adapter (отличие); Q22 Composite; Q36 Spring (DispatcherServlet как facade)."
+                "related": "[[design-patterns-interview#Q15]] Adapter (отличие); [[design-patterns-interview#Q22]] Composite; [[design-patterns-interview#Q36]] Spring (DispatcherServlet как facade)."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "`FileSystemComponent` с реализациями `File` (`getSize` возвращает свой размер) и `Directory` (`getSize` суммирует размеры детей рекурсивно). В JDK: `java.awt.Container` содержит `Component`, AST в `javax.lang.model`.",
                 "when_to_apply": "Когда задача формулируется как дерево/иерархия (файловая система, организационная структура, GUI-контейнеры, AST, меню-навигация); когда операции применяются единообразно к листьям и узлам.",
                 "edge_cases": "Дилемма: добавлять методы `add`/`remove` в `Component` (нарушает SRP/ISP для листьев) или только в `Composite` (нарушает прозрачность). Циклы в графе не поддерживаются — паттерн строго про деревья.",
-                "related": "Q18 Decorator (общая основа — рекурсивная композиция); Q32 Iterator (обход дерева); Q31 Visitor (операция над структурой)."
+                "related": "[[design-patterns-interview#Q18]] Decorator (общая основа — рекурсивная композиция); [[design-patterns-interview#Q32]] Iterator (обход дерева); [[design-patterns-interview#Q31]] Visitor (операция над структурой)."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "`Integer.valueOf(127)` возвращает один и тот же объект из кэша. `String.intern()` — добавляет строку в pool. Своя реализация: `TreeTypeFactory` хранит `Map<key, TreeType>`, возвращает существующий экземпляр или создаёт новый.",
                 "when_to_apply": "Когда в системе создаются миллионы похожих объектов с большой долей общего immutable-состояния; когда память — критичный ресурс. Особенно эффективно для частиц, символов, иконок, единиц измерения.",
                 "edge_cases": "`Integer.valueOf` кэширует только -128..127 (можно расширить через `-Djava.lang.Integer.IntegerCache.high=...`). Flyweight не подходит для mutable-состояния — расшаривание ломает инкапсуляцию. Профилируйте перед применением: усложнение кода оправдано только при реальной экономии.",
-                "related": "Q35 JDK паттерны; Q40 связи; Q47 когда не нужен (overengineering для малого числа объектов)."
+                "related": "[[design-patterns-interview#Q35]] JDK паттерны; [[design-patterns-interview#Q40]] связи; [[design-patterns-interview#Q47]] когда не нужен (overengineering для малого числа объектов)."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "В `Java`: `Comparator` (`Strategy`), `Runnable`/`Callable` (`Command`), `Iterator`, `AbstractList.add()` (`Template Method`), `PropertyChangeListener` (`Observer`), `Servlet Filter`/`Spring Security` (`Chain of Responsibility`).",
                 "when_to_apply": "Большинство задач, связанных с алгоритмами, событиями, состоянием и распределением логики — решаются именно behavioral-паттернами. Это самая «практичная» категория в ежедневной разработке.",
                 "edge_cases": "Некоторые паттерны похожи: `Strategy` vs `State` (структура одинакова, семантика разная); `Command` vs `Strategy` (Command — действие как объект, Strategy — алгоритм). `Interpreter` редко применим — обычно лучше готовые парсеры.",
-                "related": "Q25 Strategy; Q27 Observer; Q30 Template Method; Q40 связи между паттернами."
+                "related": "[[design-patterns-interview#Q25]] Strategy; [[design-patterns-interview#Q27]] Observer; [[design-patterns-interview#Q30]] Template Method; [[design-patterns-interview#Q40]] связи между паттернами."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "Классика: `interface PaymentStrategy { void pay(...); }` + `CreditCardPayment`, `PayPalPayment`. `Java 8+`: `Comparator.comparing(User::getAge)` — это Strategy для `Collections.sort`. `Map<String, PaymentStrategy>` с `Map.of(\"card\", new Card(), \"paypal\", paypal::charge)`.",
                 "when_to_apply": "Когда есть несколько способов выполнить одну задачу и выбор должен делаться в runtime (например, тип платежа, формат экспорта, алгоритм сжатия). Помогает соблюсти `OCP` — новая стратегия не требует менять контекст.",
                 "edge_cases": "Для двух коротких стратегий — overkill; достаточно `if/else` или `enum`. Лямбды не имеют состояния — если стратегии требуют состояния (например, кэш), нужны классы.",
-                "related": "Q26 State (отличие); Q30 Template Method (другой стиль); Q41 Java 8+ упрощение паттернов."
+                "related": "[[design-patterns-interview#Q26]] State (отличие); [[design-patterns-interview#Q30]] Template Method (другой стиль); [[design-patterns-interview#Q41]] Java 8+ упрощение паттернов."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "`Order` имеет состояние `NewOrder`/`PaidOrder`/`ShippedOrder`. Метод `next()` каждого состояния переключает order в следующее: `NewOrder.next()` → `PaidOrder`. Состояния знают переходы. В JDK: `Thread.State` (концептуально).",
                 "when_to_apply": "Когда поведение объекта существенно зависит от его состояния и состояний больше 2-3 с нетривиальными переходами; когда нужна машина состояний (FSM): заказы, документы (draft → review → published), TCP-соединения.",
                 "edge_cases": "Если состояний 2 и переходы простые — достаточно `boolean` или `enum`. Если состояний 10+ — лучше state machine библиотеки (`Spring StateMachine`, `Squirrel`). Можно сделать состояния `Singleton` (они immutable, если состояние хранится в контексте).",
-                "related": "Q25 Strategy (отличие); Q27 Observer (часто используется для notify состояний)."
+                "related": "[[design-patterns-interview#Q25]] Strategy (отличие); [[design-patterns-interview#Q27]] Observer (часто используется для notify состояний)."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "В Spring: `applicationEventPublisher.publishEvent(new OrderCreatedEvent(...))` → `@EventListener` методы обрабатывают. Своя реализация: `EventBus<T>` с `Map<String, List<Consumer<T>>>` и методами `subscribe`/`publish`. В JDK: `PropertyChangeListener`.",
                 "when_to_apply": "Когда несколько объектов должны реагировать на изменение одного без жёсткой связности; для event-driven архитектуры; для уведомлений (email, push, аналитика) после действий пользователя.",
                 "edge_cases": "Утечка памяти, если подписчик не отписался (`removeListener`) — используется `WeakReference` в системах с долгоживущими событиями. Sync-уведомление блокирует publisher; нужны async-варианты (`@Async` в Spring). Циклические подписки приводят к infinite loop.",
-                "related": "Q33 Mediator (event bus); Q41 Java 8+ через Consumer; Q36 Spring ApplicationEvent."
+                "related": "[[design-patterns-interview#Q33]] Mediator (event bus); [[design-patterns-interview#Q41]] Java 8+ через Consumer; [[design-patterns-interview#Q36]] Spring ApplicationEvent."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "`Spring Security`: `SecurityFilterChain` — список фильтров (`UsernamePasswordAuthenticationFilter`, `CsrfFilter`, ...). Каждый проверяет свой аспект; `doFilter()` передаёт дальше. Своя реализация: `LogHandler` с уровнями DEBUG → INFO → ERROR, каждый отвечает за свой уровень.",
                 "when_to_apply": "Когда обработка запроса состоит из независимых проверок/трансформаций; когда набор обработчиков может меняться; для middleware-цепочек (auth, logging, validation, transformation).",
                 "edge_cases": "Без явного `break` в цепочке запрос может пройти всех обработчиков, даже если уже обработан — нужно решать в дизайне (return после обработки или передача дальше). Цепочка скрывает control flow — отладка сложнее, чем у прямого вызова.",
-                "related": "Q29 Command; Q36 Spring Filters; Q40 связь с другими паттернами."
+                "related": "[[design-patterns-interview#Q29]] Command; [[design-patterns-interview#Q36]] Spring Filters; [[design-patterns-interview#Q40]] связь с другими паттернами."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "В JDK: `Runnable.run()`, `Callable.call()` — это объекты-команды (без undo). Своя реализация: `LightOnCommand.execute()` включает свет, `undo()` выключает. `MacroCommand` для записи макроса. В Swing: `Action`-объекты — Command.",
                 "when_to_apply": "Для undo/redo (текстовые редакторы, редакторы 3D); для отложенных операций (job queue, scheduled tasks); для аудит-логирования действий (что и когда выполнено); для GUI с привязкой действий к кнопкам/меню.",
                 "edge_cases": "Реализация undo требует хранения состояния до выполнения (либо инверсии действий). Для сложных операций может потребоваться `Memento` для снапшота. С Java 8+ простые команды без undo заменяются `Runnable`/лямбдой.",
-                "related": "Q30 Template Method; Q34 Memento (для undo); Q41 Java 8+ Runnable как Command."
+                "related": "[[design-patterns-interview#Q30]] Template Method; [[design-patterns-interview#Q34]] Memento (для undo); [[design-patterns-interview#Q41]] Java 8+ Runnable как Command."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "`DataImporter.importData()` — скелет: `readSource()` → `parse()` → `validate()` → `save()`. Подклассы `CsvImporter`/`JsonImporter` переопределяют чтение и парсинг. В JDK: `AbstractList.add()`, `HttpServlet.doGet()/doPost()`. В Spring: `JdbcTemplate`, `RestTemplate`.",
                 "when_to_apply": "Когда несколько алгоритмов имеют общий скелет с вариативными шагами; когда нужно зафиксировать порядок шагов (через `final`), но дать гибкость в деталях; для frameworks (фреймворк определяет порядок, юзер заполняет детали).",
                 "edge_cases": "Template Method привязан к наследованию (нельзя сменить алгоритм в runtime). Подклассы получают доступ к `protected`-членам, что усиливает связность. `Strategy` предпочтительнее, когда нужна гибкость, Template Method — когда нужна жёсткая структура.",
-                "related": "Q25 Strategy; Q31 Visitor; Q36 Spring `JdbcTemplate`."
+                "related": "[[design-patterns-interview#Q25]] Strategy; [[design-patterns-interview#Q31]] Visitor; [[design-patterns-interview#Q36]] Spring `JdbcTemplate`."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "`DocumentElement` (`Paragraph`, `Image`) + `DocumentVisitor` (`HtmlExportVisitor`, `WordCountVisitor`). Для нового экспорта добавляется новый Visitor, классы документа не трогаются. В JDK: `java.nio.file.FileVisitor`, `javax.lang.model.element.ElementVisitor`.",
                 "when_to_apply": "Когда структура объектов стабильна, а операций над ней много и они часто добавляются (компиляторы — AST + операции типа печать/оптимизация/проверка типов). Когда операции должны быть отделены от данных.",
                 "edge_cases": "Добавление нового типа элемента требует менять все Visitor-ы — это обратная сторона паттерна. Поэтому Visitor подходит, когда типы стабильны, а операции переменчивы. Альтернатива в Java 14+ — `pattern matching` с `sealed`-классами.",
-                "related": "Q22 Composite (часто комбинируется); Q40 связи паттернов; Q41 Java pattern matching."
+                "related": "[[design-patterns-interview#Q22]] Composite (часто комбинируется); [[design-patterns-interview#Q40]] связи паттернов; [[design-patterns-interview#Q41]] Java pattern matching."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "Своя коллекция `NumberRange implements Iterable<Integer>` с анонимным `Iterator` внутри `iterator()`. В JDK: `Iterator` для всех `Collection`, `Enumeration` (legacy с Java 1.0), `Spliterator` (для параллельных потоков), `Scanner` (для ввода).",
                 "when_to_apply": "Когда нужно итерировать произвольную коллекцию без раскрытия внутренностей; для собственных контейнеров (deque, tree, range); при работе с потоками данных, которые слишком велики для загрузки в память (`Iterator` пишет lazy).",
                 "edge_cases": "`ConcurrentModificationException` при изменении коллекции во время итерации (fail-fast). Concurrent коллекции (`ConcurrentHashMap`) — weakly consistent. `Iterator.remove()` — единственный безопасный способ удалить элемент в процессе итерации.",
-                "related": "Q22 Composite (Iterator+Composite для дерева); Q41 Stream/Spliterator; Q43 комбинации."
+                "related": "[[design-patterns-interview#Q22]] Composite (Iterator+Composite для дерева); [[design-patterns-interview#Q41]] Stream/Spliterator; [[design-patterns-interview#Q43]] комбинации."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "Чат-комната (`GroupChat`) — медиатор: пользователи (`ChatUser`) не общаются напрямую, а отправляют сообщение через `mediator.sendMessage()`. Медиатор рассылает остальным. В Spring: `DispatcherServlet` — медиатор между HTTP-запросом, контроллерами и view resolvers.",
                 "when_to_apply": "Когда между объектами образуется сложная сеть взаимодействий с растущим числом связей; для GUI-форм (поля влияют друг на друга), для координации workflow-шагов, для контроля порядка в распределённых системах.",
                 "edge_cases": "Медиатор может стать `God Object`, если знает слишком много о бизнес-логике участников — нужно балансировать. Отличается от `Observer`: Mediator — централизованная координация (часто двусторонняя), Observer — однонаправленная подписка.",
-                "related": "Q27 Observer (отличие); Q36 Spring DispatcherServlet; Q43 Observer+Mediator (event bus)."
+                "related": "[[design-patterns-interview#Q27]] Observer (отличие); [[design-patterns-interview#Q36]] Spring DispatcherServlet; [[design-patterns-interview#Q43]] Observer+Mediator (event bus)."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "`TextEditor.save()` возвращает `EditorMemento(content, cursor)`; `restore(memento)` восстанавливает. `EditorHistory` — caretaker, держит `Deque<EditorMemento>` для undo. В JDK: `java.io.Serializable` — близок концептуально (сохранение состояния), но не классический Memento.",
                 "when_to_apply": "Для реализации undo/redo (редакторы); для save points в играх; для откатов транзакций на уровне приложения; для snapshot-ов состояния workflow.",
                 "edge_cases": "Memento может потреблять много памяти при глубокой истории — нужно ограничивать размер `Deque`. Глубокое копирование (deep copy) обязательно, если состояние содержит mutable-объекты. В Java часто комбинируется с `Command` для command-based undo.",
-                "related": "Q29 Command (Command+Memento для undo); Q34 связи; Q43 комбинации паттернов."
+                "related": "[[design-patterns-interview#Q29]] Command (Command+Memento для undo); [[design-patterns-interview#Q34]] связи; [[design-patterns-interview#Q43]] комбинации паттернов."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "На собеседовании просят: «Какой паттерн в `java.io`?» — `Decorator`. «Какой в `Comparator`?» — `Strategy`. «Какой в `Iterator.next()`?» — `Iterator`. Знание примеров в JDK укрепляет понимание.",
                 "when_to_apply": "При обучении паттернам полезно сразу видеть, как они применяются в JDK — это помогает понять, когда они уместны на практике. При собственной реализации можно опираться на канонические образцы.",
                 "edge_cases": "Часть паттернов в JDK реализованы не идеально (например, `java.util.Observable` deprecated). Современные альтернативы — `Flow API` (Java 9+) для Observer, `record` для immutable Memento.",
-                "related": "Q36 паттерны в Spring; Q41 Java 8+ изменения; все вопросы про конкретные паттерны."
+                "related": "[[design-patterns-interview#Q36]] паттерны в Spring; [[design-patterns-interview#Q41]] Java 8+ изменения; все вопросы про конкретные паттерны."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "`@Transactional` метод → CGLIB-прокси оборачивает в начало/конец транзакции. `applicationEventPublisher.publishEvent(event)` → `@EventListener` методы обрабатывают (Observer). `DispatcherServlet` — Mediator + Strategy (для view resolver / handler mapping).",
                 "when_to_apply": "Знание паттернов в Spring помогает понимать почему что-то работает (например, `@Transactional` не работает при self-invocation — потому что Proxy). На собеседовании показывает зрелое понимание фреймворка.",
                 "edge_cases": "`@Transactional` self-invocation: вызов `this.foo()` внутри класса не идёт через proxy → транзакция не открывается. `FactoryBean<T>` сложно тестировать. `CGLIB`-proxy не работает для `final`-методов и `final`-классов.",
-                "related": "Q20 Proxy; Q35 паттерны в JDK; Q37 DI vs Service Locator; Q38 Singleton vs Spring scope."
+                "related": "[[design-patterns-interview#Q20]] Proxy; [[design-patterns-interview#Q35]] паттерны в JDK; [[design-patterns-interview#Q37]] DI vs Service Locator; [[design-patterns-interview#Q38]] Singleton vs Spring scope."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "DI: `class OrderService { OrderService(PaymentGateway gw) {...} }` — зависимость явная. Service Locator: `PaymentGateway gw = ServiceLocator.get(PaymentGateway.class)` внутри метода — скрытая. Mock в DI — через конструктор; в SL — нужно мокать сам Locator.",
                 "when_to_apply": "В новом коде всегда предпочитать DI. `Service Locator` допустим в legacy-коде, в frameworks с отсутствием DI или при работе с JNDI/ServiceLoader. Spring предлагает DI, но `ApplicationContext.getBean()` — это уже Service Locator (anti-pattern для production-кода).",
                 "edge_cases": "В тестах DI требует mock-frameworks (Mockito); Service Locator — сложнее mock-ить (нужны статические mock-и или подмена реестра). DI способствует SRP/DIP, Service Locator — наоборот, размывает зависимости.",
-                "related": "Q5 SOLID (DIP); Q36 Spring DI; Q38 Singleton scope."
+                "related": "[[design-patterns-interview#Q5]] SOLID (DIP); [[design-patterns-interview#Q36]] Spring DI; [[design-patterns-interview#Q38]] Singleton scope."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "`@Component class MyService {}` — Singleton-scope в Spring (default). Если приложение имеет parent + child context, в каждом будет свой экземпляр. GoF: `class Db { private static final Db INSTANCE; private Db(); }` — один на JVM независимо от контекстов.",
                 "when_to_apply": "Spring scope подходит для большинства бизнес-сервисов (stateless, разделяемые). GoF Singleton — для технических ресурсов (cache, registry), которые должны быть уникальны независимо от контейнера.",
                 "edge_cases": "В multi-context приложениях (Spring Boot test + main) бины с одинаковым именем могут существовать в нескольких экземплярах. Singleton scope требует thread-safety от бина (Spring не синхронизирует доступ).",
-                "related": "Q6 Singleton implementations; Q9 недостатки; Q36 Spring patterns."
+                "related": "[[design-patterns-interview#Q6]] Singleton implementations; [[design-patterns-interview#Q9]] недостатки; [[design-patterns-interview#Q36]] Spring patterns."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "Задача: «выбрать алгоритм в runtime для расчёта скидки». 1) Behavioral. 2) Кандидаты: `Strategy`, `State`, `Template Method`. 3) Подходит `Strategy` (выбор алгоритма клиентом, без состояния). 4) Простой `Map<String, Function<Order, Discount>>` тоже работает и короче.",
                 "when_to_apply": "При проектировании новых модулей; при code review для оценки альтернатив; при рефакторинге сложного кода.",
                 "edge_cases": "Не пытайтесь применить именованный паттерн любой ценой — иногда правильный ответ «никакой, простого if достаточно». Один паттерн часто пересекается с другим (`Strategy` vs `State`, `Decorator` vs `Proxy`) — различаются по семантике, не по структуре.",
-                "related": "Q4 риски паттернов; Q40 связи паттернов; Q47 когда не применять."
+                "related": "[[design-patterns-interview#Q4]] риски паттернов; [[design-patterns-interview#Q40]] связи паттернов; [[design-patterns-interview#Q47]] когда не применять."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "В Spring `DispatcherServlet` — `Mediator` + использует `Strategy` (`HandlerMapping`, `ViewResolver`) + `Chain of Responsibility` (`FilterChain`). Один реальный класс пересекает несколько паттернов.",
                 "when_to_apply": "Понимание связей помогает: не применять паттерны изолированно; выбирать комбинации (`Factory + Strategy` для динамического выбора стратегий); видеть, что один паттерн может быть «продвижением» другого.",
                 "edge_cases": "Связь не означает идентичность: `Strategy`+`State` структурно похожи, но семантически разные. Книга `GoF` приводит диаграммы связей паттернов в приложениях. Современные frameworks часто комбинируют 5+ паттернов в одном модуле.",
-                "related": "Q43 частые комбинации; Q1-Q48 все паттерны."
+                "related": "[[design-patterns-interview#Q43]] частые комбинации; Q1-Q48 все паттерны."
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "Strategy: `list.sort((a, b) -> a.compareTo(b))`. Command: `executor.submit(() -> doWork())`. Factory: `Map<String, Supplier<Shape>> factories = Map.of(\"circle\", Circle::new)`. Observer: `Flow.Subscriber` или `Consumer<Event>`.",
                 "when_to_apply": "В новом коде предпочитайте функциональный стиль для простых случаев. Классы остаются предпочтительными, когда: нужно состояние, есть несколько связанных методов, нужно тестировать как unit, нужны имена для читаемости.",
                 "edge_cases": "Лямбды без имён затрудняют отладку и стек-трейсы. Сложные стратегии с состоянием не помещаются в лямбду. Method references (`User::getName`) — middle ground между классом и лямбдой.",
-                "related": "Q25 Strategy через лямбды; Q29 Command как Runnable; Q47 когда не применять."
+                "related": "[[design-patterns-interview#Q25]] Strategy через лямбды; [[design-patterns-interview#Q29]] Command как Runnable; [[design-patterns-interview#Q47]] когда не применять."
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "`interface Logger { log(msg); }` с `ConsoleLogger` и `NullLogger { log(msg) { /* no-op */ } }`. Сервис принимает `Logger` всегда non-null. В JDK: `Collections.emptyList()` — Null Object вместо `null`-списка; `Optional.empty()` — для возвращаемых значений.",
                 "when_to_apply": "Когда отсутствие объекта — валидный случай и логика должна продолжаться (например, optional dependencies, default behaviors); чтобы избежать рассыпанных по коду `!= null` проверок.",
                 "edge_cases": "Null Object скрывает ошибки: если объект забыли инициализировать, его «no-op» поведение не вызовет исключения, и баг проявится поздно. Не подходит, когда отсутствие требует явной обработки (логирование, fail-fast). С `Optional` проблема решается явно.",
-                "related": "Q41 Java 8+ изменения; Q47 когда не применять."
+                "related": "[[design-patterns-interview#Q41]] Java 8+ изменения; [[design-patterns-interview#Q47]] когда не применять."
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "Spring `DispatcherServlet`: `Mediator` (координирует) + `Strategy` (`HandlerMapping`, `ViewResolver`) + `Chain of Responsibility` (`HandlerInterceptor`). Один класс — три паттерна. Hibernate Session: `Factory` + `Proxy` (lazy loading) + `Observer` (lifecycle events).",
                 "when_to_apply": "При проектировании крупных модулей часто требуется композиция паттернов. На собеседовании можно демонстрировать зрелость, приводя примеры реальных комбинаций из Spring/Hibernate.",
                 "edge_cases": "Излишнее комбинирование = `Pattern Disease`: 5 паттернов на 200 строк кода — overengineering. Каждый паттерн должен решать конкретную проблему. `Abstract Factory + Singleton` — частая, но иногда избыточная пара.",
-                "related": "Q40 связи паттернов; Q39 алгоритм выбора; Q47 overengineering."
+                "related": "[[design-patterns-interview#Q40]] связи паттернов; [[design-patterns-interview#Q39]] алгоритм выбора; [[design-patterns-interview#Q47]] overengineering."
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "Простой пример: интерпретатор boolean-выражений `a AND (b OR c)`. В JDK концептуально близок `java.util.regex.Pattern` (regex интерпретируются). На практике: ANTLR для языков, SpEL для Spring expressions, JEXL для JEXL-выражений.",
                 "when_to_apply": "Очень редко — когда DSL очень простой (несколько правил), внешняя зависимость избыточна, и грамматика стабильна. В 99% случаев лучше готовые библиотеки.",
                 "edge_cases": "При росте грамматики число классов растёт линейно (по правилам), что неэффективно для сложных языков. Производительность ниже, чем у генерируемых парсеров. Сложности с обработкой ошибок и восстановлением.",
-                "related": "Q44 Interpreter; Q48 Specification (альтернатива для бизнес-правил); Q47 когда не применять."
+                "related": "[[design-patterns-interview#Q44]] Interpreter; [[design-patterns-interview#Q48]] Specification (альтернатива для бизнес-правил); [[design-patterns-interview#Q47]] когда не применять."
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "Ответ: «Strategy — для алгоритмов расчёта скидок. Chain of Responsibility — для валидации заказа. Builder — для отчётов с опциональными секциями. Через Spring — Proxy в @Transactional и Template Method в JdbcTemplate. Observer через @EventListener для async notifications».",
                 "when_to_apply": "На технических собеседованиях. Готовиться заранее: вспомнить 3-5 реальных применений с конкретикой по проблеме, выбору паттерна и trade-offs.",
                 "edge_cases": "Не претендуйте на использование редких паттернов (`Visitor`, `Interpreter`, `Memento`) если их не было — follow-up вопросы быстро выявят. Лучше честно: «Этот паттерн знаю теоретически, но в production не применял».",
-                "related": "Q39 алгоритм выбора; Q47 когда не применять; все паттерны (контекст важен)."
+                "related": "[[design-patterns-interview#Q39]] алгоритм выбора; [[design-patterns-interview#Q47]] когда не применять; все паттерны (контекст важен)."
               }
             },
             {
@@ -2730,7 +2730,7 @@
                 "example": "`HikariCP` для JDBC: пул `Connection`-объектов, `dataSource.getConnection()` берёт из пула, `connection.close()` возвращает (а не закрывает). `Executors.newFixedThreadPool(10)` — пул потоков. Своя реализация: `BlockingQueue<DatabaseConnection>` + `acquire()`/`release()`.",
                 "when_to_apply": "Когда создание объекта дороже его использования (соединения, потоки, большие буферы); когда нужно ограничить число одновременно используемых объектов (защита от перегрузки).",
                 "edge_cases": "Утечка объектов — взяли, не вернули (нужен try-finally или try-with-resources). Dirty state — забыли сбросить состояние (например, transactional state в БД). Deadlock — пул пуст, все потоки ждут освобождения, но никто не освобождает (нужны timeout-ы).",
-                "related": "Q6 Singleton (Pool часто Singleton); Q35 JDK Executors; Q43 комбинации."
+                "related": "[[design-patterns-interview#Q6]] Singleton (Pool часто Singleton); [[design-patterns-interview#Q35]] JDK Executors; [[design-patterns-interview#Q43]] комбинации."
               }
             },
             {
@@ -2802,7 +2802,7 @@
                 "example": "Overkill: `MathUtilsSingleton.getInstance().add(2, 2)` — достаточно `Math.addExact(2, 2)`. Overkill: `new PersonBuilder().name(\"A\").age(30).build()` — достаточно `record Person(String name, int age)`. Признак: паттерн появился до второго use case.",
                 "when_to_apply": "На code review проверять: «решает ли паттерн реальную проблему?», «есть ли альтернатива проще?», «понимают ли коллеги почему он здесь?». Если на любой ответ «нет» — убрать паттерн.",
                 "edge_cases": "«Three Strikes and Refactor»: первый раз пиши прямо, второй замечай дублирование, третий вводи паттерн. Современный Java часто заменяет паттерны лямбдами/`record`-ами — это уменьшает порог применимости паттерна.",
-                "related": "Q4 риски паттернов; Q39 алгоритм выбора; Q45 опыт применения."
+                "related": "[[design-patterns-interview#Q4]] риски паттернов; [[design-patterns-interview#Q39]] алгоритм выбора; [[design-patterns-interview#Q45]] опыт применения."
               }
             },
             {
@@ -2874,7 +2874,7 @@
                 "example": "Кандидат на кредит: `eligibleForLoan = new ActiveCustomerSpec().and(new PremiumCustomerSpec()).and(new MinAgeSpec(18))`. Применение: `customers.stream().filter(eligibleForLoan::isSatisfiedBy).toList()`. В Spring Data: `customerRepository.findAll(spec)` для динамических запросов.",
                 "when_to_apply": "Когда бизнес-правила сложные и должны комбинироваться; для динамических запросов к БД (Spring Data Specifications); для правил валидации, скидок, ценообразования; для DDD-инвариантов в Aggregate Root.",
                 "edge_cases": "Производительность: фильтрация в Java через Specification загружает все записи; для больших таблиц нужно транслировать в JPA Criteria/SQL (Spring Data делает это автоматически). Для простого фильтра один-два предиката — overengineering, достаточно `filter(c -> c.isActive())`.",
-                "related": "Q5 SOLID (SRP); Q41 Java 8+ как функциональный интерфейс; Q44 Interpreter (альтернатива для DSL правил)."
+                "related": "[[design-patterns-interview#Q5]] SOLID (SRP); [[design-patterns-interview#Q41]] Java 8+ как функциональный интерфейс; [[design-patterns-interview#Q44]] Interpreter (альтернатива для DSL правил)."
               }
             }
           ]

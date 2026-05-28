@@ -18,7 +18,7 @@
                 "example": "JVM — один процесс, внутри десятки потоков (GC, JIT, app). Запуск Thread ~ микросекунды, fork() ~ миллисекунды.",
                 "when_to_apply": "Понимание модели изоляции, цены создания, способов коммуникации (IPC vs shared memory).",
                 "edge_cases": "Падение исключения в потоке без UncaughtExceptionHandler может убить весь JVM-процесс. IPC между процессами требует pipes/sockets/shm.",
-                "related": "Q2 создание потока; Q3 состояния; Q9 JMM."
+                "related": "[[java-concurrency-interview#Q2]] создание потока; [[java-concurrency-interview#Q3]] состояния; [[java-concurrency-interview#Q9]] JMM."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "new Thread(() -> log.info(\"hi\")).start(); или ExecutorService.submit(callable).",
                 "when_to_apply": "Любое создание потока; в продакшене обычно через ExecutorService, не напрямую new Thread.",
                 "edge_cases": "Повторный start() на завершённом Thread → IllegalThreadStateException. В Java 21+ предпочтительнее Thread.ofVirtual().start(runnable).",
-                "related": "Q5 Runnable vs Callable; Q28 Executor; Q46 virtual threads."
+                "related": "[[java-concurrency-interview#Q5]] Runnable vs Callable; [[java-concurrency-interview#Q28]] Executor; [[java-concurrency-interview#Q46]] virtual threads."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "Thread.sleep(100) → TIMED_WAITING; lock.lock() пока занят → WAITING (через LockSupport.park).",
                 "when_to_apply": "Диагностика thread dump: jstack показывает состояния. BLOCKED + долго → проблема с монитором.",
                 "edge_cases": "RUNNABLE в dump не означает «исполняется» — может ждать I/O в нативном коде. Многие WAITING на одном объекте → проблема с notify/signal.",
-                "related": "Q7 interrupt; Q16 wait/notify; Q45 thread dump."
+                "related": "[[java-concurrency-interview#Q7]] interrupt; [[java-concurrency-interview#Q16]] wait/notify; [[java-concurrency-interview#Q45]] thread dump."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "Thread.currentThread().setPriority(Thread.MAX_PRIORITY) на Linux практически не меняет шансы получить CPU.",
                 "when_to_apply": "Только как мягкая подсказка для фоновых задач (низкий приоритет GC-helper). Никогда не для корректности.",
                 "edge_cases": "Значение вне 1..10 → IllegalArgumentException. ThreadGroup имеет максимум, выше которого priority поднять нельзя.",
-                "related": "Q24 starvation; Q3 RUNNABLE; Q6 daemon thread."
+                "related": "[[java-concurrency-interview#Q24]] starvation; [[java-concurrency-interview#Q3]] RUNNABLE; [[java-concurrency-interview#Q6]] daemon thread."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "Future<Integer> f = exec.submit(() -> { Thread.sleep(100); return 42; }); — это Callable, потому что есть return и throws InterruptedException.",
                 "when_to_apply": "Runnable — fire-and-forget; Callable — когда нужен результат или checked exception.",
                 "edge_cases": "ExecutorService.submit(Runnable) тоже возвращает Future<?> (для отслеживания завершения, result всегда null). Future.get() оборачивает исключение в ExecutionException.",
-                "related": "Q33 Future; Q28 Executor; Q31 submit vs execute."
+                "related": "[[java-concurrency-interview#Q33]] Future; [[java-concurrency-interview#Q28]] Executor; [[java-concurrency-interview#Q31]] submit vs execute."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "GC threads, JIT compiler, finalizer, jmx-сервер — daemon. ScheduledExecutorService по умолчанию НЕ daemon → JVM висит. Используют ThreadFactory с setDaemon(true).",
                 "when_to_apply": "Фоновые задачи без критичной финализации (статистика, heartbeat, кэш-cleanup).",
                 "edge_cases": "Не использовать daemon для критичной записи в БД/файл — поток может быть убит JVM в середине I/O без finally. setDaemon после start → IllegalThreadStateException.",
-                "related": "Q2 создание потока; Q28 ExecutorService; Q30 shutdown."
+                "related": "[[java-concurrency-interview#Q2]] создание потока; [[java-concurrency-interview#Q28]] ExecutorService; [[java-concurrency-interview#Q30]] shutdown."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "while (!Thread.currentThread().isInterrupted()) { ... try { sleep(100); } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; } }",
                 "when_to_apply": "Долгие/блокирующие задачи, graceful shutdown пулов потоков, реакция на cancellation.",
                 "edge_cases": "Thread.sleep(0) на Windows может молча игнорировать interrupt. Future.cancel(true) вызывает interrupt() на worker-потоке.",
-                "related": "Q23 deadlock; Q30 shutdownNow; Q56 StructuredTaskScope."
+                "related": "[[java-concurrency-interview#Q23]] deadlock; [[java-concurrency-interview#Q30]] shutdownNow; [[java-concurrency-interview#Q56]] StructuredTaskScope."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "t.join(5000) — ждать поток t до 5 секунд. Thread.sleep(1000) внутри synchronized(lock) удерживает lock всё время сна.",
                 "when_to_apply": "yield — почти никогда (платформозависимо); sleep — тестирование/heartbeat; join — координация main с workers.",
                 "edge_cases": "join(0) = join() = бесконечно (а не «не ждать»). sleep(0) на разных ОС ведёт себя по-разному. yield() на Linux часто no-op.",
-                "related": "Q16 wait/notify; Q38 CountDownLatch; Q7 interrupt."
+                "related": "[[java-concurrency-interview#Q16]] wait/notify; [[java-concurrency-interview#Q38]] CountDownLatch; [[java-concurrency-interview#Q7]] interrupt."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "Race: int flag=0; T1: flag=1; T2: while(flag==0); — без volatile T2 может крутиться вечно.",
                 "when_to_apply": "Любая разделяемая память между потоками; проектирование lock-free структур; ревью concurrent-кода.",
                 "edge_cases": "DCL (double-checked locking) без volatile сломан до Java 5. ARM/POWER имеют слабее модель памяти, чем x86 — баги воспроизводятся именно там.",
-                "related": "Q10 volatile; Q11 final; Q12 happens-before."
+                "related": "[[java-concurrency-interview#Q10]] volatile; [[java-concurrency-interview#Q11]] final; [[java-concurrency-interview#Q12]] happens-before."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "volatile boolean running — корректный shutdown-флаг. volatile int counter; counter++ — RACE: атомарности нет, нужен AtomicInteger.",
                 "when_to_apply": "Флаги статуса, double-checked locking (с Java 5+), single-writer состояние с many readers, immutable references после публикации.",
                 "edge_cases": "volatile long/double до Java 5 не были атомарны при чтении на 32-битных JVM. volatile reference не делает объект иммутабельным.",
-                "related": "Q9 JMM; Q18 Atomic/CAS; Q12 happens-before."
+                "related": "[[java-concurrency-interview#Q9]] JMM; [[java-concurrency-interview#Q18]] Atomic/CAS; [[java-concurrency-interview#Q12]] happens-before."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "String, Integer, LocalDate потокобезопасны без synchronized — все поля final + this не утекает. Если конструктор делает registry.add(this) до завершения — гарантия теряется.",
                 "when_to_apply": "Immutable value objects, configuration, cached results. Java records — все поля final by design.",
                 "edge_cases": "Утечка this: addListener(this) внутри конструктора. final со ссылкой на mutable Collection не делает контент иммутабельным.",
-                "related": "Q9 JMM; Q17 thread-safe class; Q34 CompletableFuture (immutable result)."
+                "related": "[[java-concurrency-interview#Q9]] JMM; [[java-concurrency-interview#Q17]] thread-safe class; [[java-concurrency-interview#Q34]] CompletableFuture (immutable result)."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "unlock(m) hb subsequent lock(m); volatile write hb subsequent volatile read; thread.start() hb первой инструкции в run(); transitive: A hb B и B hb C → A hb C.",
                 "when_to_apply": "Доказательство корректности любого lock-free/concurrent-алгоритма; ревью synchronized/volatile/Atomic кода.",
                 "edge_cases": "happens-before не означает «происходит раньше во времени», только «видно». Нет hb → race condition, поведение undefined.",
-                "related": "Q9 JMM; Q10 volatile; Q13 synchronized."
+                "related": "[[java-concurrency-interview#Q9]] JMM; [[java-concurrency-interview#Q10]] volatile; [[java-concurrency-interview#Q13]] synchronized."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "public synchronized void inc() { count++; } — монитор this. synchronized(lock) { ... } — явный монитор.",
                 "when_to_apply": "Простая защита состояния, когда не нужны tryLock/timeout/fairness/Condition. По умолчанию выбор перед ReentrantLock.",
                 "edge_cases": "synchronized на String literal или Integer.valueOf(1) → конфликты с другим кодом, разделяющим тот же интернированный объект. На null → NullPointerException.",
-                "related": "Q14 блок vs метод; Q15 class vs instance lock; Q20 ReentrantLock; Q48 pinning virtual threads."
+                "related": "[[java-concurrency-interview#Q14]] блок vs метод; [[java-concurrency-interview#Q15]] class vs instance lock; [[java-concurrency-interview#Q20]] ReentrantLock; [[java-concurrency-interview#Q48]] pinning virtual threads."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "synchronized(balanceLock) { balance += amount; } — блокирует только балансовую операцию; в этот момент чтение истории через historyLock параллельно.",
                 "when_to_apply": "Любое нетривиальное состояние с несколькими независимыми ресурсами; библиотечный код, где утечка lock наружу нежелательна.",
                 "edge_cases": "Несколько мониторов → потенциальный deadlock; нужно lock ordering. Lock split не всегда даёт прирост — измеряйте.",
-                "related": "Q13 synchronized; Q15 class vs instance lock; Q23 deadlock."
+                "related": "[[java-concurrency-interview#Q13]] synchronized; [[java-concurrency-interview#Q15]] class vs instance lock; [[java-concurrency-interview#Q23]] deadlock."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "Два разных Counter c1, c2 — c1.inc() и c2.inc() параллельны. Counter.staticOp() и Counter.staticOp2() — последовательны, монитор Counter.class.",
                 "when_to_apply": "Защита shared static state (singleton init, статический счётчик) — class lock; защита состояния экземпляра — instance lock.",
                 "edge_cases": "Mixing static и instance synchronized в одном классе — разные мониторы, между собой не блокируют. Singleton с DCL должен использовать volatile + synchronized(Class).",
-                "related": "Q13 synchronized; Q14 блок vs метод; Q23 deadlock."
+                "related": "[[java-concurrency-interview#Q13]] synchronized; [[java-concurrency-interview#Q14]] блок vs метод; [[java-concurrency-interview#Q23]] deadlock."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "synchronized(q){ while(q.isEmpty()) q.wait(); item = q.remove(); } и synchronized(q){ q.add(item); q.notifyAll(); }",
                 "when_to_apply": "Низкоуровневая координация, когда нет высокоуровневого синхронизатора. В современном коде предпочитают BlockingQueue/CountDownLatch/Condition.",
                 "edge_cases": "wait() без synchronized → IllegalMonitorStateException. notify() при отсутствии ожидающих — теряется сигнал. Spurious wakeups редкие, но возможны.",
-                "related": "Q22 Condition; Q38 CountDownLatch; Q43 BlockingQueue."
+                "related": "[[java-concurrency-interview#Q22]] Condition; [[java-concurrency-interview#Q38]] CountDownLatch; [[java-concurrency-interview#Q43]] BlockingQueue."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "ConcurrentHashMap, AtomicInteger, String, Integer — thread-safe. ArrayList, HashMap, SimpleDateFormat — нет.",
                 "when_to_apply": "Документация: всегда указывайте thread-safety гарантии в Javadoc. Дизайн: immutability — самый простой путь.",
                 "edge_cases": "Compound операции (check-then-act, read-modify-write) могут быть небезопасны даже на thread-safe классе. Vector — thread-safe но iteration требует внешней синхронизации.",
-                "related": "Q11 final; Q18 Atomic; Q41 concurrent collections."
+                "related": "[[java-concurrency-interview#Q11]] final; [[java-concurrency-interview#Q18]] Atomic; [[java-concurrency-interview#Q41]] concurrent collections."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "AtomicLong requestCount; requestCount.incrementAndGet(); — счётчик RPS без synchronized. AtomicReference<State> — атомарная замена состояния.",
                 "when_to_apply": "Счётчики, флаги, single-writer state machine, lock-free стэки/очереди. При высокой contention лучше LongAdder.",
                 "edge_cases": "ABA-проблема: значение менялось 1→2→1, CAS пройдёт хотя «состояние изменилось». Решение — AtomicStampedReference с версией. Spin-loop при высокой contention тратит CPU.",
-                "related": "Q19 AtomicInteger vs synchronized; Q41 ConcurrentHashMap; Q10 volatile."
+                "related": "[[java-concurrency-interview#Q19]] AtomicInteger vs synchronized; [[java-concurrency-interview#Q41]] ConcurrentHashMap; [[java-concurrency-interview#Q10]] volatile."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "Метрики RPS: AtomicLong при <10K calls/sec, LongAdder при >100K. Counter.increment() в Micrometer использует LongAdder.",
                 "when_to_apply": "Atomic — single value под умеренной contention. LongAdder/DoubleAdder — счётчики/аккумуляторы под высокой contention. synchronized int — только если нужна группа полей вместе.",
                 "edge_cases": "LongAdder.sum() читает все ячейки без снимка → значение может «дрожать». LongAdder занимает больше памяти (по ячейке на CPU).",
-                "related": "Q18 Atomic/CAS; Q41 ConcurrentHashMap; Q42 ConcurrentHashMap mechanism."
+                "related": "[[java-concurrency-interview#Q18]] Atomic/CAS; [[java-concurrency-interview#Q41]] ConcurrentHashMap; [[java-concurrency-interview#Q42]] ConcurrentHashMap mechanism."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "if (lock.tryLock(5, SECONDS)) try {...} finally {lock.unlock();} — попытка с таймаутом, защита от долгого ожидания.",
                 "when_to_apply": "Нужен timeout/interruptible/fairness/multiple conditions. Производительность ReentrantLock и synchronized сравнимы с Java 6+ (biased locking).",
                 "edge_cases": "Двойной lock() — счётчик удержаний; нужно столько же unlock(). Fairness снижает throughput, использовать только при риске starvation.",
-                "related": "Q13 synchronized; Q22 Condition; Q48 virtual threads pinning (synchronized→ReentrantLock)."
+                "related": "[[java-concurrency-interview#Q13]] synchronized; [[java-concurrency-interview#Q22]] Condition; [[java-concurrency-interview#Q48]] virtual threads pinning (synchronized→ReentrantLock)."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "StampedLock на 2D-точке: distance() читает x,y оптимистично; move() пишет writeLock. ReadWriteLock на cache: read 99% → высокий параллелизм.",
                 "when_to_apply": "Read-heavy workloads. StampedLock — для совсем горячих read-paths (геометрия, in-memory cache). ReentrantReadWriteLock — если нужна реентерабельность.",
                 "edge_cases": "StampedLock не реентерабелен → повторный writeLock из того же потока = deadlock. Wrong unlock stamp → IllegalMonitorStateException. Writer starvation в RWLock без fairness.",
-                "related": "Q20 ReentrantLock; Q22 Condition; Q53 StampedLock детально."
+                "related": "[[java-concurrency-interview#Q20]] ReentrantLock; [[java-concurrency-interview#Q22]] Condition; [[java-concurrency-interview#Q53]] StampedLock детально."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "ArrayBlockingQueue использует Lock + notFull/notEmpty Condition'ы — producer ждёт notFull, consumer ждёт notEmpty.",
                 "when_to_apply": "Несколько разных условий ожидания на одной критической секции; producer-consumer; concurrent коллекции.",
                 "edge_cases": "Condition.await() должен быть в while-цикле (как wait). signal() — недетерминированный поток; signalAll() безопаснее. Доступен только при удерживаемом Lock.",
-                "related": "Q16 wait/notify; Q20 ReentrantLock; Q43 BlockingQueue."
+                "related": "[[java-concurrency-interview#Q16]] wait/notify; [[java-concurrency-interview#Q20]] ReentrantLock; [[java-concurrency-interview#Q43]] BlockingQueue."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "Bank.transfer(a, b) и Bank.transfer(b, a) — классический deadlock. Решение: захватывать lock с меньшим id первым.",
                 "when_to_apply": "Любой код с несколькими блокировками; ревью distributed transactions; обнаружение через jstack/ThreadMXBean.findDeadlockedThreads().",
                 "edge_cases": "Deadlock с одним lock возможен (recursive non-reentrant). DB deadlock между уровнями — InnoDB определяет и откатывает.",
-                "related": "Q24 livelock/starvation; Q20 ReentrantLock.tryLock; Q45 thread dump."
+                "related": "[[java-concurrency-interview#Q24]] livelock/starvation; [[java-concurrency-interview#Q20]] ReentrantLock.tryLock; [[java-concurrency-interview#Q45]] thread dump."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "Deadlock — два transfer в обратном порядке. Livelock — два tryLock+retry в одинаковых условиях. Starvation — low-priority поток никогда не получает CPU.",
                 "when_to_apply": "Диагностика: deadlock → jstack/findDeadlocked; livelock → метрики throughput; starvation → fairness, мониторинг latency tail.",
                 "edge_cases": "Live-lock между retry-логикой клиента и backoff. Reader-starvation в ReadWriteLock без fairness когда писатели часты.",
-                "related": "Q23 deadlock; Q4 priority; Q20 fairness."
+                "related": "[[java-concurrency-interview#Q23]] deadlock; [[java-concurrency-interview#Q4]] priority; [[java-concurrency-interview#Q20]] fairness."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "map.computeIfAbsent(k, fn) вместо containsKey+put. AtomicLong.incrementAndGet вместо ++. Knight Capital 2012 — race + старый код = $440M убытка за 45 минут.",
                 "when_to_apply": "Ревью любой работы с shared state; статический анализ SpotBugs/IDEA inspections; стресс-тесты с JCStress.",
                 "edge_cases": "Time-of-check vs time-of-use в файловой системе (TOCTOU). Race в инициализации singleton без volatile + DCL.",
-                "related": "Q17 thread-safe; Q18 Atomic; Q42 ConcurrentHashMap."
+                "related": "[[java-concurrency-interview#Q17]] thread-safe; [[java-concurrency-interview#Q18]] Atomic; [[java-concurrency-interview#Q42]] ConcurrentHashMap."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "Spring SecurityContextHolder, MDC в логировании, Hibernate Session. JDBC Connection в Spring — TransactionSynchronizationManager.",
                 "when_to_apply": "Per-thread кэш дорогих объектов (SimpleDateFormat в pre-Java 8), контекст запроса, transaction-aware ресурсы.",
                 "edge_cases": "Утечка ClassLoader в Tomcat при reload приложения. InheritableThreadLocal не работает с пулами (поток создан один раз). Virtual threads → миллион ThreadLocal копий → много памяти.",
-                "related": "Q27 InheritableThreadLocal; Q50 ScopedValue; Q47 virtual threads."
+                "related": "[[java-concurrency-interview#Q27]] InheritableThreadLocal; [[java-concurrency-interview#Q50]] ScopedValue; [[java-concurrency-interview#Q47]] virtual threads."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "MDC в logback — копируется при создании потока, но в @Async тред-пуле MDC не наследуется. TaskDecorator пробрасывает MDC вручную.",
                 "when_to_apply": "Только когда дочерние потоки создаются прямо сейчас (не из пула). Для пулов — TaskDecorator или ScopedValue.",
                 "edge_cases": "Shallow copy: дочерний поток получает ссылку, не deep copy (если значение мутабельное — race возможен). InheritableThreadLocal не работает с CompletableFuture в commonPool.",
-                "related": "Q26 ThreadLocal; Q50 ScopedValue; Q47 virtual threads."
+                "related": "[[java-concurrency-interview#Q26]] ThreadLocal; [[java-concurrency-interview#Q50]] ScopedValue; [[java-concurrency-interview#Q47]] virtual threads."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "ExecutorService pool = Executors.newFixedThreadPool(8); Future<Integer> f = pool.submit(() -> compute()); pool.shutdown(); pool.awaitTermination(60, SECONDS);",
                 "when_to_apply": "Любая параллельная работа в продакшене; никогда не создавать new Thread напрямую — пул-менеджмент через ExecutorService.",
                 "edge_cases": "Executors.newCachedThreadPool() может создать неограниченное число потоков → OOM. Не вызвали shutdown → non-daemon потоки держат JVM.",
-                "related": "Q29 реализации; Q30 shutdown; Q31 submit vs execute; Q33 Future."
+                "related": "[[java-concurrency-interview#Q29]] реализации; [[java-concurrency-interview#Q30]] shutdown; [[java-concurrency-interview#Q31]] submit vs execute; [[java-concurrency-interview#Q33]] Future."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "newFixedThreadPool(2) + 1M задач → OOM (очередь съест heap). newCachedThreadPool + 100K параллельных I/O → 100K OS threads → crash. Решение: new ThreadPoolExecutor(8, 16, 60, SEC, new ArrayBlockingQueue<>(1000), new CallerRunsPolicy()).",
                 "when_to_apply": "Fixed — предсказуемая нагрузка. Cached — короткие задачи. Single — последовательность. Scheduled — cron. WorkStealing — рекурсивные. VirtualPerTask — I/O-bound на Java 21.",
                 "edge_cases": "newSingleThreadExecutor с unbounded queue → OOM при backlog. ScheduledExecutorService при exception в task — последующие выполнения отменяются (для fixedRate/fixedDelay).",
-                "related": "Q28 Executor; Q30 shutdown; Q32 ForkJoinPool; Q46 virtual threads."
+                "related": "[[java-concurrency-interview#Q28]] Executor; [[java-concurrency-interview#Q30]] shutdown; [[java-concurrency-interview#Q32]] ForkJoinPool; [[java-concurrency-interview#Q46]] virtual threads."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "Spring graceful shutdown @PreDestroy: shutdown + await 30s + shutdownNow если не уложился.",
                 "when_to_apply": "Любое приложение с пулом потоков — обязательная процедура graceful shutdown в @PreDestroy/shutdownHook.",
                 "edge_cases": "shutdownNow() не гарантирует прерывание — задачи могут не реагировать на interrupt. Без awaitTermination shutdown — пул может не успеть.",
-                "related": "Q7 interrupt; Q28 Executor; Q33 Future.cancel."
+                "related": "[[java-concurrency-interview#Q7]] interrupt; [[java-concurrency-interview#Q28]] Executor; [[java-concurrency-interview#Q33]] Future.cancel."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "executor.execute(() -> { throw new RuntimeException(); }) → лог в stderr; executor.submit(...) → тишина, пока не вызвали future.get().",
                 "when_to_apply": "execute — fire-and-forget где исключение должно «громко» падать; submit — когда нужен результат, отмена или явная обработка ошибок.",
                 "edge_cases": "Без get() submit «глотает» exception → молчаливая потеря задач. ScheduledExecutorService при exception в scheduled task — последующие не выполняются.",
-                "related": "Q28 Executor; Q33 Future; Q7 interrupt."
+                "related": "[[java-concurrency-interview#Q28]] Executor; [[java-concurrency-interview#Q33]] Future; [[java-concurrency-interview#Q7]] interrupt."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "new ForkJoinPool(8).invoke(new SumTask(arr, 0, arr.length)) — recursive merge sum. parallelStream под капотом — commonPool.",
                 "when_to_apply": "CPU-bound recursive задачи: merge sort, parallel reduce, matrix multiplication, web crawler с children URLs.",
                 "edge_cases": "Блокирующий I/O в ForkJoinPool блокирует worker → деградация parallelStream. Решение: ManagedBlocker или отдельный pool.",
-                "related": "Q51 ForkJoinPool детально; Q34 CompletableFuture; Q28 Executor."
+                "related": "[[java-concurrency-interview#Q51]] ForkJoinPool детально; [[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q28]] Executor."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "Future<String> f = exec.submit(callable); String r = f.get(5, SECONDS);. FutureTask<Integer> t = new FutureTask<>(callable); new Thread(t).start(); t.get();",
                 "when_to_apply": "Простые fire-and-collect случаи; legacy-код; когда не нужны цепочки. Иначе — CompletableFuture.",
                 "edge_cases": "Future.get() без таймаута может висеть навечно. cancel(true) на не запущенной задаче — успешен; на выполняющейся — interrupt, но задача может не реагировать.",
-                "related": "Q34 CompletableFuture; Q31 submit vs execute; Q7 interrupt."
+                "related": "[[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q31]] submit vs execute; [[java-concurrency-interview#Q7]] interrupt."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "supplyAsync(() -> fetchUser(id), httpExecutor).thenApply(this::enrich).thenAccept(this::send).exceptionally(ex -> { log.error(ex); return null; });",
                 "when_to_apply": "Любой async pipeline: fan-out + aggregation, timeouts (orTimeout), parallel HTTP-calls, обработка ошибок без вложенных try-catch.",
                 "edge_cases": "thenApply без Async выполняется в потоке, завершившем CF — может быть main или ForkJoin worker. orTimeout/completeOnTimeout — Java 9+. Default commonPool — bad для блокирующих задач.",
-                "related": "Q35 thenApply vs Compose vs Combine; Q36 exceptions; Q37 allOf/anyOf; Q52 сложные цепочки."
+                "related": "[[java-concurrency-interview#Q35]] thenApply vs Compose vs Combine; [[java-concurrency-interview#Q36]] exceptions; [[java-concurrency-interview#Q37]] allOf/anyOf; [[java-concurrency-interview#Q52]] сложные цепочки."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "getUserId().thenApply(id -> \"User-\"+id) — sync. getUserId().thenCompose(this::fetchProfile) — async chain. fetchName().thenCombine(fetchAge(), (n, a) -> n+\"/\"+a) — parallel.",
                 "when_to_apply": "thenApply — pure-функция трансформации. thenCompose — для async-вызовов в цепочке. thenCombine — параллельные независимые запросы с агрегацией.",
                 "edge_cases": "thenApply возвращающий CF создаёт CF<CF<T>> — нужен thenCompose. thenCombine ждёт ОБОИХ; если один упал — второй продолжит и результат летит в exception.",
-                "related": "Q34 CompletableFuture; Q37 allOf; Q52 сложные цепочки."
+                "related": "[[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q37]] allOf; [[java-concurrency-interview#Q52]] сложные цепочки."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "cf.exceptionally(ex -> defaultUser); cf.handle((u, ex) -> ex!=null ? new ErrorView(ex) : new OkView(u)); cf.whenComplete((u, ex) -> metrics.record(ex==null));.",
                 "when_to_apply": "exceptionally — простой fallback. handle — нужна обработка обоих случаев или трансформация success. whenComplete — pure side-effect.",
                 "edge_cases": "Throwable в этих методах — CompletionException, обёрнутый над исходным; нужно unwrap getCause(). Async-варианты выполняют callback в commonPool/указанном executor.",
-                "related": "Q34 CompletableFuture; Q35 thenApply; Q52 сложные цепочки."
+                "related": "[[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q35]] thenApply; [[java-concurrency-interview#Q52]] сложные цепочки."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "Parallel HTTP-calls: List<CF<String>> futures = urls.stream().map(this::fetchAsync).toList(); allOf(futures.toArray(CF[]::new)).thenApply(v -> futures.stream().map(CF::join).toList()).",
                 "when_to_apply": "allOf — fan-out все ответы нужны (профиль = user+orders+reviews). anyOf — fallback datacenters, fastest response wins.",
                 "edge_cases": "allOf не cancel'ит остальные при ошибке одной — расходуют ресурсы. anyOf может вернуть exception если первый завершился ошибкой. Тип CF<Object> неудобен — обычно с allOf+join.",
-                "related": "Q34 CompletableFuture; Q35 thenApply; Q56 StructuredTaskScope."
+                "related": "[[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q35]] thenApply; [[java-concurrency-interview#Q56]] StructuredTaskScope."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "Latch: main ждёт пока N воркеров инициализируются. Barrier: parallel-iterations моделирования, все потоки ждут конца итерации.",
                 "when_to_apply": "Latch — gate/finish-line (стартовать всех одновременно, дождаться завершения). Barrier — phased computation, parallel matrix operations.",
                 "edge_cases": "CyclicBarrier при BrokenBarrierException → весь barrier broken, нужно reset(). Latch.countDown() ниже нуля — не падает, остаётся 0.",
-                "related": "Q40 Phaser; Q44 Producer-Consumer; Q54 Phaser vs others."
+                "related": "[[java-concurrency-interview#Q40]] Phaser; [[java-concurrency-interview#Q44]] Producer-Consumer; [[java-concurrency-interview#Q54]] Phaser vs others."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "Ограничить параллельные HTTP-вызовы к легаси-API: Semaphore sem = new Semaphore(10); sem.acquire(); try { httpCall(); } finally { sem.release(); }.",
                 "when_to_apply": "Rate limiting, connection pool, ограничение количества одновременных операций (например, не более 5 параллельных reports).",
                 "edge_cases": "Забыли release → permits протекают, в итоге deadlock. release() может быть вызван без предшествующего acquire — повышает счётчик выше начального. Бессрочный acquire без таймаута.",
-                "related": "Q20 ReentrantLock; Q38 Latch/Barrier; Q43 BlockingQueue."
+                "related": "[[java-concurrency-interview#Q20]] ReentrantLock; [[java-concurrency-interview#Q38]] Latch/Barrier; [[java-concurrency-interview#Q43]] BlockingQueue."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "Exchanger<List<Item>>: producer заполняет, consumer обрабатывает, на exchange() меняют буфера. Phaser: 3 фазы (load, process, save) с произвольным числом workers.",
                 "when_to_apply": "Phaser — phased parallel computation, dynamic worker addition. Exchanger — handoff между парой потоков, ETL pipelines.",
                 "edge_cases": "Phaser onAdvance hook может завершить phaser (return true). Exchanger ограничен парой — для 3+ потоков не подходит.",
-                "related": "Q38 Latch/Barrier; Q54 Phaser детально; Q55 Exchanger детально."
+                "related": "[[java-concurrency-interview#Q38]] Latch/Barrier; [[java-concurrency-interview#Q54]] Phaser детально; [[java-concurrency-interview#Q55]] Exchanger детально."
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "Map<String, AtomicLong> counters = new ConcurrentHashMap<>(); counters.computeIfAbsent(key, k -> new AtomicLong()).incrementAndGet();",
                 "when_to_apply": "Многопоточный код всегда выбирает concurrent collections. CoW — для редкой записи / частого чтения (listener lists).",
                 "edge_cases": "size() / isEmpty() — приблизительные (weakly consistent). ConcurrentHashMap не допускает null keys/values. CoW дорогой при частой записи (O(N) копирование).",
-                "related": "Q42 ConcurrentHashMap; Q43 BlockingQueue; Q17 thread-safe."
+                "related": "[[java-concurrency-interview#Q42]] ConcurrentHashMap; [[java-concurrency-interview#Q43]] BlockingQueue; [[java-concurrency-interview#Q17]] thread-safe."
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "putIfAbsent, computeIfAbsent, merge — все атомарные. map.merge(k, 1, Integer::sum) — атомарный counter без race.",
                 "when_to_apply": "Любой shared mutable Map в multi-thread; кэши; counters per key; LRU замена через ConcurrentHashMap + размер контроль вручную.",
                 "edge_cases": "computeIfAbsent с долгой функцией удерживает bucket lock — другие writers на тот же bucket ждут. size() приблизительный. Recursive update в computeIfAbsent на ту же мапу → StackOverflowError или странности.",
-                "related": "Q41 concurrent collections; Q18 CAS; Q25 race condition."
+                "related": "[[java-concurrency-interview#Q41]] concurrent collections; [[java-concurrency-interview#Q18]] CAS; [[java-concurrency-interview#Q25]] race condition."
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "BlockingQueue<Task> q = new LinkedBlockingQueue<>(1000); producer: q.put(task); consumer: q.take().",
                 "when_to_apply": "Любая producer-consumer связка; внутренняя очередь ThreadPoolExecutor; rate limiting через bounded queue.",
                 "edge_cases": "PriorityBlockingQueue unbounded → OOM при backlog. SynchronousQueue — каждая put ждёт take, нет буфера. offer/poll — non-blocking аналоги.",
-                "related": "Q41 concurrent collections; Q44 Producer-Consumer; Q29 newCachedThreadPool."
+                "related": "[[java-concurrency-interview#Q41]] concurrent collections; [[java-concurrency-interview#Q44]] Producer-Consumer; [[java-concurrency-interview#Q29]] newCachedThreadPool."
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "BlockingQueue<Task> q = new LinkedBlockingQueue<>(100); producer.submit(() -> { while(running) q.put(generate()); }); consumer: while(true) { var t = q.take(); if(t==POISON) break; process(t); }",
                 "when_to_apply": "Любая декомпозиция «producer → process pipeline → consumer»: ETL, log-processing, message workers.",
                 "edge_cases": "Без bounded queue — OOM при медленном consumer. Producer должен ловить InterruptedException на put. Множественные consumers требуют по poison pill на каждого.",
-                "related": "Q43 BlockingQueue; Q22 Condition; Q38 Latch."
+                "related": "[[java-concurrency-interview#Q43]] BlockingQueue; [[java-concurrency-interview#Q22]] Condition; [[java-concurrency-interview#Q38]] Latch."
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "jstack 12345 > dump.txt; grep -A20 'BLOCKED' dump.txt. В коде: long[] ids = mxBean.findDeadlockedThreads(); if(ids != null) alert.",
                 "when_to_apply": "Production-инциденты: высокий CPU, висящие запросы, подозрение на deadlock, мониторинг через JMX.",
                 "edge_cases": "Thread dump не показывает CPU usage per thread — нужен top -H + jstack. Native frames видны частично. Виртуальные потоки в Java 21 — отдельная категория в dump.",
-                "related": "Q23 deadlock; Q24 livelock; Q3 Thread.State."
+                "related": "[[java-concurrency-interview#Q23]] deadlock; [[java-concurrency-interview#Q24]] livelock; [[java-concurrency-interview#Q3]] Thread.State."
               }
             },
             {
@@ -2730,7 +2730,7 @@
                 "example": "try (var exec = Executors.newVirtualThreadPerTaskExecutor()) { for (int i = 0; i < 100_000; i++) exec.submit(() -> httpClient.send(...)); } — 100K параллельных HTTP-запросов без OOM.",
                 "when_to_apply": "I/O-bound (HTTP, DB, files); thread-per-request серверы; масштаб 10K+ конкурентных задач. Spring Boot 3.2+ автоматически использует VT для Tomcat.",
                 "edge_cases": "synchronized + блокирующий I/O = pinning (carrier застрял). Heavy ThreadLocal × миллион VT = много памяти. CPU-bound — нет преимуществ.",
-                "related": "Q47 когда использовать; Q48 pinning; Q49 structured concurrency; Q50 ScopedValue."
+                "related": "[[java-concurrency-interview#Q47]] когда использовать; [[java-concurrency-interview#Q48]] pinning; [[java-concurrency-interview#Q49]] structured concurrency; [[java-concurrency-interview#Q50]] ScopedValue."
               }
             },
             {
@@ -2802,7 +2802,7 @@
                 "example": "Хорошо: 10000 HTTP-вызовов через httpClient.send в VT. Плохо: ForkJoin SumTask на 10М элементов в VT — те же ядра, та же скорость.",
                 "when_to_apply": "Микросервисы с blocking I/O; миграция Tomcat с большим thread pool. Не для compute-heavy worker'ов.",
                 "edge_cases": "C-extensions/JNI блокируют carrier (pinning). FileInputStream синхронный по нативе → pinning. Heavy ThreadLocal — рассмотреть ScopedValue.",
-                "related": "Q46 Virtual Threads; Q48 pinning; Q50 ScopedValue."
+                "related": "[[java-concurrency-interview#Q46]] Virtual Threads; [[java-concurrency-interview#Q48]] pinning; [[java-concurrency-interview#Q50]] ScopedValue."
               }
             },
             {
@@ -2874,7 +2874,7 @@
                 "example": "synchronized(this) { httpClient.send(request, ...); } — pinning! Заменить: lock.lock(); try { httpClient.send(...); } finally { lock.unlock(); }.",
                 "when_to_apply": "Любая миграция кода на VT: ревью synchronized-блоков. Особенно legacy-классы с synchronized вокруг I/O.",
                 "edge_cases": "Pinning от JNI в JDBC-драйверах. Класс java.io.PrintStream использует synchronized — может pinning. JEP 491 (Java 24) — частично решает synchronized-pinning.",
-                "related": "Q46 Virtual Threads; Q20 ReentrantLock; Q13 synchronized."
+                "related": "[[java-concurrency-interview#Q46]] Virtual Threads; [[java-concurrency-interview#Q20]] ReentrantLock; [[java-concurrency-interview#Q13]] synchronized."
               }
             }
           ]
@@ -2898,7 +2898,7 @@
                 "example": "try (var scope = new StructuredTaskScope.ShutdownOnFailure()) { Subtask<User> u = scope.fork(() -> fetchUser()); Subtask<Order> o = scope.fork(() -> fetchOrder()); scope.join().throwIfFailed(); return new Response(u.get(), o.get()); }.",
                 "when_to_apply": "Fan-out из serverless/microservice-handler: parallel calls с auto-cancellation. Замена CompletableFuture+allOf для блокирующего кода с VT.",
                 "edge_cases": "В Java 21 — preview; в Java 25 — stabilizing. scope.join() throws InterruptedException — обязательная обработка. fork() после join() — IllegalStateException.",
-                "related": "Q56 StructuredTaskScope; Q34 CompletableFuture; Q46 Virtual Threads."
+                "related": "[[java-concurrency-interview#Q56]] StructuredTaskScope; [[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q46]] Virtual Threads."
               }
             },
             {
@@ -2970,7 +2970,7 @@
                 "example": "static final ScopedValue<String> REQUEST_ID = ScopedValue.newInstance(); ScopedValue.runWhere(REQUEST_ID, \"req-123\", () -> processRequest()); внутри: REQUEST_ID.get() → \"req-123\".",
                 "when_to_apply": "Контекст запроса в server-handler; user/transaction info, MDC-замена. С Virtual Threads и StructuredTaskScope — каноничный паттерн.",
                 "edge_cases": "Иммутабельность — нельзя «обновить» VALUE; только bind новый scope. ScopedValue.get() вне runWhere → NoSuchElementException. В Java 21 — preview.",
-                "related": "Q26 ThreadLocal; Q27 InheritableThreadLocal; Q49 StructuredConcurrency."
+                "related": "[[java-concurrency-interview#Q26]] ThreadLocal; [[java-concurrency-interview#Q27]] InheritableThreadLocal; [[java-concurrency-interview#Q49]] StructuredConcurrency."
               }
             },
             {
@@ -3042,7 +3042,7 @@
                 "example": "RecursiveTask<Long> SumTask: if(small) compute(); else { left.fork(); rightR = right.compute(); leftR = left.join(); return leftR + rightR; }. ForkJoinPool.commonPool().invoke(new SumTask(...)).",
                 "when_to_apply": "Divide-and-conquer: merge sort, parallel matrix, tree traversal. parallelStream автоматически использует ForkJoinPool.",
                 "edge_cases": "Блокирующий I/O в FJP → деградация parallelStream (используйте ManagedBlocker или свой pool). Recursive task с слишком мелким THRESHOLD = overhead больше пользы.",
-                "related": "Q32 ForkJoinPool basic; Q28 ExecutorService; Q34 CompletableFuture."
+                "related": "[[java-concurrency-interview#Q32]] ForkJoinPool basic; [[java-concurrency-interview#Q28]] ExecutorService; [[java-concurrency-interview#Q34]] CompletableFuture."
               }
             },
             {
@@ -3114,7 +3114,7 @@
                 "example": "var u = supplyAsync(()->repo.user(id), exec).orTimeout(2,SEC); var o = supplyAsync(()->repo.orders(id), exec).exceptionally(ex->List.of()); u.thenCombine(o, Profile::new).handle((p,ex)-> ex!=null ? errorProfile(ex) : p);",
                 "when_to_apply": "Fan-out с partial degradation (некритичные сервисы); strict aggregation (всё или ничего) с явной классификацией ошибок.",
                 "edge_cases": "exceptionally возвращает CompletionStage<T>, не CompletionStage<T|Throwable> — fallback должен совпадать по типу. Async-варианты выполняются в commonPool без явного executor.",
-                "related": "Q34 CompletableFuture; Q35 thenApply/Compose; Q36 ошибки; Q56 StructuredTaskScope."
+                "related": "[[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q35]] thenApply/Compose; [[java-concurrency-interview#Q36]] ошибки; [[java-concurrency-interview#Q56]] StructuredTaskScope."
               }
             }
           ]
@@ -3138,7 +3138,7 @@
                 "example": "Point с координатами: distanceFromOrigin() через tryOptimisticRead → fallback на readLock если validate failed; move() — writeLock.",
                 "when_to_apply": "Read-heavy structures (geometry, in-memory cache), где RWLock даёт contention. CPU-критичные участки где cost lock-acquisition важен.",
                 "edge_cases": "НЕ реентерабелен → recursive call с writeLock = deadlock. tryConvertToWriteLock может вернуть 0 (failed) — нужна fallback логика. Wrong stamp → IllegalMonitorStateException.",
-                "related": "Q21 RWLock/StampedLock базово; Q20 ReentrantLock; Q22 Condition."
+                "related": "[[java-concurrency-interview#Q21]] RWLock/StampedLock базово; [[java-concurrency-interview#Q20]] ReentrantLock; [[java-concurrency-interview#Q22]] Condition."
               }
             },
             {
@@ -3210,7 +3210,7 @@
                 "example": "Phaser p = new Phaser(1); for(...) { p.register(); Thread.startVirtualThread(()->{ p.arriveAndAwaitAdvance(); /*phase 1*/ p.arriveAndAwaitAdvance(); /*phase 2*/ p.arriveAndDeregister(); }); } p.arriveAndDeregister();",
                 "when_to_apply": "Многоэтапная параллельная обработка с динамическим добавлением workers (simulation, parallel ML training).",
                 "edge_cases": "register() после shutdown — IllegalStateException. Bulk-фазы (>1024 участников) — auto-tiered Phaser. onAdvance возвращает true → Phaser terminated, все await пройдут немедленно.",
-                "related": "Q38 Latch vs Barrier; Q40 Phaser/Exchanger basic; Q55 Exchanger."
+                "related": "[[java-concurrency-interview#Q38]] Latch vs Barrier; [[java-concurrency-interview#Q40]] Phaser/Exchanger basic; [[java-concurrency-interview#Q55]] Exchanger."
               }
             },
             {
@@ -3282,7 +3282,7 @@
                 "example": "Exchanger<List<Item>> ex; producer: while(true) { fill(buf); buf = ex.exchange(buf); } consumer: while(true) { buf = ex.exchange(new ArrayList<>()); process(buf); }",
                 "when_to_apply": "Pair-pipeline producer/consumer без копирования (double-buffer); blueprint для дефолтного handoff; синхронизация unit-тестов с тестируемым потоком.",
                 "edge_cases": "Для более 2 потоков — нужны другие синхронизаторы. Если только один поток вызвал exchange — заблокирован навсегда без timeout. Прерывание блокирующего exchange — InterruptedException.",
-                "related": "Q40 Phaser/Exchanger basic; Q43 BlockingQueue; Q44 Producer-Consumer."
+                "related": "[[java-concurrency-interview#Q40]] Phaser/Exchanger basic; [[java-concurrency-interview#Q43]] BlockingQueue; [[java-concurrency-interview#Q44]] Producer-Consumer."
               }
             },
             {
@@ -3354,7 +3354,7 @@
                 "example": "try(var s = new StructuredTaskScope.ShutdownOnFailure()){ Subtask<User> u = s.fork(()->fetchUser()); Subtask<Order> o = s.fork(()->fetchOrder()); s.join().throwIfFailed(); return new Response(u.get(), o.get()); }",
                 "when_to_apply": "Server-handler fan-out с auto-cancellation; race-to-first-success (multiple regions/endpoints); replacement для CompletableFuture.allOf/anyOf в blocking-style коде.",
                 "edge_cases": "В Java 21 — preview, JEP 453. ShutdownOnFailure.throwIfFailed() оборачивает в ExecutionException. fork() после join() — IllegalStateException.",
-                "related": "Q49 Structured Concurrency basic; Q46 Virtual Threads; Q50 ScopedValue."
+                "related": "[[java-concurrency-interview#Q49]] Structured Concurrency basic; [[java-concurrency-interview#Q46]] Virtual Threads; [[java-concurrency-interview#Q50]] ScopedValue."
               }
             }
           ]

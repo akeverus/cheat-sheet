@@ -18,7 +18,7 @@
                 "example": "kubectl apply -f deployment.yaml с replicas: 3 — если один Pod упадёт, ReplicaSet создаст замену автоматически.",
                 "when_to_apply": "Для запуска stateless/stateful микросервисов в production, когда нужно self-healing, rolling deploy, service discovery и автоскейл.",
                 "edge_cases": "K8s сам не управляет данными приложений и не делает бэкапов БД; он только обеспечивает запуск контейнеров и базовую сеть.",
-                "related": "Q2 архитектура; Q12 ReplicaSet; Q13 Deployment."
+                "related": "[[kubernetes-interview#Q2]] архитектура; [[kubernetes-interview#Q12]] ReplicaSet; [[kubernetes-interview#Q13]] Deployment."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "kubectl apply → api-server → etcd → scheduler выбирает ноду → kubelet на ноде запускает контейнер через containerd.",
                 "when_to_apply": "Базовая модель кластера; важна для понимания HA Control Plane, бэкапов etcd, диагностики проблем со scheduling.",
                 "edge_cases": "В managed K8s (EKS/GKE/AKS) Control Plane скрыт; etcd обычно реплицируется 3 или 5 узлов для кворума Raft.",
-                "related": "Q3 etcd; Q39 high availability."
+                "related": "[[kubernetes-interview#Q3]] etcd; [[kubernetes-interview#Q39]] high availability."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "kubectl edit deployment пишет в etcd через api-server; controller-manager получает watch-событие и приводит ReplicaSet к новой spec.",
                 "when_to_apply": "Понимание HA Control Plane, бэкапов (etcdctl snapshot save), производительности кластера.",
                 "edge_cases": "Размер БД лимитируется (~8GB default); secrets шифровать на уровне etcd (EncryptionConfiguration); потеря кворума делает кластер read-only.",
-                "related": "Q39 HA; Q27 Secrets."
+                "related": "[[kubernetes-interview#Q39]] HA; [[kubernetes-interview#Q27]] Secrets."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "VM Ubuntu — образ ~2 ГБ, старт минуты. Docker-контейнер с Alpine — ~5 МБ, старт секунды.",
                 "when_to_apply": "Контейнеры — для микросервисов и плотного запуска; ВМ — для запуска разных ОС, сильной изоляции (multi-tenant security).",
                 "edge_cases": "Kata Containers, gVisor — гибрид: контейнер с микро-ВМ для усиления изоляции при сохранении удобства API.",
-                "related": "Q6 Pod; docker-interview."
+                "related": "[[kubernetes-interview#Q6]] Pod; docker-interview."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "Прод-микросервисы под нагрузкой с canary-деплоем и автоскейлом — K8s. Малая lab-команда с парой сервисов — Swarm может хватить.",
                 "when_to_apply": "Выбор orchestrator для production / dev окружения; типовой собес-вопрос.",
                 "edge_cases": "Docker Inc. фактически свернула активное развитие Swarm; K8s — де-факто стандарт CNCF.",
-                "related": "Q1 K8s задачи."
+                "related": "[[kubernetes-interview#Q1]] K8s задачи."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "Pod app+envoy-sidecar: приложение слушает 8080, sidecar 15000, оба видят localhost.",
                 "when_to_apply": "Любое развёртывание контейнеров в K8s; на практике создавать через Deployment/StatefulSet, не напрямую.",
                 "edge_cases": "После падения Pod-а его данные в emptyDir теряются; восстановление состояния — через PVC. Pod IP меняется при пересоздании, поэтому нужен Service.",
-                "related": "Q7 lifecycle; Q10 multi-container; Q20 Service."
+                "related": "[[kubernetes-interview#Q7]] lifecycle; [[kubernetes-interview#Q10]] multi-container; [[kubernetes-interview#Q20]] Service."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "Pod в Pending с reason=ImagePullBackOff — registry не отдаёт образ; kubectl describe покажет события.",
                 "when_to_apply": "Диагностика проблем со scheduling и старта контейнеров; основа для понимания probes и restartPolicy.",
                 "edge_cases": "Phase Running ≠ ready: Pod в Running, но readinessProbe failing — трафик не идёт. CrashLoopBackOff отображается в container status, не в phase.",
-                "related": "Q8 init; Q9 probes."
+                "related": "[[kubernetes-interview#Q8]] init; [[kubernetes-interview#Q9]] probes."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "initContainer wait-for-db с `until nc -z postgres-svc 5432; do sleep 2; done` — основной контейнер стартует только когда БД отвечает.",
                 "when_to_apply": "Pod зависит от внешнего ресурса, который должен стать готовым; миграции на старте; настройка volumes до запуска приложения.",
                 "edge_cases": "Не поддерживают readinessProbe; tолько livenessProbe не имеет смысла; долгие init-контейнеры удлиняют запуск Pod.",
-                "related": "Q9 probes; Q10 patterns."
+                "related": "[[kubernetes-interview#Q9]] probes; [[kubernetes-interview#Q10]] patterns."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "Spring Boot: startupProbe /actuator/health/liveness с failureThreshold=30 даёт 60с на старт; затем livenessProbe (без зависимостей), readinessProbe (с зависимостями).",
                 "when_to_apply": "Любое production-приложение в K8s; startupProbe — для слегка медленного старта, иначе можно без неё.",
                 "edge_cases": "livenessProbe не должен зависеть от внешних систем (БД, кеш) — иначе их падение каскадно перезапустит все Pod-ы. Для зависимостей — только readiness.",
-                "related": "Q41 Spring Boot probes; Q42 graceful shutdown."
+                "related": "[[kubernetes-interview#Q41]] Spring Boot probes; [[kubernetes-interview#Q42]] graceful shutdown."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "App+Fluentd: приложение пишет в /var/log, Fluentd-sidecar отправляет в Elasticsearch.",
                 "when_to_apply": "Когда нужна функциональность без изменения приложения — телеметрия, mTLS, прокси к внешним сервисам.",
                 "edge_cases": "Sidecar в обычном Pod завершался не gracefully вместе с приложением — для этого с K8s 1.29 появились sidecar Init-контейнеры с restartPolicy: Always.",
-                "related": "Q8 init."
+                "related": "[[kubernetes-interview#Q8]] init."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "Pod с requests: cpu=500m, mem=512Mi и точно теми же limits → Guaranteed. Pod без requests/limits → BestEffort.",
                 "when_to_apply": "Production — всегда задавайте requests/limits, чтобы получить Burstable или Guaranteed; критичные сервисы — Guaranteed.",
                 "edge_cases": "Guaranteed не гарантирует absolute невытесняемость — при memory pressure всё равно может быть OOM-killed; PriorityClass — отдельный механизм preemption.",
-                "related": "Q34 quotas; Q44 LimitRange."
+                "related": "[[kubernetes-interview#Q34]] quotas; [[kubernetes-interview#Q44]] LimitRange."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "ReplicaSet с replicas=3 — при kubectl delete pod создаёт четвёртый автоматически.",
                 "when_to_apply": "Не используется напрямую — управляется через Deployment, который добавляет rolling update / rollback.",
                 "edge_cases": "Если selector ReplicaSet совпадает с metadata Pod-ов, не управляемых им (orphan), ReplicaSet может неожиданно их «адоптировать» и удалить лишние.",
-                "related": "Q13 Deployment."
+                "related": "[[kubernetes-interview#Q13]] Deployment."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "kubectl set image deployment/backend app=app:1.4 — новый RS scale до 3, старый до 0; kubectl rollout undo вернёт.",
                 "when_to_apply": "Любой stateless workload — обычный Deployment; не использовать напрямую ReplicaSet.",
                 "edge_cases": "Слишком короткая revisionHistoryLimit (например 1) делает rollback к более старым версиям невозможным.",
-                "related": "Q12 RS; Q14 strategies; Q15 rollback."
+                "related": "[[kubernetes-interview#Q12]] RS; [[kubernetes-interview#Q14]] strategies; [[kubernetes-interview#Q15]] rollback."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "strategy: RollingUpdate, maxSurge: 25%, maxUnavailable: 0 — типичный production-сетап.",
                 "when_to_apply": "RollingUpdate — обычный случай; Recreate — когда нельзя смешивать версии.",
                 "edge_cases": "Слишком агрессивный maxSurge может перегрузить кластер; maxUnavailable>0 может уронить доступность во время деплоя.",
-                "related": "Q15 rollback; deployment-strategies-interview."
+                "related": "[[kubernetes-interview#Q15]] rollback; deployment-strategies-interview."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "kubectl rollout history deployment/backend → revisions 1..5; kubectl rollout undo deployment/backend --to-revision=3.",
                 "when_to_apply": "Регрессия после релиза; инцидент в production требующий быстрого отката.",
                 "edge_cases": "Если revisionHistoryLimit=1, доступен только последний откат; ConfigMap/Secret не откатываются вместе — это отдельно.",
-                "related": "Q13 Deployment; Q14 strategies."
+                "related": "[[kubernetes-interview#Q13]] Deployment; [[kubernetes-interview#Q14]] strategies."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "Postgres StatefulSet replicas=3 → postgres-0, postgres-1, postgres-2; каждый со своим PVC data-postgres-N (10Gi).",
                 "when_to_apply": "Stateful workloads: реляционные БД, ZooKeeper, Kafka, Elasticsearch, Cassandra, Redis Cluster.",
                 "edge_cases": "Удаление StatefulSet не удаляет PVC — это намеренно для сохранения данных; OnDelete updateStrategy требует ручного rollout.",
-                "related": "Q17 vs Deployment; Q29 PVC."
+                "related": "[[kubernetes-interview#Q17]] vs Deployment; [[kubernetes-interview#Q29]] PVC."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "API gateway → Deployment с 5 одинаковыми Pod. Postgres → StatefulSet с pod-0 master, pod-1/2 replicas, каждый со своим PVC.",
                 "when_to_apply": "Выбор контроллера для нового сервиса: stateless → Deployment, stateful → StatefulSet.",
                 "edge_cases": "Pod в StatefulSet при scale down удаляются с конца (pod-N → pod-0), что иногда мешает (например при drain ноды конкретного индекса).",
-                "related": "Q13 Deployment; Q16 StatefulSet."
+                "related": "[[kubernetes-interview#Q13]] Deployment; [[kubernetes-interview#Q16]] StatefulSet."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "fluentd DaemonSet с hostPath /var/log — собирает логи всех контейнеров каждой ноды.",
                 "when_to_apply": "Per-node infra: log shipper, metrics exporter, CNI/CSI агенты, security агенты (Falco).",
                 "edge_cases": "Tolerations нужны для control plane нод; при заполнении ноды DaemonSet Pod всё равно создаётся (приоритет system).",
-                "related": "Q43 taints/tolerations."
+                "related": "[[kubernetes-interview#Q43]] taints/tolerations."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "CronJob daily-report со schedule '0 2 * * *', concurrencyPolicy: Forbid — каждую ночь в 02:00, не запускать если предыдущий не закончил.",
                 "when_to_apply": "Миграции БД на старте — Job; ночные отчёты, eviction — CronJob.",
                 "edge_cases": "startingDeadlineSeconds важен — иначе пропущенные запуски накопятся; restartPolicy в Job spec — только Never или OnFailure.",
-                "related": "Q39 HA."
+                "related": "[[kubernetes-interview#Q39]] HA."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "type: ClusterIP, selector app: backend, port 80 → targetPort 8080 — внутри кластера curl http://backend-svc раскидывает на Pod-ы с label app=backend.",
                 "when_to_apply": "ClusterIP — межсервисное взаимодействие; LoadBalancer — внешний прод; Headless — StatefulSet, service discovery; NodePort — dev/test.",
                 "edge_cases": "Service IP стабилен только пока существует объект; смена namespace меняет DNS; sessionAffinity: ClientIP — закрепляет клиента на одном Pod.",
-                "related": "Q21 differences; Q24 DNS."
+                "related": "[[kubernetes-interview#Q21]] differences; [[kubernetes-interview#Q24]] DNS."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "type: LoadBalancer → AWS NLB на 80 → NodePort 31234 на каждой ноде → ClusterIP 10.96.0.100 → Pod 10.244.x.y:8080.",
                 "when_to_apply": "Внутренние сервисы — ClusterIP; внешний трафик — LoadBalancer; dev/test — NodePort.",
                 "edge_cases": "LoadBalancer без облачного провайдера зависает в Pending; NodePort на больших кластерах требует управления портами.",
-                "related": "Q20 Service; Q22 Ingress."
+                "related": "[[kubernetes-interview#Q20]] Service; [[kubernetes-interview#Q22]] Ingress."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "Один Ingress с правилами host=api.example.com path=/v1 → backend-svc:80, path=/ → frontend-svc:80; один LB на весь кластер.",
                 "when_to_apply": "Когда нужно выставить много HTTP-сервисов через один публичный IP; экономия на LoadBalancer.",
                 "edge_cases": "Без установленного Ingress controller манифест не делает ничего; Gateway API (GA с 1.1) — следующий стандарт, поддерживает TCP/UDP.",
-                "related": "Q20 Service; Q21 LoadBalancer."
+                "related": "[[kubernetes-interview#Q20]] Service; [[kubernetes-interview#Q21]] LoadBalancer."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "type: NodePort, port: 80, targetPort: 8080, nodePort: 30080 — curl http://node-ip:30080 → svc:80 → pod:8080.",
                 "when_to_apply": "Конфигурация Service для любого нестандартного маппинга порта приложение/сервис/нода.",
                 "edge_cases": "targetPort может быть именованным (name из containerPort), что удобно при ротации портов; nodePort можно не указывать — K8s выберет автоматически.",
-                "related": "Q20 Service; Q21 types."
+                "related": "[[kubernetes-interview#Q20]] Service; [[kubernetes-interview#Q21]] types."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "curl http://postgres-0.postgres.default.svc.cluster.local:5432 — прямой доступ к Pod-у StatefulSet через headless Service.",
                 "when_to_apply": "Любое межсервисное взаимодействие в K8s; конфиги приложений (URL БД, очереди) — через DNS-имя Service.",
                 "edge_cases": "ndots:5 в resolv.conf приводит к лишним запросам — при доменах с точками задавайте FQDN. NodeLocal DNSCache улучшает производительность.",
-                "related": "Q20 Service; Q16 StatefulSet."
+                "related": "[[kubernetes-interview#Q20]] Service; [[kubernetes-interview#Q16]] StatefulSet."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "Backend-policy: podSelector app=backend, ingress from podSelector app=frontend порт 8080 — frontend → backend разрешено, остальные изолированы.",
                 "when_to_apply": "Zero-trust networking в multi-tenant кластерах; защита БД от чужих сервисов; PCI DSS требует сегментации.",
                 "edge_cases": "NetworkPolicy относятся к Pod, не Service; egress в kube-dns надо явно разрешить, иначе DNS сломается; политики аддитивны (логическое OR).",
-                "related": "Q33 RBAC; Q35 SecurityContext."
+                "related": "[[kubernetes-interview#Q33]] RBAC; [[kubernetes-interview#Q35]] SecurityContext."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "ConfigMap app-config с APP_ENV=production, LOG_LEVEL=info → Pod env from configMapRef → видит как env vars.",
                 "when_to_apply": "Любая нечувствительная конфигурация: feature flags, URL внешних сервисов, application.yml.",
                 "edge_cases": "ConfigMap как env передаётся при запуске Pod — изменение требует рестарта; mount как volume обновляется автоматически (с задержкой kubelet sync).",
-                "related": "Q27 Secret; Q28 ways to pass config."
+                "related": "[[kubernetes-interview#Q27]] Secret; [[kubernetes-interview#Q28]] ways to pass config."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "kubectl create secret generic db-cred --from-literal=password=s3cret → Pod env DB_PASSWORD from secretKeyRef.",
                 "when_to_apply": "Любые credentials, токены, TLS-ключи; ServiceAccount тоже использует Secret типа service-account-token.",
                 "edge_cases": "kubectl edit secret показывает base64 — это не защита; ConfigMap в логах легко утекает, Secret — нет (kubectl describe маскирует); mounted Secret в tmpfs, не на диске.",
-                "related": "Q26 ConfigMap; Q33 RBAC."
+                "related": "[[kubernetes-interview#Q26]] ConfigMap; [[kubernetes-interview#Q33]] RBAC."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "env: DB_PASSWORD from secretKeyRef; volumeMount /config из ConfigMap; env POD_NAME from fieldRef metadata.name.",
                 "when_to_apply": "Простые флаги — env; конфиг-файлы — volume; метрики/логи требуют POD_NAME — Downward API.",
                 "edge_cases": "env устанавливаются один раз при старте; volume mount обновляется без рестарта (с задержкой); Downward API не покрывает все поля — только подмножество.",
-                "related": "Q26 ConfigMap; Q27 Secret."
+                "related": "[[kubernetes-interview#Q26]] ConfigMap; [[kubernetes-interview#Q27]] Secret."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "PVC app-data 5Gi RWO storageClassName: standard → провайдер создаёт EBS-том → биндится к PVC → Pod монтирует /data.",
                 "when_to_apply": "Любые данные, переживающие пересоздание Pod: БД, кеши с диском, файловые загрузки.",
                 "edge_cases": "RWO — только одна нода может писать; для shared storage между Pod на разных нодах нужен RWX (NFS, EFS, CephFS); удаление PVC при reclaimPolicy: Delete удаляет данные.",
-                "related": "Q30 volume types; Q16 StatefulSet PVC."
+                "related": "[[kubernetes-interview#Q30]] volume types; [[kubernetes-interview#Q16]] StatefulSet PVC."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "Sidecar и app разделяют emptyDir /logs для обмена; PVC через CSI для БД; ConfigMap как volume на /etc/app.",
                 "when_to_apply": "Выбор типа volume под задачу: stateful → PVC/CSI; обмен в Pod → emptyDir; конфигурация → configMap.",
                 "edge_cases": "emptyDir в tmpfs (memory) ограничивает RAM; hostPath не переносим — Pod может попасть на другую ноду; in-tree volumes устарели в пользу CSI.",
-                "related": "Q29 PV/PVC."
+                "related": "[[kubernetes-interview#Q29]] PV/PVC."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "HPA backend min=2 max=10 cpu 70%: при 90% CPU на 3 Pod → desired = ceil(90/70*3)=4 → scale up.",
                 "when_to_apply": "Любой workload с переменной нагрузкой; не для StatefulSet с ordered scaling, где быстро добавлять реплики опасно.",
                 "edge_cases": "Без Metrics Server HPA не работает по CPU/memory; scale down имеет длинный stabilizationWindow (5 мин) для борьбы с flapping; не масштабирует ниже minReplicas.",
-                "related": "Q32 VPA/CA/KEDA."
+                "related": "[[kubernetes-interview#Q32]] VPA/CA/KEDA."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "Consumer Kafka: KEDA масштабирует Pod по lag (число необработанных сообщений в топике); HPA реагировал бы только на CPU.",
                 "when_to_apply": "VPA — трудно подобрать requests вручную; CA — облачный/cluster-as-a-service кластер; KEDA — event-driven workloads.",
                 "edge_cases": "VPA и HPA по CPU/memory одновременно конфликтуют; CA не масштабирует ниже minNodes; KEDA scale-to-zero возможен для длительно холостых сервисов.",
-                "related": "Q31 HPA."
+                "related": "[[kubernetes-interview#Q31]] HPA."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "Role pod-reader в namespace prod: verbs=[get,list,watch], resources=[pods]; RoleBinding связывает с ServiceAccount monitoring.",
                 "when_to_apply": "Любой production-кластер; ServiceAccount для контроллеров и операторов; разделение dev/prod команд.",
                 "edge_cases": "cluster-admin даёт всё — давать только администраторам; aggregate rules позволяют расширять стандартные роли; impersonation требует отдельных permission.",
-                "related": "Q34 namespace; Q35 SecurityContext."
+                "related": "[[kubernetes-interview#Q34]] namespace; [[kubernetes-interview#Q35]] SecurityContext."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "Namespace prod-team-a с ResourceQuota requests.cpu=10, requests.memory=20Gi, pods=50 — команда A не превысит лимит.",
                 "when_to_apply": "Multi-tenant кластер, разделение команд/окружений; обязательная практика для shared K8s.",
                 "edge_cases": "Без LimitRange Pod без requests/limits не попадают под ResourceQuota; ResourceQuota применяется при создании — превышение блокирует apply.",
-                "related": "Q33 RBAC; Q44 LimitRange."
+                "related": "[[kubernetes-interview#Q33]] RBAC; [[kubernetes-interview#Q44]] LimitRange."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "Namespace label pod-security.kubernetes.io/enforce=restricted; Pod с SecurityContext runAsNonRoot: true, readOnlyRootFilesystem: true, capabilities.drop=[ALL].",
                 "when_to_apply": "Production: применять Baseline или Restricted на app-namespaces; SecurityContext — в каждом Deployment-template.",
                 "edge_cases": "runAsNonRoot: true без явного runAsUser ломает образы, где USER root; readOnlyRootFilesystem требует emptyDir для /tmp.",
-                "related": "Q33 RBAC; Q11 QoS."
+                "related": "[[kubernetes-interview#Q33]] RBAC; [[kubernetes-interview#Q11]] QoS."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "helm install postgres bitnami/postgresql -f my-values.yaml — ставит Postgres из публичного chart с кастомными значениями.",
                 "when_to_apply": "Сложные приложения с множеством ресурсов (Deployment + Service + Ingress + HPA + RBAC); сторонние пакеты (nginx-ingress, cert-manager).",
                 "edge_cases": "helm install создаёт ресурсы только если их нет; конфликт с существующими — ошибка. Helm 2 (Tiller) deprecated, использовать Helm 3 (client-only).",
-                "related": "Q45 Kustomize."
+                "related": "[[kubernetes-interview#Q45]] Kustomize."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "kubectl get pods -n prod -o wide; kubectl logs -f deployment/backend -c app; kubectl rollout undo deployment/backend.",
                 "when_to_apply": "Ежедневная работа в K8s; интервью часто проверяет именно набор команд.",
                 "edge_cases": "kubectl exec не работает если контейнер distroless без shell; port-forward держит туннель только пока процесс kubectl запущен; --previous полезен после CrashLoopBackOff.",
-                "related": "Q15 rollback."
+                "related": "[[kubernetes-interview#Q15]] rollback."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "Prometheus Operator + ServiceMonitor backend-monitor с targetLabels app=backend; Pod actuator/prometheus → метрики автоматически собираются.",
                 "when_to_apply": "Production K8s; minimal viable observability — Prometheus + Grafana + Loki.",
                 "edge_cases": "Prometheus federation для multi-cluster; pull model требует доступности Pod из Prometheus (NetworkPolicy); retention в Prometheus ограничен — long term в Cortex/Mimir/Victoria Metrics.",
-                "related": "observability-interview; Q41 Spring Boot actuator."
+                "related": "observability-interview; [[kubernetes-interview#Q41]] Spring Boot actuator."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "PDB minAvailable=2 + podAntiAffinity по hostname + 3 реплики → drain ноды не уронит сервис.",
                 "when_to_apply": "Production-deployment любого критичного сервиса; обязательная защита от node maintenance.",
                 "edge_cases": "PDB защищает только от voluntary disruption (drain); при падении ноды Pod не сразу пересоздаются (node-not-ready taint timeout); etcd с 2 нодами не имеет кворума и не отказоустойчив.",
-                "related": "Q43 affinity/taints."
+                "related": "[[kubernetes-interview#Q43]] affinity/taints."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "Developer пишет S2I-конфиг, OpenShift сам собирает образ из исходников git → ImageStream обновляется → автоматический rollout.",
                 "when_to_apply": "Enterprise с требованием Red Hat support, SLA, on-prem; финансовый сектор, регуляторы.",
                 "edge_cases": "SCC по умолчанию запрещает run-as-root, многие public Helm-чарты ломаются; миграция helm-чартов K8s → OpenShift требует адаптации.",
-                "related": "Q1 K8s; Q36 Helm."
+                "related": "[[kubernetes-interview#Q1]] K8s; [[kubernetes-interview#Q36]] Helm."
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "startupProbe для медленного JVM-старта (failureThreshold=30); livenessProbe на /actuator/health/liveness; readinessProbe на /actuator/health/readiness.",
                 "when_to_apply": "Любой Spring Boot сервис в K8s; обязательно для production.",
                 "edge_cases": "JAVA_OPTS -XX:MaxRAMPercentage=75 учитывает container limit; без него JVM не видит cgroups (до Java 10); preStop sleep 5 закрывает race с Endpoints update.",
-                "related": "Q9 probes; Q42 graceful shutdown."
+                "related": "[[kubernetes-interview#Q9]] probes; [[kubernetes-interview#Q42]] graceful shutdown."
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "preStop: exec sleep 5; server.shutdown=graceful; spring.lifecycle.timeout-per-shutdown-phase: 30s; terminationGracePeriodSeconds: 60.",
                 "when_to_apply": "Zero-downtime deployment любого HTTP-сервиса; критично для финансовых транзакций.",
                 "edge_cases": "Если приложение зависает в shutdown — SIGKILL через grace period; long-running запросы (websocket) требуют большего timeout-per-shutdown-phase.",
-                "related": "Q41 Spring Boot probes."
+                "related": "[[kubernetes-interview#Q41]] Spring Boot probes."
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "kubectl taint nodes gpu-node type=gpu:NoSchedule; Pod с tolerations key=type, value=gpu, effect=NoSchedule + nodeAffinity gpu=true попадает только на GPU-ноды.",
                 "when_to_apply": "Выделенные ноды (GPU, high-memory); изоляция dedicated workloads; маркировка zone/region для multi-AZ.",
                 "edge_cases": "Taint NoExecute с tolerationSeconds эвакуирует Pod через N секунд; pod-level pre-emption через PriorityClass — отдельный механизм.",
-                "related": "Q39 HA; Q18 DaemonSet tolerations."
+                "related": "[[kubernetes-interview#Q39]] HA; [[kubernetes-interview#Q18]] DaemonSet tolerations."
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "LimitRange default cpu=500m, max cpu=2; Pod без requests → получит 500m; Pod с requests=3 → отклонён. ResourceQuota requests.cpu=10 → 10 Pod по 1 CPU помещаются.",
                 "when_to_apply": "LimitRange — обязателен в production namespace, чтобы не было BestEffort; ResourceQuota — multi-tenant кластер с командами.",
                 "edge_cases": "Без LimitRange Pod без requests не попадает под ResourceQuota по CPU/memory; LimitRange имеет тип Container/Pod/PVC, можно ограничить storage.",
-                "related": "Q11 QoS; Q34 ResourceQuota."
+                "related": "[[kubernetes-interview#Q11]] QoS; [[kubernetes-interview#Q34]] ResourceQuota."
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "base/{deployment,service}.yaml + overlays/prod/patch-replicas.yaml с replicas: 5 → kubectl apply -k overlays/prod применяет итоговый манифест.",
                 "when_to_apply": "Kustomize — внутренние приложения с overlay по окружениям, GitOps. Helm — сторонние пакеты (nginx-ingress, cert-manager, postgres), сложные релизы с зависимостями.",
                 "edge_cases": "Kustomize не управляет lifecycle release — откат через git revert; Helm рендерит, Kustomize patches — это разные модели; в одном проекте можно использовать оба (helm template | kustomize build).",
-                "related": "Q36 Helm."
+                "related": "[[kubernetes-interview#Q36]] Helm."
               }
             },
             {

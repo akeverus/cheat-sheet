@@ -18,7 +18,7 @@
                 "example": "`@Component class UserService { private final UserRepo repo; UserService(UserRepo repo) { this.repo = repo; } }` — `Spring` сам создаст `UserRepo` и передаст в конструктор.",
                 "when_to_apply": "Всегда в `Spring`-приложениях: при описании сервисов, репозиториев, контроллеров — `IoC`-контейнер организует жизненный цикл и связи между ними.",
                 "edge_cases": "В тестах можно обойти контейнер через `new UserService(mockRepo)`; в `@Configuration`-классах `Spring` сам подставляет аргументы методов `@Bean`.",
-                "related": "Q2 `DI`; Q4 `ApplicationContext`; Q5 `BeanFactory`."
+                "related": "[[spring-framework-interview#Q2]] `DI`; [[spring-framework-interview#Q4]] `ApplicationContext`; [[spring-framework-interview#Q5]] `BeanFactory`."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "`class UserService { private final UserRepo repo; UserService(UserRepo repo) { this.repo = repo; } }` — constructor; `@Autowired void setRepo(...)` — setter; `@Autowired private UserRepo repo;` — field.",
                 "when_to_apply": "Constructor — для обязательных зависимостей (по умолчанию); setter — для опциональных или меняемых в runtime; field — лучше избегать в production-коде, допустимо в тестах.",
                 "edge_cases": "Если в классе один конструктор, `@Autowired` на нём опционален (с `Spring` 4.3+); циклы между constructor injection приводят к `UnsatisfiedDependencyException`.",
-                "related": "Q3 constructor preferred; Q23 `@Autowired`; Q28 циклы."
+                "related": "[[spring-framework-interview#Q3]] constructor preferred; [[spring-framework-interview#Q23]] `@Autowired`; [[spring-framework-interview#Q28]] циклы."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "`class OrderService { private final PaymentClient payment; private final OrderRepo repo; OrderService(PaymentClient payment, OrderRepo repo) {...} }` — тест: `new OrderService(mockPayment, mockRepo)` без `@SpringBootTest`.",
                 "when_to_apply": "Для всех обязательных зависимостей сервисов, репозиториев, контроллеров. Это дефолт с `Spring` 4.3+, аннотация `@Autowired` на единственном конструкторе не нужна.",
                 "edge_cases": "Если зависимостей >5, это сигнал к декомпозиции класса; циклические зависимости через constructor падают на старте, что хорошо — лучше чем тихий `null` через field injection.",
-                "related": "Q2 типы DI; Q15 как лучше внедрять; Q28 циклы."
+                "related": "[[spring-framework-interview#Q2]] типы DI; [[spring-framework-interview#Q15]] как лучше внедрять; [[spring-framework-interview#Q28]] циклы."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "`ApplicationContext ctx = new AnnotationConfigApplicationContext(AppConfig.class);` — для Java-конфига; `new ClassPathXmlApplicationContext(\"beans.xml\")` — для XML.",
                 "when_to_apply": "Всегда `ApplicationContext` в реальных приложениях; `BeanFactory` — только в очень редких случаях, когда нужен минимальный footprint (например, для embedded-сценариев).",
                 "edge_cases": "`BeanFactory` инициализирует бины лениво (при первом обращении), `ApplicationContext` — eager для singleton; это влияет на момент обнаружения ошибок конфигурации.",
-                "related": "Q1 `IoC`; Q5 типы контекста; Q9 что такое bean."
+                "related": "[[spring-framework-interview#Q1]] `IoC`; [[spring-framework-interview#Q5]] типы контекста; [[spring-framework-interview#Q9]] что такое bean."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "`AnnotationConfigApplicationContext` сканирует `@ComponentScan`-пакеты, находит `@Component`, создаёт `BeanDefinition`, инстанциирует и хранит.",
                 "when_to_apply": "Всегда при работе со `Spring`: вы получаете готовый контейнер через `@SpringBootApplication` или вручную (`new AnnotationConfigApplicationContext(...)`).",
                 "edge_cases": "Контейнер может быть иерархическим (parent-child); для тестов часто создают отдельный контекст; закрытие контейнера (`ctx.close()`) вызывает `@PreDestroy`.",
-                "related": "Q1 `IoC`; Q4 `BeanFactory` vs `ApplicationContext`; Q6 жизненный цикл."
+                "related": "[[spring-framework-interview#Q1]] `IoC`; [[spring-framework-interview#Q4]] `BeanFactory` vs `ApplicationContext`; [[spring-framework-interview#Q6]] жизненный цикл."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "`BeanDefinition bd = ctx.getBeanFactory().getBeanDefinition(\"userService\");` — получить метаданные; `bd.setScope(\"prototype\")` — изменить scope.",
                 "when_to_apply": "Напрямую — редко (в кастомных `BeanFactoryPostProcessor` или `BeanDefinitionRegistryPostProcessor`); косвенно — постоянно через стандартные механизмы конфигурации.",
                 "edge_cases": "`@Autowired` использует тип, а не `BeanDefinition` напрямую; модификация definition после старта контекста не повлияет на уже созданные singleton.",
-                "related": "Q5 контейнер; Q14 `BeanPostProcessor`; Q16 `BeanFactoryPostProcessor`."
+                "related": "[[spring-framework-interview#Q5]] контейнер; [[spring-framework-interview#Q14]] `BeanPostProcessor`; [[spring-framework-interview#Q16]] `BeanFactoryPostProcessor`."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "`@Component @Scope(\"prototype\") class TaskExecutor {...}`; `@RestController class UserCtrl { @Autowired Provider<TaskExecutor> taskProvider; }` — `taskProvider.get()` даёт новый инстанс.",
                 "when_to_apply": "Singleton — 95% случаев (сервисы, репозитории); prototype — для объектов с состоянием; request/session — в web для пользовательских данных.",
                 "edge_cases": "Prototype в singleton: без `Provider`/`@Lookup` получите тот же инстанс; web-scopes требуют активного HTTP-запроса и `RequestContextHolder`.",
-                "related": "Q8 prototype vs singleton; Q14 lifecycle; Q16 thread-safety."
+                "related": "[[spring-framework-interview#Q8]] prototype vs singleton; [[spring-framework-interview#Q14]] lifecycle; [[spring-framework-interview#Q16]] thread-safety."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "`@Service class StatelessSvc {}` — singleton, один на всё приложение; `@Component @Scope(\"prototype\") class TaskCtx { String state; }` — новый при каждом `ctx.getBean(TaskCtx.class)`.",
                 "when_to_apply": "Singleton — для сервисов, репозиториев, контроллеров (stateless); prototype — для DTO-подобных контейнеров состояния, command-объектов, билдеров.",
                 "edge_cases": "Prototype в singleton без `Provider`/`@Lookup` даёт одну и ту же копию; контейнер не вызывает destroy-методы для prototype — следите за ресурсами вручную.",
-                "related": "Q7 scope; Q9 жизненный цикл; Q16 thread-safety singleton."
+                "related": "[[spring-framework-interview#Q7]] scope; [[spring-framework-interview#Q9]] жизненный цикл; [[spring-framework-interview#Q16]] thread-safety singleton."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "`@Component class MyBean { @Autowired Dep dep; @PostConstruct void init() { /* dep уже доступен */ } @PreDestroy void cleanup() {} }` — `Spring` вызовет `init()` после `populate`, и `cleanup()` при `ctx.close()`.",
                 "when_to_apply": "При инициализации ресурсов (открыть соединение, прогреть кэш) — `@PostConstruct`; при освобождении (закрыть, flush) — `@PreDestroy`.",
                 "edge_cases": "`@PreDestroy` НЕ вызывается для prototype-бинов; при принудительном завершении JVM (`kill -9`) callback-и могут не выполниться; AOP-прокси оборачивает уже инициализированный бин — внутри прокси `this` указывает на target, поэтому self-call минует proxy.",
-                "related": "Q10 `@PostConstruct`; Q12 `BeanPostProcessor`; Q31 self-invocation."
+                "related": "[[spring-framework-interview#Q10]] `@PostConstruct`; [[spring-framework-interview#Q12]] `BeanPostProcessor`; [[spring-framework-interview#Q31]] self-invocation."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "`@Component class Cache { @PostConstruct void warmup() { /*...*/ } }` vs `class Cache implements InitializingBean { void afterPropertiesSet() {...} }` — первый предпочтительнее.",
                 "when_to_apply": "Используйте `@PostConstruct` для нового кода — это стандарт и не привязывает к `Spring`. `InitializingBean` — только в legacy или когда `@PostConstruct` недоступен.",
                 "edge_cases": "В `Spring Boot 3+`/`Jakarta EE 9+` пакет аннотации — `jakarta.annotation.PostConstruct` (раньше был `javax.annotation`); миграция требует смены импорта.",
-                "related": "Q9 lifecycle; Q11 `@PreDestroy`; Q15 init-method."
+                "related": "[[spring-framework-interview#Q9]] lifecycle; [[spring-framework-interview#Q11]] `@PreDestroy`; [[spring-framework-interview#Q15]] init-method."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "`@Component class LoggingBPP implements BeanPostProcessor { public Object postProcessAfterInitialization(Object bean, String name) { return Proxy.newProxyInstance(...); } }` — обернёт каждый бин в logging-прокси.",
                 "when_to_apply": "При создании кастомной интеграции (например, регистрация бина в внешнем реестре после инициализации), реализации своей аннотации с поведением, оборачивания бинов в декораторы.",
                 "edge_cases": "Метод вызывается для КАЖДОГО бина, включая инфраструктурные — будьте осторожны с производительностью; `BPP` сам не должен зависеть от других бизнес-бинов (он создаётся раньше них).",
-                "related": "Q9 lifecycle; Q12 `BeanFactoryPostProcessor`; Q33 AOP-прокси."
+                "related": "[[spring-framework-interview#Q9]] lifecycle; [[spring-framework-interview#Q12]] `BeanFactoryPostProcessor`; [[spring-framework-interview#Q33]] AOP-прокси."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "`PropertySourcesPlaceholderConfigurer` (`BFPP`) подставляет `${app.url}` в `BeanDefinition` свойства; `AutowiredAnnotationBeanPostProcessor` (`BPP`) внедряет зависимости по `@Autowired`.",
                 "when_to_apply": "`BFPP` — для динамической регистрации бинов или модификации конфигурации; `BPP` — для wrapping и реализации кастомных аннотаций.",
                 "edge_cases": "`BFPP` запускается ОДИН раз для всего контекста (не для каждого бина); `BeanDefinitionRegistryPostProcessor` (наследник `BFPP`) умеет регистрировать новые definition.",
-                "related": "Q11 `BeanPostProcessor`; Q6 `BeanDefinition`; Q18 `@Bean` regis."
+                "related": "[[spring-framework-interview#Q11]] `BeanPostProcessor`; [[spring-framework-interview#Q6]] `BeanDefinition`; [[spring-framework-interview#Q18]] `@Bean` regis."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "`@Component @Lazy class HeavyClient { /*...*/ }` — создастся при первом `getBean`; `@Autowired @Lazy ServiceA a;` — `a` будет прокси, target создастся при первом вызове `a.method()`.",
                 "when_to_apply": "Для редко используемых тяжёлых бинов, для разрыва циклических зависимостей через lazy-точку, для ускорения старта приложения.",
                 "edge_cases": "Lazy не работает для prototype в singleton без прокси; ошибки конфигурации бина обнаружатся не на старте, а при первом обращении; на `@Configuration` `@Lazy` делает все `@Bean` ленивыми.",
-                "related": "Q14 `@DependsOn`; Q15 `FactoryBean`; Q28 циклические зависимости."
+                "related": "[[spring-framework-interview#Q14]] `@DependsOn`; [[spring-framework-interview#Q15]] `FactoryBean`; [[spring-framework-interview#Q28]] циклические зависимости."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "`@Component @DependsOn(\"flywayInitializer\") class UserRepo { /* в момент создания миграции уже применены */ }`",
                 "when_to_apply": "Когда между бинами есть неявная зависимость через side-effect, и порядок критичен; при работе с legacy-кодом, использующим static-инициализацию.",
                 "edge_cases": "`@DependsOn` указывает имена бинов; опечатка приведёт к `NoSuchBeanDefinitionException` на старте; не путать с `Order` (порядок при injection списка).",
-                "related": "Q13 `@Lazy`; Q15 `FactoryBean`; Q25 `@Order`."
+                "related": "[[spring-framework-interview#Q13]] `@Lazy`; [[spring-framework-interview#Q15]] `FactoryBean`; [[spring-framework-interview#Q25]] `@Order`."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "`class MyFactoryBean implements FactoryBean<Service> { public Service getObject() { return new ComplexService(...); } public Class<?> getObjectType() { return Service.class; } }` — `@Autowired Service svc` получит `ComplexService`.",
                 "when_to_apply": "Когда нужна сложная многошаговая инициализация бина (соединения, JPA, MyBatis); при интеграции с библиотеками, требующими билдер-подобный API.",
                 "edge_cases": "Для получения самой фабрики используют `ctx.getBean(\"&beanName\", FactoryBean.class)`; `isSingleton()` влияет на кэширование результата `getObject()`; не путать с `@Bean`-методом, который и так возвращает готовый объект.",
-                "related": "Q16 `@Bean`; Q4 `BeanFactory`; Q11 `BeanPostProcessor`."
+                "related": "[[spring-framework-interview#Q16]] `@Bean`; [[spring-framework-interview#Q4]] `BeanFactory`; [[spring-framework-interview#Q11]] `BeanPostProcessor`."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "`@Service class OrderService {}` — бизнес-логика; `@Repository class OrderRepoJpa {}` — DAO с перехватом `SQLException` → `DataAccessException`; `@RestController class OrderCtrl {}` — REST endpoint.",
                 "when_to_apply": "Используйте семантические аннотации (`@Service`, `@Repository`, `@Controller`) когда они соответствуют слою; `@Component` — для всего остального (helpers, validators, factory-helpers).",
                 "edge_cases": "`@RestController` = `@Controller` + `@ResponseBody`; `@Repository` без JPA/JDBC не приносит дополнительного поведения; `AOP`-аспекты могут реагировать на `@Service`, делая семантику значимой.",
-                "related": "Q17 `@Configuration`; Q18 `@Bean`; Q19 `@ComponentScan`."
+                "related": "[[spring-framework-interview#Q17]] `@Configuration`; [[spring-framework-interview#Q18]] `@Bean`; [[spring-framework-interview#Q19]] `@ComponentScan`."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "`@Configuration class Cfg { @Bean A a() { return new A(b()); } @Bean B b() { return new B(); } }` — `a.b == ctx.getBean(B.class)`. В `@Component` это были бы разные `B`.",
                 "when_to_apply": "Используйте `@Configuration` для классов с `@Bean`-методами, особенно когда они вызывают друг друга. `proxyBeanMethods = false` ускоряет старт, если вызовов между `@Bean` нет (рекомендация `Spring Boot 2.2+` для AOT/Native).",
                 "edge_cases": "`final` методы в `@Configuration` не могут быть прокси через CGLIB — ошибка на старте; `@Configuration` сам становится бином и может иметь зависимости через конструктор.",
-                "related": "Q18 `@Bean`; Q19 `@ComponentScan`; Q22 `@Import`."
+                "related": "[[spring-framework-interview#Q18]] `@Bean`; [[spring-framework-interview#Q19]] `@ComponentScan`; [[spring-framework-interview#Q22]] `@Import`."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "`@Configuration class AppCfg { @Bean RestTemplate restTemplate(RestTemplateBuilder b) { return b.setConnectTimeout(Duration.ofSeconds(5)).build(); } }`",
                 "when_to_apply": "Когда нужно зарегистрировать бин из стороннего класса (без `@Component`); когда логика создания нетривиальная; для конфигурации с условиями (`@ConditionalOnProperty`).",
                 "edge_cases": "`@Bean` в обычном классе (не `@Configuration`/`@Component`) не обрабатывается; static `@Bean`-методы не проксируются (используются для `BeanFactoryPostProcessor`); параметры метода — это другие бины из контекста.",
-                "related": "Q17 `@Configuration`; Q19 `@ComponentScan`; Q22 `@Import`."
+                "related": "[[spring-framework-interview#Q17]] `@Configuration`; [[spring-framework-interview#Q19]] `@ComponentScan`; [[spring-framework-interview#Q22]] `@Import`."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "`@Configuration @ComponentScan(basePackages = {\"com.app.service\", \"com.app.repo\"}) class AppCfg {}` — найдёт `@Service`/`@Repository` в этих пакетах.",
                 "when_to_apply": "В корневой конфигурации приложения для автоматического обнаружения компонентов; для разделения сканирования по модулям; в тестах — для ограничения области сканирования.",
                 "edge_cases": "`@SpringBootApplication` сканирует с пакета main-класса вниз; main-класс в корне `com.app` (без подпакета) приведёт к сканированию ВСЕХ classpath-классов — это медленно и опасно.",
-                "related": "Q16 `@Component` etc; Q17 `@Configuration`; Q22 `@Import`."
+                "related": "[[spring-framework-interview#Q16]] `@Component` etc; [[spring-framework-interview#Q17]] `@Configuration`; [[spring-framework-interview#Q22]] `@Import`."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "`@Bean @ConditionalOnProperty(name=\"feature.x.enabled\", havingValue=\"true\") FeatureXService featureX() {...}` — бин создастся только если property `true`.",
                 "when_to_apply": "Для optional features, переключаемых через config; для разных реализаций (cloud vs on-prem); для library-кода, который адаптируется к окружению клиента.",
                 "edge_cases": "Условие оценивается на старте — runtime-изменения property не пересоздадут бин; `Condition.matches` не должен зависеть от других бизнес-бинов (они ещё не созданы).",
-                "related": "Q21 profiles; Q22 `@Import`; Q19 `@ComponentScan`."
+                "related": "[[spring-framework-interview#Q21]] profiles; [[spring-framework-interview#Q22]] `@Import`; [[spring-framework-interview#Q19]] `@ComponentScan`."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "`@Bean @Profile(\"dev\") DataSource devDs() { return new H2DataSource(); }` `@Bean @Profile(\"prod\") DataSource prodDs() { return hikari(...); }` — при `--spring.profiles.active=prod` создастся только prod.",
                 "when_to_apply": "Для разделения dev/test/staging/prod конфигов; для опциональных features; для разных реализаций интеграций (mock vs real client).",
                 "edge_cases": "Профили не пересоздаются в runtime — нужен рестарт; `default`-профиль активен, если ни один не задан; `@ActiveProfiles` в тестах задаёт профиль для test-контекста.",
-                "related": "Q20 `@Conditional`; Q22 `@Import`; Q42 Environment."
+                "related": "[[spring-framework-interview#Q20]] `@Conditional`; [[spring-framework-interview#Q22]] `@Import`; [[spring-framework-interview#Q42]] Environment."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "`@Configuration @Import({DataSourceConfig.class, SecurityConfig.class}) class AppConfig {}` — подключит два модуля; `@EnableXxx`-аннотации обычно реализованы через `@Import(SomeSelector.class)`.",
                 "when_to_apply": "Для модульной конфигурации (разделение по слоям, фичам); для создания собственных `@EnableXxx`-аннотаций; для подключения сторонних конфигов без classpath-сканирования.",
                 "edge_cases": "`@Import` не поддерживает циклы между конфигами; `ImportSelector` оценивается на старте — runtime-изменения не работают; `DeferredImportSelector` запускается после всех обычных импортов.",
-                "related": "Q17 `@Configuration`; Q19 `@ComponentScan`; Q20 `@Conditional`."
+                "related": "[[spring-framework-interview#Q17]] `@Configuration`; [[spring-framework-interview#Q19]] `@ComponentScan`; [[spring-framework-interview#Q20]] `@Conditional`."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "`@Service class OrderSvc { private final PaymentClient pc; OrderSvc(PaymentClient pc) { this.pc = pc; } @Autowired void setLogger(Logger l) {...} @Autowired(required=false) Optional<Cache> cache; }`",
                 "when_to_apply": "Для constructor injection (предпочтительно); для опциональных зависимостей с `required=false`; для коллекций бинов одного типа (стратегии, валидаторы).",
                 "edge_cases": "Field injection через `@Autowired` не рекомендован; поиск по типу даёт `NoUniqueBeanDefinitionException` без `@Qualifier`/`@Primary`; на коллекциях вернёт пустую, если бинов нет (с `required=false`).",
-                "related": "Q24 `@Qualifier`; Q25 `@Primary`; Q26 коллекции."
+                "related": "[[spring-framework-interview#Q24]] `@Qualifier`; [[spring-framework-interview#Q25]] `@Primary`; [[spring-framework-interview#Q26]] коллекции."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "`@Bean(\"primary\") DataSource primaryDs() {...}` `@Bean(\"replica\") DataSource replicaDs() {...}` `class Svc { Svc(@Qualifier(\"primary\") DataSource ds) {...} }`",
                 "when_to_apply": "Когда нескольких бинов одного типа в контексте (DataSource, RestTemplate с разными конфигами, стратегии); для type-safe квалификаторов через кастомные аннотации.",
                 "edge_cases": "Без `@Qualifier` `Spring` сначала ищет по имени параметра как fallback; кастомные мета-аннотации работают только если зарегистрированы как qualifier; `@Qualifier` не влияет на коллекции (`List<T>` инжектирует все).",
-                "related": "Q23 `@Autowired`; Q25 `@Primary`; Q26 коллекции."
+                "related": "[[spring-framework-interview#Q23]] `@Autowired`; [[spring-framework-interview#Q25]] `@Primary`; [[spring-framework-interview#Q26]] коллекции."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "`@Bean @Primary DataSource main(){...}` `@Bean DataSource analytics(){...}` `@Autowired DataSource ds;` — `ds == main`; `@Autowired @Qualifier(\"analytics\") DataSource ds2;` — `ds2 == analytics`.",
                 "when_to_apply": "`@Primary` — для основной реализации, чтобы не загромождать код `@Qualifier`. `@Qualifier` — для специфичных точек, где нужен другой бин.",
                 "edge_cases": "Два `@Primary`-бина одного типа → `NoUniqueBeanDefinitionException`; `@Primary` не влияет на коллекции (все бины попадут в `List<T>`); `@Qualifier` имеет приоритет над `@Primary`.",
-                "related": "Q23 `@Autowired`; Q24 `@Qualifier`; Q26 коллекции."
+                "related": "[[spring-framework-interview#Q23]] `@Autowired`; [[spring-framework-interview#Q24]] `@Qualifier`; [[spring-framework-interview#Q26]] коллекции."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "`@Service class Dispatcher { Dispatcher(List<Handler> handlers) {...} }`; `@Component @Order(1) class A implements Handler {}` `@Component @Order(2) class B implements Handler {}` — порядок A, B.",
                 "when_to_apply": "Для chain of responsibility, стратегий, валидаторов, обработчиков событий, registry-паттернов. Альтернатива if-else по типу.",
                 "edge_cases": "Пустой список при отсутствии бинов (не ошибка); `Map<String, T>` использует имена бинов как ключи; внутри `@Configuration`-метода аргумент `List<T>` тоже работает.",
-                "related": "Q23 `@Autowired`; Q24 `@Qualifier`; Q25 `@Primary`."
+                "related": "[[spring-framework-interview#Q23]] `@Autowired`; [[spring-framework-interview#Q24]] `@Qualifier`; [[spring-framework-interview#Q25]] `@Primary`."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "`@Autowired(required=false) private Cache cache;`; `OrderSvc(Optional<EmailClient> email) {...}`; `OrderSvc(ObjectProvider<MetricsClient> metrics) {...}`",
                 "when_to_apply": "Когда бин может отсутствовать (опциональный модуль, feature flag); когда нужен ленивый/conditional resolve; когда несколько кандидатов и важно безопасно обработать.",
                 "edge_cases": "`required=false` на конструкторе разрешает `Spring`-у пропустить конструктор и использовать другой; `Optional<T>` на конструкторе — параметр всегда есть, но пустой; в Kotlin nullable-тип (`T?`) распознаётся как опциональный.",
-                "related": "Q23 `@Autowired`; Q26 коллекции; Q15 `FactoryBean`."
+                "related": "[[spring-framework-interview#Q23]] `@Autowired`; [[spring-framework-interview#Q26]] коллекции; [[spring-framework-interview#Q15]] `FactoryBean`."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "`@Service class A { A(@Lazy B b) {...} }` `@Service class B { B(A a) {...} }` — `A` получает прокси на `B`, цикл разрешается.",
                 "when_to_apply": "Если цикл случайно появился — рефакторинг. Если архитектурно оправдан (event-driven между двумя одинаково важными модулями) — `@Lazy` или events.",
                 "edge_cases": "`@Lazy`-прокси не работает для final-методов; `prototype` в цикле всегда падает; пересмотреть, не пора ли разрезать через ApplicationEventPublisher.",
-                "related": "Q3 constructor preferred; Q13 `@Lazy`; Q47 events."
+                "related": "[[spring-framework-interview#Q3]] constructor preferred; [[spring-framework-interview#Q13]] `@Lazy`; [[spring-framework-interview#Q47]] events."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "`@Aspect @Component class LoggingAspect { @Around(\"execution(* com.app..*Service.*(..))\") Object log(ProceedingJoinPoint pjp) throws Throwable { /* before */ Object r = pjp.proceed(); /* after */ return r; } }`",
                 "when_to_apply": "Для логирования вызовов, измерения латентности, валидации параметров, авторизации, retry, кэширования — всего, что нужно одинаково применить ко многим методам.",
                 "edge_cases": "Self-invocation внутри одного класса не идёт через прокси и не активирует advice; AOP применяется только к бинам контейнера; private/final-методы не перехватываются; CGLIB требует non-final класс.",
-                "related": "Q30 Aspect/Pointcut; Q31 self-invocation; Q33 прокси типы."
+                "related": "[[spring-framework-interview#Q30]] Aspect/Pointcut; [[spring-framework-interview#Q31]] self-invocation; [[spring-framework-interview#Q33]] прокси типы."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "`@Aspect class LogAspect { @Pointcut(\"execution(* com.app.service.*.*(..))\") void serviceMethods(){} @Around(\"serviceMethods()\") Object around(ProceedingJoinPoint jp) {...} }`",
                 "when_to_apply": "При написании любого аспекта; правильная декомпозиция (отдельные Pointcut-ы для переиспользования, отдельные Advice по типам).",
                 "edge_cases": "В `Spring AOP` JoinPoint = только method execution; в `AspectJ` — также field access, constructor, static initializer; Pointcut-выражения могут комбинироваться через `&&`, `||`, `!`.",
-                "related": "Q29 AOP в целом; Q31 типы advice; Q33 прокси."
+                "related": "[[spring-framework-interview#Q29]] AOP в целом; [[spring-framework-interview#Q31]] типы advice; [[spring-framework-interview#Q33]] прокси."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "`@Around(\"@annotation(timed)\") Object measure(ProceedingJoinPoint pjp) throws Throwable { long t = System.nanoTime(); try { return pjp.proceed(); } finally { metrics.record(System.nanoTime() - t); } }`",
                 "when_to_apply": "`@Before` — простое логирование; `@AfterReturning`/`@AfterThrowing` — обработка результата/ошибки; `@Around` — когда нужна полная обёртка (метрики, retry, кэш, транзакции).",
                 "edge_cases": "В `@Around` забыли `proceed()` — метод не выполнится; исключения из `proceed()` нужно пробросить; порядок аспектов задаётся `@Order`.",
-                "related": "Q29 AOP; Q30 Aspect/Advice; Q32 self-invocation."
+                "related": "[[spring-framework-interview#Q29]] AOP; [[spring-framework-interview#Q30]] Aspect/Advice; [[spring-framework-interview#Q32]] self-invocation."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "`@Service class UserSvc { @Transactional void outer() { inner(); /* НЕТ транзакции */ } @Transactional(propagation=REQUIRES_NEW) void inner() {...} }`",
                 "when_to_apply": "Всегда учитывайте при работе с `@Transactional`, `@Async`, `@Cacheable`, `@PreAuthorize`. Если нужен advice — вынесите метод в другой бин или используйте `AopContext.currentProxy()`.",
                 "edge_cases": "`AopContext.currentProxy()` требует `exposeProxy=true` и работает только в singleton-бинах; `AspectJ` weaving не имеет этой проблемы, но требует настройки агента/компилятора.",
-                "related": "Q31 типы advice; Q33 типы прокси; Q34 `@EnableAspectJAutoProxy`."
+                "related": "[[spring-framework-interview#Q31]] типы advice; [[spring-framework-interview#Q33]] типы прокси; [[spring-framework-interview#Q34]] `@EnableAspectJAutoProxy`."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "`@Service class UserSvc {}` (без интерфейса) → CGLIB; `@Service class UserSvcImpl implements UserSvc {}` → JDK proxy реализует `UserSvc`.",
                 "when_to_apply": "Обычно дефолты `Spring` достаточно. Принудительно CGLIB: `@EnableAspectJAutoProxy(proxyTargetClass=true)`. Учитывайте при использовании Kotlin (классы по умолчанию final).",
                 "edge_cases": "Kotlin-классы по умолчанию `final` — CGLIB не работает; добавьте `kotlin-allopen` plugin или `open class`; `private`-методы не проксируются ни одним из типов.",
-                "related": "Q31 advice; Q32 self-invocation; Q34 `@EnableAspectJAutoProxy`."
+                "related": "[[spring-framework-interview#Q31]] advice; [[spring-framework-interview#Q32]] self-invocation; [[spring-framework-interview#Q34]] `@EnableAspectJAutoProxy`."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "`@Configuration @EnableAspectJAutoProxy(proxyTargetClass = true) class AopConfig {}` — включает AOP, форсит CGLIB для всех бинов.",
                 "when_to_apply": "Всегда, когда используете `@Aspect`-классы вне `Spring Boot`; в `Spring Boot` явно не нужно. `exposeProxy=true` — когда нужен self-invocation через `AopContext.currentProxy()`.",
                 "edge_cases": "Несколько раз включать не нужно — `Spring Boot` уже включает; для чистого `Spring` обязательно на одном из `@Configuration`-классов.",
-                "related": "Q29 AOP; Q32 self-invocation; Q33 типы прокси."
+                "related": "[[spring-framework-interview#Q29]] AOP; [[spring-framework-interview#Q32]] self-invocation; [[spring-framework-interview#Q33]] типы прокси."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "`Spring AOP`: `@Aspect @Component class LogA { @Before(\"...\") void log() {} }` — работает без настроек. `AspectJ` LTW: добавить `-javaagent:aspectjweaver.jar` + `<context:load-time-weaver/>`.",
                 "when_to_apply": "По умолчанию — `Spring AOP`. `AspectJ` — для специфических кейсов: глубокий profiling, security на private-методах, замена для проблем self-invocation.",
                 "edge_cases": "`AspectJ` LTW увеличивает время старта; CTW (compile-time) требует Maven/Gradle plugin; `Spring` поддерживает гибридный режим (`@EnableLoadTimeWeaving`).",
-                "related": "Q29 AOP; Q33 прокси типы; Q32 self-invocation."
+                "related": "[[spring-framework-interview#Q29]] AOP; [[spring-framework-interview#Q33]] прокси типы; [[spring-framework-interview#Q32]] self-invocation."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "`@Service class OrderSvc { @Transactional Order create(...) { repo.save(...); paymentClient.charge(...); return order; } }` — если `paymentClient.charge()` бросит `RuntimeException`, `save` откатится.",
                 "when_to_apply": "На public-методах сервисов, изменяющих данные. Для read-only — `@Transactional(readOnly=true)` для оптимизаций.",
                 "edge_cases": "Только public-методы (для CGLIB прокси); чек-listed exception без `rollbackFor` НЕ откатят (`IOException`, `SQLException`); self-invocation минует прокси и транзакция не откроется; `propagation=REQUIRES_NEW` создаёт новую транзакцию, suspending текущую.",
-                "related": "Q37 propagation; Q38 isolation; Q39 rollback."
+                "related": "[[spring-framework-interview#Q37]] propagation; [[spring-framework-interview#Q38]] isolation; [[spring-framework-interview#Q39]] rollback."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "`@Transactional void mainFlow() { repo.save(...); auditLog(); }` `@Transactional(propagation=REQUIRES_NEW) void auditLog() {...}` — audit зафиксируется даже если `mainFlow` откатится.",
                 "when_to_apply": "Большинство сервисов — `REQUIRED`. Audit, нотификации, метрики БД — `REQUIRES_NEW`. Чтение в смешанных операциях — `SUPPORTS`/`readOnly`.",
                 "edge_cases": "`REQUIRES_NEW` создаёт новое соединение из пула — при истощении пула deadlock; `NESTED` не работает с JPA (нет savepoint); self-invocation не открывает новую транзакцию даже с `REQUIRES_NEW`.",
-                "related": "Q36 `@Transactional`; Q38 isolation; Q39 rollback."
+                "related": "[[spring-framework-interview#Q36]] `@Transactional`; [[spring-framework-interview#Q38]] isolation; [[spring-framework-interview#Q39]] rollback."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "`@Transactional(isolation=Isolation.REPEATABLE_READ) void transferMoney(Account from, Account to) {...}` — внутри транзакции `from.balance` не изменится между чтениями.",
                 "when_to_apply": "Default подходит для обычных CRUD. `REPEATABLE_READ` — для финансовых операций. `SERIALIZABLE` — для редких critical секций. `READ_UNCOMMITTED` — почти никогда (только для read-only аналитики, где dirty read допустим).",
                 "edge_cases": "Не все БД поддерживают все уровни (`MySQL` не имеет true `SERIALIZABLE` без table-lock); повышение уровня увеличивает шанс deadlock; SERIALIZABLE в `PostgreSQL` — через SSI (`Serializable Snapshot Isolation`), может бросать `serialization_failure` для retry.",
-                "related": "Q37 propagation; Q36 `@Transactional`; Q39 rollback."
+                "related": "[[spring-framework-interview#Q37]] propagation; [[spring-framework-interview#Q36]] `@Transactional`; [[spring-framework-interview#Q39]] rollback."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "`@Transactional(rollbackFor=Exception.class) void process() throws IOException {...}` — `IOException` теперь откатит; `@Transactional(noRollbackFor=NotFoundException.class) void find() {...}` — NotFoundException не откатит.",
                 "when_to_apply": "Default — для бизнес-логики, где checked = валидация без сайд-эффектов. `rollbackFor=Exception.class` — для строгой консистентности. `noRollbackFor` — для optional операций.",
                 "edge_cases": "Поглощение exception в catch внутри метода — транзакция всё равно commit (не дойдёт до прокси); `TransactionStatus.setRollbackOnly()` — программный rollback без exception; `UnexpectedRollbackException` — попытка commit транзакции, помеченной rollback-only.",
-                "related": "Q36 `@Transactional`; Q37 propagation; Q40 programmatic."
+                "related": "[[spring-framework-interview#Q36]] `@Transactional`; [[spring-framework-interview#Q37]] propagation; [[spring-framework-interview#Q40]] programmatic."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "`@Service class BatchSvc { TransactionTemplate tx; void processAll(List<Item> items) { for(Item i : items) { tx.executeWithoutResult(s -> { try { process(i); } catch(Ex e) { s.setRollbackOnly(); }}); } } }` — каждый item в своей транзакции.",
                 "when_to_apply": "Batch processing с rollback per-item; динамические границы; смешанная логика commit/rollback не по exception.",
                 "edge_cases": "`TransactionTemplate.execute` принимает callback, обёртывает в try-catch с автоматическим rollback на exception; `setRollbackOnly()` — пометить как rollback без exception; не используйте `PlatformTransactionManager` напрямую без необходимости — boilerplate выше.",
-                "related": "Q36 `@Transactional`; Q41 sync; Q37 propagation."
+                "related": "[[spring-framework-interview#Q36]] `@Transactional`; [[spring-framework-interview#Q41]] sync; [[spring-framework-interview#Q37]] propagation."
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "`TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() { public void afterCommit() { eventBus.publish(event); } });`",
                 "when_to_apply": "Для отправки событий после commit, инвалидации внешних кэшей, нотификаций, вызова внешних API после успешной транзакции в БД.",
                 "edge_cases": "Регистрация работает только внутри активной транзакции (`TransactionSynchronizationManager.isSynchronizationActive()`); ошибка в `afterCommit` уже не может откатить транзакцию; `@TransactionalEventListener` инкапсулирует этот механизм для events.",
-                "related": "Q36 `@Transactional`; Q39 rollback; Q50 `@TransactionalEventListener`."
+                "related": "[[spring-framework-interview#Q36]] `@Transactional`; [[spring-framework-interview#Q39]] rollback; [[spring-framework-interview#Q50]] `@TransactionalEventListener`."
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "`@Autowired Environment env; String url = env.getProperty(\"app.api.url\", \"http://default\"); if(env.acceptsProfiles(\"prod\")) {...}`",
                 "when_to_apply": "Для динамического чтения properties с fallback; для проверки активных профилей в коде; в `@Configuration`-классах для условной логики.",
                 "edge_cases": "`env.getProperty()` возвращает `null` если ключ не найден — используйте overload с default; profiles меняются только при рестарте; `ConfigurableEnvironment` — мутабельная версия (можно добавить `PropertySource`).",
-                "related": "Q43 `PropertySource`; Q44 `@Value`; Q21 profiles."
+                "related": "[[spring-framework-interview#Q43]] `PropertySource`; [[spring-framework-interview#Q44]] `@Value`; [[spring-framework-interview#Q21]] profiles."
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "`@Configuration @PropertySource(\"classpath:integrations.properties\") class IntegrationCfg { @Value(\"${api.url}\") String url; }`",
                 "when_to_apply": "Для подключения custom properties-файлов; для интеграции с внешними config-системами; редко напрямую — обычно через `application.yml`/`Spring Boot` defaults.",
                 "edge_cases": "`@PropertySource` поддерживает только `.properties` из коробки (для YAML — кастомная factory); порядок `PropertySource` важен — последний регистрируется с низшим приоритетом по дефолту; в `Spring Boot` обычно достаточно `application.yml`.",
-                "related": "Q42 `Environment`; Q44 `@Value`; Q45 `@ConfigurationProperties`."
+                "related": "[[spring-framework-interview#Q42]] `Environment`; [[spring-framework-interview#Q44]] `@Value`; [[spring-framework-interview#Q45]] `@ConfigurationProperties`."
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "`@Value(\"${app.timeout:30}\") private int timeoutSec; @Value(\"#{T(java.time.Duration).ofSeconds(${app.timeout:30})}\") private Duration timeout; @Value(\"${app.hosts:host1,host2}\") private List<String> hosts;`",
                 "when_to_apply": "Для одиночных properties в бине; для default-значений (`${key:default}`); для SpEL-выражений (обращение к другим бинам). Для группы — `@ConfigurationProperties`.",
                 "edge_cases": "Без `${...}`/`#{...}` `@Value(\"plain\")` инжектит literal string `plain`; missing property без default → `IllegalArgumentException` на старте; `@Value` на constructor parameter работает (рекомендуется для иммутабельности).",
-                "related": "Q42 `Environment`; Q45 `@ConfigurationProperties`; Q46 SpEL."
+                "related": "[[spring-framework-interview#Q42]] `Environment`; [[spring-framework-interview#Q45]] `@ConfigurationProperties`; [[spring-framework-interview#Q46]] SpEL."
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "`@ConfigurationProperties(\"app.mail\") @Validated record MailProps(@NotBlank String host, int port, @NotNull Duration timeout) {}` + `app.mail.host=smtp.gmail.com, app.mail.port=465, app.mail.timeout=10s` в `application.yml`.",
                 "when_to_apply": "Для любой группы связанных properties (DB, Mail, Integration); вместо разбросанных `@Value` в разных классах; для feature-flags-объектов.",
                 "edge_cases": "Класс должен быть бином (`@Component` или `@EnableConfigurationProperties`); record-based требует `Spring Boot 2.6+`; relaxed binding (`my-prop` ↔ `myProp` ↔ `MY_PROP`); valid без `@Validated` не сработает.",
-                "related": "Q44 `@Value`; Q42 `Environment`; Q46 SpEL."
+                "related": "[[spring-framework-interview#Q44]] `@Value`; [[spring-framework-interview#Q42]] `Environment`; [[spring-framework-interview#Q46]] SpEL."
               }
             },
             {
@@ -2730,7 +2730,7 @@
                 "example": "`@Value(\"#{T(java.time.Duration).ofMinutes(${app.timeout:5})}\") Duration timeout;` `@PreAuthorize(\"#userId == authentication.principal.id\") void delete(Long userId)` `@Cacheable(key=\"#user.id\") Profile getProfile(User user)`.",
                 "when_to_apply": "В аннотациях, где нужна динамика (`@Cacheable.key`, `@PreAuthorize`, `@Query`); в `@Value` для type conversion и комбинирования properties; не для бизнес-логики (там Java-код читается лучше).",
                 "edge_cases": "`SpEL` — runtime-выражение, ошибки только в runtime; performance overhead из-за интерпретации (есть `SpelCompilerMode.IMMEDIATE` для compile-to-bytecode); literal string без `#{...}` — это просто строка.",
-                "related": "Q44 `@Value`; Q42 `Environment`; Q45 `@ConfigurationProperties`."
+                "related": "[[spring-framework-interview#Q44]] `@Value`; [[spring-framework-interview#Q42]] `Environment`; [[spring-framework-interview#Q45]] `@ConfigurationProperties`."
               }
             },
             {
@@ -2802,7 +2802,7 @@
                 "example": "`@Service class OrderSvc { ApplicationEventPublisher pub; void create(Order o) { repo.save(o); pub.publishEvent(new OrderCreatedEvent(o.getId())); } }` `@Component class NotifyL { @EventListener void on(OrderCreatedEvent e) { email.send(...); } }`",
                 "when_to_apply": "Для domain events внутри приложения; для разделения concerns (бизнес-логика vs notifications/audit); для plug-and-play extensions.",
                 "edge_cases": "Синхронные listener-ы выполняются в потоке producer-а — ошибка убьёт всю транзакцию; `@Async` нужен для не-blocking; обработка ошибок — через `setErrorHandler`; events не персистентны (live in memory).",
-                "related": "Q48 `@EventListener`; Q49 async; Q50 `@TransactionalEventListener`."
+                "related": "[[spring-framework-interview#Q48]] `@EventListener`; [[spring-framework-interview#Q49]] async; [[spring-framework-interview#Q50]] `@TransactionalEventListener`."
               }
             },
             {
@@ -2874,7 +2874,7 @@
                 "example": "`@EventListener void onOrder(OrderCreatedEvent e) {...}` `@EventListener(condition=\"#e.amount > 1000\") void onLargeOrder(OrderCreatedEvent e) {...}`",
                 "when_to_apply": "Когда есть один отправитель и несколько подписчиков на event; для аудита/нотификаций/метрик; для разделения domain-логики и cross-cutting actions.",
                 "edge_cases": "Listener выполняется синхронно в потоке producer-а; для async — `@Async`; ошибка в listener-е по умолчанию прерывает выполнение остальных; condition использует `SpEL`.",
-                "related": "Q47 `ApplicationEventPublisher`; Q49 async; Q50 `@TransactionalEventListener`."
+                "related": "[[spring-framework-interview#Q47]] `ApplicationEventPublisher`; [[spring-framework-interview#Q49]] async; [[spring-framework-interview#Q50]] `@TransactionalEventListener`."
               }
             }
           ]
@@ -2898,7 +2898,7 @@
                 "example": "`@EnableAsync class Config {}` `@Component class L { @Async @EventListener void on(OrderEvent e) { emailClient.send(...); } }`",
                 "when_to_apply": "Для I/O-heavy listener-ов (email, push, audit-log в другую БД); для нотификаций, которые не должны блокировать transaction; когда ошибка listener не должна влиять на producer.",
                 "edge_cases": "`@Async` не работает через self-invocation (как любой AOP); кастомный `TaskExecutor` рекомендуется (default — `SimpleAsyncTaskExecutor` без пула); exception в async-listener теряется без `AsyncUncaughtExceptionHandler`; транзакция в async — новая (не наследуется от producer).",
-                "related": "Q47 events; Q48 `@EventListener`; Q50 `@TransactionalEventListener`."
+                "related": "[[spring-framework-interview#Q47]] events; [[spring-framework-interview#Q48]] `@EventListener`; [[spring-framework-interview#Q50]] `@TransactionalEventListener`."
               }
             },
             {
@@ -2970,7 +2970,7 @@
                 "example": "`@Service class OrderSvc { @Transactional void create(Order o) { repo.save(o); pub.publishEvent(new OrderCreatedEvent(o.getId())); } }` `@Component class NotifyL { @TransactionalEventListener void on(OrderCreatedEvent e) { /* выполнится после commit */ emailClient.send(...); } }`",
                 "when_to_apply": "Когда event triggers внешние действия (email, push, Kafka), которые не должны произойти при rollback; для кэш-инвалидации; для аудита успешных операций.",
                 "edge_cases": "Если событие опубликовано без активной транзакции — listener НЕ выполнится без `fallbackExecution=true`; AFTER_COMMIT listener выполняется в потоке commit (как и transaction synchronization callback); сочетайте с `@Async` для асинхронной post-commit обработки.",
-                "related": "Q47 events; Q49 async; Q41 `TransactionSynchronization`."
+                "related": "[[spring-framework-interview#Q47]] events; [[spring-framework-interview#Q49]] async; [[spring-framework-interview#Q41]] `TransactionSynchronization`."
               }
             },
             {
@@ -3042,7 +3042,7 @@
                 "example": "MVC: `@GetMapping(\"/user/{id}\") User getUser(...) { return repo.findById(id); }` WebFlux: `@GetMapping(\"/user/{id}\") Mono<User> getUser(...) { return repo.findById(id); }`",
                 "when_to_apply": "WebFlux — для API gateway, streaming, real-time, тысячи concurrent connections, integration с reactive БД. MVC — для классического enterprise (CRUD, REST с обычной БД).",
                 "edge_cases": "Mixing blocking и reactive в одном thread приводит к проблемам; debugging сложнее (нет линейного стэка); Virtual Threads (`Project Loom`) в JDK 21 могут изменить ландшафт.",
-                "related": "Q52 native; Q53 Spring 6 baseline; Q54 JDK 17."
+                "related": "[[spring-framework-interview#Q52]] native; [[spring-framework-interview#Q53]] Spring 6 baseline; [[spring-framework-interview#Q54]] JDK 17."
               }
             },
             {
@@ -3114,7 +3114,7 @@
                 "example": "`./gradlew nativeCompile` (с `org.graalvm.buildtools.native` plugin) → native binary; `./build/native/nativeCompile/myapp` стартует за ~50 мс.",
                 "when_to_apply": "Для serverless (короткие функции, где старт критичен); для CLI-утилит; для container-deployments, где важна экономия памяти.",
                 "edge_cases": "Не все библиотеки совместимы (нужны reflection hints); GraalVM build долгий (несколько минут); JIT-оптимизаций нет — long-running могут быть медленнее JVM; debugging native — сложнее.",
-                "related": "Q51 WebFlux; Q53 Spring 6 baseline; Q54 JDK 17."
+                "related": "[[spring-framework-interview#Q51]] WebFlux; [[spring-framework-interview#Q53]] Spring 6 baseline; [[spring-framework-interview#Q54]] JDK 17."
               }
             }
           ]
@@ -3138,7 +3138,7 @@
                 "example": "Spring 5: `javax.servlet.http.HttpServletRequest`; Spring 6: `jakarta.servlet.http.HttpServletRequest`. `@HttpExchange interface UserApi { @GetExchange(\"/users/{id}\") User get(@PathVariable Long id); }` — декларативный HTTP-клиент.",
                 "when_to_apply": "Новые проекты — сразу на Spring 6+/Boot 3+. Существующие — миграция планируется как major upgrade с пакетом изменений (jakarta, новый Servlet API, новые версии библиотек).",
                 "edge_cases": "Несовместимость с библиотеками, ещё не мигрировавшими на jakarta; рантайм JDK 17+ требуется; некоторые deprecated API удалены (`commons-logging` adapter, `LegacySpringAdapter`).",
-                "related": "Q51 WebFlux; Q52 native; Q54 JDK 17."
+                "related": "[[spring-framework-interview#Q51]] WebFlux; [[spring-framework-interview#Q52]] native; [[spring-framework-interview#Q54]] JDK 17."
               }
             },
             {
@@ -3210,7 +3210,7 @@
                 "example": "`public record OrderEvent(Long id, String status, Instant createdAt) {}` — immutable event; `@ConfigurationProperties(\"app.mail\") public record MailProps(String host, int port) {}` — type-safe конфиг.",
                 "when_to_apply": "Records — для DTO, событий, value objects, конфигов; pattern matching — для разбора hierarchical types; text blocks — для SQL/JSON в коде.",
                 "edge_cases": "Records не могут extends; нельзя добавить mutable state; sealed classes требуют exhaustive switch (или default); pattern matching variable scoping имеет нюансы; Loom virtual threads — preview в JDK 17, GA в JDK 21.",
-                "related": "Q51 WebFlux; Q52 native; Q53 Spring 6."
+                "related": "[[spring-framework-interview#Q51]] WebFlux; [[spring-framework-interview#Q52]] native; [[spring-framework-interview#Q53]] Spring 6."
               }
             },
             {
@@ -3282,7 +3282,7 @@
                 "example": "Self-invocation: `@Transactional void outer() { inner(); /* НЕТ транзакции для inner */ } @Transactional(REQUIRES_NEW) void inner() {...}` — решение: вынести `inner` в отдельный бин или использовать `AopContext.currentProxy()`.",
                 "when_to_apply": "При code review, разработке и отладке любых `Spring`-приложений; знание этих ошибок отличает junior от senior.",
                 "edge_cases": "Не все ошибки очевидны при тестировании — many manifest только под нагрузкой или в специфических конфигурациях; статанализ (`SpotBugs`, `Sonar`) ловит часть, но не все.",
-                "related": "Q32 self-invocation; Q3 constructor injection; Q28 циклы."
+                "related": "[[spring-framework-interview#Q32]] self-invocation; [[spring-framework-interview#Q3]] constructor injection; [[spring-framework-interview#Q28]] циклы."
               }
             },
             {

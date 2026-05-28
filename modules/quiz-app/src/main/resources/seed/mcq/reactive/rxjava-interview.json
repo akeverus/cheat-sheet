@@ -18,7 +18,7 @@
                 "example": "Observable.just('A','B').subscribe(item -> log(item)) — Observable сам вызывает onNext для каждого элемента.",
                 "when_to_apply": "Любые асинхронные потоки событий: UI-клики, WebSocket-сообщения, callback-стримы.",
                 "edge_cases": "Flowable добавляет pull-механизм request(n) поверх push для контроля скорости — получается гибридная push-pull модель из Reactive Streams.",
-                "related": "Q4 виды реактивных типов; Q31 backpressure; Q32 Observable vs Flowable."
+                "related": "[[rxjava-interview#Q4]] виды реактивных типов; [[rxjava-interview#Q31]] backpressure; [[rxjava-interview#Q32]] Observable vs Flowable."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "Observable.create(e -> { e.onNext('A'); e.onComplete(); e.onNext('B'); /* B уходит в RxJavaPlugins */ }).",
                 "when_to_apply": "При реализации собственных источников через create(): обязательно вызывать ровно одно терминальное событие.",
                 "edge_cases": "В RxJava 2/3 события после терминального уходят в глобальный RxJavaPlugins.onError, чтобы не молча терялись.",
-                "related": "Q3 кратность вызовов; Q35 операторы ошибок; Q39 утечки и Disposable."
+                "related": "[[rxjava-interview#Q3]] кратность вызовов; [[rxjava-interview#Q35]] операторы ошибок; [[rxjava-interview#Q39]] утечки и Disposable."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "Observable.empty() — 0 onNext + onComplete; Observable.error(e) — 0 onNext + onError; Observable.just(1,2) — 2 onNext + onComplete.",
                 "when_to_apply": "При написании кастомных операторов и источников: гарантировать соблюдение протокола, иначе downstream получит UB.",
                 "edge_cases": "Нарушение контракта в RxJava 2/3 не падает в подписчика, а уходит в RxJavaPlugins.setErrorHandler — стоит подписаться, чтобы не терять баги.",
-                "related": "Q2 семантика методов; Q36 множественные ошибки; Q39 утечки."
+                "related": "[[rxjava-interview#Q2]] семантика методов; [[rxjava-interview#Q36]] множественные ошибки; [[rxjava-interview#Q39]] утечки."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "Single<User> userRepo.findById(42); Completable userRepo.save(user); Flowable<Event> kafka.listen('orders').",
                 "when_to_apply": "Single для запросов API, Completable для побочных операций без результата, Maybe для cache-lookup, Flowable — для потоков с возможным backpressure.",
                 "edge_cases": "Между типами есть конвертеры: toFlowable(strategy), toObservable(), toMaybe()/toSingle() — но при конвертации Flowable→Observable теряется backpressure.",
-                "related": "Q5 версии RxJava; Q31 backpressure; Q32 Observable vs Flowable; Q41 fire-and-forget."
+                "related": "[[rxjava-interview#Q5]] версии RxJava; [[rxjava-interview#Q31]] backpressure; [[rxjava-interview#Q32]] Observable vs Flowable; [[rxjava-interview#Q41]] fire-and-forget."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "rx.Observable из 1.x превращается в io.reactivex.Observable во 2.x и в io.reactivex.rxjava3.core.Observable в 3.x.",
                 "when_to_apply": "При миграции legacy-проектов: пакеты можно держать параллельно через bridge-библиотеки, но новый код стоит писать на 3.x.",
                 "edge_cases": "RxJava 1 — EOL с 2018, поддержки нет; RxJava 2 — maintenance mode, баги фиксят, но новые фичи в 3.x.",
-                "related": "Q4 типы Reactor; Q31 backpressure; Q39 Disposable."
+                "related": "[[rxjava-interview#Q4]] типы Reactor; [[rxjava-interview#Q31]] backpressure; [[rxjava-interview#Q39]] Disposable."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "Для map(x -> x*2): вход ---1---2---3---|; оператор map; выход ---2---4---6---|.",
                 "when_to_apply": "При объяснении работы операторов на собеседовании; при чтении документации reactivex.io; при дизайне собственных операторов.",
                 "edge_cases": "Asynchronous-диаграммы показывают разные потоки на разных строках — в RxJava это критично, потому что Schedulers могут разносить операторы по разным thread'ам.",
-                "related": "Q15 map vs flatMap; Q16 flatMap vs concatMap vs switchMap; Q19 операторы фильтрации."
+                "related": "[[rxjava-interview#Q15]] map vs flatMap; [[rxjava-interview#Q16]] flatMap vs concatMap vs switchMap; [[rxjava-interview#Q19]] операторы фильтрации."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "Плохо: .map(s -> { results.add(s); return s; }); Хорошо: .map(String::toLowerCase) — без побочных эффектов.",
                 "when_to_apply": "Любые лямбды, передаваемые в map/filter/reduce/scan/flatMap — делать pure; сайд-эффекты выносить в doOnNext/doOnError/doOnComplete.",
                 "edge_cases": "Для side-effects есть отдельный набор операторов doOn*; они выполняются в текущем Scheduler и явно отделены от трансформации.",
-                "related": "Q15 map vs flatMap; Q23 Schedulers; Q28 параллелизм."
+                "related": "[[rxjava-interview#Q15]] map vs flatMap; [[rxjava-interview#Q23]] Schedulers; [[rxjava-interview#Q28]] параллелизм."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "Observable.create(emitter -> { log('start'); emitter.onNext(1); emitter.onComplete(); }) — 'start' логируется на каждый subscribe.",
                 "when_to_apply": "HTTP-запросы, чтение файлов, генерация по диапазону — cold-семантика безопасна (каждый получает свои данные).",
                 "edge_cases": "Если работа дорогая и подписчиков несколько, нужно использовать publish().refCount()/share() или replay() для шейринга подписки.",
-                "related": "Q9 cold vs hot; Q10 cold to hot; Q14 create vs defer."
+                "related": "[[rxjava-interview#Q9]] cold vs hot; [[rxjava-interview#Q10]] cold to hot; [[rxjava-interview#Q14]] create vs defer."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "Cold: Observable.range(1,3) — каждый sub получает 1,2,3 заново. Hot: PublishSubject — sub, подписавшийся после onNext(2), получит только 3 и далее.",
                 "when_to_apply": "Cold — для запросов с уникальным результатом каждый раз (HTTP, чтение). Hot — для событий, существующих независимо: клики, биржевые тикеры, WebSocket.",
                 "edge_cases": "publish().refCount() / share() превращают cold в hot до тех пор, пока есть подписчики; replay() кеширует элементы и снова делает hot похожим на cold.",
-                "related": "Q8 когда начинается испускание; Q10/Q11 конвертация; Q29 Subject."
+                "related": "[[rxjava-interview#Q8]] когда начинается испускание; Q10/Q11 конвертация; [[rxjava-interview#Q29]] Subject."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "Observable.interval(1, SECONDS).publish().refCount() == .share() — один таймер на всех подписчиков, пока их хотя бы один.",
                 "when_to_apply": "Когда несколько подписчиков должны получать одни и те же события из одного источника: WebSocket-канал, лог-стрим, шина событий.",
                 "edge_cases": "share() переподключается при достижении нуля подписчиков — late-подписчик может получить новое выполнение cold-источника. Для одноразового шейринга используйте autoConnect(n) или replay().autoConnect().",
-                "related": "Q9 cold vs hot; Q11 hot to cold; Q29 Subject."
+                "related": "[[rxjava-interview#Q9]] cold vs hot; [[rxjava-interview#Q11]] hot to cold; [[rxjava-interview#Q29]] Subject."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "Observable.interval(1, SECONDS).publish().autoConnect(); → .replay(3).autoConnect() — late-подписчик получит последние 3 значения, потом live.",
                 "when_to_apply": "Когда поздние подписчики должны получить историю событий: лог-стримы, кэшируемые состояния, BehaviorSubject-подобная семантика на произвольном hot-источнике.",
                 "edge_cases": "replay() без bufferSize кеширует ВСЁ — на длинных потоках может привести к OOM. Используйте replay(n) или replay(time, unit).",
-                "related": "Q10 cold to hot; Q29 ReplaySubject; Q39 утечки памяти."
+                "related": "[[rxjava-interview#Q10]] cold to hot; [[rxjava-interview#Q29]] ReplaySubject; [[rxjava-interview#Q39]] утечки памяти."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "Observable<String> raw = ...; Observable<String> upper = raw.map(String::toUpperCase); raw.subscribe(...) — старый поток без upper.",
                 "when_to_apply": "Когда нужно строить разные пайплайны из общего источника без побочных эффектов; для лёгкого тестирования отдельных операторов.",
                 "edge_cases": "Иммутабельность гарантируется только для самих Observable; данные внутри элементов могут быть mutable — следуйте принципу pure-функций.",
-                "related": "Q7 pure-функции; Q18 несколько операторов одного типа; Q22 compose/Transformer."
+                "related": "[[rxjava-interview#Q7]] pure-функции; [[rxjava-interview#Q18]] несколько операторов одного типа; [[rxjava-interview#Q22]] compose/Transformer."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "Observable.just(1,2,3); Observable.fromCallable(() -> apiCall()); Observable.interval(1, SECONDS); Observable.error(new IllegalStateException()).",
                 "when_to_apply": "just — известные данные; fromCallable — обёртка blocking-вызова; create — кастомный источник; interval/timer — таймеры; defer — отложенное создание с актуальным состоянием.",
                 "edge_cases": "just(null) бросает NPE в RxJava 2/3 (null запрещён); error vs never отличаются терминальностью — never не завершается вообще, полезен в тестах.",
-                "related": "Q14 create vs defer; Q23 Schedulers (для interval/timer); Q41 fromCallable для fire-and-forget."
+                "related": "[[rxjava-interview#Q14]] create vs defer; [[rxjava-interview#Q23]] Schedulers (для interval/timer); [[rxjava-interview#Q41]] fromCallable для fire-and-forget."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "Observable.just(System.currentTimeMillis()) — фиксирует время создания; Observable.defer(() -> Observable.just(System.currentTimeMillis())) — текущее время на момент subscribe.",
                 "when_to_apply": "create — для интеграции с listener API/коллбэками; defer — когда внутренний Observable должен пересоздаваться для каждого подписчика.",
                 "edge_cases": "В create() нужно вручную проверять emitter.isDisposed() и корректно очищать ресурсы (setCancellable/setDisposable), иначе утечка.",
-                "related": "Q13 операторы создания; Q39 утечки и Disposable."
+                "related": "[[rxjava-interview#Q13]] операторы создания; [[rxjava-interview#Q39]] утечки и Disposable."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "Observable.just(1,2,3).map(n -> n*10) -> 10,20,30. Observable.just('a','b').flatMap(s -> api.get(s).subscribeOn(io())) -> результаты в порядке завершения запросов.",
                 "when_to_apply": "map — для простых синхронных трансформаций. flatMap — когда нужно вызвать другой Observable из элемента (API, БД, файл).",
                 "edge_cases": "Если порядок важен — использовать concatMap; если важен только последний результат — switchMap. flatMap может запускать много параллельных Observable, контролировать concurrency через перегрузку с maxConcurrency.",
-                "related": "Q16 flatMap vs concatMap vs switchMap; Q17 concat vs merge; Q28 параллелизм."
+                "related": "[[rxjava-interview#Q16]] flatMap vs concatMap vs switchMap; [[rxjava-interview#Q17]] concat vs merge; [[rxjava-interview#Q28]] параллелизм."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "Поиск с автодополнением: searchField.textChanges().debounce(300, MS).switchMap(q -> api.search(q)) — старые запросы отменяются при новом вводе.",
                 "when_to_apply": "flatMap — параллельные независимые операции (загрузка списка фото); concatMap — упорядоченные операции (sequence of writes); switchMap — только последний релевантен (поиск, навигация).",
                 "edge_cases": "switchMap полагается на правильный disposal внутреннего Observable — если внутри длинный blocking-вызов без проверки disposed, отмена не произойдёт. flatMap с большим parallelism может создать слишком много параллельных операций — используйте перегрузку с maxConcurrency.",
-                "related": "Q15 map vs flatMap; Q19 debounce; Q28 параллелизм."
+                "related": "[[rxjava-interview#Q15]] map vs flatMap; [[rxjava-interview#Q19]] debounce; [[rxjava-interview#Q28]] параллелизм."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "Observable.concat(cache.get(), api.get()) — сначала весь кеш, потом весь API; merge — перемешано в порядке поступления.",
                 "when_to_apply": "concat — упорядоченные источники (cache then network); merge — параллельная загрузка независимых данных.",
                 "edge_cases": "merge с ошибкой одного источника прерывает всю цепочку. mergeDelayError откладывает ошибки до конца и собирает их в CompositeException.",
-                "related": "Q16 flatMap vs concatMap; Q35 обработка ошибок; Q36 множественные ошибки."
+                "related": "[[rxjava-interview#Q16]] flatMap vs concatMap; [[rxjava-interview#Q35]] обработка ошибок; [[rxjava-interview#Q36]] множественные ошибки."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "Observable.just(' Hello ').map(String::trim).map(String::toUpperCase).map(s -> s + '!') — три последовательных map.",
                 "when_to_apply": "Когда трансформации логически отделены и читаемее по отдельности; для удобства логирования через doOnNext между операторами.",
                 "edge_cases": "subscribeOn — исключение: только первый имеет эффект (см. Q25). observeOn — каждый переключает поток downstream (Q26).",
-                "related": "Q22 compose/Transformer; Q24 observeOn vs subscribeOn; Q25/Q26 несколько subscribeOn/observeOn."
+                "related": "[[rxjava-interview#Q22]] compose/Transformer; [[rxjava-interview#Q24]] observeOn vs subscribeOn; Q25/Q26 несколько subscribeOn/observeOn."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "searchInput.debounce(300, MS).distinctUntilChanged().switchMap(q -> api.search(q)) — типичный поиск с автодополнением.",
                 "when_to_apply": "debounce — для пользовательского ввода; throttle — для rate-limiting тиков; distinctUntilChanged — для устранения дубликатов состояния.",
                 "edge_cases": "debounce задерживает все элементы на window; throttleFirst отдаёт первый сразу, остальные молча отбрасывает. Поведение разное при пакетных событиях.",
-                "related": "Q16 switchMap для поиска; Q20 операторы агрегации; Q33 backpressure стратегии."
+                "related": "[[rxjava-interview#Q16]] switchMap для поиска; [[rxjava-interview#Q20]] операторы агрегации; [[rxjava-interview#Q33]] backpressure стратегии."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "Observable.range(1,5).reduce(0, Integer::sum) -> Single<15>; .scan(0, Integer::sum) -> Observable<0,1,3,6,10,15>.",
                 "when_to_apply": "reduce/collect — для финальных вычислений; scan — когда нужны промежуточные значения (running sum, аккумулятор для UI).",
                 "edge_cases": "reduce без identity на пустом потоке вернёт Maybe.empty() — нужно учитывать через defaultIfEmpty.",
-                "related": "Q4 Single/Maybe; Q19 фильтрация; Q34 buffer/window."
+                "related": "[[rxjava-interview#Q4]] Single/Maybe; [[rxjava-interview#Q19]] фильтрация; [[rxjava-interview#Q34]] buffer/window."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "static <T> ObservableTransformer<T,T> ioToMain() { return up -> up.subscribeOn(io()).observeOn(mainThread()); } -> api.call().compose(ioToMain()).",
                 "when_to_apply": "compose — почти всегда; lift — только когда нужен прямой доступ к Observer (низкоуровневые оптимизации, кастомные backpressure-стратегии).",
                 "edge_cases": "lift требует корректного forwarding всех событий (onNext/onComplete/onError) и обработки Disposable; забыть про дезподписку — утечка.",
-                "related": "Q18 несколько операторов; Q22 Transformer; Q31 backpressure."
+                "related": "[[rxjava-interview#Q18]] несколько операторов; [[rxjava-interview#Q22]] Transformer; [[rxjava-interview#Q31]] backpressure."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "static <T> ObservableTransformer<T,T> retryWithBackoff(int n) { return up -> up.retryWhen(errors -> ...); } -> api.call().compose(retryWithBackoff(3)).",
                 "when_to_apply": "Когда одинаковые цепочки операторов применяются к разным Observable; для миграции/тестируемости (Transformer легко подменить).",
                 "edge_cases": "compose работает на уровне всего Observable, поэтому может полностью переопределить его поведение (например, заменить на error). lift работает на уровне Observer и не имеет такой власти.",
-                "related": "Q21 кастомные операторы; Q35 обработка ошибок; Q44 retry с backoff."
+                "related": "[[rxjava-interview#Q21]] кастомные операторы; [[rxjava-interview#Q35]] обработка ошибок; [[rxjava-interview#Q44]] retry с backoff."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "Observable.fromCallable(this::loadFromNetwork).subscribeOn(Schedulers.io()).observeOn(Schedulers.computation()).map(this::parseJson).subscribe(...).",
                 "when_to_apply": "io() — HTTP/DB/файлы; computation() — парсинг/расчёты; single() — последовательность; from(executor) — интеграция с существующими пулами.",
                 "edge_cases": "Не запускать blocking-код на computation() — заблокирует CPU-пул и весь RxJava замрёт. Для blocking всегда io() или from(executor).",
-                "related": "Q24 subscribeOn vs observeOn; Q27 синхронность по умолчанию; Q28 параллелизм."
+                "related": "[[rxjava-interview#Q24]] subscribeOn vs observeOn; [[rxjava-interview#Q27]] синхронность по умолчанию; [[rxjava-interview#Q28]] параллелизм."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "src.subscribeOn(io()).map(parse).observeOn(computation()).map(compute).observeOn(mainThread()).subscribe(updateUI).",
                 "when_to_apply": "subscribeOn один раз — где-то в начале цепочки (для источника). observeOn — на границе между этапами с разной нагрузкой (IO -> CPU -> UI).",
                 "edge_cases": "Если subscribeOn не указан, всё выполняется в потоке вызова subscribe(). Если несколько subscribeOn — только первый имеет эффект (см. Q25).",
-                "related": "Q23 Schedulers; Q25/Q26 несколько subscribeOn/observeOn; Q27 синхронность."
+                "related": "[[rxjava-interview#Q23]] Schedulers; Q25/Q26 несколько subscribeOn/observeOn; [[rxjava-interview#Q27]] синхронность."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "Observable.just(1,2,3).subscribeOn(io()).map(parse).subscribeOn(computation()).subscribe(...) — всё работает на io().",
                 "when_to_apply": "Чтобы избежать путаницы — ставить subscribeOn один раз, как можно ближе к источнику; не дублировать.",
                 "edge_cases": "Для кастомного управления есть subscribeOn(Scheduler, boolean requestOn) во Flowable и приёмы с unsubscribeOn для disposal в другом потоке.",
-                "related": "Q24 subscribeOn vs observeOn; Q26 несколько observeOn; Q39 утечки."
+                "related": "[[rxjava-interview#Q24]] subscribeOn vs observeOn; [[rxjava-interview#Q26]] несколько observeOn; [[rxjava-interview#Q39]] утечки."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "src.subscribeOn(io()).observeOn(computation()).map(parse).observeOn(mainThread()).subscribe(ui::update) — три потока в одной цепочке.",
                 "when_to_apply": "Когда разные этапы обработки требуют разной природы Scheduler (IO/CPU/UI/single).",
                 "edge_cases": "Каждое переключение — это hand-off через очередь, имеет небольшую стоимость; не злоупотреблять для коротких операторов.",
-                "related": "Q24 subscribeOn vs observeOn; Q25 несколько subscribeOn; Q23 Schedulers."
+                "related": "[[rxjava-interview#Q24]] subscribeOn vs observeOn; [[rxjava-interview#Q25]] несколько subscribeOn; [[rxjava-interview#Q23]] Schedulers."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "Observable.just(1,2,3).map(this::heavy).subscribe(println) — всё в main; map тоже в main.",
                 "when_to_apply": "Понимать это нужно всегда: иначе случайные blocking-операции могут заморозить UI или серверный поток.",
                 "edge_cases": "interval/timer/delay используют Schedulers.computation() по умолчанию — там async автоматически; subscribeOn в этом случае может быть не нужен для асинхронности.",
-                "related": "Q23 Schedulers; Q24 subscribeOn vs observeOn; Q28 параллелизм."
+                "related": "[[rxjava-interview#Q23]] Schedulers; [[rxjava-interview#Q24]] subscribeOn vs observeOn; [[rxjava-interview#Q28]] параллелизм."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "Flowable.range(1,100).parallel(4).runOn(computation()).map(heavy).sequential().subscribe(println).",
                 "when_to_apply": "flatMap+subscribeOn — для N независимых запросов; parallel — для CPU-bound пайплайнов; merge — для разнородных источников.",
                 "edge_cases": "flatMap с большим количеством параллельных операций может перегрузить пул — используйте flatMap(mapper, maxConcurrency) для контроля.",
-                "related": "Q15 flatMap; Q16 flatMap vs concatMap; Q23 Schedulers; Q25 subscribeOn."
+                "related": "[[rxjava-interview#Q15]] flatMap; [[rxjava-interview#Q16]] flatMap vs concatMap; [[rxjava-interview#Q23]] Schedulers; [[rxjava-interview#Q25]] subscribeOn."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "BehaviorSubject<String> state = BehaviorSubject.createDefault('idle'); ui.subscribe(state); state.onNext('loading');",
                 "when_to_apply": "PublishSubject — события без истории; BehaviorSubject — state с текущим значением; ReplaySubject — лог-стрим; AsyncSubject — отложенный финальный результат; UnicastSubject — буферизация до подписки.",
                 "edge_cases": "Subject thread-safe для emit/subscribe, но порядок onNext не гарантирован при concurrent emit без serialize(). Subject можно случайно завершить onComplete/onError — для защиты есть RxRelay (Q30).",
-                "related": "Q9 cold vs hot; Q30 Subject vs RxRelay; Q39 утечки."
+                "related": "[[rxjava-interview#Q9]] cold vs hot; [[rxjava-interview#Q30]] Subject vs RxRelay; [[rxjava-interview#Q39]] утечки."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "PublishRelay<UserEvent> events = PublishRelay.create(); events.accept(event); — нет risk onError(throwable).",
                 "when_to_apply": "Когда поток должен жить весь жизненный цикл приложения и не имеет смысла его завершать (UI events, app-level event bus).",
                 "edge_cases": "Если нужны terminal-события (для тестов или ограниченного потока) — использовать Subject. Relay не подходит для one-shot операций.",
-                "related": "Q29 Subject; Q39 утечки и lifecycle."
+                "related": "[[rxjava-interview#Q29]] Subject; [[rxjava-interview#Q39]] утечки и lifecycle."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "Flowable.fromIterable(bigList).observeOn(io()).subscribe(slow::process) — request(n) гарантирует, что producer ждёт consumer.",
                 "when_to_apply": "Когда producer быстрый и неуправляемый (Kafka-стрим, файл, sensor); когда consumer медленный (IO, БД); когда поток бесконечный.",
                 "edge_cases": "Observable -> Flowable конверсия требует BackpressureStrategy (BUFFER/DROP/LATEST/ERROR/MISSING). Обратная конверсия теряет backpressure.",
-                "related": "Q32 Observable vs Flowable; Q33 BackpressureStrategy; Q45 стратегии."
+                "related": "[[rxjava-interview#Q32]] Observable vs Flowable; [[rxjava-interview#Q33]] BackpressureStrategy; [[rxjava-interview#Q45]] стратегии."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "Observable<MotionEvent> для touch-событий; Flowable<String> lines = Flowable.create(emitter -> readFile(emitter), BUFFER).",
                 "when_to_apply": "Observable — <1000 элементов/сек или UI; Flowable — IO/БД/Kafka/большие коллекции.",
                 "edge_cases": "Observable.toFlowable(strategy) — конверсия с явной стратегией. Flowable.toObservable() — теряет backpressure (опасно для длинных потоков).",
-                "related": "Q31 backpressure; Q33 стратегии; Q45 практическое применение."
+                "related": "[[rxjava-interview#Q31]] backpressure; [[rxjava-interview#Q33]] стратегии; [[rxjava-interview#Q45]] практическое применение."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "Flowable.create(emit, BackpressureStrategy.LATEST) для UI-состояний; BackpressureStrategy.BUFFER для Kafka-сообщений.",
                 "when_to_apply": "BUFFER — критичные сообщения с приёмлемой памятью; DROP — телеметрия; LATEST — UI; ERROR — тесты/протокольные потоки; MISSING — ручное управление через onBackpressure*.",
                 "edge_cases": "BUFFER без ограничения буфера = OOM при медленном consumer. Используйте onBackpressureBuffer(size, callback, overflowStrategy) для ограниченного буфера с политикой переполнения.",
-                "related": "Q31 backpressure; Q32 Observable vs Flowable; Q45 практический выбор."
+                "related": "[[rxjava-interview#Q31]] backpressure; [[rxjava-interview#Q32]] Observable vs Flowable; [[rxjava-interview#Q45]] практический выбор."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "events.throttleLast(100, MS).buffer(50).flatMapSingle(batch -> save(batch)) — комбинация: ограничение частоты + батчинг.",
                 "when_to_apply": "throttle/sample — потеря отдельных значений приемлема; buffer/window — пакетная обработка эффективнее; parallel — consumer CPU-bound; onBackpressureBuffer — гибкий контроль с callback.",
                 "edge_cases": "buffer без ограничения времени может задерживать слишком долго; используйте buffer(count, time) с двумя триггерами для предсказуемой задержки.",
-                "related": "Q31 backpressure; Q33 стратегии; Q19 throttle; Q28 параллелизм."
+                "related": "[[rxjava-interview#Q31]] backpressure; [[rxjava-interview#Q33]] стратегии; [[rxjava-interview#Q19]] throttle; [[rxjava-interview#Q28]] параллелизм."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "api.get(id).retry(3).onErrorResumeNext(e -> cache.get(id)).doOnError(e -> log.warn(e)).subscribe(ui::update).",
                 "when_to_apply": "onErrorReturn — graceful degradation; onErrorResumeNext — fallback к другому источнику; retryWhen — backoff/jitter; doOnError — логирование/метрики.",
                 "edge_cases": "retry без задержки атакует сервис; используйте retryWhen с timer/exponential backoff. doOnError не подавляет ошибку — она пройдёт дальше.",
-                "related": "Q36 множественные ошибки; Q44 retry с backoff; Q46 production-обработка."
+                "related": "[[rxjava-interview#Q36]] множественные ошибки; [[rxjava-interview#Q44]] retry с backoff; [[rxjava-interview#Q46]] production-обработка."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "Observable.mergeDelayError(s1, s2, s3).subscribe(v -> {}, e -> { if (e instanceof CompositeException) ce.getExceptions().forEach(log::error); }).",
                 "when_to_apply": "Когда параллельная обработка нескольких источников должна продолжаться даже при сбое одного (например, агрегация из N микросервисов).",
                 "edge_cases": "CompositeException.getExceptions() возвращает все собранные ошибки. onErrorResumeNext(e -> empty()) внутри подзапроса позволяет проглатывать ошибки точечно.",
-                "related": "Q17 concat vs merge; Q35 операторы ошибок; Q46 production handling."
+                "related": "[[rxjava-interview#Q17]] concat vs merge; [[rxjava-interview#Q35]] операторы ошибок; [[rxjava-interview#Q46]] production handling."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "Observable.just(1,2,3).filter(n -> n%2==0).test().assertValues(2).assertComplete().assertNoErrors();",
                 "when_to_apply": "Все unit-тесты RxJava-логики. TestScheduler — операторы времени (interval, delay, timeout, debounce). RxJavaPlugins.set*SchedulerHandler — интеграционные тесты.",
                 "edge_cases": "Не забывать RxJavaPlugins.reset() в @AfterEach, иначе глобальные хендлеры утекают между тестами. TestScheduler не передаётся автоматически — операторы должны принимать его параметром (interval(1, SEC, scheduler)).",
-                "related": "Q38 TestScheduler; Q23 Schedulers; Q39 утечки."
+                "related": "[[rxjava-interview#Q38]] TestScheduler; [[rxjava-interview#Q23]] Schedulers; [[rxjava-interview#Q39]] утечки."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "TestScheduler s = new TestScheduler(); Observable.interval(1, SEC, s).take(5).test(); s.advanceTimeBy(3, SEC); → проверить, что эмиттится 3 значения.",
                 "when_to_apply": "Любые тесты операторов времени; тесты retry с backoff; тесты timeout/debounce/throttle.",
                 "edge_cases": "advanceTimeTo задаёт абсолютное виртуальное время; triggerActions() выполняет уже запланированные задачи без продвижения времени.",
-                "related": "Q37 тестирование; Q44 retry с backoff; Q19 debounce."
+                "related": "[[rxjava-interview#Q37]] тестирование; [[rxjava-interview#Q44]] retry с backoff; [[rxjava-interview#Q19]] debounce."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "compositeDisposable.add(api.get().subscribe(this::update)); ... onDestroy: compositeDisposable.clear();",
                 "when_to_apply": "Android Activity/Fragment, Spring beans с lifecycle, любые компоненты с ограниченным жизненным циклом и долгоживущими подписками.",
                 "edge_cases": "share()/refCount() — если ноль подписчиков, отключается. Лямбды захватывают this — анонимный класс может удерживать external context (выносите в static/method reference).",
-                "related": "Q40 CompositeDisposable; Q14 create + setCancellable; Q29 Subject."
+                "related": "[[rxjava-interview#Q40]] CompositeDisposable; [[rxjava-interview#Q14]] create + setCancellable; [[rxjava-interview#Q29]] Subject."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "class VM { CompositeDisposable cd = new CompositeDisposable(); load() { cd.add(api.get().subscribe(...)); } onCleared() { cd.clear(); } }.",
                 "when_to_apply": "Когда в одном lifecycle-scope есть несколько подписок и их нужно одновременно прервать (onDestroy, @PreDestroy, ViewModel.onCleared).",
                 "edge_cases": "После dispose() контейнер не принимает новые add — они сразу dispose'ятся. Для повторного использования (например, разные жизненные циклы) используйте clear().",
-                "related": "Q39 утечки; Q29 Subject lifecycle; Q42 RxJava + Kotlin."
+                "related": "[[rxjava-interview#Q39]] утечки; [[rxjava-interview#Q29]] Subject lifecycle; [[rxjava-interview#Q42]] RxJava + Kotlin."
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "Completable.fromAction(() -> analytics.track('event')).subscribeOn(io()).subscribe(() -> {}, e -> log.warn('fail', e));",
                 "when_to_apply": "Аналитика, нотификации, асинхронные побочные эффекты, когда вызывающему не важен результат.",
                 "edge_cases": "Без error-handler в subscribe ошибки уходят в RxJavaPlugins.setErrorHandler — обязательно настроить глобально, чтобы не убивать thread/JVM.",
-                "related": "Q4 Completable; Q35 ошибки; Q46 production-обработка."
+                "related": "[[rxjava-interview#Q4]] Completable; [[rxjava-interview#Q35]] ошибки; [[rxjava-interview#Q46]] production-обработка."
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "api.getUsers().subscribeBy(onNext = { ui.update(it) }, onError = { log.warn(it) }, onComplete = { }).addTo(disposables).",
                 "when_to_apply": "Legacy Android/JVM-проекты с RxJava + переход на Kotlin; интероп с Java RxJava-кодом из Kotlin-приложений.",
                 "edge_cases": "Coroutines и RxJava интероперабельны через kotlinx-coroutines-rx3: rxSingle { } / Flowable.asFlow() — миграция возможна постепенно.",
-                "related": "Q43 альтернативы; Q40 CompositeDisposable; Q23 Schedulers."
+                "related": "[[rxjava-interview#Q43]] альтернативы; [[rxjava-interview#Q40]] CompositeDisposable; [[rxjava-interview#Q23]] Schedulers."
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "Reactor: Flux.range(1,5).map(n -> n*2).subscribe(println); RxJava: Observable.range(1,5).map(n -> n*2).subscribe(println).",
                 "when_to_apply": "Reactor — Spring WebFlux/Boot; RxJava — Android, legacy JVM, многоплатформа; Coroutines — Kotlin native; Mutiny — Quarkus; Akka — actor-системы.",
                 "edge_cases": "Reactor.Context передаёт неявные данные через цепочку (например, trace ID), RxJava такого механизма не имеет — нужно явно передавать через map/flatMap.",
-                "related": "Q42 RxJava + Kotlin; Q4 типы; Q31 backpressure."
+                "related": "[[rxjava-interview#Q42]] RxJava + Kotlin; [[rxjava-interview#Q4]] типы; [[rxjava-interview#Q31]] backpressure."
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "api.call().retryWhen(errors -> errors.zipWith(Observable.range(1, 3), (e, i) -> i).flatMap(i -> Observable.timer((long) Math.pow(2, i)*100, MS))).",
                 "when_to_apply": "Сетевые вызовы к нестабильным внешним сервисам; integration с rate-limited API; работа с eventually consistent системами.",
                 "edge_cases": "Retry на 4xx (клиентские ошибки) бессмысленен — сервер вернёт ту же ошибку. Без jitter в нагруженной системе случится thundering herd при общем сбое. Бесконечный retry без max attempts может зацикливаться.",
-                "related": "Q35 операторы ошибок; Q22 Transformer (можно вынести в reusable); Q46 production-обработка."
+                "related": "[[rxjava-interview#Q35]] операторы ошибок; [[rxjava-interview#Q22]] Transformer (можно вынести в reusable); [[rxjava-interview#Q46]] production-обработка."
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "Flowable.create(emitter, BUFFER).onBackpressureBuffer(10_000, () -> log.warn('overflow'), DROP_OLDEST) — лимит + callback + что отбрасывать.",
                 "when_to_apply": "Анализируйте свой поток: можно ли потерять? важно ли последнее? приемлема ли память? есть ли диагностические требования?.",
                 "edge_cases": "BUFFER без лимита = OOM на длинных потоках. DROP может скрыть проблемы (нет видимости потерь — добавьте onBackpressureDrop callback). LATEST дискретизирует поток (агрегация теряется).",
-                "related": "Q31 backpressure; Q33 enum стратегий; Q32 Observable vs Flowable; Q34 решения."
+                "related": "[[rxjava-interview#Q31]] backpressure; [[rxjava-interview#Q33]] enum стратегий; [[rxjava-interview#Q32]] Observable vs Flowable; [[rxjava-interview#Q34]] решения."
               }
             },
             {
@@ -2730,7 +2730,7 @@
                 "example": "api.call().retry(3).onErrorResumeNext(e -> cache.get()).doOnError(e -> metrics.inc('errors')).subscribe(this::handle, e -> log.error('all failed', e));",
                 "when_to_apply": "Любой production-код RxJava: customer-facing API, integration с внешними сервисами, фоновая обработка.",
                 "edge_cases": "UndeliverableException возникает, когда ошибка прилетает после dispose() (например, retry уже отменили) — корректно ловить и логировать в setErrorHandler. onErrorReturn(null) бросит NPE в downstream — никогда не возвращать null.",
-                "related": "Q35 операторы ошибок; Q36 множественные ошибки; Q44 retry с backoff; Q39 утечки."
+                "related": "[[rxjava-interview#Q35]] операторы ошибок; [[rxjava-interview#Q36]] множественные ошибки; [[rxjava-interview#Q44]] retry с backoff; [[rxjava-interview#Q39]] утечки."
               }
             },
             {

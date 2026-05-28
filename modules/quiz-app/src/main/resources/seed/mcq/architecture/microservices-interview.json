@@ -18,7 +18,7 @@
                 "example": "Интернет-магазин: `order-service`, `payment-service`, `inventory-service` — каждый в своём репозитории, со своей `PostgreSQL`-схемой и собственным `Helm`-чартом в `Kubernetes`.",
                 "when_to_apply": "Системы, где нужны независимый деплой, разная скорость изменений компонентов, отдельные команды-владельцы.",
                 "edge_cases": "Микросервисы — не «маленькие сервисы по строкам кода»; размер определяется bounded context, а не LOC.",
-                "related": "Q2 monolith vs MSA; Q4 размер сервиса;"
+                "related": "[[microservices-interview#Q2]] monolith vs MSA; [[microservices-interview#Q4]] размер сервиса"
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "Стартап на 5 разработчиков пилит MVP за 3 месяца. Один `Spring Boot`-моноблок + `PostgreSQL` доставит ценность быстрее, чем 6 микросервисов.",
                 "when_to_apply": "Молодой продукт, небольшая команда (до 10 чел.), нет CI/CD-зрелости, домен ещё исследуется.",
                 "edge_cases": "Modular monolith — хорошая промежуточная точка: модули внутри одного деплоя с чёткими границами.",
-                "related": "Q3 distributed monolith;"
+                "related": "[[microservices-interview#Q3]] distributed monolith"
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "`order` синхронно зовёт `inventory` → `pricing` → `tax` → `payment`. Падение любого роняет цепочку; релиз `tax` требует пересборки всех клиентов.",
                 "when_to_apply": "Не применять — это антипаттерн. Распознавать на ревью архитектуры до выхода в прод.",
                 "edge_cases": "Иногда temporary distributed monolith возникает в середине миграции `Strangler Fig` — допустимо, но кратковременно.",
-                "related": "Q11 chatty services; Q9 shared DB;"
+                "related": "[[microservices-interview#Q11]] chatty services; [[microservices-interview#Q9]] shared DB"
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "`order-service` владеет всем жизненным циклом заказа (создание, оплата, отмена). `customer-service` — данными покупателя. Они оба обращаются к слову `Customer`, но контексты разные: для заказа важен `shipping address`, для customer — полный профиль.",
                 "when_to_apply": "При проектировании новых сервисов; при ревью существующих границ.",
                 "edge_cases": "Большой bounded context (например, billing) может оправдывать сервис из 30k LOC; маленький (audit log) — из 500 LOC.",
-                "related": "Q5 Conway's Law; Q6 декомпозиция;"
+                "related": "[[microservices-interview#Q5]] Conway's Law; [[microservices-interview#Q6]] декомпозиция"
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "Frontend, backend и DBA-команды → трёхслойная архитектура. Cross-functional product teams вокруг доменов → продуктовые сервисы (`Order`, `Payment`).",
                 "when_to_apply": "При планировании декомпозиции монолита и при найме/реструктуризации команд.",
                 "edge_cases": "Реверс-маневр требует поддержки топ-менеджмента; технические аргументы без оргперестройки часто бесполезны.",
-                "related": "Q4 bounded context; Q6 декомпозиция;"
+                "related": "[[microservices-interview#Q4]] bounded context; [[microservices-interview#Q6]] декомпозиция"
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "Из монолита `e-commerce` выделяют `order-service`, `payment-service`, `catalog-service`. Каждый владеет своими таблицами; интеграция — через события `OrderPlaced`, `PaymentCompleted`.",
                 "when_to_apply": "Любая декомпозиция MSA; миграция со `Strangler Fig`.",
                 "edge_cases": "Сначала Event Storming/Domain Storytelling с бизнес-экспертами — без понимания домена декомпозиция вслепую даст distributed monolith.",
-                "related": "Q4 bounded context; Q7 декомпозиция по subdomain;"
+                "related": "[[microservices-interview#Q4]] bounded context; [[microservices-interview#Q7]] декомпозиция по subdomain"
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "`order-service` хочет переименовать `total` → `total_amount`. При shared DB надо обновить запросы во всех клиентах. При DB per service это внутреннее изменение, API остаётся стабильным.",
                 "when_to_apply": "Всегда в зрелой MSA; на старте миграции — поэтапно.",
                 "edge_cases": "Read-only вьюхи для аналитики (DWH/`Snowflake`) допустимы, но через CDC/event stream, не как прод-зависимость.",
-                "related": "Q8 shared DB; Q9 outbox;"
+                "related": "[[microservices-interview#Q8]] shared DB; [[microservices-interview#Q9]] outbox"
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "Сервис A читает `users.email`, сервис B пишет туда же. Команда B хочет разделить email на `primary_email` и `secondary_email`. Без координации с A это ломает прод.",
                 "when_to_apply": "Не применять. На переходный период использовать `Database View per Consumer` как стабильный API.",
                 "edge_cases": "Иногда временно живут в режиме shared DB при миграции — допустимо с явным дедлайном.",
-                "related": "Q7 DB per service; Q3 distributed monolith;"
+                "related": "[[microservices-interview#Q7]] DB per service; [[microservices-interview#Q3]] distributed monolith"
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "`order-service` после успешной оплаты публикует в `Kafka` событие `OrderPaid{orderId, amount, at}`. `inventory-service` резервирует склад, `notification-service` шлёт письмо. Каждый — независимо.",
                 "when_to_apply": "Любая интеграция, не требующая немедленного ответа: уведомления, обновление кэшей/read models, запуск Saga.",
                 "edge_cases": "События — иммутабельны и в прошедшем времени; `OrderCancel` (повелительное) — это команда, не событие.",
-                "related": "Q10 saga; Q9 outbox;"
+                "related": "[[microservices-interview#Q10]] saga; [[microservices-interview#Q9]] outbox"
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "Заказ: `OrderCreated` → `PaymentCharged` → `InventoryReserved` → `ShippingScheduled`. Если shipping падает: компенсации `ReleaseInventory`, `RefundPayment`, `CancelOrder`.",
                 "when_to_apply": "Любые распределённые бизнес-процессы, охватывающие 2+ сервиса (заказ, бронирование, переводы).",
                 "edge_cases": "Компенсация не всегда возможна (письмо уже отправлено) — нужны semantically inverse операции или явная фиксация необратимости.",
-                "related": "Q11 choreography/orchestration; Q21 outbox;"
+                "related": "[[microservices-interview#Q11]] choreography/orchestration; [[microservices-interview#Q21]] outbox"
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "Choreography: `order-service` публикует `OrderCreated`; `payment` реагирует, при успехе шлёт `PaymentCompleted`; `inventory` реагирует и т.д. Orchestration: `OrderOrchestrator` шлёт `ChargePayment` → ждёт `PaymentCharged` → шлёт `ReserveInventory`.",
                 "when_to_apply": "Choreography — 2–3 сервиса, простой flow. Orchestration — 4+ шагов, ветвления, нужна видимость состояния.",
                 "edge_cases": "Чрезмерная choreography в сложном flow приводит к «event spaghetti», где никто не понимает, кто и на что подписан.",
-                "related": "Q10 saga; Q9 события;"
+                "related": "[[microservices-interview#Q10]] saga; [[microservices-interview#Q9]] события"
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "Sync: `GET /orders/{id}` — пользователь видит детали заказа. Async: `OrderPlaced` → уведомления, обновление аналитики, начисление бонусов.",
                 "when_to_apply": "Простые queries; критичные валидации (проверка баланса перед списанием); короткие edge-команды (логин).",
                 "edge_cases": "Цепочки sync >2 вызовов почти всегда — запах: либо лишнее разбиение, либо нужно перейти на async.",
-                "related": "Q13 API Gateway; Q24 timeouts;"
+                "related": "[[microservices-interview#Q13]] API Gateway; [[microservices-interview#Q24]] timeouts"
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "`/api/orders/**` → `order-service`; `/api/users/**` → `user-service`. На gateway — `OAuth2 JWT validation`, `100 RPS per token`, `circuit breaker`.",
                 "when_to_apply": "Любая клиентская MSA с 3+ сервисами; BFF-варианты для разных типов клиентов.",
                 "edge_cases": "Не помещать в gateway бизнес-логику — это превратит его в new monolith. Cross-cutting only.",
-                "related": "Q14 BFF; Q15 service mesh;"
+                "related": "[[microservices-interview#Q14]] BFF; [[microservices-interview#Q15]] service mesh"
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "`Istio` injects `Envoy` в каждый pod. Политика `VirtualService` маршрутизирует 90% трафика к `v1`, 10% к `v2` (canary). `DestinationRule` задаёт `circuit breaker`. Код приложения этого не знает.",
                 "when_to_apply": "Зрелые MSA с 10+ сервисами; жёсткие требования к security (`mTLS`); политики, единые для всего кластера.",
                 "edge_cases": "Mesh добавляет операционную сложность (control plane, sidecars в каждом pod); для 3–5 сервисов часто достаточно `Resilience4j`+`Spring Cloud`.",
-                "related": "Q13 gateway; Q24 circuit breaker;"
+                "related": "[[microservices-interview#Q13]] gateway; [[microservices-interview#Q24]] circuit breaker"
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "`Eureka`: сервис при старте регистрирует себя; клиент через `DiscoveryClient` получает список инстансов и применяет `Spring Cloud LoadBalancer`. В `Kubernetes` достаточно DNS-имени `payment-service.default.svc.cluster.local`.",
                 "when_to_apply": "Любая среда, где IP не статичны; зрелая MSA на VM/Kubernetes.",
                 "edge_cases": "Eureka использует AP-семантику (выбрала availability) — стейл-данные возможны на короткий период.",
-                "related": "Q16 client-side LB; Q14 mesh;"
+                "related": "[[microservices-interview#Q16]] client-side LB; [[microservices-interview#Q14]] mesh"
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "Client-side: `WebClient` с `LoadBalanced` берёт инстансы из `Eureka` и применяет round-robin. Server-side: `kubectl expose svc payment-service` — kube-proxy распределяет трафик по подам.",
                 "when_to_apply": "Client-side — JVM-моно-стек с `Spring Cloud`. Server-side — polyglot, Kubernetes, mesh.",
                 "edge_cases": "Service mesh — это фактически client-side LB, реализованный в sidecar, что снимает требование к каждому языку.",
-                "related": "Q15 discovery; Q14 mesh;"
+                "related": "[[microservices-interview#Q15]] discovery; [[microservices-interview#Q14]] mesh"
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "`Pact JVM`: тест в `order-service` мокает `payment` и фиксирует ожидаемый запрос `POST /charges`. Файл `order-payment.json` лежит в `Pact Broker`. `payment-service` в CI скачивает его и проигрывает реальный запрос.",
                 "when_to_apply": "Любая MSA с 3+ сервисами, где e2e неподъёмен; перед изменением API на provider-стороне.",
                 "edge_cases": "Pact не заменяет integration tests; он только проверяет совместимость API, не бизнес-логику end-to-end.",
-                "related": "Q12 sync vs async; Q29 versioning;"
+                "related": "[[microservices-interview#Q12]] sync vs async; [[microservices-interview#Q29]] versioning"
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "`Axon Framework`: агрегат `Account` обрабатывает `WithdrawCommand`, генерирует `MoneyWithdrawn`, событие сохраняется в `event store` (PostgreSQL/Kafka/EventStoreDB). При следующем запросе агрегат восстанавливается replay-ем.",
                 "when_to_apply": "Системы с критичным аудитом (банкинг), сложные доменные модели, нужна возможность восстановить состояние на любой момент времени.",
                 "edge_cases": "Запросы по событиям сложны — обычно идёт в паре с CQRS, где read-модель строится отдельно. Эволюция схемы событий требует upcasting.",
-                "related": "Q19 CQRS; Q9 события;"
+                "related": "[[microservices-interview#Q19]] CQRS; [[microservices-interview#Q9]] события"
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "`OrderCommandController` принимает `CreateOrderCommand`, валидирует, пишет в `PostgreSQL`. `OrderQueryController` отдаёт `OrderView` из `Elasticsearch`, обновляемого по событию `OrderCreated`.",
                 "when_to_apply": "Read-heavy системы, разная гранулярность read/write-моделей, нужны разные индексы.",
                 "edge_cases": "CQRS добавляет eventual consistency между write и read — пользователь после создания может не увидеть запись сразу в списке; UX это надо учитывать.",
-                "related": "Q18 event sourcing; Q9 события;"
+                "related": "[[microservices-interview#Q18]] event sourcing; [[microservices-interview#Q9]] события"
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "`payment-service` имеет `p99 = 200ms`. Ставим timeout `500ms`. `WebClient`: `httpClient.responseTimeout(Duration.ofMillis(500))`.",
                 "when_to_apply": "Все исходящие HTTP/gRPC-вызовы; даже к собственным сервисам внутри кластера.",
                 "edge_cases": "Cascading timeouts: upstream должен иметь больший timeout, чем суммарный downstream — иначе клиент сдастся раньше, чем сервис закончит работу.",
-                "related": "Q21 retry; Q22 circuit breaker;"
+                "related": "[[microservices-interview#Q21]] retry; [[microservices-interview#Q22]] circuit breaker"
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "`@Retry(name = \"paymentService\")` + конфиг `maxAttempts: 3, waitDuration: 500ms, exponentialBackoffMultiplier: 2`. На POST добавляем заголовок `Idempotency-Key: ${uuid}`; provider проверяет ключ.",
                 "when_to_apply": "GET-запросы автоматически; non-GET — только с идемпотентным контрактом.",
                 "edge_cases": "Retry storm: при массовом сбое все клиенты ретраят синхронно и убивают провайдера в момент восстановления. Mitigation — jitter + circuit breaker.",
-                "related": "Q22 circuit breaker; Q25 idempotency;"
+                "related": "[[microservices-interview#Q22]] circuit breaker; [[microservices-interview#Q25]] idempotency"
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "`@CircuitBreaker(name = \"paymentService\", fallbackMethod = \"paymentFallback\")`. Конфиг: `slidingWindowSize: 10, failureRateThreshold: 50%, waitDurationInOpenState: 10s, permittedNumberOfCallsInHalfOpenState: 3`.",
                 "when_to_apply": "Любой синхронный вызов между сервисами; критичные интеграции с внешними API.",
                 "edge_cases": "Fallback должен быть осмысленным: возврат `null` или старого кэша — лучше, чем 500. Без fallback CB только превращает медленный сбой в быстрый.",
-                "related": "Q21 retry; Q26 bulkhead;"
+                "related": "[[microservices-interview#Q21]] retry; [[microservices-interview#Q26]] bulkhead"
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "`Resilience4j Bulkhead`: `@Bulkhead(name = \"paymentService\", type = SEMAPHORE)` ограничивает число параллельных вызовов. Альтернатива — `THREADPOOL` с собственным `Executor`.",
                 "when_to_apply": "Сервис, делающий вызовы к 3+ зависимостям с разной критичностью; критичные пути нужно изолировать от некритичных.",
                 "edge_cases": "Слишком мелкое разбиение пулов даёт фрагментацию ресурсов; обычно 2–4 «переборки» в одном сервисе достаточно.",
-                "related": "Q22 circuit breaker; Q21 retry;"
+                "related": "[[microservices-interview#Q22]] circuit breaker; [[microservices-interview#Q21]] retry"
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "`Stripe API`: `POST /charges` с заголовком `Idempotency-Key: order-42-payment`. Если retry — Stripe вернёт результат первой попытки, без двойного списания. Реализация на сервере: `Redis SETNX idempotency:${key} ${response} EX 86400`.",
                 "when_to_apply": "Все неидемпотентные POST между сервисами, особенно связанные с деньгами/заказами/уведомлениями.",
                 "edge_cases": "TTL ключа должен быть больше, чем максимальный retry-горизонт клиента; сохранять и ответ, чтобы повтор давал тот же payload.",
-                "related": "Q21 retry; Q10 saga;"
+                "related": "[[microservices-interview#Q21]] retry; [[microservices-interview#Q10]] saga"
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "Главная страница магазина: товары — critical (без них нет смысла), рекомендации — non-critical (показать без них). Circuit breaker на `recommendations` с fallback `Collections.emptyList()`.",
                 "when_to_apply": "Любые user-facing сервисы с несколькими зависимостями разной критичности; default-стратегия проектирования резильентности.",
                 "edge_cases": "Нужно явно описать SLO/UX-режимы деградации; неподтверждённая «деградация» легко становится скрытыми багами.",
-                "related": "Q22 circuit breaker; Q23 bulkhead;"
+                "related": "[[microservices-interview#Q22]] circuit breaker; [[microservices-interview#Q23]] bulkhead"
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "Заказ создан в `order-service` (`OrderCreated` опубликован). `analytics-service` обновит дашборд через 2с; `notification-service` пошлёт email через 1с. В этот промежуток дашборд и счётчик заказов отличаются.",
                 "when_to_apply": "Любая MSA с event-driven интеграцией; default-модель консистентности.",
                 "edge_cases": "Если бизнесу нужен strong consistency (`bank ledger`) — выделять в один сервис с одной ACID-БД, не разносить по событиям.",
-                "related": "Q27 saga; Q9 события;"
+                "related": "[[microservices-interview#Q27]] saga; [[microservices-interview#Q9]] события"
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "`UPDATE order ...; INSERT INTO outbox (event_type, payload, aggregate_id, created_at) VALUES (...)`. `Debezium` читает WAL PostgreSQL и публикует в `Kafka`. Если транзакция откатывается — нет ни записи, ни события.",
                 "when_to_apply": "Любая запись + публикация события в одной операции; обязательный паттерн при at-least-once event-driven архитектуре.",
                 "edge_cases": "At-least-once: consumer должен быть идемпотентным. Outbox table нужно регулярно чистить, иначе вырастает.",
-                "related": "Q28 CDC; Q9 события;"
+                "related": "[[microservices-interview#Q28]] CDC; [[microservices-interview#Q9]] события"
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "`Debezium PostgreSQL connector` подключается через logical replication slot, читает WAL и публикует в топики `dbserver1.public.orders`. Каждое событие содержит `before/after` снэпшоты записи.",
                 "when_to_apply": "Strangler-миграция с легаси-БД; репликация в analytics; outbox через CDC вместо отдельного poller.",
                 "edge_cases": "CDC даёт row-level события без бизнес-смысла; для domain events лучше использовать outbox с явными событиями.",
-                "related": "Q27 outbox; Q26 eventual consistency;"
+                "related": "[[microservices-interview#Q27]] outbox; [[microservices-interview#Q26]] eventual consistency"
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "Saga вместо 2PC: вместо `ChargePayment+ReserveInventory` в одной XA-транзакции — каждая локальная транзакция со своей компенсацией; нет блокировок на других узлах.",
                 "when_to_apply": "Никогда — в современных MSA. Исключение: legacy XA через `JTA`/`Atomikos` при миграции монолита.",
                 "edge_cases": "2PC ещё жив в SQL-кластерах (Spanner, CockroachDB) на уровне СУБД, но не в прикладном межсервисном слое.",
-                "related": "Q10 saga; Q26 eventual consistency;"
+                "related": "[[microservices-interview#Q10]] saga; [[microservices-interview#Q26]] eventual consistency"
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "`OpenTelemetry Java agent` авто-инструментирует `Spring Web` и `RestTemplate/WebClient`. На gateway создаётся root span `GET /api/orders/42`; вложенные span'ы — `order-service.find`, `payment-service.status`, `db.SELECT order`. Jaeger UI показывает дерево.",
                 "when_to_apply": "Любая MSA с 3+ сервисами на путь запроса; обязательная часть observability.",
                 "edge_cases": "Без context propagation (`traceparent` header) trace разрывается; асинхронные через брокер требуют ручного протягивания headers.",
-                "related": "Q31 correlation ID; Q32 metrics;"
+                "related": "[[microservices-interview#Q31]] correlation ID; [[microservices-interview#Q32]] metrics"
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "Gateway генерирует `X-Correlation-Id: 7f3a-...` или использует `traceparent`. Каждый сервис кладёт в MDC: `MDC.put(\"correlationId\", id)`; logback паттерн включает `%X{correlationId}` в каждую строку.",
                 "when_to_apply": "Любая MSA — must-have для observability вместе с structured logging.",
                 "edge_cases": "При асинхронной обработке (Kafka) надо явно передавать id в headers сообщения и восстанавливать в consumer'е.",
-                "related": "Q30 tracing; Q32 metrics;"
+                "related": "[[microservices-interview#Q30]] tracing; [[microservices-interview#Q32]] metrics"
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "`micrometer` экспортирует `http_server_requests_seconds{uri,method,status}` — отсюда RED. `hikaricp_connections_active` — saturation БД-пула. `orders_placed_total` — счётчик бизнес-события.",
                 "when_to_apply": "Любой сервис в проде; SLO определяется на основе RED-метрик.",
                 "edge_cases": "Cardinality explosion: не делать tag по `userId` или `orderId` — миллион уникальных значений сломает Prometheus.",
-                "related": "Q30 tracing; Q33 logging;"
+                "related": "[[microservices-interview#Q30]] tracing; [[microservices-interview#Q33]] logging"
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "`logback-spring.xml` с `LogstashEncoder` от `logstash-logback-encoder` → JSON в stdout. `Fluent Bit` DaemonSet в Kubernetes читает `/var/log/containers/*.log` и отправляет в Elasticsearch.",
                 "when_to_apply": "Любая MSA в проде; альтернативы ELK — Loki+Grafana, Splunk, DataDog Logs.",
                 "edge_cases": "Не логировать PII/secrets; ставить retention (30/90 дней) — иначе ES съест диск.",
-                "related": "Q31 correlation id; Q30 tracing;"
+                "related": "[[microservices-interview#Q31]] correlation id; [[microservices-interview#Q30]] tracing"
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "`Spring Boot Actuator`: `/actuator/health/liveness` и `/actuator/health/readiness`. Kubernetes: `livenessProbe: httpGet { path: /actuator/health/liveness }; initialDelaySeconds: 30; periodSeconds: 10`.",
                 "when_to_apply": "Все микросервисы в Kubernetes; обязательная пара liveness+readiness.",
                 "edge_cases": "Не включать в liveness проверку downstream сервисов — иначе один сбой downstream рестартует весь кластер. Liveness — только локальная виталити.",
-                "related": "Q32 metrics; Q42 deployment;"
+                "related": "[[microservices-interview#Q32]] metrics; [[microservices-interview#Q42]] deployment"
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "`Dockerfile` с multi-stage build: `FROM eclipse-temurin:21-jdk AS build → COPY . . → RUN ./gradlew bootJar`, затем `FROM eclipse-temurin:21-jre → COPY --from=build /app/build/libs/*.jar app.jar → CMD java -jar app.jar`.",
                 "when_to_apply": "Любая MSA на современной платформе; стандарт de-facto.",
                 "edge_cases": "Не путать container с VM: общий kernel, нет изоляции уровня железа; secrets никогда не вшивать в image.",
-                "related": "Q36 Kubernetes; Q42 deployment;"
+                "related": "[[microservices-interview#Q36]] Kubernetes; [[microservices-interview#Q42]] deployment"
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "`Deployment` с `replicas: 3, strategy: RollingUpdate { maxUnavailable: 1, maxSurge: 1 }`. При `kubectl apply` с новым image — поды обновляются по одному без потери трафика. `Service` даёт стабильный DNS-name.",
                 "when_to_apply": "Любая MSA с 3+ сервисами; production-grade оркестрация требует Kubernetes или альтернатив (Nomad, ECS).",
                 "edge_cases": "Steep learning curve: для 2–3 сервисов часто избыточен; стартапы могут начинать с `Docker Compose`/`ECS Fargate`.",
-                "related": "Q35 Docker; Q37 deployment strategies;"
+                "related": "[[microservices-interview#Q35]] Docker; [[microservices-interview#Q37]] deployment strategies"
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "Blue-green: `Argo Rollouts BlueGreen` со steps `pre-promotion-analysis → promote → post-promotion-analysis`. Canary: `Argo Rollouts Canary` с `weights: [5, 25, 50, 100]` и анализом `success_rate >= 99%` между шагами.",
                 "when_to_apply": "Blue-green — простые stateless сервисы, нужен быстрый откат. Canary — сервисы с критичными SLO, где даже 1% сбоев недопустим.",
                 "edge_cases": "Database schema changes несовместимы с обоими методами без backward-compatible миграций (expand-migrate-contract).",
-                "related": "Q39 feature flags; Q36 Kubernetes;"
+                "related": "[[microservices-interview#Q39]] feature flags; [[microservices-interview#Q36]] Kubernetes"
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "5 реплик, `maxSurge: 1, maxUnavailable: 0`. K8s создаёт 6-й pod с новой версией; когда readiness=true, удаляет старый pod. Повторяет 5 раз.",
                 "when_to_apply": "Default для большинства сервисов; backward-compatible изменения; нет требования к instant cutover.",
                 "edge_cases": "В период rollout одновременно работают обе версии — API/DB схема должна быть backward-compatible. Не подходит для breaking changes без feature flags.",
-                "related": "Q37 blue-green; Q39 feature flags;"
+                "related": "[[microservices-interview#Q37]] blue-green; [[microservices-interview#Q39]] feature flags"
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "`if (featureFlags.isEnabled(\"new-checkout\", userId)) { newCheckoutService.process(...); } else { oldCheckoutService.process(...); }`. В `Unleash`: rollout `50% to userId-based`, исключая `country = RU`.",
                 "when_to_apply": "Любые рискованные изменения; A/B-тесты; тренинг trunk-based development.",
                 "edge_cases": "Tech debt: флаги нужно удалять после полного rollout — иначе кодовая база зарастает мертвыми if/else.",
-                "related": "Q37 canary; Q40 config management;"
+                "related": "[[microservices-interview#Q37]] canary; [[microservices-interview#Q40]] config management"
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "`application.yml` с дефолтами; `application-prod.yml` с переопределениями; в Kubernetes — `envFrom: configMapRef` для config, `secretRef` для credentials. `Vault Agent` инжектит ротируемые токены в файлы.",
                 "when_to_apply": "Любая MSA в production; для секретов — обязательно отдельное хранилище.",
                 "edge_cases": "Не складывать секреты в git, даже зашифрованные plain SOPS без management — без rotation становятся уязвимостью.",
-                "related": "Q43 secrets; Q39 feature flags;"
+                "related": "[[microservices-interview#Q43]] secrets; [[microservices-interview#Q39]] feature flags"
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "`Vault Database secrets engine` выдаёт `postgres://app:tmp_pass_TTL_1h@db:5432/orders`. Через 1 час credentials rotation; pod автоматически перечитывает через `Vault Agent sidecar`. Утечка ограничена 1 часом.",
                 "when_to_apply": "Любая прод-MSA; обязательно для финансовых/health/PII систем.",
                 "edge_cases": "Никогда не логировать секреты в structured logs; маскировать в exception messages.",
-                "related": "Q40 config; Q44 mTLS;"
+                "related": "[[microservices-interview#Q40]] config; [[microservices-interview#Q44]] mTLS"
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "Istio `PeerAuthentication: STRICT` — все sidecar-прокси требуют mTLS. `payment-service` подключается к `order-service`: handshake проверяет SPIFFE-id `spiffe://cluster/ns/default/sa/order-service`.",
                 "when_to_apply": "Production MSA с требованиями compliance (PCI DSS, HIPAA); zero-trust networks; multi-tenant clusters.",
                 "edge_cases": "Без mesh настройка mTLS вручную (cert-manager + Spring TLS config) — операционная боль; mesh берёт это на себя.",
-                "related": "Q14 service mesh; Q45 zero trust;"
+                "related": "[[microservices-interview#Q14]] service mesh; [[microservices-interview#Q45]] zero trust"
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "`Keycloak realm` с client `frontend`. User → `/auth` → Keycloak login → frontend получает `access_token` (TTL 5m) + `refresh_token`. Gateway проверяет JWT через `jwks_uri`. Сервисы читают `roles: [admin]` из claims.",
                 "when_to_apply": "Любая MSA с пользовательской авторизацией; обязательно для public-facing API.",
                 "edge_cases": "Logout с JWT непростой (stateless): нужен blacklist или короткий TTL+refresh rotation. Token revocation — отдельный flow.",
-                "related": "Q42 mTLS; Q45 zero trust;"
+                "related": "[[microservices-interview#Q42]] mTLS; [[microservices-interview#Q45]] zero trust"
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "Istio: `AuthorizationPolicy` разрешает `payment-service` принимать запросы только от `order-service` и `gateway`, всё остальное блокируется. mTLS гарантирует, что identity не подделать. NetworkPolicy в K8s блокирует egress в неутверждённые namespace.",
                 "when_to_apply": "Зрелые prod-системы с compliance-требованиями; multi-tenant clusters; высокий риск compromise.",
                 "edge_cases": "Zero trust увеличивает операционную сложность; для маленьких систем избыточен. Начинать с mTLS и network policies, добавлять policy постепенно.",
-                "related": "Q42 mTLS; Q43 OAuth2;"
+                "related": "[[microservices-interview#Q42]] mTLS; [[microservices-interview#Q43]] OAuth2"
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "`GET /orders/{id}` зовёт `order-service` → `customer-service` (получить имя) → `address-service` (адрес доставки) → `inventory-service` (статусы товаров) → `pricing-service` (актуальные цены). 5 RTT = 250ms.",
                 "when_to_apply": "Не применять. Диагностика — distributed tracing; решения — pre-join в read-модели (CQRS), event-driven обновление кэша, объединение сервисов.",
                 "edge_cases": "Иногда 2–3 вызова неизбежны, но 5+ почти всегда — запах. GraphQL/BFF может агрегировать на edge, но это лечит симптом, не причину.",
-                "related": "Q3 distributed monolith; Q19 CQRS;"
+                "related": "[[microservices-interview#Q3]] distributed monolith; [[microservices-interview#Q19]] CQRS"
               }
             },
             {
@@ -2730,7 +2730,7 @@
                 "example": "`common-models` JAR с классом `Order`; используется в `order-service`, `notification-service`, `analytics-service`. Добавили поле `cancellation_reason` → все три должны пересобраться, иначе deserialization ломается. Один не успел — система broken.",
                 "when_to_apply": "Не применять для бизнес-моделей. Допустимо — utility-libs (logging conventions, common UUID-генератор), но без бизнес-логики.",
                 "edge_cases": "Альтернатива — каждый сервис генерирует свои DTO из OpenAPI/Protobuf-схемы; контракт — спецификация, а не Java-класс.",
-                "related": "Q3 distributed monolith; Q17 contract testing;"
+                "related": "[[microservices-interview#Q3]] distributed monolith; [[microservices-interview#Q17]] contract testing"
               }
             },
             {
@@ -2802,7 +2802,7 @@
                 "example": "Заявка «добавить поле `discountAmount` к заказу» требует PR в `order-service`, `payment-service`, `analytics-service`, обновления `common-models` lib и согласованного релиза. Это distributed monolith.",
                 "when_to_apply": "Диагностика существующей системы; на ревью архитектуры новых проектов.",
                 "edge_cases": "Иногда coordinated release временно неизбежен (миграция БД expand-contract), но в норме — не более 5% релизов.",
-                "related": "Q3 distributed monolith; Q46 shared lib hell;"
+                "related": "[[microservices-interview#Q3]] distributed monolith; [[microservices-interview#Q46]] shared lib hell"
               }
             },
             {
@@ -2874,7 +2874,7 @@
                 "example": "Pod с `app-container` (Spring Boot) + `envoy-sidecar` (Istio mesh) + `fluent-bit` (log shipping). Все три делят `localhost` и общий volume `/var/log`. Приложение шлёт в `localhost:8080` — Envoy переправляет дальше.",
                 "when_to_apply": "Polyglot-системы (не хочется писать одну библиотеку на 5 языков); сложные infrastructure concerns (mTLS, observability).",
                 "edge_cases": "Sidecar добавляет overhead памяти/CPU (50–200MB на pod); для очень лёгких сервисов overhead может превысить пользу.",
-                "related": "Q14 service mesh; Q33 logging;"
+                "related": "[[microservices-interview#Q14]] service mesh; [[microservices-interview#Q33]] logging"
               }
             }
           ]
@@ -2898,7 +2898,7 @@
                 "example": "Шаг 1: ставим API Gateway перед монолитом. Шаг 2: выделяем `customer-service` (новый bounded context); gateway маршрутизирует `/api/customers/**` к нему, остальное — в монолит. Шаг 3: следующий контекст. Шаг N: монолит выключаем.",
                 "when_to_apply": "Любая миграция легаси-монолита в MSA; не применять big bang.",
                 "edge_cases": "Промежуточная двойная запись (`write to both monolith and new service`) — частая необходимость; нужны механизмы согласованности (CDC, dual writes).",
-                "related": "Q6 декомпозиция; Q3 distributed monolith;"
+                "related": "[[microservices-interview#Q6]] декомпозиция; [[microservices-interview#Q3]] distributed monolith"
               }
             },
             {
@@ -2970,7 +2970,7 @@
                 "example": "Стартап на 5 человек пилит MVP. Монолит на `Spring Boot` + `PostgreSQL` → деплой одной командой `./gradlew bootJar && docker push`. С 6 микросервисами те же 5 человек утонут в инфраструктуре.",
                 "when_to_apply": "Решение «не делать MSA» — на этапе планирования; modular monolith — хорошая промежуточная точка с возможностью миграции.",
                 "edge_cases": "Иногда продукт растёт быстрее, чем зрелость инфраструктуры; тогда выделение `Strangler`-ом первых 2–3 сервисов оправдано даже на ранних этапах.",
-                "related": "Q2 monolith vs MSA; Q49 strangler;"
+                "related": "[[microservices-interview#Q2]] monolith vs MSA; [[microservices-interview#Q49]] strangler"
               }
             },
             {

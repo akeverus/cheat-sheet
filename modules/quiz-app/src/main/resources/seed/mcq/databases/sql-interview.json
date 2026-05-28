@@ -18,7 +18,7 @@
                 "example": "`CREATE TABLE employees (...)` — `DDL`; `INSERT INTO employees VALUES (...)` — `DML`; `GRANT SELECT ON employees TO app_user` — `DCL`; `COMMIT` — `TCL`.",
                 "when_to_apply": "Понимание разбиения важно при проектировании прав доступа, миграций и обработки транзакций в `Spring`-приложении.",
                 "edge_cases": "`TRUNCATE` относится к `DDL` (не откатывается в `MySQL InnoDB`); в стандарте есть ещё `SQL/CLI` и `SQL/PSM`.",
-                "related": "Q15 разница `DELETE`/`TRUNCATE`/`DROP`; Q38 `ACID`; Q47 транзакции в `Spring`."
+                "related": "[[sql-interview#Q15]] разница `DELETE`/`TRUNCATE`/`DROP`; [[sql-interview#Q38]] `ACID`; [[sql-interview#Q47]] транзакции в `Spring`."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "`CREATE TABLE orders (id SERIAL PRIMARY KEY, customer_id INT NOT NULL REFERENCES customers(id) ON DELETE CASCADE, status VARCHAR(20) DEFAULT 'NEW' CHECK (status IN ('NEW','PAID','SHIPPED')))`.",
                 "when_to_apply": "Проектирование схемы, гарантии целостности на уровне БД, защита от багов приложения.",
                 "edge_cases": "Стратегии `ON DELETE`: `CASCADE`/`SET NULL`/`SET DEFAULT`/`RESTRICT`/`NO ACTION`. `EXCLUDE USING GIST` — только в `PostgreSQL`.",
-                "related": "Q3 `PK` vs `UNIQUE`; Q4 `FK` и `NULL`; Q7 нормализация."
+                "related": "[[sql-interview#Q3]] `PK` vs `UNIQUE`; [[sql-interview#Q4]] `FK` и `NULL`; [[sql-interview#Q7]] нормализация."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "`id SERIAL PRIMARY KEY` — `PK`; `email VARCHAR(255) UNIQUE` — допускает `NULL` для пользователей без email.",
                 "when_to_apply": "Решение: одно «техническое» поле для идентификации (`PK`) и несколько бизнес-уникальных (`UNIQUE`).",
                 "edge_cases": "В `SQL Server` `UNIQUE` допускает только один `NULL`; в `PostgreSQL` — несколько (трактуются как различные).",
-                "related": "Q2 ограничения; Q34 индексы; Q35 `Clustered` vs `Non-clustered`."
+                "related": "[[sql-interview#Q2]] ограничения; [[sql-interview#Q34]] индексы; [[sql-interview#Q35]] `Clustered` vs `Non-clustered`."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "`manager_id INT REFERENCES employees(id)` — у `CEO` `manager_id = NULL`, у обычного сотрудника — id руководителя.",
                 "when_to_apply": "Самоссылочные иерархии, опциональные связи, схемы с разреженными отношениями.",
                 "edge_cases": "Составной `FK` с частичным `NULL` — поведение зависит от `MATCH FULL` / `MATCH SIMPLE` / `MATCH PARTIAL`.",
-                "related": "Q5 `NULL`-логика; Q2 ограничения; Q26 `SELF JOIN`."
+                "related": "[[sql-interview#Q5]] `NULL`-логика; [[sql-interview#Q2]] ограничения; [[sql-interview#Q26]] `SELF JOIN`."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "`WHERE email = NULL` всегда пуст; нужно `WHERE email IS NULL`. `COALESCE(phone, 'не указан')` заменяет `NULL`.",
                 "when_to_apply": "Любая фильтрация и обработка опциональных полей; защита от багов с `WHERE col != 'value'`.",
                 "edge_cases": "`NOT IN (... NULL ...)` всегда возвращает пустой результат — используйте `NOT EXISTS`. В `PostgreSQL` `UNIQUE` допускает несколько `NULL`.",
-                "related": "Q4 `FK` и `NULL`; Q17 `IN`/`EXISTS`; Q29 `COUNT(*)` vs `COUNT(col)`."
+                "related": "[[sql-interview#Q4]] `FK` и `NULL`; [[sql-interview#Q17]] `IN`/`EXISTS`; [[sql-interview#Q29]] `COUNT(*)` vs `COUNT(col)`."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "`created_at TIMESTAMPTZ DEFAULT NOW()` в `PostgreSQL` — лучшая практика. Java `Instant`/`OffsetDateTime` маппится на `TIMESTAMPTZ`.",
                 "when_to_apply": "Любые временные метки, аудит, события распределённых систем.",
                 "edge_cases": "`MySQL TIMESTAMP` ограничен 2038 годом (Y2K38). `PostgreSQL TIMESTAMP WITHOUT TZ` тоже не хранит зону.",
-                "related": "Q5 `NULL`; Q53 `MVCC` и `xmin`/`xmax`."
+                "related": "[[sql-interview#Q5]] `NULL`; [[sql-interview#Q53]] `MVCC` и `xmin`/`xmax`."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "`phones = '111,222'` нарушает `1NF`; `city → country` через `zip_code` нарушает `3NF`.",
                 "when_to_apply": "Проектирование `OLTP`-схемы; устранение аномалий вставки/обновления/удаления.",
                 "edge_cases": "`4NF`/`5NF` — для многозначных и join-зависимостей, редко используются. `OLAP/DWH` сознательно денормализуют.",
-                "related": "Q8 денормализация; Q2 ограничения; Q23 `JOIN` vs подзапросы."
+                "related": "[[sql-interview#Q8]] денормализация; [[sql-interview#Q2]] ограничения; [[sql-interview#Q23]] `JOIN` vs подзапросы."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "Добавить `customer_name` в `orders` (избежать `JOIN`); хранить `total_orders` в `customers`; `monthly_sales` как `Materialized View`.",
                 "when_to_apply": "`OLAP/DWH` (звезда, снежинка), горячие dashboard-запросы, низкий `latency` на чтение, узкое место от множества `JOIN`.",
                 "edge_cases": "Риск рассинхронизации; нужен механизм обновления (`REFRESH`, триггеры, события).",
-                "related": "Q7 нормализация; Q9 `Materialized View`; Q42 `EXPLAIN` для оценки эффекта."
+                "related": "[[sql-interview#Q7]] нормализация; [[sql-interview#Q9]] `Materialized View`; [[sql-interview#Q42]] `EXPLAIN` для оценки эффекта."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "`CREATE MATERIALIZED VIEW monthly_sales AS SELECT date_trunc('month', order_date), SUM(total) FROM orders GROUP BY 1;` + `REFRESH MATERIALIZED VIEW CONCURRENTLY monthly_sales`.",
                 "when_to_apply": "`View` — для абстракции/безопасности/упрощения; `Materialized View` — для дорогих агрегатов с допустимой задержкой данных.",
                 "edge_cases": "`REFRESH` без `CONCURRENTLY` блокирует чтение. `View` нельзя индексировать в `PostgreSQL`. `MySQL` не поддерживает `Materialized View` нативно.",
-                "related": "Q8 денормализация; Q34 индексы; Q42 `EXPLAIN`."
+                "related": "[[sql-interview#Q8]] денормализация; [[sql-interview#Q34]] индексы; [[sql-interview#Q42]] `EXPLAIN`."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "`CREATE FUNCTION get_employee_count(dept_id INT) RETURNS INT AS $$ ... $$` → `SELECT get_employee_count(1)`. `CREATE PROCEDURE transfer_employee(...) LANGUAGE plpgsql AS $$ ... COMMIT; ... $$` → `CALL transfer_employee(42, 3)`.",
                 "when_to_apply": "Бизнес-логика на стороне БД, инкапсуляция сложных операций, оптимизация per-row вычислений.",
                 "edge_cases": "Избегайте сложной логики в БД — усложняет отладку и миграции. Версионируйте через `Flyway`.",
-                "related": "Q11 триггеры; Q47 транзакции в `Spring`."
+                "related": "[[sql-interview#Q11]] триггеры; [[sql-interview#Q47]] транзакции в `Spring`."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "`CREATE TRIGGER salary_change_trigger BEFORE UPDATE OF salary ON employees FOR EACH ROW WHEN (OLD.salary IS DISTINCT FROM NEW.salary) EXECUTE FUNCTION log_salary_change()`.",
                 "when_to_apply": "Аудит изменений, авто-вычисление полей (`updated_at`), enforcement бизнес-правил, недоступных через `CHECK`.",
                 "edge_cases": "Усложняет отладку и миграции; каскадные триггеры могут вызвать неожиданные побочные эффекты. Не срабатывают при `TRUNCATE` и bulk-load.",
-                "related": "Q10 `Procedure`/`Function`; Q15 `DELETE`/`TRUNCATE`; Q53 `MVCC`."
+                "related": "[[sql-interview#Q10]] `Procedure`/`Function`; [[sql-interview#Q15]] `DELETE`/`TRUNCATE`; [[sql-interview#Q53]] `MVCC`."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "`CREATE TEMP TABLE temp_report (department VARCHAR(100), total_salary NUMERIC); INSERT INTO temp_report SELECT d.name, SUM(e.salary) FROM ... ;` — после отключения сессии исчезает.",
                 "when_to_apply": "Промежуточные результаты сложных отчётов, ETL-этапы, изоляция данных между сессиями.",
                 "edge_cases": "Имя может конфликтовать с обычной таблицей; видна только своей сессии. `PostgreSQL`: `ON COMMIT DELETE ROWS` / `DROP` / `PRESERVE ROWS`.",
-                "related": "Q19 `CTE`; Q9 `View`; Q47 транзакции."
+                "related": "[[sql-interview#Q19]] `CTE`; [[sql-interview#Q9]] `View`; [[sql-interview#Q47]] транзакции."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "`CREATE SEQUENCE order_seq START 1000 INCREMENT 1; SELECT nextval('order_seq');` или `INSERT INTO orders (id, customer_id) VALUES (nextval('order_seq'), 42)`.",
                 "when_to_apply": "Глобальные идентификаторы между таблицами, кастомные шаги/циклы, явное управление пулом id.",
                 "edge_cases": "`Sequence` не откатывается → возможны «дыры» в id. Кэширование (`CACHE`) ускоряет, но увеличивает дыры при сбое.",
-                "related": "Q2 ограничения; Q15 `TRUNCATE` и сброс идентификатора."
+                "related": "[[sql-interview#Q2]] ограничения; [[sql-interview#Q15]] `TRUNCATE` и сброс идентификатора."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "`SELECT department, COUNT(*) AS cnt FROM employees JOIN departments ... WHERE salary > 50000 GROUP BY department HAVING COUNT(*) > 5 ORDER BY cnt DESC LIMIT 10`.",
                 "when_to_apply": "Понимание этапов запроса при отладке и оптимизации; объяснение ошибок «column does not exist» в `WHERE`.",
                 "edge_cases": "Оконные функции выполняются после `HAVING`, но до `ORDER BY` → не доступны в `WHERE` (Q33). `DISTINCT` идёт после `SELECT`.",
-                "related": "Q27 `GROUP BY`/`HAVING`; Q33 оконные функции в `WHERE`; Q42 `EXPLAIN`."
+                "related": "[[sql-interview#Q27]] `GROUP BY`/`HAVING`; [[sql-interview#Q33]] оконные функции в `WHERE`; [[sql-interview#Q42]] `EXPLAIN`."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "`DELETE FROM orders WHERE status = 'CANCELLED'`; `TRUNCATE TABLE temp_data`; `DROP TABLE IF EXISTS old_archive`.",
                 "when_to_apply": "`DELETE` — частичная очистка с триггерами; `TRUNCATE` — быстрая полная очистка таблицы; `DROP` — удаление неиспользуемой структуры.",
                 "edge_cases": "В `PostgreSQL` `TRUNCATE` можно откатить внутри транзакции; в `MySQL InnoDB` — нельзя. `TRUNCATE` не запускает `ON DELETE` триггеры.",
-                "related": "Q11 триггеры; Q53 `MVCC`; Q38 транзакции."
+                "related": "[[sql-interview#Q11]] триггеры; [[sql-interview#Q53]] `MVCC`; [[sql-interview#Q38]] транзакции."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "`INSERT INTO products (sku, name, price) VALUES ('ABC-123', 'Widget', 29.99) ON CONFLICT (sku) DO UPDATE SET name = EXCLUDED.name, price = EXCLUDED.price, updated_at = NOW()`.",
                 "when_to_apply": "Идемпотентные API, синхронизация с внешними источниками, batch-загрузка с обновлениями.",
                 "edge_cases": "`ON CONFLICT` требует существующий уникальный индекс/`PK`. Не путать с `INSERT ... ON DUPLICATE KEY UPDATE` (MySQL).",
-                "related": "Q2 ограничения; Q15 `DELETE`/`TRUNCATE`; Q47 транзакции."
+                "related": "[[sql-interview#Q2]] ограничения; [[sql-interview#Q15]] `DELETE`/`TRUNCATE`; [[sql-interview#Q47]] транзакции."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "`SELECT * FROM orders o WHERE EXISTS (SELECT 1 FROM vip_customers v WHERE v.id = o.customer_id)` — безопасный аналог `IN` для больших списков.",
                 "when_to_apply": "`IN` — короткий статический список; `EXISTS` — большие/коррелированные проверки существования; `JOIN` — нужны столбцы из второй таблицы.",
                 "edge_cases": "`NOT IN` + `NULL` = пустой результат; используйте `NOT EXISTS`. `JOIN` может создавать дубликаты, нужен `DISTINCT` или `EXISTS`.",
-                "related": "Q5 `NULL`; Q23 `JOIN` vs подзапросы; Q21 типы `JOIN`."
+                "related": "[[sql-interview#Q5]] `NULL`; [[sql-interview#Q23]] `JOIN` vs подзапросы; [[sql-interview#Q21]] типы `JOIN`."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "`SELECT name, CASE WHEN salary >= 200000 THEN 'Senior' WHEN salary >= 100000 THEN 'Middle' ELSE 'Junior' END AS grade FROM employees`.",
                 "when_to_apply": "Деривированные столбцы, условная агрегация (`SUM(CASE WHEN ...)`), мультиколоночная сортировка с приоритетом.",
                 "edge_cases": "Условия проверяются по порядку — первое истинное побеждает. Типы всех ветвей должны быть совместимы.",
-                "related": "Q5 `NULL`; Q14 порядок выполнения; Q27 `GROUP BY`."
+                "related": "[[sql-interview#Q5]] `NULL`; [[sql-interview#Q14]] порядок выполнения; [[sql-interview#Q27]] `GROUP BY`."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "`WITH department_stats AS (SELECT department_id, AVG(salary) FROM employees GROUP BY department_id) SELECT d.name, ds.avg_salary FROM departments d JOIN department_stats ds ON d.id = ds.department_id`.",
                 "when_to_apply": "Сложные многоэтапные запросы, иерархии (рекурсивный `CTE`), повторное использование подзапроса в основном запросе.",
                 "edge_cases": "В `PG < 12` `CTE` мог быть медленнее подзапроса (фенс). В `MySQL` поддерживается с 8.0.",
-                "related": "Q48 рекурсивные `CTE`; Q33 окна в `WHERE`; Q23 `JOIN` vs подзапросы."
+                "related": "[[sql-interview#Q48]] рекурсивные `CTE`; [[sql-interview#Q33]] окна в `WHERE`; [[sql-interview#Q23]] `JOIN` vs подзапросы."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "`INSERT INTO users (name, email) VALUES ('Иванов', 'i@m.ru') RETURNING id, created_at`; `DELETE FROM sessions WHERE expires_at < NOW() RETURNING user_id`.",
                 "when_to_apply": "Получение auto-id, аудит изменений, удаление с возвратом списка пострадавших.",
                 "edge_cases": "Не поддерживается в `MySQL`. В `Spring Data JDBC` доступен через `@Modifying` + `@Query`.",
-                "related": "Q13 `Sequence`; Q15 `DELETE`; Q47 транзакции."
+                "related": "[[sql-interview#Q13]] `Sequence`; [[sql-interview#Q15]] `DELETE`; [[sql-interview#Q47]] транзакции."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "`SELECT e.name, d.name FROM employees e LEFT JOIN departments d ON e.department_id = d.id` — сотрудник без отдела сохранится с `d.name = NULL`.",
                 "when_to_apply": "Любая работа с реляционной моделью: связи 1:1, 1:N, N:M; отчёты с включением пустых категорий.",
                 "edge_cases": "`FULL OUTER JOIN` не поддерживается в `MySQL` (нужна эмуляция `UNION`). `RIGHT JOIN` редок — обычно переписывают как `LEFT`.",
-                "related": "Q22 `WHERE` vs `ON`; Q25 `CROSS JOIN`; Q26 `SELF JOIN`."
+                "related": "[[sql-interview#Q22]] `WHERE` vs `ON`; [[sql-interview#Q25]] `CROSS JOIN`; [[sql-interview#Q26]] `SELF JOIN`."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "`LEFT JOIN d ON d.id = e.department_id AND d.active = true` — сотрудники без отдела сохранятся; перенос `AND d.active = true` в `WHERE` исключит их.",
                 "when_to_apply": "Отчёты «всё с пустыми категориями», фильтрация второй таблицы при сохранении строк первой.",
                 "edge_cases": "Оптимизатор может вытащить безопасные условия из `WHERE` в `ON` (predicate pushdown), но только для `INNER`.",
-                "related": "Q21 типы `JOIN`; Q17 `IN`/`EXISTS`; Q42 `EXPLAIN`."
+                "related": "[[sql-interview#Q21]] типы `JOIN`; [[sql-interview#Q17]] `IN`/`EXISTS`; [[sql-interview#Q42]] `EXPLAIN`."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "Коррелированный: `SELECT (SELECT d.name FROM departments d WHERE d.id = e.department_id) FROM employees e`; лучше переписать как `LEFT JOIN`.",
                 "when_to_apply": "`JOIN` — нужны столбцы из второй таблицы; подзапрос — фильтр или агрегат без необходимости столбцов.",
                 "edge_cases": "`PG`/`MySQL 8+` часто разворачивают подзапросы в `JOIN` (subquery unnesting). Старые версии — нет.",
-                "related": "Q17 `IN`/`EXISTS`/`JOIN`; Q42 `EXPLAIN`; Q21 типы `JOIN`."
+                "related": "[[sql-interview#Q17]] `IN`/`EXISTS`/`JOIN`; [[sql-interview#Q42]] `EXPLAIN`; [[sql-interview#Q21]] типы `JOIN`."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "`SELECT name, 'employee' AS type FROM employees UNION ALL SELECT name, 'contractor' FROM contractors`.",
                 "when_to_apply": "Слияние однородных наборов из разных таблиц/партиций; вертикальное «склеивание» разных подмножеств.",
                 "edge_cases": "`UNION` сортирует — может быть узким местом на больших наборах. `ORDER BY` ставится в конце последнего `SELECT`.",
-                "related": "Q21 типы `JOIN`; Q27 `GROUP BY`; Q42 `EXPLAIN`."
+                "related": "[[sql-interview#Q21]] типы `JOIN`; [[sql-interview#Q27]] `GROUP BY`; [[sql-interview#Q42]] `EXPLAIN`."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "`SELECT d.date, h.hour FROM generate_series('2026-01-01'::date, '2026-12-31', '1 day') d(date) CROSS JOIN generate_series(0, 23) h(hour)`.",
                 "when_to_apply": "Генерация комбинаций, календари, заполнение пропусков в отчётах, all-pairs тесты.",
                 "edge_cases": "Случайный `CROSS JOIN` (забытое `ON`) даёт огромный результат — типичный bug. В `PostgreSQL` есть `LATERAL` для зависимых cross-join.",
-                "related": "Q21 типы `JOIN`; Q22 `WHERE` vs `ON`; Q19 `CTE`."
+                "related": "[[sql-interview#Q21]] типы `JOIN`; [[sql-interview#Q22]] `WHERE` vs `ON`; [[sql-interview#Q19]] `CTE`."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "`SELECT e.name AS employee, m.name AS manager FROM employees e LEFT JOIN employees m ON e.manager_id = m.id` — иерархия сотрудник→руководитель.",
                 "when_to_apply": "Иерархия (менеджер/подчинённые), сравнение строк (`a.id < b.id` для уникальных пар), поиск дубликатов.",
                 "edge_cases": "При большом ветвлении лучше использовать рекурсивный `CTE`. Алиасы обязательны — без них СУБД не различит таблицы.",
-                "related": "Q21 типы `JOIN`; Q48 рекурсивные `CTE`; Q19 `CTE`."
+                "related": "[[sql-interview#Q21]] типы `JOIN`; [[sql-interview#Q48]] рекурсивные `CTE`; [[sql-interview#Q19]] `CTE`."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "`SELECT department, COUNT(*), AVG(salary) FROM employees WHERE status = 'ACTIVE' GROUP BY department HAVING COUNT(*) > 3 ORDER BY AVG(salary) DESC`.",
                 "when_to_apply": "Отчёты с агрегацией по категориям; фильтрация групп по агрегатным условиям.",
                 "edge_cases": "`GROUP BY` объединяет все `NULL` в одну группу. `MySQL` в нестрогом режиме допускает столбцы в `SELECT` без `GROUP BY` — нестандарт.",
-                "related": "Q14 порядок выполнения; Q28 `GROUP BY` vs `DISTINCT`; Q29 `COUNT(*)`."
+                "related": "[[sql-interview#Q14]] порядок выполнения; [[sql-interview#Q28]] `GROUP BY` vs `DISTINCT`; [[sql-interview#Q29]] `COUNT(*)`."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "`SELECT DISTINCT department FROM employees` ≡ `SELECT department FROM employees GROUP BY department`; но `GROUP BY` добавляет `SUM(salary)` без второго запроса.",
                 "when_to_apply": "`DISTINCT` — простое удаление дубликатов; `GROUP BY` — когда нужны агрегаты по группам.",
                 "edge_cases": "`DISTINCT ON (col)` в `PostgreSQL` — нестандартное расширение для получения первой строки в группе. В `MySQL` оптимизатор может использовать loose index scan.",
-                "related": "Q27 `GROUP BY`/`HAVING`; Q24 `UNION`; Q31 `ROW_NUMBER` для дедупликации."
+                "related": "[[sql-interview#Q27]] `GROUP BY`/`HAVING`; [[sql-interview#Q24]] `UNION`; [[sql-interview#Q31]] `ROW_NUMBER` для дедупликации."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "Для строк `(1,10,5), (2,10,NULL), (3,20,10), (4,20,5)`: `COUNT(*) = 4`, `COUNT(discount) = 3`, `COUNT(DISTINCT customer_id) = 2`, `COUNT(DISTINCT discount) = 2`.",
                 "when_to_apply": "`COUNT(*)` — общее количество строк; `COUNT(col)` — заполненные значения; `COUNT(DISTINCT)` — уникальные значения для аналитики.",
                 "edge_cases": "`COUNT(1)` ≡ `COUNT(*)` по скорости в современных СУБД (миф о «`COUNT(1)` быстрее» устарел).",
-                "related": "Q5 `NULL`; Q27 `GROUP BY`; Q28 `DISTINCT`."
+                "related": "[[sql-interview#Q5]] `NULL`; [[sql-interview#Q27]] `GROUP BY`; [[sql-interview#Q28]] `DISTINCT`."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "`AVG(salary) OVER (PARTITION BY department) AS dept_avg` — средняя по отделу для каждой строки без `GROUP BY`. `SUM(...) OVER (ORDER BY date)` — нарастающий итог.",
                 "when_to_apply": "Рейтинги, нарастающие итоги, скользящие средние, сравнение с соседними строками, top-N в группах.",
                 "edge_cases": "Не работают в `WHERE`/`HAVING` (Q33) — только `SELECT`/`ORDER BY`. Без `ORDER BY` рамка по умолчанию — вся партиция.",
-                "related": "Q31 `ROW_NUMBER`/`RANK`; Q32 `LAG`/`LEAD`; Q33 окна в `WHERE`."
+                "related": "[[sql-interview#Q31]] `ROW_NUMBER`/`RANK`; [[sql-interview#Q32]] `LAG`/`LEAD`; [[sql-interview#Q33]] окна в `WHERE`."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "Зарплаты 100, 100, 90, 80 → `ROW_NUMBER`: 1, 2, 3, 4; `RANK`: 1, 1, 3, 4; `DENSE_RANK`: 1, 1, 2, 3. Дедупликация: `DELETE WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY ts DESC) rn) WHERE rn > 1)`.",
                 "when_to_apply": "`ROW_NUMBER` — top-N в группе, пагинация; `RANK` — спортивные рейтинги; `DENSE_RANK` — плотные категории.",
                 "edge_cases": "`ROW_NUMBER` недетерминистичен при ничьих в `ORDER BY` — добавляйте tie-breaker. Без `ORDER BY` порядок не гарантирован.",
-                "related": "Q30 оконные функции; Q33 окна в `WHERE`; Q32 `LAG`/`LEAD`."
+                "related": "[[sql-interview#Q30]] оконные функции; [[sql-interview#Q33]] окна в `WHERE`; [[sql-interview#Q32]] `LAG`/`LEAD`."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "`SELECT date, revenue, LAG(revenue) OVER (ORDER BY date) AS prev FROM daily_sales` — вчерашняя выручка рядом с сегодняшней. Процент изменения: `(revenue - LAG(revenue) OVER (...)) * 100.0 / LAG(revenue) OVER (...)`.",
                 "when_to_apply": "Расчёт дельт, временных рядов, day-over-day сравнений, поиск «перехода состояния» (когда значение изменилось).",
                 "edge_cases": "На границе окна `LAG`/`LEAD` возвращают `NULL` (или дефолт). `LAST_VALUE` без явной рамки часто даёт текущую строку — нужен `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`.",
-                "related": "Q30 оконные функции; Q31 `ROW_NUMBER`/`RANK`; Q33 окна в `WHERE`."
+                "related": "[[sql-interview#Q30]] оконные функции; [[sql-interview#Q31]] `ROW_NUMBER`/`RANK`; [[sql-interview#Q33]] окна в `WHERE`."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "`WITH ranked AS (SELECT *, ROW_NUMBER() OVER (ORDER BY salary DESC) AS rn FROM employees) SELECT * FROM ranked WHERE rn <= 10` — top-10 через `CTE`.",
                 "when_to_apply": "Любая фильтрация по результату окна: top-N, дедупликация, выбор первой/последней строки в группе.",
                 "edge_cases": "`QUALIFY` (Snowflake, BigQuery) — расширение для фильтрации по окнам без `CTE`; в `PostgreSQL`/`MySQL` нет.",
-                "related": "Q14 порядок выполнения; Q19 `CTE`; Q30 оконные функции."
+                "related": "[[sql-interview#Q14]] порядок выполнения; [[sql-interview#Q19]] `CTE`; [[sql-interview#Q30]] оконные функции."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "`CREATE INDEX idx_emp_dept_salary ON employees (department_id, salary)`; `CREATE UNIQUE INDEX idx_users_email ON users (email)`.",
                 "when_to_apply": "Колонки в `WHERE`, `JOIN`, `ORDER BY`, `GROUP BY` с высокой селективностью; foreign keys.",
                 "edge_cases": "Каждый индекс замедляет `INSERT`/`UPDATE`/`DELETE`. Индексы по неуникальным значениям с низкой селективностью почти бесполезны.",
-                "related": "Q35 кластерный/некластерный; Q36 `Covering`/`Partial`; Q51 типы индексов в `PostgreSQL`."
+                "related": "[[sql-interview#Q35]] кластерный/некластерный; [[sql-interview#Q36]] `Covering`/`Partial`; [[sql-interview#Q51]] типы индексов в `PostgreSQL`."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "`MySQL InnoDB`: `PRIMARY KEY` = кластерный индекс, вторичные индексы хранят значение `PK` → компактный `PK` (INT) лучше UUID. `PostgreSQL`: команда `CLUSTER tab USING idx` — разовая физическая перегруппировка.",
                 "when_to_apply": "Понимание архитектуры таблиц в `MySQL`; выбор `PK` (`BIGSERIAL` vs `UUID`); оценка стоимости вторичных индексов.",
                 "edge_cases": "`PostgreSQL` после `CLUSTER` не сохраняет порядок при `UPDATE`/`INSERT`. `SQL Server`: можно явно создать кластерный индекс на любом столбце.",
-                "related": "Q34 индексы; Q36 `Covering`; Q51 типы индексов."
+                "related": "[[sql-interview#Q34]] индексы; [[sql-interview#Q36]] `Covering`; [[sql-interview#Q51]] типы индексов."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "`CREATE INDEX idx_orders_covering ON orders (customer_id, status) INCLUDE (total, created_at)`; `CREATE INDEX idx_active_orders ON orders (customer_id) WHERE status = 'ACTIVE'`.",
                 "when_to_apply": "`Covering` — для частых запросов с фиксированным набором столбцов; `Partial` — для маленького активного подмножества.",
                 "edge_cases": "`Partial` индекс используется только если `WHERE` запроса включает условие индекса. `INCLUDE` в `PostgreSQL` появился в 11; раньше использовали все столбцы как ключевые.",
-                "related": "Q34 индексы; Q35 кластерный/некластерный; Q37 когда индекс не помогает."
+                "related": "[[sql-interview#Q34]] индексы; [[sql-interview#Q35]] кластерный/некластерный; [[sql-interview#Q37]] когда индекс не помогает."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "`WHERE UPPER(name) = 'ИВАНОВ'` → `Seq Scan`. Решение: `CREATE INDEX idx_users_name_upper ON users (UPPER(name))`. Или `LIKE 'ivan%'` — индекс работает; `LIKE '%vanov'` — нет.",
                 "when_to_apply": "Диагностика «почему мой запрос медленный, ведь есть индекс»; решение через `EXPLAIN ANALYZE`.",
                 "edge_cases": "После массового обновления нужен `ANALYZE` для актуальной статистики. `pg_stat_user_indexes` показывает неиспользуемые индексы.",
-                "related": "Q34 индексы; Q42 `EXPLAIN`; Q52 `VACUUM`/`ANALYZE`."
+                "related": "[[sql-interview#Q34]] индексы; [[sql-interview#Q42]] `EXPLAIN`; [[sql-interview#Q52]] `VACUUM`/`ANALYZE`."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "`BEGIN; UPDATE accounts SET balance = balance - 1000 WHERE id = 1; UPDATE accounts SET balance = balance + 1000 WHERE id = 2; COMMIT;` — обе операции или ни одной.",
                 "when_to_apply": "Финансовые операции, бронирование, любая критическая бизнес-логика, требующая надёжности.",
                 "edge_cases": "В распределённых системах `ACID` сложно достигается — компромисс с `BASE`/`CAP`. `Durability` зависит от `fsync` и настроек репликации.",
-                "related": "Q39 уровни изоляции; Q40 deadlock; Q53 `MVCC`."
+                "related": "[[sql-interview#Q39]] уровни изоляции; [[sql-interview#Q40]] deadlock; [[sql-interview#Q53]] `MVCC`."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "`SET TRANSACTION ISOLATION LEVEL REPEATABLE READ; BEGIN; SELECT balance FROM accounts WHERE id = 1; -- другая транзакция COMMIT-ит UPDATE; -- наш SELECT всё ещё видит старое значение; COMMIT;`.",
                 "when_to_apply": "Финансовые транзакции — `SERIALIZABLE`/`REPEATABLE READ`; отчёты — `READ COMMITTED`; high-throughput чтение — `READ UNCOMMITTED` (редко).",
                 "edge_cases": "`PostgreSQL REPEATABLE READ` предотвращает phantom reads (через `MVCC/SSI`) — отличие от стандарта. `SERIALIZABLE` в `PG` использует `SSI` с возможным `serialization_failure`.",
-                "related": "Q38 `ACID`; Q40 deadlock; Q53 `MVCC`."
+                "related": "[[sql-interview#Q38]] `ACID`; [[sql-interview#Q40]] deadlock; [[sql-interview#Q53]] `MVCC`."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "T1: блокирует строку 1, ждёт 2. T2: блокирует строку 2, ждёт 1 → deadlock. Решение — всегда блокировать в порядке возрастания `id`.",
                 "when_to_apply": "Высокая конкуренция за общие ресурсы, multi-row updates, переводы между счетами.",
                 "edge_cases": "Deadlock-detection имеет таймаут (`deadlock_timeout` в `PG`). При высокой нагрузке возможны livelock и lock contention без формального deadlock.",
-                "related": "Q38 `ACID`; Q39 изоляция; Q41 оптимистичная/пессимистичная блокировка."
+                "related": "[[sql-interview#Q38]] `ACID`; [[sql-interview#Q39]] изоляция; [[sql-interview#Q41]] оптимистичная/пессимистичная блокировка."
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "Пессимистичная: `SELECT * FROM products WHERE id = 42 FOR UPDATE; UPDATE products SET stock = stock - 1`. Оптимистичная: `@Entity class Product { @Version Integer version; }` — `Hibernate` автоматически проверяет.",
                 "when_to_apply": "Пессимистичная — высокая конкуренция за одни и те же данные; оптимистичная — низкая вероятность конфликта (большинство web-приложений).",
                 "edge_cases": "Пессимистичная требует длинной транзакции — плохо для веб (lock contention). Оптимистичная нуждается в retry-логике на стороне клиента.",
-                "related": "Q40 deadlock; Q39 изоляция; Q47 транзакции в `Spring`."
+                "related": "[[sql-interview#Q40]] deadlock; [[sql-interview#Q39]] изоляция; [[sql-interview#Q47]] транзакции в `Spring`."
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "`Hash Join (cost=1.09..2.19 rows=3 width=64) (actual time=0.025..0.027 rows=3 loops=1)` — `cost` оценка, `actual time` реальное, `rows` количество, `loops` повторения.",
                 "when_to_apply": "Любая оптимизация: проверка использования индексов, выбор `JOIN`-алгоритма, обнаружение `Seq Scan` там, где ожидали индекс.",
                 "edge_cases": "`rows` от планировщика может сильно отличаться от `actual rows` — нужен `ANALYZE` для актуальной статистики. `Buffers` показывает hit/read для page cache.",
-                "related": "Q34 индексы; Q43 стратегии оптимизации; Q49 чтение плана."
+                "related": "[[sql-interview#Q34]] индексы; [[sql-interview#Q43]] стратегии оптимизации; [[sql-interview#Q49]] чтение плана."
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "`OFFSET 100000` сканирует 100020 строк; `WHERE id > 100000 LIMIT 20` — только 20. Batch: `INSERT INTO t VALUES (...), (...), (...)` вместо цикла из N запросов.",
                 "when_to_apply": "Любые медленные запросы; высоконагруженные эндпоинты; отчёты с большими объёмами.",
                 "edge_cases": "Слишком много индексов замедляют запись. `Connection pooling` (`HikariCP`/`PgBouncer`) критичен — открытие соединения дорого.",
-                "related": "Q42 `EXPLAIN`; Q44 `N+1`; Q49 чтение плана."
+                "related": "[[sql-interview#Q42]] `EXPLAIN`; [[sql-interview#Q44]] `N+1`; [[sql-interview#Q49]] чтение плана."
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "`findAll` (1 запрос) + `for order: order.getCustomer().getName()` (N запросов). Решение: `@Query(\"SELECT o FROM Order o JOIN FETCH o.customer\")` или `@EntityGraph(attributePaths = {\"customer\"})`.",
                 "when_to_apply": "Любой обход коллекций сущностей в `JPA`/`Hibernate`; рендеринг списков с вложенными связями.",
                 "edge_cases": "`JOIN FETCH` для коллекций (`@OneToMany`) даёт дубликаты родителей — нужен `DISTINCT`. `@BatchSize(N)` группирует lazy-fetch в IN-запросы.",
-                "related": "Q23 `JOIN` vs подзапросы; Q42 `EXPLAIN`; Q45 `JDBC` vs `JPA`."
+                "related": "[[sql-interview#Q23]] `JOIN` vs подзапросы; [[sql-interview#Q42]] `EXPLAIN`; [[sql-interview#Q45]] `JDBC` vs `JPA`."
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "`JDBC`: `try (PreparedStatement ps = conn.prepareStatement(\"SELECT ...\")) { ps.setInt(1, id); ResultSet rs = ps.executeQuery(); ... }`. `JPA`: `@Entity class Employee {...}` + `repository.findById(id)`.",
                 "when_to_apply": "`JDBC`/`jdbcTemplate` — простые случаи, batch, кастомный SQL; `JPA` — сложные доменные модели с связями; `Spring Data JDBC` — упрощённый ORM без lazy.",
                 "edge_cases": "`JPA` имеет проблему `N+1` и сложности с performance debugging. `JDBC` требует ручного управления соединениями и `ResultSet`.",
-                "related": "Q44 `N+1`; Q46 индексы в `JPA`; Q47 транзакции."
+                "related": "[[sql-interview#Q44]] `N+1`; [[sql-interview#Q46]] индексы в `JPA`; [[sql-interview#Q47]] транзакции."
               }
             },
             {
@@ -2730,7 +2730,7 @@
                 "example": "`@Table(name = \"employees\", indexes = { @Index(name = \"idx_emp_department\", columnList = \"department_id\"), @Index(name = \"idx_emp_email\", columnList = \"email\", unique = true) })`.",
                 "when_to_apply": "Объявление индексов вместе с сущностью для разработки/тестов; синхронизация с реальной схемой через миграции.",
                 "edge_cases": "Составной индекс: `columnList = \"department_id, salary\"` (порядок важен). `@UniqueConstraint` отдельный — для бизнес-уникальности.",
-                "related": "Q34 индексы; Q35 кластерный; Q45 `JDBC` vs `JPA`."
+                "related": "[[sql-interview#Q34]] индексы; [[sql-interview#Q35]] кластерный; [[sql-interview#Q45]] `JDBC` vs `JPA`."
               }
             },
             {
@@ -2802,7 +2802,7 @@
                 "example": "`@Transactional(isolation = Isolation.REPEATABLE_READ, propagation = Propagation.REQUIRES_NEW, timeout = 5, rollbackFor = BusinessException.class) public void processPayment(...) {...}`.",
                 "when_to_apply": "Декларативный — стандарт для бизнес-логики; программный — для гранулярного контроля и `setRollbackOnly()`.",
                 "edge_cases": "Self-invocation: вызов метода `@Transactional` из того же класса НЕ создаёт транзакцию (proxy обходится). Решение — вынести в отдельный бин.",
-                "related": "Q38 `ACID`; Q39 изоляция; Q41 блокировки."
+                "related": "[[sql-interview#Q38]] `ACID`; [[sql-interview#Q39]] изоляция; [[sql-interview#Q41]] блокировки."
               }
             },
             {
@@ -2874,7 +2874,7 @@
                 "example": "`WITH RECURSIVE org_chart AS (SELECT id, name, manager_id, 1 AS level FROM employees WHERE manager_id IS NULL UNION ALL SELECT e.id, e.name, e.manager_id, oc.level + 1 FROM employees e JOIN org_chart oc ON e.manager_id = oc.id) SELECT * FROM org_chart`.",
                 "when_to_apply": "Деревья (категории, оргструктура), графы (маршруты, зависимости), серии дат/чисел, обход связных списков.",
                 "edge_cases": "Бесконечные циклы — защита через `WHERE level < N` или `WHERE NOT id = ANY(path)`. Может быть медленным на больших графах.",
-                "related": "Q19 `CTE`; Q26 `SELF JOIN`; Q14 порядок выполнения."
+                "related": "[[sql-interview#Q19]] `CTE`; [[sql-interview#Q26]] `SELF JOIN`; [[sql-interview#Q14]] порядок выполнения."
               }
             }
           ]
@@ -2898,7 +2898,7 @@
                 "example": "`Hash Join` (Hash Cond: e.dept_id = d.id) → `Seq Scan on employees` (Filter: salary > 100000) → `Hash` → `Seq Scan on departments`. Сначала строится hash из departments, потом scan employees.",
                 "when_to_apply": "Любая оптимизация запроса; диагностика «почему медленно»; выбор индекса.",
                 "edge_cases": "`Rows Removed by Filter` показывает неэффективную фильтрацию (без индекса). `Heap Fetches: 0` в `Index Only Scan` — covering index работает идеально.",
-                "related": "Q42 `EXPLAIN`; Q34 индексы; Q43 стратегии оптимизации."
+                "related": "[[sql-interview#Q42]] `EXPLAIN`; [[sql-interview#Q34]] индексы; [[sql-interview#Q43]] стратегии оптимизации."
               }
             },
             {
@@ -2970,7 +2970,7 @@
                 "example": "`CREATE TABLE orders (id BIGINT, created_at DATE, ...) PARTITION BY RANGE (created_at); CREATE TABLE orders_2026 PARTITION OF orders FOR VALUES FROM ('2026-01-01') TO ('2027-01-01')`.",
                 "when_to_apply": "Таблицы >10-50 млн строк, чёткая логика партиционирования (по дате/региону/типу), retention с регулярным удалением старых данных.",
                 "edge_cases": "Запросы без ключа партиционирования сканируют все партиции (медленно). Глобальные индексы между партициями не поддерживаются нативно.",
-                "related": "Q34 индексы; Q42 `EXPLAIN`; Q53 `MVCC`."
+                "related": "[[sql-interview#Q34]] индексы; [[sql-interview#Q42]] `EXPLAIN`; [[sql-interview#Q53]] `MVCC`."
               }
             },
             {
@@ -3042,7 +3042,7 @@
                 "example": "`CREATE INDEX idx_products_attrs ON products USING GIN (attributes)` для `JSONB`; `CREATE INDEX idx_logs_created BRIN (created_at)` для хронологических логов.",
                 "when_to_apply": "Выбор типа под запросы: `JSONB` → `GIN`; геоданные → `GiST`; точное равенство → `Hash`; диапазоны и сортировка → `B-tree`.",
                 "edge_cases": "`Hash` не поддерживает `WAL` до `PG 10`. `BRIN` бесполезен без физической корреляции данных с порядком вставки.",
-                "related": "Q34 индексы; Q35 кластерный; Q36 `Covering`/`Partial`."
+                "related": "[[sql-interview#Q34]] индексы; [[sql-interview#Q35]] кластерный; [[sql-interview#Q36]] `Covering`/`Partial`."
               }
             },
             {
@@ -3114,7 +3114,7 @@
                 "example": "`VACUUM ANALYZE orders` — стандарт; `VACUUM FULL` — только в maintenance window; `ANALYZE orders (user_id, created_at)` — по конкретным столбцам.",
                 "when_to_apply": "Регулярно через `autovacuum`; вручную после массовых `UPDATE`/`DELETE`; после bulk-load — обязательно `ANALYZE`.",
                 "edge_cases": "`autovacuum` запускается по порогам (`scale_factor`). Транзакционный wraparound (`xid` ≈ 2 млрд) требует `VACUUM FREEZE` — если не делать, БД остановится.",
-                "related": "Q37 индексы не помогают; Q42 `EXPLAIN`; Q53 `MVCC`."
+                "related": "[[sql-interview#Q37]] индексы не помогают; [[sql-interview#Q42]] `EXPLAIN`; [[sql-interview#Q53]] `MVCC`."
               }
             }
           ]
@@ -3138,7 +3138,7 @@
                 "example": "Исходно `(id=1, name='Иван', xmin=100, xmax=0)`. После `UPDATE` в txid=200: старая `(name='Иван', xmin=100, xmax=200)` мёртвая, новая `(name='Ivan', xmin=200, xmax=0)`.",
                 "when_to_apply": "Понимание изоляции (Q39), отсутствия блокировок чтения, table bloat и необходимости `VACUUM`.",
                 "edge_cases": "Table bloat — мёртвые строки растут без `VACUUM`. `xid wraparound` (~2 млрд) — нужен `VACUUM FREEZE`. Snapshot захватывается на старте транзакции (для `REPEATABLE READ`/`SERIALIZABLE`).",
-                "related": "Q38 `ACID`; Q39 изоляция; Q52 `VACUUM`/`ANALYZE`."
+                "related": "[[sql-interview#Q38]] `ACID`; [[sql-interview#Q39]] изоляция; [[sql-interview#Q52]] `VACUUM`/`ANALYZE`."
               }
             },
             {

@@ -18,7 +18,7 @@
                 "example": "userRepository.findById(id).flatMap(orderRepo::findByUser) вместо блокирующего findById, который держит поток на JDBC.",
                 "when_to_apply": "Высоконагруженные I/O-приложения, стриминг событий, бэкенды с тысячами одновременных соединений.",
                 "edge_cases": "Реактивный код сложнее отлаживать; для чисто CPU-задач или простых CRUD преимуществ нет.",
-                "related": "Q2 Reactive Streams; Q4 backpressure; Q46 Spring WebFlux."
+                "related": "[[project-reactor-interview#Q2]] Reactive Streams; [[project-reactor-interview#Q4]] backpressure; [[project-reactor-interview#Q46]] Spring WebFlux."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "Mono и Flux в Reactor реализуют Publisher; StepVerifier подписывается на них как Subscriber.",
                 "when_to_apply": "Понимание основ при отладке, интеграции с RxJava/JDK Flow или написании собственных операторов.",
                 "edge_cases": "TCK (Technology Compatibility Kit) строго проверяет соответствие — нарушения спецификации в кастомном Publisher приводят к утечкам.",
-                "related": "Q3 Reactor vs RxJava; Q4 backpressure; Q27 реализация backpressure."
+                "related": "[[project-reactor-interview#Q3]] Reactor vs RxJava; [[project-reactor-interview#Q4]] backpressure; [[project-reactor-interview#Q27]] реализация backpressure."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "В Reactor: Mono<User> findById(id). В RxJava: Single<User> или Maybe<User> findById(id).",
                 "when_to_apply": "Выбор реактивной библиотеки в Spring-проекте: Reactor — дефолт; RxJava — если уже используется в коде или для Android.",
                 "edge_cases": "Reactor запрещает null; код, перенесённый с RxJava 1 (где null допустим), требует переработки.",
-                "related": "Q5 Mono vs Flux; Q33 Context; Q46 Spring WebFlux."
+                "related": "[[project-reactor-interview#Q5]] Mono vs Flux; [[project-reactor-interview#Q33]] Context; [[project-reactor-interview#Q46]] Spring WebFlux."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "BaseSubscriber: hookOnSubscribe { request(1); } hookOnNext(v) { process(v); request(1); } — обработка строго по одному элементу.",
                 "when_to_apply": "Любой реактивный пайплайн с разной скоростью источника и потребителя: Kafka → DB, file streaming, HTTP-стриминг.",
                 "edge_cases": "Hot publishers (UI-события, WebSocket) не уважают request(n) автоматически — нужны onBackpressureBuffer/Drop/Latest.",
-                "related": "Q27 реализация в Reactor; Q28 стратегии; Q29 limitRate."
+                "related": "[[project-reactor-interview#Q27]] реализация в Reactor; [[project-reactor-interview#Q28]] стратегии; [[project-reactor-interview#Q29]] limitRate."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "Mono<User> findById(Long id) vs Flux<User> findAll(); Mono<Long> count() vs Flux<Order> findByUser(user).",
                 "when_to_apply": "Mono — для CRUD-операций над одной сущностью; Flux — для коллекций, SSE, Kafka-стримов, чтения файлов построчно.",
                 "edge_cases": "Mono.just(null) бросает NullPointerException — для отсутствующего значения используйте Mono.empty() или Mono.justOrEmpty().",
-                "related": "Q6 создание Mono; Q7 создание Flux; Q47 block()."
+                "related": "[[project-reactor-interview#Q6]] создание Mono; [[project-reactor-interview#Q7]] создание Flux; [[project-reactor-interview#Q47]] block()."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "Mono.fromCallable(() -> jdbc.query(...)).subscribeOn(Schedulers.boundedElastic()) — оборачивание блокирующего JDBC.",
                 "when_to_apply": "fromCallable — для интеграции с не-реактивными API; defer — когда нужен свежий Mono при каждой подписке.",
                 "edge_cases": "Mono.just(null) → NullPointerException; для опционального значения нужен Mono.justOrEmpty(Optional).",
-                "related": "Q8 just vs defer; Q9 create/push; Q26 Exceptions.propagate."
+                "related": "[[project-reactor-interview#Q8]] just vs defer; [[project-reactor-interview#Q9]] create/push; [[project-reactor-interview#Q26]] Exceptions.propagate."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "Flux.fromIterable(repo.findAll()) для коллекции; Flux.interval(Duration.ofSeconds(1)) для heartbeat; Flux.create(sink -> bus.subscribe(sink::next)) для event-шины.",
                 "when_to_apply": "Подбор источника под задачу: fromIterable для готовой коллекции; create — для интеграции с callback-API.",
                 "edge_cases": "Flux.fromIterable на бесконечной Iterable работает, но без backpressure быстро заполнит буфер; Flux.interval требует Scheduler.",
-                "related": "Q9 create vs push; Q10 generate vs create; Q38 операторы времени."
+                "related": "[[project-reactor-interview#Q9]] create vs push; [[project-reactor-interview#Q10]] generate vs create; [[project-reactor-interview#Q38]] операторы времени."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "Mono.just(LocalDateTime.now()) — время создания; Mono.defer(() -> Mono.just(LocalDateTime.now())) — время подписки.",
                 "when_to_apply": "defer — когда значение должно быть свежим для каждого подписчика или генерируется с побочными эффектами; just — для константных значений.",
                 "edge_cases": "При повторных подписках на just все подписчики видят одно и то же значение; на defer — каждый своё.",
-                "related": "Q6 создание Mono; Q26 propagate; Q35 cold vs hot."
+                "related": "[[project-reactor-interview#Q6]] создание Mono; [[project-reactor-interview#Q26]] propagate; [[project-reactor-interview#Q35]] cold vs hot."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "create: eventBus.subscribe(event -> sink.next(event)) — из разных потоков; push: asyncApi.onData(sink::next) — из одного потока.",
                 "when_to_apply": "create — для event-шин, JMS, multi-threaded callback; push — для single-threaded callback-API.",
                 "edge_cases": "Использование push в многопоточном контексте даёт UB; OverflowStrategy.IGNORE приведёт к OOM при отсутствии request(n).",
-                "related": "Q10 generate; Q28 стратегии backpressure; Q35 hot publishers."
+                "related": "[[project-reactor-interview#Q10]] generate; [[project-reactor-interview#Q28]] стратегии backpressure; [[project-reactor-interview#Q35]] hot publishers."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "Flux.generate(() -> 0, (s, sink) -> { sink.next(s); return s + 1; }) — натуральный ряд.",
                 "when_to_apply": "Алгоритмические последовательности, итерация по структуре без потоков, синхронные генераторы с состоянием.",
                 "edge_cases": "Второй вызов sink.next() за итерацию приводит к IllegalStateException; забыли вернуть state → бесконечный цикл.",
-                "related": "Q9 create/push; Q27 backpressure; Q7 создание Flux."
+                "related": "[[project-reactor-interview#Q9]] create/push; [[project-reactor-interview#Q27]] backpressure; [[project-reactor-interview#Q7]] создание Flux."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "flux.flatMap(userId -> repo.findById(userId)) корректно, flux.map(repo::findById) даст Flux<Mono<User>>.",
                 "when_to_apply": "map — синхронные преобразования; flatMap — вложенные асинхронные вызовы (DB, HTTP, файлы).",
                 "edge_cases": "flatMap не сохраняет порядок (подписки конкурентны); для упорядоченного результата нужен concatMap или flatMapSequential.",
-                "related": "Q12 flatMap/concatMap/switchMap; Q13 flatMapSequential; Q14 transform."
+                "related": "[[project-reactor-interview#Q12]] flatMap/concatMap/switchMap; [[project-reactor-interview#Q13]] flatMapSequential; [[project-reactor-interview#Q14]] transform."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "inputFlux.debounce(300ms).switchMap(query -> search.search(query)) — поиск с отменой устаревших.",
                 "when_to_apply": "flatMap — параллельные API-вызовы; concatMap — сохранение последовательности; switchMap — реактивные UI с фильтрацией.",
                 "edge_cases": "concatMap при медленном внутреннем Publisher создаёт очередь и снижает пропускную способность; switchMap может терять промежуточные результаты.",
-                "related": "Q11 map vs flatMap; Q13 flatMapSequential; Q20 combineLatest."
+                "related": "[[project-reactor-interview#Q11]] map vs flatMap; [[project-reactor-interview#Q13]] flatMapSequential; [[project-reactor-interview#Q20]] combineLatest."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "Flux.range(1,5).flatMapSequential(i -> fetchFromDB(i)) — параллельные запросы, но результат 1,2,3,4,5.",
                 "when_to_apply": "Нужен порядок и допустима буферизация; например, отображение списка результатов.",
                 "edge_cases": "Если первый Publisher долго отвечает, буфер копит результаты остальных; ограничивайте concurrency через флаги.",
-                "related": "Q11 map/flatMap; Q12 flatMap/concatMap/switchMap; Q22 обработка ошибок."
+                "related": "[[project-reactor-interview#Q11]] map/flatMap; [[project-reactor-interview#Q12]] flatMap/concatMap/switchMap; [[project-reactor-interview#Q22]] обработка ошибок."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "Function<Flux<String>,Flux<String>> trim = f -> f.filter(s->!s.isEmpty()).map(String::trim); flux.transform(trim).",
                 "when_to_apply": "transform — переиспользуемые цепочки; as — конверсия (Flux → Mono<List>, Flux → Mono).",
                 "edge_cases": "transform применяется один раз при сборке — для применения per-subscription используйте transformDeferred.",
-                "related": "Q15 doOn-операторы; Q34 transformDeferredContextual; Q22 обработка ошибок."
+                "related": "[[project-reactor-interview#Q15]] doOn-операторы; [[project-reactor-interview#Q34]] transformDeferredContextual; [[project-reactor-interview#Q22]] обработка ошибок."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "flux.doOnNext(log::info).doOnError(log::error).doFinally(sig -> meter.recordTerminal(sig)).",
                 "when_to_apply": "Observability в реактивной цепочке: логи, метрики, трейсинг.",
                 "edge_cases": "Исключение в doOnNext-callback не обрабатывается основной цепочкой и попадает в Hooks.onOperatorError; не используйте для бизнес-логики.",
-                "related": "Q22 обработка ошибок; Q43 отладка; Q45 Hooks."
+                "related": "[[project-reactor-interview#Q22]] обработка ошибок; [[project-reactor-interview#Q43]] отладка; [[project-reactor-interview#Q45]] Hooks."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "users.filterWhen(u -> permissions.canRead(u)) — асинхронная авторизация через Mono<Boolean>.",
                 "when_to_apply": "Подбор оператора под задачу: filter — синхронно; filterWhen — асинхронно; distinct — уникальность; take/skip — по позиции.",
                 "edge_cases": "distinct хранит все ранее увиденные элементы в HashSet — для бесконечных Flux требует ограничения; distinctUntilChanged легче по памяти.",
-                "related": "Q17 switchIfEmpty; Q18 take/skip; Q15 doOn-операторы."
+                "related": "[[project-reactor-interview#Q17]] switchIfEmpty; [[project-reactor-interview#Q18]] take/skip; [[project-reactor-interview#Q15]] doOn-операторы."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "cache.findById(id).switchIfEmpty(db.findById(id)).switchIfEmpty(Mono.error(new NotFoundException())).",
                 "when_to_apply": "Многоуровневый fallback: кэш → БД → ошибка. Загрузка значений по умолчанию.",
                 "edge_cases": "Не путать с onErrorResume — switchIfEmpty не реагирует на ошибки; для empty + error нужны оба.",
-                "related": "Q22 обработка ошибок; Q23 onErrorReturn; Q18 take/skip."
+                "related": "[[project-reactor-interview#Q22]] обработка ошибок; [[project-reactor-interview#Q23]] onErrorReturn; [[project-reactor-interview#Q18]] take/skip."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "Flux.range(1,100).take(5) → 1..5; Flux.range(1,100).skip(7) → 8..100; Flux.interval(ms).take(Duration.ofSec(10)).",
                 "when_to_apply": "take — паджинация/первые N; skip — пропуск заголовка/первых элементов; takeWhile — обработка пока условие выполняется.",
                 "edge_cases": "take(0) приведёт к моментальному complete; skip(больше_элементов) даст пустой Flux.",
-                "related": "Q16 фильтрация; Q39 timeout; Q38 операторы времени."
+                "related": "[[project-reactor-interview#Q16]] фильтрация; [[project-reactor-interview#Q39]] timeout; [[project-reactor-interview#Q38]] операторы времени."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "merge(fastFlux, slowFlux) перемешивает; concat сохраняет порядок; zip даёт Tuple2 или результат combinator-функции.",
                 "when_to_apply": "merge — стриминг от нескольких источников; concat — pipeline-задачи; zip — синхронизированные данные (например, параллельные запросы с одинаковой кардинальностью).",
                 "edge_cases": "zip завершается по самому короткому — другие источники cancelятся; merge не гарантирует порядок даже при одинаковой скорости.",
-                "related": "Q20 combineLatest; Q21 zipWith; Q11 map/flatMap."
+                "related": "[[project-reactor-interview#Q20]] combineLatest; [[project-reactor-interview#Q21]] zipWith; [[project-reactor-interview#Q11]] map/flatMap."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "Flux.combineLatest(query$, category$, (q, c) -> search(q, c)) — переисчисление при изменении любого фильтра.",
                 "when_to_apply": "Реактивные UI с несколькими источниками сигналов, переисчисление при изменении одного из входных параметров.",
                 "edge_cases": "Если один из источников никогда не эмитит, combineLatest не сработает; для cold source с одним значением — нет смысла.",
-                "related": "Q19 merge/concat/zip; Q21 zipWith/withLatestFrom; Q33 Context."
+                "related": "[[project-reactor-interview#Q19]] merge/concat/zip; [[project-reactor-interview#Q21]] zipWith/withLatestFrom; [[project-reactor-interview#Q33]] Context."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "ticks.withLatestFrom(updates, (tick, upd) -> tick + ': ' + upd) — каждый тик с последним апдейтом.",
                 "when_to_apply": "withLatestFrom — когда есть основной триггер и метаданные; zipWith — когда оба источника одинаково важны.",
                 "edge_cases": "Если other пустой — withLatestFrom не эмитит ничего; zipWith ждёт первого элемента вечно.",
-                "related": "Q19 merge/concat/zip; Q20 combineLatest; Q38 операторы времени."
+                "related": "[[project-reactor-interview#Q19]] merge/concat/zip; [[project-reactor-interview#Q20]] combineLatest; [[project-reactor-interview#Q38]] операторы времени."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "service.call().onErrorMap(SQLException.class, RepositoryException::new).onErrorResume(RepositoryException.class, ex -> cache.get(id)).onErrorReturn(default).",
                 "when_to_apply": "Сложные пайплайны с многоуровневым fallback (БД → кэш → дефолт); трансформация инфраструктурных исключений в доменные.",
                 "edge_cases": "doOnError не обрабатывает ошибку — только side-effect; цепочка onError* применяется сверху вниз.",
-                "related": "Q23 onErrorReturn vs onErrorResume; Q24 onErrorMap; Q25 retry/retryWhen."
+                "related": "[[project-reactor-interview#Q23]] onErrorReturn vs onErrorResume; [[project-reactor-interview#Q24]] onErrorMap; [[project-reactor-interview#Q25]] retry/retryWhen."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "primary.call().onErrorReturn(\"default\") vs primary.call().onErrorResume(ex -> backup.call()).",
                 "when_to_apply": "onErrorReturn — для значения по умолчанию; onErrorResume — для альтернативного источника или цепочки сервисов.",
                 "edge_cases": "Оба можно фильтровать по типу: onErrorReturn(SQLException.class, default); если тип не совпал — ошибка пропускается дальше.",
-                "related": "Q22 общая обработка ошибок; Q24 onErrorMap; Q17 switchIfEmpty."
+                "related": "[[project-reactor-interview#Q22]] общая обработка ошибок; [[project-reactor-interview#Q24]] onErrorMap; [[project-reactor-interview#Q17]] switchIfEmpty."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "repo.findById(id).onErrorMap(SQLException.class, ex -> new RepositoryException(\"DB unavailable\", ex)).",
                 "when_to_apply": "Изоляция слоёв: persistence-исключения → доменные; внешние API-ошибки → собственные.",
                 "edge_cases": "onErrorMap с типом ошибки не пропустит другие типы; цепочка фильтрации работает по принципу первого совпадения.",
-                "related": "Q22 обработка ошибок; Q23 onErrorReturn/onErrorResume; Q25 retry/retryWhen."
+                "related": "[[project-reactor-interview#Q22]] обработка ошибок; [[project-reactor-interview#Q23]] onErrorReturn/onErrorResume; [[project-reactor-interview#Q25]] retry/retryWhen."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "retryWhen(Retry.backoff(3, Duration.ofMillis(100)).maxBackoff(Duration.ofSec(5)).jitter(0.5).filter(ex -> ex instanceof TransientException)).",
                 "when_to_apply": "retry — для простых временных ошибок; retryWhen — для production-сценариев с экспоненциальным отступом, jitter и условной фильтрацией.",
                 "edge_cases": "retry на бесконечном Flux может маскировать постоянную ошибку; retryWhen без maxAttempts даёт infinite retry; jitter снижает thundering herd при множестве клиентов.",
-                "related": "Q22 обработка ошибок; Q24 onErrorMap; Q39 timeout."
+                "related": "[[project-reactor-interview#Q22]] обработка ошибок; [[project-reactor-interview#Q24]] onErrorMap; [[project-reactor-interview#Q39]] timeout."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "map(file -> { try { return Files.readString(Path.of(file)); } catch (IOException e) { throw Exceptions.propagate(e); } }).",
                 "when_to_apply": "Интеграция с API, бросающими checked-исключения (IO, JDBC, Reflection); затем .onErrorResume или Exceptions.unwrap в catch.",
                 "edge_cases": "Обычный throw new RuntimeException(e) тоже работает, но Exceptions.propagate сохраняет правильный класс-обёртку для unwrap; стек unwrap корректнее распознаёт оригинал.",
-                "related": "Q22 обработка ошибок; Q24 onErrorMap; Q43 отладка."
+                "related": "[[project-reactor-interview#Q22]] обработка ошибок; [[project-reactor-interview#Q24]] onErrorMap; [[project-reactor-interview#Q43]] отладка."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "BaseSubscriber: hookOnSubscribe { request(10); } hookOnNext(v) { process(v); if (v%10==0) request(10); } — порциями по 10.",
                 "when_to_apply": "Хочешь контролировать темп — наследуйся от BaseSubscriber; в большинстве случаев работает автоматически.",
                 "edge_cases": "Hot publisher (callback API) сам по себе не уважает request(n) — нужны onBackpressure*-операторы.",
-                "related": "Q4 backpressure; Q28 стратегии; Q29 limitRate."
+                "related": "[[project-reactor-interview#Q4]] backpressure; [[project-reactor-interview#Q28]] стратегии; [[project-reactor-interview#Q29]] limitRate."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "stockPriceStream().onBackpressureLatest().publishOn(boundedElastic()).subscribe(this::display) — UI хочет только последнюю цену.",
                 "when_to_apply": "BUFFER + maxSize — gauge events; DROP — телеметрия с потерями; LATEST — состояние/значения с заменой; ERROR — fail-fast при перегрузке.",
                 "edge_cases": "Без maxSize у BUFFER → OOM; ERROR прерывает поток — нужно onErrorResume; LATEST теряет промежуточные значения.",
-                "related": "Q4 backpressure; Q27 реализация; Q29 limitRate."
+                "related": "[[project-reactor-interview#Q4]] backpressure; [[project-reactor-interview#Q27]] реализация; [[project-reactor-interview#Q29]] limitRate."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "Flux.range(1, 10000).limitRate(50).publishOn(boundedElastic()).subscribe(this::process) — request(50), затем при 38 потреблённых ещё request(38).",
                 "when_to_apply": "Реактивные пайплайны с большим объёмом данных, где нужно контролировать размер внутреннего буфера; интеграция с медленным потребителем.",
                 "edge_cases": "Слишком маленький highTide увеличивает overhead на request-сигналах; слишком большой — упрощает работу, но даёт большой буфер.",
-                "related": "Q27 backpressure; Q28 стратегии; Q31 publishOn."
+                "related": "[[project-reactor-interview#Q27]] backpressure; [[project-reactor-interview#Q28]] стратегии; [[project-reactor-interview#Q31]] publishOn."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "Mono.fromCallable(() -> jdbc.find(id)).subscribeOn(boundedElastic()) — JDBC в boundedElastic-пуле, не блокируя event loop.",
                 "when_to_apply": "boundedElastic — JDBC/JMS/file I/O; parallel — параллельная обработка; single — sequenced задачи; immediate — синхронные тесты.",
                 "edge_cases": "Запуск блокирующего кода на parallel приводит к starvation; boundedElastic ограничен 10×CPU потоков по умолчанию.",
-                "related": "Q31 subscribeOn vs publishOn; Q32 ParallelFlux; Q47 block()."
+                "related": "[[project-reactor-interview#Q31]] subscribeOn vs publishOn; [[project-reactor-interview#Q32]] ParallelFlux; [[project-reactor-interview#Q47]] block()."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "Mono.fromCallable(blockingCall()).subscribeOn(boundedElastic()).publishOn(parallel()).map(this::cpuWork).",
                 "when_to_apply": "subscribeOn — изоляция блокирующего источника; publishOn — переключение downstream-операторов на другой пул.",
                 "edge_cases": "Несколько subscribeOn в цепочке — только первый (ближайший к источнику) учитывается; multiple publishOn создают многократные переключения.",
-                "related": "Q30 Schedulers; Q32 ParallelFlux; Q47 block()."
+                "related": "[[project-reactor-interview#Q30]] Schedulers; [[project-reactor-interview#Q32]] ParallelFlux; [[project-reactor-interview#Q47]] block()."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "Flux.range(1,1000).parallel(4).runOn(Schedulers.parallel()).map(this::heavyComputation).sequential().",
                 "when_to_apply": "CPU-intensive обработка большого числа элементов с известной заранее степенью параллелизма; map-reduce паттерны.",
                 "edge_cases": "Не все операторы Flux доступны на ParallelFlux; требует runOn() для активации Scheduler; sequential() возвращает к обычному Flux.",
-                "related": "Q30 Schedulers; Q31 subscribeOn/publishOn; Q11 map/flatMap."
+                "related": "[[project-reactor-interview#Q30]] Schedulers; [[project-reactor-interview#Q31]] subscribeOn/publishOn; [[project-reactor-interview#Q11]] map/flatMap."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "process().contextWrite(ctx -> ctx.put(\"traceId\", id)) + Mono.deferContextual(ctx -> useTraceId(ctx.get(\"traceId\"))).",
                 "when_to_apply": "Трейсинг (MDC, traceId), авторизация (userId, roles), локализация (locale) — везде, где раньше использовали ThreadLocal.",
                 "edge_cases": "Context immutable: put возвращает новый Context; reactor-extra включает ContextSnapshot для интеграции с MDC.",
-                "related": "Q34 запись/чтение; Q43 отладка; Q46 WebFlux."
+                "related": "[[project-reactor-interview#Q34]] запись/чтение; [[project-reactor-interview#Q43]] отладка; [[project-reactor-interview#Q46]] WebFlux."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "service.process().contextWrite(ctx -> ctx.put(\"userId\", req.getUserId())); внутри service: Mono.deferContextual(ctx -> findUser(ctx.<String>get(\"userId\"))).",
                 "when_to_apply": "Сквозная передача данных через цепочки сервисов (traceId, userId, locale); интеграция с MDC через doOnEach + Hooks.",
                 "edge_cases": "ctx.get(missingKey) бросит NoSuchElementException; используйте getOrDefault. Context propagation на subscribeOn-боундери требует поддержки в Scheduler.",
-                "related": "Q33 Context; Q43 отладка; Q46 WebFlux."
+                "related": "[[project-reactor-interview#Q33]] Context; [[project-reactor-interview#Q43]] отладка; [[project-reactor-interview#Q46]] WebFlux."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "Cold: webClient.get().retrieve().bodyToMono(...) — каждая подписка = новый запрос. Hot: stockPriceStream() — все подписчики видят одни и те же тики.",
                 "when_to_apply": "Cold — для idempotent операций (HTTP, query, computation); Hot — для broadcast, событий, UI-апдейтов.",
                 "edge_cases": "Cold с побочными эффектами на каждую подписку — частая ошибка; Hot без backpressure — риск переполнения буфера.",
-                "related": "Q36 cold → hot; Q37 ConnectableFlux; Q4 backpressure."
+                "related": "[[project-reactor-interview#Q36]] cold → hot; [[project-reactor-interview#Q37]] ConnectableFlux; [[project-reactor-interview#Q4]] backpressure."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "Flux.interval(ms).share() — поток для всех подписчиков; cache() — отдаст всем элементы, накопленные с момента первой подписки.",
                 "when_to_apply": "share — UI-события; cache — конфигурация/состояние; publish().connect() — для синхронизированного старта нескольких подписчиков.",
                 "edge_cases": "cache() без ограничений → потенциальный OOM на бесконечном Flux; refCount(1) равноценен share()-у.",
-                "related": "Q35 cold/hot; Q37 ConnectableFlux; Q33 Context."
+                "related": "[[project-reactor-interview#Q35]] cold/hot; [[project-reactor-interview#Q37]] ConnectableFlux; [[project-reactor-interview#Q33]] Context."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "ConnectableFlux<Long> cf = source.publish(); cf.subscribe(a); cf.subscribe(b); cf.connect(); — оба подписчика получат одни и те же события.",
                 "when_to_apply": "Тесты с синхронизированным стартом, broadcast-сервисы с контролируемым запуском.",
                 "edge_cases": "Подписка после connect() пропускает уже эмитированные элементы; не путать с share() (автоматический refCount).",
-                "related": "Q35 cold/hot; Q36 cold → hot; Q38 операторы времени."
+                "related": "[[project-reactor-interview#Q35]] cold/hot; [[project-reactor-interview#Q36]] cold → hot; [[project-reactor-interview#Q38]] операторы времени."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "Flux.interval(Duration.ofSec(1)).take(10).timestamp() → 10 тиков с timestamp; Mono.delay(Duration.ofMs(500)) → задержанный Mono.",
                 "when_to_apply": "interval — heartbeat/polling; delayElements — троттлинг; delaySubscription — отложенный запуск; timeout — SLA.",
                 "edge_cases": "interval работает на parallel Scheduler — не блокируйте его; delayElements на огромном Flux может скушать кучу памяти буфера.",
-                "related": "Q39 timeout; Q41 virtual time; Q30 Schedulers."
+                "related": "[[project-reactor-interview#Q39]] timeout; [[project-reactor-interview#Q41]] virtual time; [[project-reactor-interview#Q30]] Schedulers."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "userService.findById(id).timeout(Duration.ofSec(3), Mono.just(User.anonymous())) — fallback при таймауте.",
                 "when_to_apply": "SLA для внешних сервисов; защита от зависших источников данных; circuit breaker pattern.",
                 "edge_cases": "timeout создаёт задачу на Scheduler — не используйте слишком часто на parallel; cleanup ресурсов upstream происходит через cancel.",
-                "related": "Q22 обработка ошибок; Q25 retry/retryWhen; Q38 операторы времени."
+                "related": "[[project-reactor-interview#Q22]] обработка ошибок; [[project-reactor-interview#Q25]] retry/retryWhen; [[project-reactor-interview#Q38]] операторы времени."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "StepVerifier.create(flux).expectNext(1).expectNext(2, 3).expectComplete().verify();",
                 "when_to_apply": "Unit-тесты сервисов и операторов; интеграция с JUnit/TestNG.",
                 "edge_cases": "verify() блокирует тестовый поток до завершения; для долгих/бесконечных потоков используйте verify(Duration); withVirtualTime для time-based.",
-                "related": "Q41 virtual time; Q42 TestPublisher; Q43 отладка."
+                "related": "[[project-reactor-interview#Q41]] virtual time; [[project-reactor-interview#Q42]] TestPublisher; [[project-reactor-interview#Q43]] отладка."
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "StepVerifier.withVirtualTime(() -> Flux.interval(Duration.ofHours(1)).take(3)).thenAwait(Duration.ofHours(1)).expectNext(0L)....verify();",
                 "when_to_apply": "Любое тестирование операторов времени: interval, delay, timeout, debounce, sample.",
                 "edge_cases": "Если Publisher создан вне Supplier — virtual time не применится; не работает с кастомным Scheduler, который не использует Reactor-factory.",
-                "related": "Q40 StepVerifier; Q42 TestPublisher; Q38 операторы времени."
+                "related": "[[project-reactor-interview#Q40]] StepVerifier; [[project-reactor-interview#Q42]] TestPublisher; [[project-reactor-interview#Q38]] операторы времени."
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "TestPublisher<String> tp = TestPublisher.create(); StepVerifier.create(tp.flux().map(String::toUpperCase)).then(() -> tp.next(\"hello\")).expectNext(\"HELLO\").then(tp::complete).expectComplete().verify();",
                 "when_to_apply": "Тестирование операторов, обрабатывающих определённые последовательности сигналов; проверка устойчивости к нарушениям Reactive Streams.",
                 "edge_cases": "createNoncompliant отключает спецификационные проверки — для тестов того, как код реагирует на bad publishers; нельзя использовать в production.",
-                "related": "Q40 StepVerifier; Q41 virtual time; Q22 обработка ошибок."
+                "related": "[[project-reactor-interview#Q40]] StepVerifier; [[project-reactor-interview#Q41]] virtual time; [[project-reactor-interview#Q22]] обработка ошибок."
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "flux.checkpoint(\"after-map\").map(this::convert).checkpoint(\"after-convert\").subscribe();",
                 "when_to_apply": "log — точечная отладка; checkpoint — выделение проблемных мест; Hooks.onOperatorDebug — глобально в dev; ReactorDebugAgent — production.",
                 "edge_cases": "Hooks.onOperatorDebug замедляет работу в 5-10 раз; ReactorDebugAgent безопасен для продакшена.",
-                "related": "Q44 checkpoint; Q45 Hooks; Q15 doOn-операторы."
+                "related": "[[project-reactor-interview#Q44]] checkpoint; [[project-reactor-interview#Q45]] Hooks; [[project-reactor-interview#Q15]] doOn-операторы."
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "flux.checkpoint(\"before-division\").map(i -> 10/i).checkpoint(\"after-division\").subscribe(); → в трейсе будет 'Assembly site of checkpoint after-division'.",
                 "when_to_apply": "Локализованная отладка одного участка без глобального overhead; в production-коде на критических точках.",
                 "edge_cases": "checkpoint без forceStackTrace = lightweight (рекомендовано); с true — точный stack, но дороже.",
-                "related": "Q43 отладка; Q45 Hooks; Q15 doOn-операторы."
+                "related": "[[project-reactor-interview#Q43]] отладка; [[project-reactor-interview#Q45]] Hooks; [[project-reactor-interview#Q15]] doOn-операторы."
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "В main() приложения: Hooks.onOperatorDebug(); или ReactorDebugAgent.init() для производства.",
                 "when_to_apply": "onOperatorDebug — в dev/staging; ReactorDebugAgent — в production; onErrorDropped — глобальное логирование непойманных ошибок.",
                 "edge_cases": "Hooks.onOperatorDebug замедляет работу в 5-10 раз; ReactorDebugAgent безопаснее, но требует -javaagent или ReactorDebugAgent.init().",
-                "related": "Q43 отладка; Q44 checkpoint; Q22 обработка ошибок."
+                "related": "[[project-reactor-interview#Q43]] отладка; [[project-reactor-interview#Q44]] checkpoint; [[project-reactor-interview#Q22]] обработка ошибок."
               }
             },
             {
@@ -2730,7 +2730,7 @@
                 "example": "@GetMapping public Flux<User> users() { return repo.findAll(); } — Spring подпишется, прочитает, сериализует и отправит ответ.",
                 "when_to_apply": "Реактивные веб-приложения, высокая параллельность, intensive I/O, стриминг (SSE), интеграция с R2DBC/MongoDB Reactive.",
                 "edge_cases": "Смешивание блокирующих и реактивных вызовов — частая ошибка; @Transactional требует ReactiveTransactionManager.",
-                "related": "Q47 block(); Q33 Context; Q30 Schedulers."
+                "related": "[[project-reactor-interview#Q47]] block(); [[project-reactor-interview#Q33]] Context; [[project-reactor-interview#Q30]] Schedulers."
               }
             },
             {
@@ -2802,7 +2802,7 @@
                 "example": "ПРАВИЛЬНО: @GetMapping return userService.find(id).map(this::transform); НЕПРАВИЛЬНО: User u = service.find(id).block();",
                 "when_to_apply": "block() допустим только в edge cases: main()/init scripts, тестах с @Test, миграциях; никогда в reactive handlers.",
                 "edge_cases": "Mono.fromCallable + subscribeOn(boundedElastic) — единственный безопасный путь для блокирующих API; даже в boundedElastic блокировка не должна быть длительной.",
-                "related": "Q30 Schedulers; Q31 subscribeOn/publishOn; Q46 WebFlux."
+                "related": "[[project-reactor-interview#Q30]] Schedulers; [[project-reactor-interview#Q31]] subscribeOn/publishOn; [[project-reactor-interview#Q46]] WebFlux."
               }
             },
             {

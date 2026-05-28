@@ -18,7 +18,7 @@
                 "example": "`SELECT pid, usename, state, query FROM pg_stat_activity WHERE state <> 'idle'` — показывает активные backend-процессы.",
                 "when_to_apply": "Понимание архитектуры нужно при настройке `max_connections`, выборе `PgBouncer` и диагностике потребления памяти.",
                 "edge_cases": "Fork backend-а стоит ~1–5 мс и ~5–10 МБ RAM; поэтому тысячи коротких соединений деградируют производительность без пула.",
-                "related": "Q2 `shared_buffers`; Q49 `PgBouncer`; Q53 `max_connections`."
+                "related": "[[postgresql-interview#Q2]] `shared_buffers`; [[postgresql-interview#Q49]] `PgBouncer`; [[postgresql-interview#Q53]] `max_connections`."
               }
             },
             {
@@ -90,7 +90,7 @@
                 "example": "`SELECT sum(heap_blks_hit)::float / nullif(sum(heap_blks_hit)+sum(heap_blks_read),0) FROM pg_statio_user_tables;` — должно быть > 0.99.",
                 "when_to_apply": "При настройке сервера под OLTP/OLAP-нагрузку и при росте дискового I/O в метриках.",
                 "edge_cases": "Слишком большой `shared_buffers` (> 40% RAM) часто ухудшает производительность: страницы дублируются в ОС-кэше, растёт overhead на управление буфером.",
-                "related": "Q53 ключевые параметры; Q24 `seq_page_cost`/`random_page_cost`; Q4 `checkpoint`."
+                "related": "[[postgresql-interview#Q53]] ключевые параметры; [[postgresql-interview#Q24]] `seq_page_cost`/`random_page_cost`; [[postgresql-interview#Q4]] `checkpoint`."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "`SHOW wal_level;` `SHOW synchronous_commit;` — основные настройки. `archive_mode=on` + `archive_command` включают архивирование для PITR.",
                 "when_to_apply": "Всегда включён; настраивается под цели DR (`synchronous_commit`, `wal_level`, `archive_mode`).",
                 "edge_cases": "При `synchronous_commit=off` возможна потеря последних подтверждённых транзакций при сбое (но база остаётся консистентной).",
-                "related": "Q4 `checkpoint`; Q44 streaming replication; Q46 replication slot."
+                "related": "[[postgresql-interview#Q4]] `checkpoint`; [[postgresql-interview#Q44]] streaming replication; [[postgresql-interview#Q46]] replication slot."
               }
             },
             {
@@ -234,7 +234,7 @@
                 "example": "В логах: `LOG: checkpoint starting: time` / `checkpoint complete: wrote 12345 buffers (5.3%)`.",
                 "when_to_apply": "При тюнинге OLTP — увеличивают `max_wal_size` и `checkpoint_timeout`, чтобы избежать частых checkpoint-ов.",
                 "edge_cases": "Слишком редкие checkpoint-ы → долгое восстановление после сбоя и большой `WAL`. Слишком частые → постоянная нагрузка на диск.",
-                "related": "Q3 `WAL`; Q53 `max_wal_size`; Q2 `shared_buffers`."
+                "related": "[[postgresql-interview#Q3]] `WAL`; [[postgresql-interview#Q53]] `max_wal_size`; [[postgresql-interview#Q2]] `shared_buffers`."
               }
             }
           ]
@@ -258,7 +258,7 @@
                 "example": "`host all all 10.0.0.0/8 scram-sha-256` — все базы для всех пользователей из подсети по `SCRAM`.",
                 "when_to_apply": "При выкатке нового сервиса в кластере, ограничении доступа по IP, переходе со старого `md5` на `scram-sha-256`.",
                 "edge_cases": "`trust` без указания IP открывает базу всему миру; `peer` работает только для локальных Unix-socket соединений и сверяет имя ОС-пользователя.",
-                "related": "Q1 архитектура; Q53 `max_connections`; Q49 `PgBouncer`."
+                "related": "[[postgresql-interview#Q1]] архитектура; [[postgresql-interview#Q53]] `max_connections`; [[postgresql-interview#Q49]] `PgBouncer`."
               }
             },
             {
@@ -330,7 +330,7 @@
                 "example": "`CREATE TABLE events (id SERIAL, payload JSONB, tags TEXT[], occurred_at TSTZRANGE);`",
                 "when_to_apply": "При проектировании схемы, когда стандартного `VARCHAR`/`INT` недостаточно — гибкие атрибуты, диапазоны времени, геометрия.",
                 "edge_cases": "`ENUM` сложно мигрировать (добавление через `ALTER TYPE ... ADD VALUE` нельзя в транзакции до PG 12); `JSON` сохраняет порядок ключей, `JSONB` — нет.",
-                "related": "Q7 `JSON` vs `JSONB`; Q8 массивы; Q10 пользовательские типы."
+                "related": "[[postgresql-interview#Q7]] `JSON` vs `JSONB`; [[postgresql-interview#Q8]] массивы; [[postgresql-interview#Q10]] пользовательские типы."
               }
             },
             {
@@ -402,7 +402,7 @@
                 "example": "`CREATE TABLE events (id SERIAL, payload JSONB); CREATE INDEX ON events USING GIN (payload);` `SELECT * FROM events WHERE payload @> '{\"type\":\"purchase\"}'`.",
                 "when_to_apply": "`JSONB` — по умолчанию. `JSON` — только когда критичен оригинальный байт-в-байт текст (подпись, логирование внешних payload-ов).",
                 "edge_cases": "В `JSONB` при дублях ключей выживает последнее значение; порядок ключей не определён — нельзя полагаться на него в сравнениях.",
-                "related": "Q48 операторы `JSONB`; Q13 `GIN`-индекс; Q17 функциональный индекс по полю JSON."
+                "related": "[[postgresql-interview#Q48]] операторы `JSONB`; [[postgresql-interview#Q13]] `GIN`-индекс; [[postgresql-interview#Q17]] функциональный индекс по полю JSON."
               }
             },
             {
@@ -474,7 +474,7 @@
                 "example": "`SELECT * FROM articles WHERE 'pg' = ANY(tags);` `SELECT * FROM articles WHERE tags @> ARRAY['pg','sql'];` `CREATE INDEX ON articles USING GIN (tags);`",
                 "when_to_apply": "Когда атрибут естественным образом — небольшой набор значений (теги статьи, роли пользователя), и не нужна отдельная таблица.",
                 "edge_cases": "Изменение одного элемента переписывает весь массив; для частых обновлений лучше нормализованная таблица. Индексирование по позиции (`tags[1]`) требует функционального индекса.",
-                "related": "Q13 `GIN`-индекс; Q11 типы индексов; Q7 `JSONB` как альтернатива для разнородных значений."
+                "related": "[[postgresql-interview#Q13]] `GIN`-индекс; [[postgresql-interview#Q11]] типы индексов; [[postgresql-interview#Q7]] `JSONB` как альтернатива для разнородных значений."
               }
             }
           ]
@@ -498,7 +498,7 @@
                 "example": "`INSERT INTO products(attributes) VALUES ('color=>\"red\", size=>\"L\"'); SELECT attributes->'color' FROM products;`",
                 "when_to_apply": "Когда нужны простые key-value атрибуты без вложенности и числовых типов, и нет смысла тащить `JSONB`.",
                 "edge_cases": "Все значения — строки; для чисел/дат нужна явная конверсия. На новых проектах обычно предпочитают `JSONB` для единообразия.",
-                "related": "Q7 `JSON` vs `JSONB`; Q13 `GIN`; Q55 популярные расширения."
+                "related": "[[postgresql-interview#Q7]] `JSON` vs `JSONB`; [[postgresql-interview#Q13]] `GIN`; [[postgresql-interview#Q55]] популярные расширения."
               }
             },
             {
@@ -570,7 +570,7 @@
                 "example": "`CREATE TYPE mood AS ENUM ('low','ok','high'); CREATE DOMAIN email AS TEXT CHECK (VALUE ~ '@'); CREATE TYPE addr AS (city TEXT, zip TEXT);`",
                 "when_to_apply": "`ENUM` — для стабильных перечислений (статусы); `DOMAIN` — для повторяемых валидаций; `COMPOSITE` — для возврата из функций.",
                 "edge_cases": "`ENUM` сложно реорганизовать: до PG 12 `ALTER TYPE ... ADD VALUE` нельзя было выполнять в транзакции; удаление значения требует пересоздания типа.",
-                "related": "Q6 типы данных; Q26 транзакции и DDL; Q11 индексы по `ENUM`."
+                "related": "[[postgresql-interview#Q6]] типы данных; [[postgresql-interview#Q26]] транзакции и DDL; [[postgresql-interview#Q11]] индексы по `ENUM`."
               }
             },
             {
@@ -642,7 +642,7 @@
                 "example": "`CREATE INDEX ON orders (user_id);` — `B-tree`; `CREATE INDEX ON events USING GIN (payload);` — `GIN`; `CREATE INDEX ON logs USING BRIN (created_at);` — `BRIN`.",
                 "when_to_apply": "Выбирать тип по операторам в `WHERE`: `=`/`<`/`>` → `B-tree`; `@>`/`?` → `GIN`; диапазоны → `GiST`; временные ряды → `BRIN`.",
                 "edge_cases": "`Hash` исторически не был crash-safe; начиная с PG 10 — пишется в `WAL`, но `B-tree` обычно практичнее.",
-                "related": "Q12 `B-tree`; Q13 `GIN`; Q14 `GiST`; Q15 `BRIN`."
+                "related": "[[postgresql-interview#Q12]] `B-tree`; [[postgresql-interview#Q13]] `GIN`; [[postgresql-interview#Q14]] `GiST`; [[postgresql-interview#Q15]] `BRIN`."
               }
             },
             {
@@ -714,7 +714,7 @@
                 "example": "`CREATE INDEX idx_orders_user_status ON orders (user_id, status);` — оптимизирует `WHERE user_id=42 AND status='open'`.",
                 "when_to_apply": "По умолчанию для PK, FK, частых фильтров, ORDER BY и UNIQUE-ограничений.",
                 "edge_cases": "`LIKE '%suffix'` не использует `B-tree` (нет префикса). Для таких случаев — `pg_trgm` + `GIN`/`GiST`.",
-                "related": "Q11 типы индексов; Q22 `Seq Scan` vs `Index Scan`; Q18 покрывающий индекс."
+                "related": "[[postgresql-interview#Q11]] типы индексов; [[postgresql-interview#Q22]] `Seq Scan` vs `Index Scan`; [[postgresql-interview#Q18]] покрывающий индекс."
               }
             }
           ]
@@ -738,7 +738,7 @@
                 "example": "`CREATE INDEX ON events USING GIN (payload);` `CREATE INDEX ON articles USING GIN (to_tsvector('russian', body));` `CREATE EXTENSION pg_trgm; CREATE INDEX ON products USING GIN (name gin_trgm_ops);`",
                 "when_to_apply": "Когда одно значение содержит много «элементов», по которым нужен поиск (`@>`, `?`, `@@`, `%`).",
                 "edge_cases": "Медленная вставка → периодически выполнять `VACUUM` для merge pending list. Размер обычно больше `B-tree` на тех же данных.",
-                "related": "Q14 `GiST`; Q47 FTS; Q48 операторы `JSONB`; Q11 типы индексов."
+                "related": "[[postgresql-interview#Q14]] `GiST`; [[postgresql-interview#Q47]] FTS; [[postgresql-interview#Q48]] операторы `JSONB`; [[postgresql-interview#Q11]] типы индексов."
               }
             },
             {
@@ -810,7 +810,7 @@
                 "example": "`CREATE INDEX ON reservations USING GiST (period);` для `tsrange &&`. `CREATE INDEX ON locations USING GiST (geom);` для PostGIS.",
                 "when_to_apply": "Геометрия, диапазоны, exclusion-constraint (`EXCLUDE USING GIST`), KNN-поиск ближайших точек.",
                 "edge_cases": "`GiST` допускает false positives → требует recheck по таблице; для проверки актуальности используется `Recheck Cond` в плане.",
-                "related": "Q13 `GIN`; Q11 типы индексов; Q15 `BRIN` для альтернативной нагрузки."
+                "related": "[[postgresql-interview#Q13]] `GIN`; [[postgresql-interview#Q11]] типы индексов; [[postgresql-interview#Q15]] `BRIN` для альтернативной нагрузки."
               }
             },
             {
@@ -882,7 +882,7 @@
                 "example": "`CREATE INDEX ON logs USING BRIN (created_at) WITH (pages_per_range=64);`",
                 "when_to_apply": "Таблицы > 100 ГБ, append-only по времени; запросы по диапазону на ключ упорядочения.",
                 "edge_cases": "Эффективен только при высокой корреляции значений с физическим порядком; на случайных данных деградирует до `Seq Scan`. После массовых `UPDATE`/`VACUUM FULL` корреляция может испортиться.",
-                "related": "Q11 типы индексов; Q25 статистика и корреляция; Q12 `B-tree`."
+                "related": "[[postgresql-interview#Q11]] типы индексов; [[postgresql-interview#Q25]] статистика и корреляция; [[postgresql-interview#Q12]] `B-tree`."
               }
             },
             {
@@ -954,7 +954,7 @@
                 "example": "`CREATE INDEX idx_orders_open ON orders (user_id) WHERE status='open';` — индексируются только открытые заказы.",
                 "when_to_apply": "Когда запросы устойчиво фильтруют по фиксированному предикату и подмножество — небольшая доля таблицы.",
                 "edge_cases": "Планировщик использует индекс только если условие в `WHERE` запроса доказуемо включает условие индекса; параметризованные предикаты могут мешать.",
-                "related": "Q17 функциональный индекс; Q11 типы индексов; Q20 чтение `EXPLAIN`."
+                "related": "[[postgresql-interview#Q17]] функциональный индекс; [[postgresql-interview#Q11]] типы индексов; [[postgresql-interview#Q20]] чтение `EXPLAIN`."
               }
             }
           ]
@@ -978,7 +978,7 @@
                 "example": "`CREATE INDEX idx_users_lower_email ON users (LOWER(email));` `CREATE INDEX idx_events_type ON events ((payload->>'event_type'));`",
                 "when_to_apply": "Регистронезависимый поиск; индексирование вычисляемых полей или поля `JSONB`/`HSTORE`.",
                 "edge_cases": "Если функция помечена `VOLATILE`/`STABLE`, индекс создать нельзя. Запрос `WHERE email = 'x'` не использует индекс по `LOWER(email)` — нужен `LOWER(email) = lower('x')`.",
-                "related": "Q16 частичный индекс; Q48 операторы `JSONB`; Q20 `EXPLAIN`."
+                "related": "[[postgresql-interview#Q16]] частичный индекс; [[postgresql-interview#Q48]] операторы `JSONB`; [[postgresql-interview#Q20]] `EXPLAIN`."
               }
             },
             {
@@ -1050,7 +1050,7 @@
                 "example": "`CREATE INDEX idx_orders_covering ON orders (user_id) INCLUDE (status, total);` — `SELECT status, total FROM orders WHERE user_id=42;` идёт через `Index Only Scan`.",
                 "when_to_apply": "Точечные SELECT-ы с известным небольшим набором столбцов и высоким QPS, где важно избавиться от heap-доступа.",
                 "edge_cases": "Для `Index Only Scan` visibility map должна показывать, что страницы heap не содержат непогашенных мёртвых кортежей; иначе planner всё равно посмотрит heap.",
-                "related": "Q23 `Index Only Scan`; Q31 `VACUUM` и visibility map; Q12 `B-tree`."
+                "related": "[[postgresql-interview#Q23]] `Index Only Scan`; [[postgresql-interview#Q31]] `VACUUM` и visibility map; [[postgresql-interview#Q12]] `B-tree`."
               }
             },
             {
@@ -1122,7 +1122,7 @@
                 "example": "`CREATE INDEX CONCURRENTLY idx_orders_user_id ON orders (user_id);`",
                 "when_to_apply": "На больших таблицах с активной записью; при выкатке миграций без downtime.",
                 "edge_cases": "Нельзя выполнять внутри транзакции (`BEGIN`...`COMMIT`). При прерывании остаётся `INVALID`-индекс — его нужно удалить вручную: `DROP INDEX idx_name;`.",
-                "related": "Q11 индексы; Q51 блокировки; Q31 `VACUUM`."
+                "related": "[[postgresql-interview#Q11]] индексы; [[postgresql-interview#Q51]] блокировки; [[postgresql-interview#Q31]] `VACUUM`."
               }
             },
             {
@@ -1194,7 +1194,7 @@
                 "example": "`EXPLAIN SELECT * FROM orders WHERE user_id=42;` → `Index Scan using idx_orders_user_id on orders (cost=0.43..8.45 rows=5 width=128) Index Cond: (user_id = 42)`.",
                 "when_to_apply": "При оптимизации запроса: сравнить оценки и реальность, проверить выбранный access-метод, найти узкие места.",
                 "edge_cases": "`loops=N` нужно умножать на `actual time` (это время одной итерации) для оценки общей стоимости узла.",
-                "related": "Q21 `EXPLAIN ANALYZE`; Q22 `Seq Scan`/`Index Scan`; Q24 `cost`."
+                "related": "[[postgresql-interview#Q21]] `EXPLAIN ANALYZE`; [[postgresql-interview#Q22]] `Seq Scan`/`Index Scan`; [[postgresql-interview#Q24]] `cost`."
               }
             }
           ]
@@ -1218,7 +1218,7 @@
                 "example": "`EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM orders JOIN users ON ...;` — реальное время + I/O.",
                 "when_to_apply": "`EXPLAIN` — быстрый sanity-check плана; `EXPLAIN ANALYZE` — для диагностики реального поведения и расхождений с оценкой.",
                 "edge_cases": "`EXPLAIN ANALYZE` ВЫПОЛНЯЕТ деструктивные запросы (`DELETE`, `UPDATE`) — оборачивать в `BEGIN; ... ROLLBACK;`.",
-                "related": "Q20 чтение `EXPLAIN`; Q24 `cost`; Q25 статистика."
+                "related": "[[postgresql-interview#Q20]] чтение `EXPLAIN`; [[postgresql-interview#Q24]] `cost`; [[postgresql-interview#Q25]] статистика."
               }
             },
             {
@@ -1290,7 +1290,7 @@
                 "example": "`WHERE status='open'` — если `open` = 90% строк → `Seq Scan` дешевле; если 0.1% → `Index Scan` или `Bitmap Index Scan`.",
                 "when_to_apply": "Не пытаться принудить индекс; анализировать селективность через `EXPLAIN ANALYZE` и корректировать стоимости/статистику.",
                 "edge_cases": "На маленьких таблицах `Seq Scan` почти всегда выгоднее даже при наличии индекса — накладные расходы перевешивают.",
-                "related": "Q23 `Bitmap Index Scan`; Q24 `cost`; Q25 статистика."
+                "related": "[[postgresql-interview#Q23]] `Bitmap Index Scan`; [[postgresql-interview#Q24]] `cost`; [[postgresql-interview#Q25]] статистика."
               }
             },
             {
@@ -1362,7 +1362,7 @@
                 "example": "`Bitmap Heap Scan on orders Recheck Cond: (status='open') -> Bitmap Index Scan on idx_orders_status`.",
                 "when_to_apply": "Bitmap — когда индекс возвращает много строк, расположенных вразброс. Index Only — когда индекс покрывает все нужные столбцы.",
                 "edge_cases": "Для `Index Only` устаревшая visibility map (после массового `UPDATE`) приведёт к `Heap Fetches > 0` в плане.",
-                "related": "Q18 покрывающий индекс; Q31 `VACUUM`; Q22 `Index Scan`."
+                "related": "[[postgresql-interview#Q18]] покрывающий индекс; [[postgresql-interview#Q31]] `VACUUM`; [[postgresql-interview#Q22]] `Index Scan`."
               }
             },
             {
@@ -1434,7 +1434,7 @@
                 "example": "`Index Scan ... (cost=0.43..8.45 rows=5 width=128)` — start cost 0.43 (до возвращения первой строки), total 8.45 (до полного завершения).",
                 "when_to_apply": "Сравнивать планы и понимать, почему планировщик выбрал один вариант, а не другой. Для SSD понижают `random_page_cost`.",
                 "edge_cases": "Если оценочный `cost` сильно расходится с реальным временем — обычно проблема в статистике (`ANALYZE`) или в неверных значениях стоимостей.",
-                "related": "Q22 выбор плана; Q25 статистика; Q20 `EXPLAIN`."
+                "related": "[[postgresql-interview#Q22]] выбор плана; [[postgresql-interview#Q25]] статистика; [[postgresql-interview#Q20]] `EXPLAIN`."
               }
             }
           ]
@@ -1458,7 +1458,7 @@
                 "example": "`ANALYZE orders;` `SELECT n_distinct, most_common_vals FROM pg_stats WHERE tablename='orders' AND attname='status';`",
                 "when_to_apply": "После массовых импортов/обновлений и при сильном расхождении `rows` vs `actual rows` в `EXPLAIN ANALYZE`.",
                 "edge_cases": "Для коррелированных столбцов используют `CREATE STATISTICS` (multivariate stats). Для очень больших таблиц `default_statistics_target` повышают до 500–1000 на ключевые столбцы.",
-                "related": "Q24 `cost`; Q22 выбор плана; Q33 `autovacuum`."
+                "related": "[[postgresql-interview#Q24]] `cost`; [[postgresql-interview#Q22]] выбор плана; [[postgresql-interview#Q33]] `autovacuum`."
               }
             },
             {
@@ -1530,7 +1530,7 @@
                 "example": "`BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE; ... COMMIT;` Spring: `@Transactional(isolation=SERIALIZABLE)`.",
                 "when_to_apply": "Финансы/инвентарь — `SERIALIZABLE` или `REPEATABLE READ` + явные локи; обычные CRUD — `READ COMMITTED`.",
                 "edge_cases": "На `SERIALIZABLE` ожидаются периодические откаты с `40001`; клиент должен уметь повторить транзакцию.",
-                "related": "Q27 MVCC; Q29 аномалии; Q51 блокировки."
+                "related": "[[postgresql-interview#Q27]] MVCC; [[postgresql-interview#Q29]] аномалии; [[postgresql-interview#Q51]] блокировки."
               }
             },
             {
@@ -1602,7 +1602,7 @@
                 "example": "После `UPDATE orders SET status='paid' WHERE id=1` старая строка остаётся с `xmax=<txid>`, новая создаётся с `xmin=<txid>`.",
                 "when_to_apply": "Понимание MVCC нужно для интерпретации `VACUUM`, bloat, изоляции и репликации.",
                 "edge_cases": "Долгая открытая транзакция блокирует `VACUUM` от удаления версий, видимых её снимку, → рост bloat. Видно через `pg_stat_activity.xact_start`.",
-                "related": "Q28 `xmin`/`xmax`; Q31 `VACUUM`; Q26 уровни изоляции."
+                "related": "[[postgresql-interview#Q28]] `xmin`/`xmax`; [[postgresql-interview#Q31]] `VACUUM`; [[postgresql-interview#Q26]] уровни изоляции."
               }
             },
             {
@@ -1674,7 +1674,7 @@
                 "example": "`SELECT xmin, xmax, ctid, * FROM orders WHERE id=1;` — покажет «возраст» строки и факт удаления/обновления.",
                 "when_to_apply": "Диагностика MVCC, отладка repeatable read, поиск зависших long-running транзакций.",
                 "edge_cases": "При wraparound `xid` (счётчик 32-битный) `PostgreSQL` использует freeze (запись `xmin=FrozenXid`), чтобы избежать переполнения. Это часть работы `VACUUM`.",
-                "related": "Q27 MVCC; Q31 `VACUUM` и freeze; Q33 autovacuum и txid wraparound."
+                "related": "[[postgresql-interview#Q27]] MVCC; [[postgresql-interview#Q31]] `VACUUM` и freeze; [[postgresql-interview#Q33]] autovacuum и txid wraparound."
               }
             }
           ]
@@ -1698,7 +1698,7 @@
                 "example": "Phantom: `SELECT COUNT(*) FROM orders WHERE total > 100` дважды в одной транзакции на `READ COMMITTED` — между вызовами другой клиент вставил подходящую строку.",
                 "when_to_apply": "Выбор уровня изоляции в зависимости от того, какие аномалии бизнес-логика терпит.",
                 "edge_cases": "Помимо трёх стандартных, есть write skew и lost update; они устраняются только `SERIALIZABLE` или явными локами (`SELECT ... FOR UPDATE`).",
-                "related": "Q26 уровни изоляции; Q27 MVCC; Q51 блокировки."
+                "related": "[[postgresql-interview#Q26]] уровни изоляции; [[postgresql-interview#Q27]] MVCC; [[postgresql-interview#Q51]] блокировки."
               }
             },
             {
@@ -1770,7 +1770,7 @@
                 "example": "`BEGIN; INSERT INTO a ...; SAVEPOINT s1; UPDATE b ...; ROLLBACK TO s1; COMMIT;` — `INSERT` останется, `UPDATE` откатится.",
                 "when_to_apply": "Сложные сценарии в одной транзакции, где часть шагов может failованно повториться; в JDBC — `Connection.setSavepoint()`.",
                 "edge_cases": "Большое число savepoint-ов в одной транзакции создаёт нагрузку на subxid cache; десятки тысяч ведут к переполнению и snapshot suboverflowed.",
-                "related": "Q26 транзакции; Q27 MVCC; Q51 блокировки."
+                "related": "[[postgresql-interview#Q26]] транзакции; [[postgresql-interview#Q27]] MVCC; [[postgresql-interview#Q51]] блокировки."
               }
             },
             {
@@ -1842,7 +1842,7 @@
                 "example": "`VACUUM (VERBOSE) orders;` `SELECT relname, n_dead_tup FROM pg_stat_user_tables ORDER BY n_dead_tup DESC LIMIT 10;`",
                 "when_to_apply": "Обычно работает autovacuum; ручной `VACUUM` — при массовых `UPDATE`/`DELETE` или для контролируемого освобождения места.",
                 "edge_cases": "Долгая открытая транзакция или нелениво поднятый replication slot не дают `VACUUM` чистить — `dead_tuples` растут.",
-                "related": "Q32 `VACUUM FULL`; Q33 autovacuum; Q34 table bloat."
+                "related": "[[postgresql-interview#Q32]] `VACUUM FULL`; [[postgresql-interview#Q33]] autovacuum; [[postgresql-interview#Q34]] table bloat."
               }
             },
             {
@@ -1914,7 +1914,7 @@
                 "example": "`VACUUM ANALYZE orders;` — рутинно. `VACUUM FULL orders;` — только в окно обслуживания.",
                 "when_to_apply": "`VACUUM` — регулярно (или через autovacuum). `VACUUM FULL` — после массового `DELETE`, когда нужно отдать дисковое место.",
                 "edge_cases": "`VACUUM FULL` требует ~2x места на диске на время работы (новый файл создаётся параллельно). На больших таблицах это часы блокировки.",
-                "related": "Q31 `VACUUM`; Q34 bloat; Q55 `pg_repack`."
+                "related": "[[postgresql-interview#Q31]] `VACUUM`; [[postgresql-interview#Q34]] bloat; [[postgresql-interview#Q55]] `pg_repack`."
               }
             }
           ]
@@ -1938,7 +1938,7 @@
                 "example": "`ALTER TABLE orders SET (autovacuum_vacuum_scale_factor=0.01, autovacuum_vacuum_threshold=1000);` `SELECT relname, last_autovacuum, n_dead_tup FROM pg_stat_user_tables;`",
                 "when_to_apply": "Для горячих таблиц с высокой долей `UPDATE`/`DELETE`; tuning под профиль нагрузки.",
                 "edge_cases": "`autovacuum_freeze_max_age` форсирует aggressive vacuum при приближении к txid wraparound — пропустить нельзя, иначе кластер встанет.",
-                "related": "Q31 `VACUUM`; Q34 bloat; Q53 параметры конфигурации."
+                "related": "[[postgresql-interview#Q31]] `VACUUM`; [[postgresql-interview#Q34]] bloat; [[postgresql-interview#Q53]] параметры конфигурации."
               }
             },
             {
@@ -2010,7 +2010,7 @@
                 "example": "`CREATE EXTENSION pgstattuple; SELECT * FROM pgstattuple('orders');` — покажет `dead_tuple_percent`, `free_percent`.",
                 "when_to_apply": "При росте размера таблицы непропорционально количеству строк; перед решением о `VACUUM FULL`/`pg_repack`.",
                 "edge_cases": "Bloat в индексах считается отдельно (`pgstatindex`); индексы тоже требуют `REINDEX CONCURRENTLY` периодически.",
-                "related": "Q31 `VACUUM`; Q32 `VACUUM FULL`; Q55 `pg_repack`."
+                "related": "[[postgresql-interview#Q31]] `VACUUM`; [[postgresql-interview#Q32]] `VACUUM FULL`; [[postgresql-interview#Q55]] `pg_repack`."
               }
             },
             {
@@ -2082,7 +2082,7 @@
                 "example": "`CREATE TABLE orders (...) PARTITION BY RANGE (created_at); CREATE TABLE orders_2026 PARTITION OF orders FOR VALUES FROM ('2026-01-01') TO ('2027-01-01');`",
                 "when_to_apply": "Таблицы > 100 ГБ, чёткое временное/категориальное разделение, частые удаления по диапазону (`DROP PARTITION` мгновенный).",
                 "edge_cases": "Глобальные индексы не поддерживаются — `UNIQUE` через все партиции возможен только включением ключа партиционирования в `PRIMARY KEY`.",
-                "related": "Q36 partition pruning; Q37 когда не даёт выигрыша; Q55 `pg_partman`."
+                "related": "[[postgresql-interview#Q36]] partition pruning; [[postgresql-interview#Q37]] когда не даёт выигрыша; [[postgresql-interview#Q55]] `pg_partman`."
               }
             },
             {
@@ -2154,7 +2154,7 @@
                 "example": "`SELECT * FROM orders WHERE created_at >= '2026-01-01' AND created_at < '2026-02-01';` → планировщик читает только `orders_2026_01`.",
                 "when_to_apply": "Всегда строить запросы с фильтром по ключу партиционирования; иначе чтение пройдёт по всем партициям.",
                 "edge_cases": "`JOIN` партиционированной таблицы с обычной может не давать pruning, если фильтр приходит косвенно через условие соединения. Помогает `enable_partitionwise_join`.",
-                "related": "Q35 виды партиционирования; Q37 когда не даёт выигрыша; Q20 `EXPLAIN`."
+                "related": "[[postgresql-interview#Q35]] виды партиционирования; [[postgresql-interview#Q37]] когда не даёт выигрыша; [[postgresql-interview#Q20]] `EXPLAIN`."
               }
             }
           ]
@@ -2178,7 +2178,7 @@
                 "example": "Таблица `users` в 100 тыс. строк с поиском по `email` — партиционирование бессмысленно, нужен индекс по `email`.",
                 "when_to_apply": "Не партиционировать ради экспериментов; делать только когда таблица > 50–100 ГБ и есть стабильный фильтр.",
                 "edge_cases": "Партиционирование по `HASH` усложняет миграции данных и не даёт pruning по диапазонам; используется для шардирования.",
-                "related": "Q35 виды; Q36 pruning; Q55 `pg_partman`."
+                "related": "[[postgresql-interview#Q35]] виды; [[postgresql-interview#Q36]] pruning; [[postgresql-interview#Q55]] `pg_partman`."
               }
             },
             {
@@ -2250,7 +2250,7 @@
                 "example": "`SELECT user_id, total, SUM(total) OVER (PARTITION BY user_id ORDER BY order_date) AS running_total FROM orders;`",
                 "when_to_apply": "Топ-N на группу, нарастающие итоги, скользящие средние, дельты между строками, ранжирование.",
                 "edge_cases": "При отсутствии `ORDER BY` агрегат считается по всему окну; при `ORDER BY` без явного frame — `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` (с особенностью обработки ties).",
-                "related": "Q39 ранжирующие; Q40 `LAG`/`LEAD`; Q41 скользящие агрегаты."
+                "related": "[[postgresql-interview#Q39]] ранжирующие; [[postgresql-interview#Q40]] `LAG`/`LEAD`; [[postgresql-interview#Q41]] скользящие агрегаты."
               }
             },
             {
@@ -2322,7 +2322,7 @@
                 "example": "`ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS rn` — типичный «последний заказ на пользователя» через `WHERE rn = 1`.",
                 "when_to_apply": "`ROW_NUMBER` — для дедупликации (выбрать одну строку из группы). `RANK`/`DENSE_RANK` — для leaderboard с обработкой ничьих.",
                 "edge_cases": "Если в `ORDER BY` нет уникальности и нужен детерминизм — добавляют tiebreaker (`ORDER BY score DESC, id`).",
-                "related": "Q38 оконные функции; Q40 `LAG`/`LEAD`; Q41 скользящие."
+                "related": "[[postgresql-interview#Q38]] оконные функции; [[postgresql-interview#Q40]] `LAG`/`LEAD`; [[postgresql-interview#Q41]] скользящие."
               }
             },
             {
@@ -2394,7 +2394,7 @@
                 "example": "`SELECT order_date, total, total - LAG(total) OVER (PARTITION BY user_id ORDER BY order_date) AS diff FROM orders;`",
                 "when_to_apply": "Time-series анализ, разница между последовательными измерениями, определение перехода статусов в журналах событий.",
                 "edge_cases": "Для первой строки в окне `LAG` возвращает `default` (или NULL); часто используют `LAG(col, 1, 0)` чтобы получить 0 вместо NULL.",
-                "related": "Q38 оконные функции; Q41 скользящие; Q39 ранжирование."
+                "related": "[[postgresql-interview#Q38]] оконные функции; [[postgresql-interview#Q41]] скользящие; [[postgresql-interview#Q39]] ранжирование."
               }
             }
           ]
@@ -2418,7 +2418,7 @@
                 "example": "`AVG(total) OVER (ORDER BY order_date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg_7d`.",
                 "when_to_apply": "Скользящие средние, running totals, top-N по окну, агрегаты внутри партиции.",
                 "edge_cases": "`RANGE` требует, чтобы тип столбца сортировки поддерживал `+`/`-` с интервалом (даты, числа); для строк работает только `ROWS`.",
-                "related": "Q38 оконные функции; Q40 `LAG`/`LEAD`; Q39 ранжирование."
+                "related": "[[postgresql-interview#Q38]] оконные функции; [[postgresql-interview#Q40]] `LAG`/`LEAD`; [[postgresql-interview#Q39]] ранжирование."
               }
             },
             {
@@ -2490,7 +2490,7 @@
                 "example": "`WITH active AS (SELECT id FROM users WHERE status='active') SELECT u.id, COUNT(*) FROM active u JOIN orders o ON o.user_id=u.id GROUP BY u.id;`",
                 "when_to_apply": "Сложные многошаговые запросы, рекурсия, переиспользование промежуточного результата; явная материализация для управления планом.",
                 "edge_cases": "`CTE` с побочными эффектами (`INSERT`/`UPDATE`/`DELETE RETURNING`) всегда материализуется и выполняется один раз — поведение, на которое опираются для атомарных операций.",
-                "related": "Q43 рекурсивные `CTE`; Q20 `EXPLAIN`; Q38 оконные функции."
+                "related": "[[postgresql-interview#Q43]] рекурсивные `CTE`; [[postgresql-interview#Q20]] `EXPLAIN`; [[postgresql-interview#Q38]] оконные функции."
               }
             },
             {
@@ -2562,7 +2562,7 @@
                 "example": "`WITH RECURSIVE h AS (SELECT id, mgr, 1 d FROM emp WHERE mgr IS NULL UNION ALL SELECT e.id, e.mgr, h.d+1 FROM emp e JOIN h ON e.mgr=h.id) SELECT * FROM h;`",
                 "when_to_apply": "Деревья комментариев, BOM, маршруты, ancestor/descendant lookup.",
                 "edge_cases": "Без условия завершения возможен бесконечный цикл (на циклических графах). Ограничивают глубиной: `WHERE depth < 100` или массивом visited.",
-                "related": "Q42 `CTE`; Q38 оконные функции; Q20 `EXPLAIN`."
+                "related": "[[postgresql-interview#Q42]] `CTE`; [[postgresql-interview#Q38]] оконные функции; [[postgresql-interview#Q20]] `EXPLAIN`."
               }
             },
             {
@@ -2634,7 +2634,7 @@
                 "example": "На primary: `wal_level=replica`, `max_wal_senders=10`. На standby: `primary_conninfo='host=primary user=repuser'`, `hot_standby=on`.",
                 "when_to_apply": "HA-кластеры с автоматическим failover (Patroni, repmgr), read-replicas для масштабирования чтения, DR.",
                 "edge_cases": "При `synchronous_commit=on` и недоступной синхронной реплике — `COMMIT` зависает; всегда настраивать несколько кандидатов или `ANY n_synchronous_standby_names`.",
-                "related": "Q45 физическая vs логическая; Q46 replication slot; Q3 `WAL`."
+                "related": "[[postgresql-interview#Q45]] физическая vs логическая; [[postgresql-interview#Q46]] replication slot; [[postgresql-interview#Q3]] `WAL`."
               }
             }
           ]
@@ -2658,7 +2658,7 @@
                 "example": "`CREATE PUBLICATION pub FOR TABLE orders, users;` на источнике; `CREATE SUBSCRIPTION sub CONNECTION '...' PUBLICATION pub;` на получателе.",
                 "when_to_apply": "Логическая — версионные миграции, ETL, CDC в Kafka через `pg_logical_emit_message`. Физическая — HA-кластер.",
                 "edge_cases": "Логическая требует `wal_level=logical`, уникальный `replica identity` для `UPDATE`/`DELETE` (PK или `REPLICA IDENTITY FULL`). `DDL` не реплицируется.",
-                "related": "Q44 streaming replication; Q46 replication slot; Q3 `WAL`."
+                "related": "[[postgresql-interview#Q44]] streaming replication; [[postgresql-interview#Q46]] replication slot; [[postgresql-interview#Q3]] `WAL`."
               }
             },
             {
@@ -2730,7 +2730,7 @@
                 "example": "`SELECT pg_create_physical_replication_slot('standby1');` `SELECT pg_create_logical_replication_slot('cdc', 'pgoutput');` `SELECT * FROM pg_replication_slots;`",
                 "when_to_apply": "Обязательно для production-кластеров: HA-стендбай и CDC-пайплайны.",
                 "edge_cases": "Заброшенный (inactive) slot — основной риск: `WAL` копится, диск переполняется. Мониторят через `pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)`.",
-                "related": "Q44 streaming replication; Q45 логическая; Q3 `WAL`."
+                "related": "[[postgresql-interview#Q44]] streaming replication; [[postgresql-interview#Q45]] логическая; [[postgresql-interview#Q3]] `WAL`."
               }
             },
             {
@@ -2802,7 +2802,7 @@
                 "example": "`ALTER TABLE articles ADD COLUMN tsv tsvector GENERATED ALWAYS AS (to_tsvector('russian', title||' '||body)) STORED; CREATE INDEX ON articles USING GIN (tsv);`",
                 "when_to_apply": "Поиск по статьям, документам, описаниям товаров — когда не нужны фасеты и аналитика как в Elasticsearch.",
                 "edge_cases": "FTS не делает fuzzy-поиск (опечатки); для опечаток подключают `pg_trgm` (similarity) или внешний движок.",
-                "related": "Q13 `GIN`; Q14 `GiST`; Q48 `JSONB` для гибких документов."
+                "related": "[[postgresql-interview#Q13]] `GIN`; [[postgresql-interview#Q14]] `GiST`; [[postgresql-interview#Q48]] `JSONB` для гибких документов."
               }
             },
             {
@@ -2874,7 +2874,7 @@
                 "example": "`SELECT * FROM events WHERE payload @> '{\"type\":\"purchase\"}';` `UPDATE events SET payload = jsonb_set(payload, '{user,name}', '\"Alice\"');`",
                 "when_to_apply": "Гибкие схемы (события, конфиги, метаданные); миграции из document-БД; событийные журналы.",
                 "edge_cases": "`->` vs `->>`: `->` возвращает JSON (для дальнейших операций), `->>` — text (для сравнения и индексирования по выражению). Частая ошибка — путать `?` (jsonb-ключ) с placeholder-ом JDBC.",
-                "related": "Q7 `JSON` vs `JSONB`; Q13 `GIN`; Q17 функциональный индекс."
+                "related": "[[postgresql-interview#Q7]] `JSON` vs `JSONB`; [[postgresql-interview#Q13]] `GIN`; [[postgresql-interview#Q17]] функциональный индекс."
               }
             }
           ]
@@ -2898,7 +2898,7 @@
                 "example": "`pool_mode=transaction max_client_conn=1000 default_pool_size=20` → 1000 клиентов работают через 20 реальных соединений.",
                 "when_to_apply": "Любое продовое приложение со множеством short-lived соединений (web-фронты, serverless, lambdas).",
                 "edge_cases": "`transaction` mode ломает session-фичи (`SET LOCAL` работает, `SET` без `LOCAL` — нет; `LISTEN`, `PREPARE`, advisory locks могут сломаться).",
-                "related": "Q50 режимы пулинга; Q1 архитектура; Q53 `max_connections`."
+                "related": "[[postgresql-interview#Q50]] режимы пулинга; [[postgresql-interview#Q1]] архитектура; [[postgresql-interview#Q53]] `max_connections`."
               }
             },
             {
@@ -2970,7 +2970,7 @@
                 "example": "`pool_mode=transaction` — после `COMMIT` соединение свободно для следующего клиента; `pool_mode=session` — пока клиент держит, никто другой не получит.",
                 "when_to_apply": "`transaction` — дефолт для большинства приложений. `session` — если используются `LISTEN`/`NOTIFY`, advisory locks, `SET` параметров сессии.",
                 "edge_cases": "В `transaction` mode prepared statements кэшируются на клиенте (на сервере они привязаны к сессии). Решения: `prepared_statements: false` или `protocol_v2` PgBouncer 1.21+.",
-                "related": "Q49 `PgBouncer`; Q26 уровни изоляции; Q30 `SAVEPOINT`."
+                "related": "[[postgresql-interview#Q49]] `PgBouncer`; [[postgresql-interview#Q26]] уровни изоляции; [[postgresql-interview#Q30]] `SAVEPOINT`."
               }
             },
             {
@@ -3042,7 +3042,7 @@
                 "example": "`SELECT pid, locktype, relation::regclass, mode, granted FROM pg_locks WHERE NOT granted;` — кто кого ждёт.",
                 "when_to_apply": "Диагностика блокировок, разрешение deadlock-ов, аудит DDL-операций на проде.",
                 "edge_cases": "`ALTER TABLE` берёт `ACCESS EXCLUSIVE` — блокирует даже `SELECT`. Многие варианты (`ADD COLUMN` без DEFAULT, `SET NOT NULL` с constant CHECK) ускорены и не переписывают таблицу, но lock всё равно нужен — пусть и кратко.",
-                "related": "Q52 deadlock; Q26 уровни изоляции; Q19 `CONCURRENTLY`."
+                "related": "[[postgresql-interview#Q52]] deadlock; [[postgresql-interview#Q26]] уровни изоляции; [[postgresql-interview#Q19]] `CONCURRENTLY`."
               }
             },
             {
@@ -3114,7 +3114,7 @@
                 "example": "`SELECT * FROM jobs WHERE status='pending' FOR UPDATE SKIP LOCKED LIMIT 1;` — паттерн очереди без deadlock-ов.",
                 "when_to_apply": "В системах с конкурентными обновлениями (биллинг, инвентарь, очереди задач).",
                 "edge_cases": "Уменьшение `deadlock_timeout` ускоряет обнаружение, но грузит CPU постоянной проверкой; в большинстве случаев 1 с достаточно.",
-                "related": "Q51 блокировки; Q26 уровни изоляции; Q30 `SAVEPOINT` (для retry)."
+                "related": "[[postgresql-interview#Q51]] блокировки; [[postgresql-interview#Q26]] уровни изоляции; [[postgresql-interview#Q30]] `SAVEPOINT` (для retry)."
               }
             }
           ]
@@ -3138,7 +3138,7 @@
                 "example": "`work_mem=16MB`, `JOIN` с двумя `Sort` + `Hash Agg` может суммарно потратить ~50 МБ на этот запрос.",
                 "when_to_apply": "Тюнинг под workload: OLTP/OLAP/смешанный. Использовать `pgtune`/`postgresqlco.nf` как стартовую точку.",
                 "edge_cases": "Слишком большой `work_mem` × `max_connections` может «съесть» всю RAM в пике; считают по worst-case sort/hash на запрос.",
-                "related": "Q2 `shared_buffers`; Q24 стоимости; Q33 autovacuum."
+                "related": "[[postgresql-interview#Q2]] `shared_buffers`; [[postgresql-interview#Q24]] стоимости; [[postgresql-interview#Q33]] autovacuum."
               }
             },
             {
@@ -3210,7 +3210,7 @@
                 "example": "`SELECT query, calls, total_exec_time, mean_exec_time FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;`",
                 "when_to_apply": "Регулярный аудит; при росте latency/ошибках на API; перед оптимизацией индексов.",
                 "edge_cases": "После выкатки изменений сбрасывать статистику: `SELECT pg_stat_statements_reset();`. Логирование slow queries создаёт I/O нагрузку на сервер логов — порог подбирают.",
-                "related": "Q20 `EXPLAIN`; Q21 `EXPLAIN ANALYZE`; Q25 статистика; Q55 расширения."
+                "related": "[[postgresql-interview#Q20]] `EXPLAIN`; [[postgresql-interview#Q21]] `EXPLAIN ANALYZE`; [[postgresql-interview#Q25]] статистика; [[postgresql-interview#Q55]] расширения."
               }
             },
             {
@@ -3282,7 +3282,7 @@
                 "example": "`CREATE EXTENSION IF NOT EXISTS pg_stat_statements;` `CREATE EXTENSION pgcrypto;` `SELECT gen_random_uuid();` (встроено с PG 13).",
                 "when_to_apply": "Подбирают под задачу: гео → PostGIS, FTS с fuzzy → pg_trgm, time-series → TimescaleDB, AI embeddings → pgvector.",
                 "edge_cases": "Не все расширения доступны на managed-сервисах (AWS RDS, Cloud SQL): нужно проверять список заранее.",
-                "related": "Q9 `hstore`; Q34 bloat (`pg_repack`); Q47 FTS (`pg_trgm`); Q54 (`pg_stat_statements`)."
+                "related": "[[postgresql-interview#Q9]] `hstore`; [[postgresql-interview#Q34]] bloat (`pg_repack`); [[postgresql-interview#Q47]] FTS (`pg_trgm`); [[postgresql-interview#Q54]] (`pg_stat_statements`)."
               }
             },
             {
