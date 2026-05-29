@@ -4,7 +4,7 @@ description: "Полный план аудита всех 304 interview-файл
 updated: "2026-05-29"
 status: "active"
 audit_version: 5
-progress: "MCQ-сидеры: 136/306 .md имеют выровненный JSON; 170 NO-JSON в работе (Phase 2). Spring-кластер (28) готов. Security: 4/10 закоммичены (mtls, secrets-management, supply-chain-security, zero-trust), остальные 6 генерируются."
+progress: "MCQ-сидеры: 142/306 .md имеют выровненный JSON; 164 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10). Дальше: programming-languages (36), architecture (17), testing (14)."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -595,15 +595,15 @@ Pass: `OK FILE.md`.
 | 257 | `reactive` | `reactive-testing` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 258 | `reactive` | `rxjava` | 46 | 46 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 259 | `reactive` | `webflux` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 260 | `security` | `application-security` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 261 | `security` | `authentication-authorization-patterns` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 262 | `security` | `jwt` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 260 | `security` | `application-security` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 261 | `security` | `authentication-authorization-patterns` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 262 | `security` | `jwt` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 263 | `security` | `mtls` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 264 | `security` | `oauth2` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 265 | `security` | `owasp-top10` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 264 | `security` | `oauth2` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 265 | `security` | `owasp-top10` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 266 | `security` | `secrets-management` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 267 | `security` | `supply-chain-security` | 24 | 24 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 268 | `security` | `tls-ssl` | 45 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 268 | `security` | `tls-ssl` | 45 | 45 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 269 | `security` | `zero-trust` | 19 | 19 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 270 | `system-design` | `design-chat-system` | 21 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 271 | `system-design` | `design-dropbox` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
