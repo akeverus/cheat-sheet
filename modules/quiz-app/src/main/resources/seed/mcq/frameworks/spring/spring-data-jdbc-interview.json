@@ -1,0 +1,965 @@
+{
+  "topic_slug": "spring-data-jdbc-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Data JDBC` и чем он отличается от `Spring Data JPA`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Data JDBC` — persistence-фреймворк с прямым `SQL`-доступом без ORM: нет lazy loading, нет first-level cache, нет dirty checking; он реализует репозиторный подход `Spring Data`, но без `Hibernate` под капотом, опираясь на DDD-агрегаты, тогда как `Spring Data JPA` — это полноценный ORM поверх `Hibernate`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Принцип `Spring Data JDBC` — «what you see is what you get»: SQL предсказуем, скрытых запросов нет. У `JPA` есть `Session`, кэш, проксирование и автоматический `flush`, что добавляет мощь, но и сложность (`N+1`, `LazyInitializationException`).",
+                "example": "`orderRepository.findById(id)` в `Spring Data JDBC` сразу читает весь агрегат явными `SELECT`; в `JPA` дочерняя коллекция подгрузится лениво при первом обращении.",
+                "when_to_apply": "Выбирают `Spring Data JDBC` для новых микросервисов с чистыми DDD-границами и простыми агрегатами, где важна предсказуемость SQL.",
+                "edge_cases": "При сложных объектных графах и потребности в lazy loading или L2-кэше `Spring Data JDBC` проигрывает `JPA` — там переплата на ручные SELECT.",
+                "related": "[[spring-data-jdbc-interview#Q2]] что значит «нет lazy loading»; [[spring-data-jdbc-interview#Q3]] когда выбирать вместо JPA; [[spring-data-jdbc-interview#Q4]] aggregate root."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Data JDBC` — это тонкая обёртка над `Hibernate`, которая включает first-level cache и dirty checking, но прячет `JPQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Data JDBC` не использует `Hibernate` вообще: нет ни `Session`, ни first-level cache, ни dirty checking — он напрямую работает через `JdbcTemplate` и plain SQL.",
+                "source_of_confusion": "Оба проекта живут под зонтиком `Spring Data` и дают похожие репозитории, поэтому кажется, что под капотом один и тот же ORM.",
+                "if_it_were_true": "Если бы внутри был `Hibernate`, появлялся бы `LazyInitializationException` вне транзакции — но в `Spring Data JDBC` его в принципе не бывает.",
+                "how_it_should_be": "`Hibernate` лежит под `Spring Data JPA`; `Spring Data JDBC` — самостоятельный фреймворк без ORM-слоя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Data JDBC` и `Spring Data JPA` — это одно и то же, просто два разных имени для одного модуля с ORM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два разных модуля с разной моделью: `JPA` — полный ORM поверх `Hibernate`, `JDBC` — прямой SQL без ORM, с упором на DDD-агрегаты.",
+                "source_of_confusion": "Похожие имена интерфейсов вроде `CrudRepository` создают иллюзию, что это синонимы.",
+                "if_it_were_true": "Тогда не было бы смысла в отдельном артефакте `spring-data-jdbc` и отдельной документации — но они существуют именно из-за разной архитектуры.",
+                "how_it_should_be": "Это разные подходы к persistence; выбор зависит от сложности модели и потребности в ORM."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Data JDBC` поддерживает lazy loading и автоматический dirty checking, как и `JPA`, но без поддержки кастомного SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё ровно наоборот: lazy loading и dirty checking в `Spring Data JDBC` отсутствуют, зато кастомный SQL через `@Query` поддерживается полноценно.",
+                "source_of_confusion": "Привычные ORM-возможности `JPA` ошибочно приписывают и `JDBC`-варианту.",
+                "if_it_were_true": "Если бы был dirty checking, не нужно было бы явно вызывать `save()` после изменения сущности — но в `Spring Data JDBC` он обязателен.",
+                "how_it_should_be": "Lazy loading и dirty checking — атрибуты `JPA`; `Spring Data JDBC` загружает eager и требует явного `save()`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что на практике означает фраза «в `Spring Data JDBC` нет lazy loading»?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это значит, что дочерние коллекции вообще не загружаются автоматически — их всегда нужно запрашивать отдельным репозиторием вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дочерние объекты внутри агрегата грузятся автоматически и сразу (eager) при загрузке корня — отдельный ручной запрос для них не нужен.",
+                "source_of_confusion": "«Нет lazy» путают с «нет загрузки вовсе», хотя речь о времени загрузки, а не о её наличии.",
+                "if_it_were_true": "Тогда `order.getItems()` после `findById` возвращал бы `null` или пустоту — но он уже заполнен.",
+                "how_it_should_be": "«Нет lazy» означает eager-загрузку всего агрегата сразу, а не отсутствие загрузки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При загрузке агрегата все дочерние объекты подгружаются сразу (eager) — через `JOIN` или дополнительные `SELECT`; нет `@FetchType`, нет ленивой инициализации, поэтому не бывает `LazyInitializationException`, а запросы остаются явными без скрытого `N+1`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Раз нет `Session` и прокси, коллекция в агрегате уже заполнена к моменту возврата из репозитория. Это убирает классические JPA-ловушки вне транзакции, но требует держать агрегаты компактными.",
+                "example": "`Order order = orderRepository.findById(id).orElseThrow();` — после этого `order.getItems()` уже содержит позиции, и обращение к ним не порождает нового `SELECT`.",
+                "when_to_apply": "Полезно помнить при проектировании агрегатов: тяжёлые коллекции грузятся целиком, поэтому крупные агрегаты дробят на отдельные.",
+                "edge_cases": "Большой агрегат с тысячами дочерних строк станет дорогим на каждом `findById`, ведь частичная (ленивая) загрузка недоступна.",
+                "related": "[[spring-data-jdbc-interview#Q1]] отличия от JPA; [[spring-data-jdbc-interview#Q4]] aggregate root; [[spring-data-jdbc-interview#Q6]] @MappedCollection."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это значит, что `Spring Data JDBC` грузит коллекции лениво так же, как `JPA`, но без выброса `LazyInitializationException`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ленивой загрузки нет совсем: всё грузится eager, поэтому и контекст для `LazyInitializationException` не возникает в принципе.",
+                "source_of_confusion": "Кажется, что «нет проблемы lazy-init» означает «lazy есть, но безопасный».",
+                "if_it_were_true": "Тогда существовал бы момент, когда коллекция ещё не загружена — но в `Spring Data JDBC` такого состояния нет.",
+                "how_it_should_be": "Lazy loading отсутствует как механизм; загрузка агрегата всегда полная и немедленная."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это значит, что можно настроить `@FetchType.LAZY` на коллекциях, чтобы откладывать загрузку до первого обращения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации `@FetchType` в `Spring Data JDBC` нет — стратегию загрузки настроить нельзя, она всегда eager в пределах агрегата.",
+                "source_of_confusion": "Опыт настройки `fetch` в `JPA`/`Hibernate` переносят на `Spring Data JDBC`.",
+                "if_it_were_true": "Тогда в API был бы атрибут `fetch`, как у `@OneToMany` в JPA — но `@MappedCollection` его не имеет.",
+                "how_it_should_be": "Стратегия фиксирована: весь агрегат загружается eager, переключателя `FetchType` нет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда стоит выбирать `Spring Data JDBC` вместо `Spring Data JPA`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Data JDBC` стоит выбирать именно для сложных объектных графов с глубокой ленивой загрузкой и L2-кэшем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сложные графы с lazy loading и L2-кэшем — это сильная сторона `JPA`; `Spring Data JDBC` лучше для простых компактных агрегатов.",
+                "source_of_confusion": "Кажется, что более «низкоуровневый» фреймворк автоматически мощнее для сложных случаев.",
+                "if_it_were_true": "Тогда у `Spring Data JDBC` был бы second-level cache и lazy loading — но их нет.",
+                "how_it_should_be": "Для сложных графов берут `JPA`; `Spring Data JDBC` — для простых DDD-агрегатов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Data JDBC` нужно выбирать всегда, потому что он во всём быстрее и функциональнее `JPA`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Универсального превосходства нет: на простых CRUD `Spring Data JDBC` быстрее, но `JPA` функциональнее для сложных сценариев (Criteria, L2-кэш, lazy).",
+                "source_of_confusion": "«Меньше магии» воспринимают как «всегда лучше во всём».",
+                "if_it_were_true": "Тогда проект `Spring Data JPA` давно бы свернули — но он остаётся стандартом для многих задач.",
+                "how_it_should_be": "Выбор контекстный: простота и предсказуемость против богатого ORM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Data JDBC` берут, когда доменная модель простая и агрегаты небольшие, нужны предсказуемые SQL-запросы без ORM-магии, проект следует DDD с чёткими границами агрегатов и команда хочет избежать сложностей `Hibernate` (`N+1`, `LazyInit`, кэш); `JPA` оставляют для сложных графов сущностей, генерации схемы, `Criteria API` и L2-кэша.",
+              "correct": true,
+              "sections": {
+                "explanation": "Решение сводится к балансу простоты и мощи: `Spring Data JDBC` минимизирует скрытое поведение, `JPA` даёт богатый ORM ценой сложности. Для новых микросервисов с чистой DDD-архитектурой первый вариант обычно удобнее.",
+                "example": "Новый сервис заказов с агрегатом `Order` и парой дочерних таблиц — кандидат для `Spring Data JDBC`; крупный legacy-монолит на `Hibernate` с десятками связей лучше оставить на `JPA`.",
+                "when_to_apply": "Применяют при старте нового сервиса, когда есть свобода выбора и важна прозрачность SQL.",
+                "edge_cases": "Если уже есть большой проект на `Hibernate` или нужны Criteria/JPQL, миграция на `Spring Data JDBC` будет дороже выгоды.",
+                "related": "[[spring-data-jdbc-interview#Q1]] отличия от JPA; [[spring-data-jdbc-interview#Q2]] eager-загрузка; [[spring-data-jdbc-interview#Q4]] aggregate root."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Data JDBC` выбирают, когда нужна автоматическая генерация и миграция схемы БД средствами фреймворка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Схему в `Spring Data JDBC` создают вручную (обычно через `Flyway`/`Liquibase`); автогенерации схемы, как `hbm2ddl` в `Hibernate`, тут нет.",
+                "source_of_confusion": "Возможность `Hibernate` генерировать DDL ошибочно приписывают и `Spring Data JDBC`.",
+                "if_it_were_true": "Тогда был бы аналог `spring.jpa.hibernate.ddl-auto` — но для `Spring Data JDBC` его не существует.",
+                "how_it_should_be": "Генерация схемы — аргумент в пользу `JPA`/`Hibernate`, а не `Spring Data JDBC`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Aggregate Root` в `Spring Data JDBC` и какие правила с ним связаны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Aggregate Root` — это любая сущность с аннотацией `@Id`, и для каждой такой сущности обязательно создаётся собственный репозиторий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Id` есть и у дочерних сущностей внутри агрегата, но репозиторий создают только у корня; дочерние управляются через него.",
+                "source_of_confusion": "Наличие `@Id` ассоциируют с самостоятельностью и собственным репозиторием.",
+                "if_it_were_true": "Тогда `OrderItem` имел бы `OrderItemRepository` и сохранялся отдельно — но это нарушило бы границу агрегата.",
+                "how_it_should_be": "Репозиторий — только у корня агрегата; `@Id` у дочерних нужен лишь для идентичности строк."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Aggregate Root` — это сущность, при удалении которой дочерние записи остаются в БД и должны удаляться вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `deleteById` корня все дочерние записи агрегата удаляются каскадно автоматически — ручной зачистки не требуется.",
+                "source_of_confusion": "Отсутствие ORM-каскадов JPA создаёт впечатление, что каскадного удаления нет вовсе.",
+                "if_it_were_true": "Тогда после удаления `Order` в `order_items` оставались бы осиротевшие строки — но `Spring Data JDBC` их удаляет.",
+                "how_it_should_be": "Удаление корня каскадно удаляет весь агрегат целиком."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Aggregate Root` — это сущность, которая обязана ссылаться на другие агрегаты, загружая их целиком вместе с собой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ссылку на другой агрегат выражают через `AggregateReference`, который хранит только ID и НЕ загружает чужой агрегат.",
+                "source_of_confusion": "Привычка к JPA-связям с автоматической загрузкой связанной сущности.",
+                "if_it_were_true": "Тогда загрузка `Order` тянула бы целиком `Customer` — но `AggregateReference` хранит лишь идентификатор.",
+                "how_it_should_be": "Между агрегатами — ссылка по ID через `AggregateReference`, без загрузки чужого корня."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Aggregate Root` — центральная сущность агрегата и единственная точка входа для сохранения и извлечения данных: только у корня есть репозиторий, весь агрегат сохраняется/удаляется через него (`orderRepository.save(order)`), дочерние сущности (`OrderItem`) управляются лишь через корень и удаляются каскадно, а ссылки на другие агрегаты выражаются через `AggregateReference`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это прямое воплощение DDD: агрегат — граница согласованности. У дочерних сущностей нет собственного репозитория, поэтому их нельзя сохранить в обход корня, что гарантирует целостность.",
+                "example": "У `Order` есть `@MappedCollection Set<OrderItem> items`; `OrderItemRepository` не создают — позиции живут и удаляются вместе с `Order`.",
+                "when_to_apply": "Применяют при моделировании по DDD, когда нужно жёстко очертить границы согласованности и точки доступа к данным.",
+                "edge_cases": "Если дочерней сущности реально нужен независимый жизненный цикл — значит, она сама должна стать отдельным агрегатом, а связь выражают через `AggregateReference`.",
+                "related": "[[spring-data-jdbc-interview#Q6]] @MappedCollection для 1:N; [[spring-data-jdbc-interview#Q7]] AggregateReference между агрегатами; [[spring-data-jdbc-interview#Q13]] репозитории."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как в `Spring Data JDBC` маппировать связь один-к-одному?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один-к-одному реализуют либо вложенным объектом в той же таблице через `@Embedded`, либо отдельной таблицей с прямой ссылкой, где `Spring Data JDBC` сам добавляет FK-колонку в дочернюю таблицу (например, `order_id` в `shipping_info`); явного `@OneToOne` тут нет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Если данные логически принадлежат той же строке — берут `@Embedded` (колонки в одной таблице, без JOIN). Если у связанного объекта своя таблица — его просто объявляют полем корня, и FK создаётся автоматически.",
+                "example": "`@Embedded(onEmpty = USE_NULL) Address address;` кладёт `street`/`city` в таблицу `persons`; вариант с полем `ShippingInfo shippingInfo;` создаст FK `shipping_info.order_id`.",
+                "when_to_apply": "`@Embedded` — для value-объектов внутри строки; отдельная таблица — когда у связанного объекта самостоятельная сущность с `@Id`.",
+                "edge_cases": "Связанная таблица всё равно остаётся частью агрегата корня — отдельного репозитория для неё не заводят, иначе нарушается граница агрегата.",
+                "related": "[[spring-data-jdbc-interview#Q8]] как работает @Embedded; [[spring-data-jdbc-interview#Q6]] связь один-ко-многим; [[spring-data-jdbc-interview#Q4]] границы агрегата."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Связь один-к-одному задают аннотацией `@OneToOne` с атрибутом `fetch`, как в `JPA`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации `@OneToOne` в `Spring Data JDBC` нет — связь выражают через `@Embedded` или вложенное поле-сущность с автоматическим FK.",
+                "source_of_confusion": "JPA-аннотации связей (`@OneToOne`, `@ManyToOne`) ошибочно ищут и в `Spring Data JDBC`.",
+                "if_it_were_true": "Тогда можно было бы настроить `fetch = LAZY` на связи — но lazy loading тут отсутствует в принципе.",
+                "how_it_should_be": "Используют `@Embedded` для value-объекта или вложенное поле-сущность с FK, без `@OneToOne`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "FK для связанной таблицы нужно объявлять вручную полем в дочерней сущности — автоматически он не создаётся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Data JDBC` сам добавляет и заполняет FK-колонку (например, `order_id`) в дочерней таблице, поле в дочерней сущности не требуется.",
+                "source_of_confusion": "В JPA часто держат `@JoinColumn` и обратное поле, отсюда ожидание ручного FK.",
+                "if_it_were_true": "Тогда без явного поля `orderId` связь не сохранялась бы — но фреймворк управляет FK сам.",
+                "how_it_should_be": "FK создаётся и заполняется автоматически по структуре агрегата; ручное поле не нужно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Связь один-к-одному в `Spring Data JDBC` возможна только через отдельную таблицу — вложить объект в ту же таблицу нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вложение в ту же таблицу как раз возможно и типично — через `@Embedded`, который раскладывает поля объекта по колонкам строки.",
+                "source_of_confusion": "Кажется, что у каждого Java-объекта обязана быть своя таблица.",
+                "if_it_were_true": "Тогда `@Embedded` не существовала бы — но это штатный механизм маппинга в одну таблицу.",
+                "how_it_should_be": "Есть оба варианта: `@Embedded` в одной таблице и отдельная таблица с FK."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как маппировать связь один-ко-многим через `@MappedCollection` и что происходит при `save`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "При `save(order)` `Spring Data JDBC` делает «умный» merge: сравнивает дочерние строки и обновляет только изменённые, как dirty checking в `JPA`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Умного merge нет: фреймворк удаляет все дочерние строки с данным FK и вставляет заново при каждом `save`.",
+                "source_of_confusion": "Поведение `Hibernate`, который через dirty checking шлёт точечные `UPDATE`, переносят на `Spring Data JDBC`.",
+                "if_it_were_true": "Тогда авто-сгенерированные `id` дочерних строк сохранялись бы между сохранениями — но при delete-insert они меняются.",
+                "how_it_should_be": "Это delete-all + insert; точечного merge дочерних строк нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Коллекцию дочерних сущностей объявляют в корне как `@MappedCollection(idColumn = \"order_id\")`, где `idColumn` — имя FK в дочерней таблице, а `keyColumn` задаёт колонку порядка/ключа для `List`/`Map`; важная особенность: при каждом `save(order)` `Spring Data JDBC` удаляет все строки с данным `order_id` и вставляет их заново, без «умного» merge как в `JPA`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Дочерняя сущность не хранит поле `orderId` — связь живёт в `idColumn`. У `Set` порядок не важен, для `List` добавляют `keyColumn` (например, `position`), чтобы зафиксировать индекс.",
+                "example": "`@MappedCollection(idColumn = \"order_id\", keyColumn = \"position\") List<OrderItem> orderedItems;` — DDL включает `order_id BIGINT REFERENCES orders(id)` и `position INT`.",
+                "when_to_apply": "Используют для дочерних сущностей внутри агрегата, жизненный цикл которых полностью подчинён корню.",
+                "edge_cases": "Стратегия delete-all-insert при `save` неэффективна на больших коллекциях и сбрасывает авто-ID дочерних строк — это учитывают при проектировании.",
+                "related": "[[spring-data-jdbc-interview#Q4]] aggregate root; [[spring-data-jdbc-interview#Q7]] AggregateReference vs MappedCollection; [[spring-data-jdbc-interview#Q16]] транзакция save."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Дочерняя сущность обязана содержать поле `Long orderId`, иначе связь через `@MappedCollection` не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поле `orderId` в дочерней сущности не нужно: связь задаётся параметром `idColumn`, а FK-колонкой управляет сам фреймворк.",
+                "source_of_confusion": "Привычка держать поле внешнего ключа в дочерней сущности из JDBC/JPA-практики.",
+                "if_it_were_true": "Тогда без поля `orderId` мапперу некуда было бы писать FK — но он пишет прямо в колонку `idColumn`.",
+                "how_it_should_be": "FK хранится в колонке `idColumn`; поле в дочерней сущности не объявляют."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`keyColumn` в `@MappedCollection` задаёт имя FK-колонки, а `idColumn` — порядок элементов в `List`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `idColumn` — имя FK-колонки в дочерней таблице, а `keyColumn` хранит порядок/ключ для `List`/`Map`.",
+                "source_of_confusion": "Похожие имена параметров легко перепутать местами.",
+                "if_it_were_true": "Тогда `Set` тоже требовал бы `keyColumn`, ведь это был бы FK — но для `Set` достаточно `idColumn`.",
+                "how_it_should_be": "`idColumn` — FK; `keyColumn` — индекс/ключ для упорядоченных коллекций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `AggregateReference` и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AggregateReference` при загрузке корня автоматически подтягивает связанный агрегат целиком, как `@ManyToOne(fetch = EAGER)` в JPA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AggregateReference` хранит только ID и НЕ загружает связанный агрегат — для его получения нужен явный запрос через его репозиторий.",
+                "source_of_confusion": "Слово «reference» наводит на мысль об автоматическом разыменовании, как в JPA-связях.",
+                "if_it_were_true": "Тогда загрузка `Order` тянула бы и `Customer` одним запросом — но в БД это просто колонка с ID.",
+                "how_it_should_be": "Это ссылка по ID; связанный агрегат загружают отдельно и явно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`AggregateReference` используют для дочерних сущностей ВНУТРИ одного агрегата вместо `@MappedCollection`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутри агрегата применяют `@MappedCollection`; `AggregateReference` — для ссылок МЕЖДУ разными агрегатами.",
+                "source_of_confusion": "Обе конструкции про «связи», поэтому их области применения путают.",
+                "if_it_were_true": "Тогда дочерние `OrderItem` не загружались бы вместе с `Order` — но они грузятся eager как часть агрегата.",
+                "how_it_should_be": "`@MappedCollection` — внутри агрегата; `AggregateReference` — между агрегатами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`AggregateReference<T, ID>` — типобезопасная ссылка на корень другого агрегата по ID без загрузки самого объекта: в БД это обычная колонка (например, `customer_id BIGINT`), при загрузке `Order` данные `Customer` не подтягиваются; так выражают связь между агрегатами, не нарушая их границы.",
+              "correct": true,
+              "sections": {
+                "explanation": "В DDD один агрегат не должен держать ссылку на объект другого агрегата целиком. `AggregateReference` хранит только идентификатор, что сохраняет границы и избегает каскадной загрузки.",
+                "example": "`AggregateReference<Customer, Long> customerId;` — чтобы получить клиента, явно вызывают `customerRepository.findById(order.getCustomerId().getId())`.",
+                "when_to_apply": "Используют для ссылок между разными агрегатами, где не нужно загружать связанный корень автоматически.",
+                "edge_cases": "Если данные связанного агрегата нужны часто и вместе — возможно, агрегаты стоит переразбить; `AggregateReference` не делает JOIN за вас.",
+                "related": "[[spring-data-jdbc-interview#Q6]] @MappedCollection внутри агрегата; [[spring-data-jdbc-interview#Q4]] границы агрегата; [[spring-data-jdbc-interview#Q9]] основные аннотации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`AggregateReference` хранит в колонке весь сериализованный связанный объект в виде JSON, а не его идентификатор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В колонке лежит только идентификатор (например, `BIGINT`), а не сериализованный объект.",
+                "source_of_confusion": "Идею хранения вложенного объекта (как `@Embedded`) ошибочно переносят на ссылку между агрегатами.",
+                "if_it_were_true": "Тогда тип колонки был бы `JSON`/`TEXT`, а `getId()` не имел бы смысла — но метод возвращает именно ID.",
+                "how_it_should_be": "Хранится скалярный идентификатор; объект достают отдельным запросом по этому ID."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает аннотация `@Embedded` в `Spring Data JDBC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Embedded` создаёт для вложенного объекта отдельную таблицу и связывает её JOIN-ом с родительской.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Embedded` НЕ создаёт отдельной таблицы и JOIN — поля вложенного объекта становятся колонками той же строки родителя.",
+                "source_of_confusion": "Любую вложенность объектов привычно ассоциируют с отдельной таблицей.",
+                "if_it_were_true": "Тогда не было бы смысла в атрибуте `prefix` для колонок одной таблицы — но он существует именно для этого.",
+                "how_it_should_be": "Вложенный объект разворачивается в колонки той же таблицы, без отдельной таблицы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Атрибут `prefix` в `@Embedded` задаёт имя отдельной таблицы для вложенного объекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`prefix` добавляет префикс к именам колонок вложенного объекта в той же таблице, а не имя отдельной таблицы.",
+                "source_of_confusion": "Слово `prefix` ассоциируют с именованием таблиц, а не колонок.",
+                "if_it_were_true": "Тогда два embedded-объекта одного типа всё равно конфликтовали бы по колонкам — но `prefix` как раз это и разрешает.",
+                "how_it_should_be": "`prefix` — это префикс имён колонок, позволяющий иметь несколько embedded одного типа."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`onEmpty = USE_NULL` означает, что фреймворк выбросит исключение, если все колонки вложенного объекта оказались `NULL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`onEmpty = USE_NULL` просто делает сам вложенный объект `null` при полностью пустых колонках — никакого исключения нет.",
+                "source_of_confusion": "Слово `Null` в имени опции связывают с NPE/ошибкой вместо штатного поведения.",
+                "if_it_were_true": "Тогда не существовало бы альтернативного `USE_EMPTY` — но оно есть именно как другой вариант поведения.",
+                "how_it_should_be": "`USE_NULL` подставляет `null`, `USE_EMPTY` — пустой объект; ни один не бросает исключение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Embedded` маппирует вложенный объект как набор колонок в той же таблице — без отдельной таблицы и без JOIN; атрибут `prefix` позволяет держать несколько embedded-объектов одного типа в одной таблице, а `onEmpty = USE_NULL` делает объект `null`, если все его колонки `NULL` (а `USE_EMPTY` создаст пустой объект).",
+              "correct": true,
+              "sections": {
+                "explanation": "Это удобно для value-объектов (адрес, деньги), которые логически принадлежат сущности. Поля вложенного объекта раскладываются по колонкам строки родителя.",
+                "example": "`@Embedded(prefix = \"billing_\", onEmpty = USE_NULL) BillingAddress billingAddress;` даёт колонки `billing_street`, `billing_city` рядом с `home`-адресом без prefix.",
+                "when_to_apply": "Применяют для неизменяемых value-объектов, которые не имеют собственной идентичности и не нужны как отдельные строки.",
+                "edge_cases": "Без `prefix` два embedded-объекта с одинаковыми именами полей дадут конфликт колонок; `onEmpty` определяет поведение при полностью пустом наборе.",
+                "related": "[[spring-data-jdbc-interview#Q5]] один-к-одному через @Embedded; [[spring-data-jdbc-interview#Q9]] основные аннотации; [[spring-data-jdbc-interview#Q10]] именование колонок."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные аннотации использует `Spring Data JDBC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Базовый набор: `@Table(\"name\")` — имя таблицы, `@Id` — обязательный первичный ключ, `@Column(\"name\")` — имя колонки, `@MappedCollection` — коллекция дочерних сущностей (1:N), `@Embedded` — вложенный объект в той же таблице, `@Version` — оптимистичная блокировка, `@ReadOnlyProperty` — поле только для чтения, `@Transient` — поле не маппируется, `@PersistenceCreator` — конструктор для создания сущности.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотации лежат в пакете `org.springframework.data.relational`/`annotation`, а не в `jakarta.persistence`. Это отдельный набор, заточенный под модель агрегатов без ORM.",
+                "example": "`@Table(\"orders\") class Order { @Id Long id; @Column(\"created_at\") Instant createdAt; @Version long version; }`.",
+                "when_to_apply": "Этими аннотациями описывают маппинг сущности; они покрывают типовые потребности без JPA-зависимостей.",
+                "edge_cases": "Похожие по смыслу JPA-аннотации (`@Entity`, `@OneToMany`) здесь не работают — нужны именно `Spring Data Relational`-аналоги.",
+                "related": "[[spring-data-jdbc-interview#Q10]] именование по умолчанию; [[spring-data-jdbc-interview#Q11]] иммутабельные сущности; [[spring-data-jdbc-interview#Q12]] @Version."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Data JDBC` использует те же аннотации, что и JPA: `@Entity`, `@OneToMany`, `@JoinColumn`, `@GeneratedValue`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Data JDBC` использует собственные аннотации (`@Table`, `@Id`, `@MappedCollection`, `@Embedded`), а не `jakarta.persistence`.",
+                "source_of_confusion": "Привычка к JPA-аннотациям и одинаковое короткое имя `@Id` в разных пакетах.",
+                "if_it_were_true": "Тогда `@OneToMany` маппил бы коллекцию — но `Spring Data JDBC` его не распознаёт, нужен `@MappedCollection`.",
+                "how_it_should_be": "Набор свой: `@Table`/`@Id`/`@Column`/`@MappedCollection`/`@Embedded`/`@Version` из `Spring Data Relational`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Аннотация `@Id` необязательна — если её не указать, `Spring Data JDBC` сам выберет первое поле как ключ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Id` обязателен: без него фреймворк не знает идентификатор сущности и не сможет её сохранять/искать по ключу.",
+                "source_of_confusion": "Кажется, что фреймворк может догадаться о ключе по соглашению об именах.",
+                "if_it_were_true": "Тогда поле `id` всегда трактовалось бы как ключ автоматически — но требуется явный `@Id`.",
+                "how_it_should_be": "Первичный ключ всегда помечают `@Id` явно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы поле не сохранялось в БД, его помечают `@Column(insertable = false)`, как в JPA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чтобы исключить поле из маппинга, используют `@Transient`; для read-only — `@ReadOnlyProperty`. Атрибута `insertable` у `@Column` тут нет.",
+                "source_of_confusion": "JPA-атрибуты `insertable`/`updatable` ошибочно ожидают и в `Spring Data JDBC`.",
+                "if_it_were_true": "Тогда `@Column` имел бы флаги `insertable`/`updatable` — но в `Spring Data JDBC` `@Column` лишь задаёт имя.",
+                "how_it_should_be": "Для исключения поля — `@Transient`, для чтения без записи — `@ReadOnlyProperty`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Spring Data JDBC` именует таблицы и колонки по умолчанию и как это изменить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "По умолчанию имена таблиц и колонок берутся буква-в-букву из имён классов и полей в `camelCase`, без преобразования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию идёт преобразование `camelCase` → `snake_case`, поэтому `firstName` становится `first_name`, а не `firstName`.",
+                "source_of_confusion": "Кажется, что фреймворк не трогает имена и использует их как есть.",
+                "if_it_were_true": "Тогда колонка называлась бы `firstName` и не находилась бы в `snake_case`-схеме — но дефолт именно `first_name`.",
+                "how_it_should_be": "Дефолтная стратегия — `camelCase` → `snake_case` для таблиц и колонок."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "По умолчанию `camelCase` конвертируется в `snake_case`: класс `OrderItem` → таблица `order_item`, поле `firstName` → колонка `first_name`; стратегию меняют либо точечно через `@Table`/`@Column`, либо глобально, переопределив `NamingStrategy` в `AbstractJdbcConfiguration` (например, добавив префикс `app_` к именам таблиц).",
+              "correct": true,
+              "sections": {
+                "explanation": "За преобразование имён отвечает `NamingStrategy`. Точечные аннотации перекрывают стратегию для конкретной сущности/поля, глобальный bean меняет правило для всех.",
+                "example": "Переопределение `getTableName` в `DefaultNamingStrategy` возвращает `\"app_\" + super.getTableName(type)`, превращая `order` в `app_order`.",
+                "when_to_apply": "Глобальную стратегию настраивают при общих соглашениях схемы (префиксы, регистр); аннотации — для отдельных исключений.",
+                "edge_cases": "Если БД использует не `snake_case`, а другой стиль (например, `PascalCase` с кавычками), без кастомной `NamingStrategy` имена не совпадут.",
+                "related": "[[spring-data-jdbc-interview#Q9]] @Table и @Column; [[spring-data-jdbc-interview#Q8]] @Embedded и prefix; [[spring-data-jdbc-interview#Q1]] ручное создание схемы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Изменить стратегию именования нельзя — она зашита в фреймворк и всегда строго `snake_case`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стратегию можно менять: точечно через `@Table`/`@Column` или глобально через bean `NamingStrategy` в `AbstractJdbcConfiguration`.",
+                "source_of_confusion": "Наличие разумного дефолта создаёт впечатление, что он жёстко фиксирован.",
+                "if_it_were_true": "Тогда не было бы интерфейса `NamingStrategy` для переопределения — но он публичный и расширяемый.",
+                "how_it_should_be": "Именование настраивается аннотациями или кастомной `NamingStrategy`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Имя таблицы по умолчанию совпадает с полным именем класса вместе с пакетом, например `com_example_OrderItem`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Берётся только простое имя класса, преобразованное в `snake_case` (`OrderItem` → `order_item`); пакет в имя таблицы не входит.",
+                "source_of_confusion": "Путают полное (FQCN) и простое имя класса.",
+                "if_it_were_true": "Тогда таблицы имели бы имена с пакетами вроде `com_example_...` — но в схеме их нет.",
+                "how_it_should_be": "Используется простое имя класса в `snake_case`, без пакета."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как в `Spring Data JDBC` создать иммутабельную сущность?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Иммутабельную сущность создать нельзя: `Spring Data JDBC` требует пустой конструктор и сеттеры для всех полей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Иммутабельность поддерживается: фреймворк умеет создавать сущность через конструктор (`@PersistenceCreator` или record), сеттеры не обязательны.",
+                "source_of_confusion": "Классическое требование `Hibernate` к no-arg конструктору переносят на `Spring Data JDBC`.",
+                "if_it_were_true": "Тогда `record` нельзя было бы использовать как сущность — но они поддерживаются штатно.",
+                "how_it_should_be": "Можно: `final`-поля + `@PersistenceCreator` либо просто Java `record`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для Java `record` обязательно нужно вручную ставить `@PersistenceCreator` на канонический конструктор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для `record` `@PersistenceCreator` не требуется — фреймворк автоматически использует канонический конструктор записи.",
+                "source_of_confusion": "Раз у классов конструктор иногда нужно помечать, кажется, что и у records тоже.",
+                "if_it_were_true": "Тогда минимальный `record`-пример не компилировался бы как сущность без аннотации — но он работает.",
+                "how_it_should_be": "Records поддерживаются автоматически; `@PersistenceCreator` для них не нужен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Иммутабельную сущность делают через `final`-поля и конструктор, помеченный `@PersistenceCreator`, который `Spring Data JDBC` использует при чтении из БД; для Java `record` ничего дополнительно не нужно — records поддерживаются автоматически и `@PersistenceCreator` для них не требуется.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без сеттеров фреймворк не может заполнить поля после создания, поэтому ему нужен конструктор для маппинга строки. `@PersistenceCreator` указывает, какой именно конструктор использовать, если их несколько.",
+                "example": "`@Table(\"products\") record Product(@Id Long id, String name, BigDecimal price) {}` — рабочая иммутабельная сущность без единого сеттера.",
+                "when_to_apply": "Применяют для value-ориентированных доменных моделей и DDD, где иммутабельность снижает число ошибок.",
+                "edge_cases": "Если конструкторов несколько и ни один не помечен, фреймворк не поймёт, какой брать — тогда `@PersistenceCreator` обязателен.",
+                "related": "[[spring-data-jdbc-interview#Q9]] @PersistenceCreator в наборе аннотаций; [[spring-data-jdbc-interview#Q4]] DDD-агрегаты; [[spring-data-jdbc-interview#Q12]] @Version."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@PersistenceCreator` ставят на сеттер, чтобы фреймворк вызывал именно его при чтении из БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@PersistenceCreator` помечает конструктор (или фабричный метод), а не сеттер — он определяет, как создавать экземпляр при чтении.",
+                "source_of_confusion": "Слово «creator» путают с механизмом установки значений через сеттеры.",
+                "if_it_were_true": "Тогда иммутабельная сущность без сеттеров не читалась бы — но она читается через конструктор.",
+                "how_it_should_be": "`@PersistenceCreator` помечает конструктор создания сущности, не сеттер."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает оптимистичная блокировка через `@Version` в `Spring Data JDBC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Version` включает пессимистичную блокировку: строка блокируется `SELECT ... FOR UPDATE` на время транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Version` реализует ОПТИМИСТИЧНУЮ блокировку через сравнение версии в `WHERE`, без `SELECT ... FOR UPDATE` и без удержания блокировки строки.",
+                "source_of_confusion": "Понятия оптимистичной и пессимистичной блокировки часто смешивают.",
+                "if_it_were_true": "Тогда конкурентные потоки ждали бы освобождения блокировки, а не получали исключение — но они получают `OptimisticLockingFailureException`.",
+                "how_it_should_be": "Это оптимистичная схема: проверка версии в `WHERE`, исключение при конфликте."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поле `@Version` нужно инкрементировать вручную в коде перед каждым `save`, иначе блокировка не сработает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Версия инкрементируется автоматически фреймворком при `UPDATE`; вручную её менять не нужно и даже вредно.",
+                "source_of_confusion": "Кажется, что раз поле обычное (`long`), его обязан вести разработчик.",
+                "if_it_were_true": "Тогда забытый инкремент молча ломал бы блокировку — но фреймворк управляет версией сам.",
+                "how_it_should_be": "Инкремент версии выполняет `Spring Data JDBC` автоматически в SQL-апдейте."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При конфликте версий `Spring Data JDBC` молча перезаписывает данные более свежей версией, не уведомляя приложение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При несовпадении версии фреймворк не перезаписывает данные, а бросает `OptimisticLockingFailureException`, чтобы приложение обработало конфликт.",
+                "source_of_confusion": "Поведение «last write wins» без версионирования путают с оптимистичной блокировкой.",
+                "if_it_were_true": "Тогда `@Version` не защищал бы от потерянных обновлений — но именно для этого он и нужен.",
+                "how_it_should_be": "Конфликт версий приводит к исключению, а не к тихой перезаписи."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Поле с `@Version` автоматически инкрементируется при каждом `UPDATE`, а сам апдейт включает условие по версии: `UPDATE accounts SET balance = ?, version = version + 1 WHERE id = ? AND version = ?`; если другой поток уже изменил запись (версия не совпала), бросается `OptimisticLockingFailureException`. Механизм тот же, что в JPA, но без `Session` — конфликт обнаруживается на уровне репозитория.",
+              "correct": true,
+              "sections": {
+                "explanation": "Версия в `WHERE` гарантирует, что обновляется только не изменённая параллельно строка. Несовпадение версии означает потерянное обновление, и фреймворк сигнализирует исключением вместо тихой перезаписи.",
+                "example": "Два потока читают `Account` с `version = 5`; первый сохраняет (станет `6`), второй получает `OptimisticLockingFailureException`, так как его `WHERE version = 5` не находит строку.",
+                "when_to_apply": "Применяют при конкурентных обновлениях одной записи, где недопустима потеря изменений (балансы, остатки).",
+                "edge_cases": "При `@Version`-поле, инициализированном как новое (например, `null`/`0`), `save` трактуется как `INSERT`; неверная инициализация версии ломает различение insert/update.",
+                "related": "[[spring-data-jdbc-interview#Q9]] @Version в наборе аннотаций; [[spring-data-jdbc-interview#Q16]] транзакции; [[spring-data-jdbc-interview#Q11]] иммутабельные сущности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие репозитории использует `Spring Data JDBC` и какие методы они дают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Используют интерфейсы `Spring Data`: `CrudRepository<T, ID>` (`save`, `findById`, `findAll`, `delete`, `count`), `PagingAndSortingRepository` (`findAll(Sort)`, `findAll(Pageable)`) и `ListCrudRepository` (как `CrudRepository`, но возвращает `List`); они поддерживают derived query methods (`findByNameContaining`) и кастомный SQL через `@Query`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Базовые методы наследуются от интерфейсов `Spring Data`, а производные методы фреймворк генерирует по имени. Кастомные запросы пишут на plain SQL через `@Query`.",
+                "example": "`interface ProductRepository extends CrudRepository<Product, Long> { List<Product> findByNameContaining(String kw); }` — метод по имени работает без реализации.",
+                "when_to_apply": "`CrudRepository`/`ListCrudRepository` — для CRUD, `PagingAndSortingRepository` — когда нужны пагинация и сортировка.",
+                "edge_cases": "Производные методы ограничены: сложную логику с JOIN или агрегацией всё равно выражают через `@Query`, а не имя метода.",
+                "related": "[[spring-data-jdbc-interview#Q14]] кастомный SQL через @Query; [[spring-data-jdbc-interview#Q4]] репозиторий только у корня; [[spring-data-jdbc-interview#Q15]] modifying-запросы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Data JDBC` использует интерфейс `JpaRepository` со всеми его методами вроде `saveAndFlush` и `getReferenceById`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JpaRepository` относится к `Spring Data JPA`; `Spring Data JDBC` использует `CrudRepository`/`ListCrudRepository`/`PagingAndSortingRepository` без `flush` и lazy-прокси.",
+                "source_of_confusion": "`JpaRepository` — самый известный интерфейс, его по привычке считают универсальным.",
+                "if_it_were_true": "Тогда был бы `saveAndFlush`, но в `Spring Data JDBC` нет `flush`, потому что нет `Session`.",
+                "how_it_should_be": "Базовые интерфейсы — `CrudRepository` и родственные, без JPA-специфики."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Spring Data JDBC` нужно вручную писать реализацию каждого метода репозитория — derived query methods не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Derived query methods поддерживаются: фреймворк сам генерирует SQL по имени метода (`findByNameAndCategory` и т. п.).",
+                "source_of_confusion": "Раз нет ORM, кажется, что и магии генерации запросов по имени нет.",
+                "if_it_were_true": "Тогда `findByNameContaining` без тела не компилировался бы как рабочий метод — но он работает.",
+                "how_it_should_be": "Производные методы по имени поддерживаются так же, как в остальных `Spring Data`-модулях."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственный доступный интерфейс — `Repository<T, ID>`, а `CrudRepository` и `PagingAndSortingRepository` в `Spring Data JDBC` отсутствуют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CrudRepository`, `ListCrudRepository` и `PagingAndSortingRepository` доступны полностью; `Repository` — лишь маркерный базовый интерфейс.",
+                "source_of_confusion": "Маркерный `Repository` принимают за единственный доступный.",
+                "if_it_were_true": "Тогда не было бы готовых `save`/`findById` из коробки — но они приходят именно из `CrudRepository`.",
+                "how_it_should_be": "Полный набор `Crud`/`ListCrud`/`PagingAndSorting` доступен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как написать кастомный SQL-запрос в `Spring Data JDBC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `@Query` пишут `JPQL` (например, `SELECT p FROM Product p`), а не нативный SQL — фреймворк сам транслирует его в SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Data JDBC` принимает только plain SQL; `JPQL` он не понимает, потому что под капотом нет JPA-движка для трансляции.",
+                "source_of_confusion": "Привычка к `@Query` в `Spring Data JPA`, где по умолчанию именно JPQL.",
+                "if_it_were_true": "Тогда `SELECT p FROM Product p` выполнялся бы — но это вызвало бы ошибку SQL-синтаксиса.",
+                "how_it_should_be": "В `@Query` пишут нативный SQL диалекта БД, без JPQL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Используют аннотацию `@Query` с PLAIN SQL (не `JPQL`!) и только именованными параметрами (`:category`, не `?1`), привязанными через `@Param`; результат можно маппить в кастомный DTO или `record` — `Spring Data JDBC` автоматически сопоставляет колонки с конструктором/полями.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку нет JPQL и ORM, в `@Query` пишут настоящий SQL диалекта вашей БД, включая `JOIN` и агрегаты. Возвращаемый тип может быть сущностью, проекцией или DTO.",
+                "example": "`@Query(\"SELECT p.* FROM products p JOIN categories c ON p.category_id = c.id WHERE c.name = :category\") List<Product> byCategory(@Param(\"category\") String c);`.",
+                "when_to_apply": "Применяют для запросов, которые не выражаются derived-методами: JOIN, агрегаты, сложные условия, кастомные проекции.",
+                "edge_cases": "Позиционные параметры `?1` не работают — только именованные; SQL привязан к диалекту БД, поэтому переносимость ниже, чем у JPQL.",
+                "related": "[[spring-data-jdbc-interview#Q15]] @Modifying для UPDATE/DELETE; [[spring-data-jdbc-interview#Q13]] базовые репозитории; [[spring-data-jdbc-interview#Q1]] только SQL, без JPQL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параметры в `@Query` указывают позиционно как `?1`, `?2`; именованные параметры через `:name` не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддерживаются именно именованные параметры (`:name` + `@Param`); позиционные `?1` в `Spring Data JDBC` не работают.",
+                "source_of_confusion": "Позиционные параметры распространены в `PreparedStatement` и части JPQL-примеров.",
+                "if_it_were_true": "Тогда `@Param` был бы не нужен — но он обязателен для привязки именованных параметров.",
+                "how_it_should_be": "Используют только именованные параметры `:name` с `@Param`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Результат `@Query` нельзя маппить в кастомный DTO/record — допустим только тип сущности репозитория.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Результат можно маппить в произвольный DTO или `record` — фреймворк сопоставляет колонки с конструктором/полями автоматически.",
+                "source_of_confusion": "Кажется, что репозиторий жёстко привязан к своему доменному типу.",
+                "if_it_were_true": "Тогда агрегатные проекции вроде `record ProductStats(String name, long orderCount)` были бы невозможны — но они работают.",
+                "how_it_should_be": "Поддерживается маппинг в DTO/record, не только в сущность."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выполнять modifying-запросы (`INSERT`/`UPDATE`/`DELETE`) в `Spring Data JDBC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Modifying` не нужна — `Spring Data JDBC` сам определяет по тексту запроса, что это `UPDATE`/`DELETE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Modifying` обязательна для `INSERT`/`UPDATE`/`DELETE`; без неё фреймворк трактует метод как запрос, возвращающий набор строк.",
+                "source_of_confusion": "Кажется, что распарсить ключевое слово `UPDATE` фреймворк может и сам.",
+                "if_it_were_true": "Тогда аннотация `@Modifying` была бы лишней и не существовала бы — но она требуется явно.",
+                "how_it_should_be": "Изменяющие запросы всегда помечают `@Modifying`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Modifying-метод обязан возвращать сущность, которую он изменил, иначе вернётся ошибка маппинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Допустимые типы — `void`, `int` (число затронутых строк) или `boolean`; возвращать изменённую сущность не требуется и нельзя.",
+                "source_of_confusion": "Привычка, что `save()` возвращает сохранённый объект, переносят на modifying-запросы.",
+                "if_it_were_true": "Тогда `void updatePrice(...)` был бы недопустим — но это рабочая сигнатура.",
+                "how_it_should_be": "Возвращают `void`/`int`/`boolean`, а не саму сущность."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Метод с изменяющим SQL помечают аннотацией `@Modifying` поверх `@Query`; без неё фреймворк ожидает результирующий набор и метод не отработает корректно. Допустимые возвращаемые типы: `void`, `int` (число затронутых строк) и `boolean`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Modifying` сообщает фреймворку, что запрос меняет данные, а не возвращает строки. По числу затронутых строк (`int`) можно проверить, что обновление действительно произошло.",
+                "example": "`@Modifying @Query(\"UPDATE products SET price = :price WHERE id = :id\") int updatePrice(@Param(\"id\") Long id, @Param(\"price\") BigDecimal price);`.",
+                "when_to_apply": "Применяют для массовых или точечных `UPDATE`/`DELETE` напрямую, минуя загрузку сущности через `save`/`delete`.",
+                "edge_cases": "Такие запросы идут в обход модели агрегата: дочерние сущности и `@Version` они не трогают, поэтому ими легко нарушить инварианты агрегата.",
+                "related": "[[spring-data-jdbc-interview#Q14]] @Query и SQL; [[spring-data-jdbc-interview#Q16]] транзакции; [[spring-data-jdbc-interview#Q12]] @Version и блокировка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Modifying`-запросы автоматически инкрементируют поле `@Version` и каскадно обновляют дочерние сущности агрегата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямой modifying-SQL идёт в обход модели агрегата: он НЕ трогает `@Version` и не каскадирует на дочерние сущности.",
+                "source_of_confusion": "Ожидание, что любое изменение проходит через логику агрегата, как при `save`.",
+                "if_it_were_true": "Тогда не было бы риска нарушить инварианты агрегата напрямую — но он как раз есть.",
+                "how_it_should_be": "Прямой SQL обходит `@Version` и каскады; целостность агрегата на совести разработчика."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает транзакционность в `Spring Data JDBC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "При сохранении агрегата с коллекциями каждая дочерняя строка пишется в отдельной транзакции, поэтому возможна частичная запись.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Весь агрегат сохраняется в одной транзакции: `DELETE`/`INSERT` дочерних и `UPDATE` корня атомарны вместе, частичной записи нет.",
+                "source_of_confusion": "Множество SQL-операторов при `save` создаёт впечатление нескольких независимых транзакций.",
+                "if_it_were_true": "Тогда при сбое посреди сохранения агрегат остался бы в несогласованном состоянии — но транзакция это исключает.",
+                "how_it_should_be": "Сохранение агрегата — одна транзакция: всё или ничего."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Data JDBC` делает автоматический `flush` при коммите, поэтому изменённую сущность можно не сохранять явным `save()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоматического `flush`/dirty checking нет: без явного `save()` изменения объекта в БД не попадут.",
+                "source_of_confusion": "Поведение `Hibernate`-сессии, которая flush'ит изменения при коммите, ожидают и здесь.",
+                "if_it_were_true": "Тогда менять поле сущности и просто коммитить транзакцию было бы достаточно — но это ничего не запишет.",
+                "how_it_should_be": "Каждое изменение требует явного `save()`; авто-flush отсутствует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы объединить несколько репозиторных вызовов в одну транзакцию, в `Spring Data JDBC` нельзя использовать `@Transactional` — нужен ручной `TransactionTemplate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Transactional` на сервисном методе работает штатно и объединяет вызовы в одну транзакцию; `TransactionTemplate` — лишь альтернатива, не обязательность.",
+                "source_of_confusion": "Раз нет ORM, кажется, что и декларативные транзакции `Spring` недоступны.",
+                "if_it_were_true": "Тогда `@Service @Transactional` не имел бы эффекта — но он управляет границей транзакции как обычно.",
+                "how_it_should_be": "Декларативный `@Transactional` поддерживается; `TransactionTemplate` опционален."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Методы репозитория выполняются в транзакции (CRUD-методы вроде `save`/`delete` — с `@Transactional`); при `save(order)` со вложенными коллекциями весь набор операций (`DELETE` дочерних + `INSERT` дочерних + `UPDATE` корня) идёт в одной транзакции, а свои границы транзакций в сервисе задают аннотацией `@Transactional`. В отличие от JPA, нет автоматического `flush`/`merge` — `save()` всегда генерирует явный SQL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Атомарность сохранения агрегата обеспечивается единой транзакцией: либо весь агрегат записан, либо ничего. На уровне сервиса `@Transactional` объединяет несколько репозиторных вызовов в одну транзакцию.",
+                "example": "`@Service @Transactional class OrderService { void process(Order o){ orderRepository.save(o); inventoryService.reserve(o.getItems()); } }` — оба действия в одной транзакции.",
+                "when_to_apply": "Сервисный `@Transactional` применяют, когда несколько операций должны быть атомарны вместе (сохранение заказа + резерв остатков).",
+                "edge_cases": "Так как нет `Session` и dirty checking, изменение объекта без явного `save()` не попадёт в БД — нет автоматического `flush` при коммите.",
+                "related": "[[spring-data-jdbc-interview#Q6]] delete-insert дочерних при save; [[spring-data-jdbc-interview#Q12]] @Version; [[spring-data-jdbc-interview#Q1]] явный SQL без flush/merge."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
