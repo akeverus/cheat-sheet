@@ -1,0 +1,2585 @@
+{
+  "topic_slug": "spring-security-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Security` и какие задачи он решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Security` — фреймворк аутентификации и авторизации для `Spring`-приложений: проверяет «кто ты» (форма входа, `Basic`, `JWT`, `OAuth2`, `LDAP`) и «что тебе можно» (по URL и через `@PreAuthorize`), плюс защита от `CSRF`/`XSS`/clickjacking, управление сессиями и хеширование паролей (`BCrypt`, `Argon2`).",
+              "correct": true,
+              "sections": {
+                "explanation": "В `Spring Security 6` конфигурация строится на бине `SecurityFilterChain`; устаревший `WebSecurityConfigurerAdapter` удалён.",
+                "example": "Берут логин/пароль через `DaoAuthenticationProvider`, REST API защищают `JWT`-фильтром, а доступ к `/api/admin/**` ограничивают `hasRole(\"ADMIN\")`.",
+                "when_to_apply": "Подключают практически в любом `Spring`-приложении, где есть аутентификация, авторизация по ролям или защита веб-форм от `CSRF`.",
+                "edge_cases": "Это не WAF и не сетевой firewall: `Spring Security` работает внутри приложения и не заменяет TLS, rate limiting на gateway или защиту инфраструктуры.",
+                "related": "[[spring-security-interview#Q2]] архитектура фильтров; [[spring-security-interview#Q3]] аутентификация vs авторизация; [[spring-security-interview#Q4]] SecurityFilterChain."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Security` — это только библиотека хеширования паролей, всю авторизацию пишут руками в контроллерах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Security` покрывает весь стек безопасности: фильтры, аутентификацию, авторизацию по URL и методам, защиту от `CSRF`; хеширование — лишь одна из функций.",
+                "source_of_confusion": "Знакомство только с `BCryptPasswordEncoder` создаёт впечатление, что весь фреймворк — про пароли.",
+                "if_it_were_true": "Если бы это была только библиотека хешей, не было бы `SecurityFilterChain`, `@PreAuthorize` и `OAuth2`-интеграции, но они есть.",
+                "how_it_should_be": "Хеширование — часть фреймворка; основная ценность — декларативная аутентификация и авторизация через цепочку фильтров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Security` работает только с form login и не поддерживает токены или внешних провайдеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фреймворк поддерживает `HTTP Basic`, `JWT`, `OAuth2 Login`, `OAuth2 Resource Server`, `LDAP` и кастомные `AuthenticationProvider`, а не только форму входа.",
+                "source_of_confusion": "Старые туториалы часто показывают только `formLogin()`, отсюда ощущение ограниченности.",
+                "if_it_were_true": "Будь это правдой, не существовало бы `oauth2ResourceServer()` и `BearerTokenAuthenticationFilter`, но они входят в фреймворк.",
+                "how_it_should_be": "Form login — один из многих механизмов; для REST обычно используют `JWT` или `OAuth2`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Security` заменяет сетевой firewall и TLS, защищая трафик на транспортном уровне.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Security` действует на уровне приложения (фильтры сервлетов и method security); TLS и сетевую защиту обеспечивают другие слои.",
+                "source_of_confusion": "Слово «security» наводит на мысль о защите сети и шифровании канала.",
+                "if_it_were_true": "Если бы оно шифровало транспорт, не требовался бы HTTPS на reverse-proxy, но он по-прежнему обязателен.",
+                "how_it_should_be": "Транспорт защищает TLS/reverse-proxy; `Spring Security` отвечает за прикладную аутентификацию и авторизацию."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена архитектура фильтров `Spring Security`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Security` работает как один монолитный фильтр, который сам делает всё: и аутентификацию, и авторизацию, и CSRF.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это цепочка из множества узкоспециализированных фильтров; каждый отвечает за одну задачу, что и позволяет их добавлять и переупорядочивать.",
+                "source_of_confusion": "Снаружи `FilterChainProxy` действительно один бин в `web.xml`-цепочке, отсюда впечатление монолита.",
+                "if_it_were_true": "Будь это один фильтр, нельзя было бы вставить свой `JwtAuthenticationFilter` между существующими через `addFilterBefore`, но это рутинная операция.",
+                "how_it_should_be": "Внутри `FilterChainProxy` — упорядоченный список отдельных фильтров, а не один обработчик."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Security` — это цепочка `Servlet`-фильтров: `DelegatingFilterProxy` делегирует в `FilterChainProxy`, который выбирает подходящий `SecurityFilterChain`; внутри по очереди работают `CorsFilter`, `CsrfFilter`, фильтры аутентификации (`UsernamePasswordAuthenticationFilter`, `BearerTokenAuthenticationFilter`), `ExceptionTranslationFilter` и `AuthorizationFilter` — каждый отвечает за свою задачу.",
+              "correct": true,
+              "sections": {
+                "explanation": "`FilterChainProxy` может содержать несколько `SecurityFilterChain` для разных URL-паттернов, например отдельную цепочку для `/api/**` и для остального приложения.",
+                "example": "Запрос на `/api/data` проходит CORS → CSRF → `BearerTokenAuthenticationFilter` (ставит `Authentication`) → `AuthorizationFilter` (проверяет права) → контроллер.",
+                "when_to_apply": "Понимание порядка фильтров нужно при добавлении кастомных фильтров через `addFilterBefore`/`addFilterAfter` и при отладке `401`/`403`.",
+                "edge_cases": "Порядок имеет значение: CORS должен идти до аутентификации, иначе preflight `OPTIONS` получит `401`; кастомный фильтр без указания позиции может встать не туда.",
+                "related": "[[spring-security-interview#Q1]] что такое Spring Security; [[spring-security-interview#Q4]] настройка SecurityFilterChain; [[spring-security-interview#Q12]] кастомный JWT-фильтр."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Авторизация в `Spring Security` выполняется в самом первом фильтре, ещё до аутентификации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сначала отрабатывают фильтры аутентификации и устанавливают `Authentication`, и только потом `AuthorizationFilter` проверяет права — иначе проверять было бы нечего.",
+                "source_of_confusion": "Кажется логичным «сначала запретить всё», но без установленного principal проверка прав невозможна.",
+                "if_it_were_true": "Если бы авторизация шла первой, она не видела бы ролей пользователя и всегда отклоняла бы запрос.",
+                "how_it_should_be": "`AuthorizationFilter` стоит в конце цепочки, после установки `SecurityContext`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Цепочка фильтров жёстко зафиксирована и в неё нельзя вставить свой фильтр.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Свой фильтр добавляют через `http.addFilterBefore(...)` / `addFilterAfter(...)`, указывая позицию относительно стандартного фильтра.",
+                "source_of_confusion": "Декларативный DSL `HttpSecurity` скрывает фильтры, отсюда ощущение «чёрного ящика».",
+                "if_it_were_true": "Будь цепочка неизменяемой, `JwtAuthenticationFilter` нельзя было бы зарегистрировать перед `UsernamePasswordAuthenticationFilter`, но это стандартный приём.",
+                "how_it_should_be": "Цепочка расширяемая: кастомные фильтры встраиваются в нужное место явными методами `HttpSecurity`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между аутентификацией и авторизацией?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Аутентификация и авторизация — синонимы: оба термина означают проверку пароля при входе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные стадии: аутентификация устанавливает личность, авторизация решает, что этой личности разрешено; пароль относится только к первой.",
+                "source_of_confusion": "Оба слова начинаются на «аут...» и идут рядом, поэтому их легко смешать.",
+                "if_it_were_true": "Будь они одним и тем же, не было бы отдельных кодов `401` и `403` и разных обработчиков ошибок.",
+                "how_it_should_be": "Аутентификация — «кто ты», авторизация — «что тебе можно»; это две независимые проверки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Авторизация выполняется первой, а аутентификация — уже после проверки прав.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок обратный: нельзя проверить права, не зная, кто пользователь; сначала аутентификация, потом авторизация.",
+                "source_of_confusion": "Алфавитный порядок и привычка «сначала ограничить доступ» создают иллюзию обратной последовательности.",
+                "if_it_were_true": "Если бы авторизация шла первой, у неё не было бы ни principal, ни authorities для проверки.",
+                "how_it_should_be": "Сначала устанавливается `Authentication`, затем `AuthorizationFilter` сверяет права."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Аутентификация отвечает на вопрос «кто ты» (проверка credentials → объект `Authentication`), а авторизация — «что тебе можно» (проверка ролей/authorities уже после аутентификации). Ошибка аутентификации — `401 Unauthorized`, ошибка авторизации — `403 Forbidden`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сначала фильтр аутентификации кладёт `Authentication` в `SecurityContextHolder`, затем `AuthorizationFilter` сверяет authorities с правилами доступа.",
+                "example": "Логин по паролю — аутентификация (вернёт `401` при неверном пароле); попытка `USER` зайти на `/api/admin/**` — отказ авторизации (`403`).",
+                "when_to_apply": "Различать важно при проектировании обработчиков ошибок (`AuthenticationEntryPoint` vs `AccessDeniedHandler`) и при выборе HTTP-кодов в REST API.",
+                "edge_cases": "Частая путаница: `401` означает «не аутентифицирован» (нет/невалидны credentials), а `403` — «аутентифицирован, но нет прав»; перепутанные коды сбивают клиентов.",
+                "related": "[[spring-security-interview#Q1]] задачи Spring Security; [[spring-security-interview#Q6]] процесс аутентификации; [[spring-security-interview#Q26]] обработка 401/403."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Неудачная авторизация возвращает `401 Unauthorized`, а неудачная аутентификация — `403 Forbidden`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Коды наоборот: отсутствие/невалидность credentials — `401`, а нехватка прав у аутентифицированного пользователя — `403`.",
+                "source_of_confusion": "Название `401 Unauthorized` буквально содержит «authorized», что и сбивает с толку.",
+                "if_it_were_true": "Будь это так, анонимный запрос к защищённому ресурсу отдавал бы `403`, но `Spring Security` отдаёт `401`.",
+                "how_it_should_be": "`401` — про аутентификацию, `403` — про авторизацию; историческое имя `401` вводит в заблуждение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `SecurityFilterChain` и как его настроить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SecurityFilterChain` настраивают, унаследовав класс от `WebSecurityConfigurerAdapter` и переопределив `configure(HttpSecurity)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WebSecurityConfigurerAdapter` удалён в `Spring Security 6`; конфигурацию задают `@Bean`-методом, возвращающим `SecurityFilterChain`.",
+                "source_of_confusion": "Огромное количество старых примеров и Stack Overflow-ответов всё ещё используют `WebSecurityConfigurerAdapter`.",
+                "if_it_were_true": "Будь это актуально, проект на `Spring Security 6` компилировался бы с этим классом, но его в classpath больше нет.",
+                "how_it_should_be": "В `Spring Security 6` объявляют бин `SecurityFilterChain`; наследование от адаптера невозможно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В приложении допустим только один `SecurityFilterChain`; разделить правила для `/api/**` и веб-части нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Можно объявить несколько бинов `SecurityFilterChain` с `@Order` и `securityMatcher`, и каждый отвечает за свой набор путей.",
+                "source_of_confusion": "В простых приложениях обычно одна цепочка, поэтому кажется, что больше нельзя.",
+                "if_it_were_true": "Будь это так, не существовало бы метода `securityMatcher` и аннотации `@Order` на цепочках, но они есть и активно используются.",
+                "how_it_should_be": "`FilterChainProxy` поддерживает список цепочек; их разделяют по `securityMatcher` и порядку."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Метод-бин `SecurityFilterChain` должен возвращать `HttpSecurity`, а не результат `http.build()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возвращать нужно именно `SecurityFilterChain` через `return http.build()`; `HttpSecurity` — это билдер, а не сама цепочка.",
+                "source_of_confusion": "В DSL всё крутится вокруг `HttpSecurity`, отсюда соблазн вернуть его напрямую.",
+                "if_it_were_true": "Если вернуть `HttpSecurity`, тип бина не совпадёт с ожидаемым `SecurityFilterChain` и контекст не поднимется.",
+                "how_it_should_be": "Билдер `HttpSecurity` собирает конфигурацию, а `build()` создаёт готовый `SecurityFilterChain`, который и возвращают."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SecurityFilterChain` — центральный бин конфигурации `Spring Security 6+`, заменивший `WebSecurityConfigurerAdapter`. Его объявляют `@Bean`-методом, принимающим `HttpSecurity`, и через fluent-DSL настраивают `csrf`, `sessionManagement`, `authorizeHttpRequests`, способ входа (`httpBasic`/`formLogin`) и возвращают `http.build()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Можно объявить несколько `SecurityFilterChain` для разных путей, используя `@Order` и `securityMatcher(\"/api/**\")` — первая подходящая цепочка обрабатывает запрос.",
+                "example": "Типовой бин: `http.csrf(c->c.disable()).sessionManagement(s->s.sessionCreationPolicy(STATELESS)).authorizeHttpRequests(a->a.requestMatchers(\"/api/admin/**\").hasRole(\"ADMIN\").anyRequest().authenticated()).httpBasic(withDefaults()).build()`.",
+                "when_to_apply": "Применяют в любом `Spring Security 6`-проекте; несколько цепочек — когда нужно по-разному защищать API и веб-часть приложения.",
+                "edge_cases": "При нескольких цепочках важен `@Order` и `securityMatcher`: запрос обрабатывает первая совпавшая цепочка, и без матчера более общая может перехватить всё.",
+                "related": "[[spring-security-interview#Q2]] архитектура фильтров; [[spring-security-interview#Q17]] авторизация по URL; [[spring-security-interview#Q37]] отличия от WebSecurityConfigurerAdapter."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `SecurityContext` и `SecurityContextHolder`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SecurityContext` хранит объект `Authentication` (текущий пользователь, его authorities), а `SecurityContextHolder` — статический хелпер для доступа к этому контексту. По умолчанию используется стратегия `MODE_THREADLOCAL`: контекст привязан к текущему потоку.",
+              "correct": true,
+              "sections": {
+                "explanation": "Помимо `MODE_THREADLOCAL` есть `MODE_INHERITABLETHREADLOCAL` (наследуется дочерними потоками) и `MODE_GLOBAL` (один контекст на приложение, редко); в `WebFlux` контекст лежит в `Reactor Context` через `ReactiveSecurityContextHolder`.",
+                "example": "Текущего пользователя получают так: `Authentication auth = SecurityContextHolder.getContext().getAuthentication(); String name = auth.getName();` или в контроллере через `@AuthenticationPrincipal UserDetails user`.",
+                "when_to_apply": "Используют, когда нужен текущий principal в сервисе вне контроллера или нужно понять, почему в `@Async`-методе контекст пустой.",
+                "edge_cases": "Из-за `ThreadLocal` контекст не виден в другом потоке (`@Async`, пул) — нужны `DelegatingSecurityContext*Executor` или явная передача; `clearContext()` обязателен при ручной установке.",
+                "related": "[[spring-security-interview#Q6]] как заполняется Authentication; [[spring-security-interview#Q31]] контекст в @Async; [[spring-security-interview#Q42]] передача контекста между потоками."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SecurityContext` хранится в HTTP-сессии всегда и не зависит от потока выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `SecurityContext` живёт в `ThreadLocal` текущего потока; в сессию он лишь сохраняется/восстанавливается через `SecurityContextRepository` между запросами.",
+                "source_of_confusion": "Для веб-приложений с сессиями контекст и правда персистится в сессии, отсюда обобщение.",
+                "if_it_were_true": "Будь он всегда в сессии, он автоматически был бы доступен в `@Async`-потоке, но там `getAuthentication()` возвращает `null`.",
+                "how_it_should_be": "Runtime-хранилище — `ThreadLocal`; сессия — лишь способ переноса контекста между запросами при stateful-режиме."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SecurityContextHolder` — это сам объект `Authentication`, который содержит логин и роли.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SecurityContextHolder` — статический хелпер-обёртка над хранилищем; `Authentication` лежит внутри `SecurityContext`, который он отдаёт.",
+                "source_of_confusion": "Длинное имя и частый вызов `SecurityContextHolder.getContext().getAuthentication()` смазывают границы между классами.",
+                "if_it_were_true": "Будь holder самим `Authentication`, у него были бы методы `getName()`/`getAuthorities()`, но их там нет — нужно дойти до `Authentication`.",
+                "how_it_should_be": "Иерархия такая: `SecurityContextHolder` → `SecurityContext` → `Authentication`; роли берут у последнего."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В реактивном `WebFlux` используется тот же `SecurityContextHolder` на основе `ThreadLocal`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `WebFlux` нет привязки к потоку, поэтому контекст хранится в `Reactor Context` и читается через `ReactiveSecurityContextHolder`.",
+                "source_of_confusion": "Одинаковое назначение классов наводит на мысль, что и реализация одинаковая.",
+                "if_it_were_true": "Будь это так, в реактивной цепочке, прыгающей между потоками, `ThreadLocal` терял бы пользователя на каждом `flatMap`.",
+                "how_it_should_be": "Для `WebFlux` контекст пробрасывается через `Reactor Context`, а доступ даёт `ReactiveSecurityContextHolder`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает процесс аутентификации (`AuthenticationManager`, `AuthenticationProvider`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AuthenticationManager` сам сравнивает пароли и грузит пользователей из БД, без `AuthenticationProvider` и `UserDetailsService`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AuthenticationManager` (`ProviderManager`) лишь делегирует провайдерам; загрузку делает `UserDetailsService`, сравнение пароля — `PasswordEncoder`, а оркестрацию — `AuthenticationProvider`.",
+                "source_of_confusion": "Точка входа `authenticate()` создаёт впечатление, что вся логика — внутри менеджера.",
+                "if_it_were_true": "Будь это так, не существовало бы `DaoAuthenticationProvider` и интерфейса `UserDetailsService`, но они — основа DAO-аутентификации.",
+                "how_it_should_be": "Менеджер делегирует провайдерам; провайдер использует `UserDetailsService` и `PasswordEncoder`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Фильтр вызывает `AuthenticationManager.authenticate(token)` (обычно это `ProviderManager`), который перебирает `AuthenticationProvider`-ы. Подходящий провайдер (например `DaoAuthenticationProvider`) грузит пользователя через `UserDetailsService.loadUserByUsername()` и сверяет пароль через `PasswordEncoder.matches()`; при успехе возвращает аутентифицированный `Authentication`, иначе бросает `BadCredentialsException`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ProviderManager` делегирует разным провайдерам по типу токена; `AuthenticationProvider.supports(Class)` решает, кто обрабатывает данный `Authentication`.",
+                "example": "Кастомный провайдер реализует `authenticate()` (своя проверка через LDAP/внешний сервис) и `supports(UsernamePasswordAuthenticationToken.class)`; при успехе возвращает `UsernamePasswordAuthenticationToken` с authorities.",
+                "when_to_apply": "Применяют, когда нужна нестандартная логика проверки (внешний сервис, дополнительный фактор) или интеграция с не-БД источником пользователей.",
+                "edge_cases": "Провайдер должен вернуть полностью аутентифицированный токен (`authenticated=true`) или бросить исключение; возврат `null` означает «не мой тип» и передаёт обработку дальше по цепочке провайдеров.",
+                "related": "[[spring-security-interview#Q3]] аутентификация vs авторизация; [[spring-security-interview#Q7]] UserDetailsService; [[spring-security-interview#Q8]] PasswordEncoder."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ProviderManager` всегда использует ровно один `AuthenticationProvider` и не умеет перебирать несколько.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ProviderManager` держит список провайдеров и опрашивает их по очереди, пока один не обработает токен (по `supports()`).",
+                "source_of_confusion": "В простом приложении провайдер часто один, отсюда обобщение.",
+                "if_it_were_true": "Будь это так, нельзя было бы держать рядом DAO-провайдер и, скажем, LDAP-провайдер для разных типов токенов.",
+                "how_it_should_be": "`ProviderManager` итерирует список `AuthenticationProvider` и выбирает подходящий по `supports()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`AuthenticationProvider.supports()` не нужен — провайдер вызывается для любого типа `Authentication`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`supports(Class)` определяет, какой тип токена обрабатывает провайдер; `ProviderManager` по нему решает, кому передать аутентификацию.",
+                "source_of_confusion": "Кажется, что `authenticate()` достаточно, а `supports()` — формальность.",
+                "if_it_were_true": "Если бы `supports()` игнорировался, LDAP-провайдер пытался бы обработать JWT-токен и падал бы на несовместимом типе.",
+                "how_it_should_be": "`supports()` — это фильтр по типу токена; без корректной реализации провайдер получит чужие токены."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать `UserDetailsService` для загрузки пользователя из БД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`loadUserByUsername` должен сам хешировать введённый пользователем пароль и сравнивать с БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сравнение паролей — задача `PasswordEncoder.matches()` внутри `AuthenticationProvider`; `loadUserByUsername` лишь возвращает `UserDetails` с уже сохранённым хешем.",
+                "source_of_confusion": "Кажется логичным, что раз метод грузит пользователя, он же и проверяет пароль.",
+                "if_it_were_true": "Если бы метод сам сравнивал пароли, ему пришлось бы получать сырой пароль, но в его сигнатуре только `username`.",
+                "how_it_should_be": "Метод только загружает пользователя; проверку пароля делает провайдер через `PasswordEncoder`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Если пользователь не найден, `loadUserByUsername` должен вернуть `null`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контракт требует бросить `UsernameNotFoundException`; возврат `null` приведёт к `NullPointerException` или неопределённому поведению в провайдере.",
+                "source_of_confusion": "Привычка возвращать `null` из методов поиска переносится на этот контракт.",
+                "if_it_were_true": "Будь `null` допустим, провайдер всё равно упал бы при попытке вызвать `getPassword()` на `null`.",
+                "how_it_should_be": "При отсутствии пользователя бросают `UsernameNotFoundException`, а не возвращают `null`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Реализуют интерфейс `UserDetailsService` с методом `loadUserByUsername(String)`: достают пользователя из репозитория, при отсутствии бросают `UsernameNotFoundException`, иначе собирают `UserDetails` (через `User.builder()`) с уже захешированным паролем, маппят роли в `SimpleGrantedAuthority(\"ROLE_\"+name)` и флаги аккаунта (`accountLocked`, `accountExpired`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Если `UserDetailsService` объявлен как бин, `Spring Security` подхватит его автоматически; можно и явно привязать через `DaoAuthenticationProvider.setUserDetailsService(...)`.",
+                "example": "`User user = repo.findByUsername(name).orElseThrow(() -> new UsernameNotFoundException(name)); return User.builder().username(...).password(user.getPasswordHash()).authorities(...).build();`",
+                "when_to_apply": "Используют, когда пользователи и роли хранятся в собственной БД, а не in-memory; это стандартный способ интеграции аутентификации с данными приложения.",
+                "edge_cases": "В `password()` кладут уже захешированное значение из БД, а не сырой пароль; имя роли должно иметь префикс `ROLE_`, иначе `hasRole(\"ADMIN\")` не сработает.",
+                "related": "[[spring-security-interview#Q6]] где вызывается loadUserByUsername; [[spring-security-interview#Q8]] хеширование паролей; [[spring-security-interview#Q17]] проверка ролей в правилах доступа."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы `Spring Security` использовал кастомный `UserDetailsService`, его нельзя объявлять бином — только создавать вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: достаточно объявить `UserDetailsService` как бин, и `Spring Security` подхватит его автоматически.",
+                "source_of_confusion": "Опасение «магии автоконфигурации» толкает к ручному созданию.",
+                "if_it_were_true": "Будь это так, автоконфигурация DAO-провайдера никогда бы не находила пользовательский сервис, но она это делает по типу бина.",
+                "how_it_should_be": "Бин `UserDetailsService` подхватывается автоматически; ручная привязка нужна лишь для тонкой настройки провайдера."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить хеширование паролей через `PasswordEncoder`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PasswordEncoder` шифрует пароль обратимо, чтобы при необходимости его можно было расшифровать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PasswordEncoder` использует одностороннее хеширование (`BCrypt`/`Argon2`), которое нельзя обратить; проверка идёт через `matches`, а не через расшифровку.",
+                "source_of_confusion": "Слово «encoder» наводит на мысль об обратимом кодировании вроде Base64.",
+                "if_it_were_true": "Будь хеш обратимым, утечка БД сразу раскрывала бы все пароли, что и есть та угроза, против которой хеширование вводят.",
+                "how_it_should_be": "Это необратимый хеш с солью; пароль не восстанавливают, а сверяют через `matches`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Один и тот же пароль через `BCryptPasswordEncoder` всегда даёт одинаковый хеш, поэтому соль не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BCrypt` встраивает случайную соль в каждый хеш, поэтому `encode` дважды для одного пароля даёт разные строки, а `matches` всё равно совпадает.",
+                "source_of_confusion": "Привычка к простому MD5/SHA без соли создаёт ожидание детерминированного результата.",
+                "if_it_were_true": "Будь хеш детерминированным, две одинаковые записи в БД выдавали бы повторяющиеся пароли rainbow-таблицам.",
+                "how_it_should_be": "Соль генерируется на каждый `encode` и хранится внутри хеша; сравнение делает `matches`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Хранить пароли с префиксом `{noop}` (в открытом виде) — нормальная практика для production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`{noop}` означает отсутствие хеширования и допустим только в тестах/демо; в production пароли обязаны храниться захешированными.",
+                "source_of_confusion": "`{noop}` встречается в туториалах для простоты, отсюда ложное ощущение нормы.",
+                "if_it_were_true": "Будь это нормой, утечка таблицы пользователей мгновенно раскрывала бы все пароли в открытом виде.",
+                "how_it_should_be": "В production используют `BCrypt`/`Argon2`; `{noop}` — лишь для локальных тестов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Объявляют бин `PasswordEncoder`, например `new BCryptPasswordEncoder(12)` (cost factor 12). Поддерживаются `BCrypt`, `Argon2`, `SCrypt`, `PBKDF2`. При логине `Spring Security` через `PasswordEncoder.matches(raw, encoded)` сравнивает введённый пароль с хешем из БД; хранить пароли в открытом виде (`{noop}`) допустимо только в тестах.",
+              "correct": true,
+              "sections": {
+                "explanation": "`DelegatingPasswordEncoder` (через `PasswordEncoderFactories.createDelegatingPasswordEncoder()`) хранит хеши с префиксом алгоритма (`{bcrypt}...`, `{argon2}...`) и позволяет мигрировать между алгоритмами без сброса паролей.",
+                "example": "`@Bean PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(12); }` — затем при регистрации `encoder.encode(rawPassword)`, при входе провайдер сам вызывает `matches`.",
+                "when_to_apply": "Нужен в любом приложении, где пароли хранятся локально; `DelegatingPasswordEncoder` — когда планируется смена алгоритма или поддержка нескольких форматов.",
+                "edge_cases": "Слишком большой cost factor резко замедляет логин, слишком малый ослабляет защиту; `Argon2` лучше против GPU-атак, `PBKDF2` — для FIPS-совместимости.",
+                "related": "[[spring-security-interview#Q6]] где вызывается matches; [[spring-security-interview#Q7]] хранение хеша в UserDetails; [[spring-security-interview#Q1]] задачи Spring Security."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `form-based` аутентификацию?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `SecurityFilterChain` вызывают `formLogin(form -> form.loginPage(\"/login\").loginProcessingUrl(\"/login\").defaultSuccessUrl(\"/dashboard\").failureUrl(\"/login?error=true\"))` и обычно `logout(...)`. `Spring Security` сам обрабатывает `POST /login` с параметрами `username` и `password`; страницу логина и публичные ресурсы открывают через `permitAll()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`loginPage` задаёт кастомную страницу входа, `loginProcessingUrl` — куда форма шлёт `POST`, `defaultSuccessUrl`/`failureUrl` — редиректы после входа; без явной страницы `Spring Security` отдаёт дефолтную форму.",
+                "example": "HTML-форма: `<form th:action=\"@{/login}\" method=\"post\"> <input name=\"username\"> <input type=\"password\" name=\"password\"> </form>` — имена полей по умолчанию `username`/`password`.",
+                "when_to_apply": "Подходит для классических серверных веб-приложений (Thymeleaf, MVC) с серверными сессиями, где пользователь логинится через браузерную форму.",
+                "edge_cases": "Имена полей по умолчанию `username`/`password` — при других нужно настроить `usernameParameter`/`passwordParameter`; путь страницы логина обязательно должен быть `permitAll`, иначе будет цикл редиректов.",
+                "related": "[[spring-security-interview#Q10]] HTTP Basic; [[spring-security-interview#Q11]] JWT для stateless API; [[spring-security-interview#Q23]] управление сессиями."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Form login требует вручную написать контроллер, обрабатывающий `POST /login` и проверяющий пароль.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработку `POST /login` берёт на себя `UsernamePasswordAuthenticationFilter`; разработчику нужна только HTML-форма и конфигурация `formLogin`.",
+                "source_of_confusion": "Привычка писать обычные MVC-контроллеры создаёт ожидание ручного эндпоинта логина.",
+                "if_it_were_true": "Будь свой контроллер обязателен, `formLogin(Customizer.withDefaults())` без единого контроллера не работал бы, но он работает.",
+                "how_it_should_be": "Логин-эндпоинт обеспечивает встроенный фильтр; свой контроллер для проверки пароля не нужен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Поля формы должны называться `login` и `pass`, иначе `Spring Security` их не распознает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имена по умолчанию — `username` и `password`; изменить их можно через `usernameParameter`/`passwordParameter`, но дефолт именно такой.",
+                "source_of_confusion": "Разные туториалы используют разные имена полей, отсюда путаница.",
+                "if_it_were_true": "Будь дефолтом `login`/`pass`, стандартная форма из документации с `username`/`password` не работала бы.",
+                "how_it_should_be": "По умолчанию ожидаются `username`/`password`; иные имена задают параметрами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Страницу логина (`loginPage`) не нужно помечать `permitAll` — `Spring Security` открывает её сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомную страницу логина обязательно делают `permitAll()`, иначе неаутентифицированный пользователь не сможет её увидеть и попадёт в цикл редиректов.",
+                "source_of_confusion": "Кажется, что раз страница «логина», фреймворк автоматически её разрешает.",
+                "if_it_were_true": "Будь это так, доступ к `/login` для анонима не блокировался бы правилом `anyRequest().authenticated()`, но оно действует на все пути.",
+                "how_it_should_be": "Путь кастомной страницы логина явно добавляют в `permitAll`; авто-исключения для неё нет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `HTTP Basic` аутентификацию?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`HTTP Basic` шифрует логин и пароль перед отправкой, поэтому HTTPS не обязателен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Basic` лишь кодирует `user:pass` в Base64 — это легко декодируется; защищает канал только HTTPS.",
+                "source_of_confusion": "Непривычный вид Base64-строки создаёт иллюзию шифрования.",
+                "if_it_were_true": "Будь credentials зашифрованы, перехват трафика по HTTP не раскрывал бы пароль, но он раскрывается тривиально.",
+                "how_it_should_be": "Base64 обратимо; для защиты `Basic` обязателен HTTPS."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `SecurityFilterChain` вызывают `httpBasic(basic -> basic.realmName(\"My API\").authenticationEntryPoint(...))`. Credentials передаются в заголовке `Authorization: Basic <base64(user:pass)>`; в production обязательно использовать HTTPS, иначе пароль идёт практически в открытом виде. Подходит для внутренних API и простых интеграций.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Basic`-аутентификация stateless по своей природе (credentials в каждом запросе), не требует формы и cookie; для публичных API всё же предпочтительнее `JWT`/`OAuth2`.",
+                "example": "`http.authorizeHttpRequests(a -> a.anyRequest().authenticated()).httpBasic(Customizer.withDefaults())` — браузер сам покажет диалог ввода логина/пароля при `401`.",
+                "when_to_apply": "Берут для server-to-server вызовов, актуатора, внутренних утилит и быстрых интеграций, где не нужен полноценный токен.",
+                "edge_cases": "Base64 — это кодирование, а не шифрование: без HTTPS credentials легко перехватить; диалог браузера нельзя кастомизировать, поэтому для публичных UI используют форму или OAuth2.",
+                "related": "[[spring-security-interview#Q9]] form login; [[spring-security-interview#Q11]] JWT-интеграция; [[spring-security-interview#Q36]] защита Actuator через Basic."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для `HTTP Basic` нужно создавать и хранить серверную сессию на каждый вход.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Basic` stateless: credentials присылаются в каждом запросе, серверная сессия не требуется.",
+                "source_of_confusion": "Аналогия с form login, где сессия нужна, переносится на `Basic`.",
+                "if_it_were_true": "Будь сессия обязательна, нельзя было бы использовать `Basic` в чисто stateless server-to-server вызовах, но это типичный сценарий.",
+                "how_it_should_be": "Каждый запрос несёт credentials заново; сессия для `Basic` не нужна."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Credentials в `HTTP Basic` передаются в теле POST-запроса, а не в заголовке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они передаются в HTTP-заголовке `Authorization: Basic <base64>`, независимо от метода запроса.",
+                "source_of_confusion": "Привычка отправлять логин/пароль формой в теле создаёт ложное ожидание.",
+                "if_it_were_true": "Будь это так, `GET`-запрос с `Basic` не мог бы нести credentials, но он их несёт в заголовке.",
+                "how_it_should_be": "Логин/пароль идут в заголовке `Authorization`, а не в теле запроса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как интегрировать `Spring Security` с `JWT`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для `JWT` нужно оставить `sessionCreationPolicy(ALWAYS)` и хранить токен в HTTP-сессии на сервере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JWT` именно потому и stateless, что не требует серверной сессии; ставят `STATELESS`, а токен живёт у клиента.",
+                "source_of_confusion": "Привычка к сессионной аутентификации тянет за собой ненужную сессию.",
+                "if_it_were_true": "Будь нужна серверная сессия, терялся бы весь смысл `JWT` — масштабирование без sticky-сессий и привязки к узлу.",
+                "how_it_should_be": "Для `JWT` выбирают `STATELESS`; токен носит клиент в заголовке, сервер сессию не держит."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При `JWT`-аутентификации CSRF-защиту обязательно оставлять включённой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При токене в заголовке `Authorization` CSRF не нужен — браузер не отправляет такой заголовок автоматически на сторонний сайт; CSRF обычно отключают.",
+                "source_of_confusion": "Совет «никогда не отключать CSRF» применяют без учёта stateless-сценария.",
+                "if_it_were_true": "Будь CSRF обязателен, каждый запрос к API требовал бы ещё и CSRF-токен, что бессмысленно при stateless `JWT`.",
+                "how_it_should_be": "Для `JWT` в заголовке CSRF отключают; он нужен лишь при cookie-сессиях."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для stateless REST API делают логин-эндпоинт, выдающий `JWT`, а каждый последующий запрос несёт `Authorization: Bearer <token>`. В `SecurityFilterChain` отключают `csrf`, ставят `sessionCreationPolicy(STATELESS)`, добавляют свой `JwtAuthenticationFilter` через `addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)` и настраивают `authenticationEntryPoint`, отдающий `401`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Фильтр парсит и валидирует токен и кладёт `Authentication` в `SecurityContext`; сессии не создаются, поэтому каждый запрос самодостаточен.",
+                "example": "`http.csrf(c->c.disable()).sessionManagement(s->s.sessionCreationPolicy(STATELESS)).authorizeHttpRequests(a->a.requestMatchers(\"/api/auth/**\").permitAll().anyRequest().authenticated()).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)`.",
+                "when_to_apply": "Используют для stateless API, особенно при SPA/мобильных клиентах и микросервисах, где не хотят держать серверные сессии.",
+                "edge_cases": "CSRF при `JWT` в заголовке не нужен (токен не отправляется браузером автоматически), но stateless-токены нельзя отозвать без чёрного списка; срок жизни access-токена держат коротким.",
+                "related": "[[spring-security-interview#Q12]] сам JWT-фильтр; [[spring-security-interview#Q13]] выдача токена; [[spring-security-interview#Q14]] refresh-токен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JwtAuthenticationFilter` нужно регистрировать после `AuthorizationFilter`, в самом конце цепочки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фильтр ставят перед `UsernamePasswordAuthenticationFilter` (через `addFilterBefore`), чтобы `Authentication` уже стоял к моменту проверки прав.",
+                "source_of_confusion": "Кажется, что аутентификация по токену — последний штрих перед контроллером.",
+                "if_it_were_true": "Будь фильтр после авторизации, `AuthorizationFilter` не увидел бы установленного principal и отклонил бы запрос как анонимный.",
+                "how_it_should_be": "JWT-фильтр размещают до фильтра авторизации, чтобы контекст был заполнен заранее."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как написать `JWT`-фильтр (`JwtAuthenticationFilter`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "JWT-фильтр лучше наследовать от `GenericFilterBean` напрямую, чтобы он срабатывал по нескольку раз на запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используют `OncePerRequestFilter` именно ради гарантии одного вызова на запрос; многократное срабатывание — дефект, а не цель.",
+                "source_of_confusion": "`GenericFilterBean` действительно базовый класс фильтров, отсюда соблазн взять его.",
+                "if_it_were_true": "Будь многократный вызов полезен, токен парсился бы и контекст ставился бы повторно, зря тратя ресурсы на forward/include.",
+                "how_it_should_be": "Наследуют `OncePerRequestFilter`; он подавляет повторные вызовы в рамках одного запроса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Если токен отсутствует, фильтр должен сразу вернуть `401` и не вызывать `chain.doFilter`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При отсутствии/невалидности токена фильтр просто пропускает запрос дальше (`chain.doFilter`); решение об отказе принимает авторизация или `AuthenticationEntryPoint`.",
+                "source_of_confusion": "Кажется логичным «нет токена — сразу отказ» прямо в фильтре.",
+                "if_it_were_true": "Будь так, публичные эндпоинты (`permitAll`) тоже получали бы `401`, ведь к ним токен не прикладывают.",
+                "how_it_should_be": "Фильтр не блокирует анонимные запросы; он лишь ставит `Authentication` при валидном токене, остальное решает авторизация."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "JWT-фильтр должен сам сравнивать пароль пользователя из токена с хешем в БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В токене нет пароля; фильтр проверяет подпись и срок жизни `JWT`, а не пароль — пароль проверялся один раз на этапе выдачи токена.",
+                "source_of_confusion": "Перенос логики DAO-аутентификации на проверку токена.",
+                "if_it_were_true": "Будь это так, пришлось бы хранить пароль в токене, что является грубой уязвимостью.",
+                "how_it_should_be": "Фильтр валидирует подпись и claims токена; пароль здесь не участвует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Наследуют `OncePerRequestFilter` и в `doFilterInternal` читают заголовок `Authorization`; если он начинается с `Bearer `, извлекают токен, достают username, при валидном токене и пустом `SecurityContext` грузят `UserDetails`, создают `UsernamePasswordAuthenticationToken` с authorities и кладут его в `SecurityContextHolder`. При невалидном/отсутствующем токене просто вызывают `chain.doFilter` дальше.",
+              "correct": true,
+              "sections": {
+                "explanation": "`OncePerRequestFilter` гарантирует один вызов на запрос; фильтр регистрируют через `addFilterBefore(...)` перед `UsernamePasswordAuthenticationFilter`.",
+                "example": "`String token = header.substring(7); if (jwtService.isTokenValid(token, userDetails)) { var auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()); SecurityContextHolder.getContext().setAuthentication(auth); }`",
+                "when_to_apply": "Пишут, когда нужен собственный разбор `JWT` (без готового `oauth2ResourceServer`), например для самоподписанных токенов своего auth-эндпоинта.",
+                "edge_cases": "Важно не бросать `401` прямо из фильтра при отсутствии токена — пропускать дальше, чтобы авторизация решила; и проверять, что контекст ещё пуст, иначе можно перезатереть уже установленную аутентификацию.",
+                "related": "[[spring-security-interview#Q11]] интеграция с JWT; [[spring-security-interview#Q13]] выдача токена; [[spring-security-interview#Q39]] альтернатива через BearerTokenAuthenticationFilter."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать endpoint выдачи `JWT`-токена?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `@RestController` (`/api/auth/login`) принимают `username`/`password`, вызывают `authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(...))`, при успехе берут `UserDetails` из `auth.getPrincipal()` и через `JwtService.generateToken(...)` выдают access- и refresh-токены в теле ответа. Для работы `AuthenticationManager` объявляют бином через `AuthenticationConfiguration.getAuthenticationManager()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Логин-эндпоинт делают `permitAll()`, остальное — `authenticated()`; короткий access-токен (например 15 минут) и более долгий refresh-токен (например 7 дней).",
+                "example": "`Authentication auth = authManager.authenticate(new UsernamePasswordAuthenticationToken(req.username(), req.password())); String access = jwtService.generateToken(user, Duration.ofMinutes(15));`",
+                "when_to_apply": "Используют как точку входа для stateless REST API: клиент один раз логинится и дальше носит токен в заголовке.",
+                "edge_cases": "Если `authenticate` бросает `BadCredentialsException`, эндпоинт должен вернуть `401`; нельзя выдавать токен до успешной проверки credentials.",
+                "related": "[[spring-security-interview#Q11]] интеграция с JWT; [[spring-security-interview#Q12]] JWT-фильтр; [[spring-security-interview#Q14]] refresh-токен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Логин-эндпоинт может выдавать токен сразу по логину, не проверяя пароль через `AuthenticationManager`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пароль обязательно проверяют через `authenticationManager.authenticate(...)`; только при успехе генерируют токен.",
+                "source_of_confusion": "Соблазн «упростить» эндпоинт, раз токен всё равно подписан.",
+                "if_it_were_true": "Будь так, любой смог бы получить токен на чужой username без знания пароля — это полный обход аутентификации.",
+                "how_it_should_be": "Сначала `authenticate`, и лишь при успехе — `generateToken`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Логин-эндпоинт `/api/auth/login` должен требовать `authenticated()`, как и остальные пути.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эндпоинт логина делают `permitAll()`, иначе аноним не сможет залогиниться, ведь токена у него ещё нет.",
+                "source_of_confusion": "Правило `anyRequest().authenticated()` по инерции распространяют и на логин.",
+                "if_it_were_true": "Будь логин под `authenticated()`, пользователь не смог бы получить первый токен — замкнутый круг.",
+                "how_it_should_be": "Путь логина исключают из аутентификации через `permitAll`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы эндпоинт работал, `AuthenticationManager` нельзя объявлять бином — его создаёт сам контроллер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `AuthenticationManager` объявляют `@Bean` через `AuthenticationConfiguration.getAuthenticationManager()` и инжектят в контроллер.",
+                "source_of_confusion": "В `Spring Security 6` менеджер не создаётся автоматически как готовый бин, отсюда путаница.",
+                "if_it_were_true": "Будь это так, в контроллер нечего было бы инжектить и `authenticate` вызвать было бы не на чем.",
+                "how_it_should_be": "`AuthenticationManager` достают из `AuthenticationConfiguration` и публикуют бином."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать refresh-токен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Refresh-токен должен жить столько же, сколько access-токен, иначе схема небезопасна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл refresh-токена — жить дольше access-токена (минуты против дней/недель), чтобы обновлять короткий access без повторного логина.",
+                "source_of_confusion": "Кажется, что «одинаковый срок» проще и единообразнее.",
+                "if_it_were_true": "Будь сроки равны, refresh-токен истекал бы вместе с access-токеном и не давал бы никакого продления сессии.",
+                "how_it_should_be": "Access-токен короткий, refresh-токен длинный; именно разница сроков и даёт смысл схеме."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Refresh-токен позволяет получить новый access-токен без повторного ввода credentials. На `/api/auth/refresh` валидируют refresh-токен, при успехе извлекают username, грузят `UserDetails` и выдают новый короткий access-токен; при ротации старый refresh-токен инвалидируется. Варианты хранения: stateless `JWT`, токен в БД/`Redis` (можно отозвать) или `HttpOnly` cookie.",
+              "correct": true,
+              "sections": {
+                "explanation": "Stateless refresh-токен прост, но не отзывается до истечения; хранение в БД/`Redis` даёт отзыв и ротацию ценой запроса к хранилищу при каждом обновлении.",
+                "example": "`if (!jwtService.isTokenValid(refreshToken)) return 401; String newAccess = jwtService.generateToken(user, Duration.ofMinutes(15)); String newRefresh = jwtService.generateToken(user, Duration.ofDays(7));` (ротация).",
+                "when_to_apply": "Применяют, когда access-токены короткоживущие (минуты), а пользователь не должен логиниться заново каждые 15 минут.",
+                "edge_cases": "Чистый `JWT` refresh нельзя отозвать при компрометации — для revocable-сценариев хранят refresh-токены в БД/`Redis`; cookie-хранение защищает от XSS, но уязвимо к CSRF.",
+                "related": "[[spring-security-interview#Q11]] интеграция с JWT; [[spring-security-interview#Q13]] выдача access-токена; [[spring-security-interview#Q25]] отзыв токенов в кластере."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чистый stateless `JWT` refresh-токен можно отозвать в любой момент без дополнительного хранилища.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подписанный `JWT` нельзя отозвать до истечения без чёрного списка/хранилища; для отзыва токены держат в БД или `Redis`.",
+                "source_of_confusion": "Stateless-удобство создаёт иллюзию полного контроля над токеном.",
+                "if_it_were_true": "Будь отзыв возможен из коробки, не понадобились бы blacklist в `Redis` и ротация refresh-токенов.",
+                "how_it_should_be": "Для отзыва refresh-токен хранят в БД/`Redis`; иначе он действителен до конца срока."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При обновлении нужно выдавать новый access-токен, но refresh-токен оставлять прежним навсегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Безопасная практика — ротация: на каждом обновлении выдают новый refresh-токен, а старый инвалидируют (refresh token rotation).",
+                "source_of_confusion": "Кажется удобным не трогать долгоживущий refresh-токен.",
+                "if_it_were_true": "Будь refresh-токен вечным, его утечка давала бы злоумышленнику бессрочный доступ через постоянное обновление access-токенов.",
+                "how_it_should_be": "Refresh-токен ротируют при каждом обновлении, ограничивая окно компрометации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `OAuth2 Login` (вход через `Google`/`GitHub`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`OAuth2 Login` и `OAuth2 Resource Server` — это одно и то же, разницы в конфигурации нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`oauth2Login` — это вход пользователя через провайдера (получаем профиль), а `oauth2ResourceServer` — приём и валидация чужих `Bearer`-токенов; это разные роли и разные методы DSL.",
+                "source_of_confusion": "Оба относятся к семейству `OAuth2` и настраиваются в одном `SecurityFilterChain`, поэтому их роли легко смешать в одну.",
+                "if_it_were_true": "Будь они одинаковы, не существовало бы двух разных методов `oauth2Login()` и `oauth2ResourceServer()` с разной семантикой.",
+                "how_it_should_be": "`oauth2Login` — клиент/логин-флоу; `oauth2ResourceServer` — проверка токенов; роли разные."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Обмен `authorization code` на access-токен нужно реализовывать вручную в своём контроллере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Весь Authorization Code flow (redirect, обмен кода на токен, загрузку профиля) выполняет сам `Spring Security` при `oauth2Login`.",
+                "source_of_confusion": "Кажется, что такой сложный протокол нельзя получить «из коробки».",
+                "if_it_were_true": "Будь обмен ручным, не нужны были бы регистрации провайдеров в `application.yml` и метод `oauth2Login()`.",
+                "how_it_should_be": "Code-flow обеспечивает фреймворк; разработчик лишь настраивает провайдеров и пост-обработку."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подключают `spring-boot-starter-oauth2-client`, в `application.yml` задают `spring.security.oauth2.client.registration.<provider>` с `client-id`/`client-secret`/`scope`, а в `SecurityFilterChain` вызывают `oauth2Login(...)`. При необходимости переопределяют `userInfoEndpoint().userService(...)` (через наследника `DefaultOAuth2UserService`), чтобы создавать/обновлять пользователя в своей БД после входа.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Spring Security` сам реализует redirect к провайдеру, обмен `authorization code` на токен и загрузку профиля; разработчику остаётся конфигурация и опциональная пост-обработка пользователя.",
+                "example": "`http.authorizeHttpRequests(a->a.requestMatchers(\"/\",\"/login/**\").permitAll().anyRequest().authenticated()).oauth2Login(o->o.loginPage(\"/login\").userInfoEndpoint(u->u.userService(customOAuth2UserService)))`.",
+                "when_to_apply": "Используют для SSO через внешних провайдеров (Google, GitHub, корпоративный IdP), когда не хотят хранить пароли у себя.",
+                "edge_cases": "Это про вход пользователя (`oauth2Login`), а не про приём токенов от чужого сервиса — для последнего нужен `oauth2ResourceServer`; кастомный `OAuth2UserService` обязан вернуть `OAuth2User`, иначе вход сломается.",
+                "related": "[[spring-security-interview#Q16]] Resource Server; [[spring-security-interview#Q32]] кастомные claims в Resource Server; [[spring-security-interview#Q38]] настройка через стартер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`client-secret` провайдера следует хардкодить прямо в коде конфигурации `SecurityFilterChain`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Секреты держат вне кода — в переменных окружения/secrets-хранилище и подставляют через `${GOOGLE_CLIENT_SECRET}` в `application.yml`.",
+                "source_of_confusion": "Близость секрета к конфигурации провоцирует положить его рядом в код.",
+                "if_it_were_true": "Будь это нормой, секрет утекал бы в систему контроля версий при первом же коммите.",
+                "how_it_should_be": "`client-secret` инжектят из окружения/Vault; в исходниках его не хранят."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `Spring Security` как `OAuth2 Resource Server`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Resource Server должен сам выдавать и подписывать `JWT`-токены пользователям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выдача токенов — задача Authorization Server; Resource Server только принимает и валидирует чужие токены.",
+                "source_of_confusion": "Слово «server» наводит на мысль, что он и есть источник токенов.",
+                "if_it_were_true": "Будь так, не нужен был бы `issuer-uri`/`jwk-set-uri` внешнего провайдера — он указывает, чьи токены доверять.",
+                "how_it_should_be": "Resource Server валидирует токены внешнего IdP; выдаёт их Authorization Server."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Публичный ключ для проверки подписи `JWT` нужно вручную прописывать в коде и обновлять при ротации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По `jwk-set-uri`/`issuer-uri` `Spring Security` сам скачивает и кэширует ключи JWKS, подхватывая ротацию автоматически.",
+                "source_of_confusion": "Опыт ручной работы с RSA-ключами создаёт ожидание ручного управления.",
+                "if_it_were_true": "Будь ключ статичным в коде, ротация ключей у провайдера ломала бы валидацию до ручного обновления.",
+                "how_it_should_be": "Ключи берутся по JWKS-endpoint автоматически; ручное прописывание нужно лишь в особых случаях."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Роли всегда автоматически маппятся из claim `roles` без какой-либо настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию authorities берутся из `scope`/`scp` с префиксом `SCOPE_`; для claim `roles` нужен кастомный `JwtAuthenticationConverter`.",
+                "source_of_confusion": "Кажется, что фреймворк «умный» и сам найдёт роли в любом claim.",
+                "if_it_were_true": "Будь это так, не понадобились бы `setAuthoritiesClaimName(\"roles\")` и `setAuthorityPrefix(...)`.",
+                "how_it_should_be": "Источник ролей по умолчанию — `scope`; иной claim требует явной настройки конвертера."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Когда приложение лишь принимает `JWT`-токены от внешнего IdP (Keycloak, Auth0), в `application.yml` задают `spring.security.oauth2.resourceserver.jwt.issuer-uri` (или `jwk-set-uri`), а в `SecurityFilterChain` — `oauth2ResourceServer(o -> o.jwt(...))`. Маппинг claims → `GrantedAuthority` настраивают через `JwtAuthenticationConverter` (например `setAuthoritiesClaimName(\"roles\")`, `setAuthorityPrefix(\"ROLE_\")`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`Spring Security` автоматически скачивает публичные ключи по JWKS-endpoint провайдера и валидирует подпись `JWT`; приложение само токены не выдаёт.",
+                "example": "`http.authorizeHttpRequests(a->a.requestMatchers(\"/public/**\").permitAll().anyRequest().authenticated()).oauth2ResourceServer(o->o.jwt(j->j.jwtAuthenticationConverter(jwtAuthConverter())))`.",
+                "when_to_apply": "Используют в микросервисах, доверяющих токенам общего auth-сервера, и в API за корпоративным IdP.",
+                "edge_cases": "По умолчанию роли берутся из claim `scope`/`scp` с префиксом `SCOPE_`; если в токене роли в другом claim (`roles`), нужен кастомный `JwtAuthenticationConverter`, иначе `hasRole` не сработает.",
+                "related": "[[spring-security-interview#Q15]] OAuth2 Login; [[spring-security-interview#Q32]] кастомные claims; [[spring-security-interview#Q39]] JwtDecoder и BearerTokenAuthenticationFilter."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить авторизацию по URL-паттернам?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `authorizeHttpRequests(...)` перечисляют правила через `requestMatchers(...)`: публичные пути — `permitAll()`, по ролям — `hasRole(\"ADMIN\")`/`hasAnyRole(...)`, по HTTP-методу — `requestMatchers(HttpMethod.POST, \"/api/articles/**\").hasRole(\"AUTHOR\")`, по authority — `hasAuthority(\"REPORT_VIEW\")`, а в конце `anyRequest().authenticated()`. Порядок важен: первое совпадение выигрывает.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `Spring Security 6` вместо `antMatchers()` используется `requestMatchers()`; более специфичные правила ставят раньше общих.",
+                "example": "`a.requestMatchers(\"/api/admin/**\").hasRole(\"ADMIN\").requestMatchers(HttpMethod.GET, \"/api/articles/**\").permitAll().anyRequest().authenticated()`.",
+                "when_to_apply": "Применяют для грубой авторизации на уровне путей/методов; тонкую (на объект) делают через method security и `@PreAuthorize`.",
+                "edge_cases": "`hasRole(\"ADMIN\")` ожидает authority `ROLE_ADMIN` (префикс добавляется автоматически), а `hasAuthority(\"ADMIN\")` — без префикса; путать их — частая причина неработающей авторизации.",
+                "related": "[[spring-security-interview#Q4]] SecurityFilterChain; [[spring-security-interview#Q18]] method security; [[spring-security-interview#Q27]] защита REST API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Порядок `requestMatchers` неважен — `Spring Security` сам выбирает самое специфичное правило.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок критичен: правила проверяются сверху вниз, побеждает первое совпадение, поэтому общие ставят после специфичных.",
+                "source_of_confusion": "Кажется, что фреймворк ранжирует правила по специфичности, как роутер.",
+                "if_it_were_true": "Будь порядок неважен, `anyRequest()` в начале не перехватывал бы все запросы, но он именно так и делает.",
+                "how_it_should_be": "Правила применяются по порядку; первое совпадение выигрывает, общее — в конец."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`hasRole(\"ROLE_ADMIN\")` — правильная запись, нужно явно указывать префикс `ROLE_`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `hasRole` префикс `ROLE_` добавляется автоматически, поэтому пишут `hasRole(\"ADMIN\")`; с явным `ROLE_` получится двойной префикс `ROLE_ROLE_ADMIN`.",
+                "source_of_confusion": "Знание, что authority хранится как `ROLE_ADMIN`, подталкивает указать его целиком.",
+                "if_it_were_true": "Будь это правильно, проверка искала бы authority `ROLE_ROLE_ADMIN`, которого ни у кого нет.",
+                "how_it_should_be": "В `hasRole` пишут имя без префикса; `ROLE_` дописывается фреймворком."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Spring Security 6` для путей по-прежнему используют `antMatchers()`, а `requestMatchers()` не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`antMatchers()` удалён вместе с `authorizeRequests()`; в `Spring Security 6` используют `authorizeHttpRequests()` и `requestMatchers()`.",
+                "source_of_confusion": "Старые примеры с `antMatchers` всё ещё широко распространены.",
+                "if_it_were_true": "Будь `antMatchers` актуален, код на `Spring Security 6` компилировался бы с ним, но метод отсутствует.",
+                "how_it_should_be": "Актуальный API — `requestMatchers()` внутри `authorizeHttpRequests()`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают `@PreAuthorize`, `@PostAuthorize` и `@Secured`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Secured` поддерживает SpEL-выражения так же, как `@PreAuthorize`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Secured` принимает только имена ролей (`\"ROLE_ADMIN\"`) и не вычисляет SpEL; для выражений нужен `@PreAuthorize`.",
+                "source_of_confusion": "Обе аннотации про авторизацию метода, отсюда ожидание одинаковых возможностей.",
+                "if_it_were_true": "Будь в `@Secured` SpEL, можно было бы писать `@Secured(\"#id == authentication.name\")`, но это не компилируется по смыслу — там только роли.",
+                "how_it_should_be": "SpEL поддерживают `@PreAuthorize`/`@PostAuthorize`; `@Secured` — только список ролей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Method security включают `@EnableMethodSecurity`. `@PreAuthorize` проверяет SpEL-выражение до вызова метода, `@PostAuthorize` — после (с доступом к `returnObject`), `@Secured` и `@RolesAllowed` — простая проверка роли без SpEL. SpEL даёт доступ к `authentication`, `principal` и параметрам метода через `#paramName`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@PreAuthorize`/`@PostAuthorize` поддерживают SpEL и комбинации (`hasRole('ADMIN') or #article.author == authentication.name`); `@Secured`/`@RolesAllowed` — только имена ролей.",
+                "example": "`@PreAuthorize(\"#userId == authentication.principal.id\")` пускает только владельца; `@PostAuthorize(\"returnObject.author == authentication.name\")` проверяет уже загруженный объект.",
+                "when_to_apply": "Применяют для авторизации на уровне сервисного слоя, когда правил слишком много для URL-матчеров или нужен доступ к параметрам/результату.",
+                "edge_cases": "`@PostAuthorize` выполняет метод до проверки — побочные эффекты уже произойдут; `@Secured` без SpEL не умеет проверять параметры, поэтому для сложной логики берут `@PreAuthorize`.",
+                "related": "[[spring-security-interview#Q17]] URL-авторизация; [[spring-security-interview#Q33]] SpEL и PermissionEvaluator; [[spring-security-interview#Q43]] когда брать @PostAuthorize и @Secured."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@PostAuthorize` проверяет права до выполнения метода, как и `@PreAuthorize`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@PostAuthorize` срабатывает после выполнения метода, чтобы проверить `returnObject`; до вызова работает `@PreAuthorize`.",
+                "source_of_confusion": "Похожие имена аннотаций смазывают момент проверки.",
+                "if_it_were_true": "Будь проверка до вызова, не было бы доступа к `returnObject`, ради которого `@PostAuthorize` и существует.",
+                "how_it_should_be": "`@PreAuthorize` — до вызова, `@PostAuthorize` — после, с доступом к результату."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Method security работает автоматически и не требует `@EnableMethodSecurity`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@EnableMethodSecurity` аннотации `@PreAuthorize`/`@Secured` игнорируются — нужно явно включить method security.",
+                "source_of_confusion": "Привычка к автоконфигурации `Spring Boot` создаёт ожидание «всё включено».",
+                "if_it_were_true": "Будь это так, метод с `@PreAuthorize` отклонял бы анонимов даже без аннотации `@EnableMethodSecurity`, но он этого не делает.",
+                "how_it_should_be": "Сначала добавляют `@EnableMethodSecurity`, иначе method-аннотации не действуют."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `@PreFilter` и `@PostFilter`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@PostFilter` фильтрует данные на уровне SQL-запроса, не загружая лишние строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@PostFilter` сначала получает всю коллекцию из метода и фильтрует её в памяти; в SQL он не вмешивается.",
+                "source_of_confusion": "Хочется верить, что фреймворк оптимизирует выборку, как `WHERE` в запросе.",
+                "if_it_were_true": "Будь фильтрация в SQL, `@PostFilter` не приводил бы к загрузке всех строк и проблемам с памятью на больших выборках.",
+                "how_it_should_be": "Фильтрация идёт в памяти после метода; для больших данных условие переносят в сам запрос."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В выражении `@PreFilter`/`@PostFilter` текущий элемент доступен как `returnObject`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Текущий элемент коллекции — это `filterObject`; `returnObject` относится к `@PostAuthorize` и означает весь результат метода.",
+                "source_of_confusion": "Обе аннотации работают с результатом, отсюда смешение переменных.",
+                "if_it_were_true": "Будь это `returnObject`, нельзя было бы обращаться к отдельному элементу при итерации по коллекции.",
+                "how_it_should_be": "В фильтрах используют `filterObject` (элемент); `returnObject` — для `@PostAuthorize`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@PreFilter` фильтрует входную коллекцию (оставляет только подходящие элементы перед вызовом метода), а `@PostFilter` — возвращаемую коллекцию (отсеивает после выполнения). В SpEL-выражении текущий элемент доступен как `filterObject`, например `@PreFilter(\"filterObject.owner == authentication.name\")` или `@PostFilter(\"filterObject.accessLevel <= authentication.principal.level\")`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обе аннотации работают только с коллекциями/массивами; элементы, не прошедшие условие, молча удаляются из списка.",
+                "example": "`@PreFilter(\"filterObject.owner == authentication.name\") void batchDelete(List<Document> docs)` — удалятся только свои документы; `@PostFilter` отфильтрует результат `findAll()`.",
+                "when_to_apply": "Применяют для batch-операций над коллекциями и для фильтрации выборок по правам без ручного цикла.",
+                "edge_cases": "`@PostFilter` грузит все данные из БД и фильтрует в памяти — для больших коллекций это дорого, лучше отфильтровать в SQL-запросе.",
+                "related": "[[spring-security-interview#Q18]] @PreAuthorize/@PostAuthorize; [[spring-security-interview#Q33]] hasPermission в фильтрах; [[spring-security-interview#Q34]] разница Pre/Post."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@PreFilter` и `@PostFilter` можно применять к методу, возвращающему один объект, а не коллекцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они работают только с коллекциями, массивами и `Stream`; для одиночного объекта фильтрация не имеет смысла и не применяется.",
+                "source_of_confusion": "Кажется, что фильтр универсален для любого результата.",
+                "if_it_were_true": "Будь так, фреймворк не знал бы, по чему итерировать `filterObject` для скалярного значения.",
+                "how_it_should_be": "Фильтры рассчитаны на коллекции; для одного объекта берут `@PreAuthorize`/`@PostAuthorize`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать доступ на основе данных (domain object security)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Domain object security полностью покрывается ролями: достаточно выдать роль `OWNER` и проверять `hasRole('OWNER')`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роль `OWNER` не различает конкретные объекты — нужна проверка владельца именно этой записи через SpEL-бин или `PermissionEvaluator`.",
+                "source_of_confusion": "Ролевая модель привычна и кажется применимой ко всему.",
+                "if_it_were_true": "Будь так, любой со ролью `OWNER` редактировал бы чужие статьи, а не только свои.",
+                "how_it_should_be": "Для доступа на уровне объекта проверяют владельца записи, а не общую роль."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Кастомный бин в `@PreAuthorize` вызывают как `#articleSecurity.isOwner(...)`, через решётку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ссылка на бин в SpEL делается через `@beanName` (`@articleSecurity.isOwner(...)`); `#` обозначает параметр метода, а не бин.",
+                "source_of_confusion": "Оба символа встречаются в SpEL, и их легко перепутать.",
+                "if_it_were_true": "Будь это `#`, выражение искало бы параметр метода с именем `articleSecurity`, которого нет, и падало бы.",
+                "how_it_should_be": "Бины адресуют через `@`, параметры — через `#`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Метод `hasPermission(...)` работает из коробки без регистрации `PermissionEvaluator`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`hasPermission` требует зарегистрированного `PermissionEvaluator` (через `MethodSecurityExpressionHandler`); без него выражение не сработает.",
+                "source_of_confusion": "Наличие функции в SpEL создаёт впечатление готовой реализации.",
+                "if_it_were_true": "Будь так, `hasPermission` сам знал бы правила доступа к любым объектам без вашего кода — но логику задаёт именно `PermissionEvaluator`.",
+                "how_it_should_be": "Сначала регистрируют `PermissionEvaluator`, иначе `hasPermission` не имеет реализации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Когда нужна авторизация на уровне конкретного объекта («редактировать только свои статьи»), используют два подхода: SpEL с вызовом своего бина (`@PreAuthorize(\"@articleSecurity.isOwner(#id, authentication)\")`) или кастомный `PermissionEvaluator` с `@PreAuthorize(\"hasPermission(#id, 'Article', 'WRITE')\")`. Для сложных ACL есть модуль `spring-security-acl` с таблицами разрешений в БД.",
+              "correct": true,
+              "sections": {
+                "explanation": "Бин-проверка читабельна и проста; `PermissionEvaluator` централизует логику `hasPermission` и переиспользуется в разных аннотациях.",
+                "example": "`@Component(\"articleSecurity\") class ArticleSecurity { boolean isOwner(Long id, Authentication a){ return repo.findById(id).get().getAuthor().equals(a.getName()); } }` + `@PreAuthorize(\"@articleSecurity.isOwner(#id, authentication)\")`.",
+                "when_to_apply": "Применяют, когда роли недостаточно и доступ зависит от владельца/атрибутов конкретной записи.",
+                "edge_cases": "Проверка обычно требует загрузки объекта из БД — это лишний запрос; при `@PostAuthorize` объект уже загружен методом, а при `@PreAuthorize` его грузит сам проверяющий бин.",
+                "related": "[[spring-security-interview#Q18]] @PreAuthorize; [[spring-security-interview#Q33]] кастомный PermissionEvaluator; [[spring-security-interview#Q43]] @PostAuthorize для проверки результата."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `CORS` в `Spring Security`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `SecurityFilterChain` вызывают `cors(c -> c.configurationSource(corsConfigurationSource()))` и объявляют бин `CorsConfigurationSource`, где задают `setAllowedOrigins`, `setAllowedMethods`, `setAllowedHeaders`, `setAllowCredentials`, `setMaxAge` и регистрируют конфиг на пути `/api/**`. CORS должен обрабатываться до аутентификации, иначе preflight `OPTIONS` (без credentials) получит `401`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Метод `cors()` в `HttpSecurity` сам ставит `CorsFilter` в правильное место цепочки — до фильтров аутентификации.",
+                "example": "`config.setAllowedOrigins(List.of(\"https://frontend.example.com\")); config.setAllowedMethods(List.of(\"GET\",\"POST\",\"PUT\",\"DELETE\",\"OPTIONS\")); config.setAllowCredentials(true); source.registerCorsConfiguration(\"/api/**\", config);`",
+                "when_to_apply": "Нужен, когда фронтенд (SPA на другом домене/порту) обращается к API из браузера и упирается в same-origin policy.",
+                "edge_cases": "При `allowCredentials(true)` нельзя использовать `*` в origins — указывают конкретные домены или `allowedOriginPatterns`; `@CrossOrigin` на контроллере работает, но конфигурация `SecurityFilterChain` имеет приоритет.",
+                "related": "[[spring-security-interview#Q2]] порядок фильтров; [[spring-security-interview#Q22]] CSRF; [[spring-security-interview#Q35]] CORS и CSRF вместе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CORS-фильтр должен стоять после аутентификации, чтобы проверять только запросы залогиненных пользователей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CORS обрабатывают до аутентификации: preflight `OPTIONS` идёт без credentials, и если его перехватит аутентификация, браузер получит `401` и заблокирует запрос.",
+                "source_of_confusion": "Кажется логичным «сначала проверить, кто пришёл, потом разбираться с CORS».",
+                "if_it_were_true": "Будь CORS после аутентификации, preflight всегда получал бы `401` и легитимный фронтенд не смог бы вызвать API.",
+                "how_it_should_be": "CORS ставят до фильтров аутентификации; метод `cors()` делает это автоматически."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При `allowCredentials(true)` в `allowedOrigins` можно указать `*`, чтобы разрешить все домены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Спецификация CORS запрещает сочетать `Access-Control-Allow-Credentials: true` со звёздочкой в origin — нужно перечислять домены или использовать `allowedOriginPatterns`.",
+                "source_of_confusion": "Звёздочка кажется удобным способом «открыть всем».",
+                "if_it_were_true": "Будь это допустимо, браузер всё равно отверг бы ответ с `*` и credentials, и запрос с куками не прошёл бы.",
+                "how_it_should_be": "С credentials указывают конкретные origins; `*` запрещён спецификацией."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CORS в `Spring Security` настраивается только аннотацией `@CrossOrigin` на контроллере, метода `cors()` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод `cors()` в `HttpSecurity` есть и имеет приоритет; `@CrossOrigin` — лишь дополнительный способ на уровне контроллера.",
+                "source_of_confusion": "Знакомство только с `@CrossOrigin` из Spring MVC создаёт впечатление, что других опций нет.",
+                "if_it_were_true": "Будь так, нельзя было бы централизованно задать CORS-политику для всего API одним бином.",
+                "how_it_should_be": "Централизованно CORS задают через `cors()` и `CorsConfigurationSource`; `@CrossOrigin` — точечное дополнение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `CSRF`-защита и когда её отключать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CSRF-защиту нужно отключать всегда — это устаревший механизм, не нужный в современных приложениях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CSRF по-прежнему обязателен при cookie-сессиях; отключают его только в stateless-сценариях, где cookie не используются.",
+                "source_of_confusion": "Частое `csrf.disable()` в туториалах по REST создаёт впечатление, что он не нужен нигде.",
+                "if_it_were_true": "Будь CSRF устаревшим, браузерные приложения с сессиями были бы беззащитны перед подделкой запросов с чужого сайта.",
+                "how_it_should_be": "CSRF включают для cookie-based приложений; отключают лишь для stateless API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CSRF` (Cross-Site Request Forgery) включён по умолчанию и защищает state-changing запросы (`POST`/`PUT`/`DELETE`) синхронизирующим токеном. Для stateless API на `JWT` его отключают (`csrf.disable()`), для приложений с cookie-сессиями оставляют включённым, при необходимости задавая `CookieCsrfTokenRepository` и `ignoringRequestMatchers` для webhooks.",
+              "correct": true,
+              "sections": {
+                "explanation": "При сессионной аутентификации CSRF обязателен; при `JWT` в заголовке `Authorization` он не нужен, так как браузер не отправляет этот заголовок автоматически на сторонний сайт.",
+                "example": "Stateless API: `http.csrf(c->c.disable()).sessionManagement(s->s.sessionCreationPolicy(STATELESS))`. Web с сессиями: `http.csrf(c->c.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))`.",
+                "when_to_apply": "Отключают для stateless REST/мобильных/публичных API; оставляют для form login, OAuth2 login через браузер и любых cookie-based операций.",
+                "edge_cases": "Опасно отключать CSRF при cookie-аутентификации — это открывает дыру; в `Thymeleaf` токен подставляется автоматически через `th:action`.",
+                "related": "[[spring-security-interview#Q11]] почему JWT не нужен CSRF; [[spring-security-interview#Q35]] CORS и CSRF вместе; [[spring-security-interview#Q40]] SameSite как дополнение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CSRF-токен проверяется и для `GET`-запросов тоже, ведь они тоже идут с фронтенда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CSRF защищает только state-changing методы (`POST`/`PUT`/`DELETE`/`PATCH`); безопасные `GET`/`HEAD` не должны менять состояние и токеном не проверяются.",
+                "source_of_confusion": "Кажется, что раз запрос из браузера, его надо проверять всегда.",
+                "if_it_were_true": "Будь токен нужен для `GET`, простая загрузка страницы ссылкой требовала бы CSRF-токена, что сломало бы навигацию.",
+                "how_it_should_be": "Токен проверяют для мутирующих методов; `GET` считается безопасным и не защищается CSRF."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При `JWT`-аутентификации в заголовке CSRF обязательно нужен, потому что запросы тоже мутирующие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При токене в заголовке `Authorization` CSRF не нужен: браузер не прикладывает этот заголовок к запросам со стороннего сайта, так что подделать вызов нельзя.",
+                "source_of_confusion": "Логика «мутирующий запрос → нужен CSRF» применяется без учёта способа передачи токена.",
+                "if_it_were_true": "Будь CSRF обязателен при `JWT`, пришлось бы носить ещё и CSRF-токен, что противоречит самой идее stateless-токена в заголовке.",
+                "how_it_should_be": "CSRF нужен при автоматической отправке cookie; токен в заголовке его не требует."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как управлять сессиями (session management)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Политика по умолчанию — `STATELESS`, поэтому веб-форма входа работает без дополнительной настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию политика — `IF_REQUIRED` (сессия создаётся при необходимости); `STATELESS` отключил бы хранение контекста и сломал бы form login.",
+                "source_of_confusion": "Частое использование `STATELESS` в REST-примерах создаёт впечатление, что это дефолт.",
+                "if_it_were_true": "Будь дефолтом `STATELESS`, классический form login терял бы пользователя сразу после входа.",
+                "how_it_should_be": "По умолчанию `IF_REQUIRED`; `STATELESS` выбирают явно для JWT/REST."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Таймаут сессии настраивается прямо в `sessionManagement()` методом `.timeout(Duration)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Таймаут задают в `application.yml` через `server.servlet.session.timeout`; в DSL `sessionManagement` такого метода нет.",
+                "source_of_confusion": "Хочется иметь все настройки сессии в одном fluent-блоке.",
+                "if_it_were_true": "Будь такой метод, его показывали бы в примерах вместо `application.yml`, но таймаут всегда конфигурируют свойством.",
+                "how_it_should_be": "Таймаут — это свойство сервлет-контейнера (`server.servlet.session.timeout`), а не метод DSL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `sessionManagement(...)` задают политику создания сессий (`sessionCreationPolicy`), ограничивают одновременные сессии (`maximumSessions(1)`, `maxSessionsPreventsLogin(true)`), настраивают редиректы при истечении/невалидности (`expiredUrl`, `invalidSessionUrl`) и защиту от session fixation (`sessionFixation().migrateSession()`). Таймаут сессии задают в `application.yml` через `server.servlet.session.timeout`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Политики: `ALWAYS`, `IF_REQUIRED` (по умолчанию), `NEVER`, `STATELESS` (для JWT/REST); `migrateSession` создаёт новую сессию после логина, защищая от подмены идентификатора.",
+                "example": "`http.sessionManagement(s -> s.maximumSessions(1).maxSessionsPreventsLogin(true).sessionFixation().migrateSession())` — один активный вход на пользователя.",
+                "when_to_apply": "Используют для веб-приложений с серверными сессиями: ограничить параллельные входы, защититься от session fixation, настроить таймаут.",
+                "edge_cases": "`STATELESS` отключает сохранение `SecurityContext` в сессии — подходит для `JWT`, но тогда `maximumSessions` и form login теряют смысл; без `migrateSession` возможна атака session fixation.",
+                "related": "[[spring-security-interview#Q9]] form login; [[spring-security-interview#Q24]] Remember Me; [[spring-security-interview#Q25]] сессии в кластере."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`sessionFixation().migrateSession()` не нужен — `Spring Security` не подвержен атаке session fixation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Защита от session fixation важна: без неё атакующий может зафиксировать id сессии до входа жертвы; `migrateSession` создаёт новую сессию после логина.",
+                "source_of_confusion": "Кажется, что фреймворк безопасен «из коробки» во всём.",
+                "if_it_were_true": "Будь так, не существовало бы настройки `sessionFixation()` с разными стратегиями.",
+                "how_it_should_be": "Включают `sessionFixation().migrateSession()` (это и есть дефолт), чтобы id сессии менялся при входе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `Remember Me`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Remember Me` хранит пароль пользователя в cookie, чтобы автоматически логинить его.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В cookie хранится подписанный токен (hash или ссылка на запись в БД), а не пароль; пароль в cookie никогда не кладут.",
+                "source_of_confusion": "Идея «помнить вход» наводит на мысль, что где-то лежит пароль.",
+                "if_it_were_true": "Будь пароль в cookie, его кража раскрывала бы учётные данные напрямую, а не давала временный токен.",
+                "how_it_should_be": "В cookie — токен `Remember Me`; пароль в нём не хранится."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чекбокс в форме может называться как угодно — `Spring Security` сам распознаёт намерение «запомнить меня».",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию ожидается параметр `remember-me`; иное имя нужно задавать через `rememberMeParameter`, иначе функция не активируется.",
+                "source_of_confusion": "Кажется, что фреймворк угадывает чекбокс по смыслу.",
+                "if_it_were_true": "Будь имя произвольным, `Spring Security` не знал бы, какой параметр формы означает Remember Me.",
+                "how_it_should_be": "Параметр по умолчанию — `remember-me`; другое имя задают `rememberMeParameter`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Persistent Remember Me работает без какого-либо хранилища токенов — всё держится в cookie.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Persistent-режим требует `tokenRepository` (например таблицу через `JdbcTokenRepositoryImpl`); без него работает лишь hash-based вариант.",
+                "source_of_confusion": "Cookie-механизм создаёт впечатление полной независимости от сервера.",
+                "if_it_were_true": "Будь так, нельзя было бы отозвать или ротировать persistent-токены, ради чего хранилище и вводят.",
+                "how_it_should_be": "Для persistent-режима настраивают `tokenRepository`; cookie лишь ссылается на запись в БД."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `rememberMe(...)` задают секретный `key`, срок жизни `tokenValiditySeconds` и `userDetailsService`; для persistent-режима указывают `tokenRepository` (например `JdbcTokenRepositoryImpl` с `DataSource`). В форме входа добавляют чекбокс с `name=\"remember-me\"`; `Spring Security` создаёт cookie, по которой восстанавливает аутентификацию без повторного ввода пароля.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без `tokenRepository` используется hash-based токен (на основе `key` и данных пользователя); с persistent-репозиторием токены хранятся в БД и могут ротироваться.",
+                "example": "`http.rememberMe(r -> r.key(\"uniqueSecretKey\").tokenValiditySeconds(604800).tokenRepository(persistentTokenRepository()))` — вход помнится 7 дней.",
+                "when_to_apply": "Применяют в веб-приложениях, где пользователь хочет оставаться залогиненным между сессиями браузера.",
+                "edge_cases": "Hash-based токен нельзя отозвать индивидуально и он завязан на `key`; persistent-токены безопаснее (ротация, отзыв), но требуют таблицы в БД; cookie остаётся целью кражи.",
+                "related": "[[spring-security-interview#Q9]] form login; [[spring-security-interview#Q23]] управление сессиями; [[spring-security-interview#Q25]] сессии в кластере."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить безопасность сессий в кластере?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В кластере сессии должны быть общими для всех узлов. Используют `Spring Session` с внешним хранилищем (например `Redis`): задают `spring.session.store-type: redis` и `@EnableRedisHttpSession`. `SecurityContext` сериализуется в `Redis` вместе с сессией, и на любом узле контекст восстанавливается по cookie `SESSION`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Альтернатива — stateless-архитектура с `JWT`: сессии не нужны, каждый запрос несёт токен, но требуется механизм отзыва (blacklist в `Redis`).",
+                "example": "`spring.session.store-type: redis` + `@EnableRedisHttpSession(maxInactiveIntervalInSeconds = 1800)` — сессия живёт в `Redis`, узлы stateless по отношению к ней.",
+                "when_to_apply": "Применяют при горизонтальном масштабировании за load balancer без sticky-сессий, когда запросы пользователя попадают на разные узлы.",
+                "edge_cases": "Без общего хранилища смена узла приводит к разлогину; sticky-сессии — хрупкий обходной путь; при `JWT` нужен blacklist для отзыва, иначе скомпрометированный токен живёт до истечения.",
+                "related": "[[spring-security-interview#Q23]] управление сессиями; [[spring-security-interview#Q24]] Remember Me; [[spring-security-interview#Q14]] отзыв refresh-токенов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В кластере достаточно хранить сессии в памяти каждого узла — балансировщик сам синхронизирует их между узлами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Балансировщик не реплицирует сессии; нужно общее хранилище (`Spring Session` + `Redis`) или stateless-токены, иначе при смене узла пользователь теряет сессию.",
+                "source_of_confusion": "Кажется, что load balancer «умный» и заботится о синхронизации состояния.",
+                "if_it_were_true": "Будь так, не понадобились бы `Spring Session`, sticky-сессии и репликация состояния в кластере.",
+                "how_it_should_be": "Сессии выносят в общий `Redis` (или переходят на `JWT`); балансировщик состояние не синхронизирует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При stateless-архитектуре с `JWT` механизм отзыва токенов не нужен — токены безопасны сами по себе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подписанный `JWT` нельзя отозвать до истечения без blacklist (например в `Redis`); при компрометации токен иначе остаётся валидным.",
+                "source_of_confusion": "Stateless-удобство создаёт иллюзию полного контроля.",
+                "if_it_were_true": "Будь отзыв не нужен, украденный токен нельзя было бы заблокировать до окончания срока — а это реальный риск.",
+                "how_it_should_be": "Для отзыва `JWT` ведут blacklist; иначе токен действителен весь срок жизни."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Session` с `Redis` хранит только данные приложения, но не `SecurityContext` — его нужно реплицировать отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SecurityContext` сериализуется в хранилище вместе с сессией, поэтому он восстанавливается на любом узле автоматически.",
+                "source_of_confusion": "Кажется, что контекст безопасности — особый объект вне обычной сессии.",
+                "if_it_were_true": "Будь так, при смене узла пользователь оставался бы аутентифицированным только наполовину — без своего контекста.",
+                "how_it_should_be": "`SecurityContext` лежит в той же сессии и переносится в `Redis` вместе с ней."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обработать ошибки аутентификации и авторизации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "За оба случая (`401` и `403`) отвечает один обработчик — `AccessDeniedHandler`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два разных компонента: `AuthenticationEntryPoint` обрабатывает отсутствие аутентификации (`401`), `AccessDeniedHandler` — нехватку прав (`403`).",
+                "source_of_confusion": "Оба связаны с отказом в доступе, отсюда соблазн объединить.",
+                "if_it_were_true": "Будь так, анонимный запрос и запрос без прав возвращали бы одинаковый код, но семантически это `401` и `403`.",
+                "how_it_should_be": "Для `401` — `AuthenticationEntryPoint`, для `403` — `AccessDeniedHandler`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `exceptionHandling(...)` задают `authenticationEntryPoint` (для неаутентифицированных — `401`) и `accessDeniedHandler` (для нехватки прав — `403`). `AuthenticationEntryPoint.commence(...)` пишет `401` и JSON-тело, `AccessDeniedHandler.handle(...)` — `403`. Для form-based приложений вместо JSON используют редиректы (`failureUrl(\"/login?error\")`, `accessDeniedPage(\"/403\")`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`ExceptionTranslationFilter` ловит `AuthenticationException` и `AccessDeniedException` и направляет их в соответствующий handler/entry point.",
+                "example": "`http.exceptionHandling(ex -> ex.authenticationEntryPoint(new CustomAuthEntryPoint()).accessDeniedHandler(new CustomAccessDeniedHandler()))` — REST API отдаёт `{\"error\":\"Unauthorized\"}` с `401`.",
+                "when_to_apply": "Применяют, чтобы REST API возвращал согласованные JSON-ошибки вместо дефолтных HTML-страниц или редиректов на логин.",
+                "edge_cases": "Путаница `401`/`403` — частая: `AuthenticationEntryPoint` для отсутствующих credentials, `AccessDeniedHandler` для аутентифицированного без прав; нельзя возвращать `403` анониму.",
+                "related": "[[spring-security-interview#Q3]] разница 401/403; [[spring-security-interview#Q27]] защита REST API; [[spring-security-interview#Q2]] ExceptionTranslationFilter в цепочке."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Кастомные обработчики ошибок задают в `authorizeHttpRequests`, а не в `exceptionHandling`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`authenticationEntryPoint`/`accessDeniedHandler` настраивают в блоке `exceptionHandling(...)`; `authorizeHttpRequests` отвечает только за правила доступа.",
+                "source_of_confusion": "Оба блока про безопасность, поэтому их легко перепутать.",
+                "if_it_were_true": "Будь так, в `authorizeHttpRequests` существовали бы методы для handler'ов, но их там нет.",
+                "how_it_should_be": "Обработчики ошибок — в `exceptionHandling()`; правила доступа — в `authorizeHttpRequests()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@ControllerAdvice` с `@ExceptionHandler` перехватывает `AccessDeniedException` из фильтров безопасности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ошибки, возникшие в фильтрах (до `DispatcherServlet`), `@ControllerAdvice` не видит — их обрабатывают `AuthenticationEntryPoint`/`AccessDeniedHandler`; `@ControllerAdvice` ловит лишь исключения из контроллеров (например от method security).",
+                "source_of_confusion": "Привычка обрабатывать все исключения в `@ControllerAdvice` переносится и на безопасность.",
+                "if_it_were_true": "Будь так, кастомный `AuthenticationEntryPoint` был бы не нужен, но без него фильтр-ошибки не оформятся в JSON.",
+                "how_it_should_be": "Фильтр-ошибки обрабатывают entry point/handler; `@ControllerAdvice` — для исключений уровня контроллера."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как защитить `REST API` с помощью `Spring Security`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для REST API на `JWT` сессии нужно оставить в режиме `IF_REQUIRED`, как для веб-приложений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для stateless REST на `JWT` ставят `STATELESS`, иначе сервер будет создавать ненужные сессии на каждый запрос.",
+                "source_of_confusion": "Дефолт `IF_REQUIRED` тянется по инерции с веб-конфигураций.",
+                "if_it_were_true": "Будь сессии нужны, терялось бы преимущество stateless-токенов — масштабирование без общего хранилища сессий.",
+                "how_it_should_be": "Сессии для JWT-API делают `STATELESS`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Rate limiting встроен в `Spring Security` и включается одной строкой в `SecurityFilterChain`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rate limiting в `Spring Security` не встроен — его реализуют отдельным фильтром (например на `Bucket4j`) или на API Gateway.",
+                "source_of_confusion": "Кажется, что у фреймворка безопасности есть и защита от перебора из коробки.",
+                "if_it_were_true": "Будь так, не пришлось бы писать кастомный `RateLimitFilter` или использовать `Spring Cloud Gateway`.",
+                "how_it_should_be": "Rate limiting добавляют отдельным фильтром или выносят на gateway."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для REST API собирают конфигурацию: отключают CSRF, настраивают CORS (whitelist origins), ставят сессии `STATELESS`, добавляют `JwtAuthenticationFilter` через `addFilterBefore`, задают правила `authorizeHttpRequests` (`/api/auth/**` и `/actuator/health` — `permitAll`, `/api/admin/**` — `hasRole(\"ADMIN\")`), включают method security `@EnableMethodSecurity` и кастомные `401`/`403` в JSON.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чек-лист: CSRF off, CORS whitelisted, `STATELESS`, JWT-фильтр, `@PreAuthorize` для method-level авторизации, JSON-ошибки, rate limiting на фильтре или gateway.",
+                "example": "`http.csrf(c->c.disable()).cors(c->c.configurationSource(corsConfig())).sessionManagement(s->s.sessionCreationPolicy(STATELESS)).authorizeHttpRequests(...).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)`.",
+                "when_to_apply": "Применяют для публичных и внутренних stateless REST API, особенно при SPA/мобильных клиентах и микросервисной архитектуре.",
+                "edge_cases": "Забыть `permitAll()` для `/actuator/health` сломает k8s-probes; оставить сессии не-`STATELESS` создаст лишние сессии; rate limiting в Security не встроен — его делают отдельным фильтром или на gateway.",
+                "related": "[[spring-security-interview#Q11]] JWT-интеграция; [[spring-security-interview#Q28]] rate limiting; [[spring-security-interview#Q36]] защита Actuator."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для REST API CSRF-защиту обязательно оставлять включённой, иначе API уязвим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для stateless REST на `JWT` CSRF отключают: токен в заголовке не отправляется браузером автоматически, так что подделка запроса невозможна.",
+                "source_of_confusion": "Совет «всегда включать CSRF» применяют без учёта stateless-сценария.",
+                "if_it_were_true": "Будь CSRF нужен, каждый вызов API требовал бы ещё и CSRF-токен, что противоречит идее токена в заголовке.",
+                "how_it_should_be": "CSRF для stateless REST отключают; он обязателен лишь при cookie-сессиях."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить rate limiting?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Rate limiting включается аннотацией `@RateLimit` в `Spring Security` без дополнительного кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такой аннотации в `Spring Security` нет; лимитирование пишут фильтром или берут библиотеку (`Bucket4j`) либо gateway.",
+                "source_of_confusion": "По аналогии с `@PreAuthorize` кажется, что есть и `@RateLimit`.",
+                "if_it_were_true": "Будь аннотация встроена, не нужны были бы кастомные фильтры и `Bucket4j` в примерах.",
+                "how_it_should_be": "Лимит реализуют фильтром/библиотекой; готовой аннотации нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "In-memory бакеты в `ConcurrentHashMap` корректно работают в кластере из нескольких инстансов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый узел держит свою `Map`, поэтому суммарный лимит умножается на число инстансов; для распределённого лимита счётчики хранят в `Redis`.",
+                "source_of_confusion": "Локальная `Map` кажется достаточной, пока не задумаешься о масштабировании.",
+                "if_it_were_true": "Будь так, при 3 узлах лимит «20/мин» фактически давал бы 60/мин на пользователя.",
+                "how_it_should_be": "Для кластера счётчики выносят в общий `Redis`; локальная `Map` лимитирует только один узел."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При превышении лимита фильтр должен возвращать `403 Forbidden`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартный код для превышения лимита — `429 Too Many Requests`; `403` означает иное (нехватку прав).",
+                "source_of_confusion": "Любой отказ кажется уместным закрыть кодом `403`.",
+                "if_it_were_true": "Будь `403`, клиент не отличил бы отказ по правам от троттлинга и не знал бы, что нужно подождать.",
+                "how_it_should_be": "Превышение лимита оформляют как `429 Too Many Requests`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Rate limiting не встроен в `Spring Security` — его реализуют отдельным фильтром (`OncePerRequestFilter`) или библиотекой вроде `Bucket4j`: на каждый ключ (IP/пользователь) держат `Bucket`, при `bucket.tryConsume(1)` пропускают запрос, иначе возвращают `429 Too Many Requests`. Фильтр регистрируют в цепочке через `addFilterBefore`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В простом варианте бакеты держат в `ConcurrentHashMap` по IP; для продакшена счётчики выносят в `Redis` (распределённый лимит) или используют API Gateway.",
+                "example": "`Bucket bucket = buckets.computeIfAbsent(ip, k -> Bucket.builder().addLimit(Bandwidth.classic(20, Refill.greedy(20, Duration.ofMinutes(1)))).build()); if (bucket.tryConsume(1)) chain.doFilter(...); else response.setStatus(429);`",
+                "when_to_apply": "Применяют для защиты от перебора паролей, абуза публичных эндпоинтов и DoS на уровне приложения.",
+                "edge_cases": "In-memory бакеты не работают в кластере (у каждого узла свой счётчик) — нужен `Redis`; лимит по IP легко обходится через прокси, поэтому часто лимитируют по пользователю/ключу API.",
+                "related": "[[spring-security-interview#Q27]] защита REST API; [[spring-security-interview#Q2]] добавление фильтра в цепочку; [[spring-security-interview#Q25]] распределённое состояние в Redis."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать защищённые эндпоинты?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Используют `@WithMockUser(roles = \"ADMIN\")` для подстановки мок-`Authentication`, `MockMvc` для запросов и проверяют статусы: `200` для разрешённого, `401` для анонимного, `403` для недостаточных прав. Для токенов применяют `SecurityMockMvcRequestPostProcessors.jwt()`/`csrf()`; `@WithUserDetails` загружает реального пользователя через `UserDetailsService`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@WithMockUser` ставит контекст до запроса; `jwt()`/`opaqueToken()` имитируют Bearer-аутентификацию; `csrf()` добавляет валидный CSRF-токен в мутирующий запрос.",
+                "example": "`@Test @WithMockUser(roles=\"ADMIN\") void adminCanDelete(){ mockMvc.perform(delete(\"/api/articles/1\")).andExpect(status().isOk()); }` и отдельный тест без аннотации ожидает `401`.",
+                "when_to_apply": "Применяют в `@WebMvcTest`/`@SpringBootTest` для проверки правил доступа без реального логина и без поднятия внешнего IdP.",
+                "edge_cases": "Без `csrf()` мутирующий запрос в тесте с включённым CSRF получит `403`; `@WithMockUser` не вызывает реальный `UserDetailsService` — для этого нужен `@WithUserDetails`.",
+                "related": "[[spring-security-interview#Q3]] коды 401/403; [[spring-security-interview#Q18]] method security; [[spring-security-interview#Q41]] @WithMockUser и post-processors подробнее."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@WithMockUser` поднимает реального пользователя через `UserDetailsService` из БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@WithMockUser` создаёт синтетический `Authentication` с указанными ролями и не обращается к `UserDetailsService`; для реального пользователя есть `@WithUserDetails`.",
+                "source_of_confusion": "Обе аннотации «подставляют пользователя», отсюда смешение.",
+                "if_it_were_true": "Будь так, тест с `@WithMockUser` падал бы, если пользователя нет в БД, но он работает с любым именем.",
+                "how_it_should_be": "`@WithMockUser` — мок; реального пользователя грузит `@WithUserDetails`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Мутирующие запросы (`POST`/`DELETE`) в тесте никогда не требуют CSRF-токена.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если в конфигурации CSRF включён, тестовый `POST`/`DELETE` без `with(csrf())` получит `403`; токен добавляют через post-processor.",
+                "source_of_confusion": "При отключённом CSRF в REST-конфигурации кажется, что токен не нужен нигде.",
+                "if_it_were_true": "Будь так, тесты web-приложения с включённым CSRF проходили бы и без `csrf()`, но они падают с `403`.",
+                "how_it_should_be": "При включённом CSRF в тесте добавляют `with(csrf())`; иначе мутирующий запрос отклоняется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Анонимный запрос к защищённому эндпоинту в тесте должен возвращать `403`, а не `401`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отсутствие аутентификации — это `401 Unauthorized`; `403` отдают аутентифицированному пользователю без прав.",
+                "source_of_confusion": "Любой отказ в доступе по привычке ассоциируют с `403`.",
+                "if_it_were_true": "Будь это `403`, тест `anonymousCannotDelete` ожидал бы `isForbidden`, но корректно ожидать `isUnauthorized`.",
+                "how_it_should_be": "Аноним получает `401`; `403` — для залогиненного без нужной роли."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить двухфакторную аутентификацию (2FA)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "2FA в `Spring Security` включается готовым методом `http.twoFactorAuth()` без кастомного кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенного метода `twoFactorAuth()` нет; 2FA собирают из кастомного `AuthenticationProvider`/фильтра и TOTP-библиотеки.",
+                "source_of_confusion": "По аналогии с `formLogin()`/`httpBasic()` кажется, что есть и метод для 2FA.",
+                "if_it_were_true": "Будь такой метод, не нужно было бы реализовывать `TwoFactorAuthenticationToken` и endpoint проверки кода.",
+                "how_it_should_be": "2FA реализуют вручную через провайдер/фильтр и внешнюю TOTP-библиотеку."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "2FA реализуют через кастомный `AuthenticationProvider` или дополнительный фильтр: первый шаг проверяет логин/пароль и выдаёт частичную аутентификацию (`TwoFactorAuthenticationToken`), второй — отдельный endpoint (`/api/auth/verify-2fa`) валидирует TOTP-код и только после этого выдаёт полноценный токен. Для TOTP берут библиотеки вроде `dev.samstevens.totp` или `googleauth`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Пользователь сканирует QR-код в Google Authenticator/Authy; код меняется каждые ~30 секунд и проверяется на сервере по общему секрету.",
+                "example": "После проверки пароля провайдер возвращает частичную аутентификацию; затем `if (totpService.verifyCode(user, request.code())) { String token = jwtService.generateToken(user, ...); }`.",
+                "when_to_apply": "Применяют для повышения безопасности входа в чувствительные системы (банкинг, админки), где одного пароля недостаточно.",
+                "edge_cases": "Нельзя выдавать полный доступ после первого фактора — частичная аутентификация должна ограничивать действия до подтверждения TOTP; секрет TOTP хранят защищённо, как и пароль.",
+                "related": "[[spring-security-interview#Q6]] кастомный AuthenticationProvider; [[spring-security-interview#Q13]] выдача токена после входа; [[spring-security-interview#Q8]] хранение секретов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "После успешной проверки пароля пользователю сразу выдают полный доступ, а TOTP проверяют опционально потом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После первого фактора выдают лишь частичную аутентификацию; полный доступ — только после подтверждения TOTP-кода.",
+                "source_of_confusion": "Кажется, что пароль — основное, а код — формальность.",
+                "if_it_were_true": "Будь доступ полным сразу, второй фактор не добавлял бы защиты — украденного пароля хватило бы для входа.",
+                "how_it_should_be": "Полный доступ дают только после успешной проверки второго фактора."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "TOTP-код проверяется по точному совпадению с одним фиксированным значением, хранящимся в БД в открытом виде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TOTP-код вычисляется из общего секрета и текущего времени и меняется каждые ~30 секунд; в БД хранят секрет (защищённо), а не сам код.",
+                "source_of_confusion": "Аналогия со статичным PIN-кодом создаёт ложную модель.",
+                "if_it_were_true": "Будь код фиксированным, он не был бы одноразовым и время-зависимым — терялся бы весь смысл TOTP.",
+                "how_it_should_be": "Сервер сверяет код, вычисленный из секрета и времени; в хранилище лежит секрет, не код."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `SecurityContext` в async-методах и `@Async`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `@Async`-методе `SecurityContext` доступен автоматически — `Spring` сам копирует его в поток пула.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию контекст в `ThreadLocal` текущего потока и в async-поток не попадает; нужен `DelegatingSecurityContextAsyncTaskExecutor` или другая стратегия.",
+                "source_of_confusion": "Хочется верить, что фреймворк прозрачно пробрасывает контекст всюду.",
+                "if_it_were_true": "Будь так, не существовало бы `DelegatingSecurityContextAsyncTaskExecutor`, созданного именно для этой проблемы.",
+                "how_it_should_be": "Контекст в async-поток переносят явно — обёрткой executor'а или передачей параметром."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`MODE_INHERITABLETHREADLOCAL` решает проблему контекста в любых async-сценариях, включая пулы потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эта стратегия работает только для дочерних потоков (`new Thread()`); пул переиспользует существующие потоки, не создавая дочерних, поэтому контекст не наследуется.",
+                "source_of_confusion": "Слово «inheritable» создаёт впечатление универсального наследования.",
+                "if_it_were_true": "Будь так, не понадобился бы `DelegatingSecurityContextAsyncTaskExecutor` специально для пулов.",
+                "how_it_should_be": "Для пулов берут `DelegatingSecurityContext*Executor`; `MODE_INHERITABLETHREADLOCAL` — лишь для свежесозданных потоков."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "По умолчанию `SecurityContextHolder` использует `MODE_THREADLOCAL`, поэтому в `@Async`-методе (другой поток пула) `SecurityContext` недоступен. Решения: `MODE_INHERITABLETHREADLOCAL` (для `new Thread()`, но не для пулов), обёртка `DelegatingSecurityContextAsyncTaskExecutor` вокруг `ThreadPoolTaskExecutor` (рекомендуется — копирует контекст в каждый async-поток) или явная передача `SecurityContext` параметром.",
+              "correct": true,
+              "sections": {
+                "explanation": "`DelegatingSecurityContextAsyncTaskExecutor` оборачивает обычный executor и переносит текущий контекст в рабочий поток; при ручной передаче обязателен `clearContext()` в `finally`.",
+                "example": "`@Override public Executor getAsyncExecutor(){ ThreadPoolTaskExecutor e=new ThreadPoolTaskExecutor(); e.initialize(); return new DelegatingSecurityContextAsyncTaskExecutor(e); }`",
+                "when_to_apply": "Применяют, когда в фоновом `@Async`-методе нужен текущий пользователь (генерация отчётов, аудит, отправка от имени пользователя).",
+                "edge_cases": "`MODE_INHERITABLETHREADLOCAL` не работает с пулами (потоки переиспользуются, не создаются как дочерние); при ручной передаче без `clearContext()` контекст «прилипнет» к переиспользуемому потоку пула.",
+                "related": "[[spring-security-interview#Q5]] стратегии SecurityContextHolder; [[spring-security-interview#Q42]] передача контекста и реактивный стек; [[spring-security-interview#Q1]] задачи Spring Security."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При ручной установке контекста в async-потоке `clearContext()` вызывать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В пуле поток переиспользуется, поэтому без `clearContext()` в `finally` контекст останется и «протечёт» в следующую задачу на том же потоке.",
+                "source_of_confusion": "Кажется, что контекст исчезнет сам по завершении метода.",
+                "if_it_were_true": "Будь очистка не нужна, чужой пользователь мог бы оказаться в контексте следующей задачи того же потока — это утечка прав.",
+                "how_it_should_be": "После ручной установки в пуле обязателен `clearContext()` в `finally`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `OAuth2 Resource Server` с `JWT` и кастомными клеймами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Кастомный claim с ролями (`roles`) подхватывается автоматически без `JwtAuthenticationConverter`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию authorities берутся из `scope`/`scp`; чтобы роли читались из `roles`, нужен `JwtAuthenticationConverter` с `setAuthoritiesClaimName(\"roles\")`.",
+                "source_of_confusion": "Кажется, что фреймворк сам найдёт claim с подходящим именем.",
+                "if_it_were_true": "Будь так, не понадобились бы `setAuthoritiesClaimName`/`setAuthorityPrefix` для нестандартных токенов.",
+                "how_it_should_be": "Нестандартный claim ролей маппят явным конвертером; авто-подхвата нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Audience токена проверяется автоматически, поэтому кастомный `OAuth2TokenValidator` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию проверяются подпись, срок и issuer (при `issuer-uri`), но не audience; проверку `aud` добавляют своим `OAuth2TokenValidator`.",
+                "source_of_confusion": "Кажется, что валидация токена покрывает все claims разом.",
+                "if_it_were_true": "Будь audience проверен по умолчанию, токен для другого API (с верной подписью того же IdP) отклонялся бы сам — но он принимается.",
+                "how_it_should_be": "Audience валидируют отдельным `OAuth2TokenValidator` в кастомном `JwtDecoder`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Resource Server с `JWT` должен хранить серверную сессию для каждого валидированного токена.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Resource Server работает stateless (`SessionCreationPolicy.STATELESS`): каждый запрос валидируется по токену, сессия не создаётся.",
+                "source_of_confusion": "Привычка к сессионной модели переносится на токенную аутентификацию.",
+                "if_it_were_true": "Будь сессия нужна, терялся бы смысл `Bearer`-токенов — масштабирование без общего хранилища сессий.",
+                "how_it_should_be": "Resource Server делают `STATELESS`; состояние несёт сам токен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключают `spring-boot-starter-oauth2-resource-server`, задают `issuer-uri`/`jwk-set-uri`, в `SecurityFilterChain` — `oauth2ResourceServer(o -> o.jwt(...))` и `STATELESS`. Маппинг claims настраивают через `JwtAuthenticationConverter` (`setAuthoritiesClaimName(\"roles\")`, `setAuthorityPrefix(\"ROLE_\")`, `setPrincipalClaimName(\"preferred_username\")`); для доп. проверок — кастомный `JwtDecoder` с `OAuth2TokenValidator` (issuer, audience). К клеймам обращаются через `@AuthenticationPrincipal Jwt jwt`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Конвертер превращает значения claim в `GrantedAuthority`, а валидатор отклоняет токены с чужим issuer/audience ещё до установки контекста.",
+                "example": "`converter.setAuthoritiesClaimName(\"roles\"); converter.setAuthorityPrefix(\"ROLE_\"); jwtConverter.setPrincipalClaimName(\"preferred_username\");` и в контроллере `jwt.getClaimAsStringList(\"roles\")`.",
+                "when_to_apply": "Применяют, когда токены приходят от внешнего IdP с нестандартным расположением ролей и нужно проверять audience.",
+                "edge_cases": "Без кастомного конвертера роли ищутся в `scope` с префиксом `SCOPE_` — `hasRole` не сработает; без audience-валидатора токен, выписанный для другого API, будет принят.",
+                "related": "[[spring-security-interview#Q16]] базовый Resource Server; [[spring-security-interview#Q38]] настройка через стартер; [[spring-security-interview#Q39]] JwtDecoder и валидаторы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `@PreAuthorize` с выражениями `SpEL` и кастомным `PermissionEvaluator`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@PreAuthorize` принимает SpEL-выражение, вычисляемое до метода; доступны `authentication`, `principal`, `hasRole()`, `hasAuthority()` и параметры метода через `#paramName`. Для доступа на уровне объектов регистрируют кастомный `PermissionEvaluator` (через `DefaultMethodSecurityExpressionHandler.setPermissionEvaluator(...)`) и используют `hasPermission(#id, 'Document', 'READ')` или `hasPermission(#doc, 'WRITE')`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`PermissionEvaluator` реализует две перегрузки `hasPermission` (по объекту и по id+тип); `hasPermission(returnObject, ...)` работает и в `@PostAuthorize`/`@PostFilter`.",
+                "example": "`@PreAuthorize(\"#username == authentication.name\")` пускает владельца; `@PreAuthorize(\"hasPermission(#docId, 'Document', 'READ')\")` делегирует решение `PermissionEvaluator`.",
+                "when_to_apply": "Применяют для тонкой авторизации, где правила зависят от параметров, владельца или атрибутов конкретного объекта.",
+                "edge_cases": "`hasPermission` не работает без зарегистрированного `PermissionEvaluator`; вариант с id+тип обычно делает запрос в БД за объектом — это лишняя нагрузка.",
+                "related": "[[spring-security-interview#Q18]] базовые аннотации method security; [[spring-security-interview#Q20]] domain object security; [[spring-security-interview#Q34]] @EnableMethodSecurity."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В SpEL `@PreAuthorize` нельзя обращаться к параметрам метода — доступны только роли пользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметры доступны через `#paramName` (например `#userId == authentication.principal.id`); это одна из ключевых возможностей SpEL в method security.",
+                "source_of_confusion": "Знакомство только с `hasRole(...)` создаёт впечатление, что параметры недоступны.",
+                "if_it_were_true": "Будь так, нельзя было бы написать `#order.owner == authentication.name`, но это типовое выражение.",
+                "how_it_should_be": "К параметрам обращаются через `#`; SpEL не ограничен только ролями."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`hasPermission(...)` работает сразу после `@EnableMethodSecurity`, без регистрации `PermissionEvaluator`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`hasPermission` требует кастомного `PermissionEvaluator`, подключённого через `MethodSecurityExpressionHandler`; иначе вызов завершится ошибкой/`false`.",
+                "source_of_confusion": "Наличие функции в SpEL создаёт иллюзию готовой реализации.",
+                "if_it_were_true": "Будь так, `hasPermission` знал бы правила доступа к любым объектам без вашего кода, что невозможно.",
+                "how_it_should_be": "Сначала регистрируют `PermissionEvaluator`; только потом `hasPermission` имеет смысл."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`PermissionEvaluator` имеет единственный метод `hasPermission` — перегрузки по id+тип не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Интерфейс объявляет две перегрузки: `hasPermission(auth, targetDomainObject, permission)` и `hasPermission(auth, targetId, targetType, permission)`.",
+                "source_of_confusion": "Чаще показывают вариант с готовым объектом, отсюда впечатление об одном методе.",
+                "if_it_were_true": "Будь перегрузка одна, выражение `hasPermission(#id, 'Document', 'READ')` (по id и типу) было бы некуда направить.",
+                "how_it_should_be": "Перегрузок две — по объекту и по id+тип; вторая обычно грузит объект из репозитория."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как включить `Method Security` и в чём разница между `@PreAuthorize` и `@PostFilter`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@PostFilter` блокирует весь вызов метода, если хоть один элемент коллекции не проходит условие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@PostFilter` не блокирует вызов — он удаляет из результата неподходящие элементы и возвращает отфильтрованную коллекцию.",
+                "source_of_confusion": "Аналогия с `@PreAuthorize` («не прошёл — отказ») переносится на фильтр.",
+                "if_it_were_true": "Будь так, любой недоступный элемент рушил бы весь запрос, и фильтрация теряла бы смысл.",
+                "how_it_should_be": "`@PostFilter` отсеивает элементы, а не отклоняет весь вызов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Method security включают `@EnableMethodSecurity(prePostEnabled=true, securedEnabled=true, jsr250Enabled=true)`. `@PreAuthorize` проверяет условие до выполнения метода (блокирует вызов при `false`), а `@PostFilter` срабатывает после метода и фильтрует возвращаемую коллекцию, оставляя только разрешённые элементы (текущий элемент — `filterObject`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`@PreAuthorize`/`@PostAuthorize` решают «пускать/не пускать», а `@PreFilter`/`@PostFilter` отсеивают элементы коллекций; `@PostFilter` работает только с коллекциями/массивами.",
+                "example": "`@PreAuthorize(\"hasRole('ADMIN')\")` блокирует вызов целиком; `@PostFilter(\"hasPermission(filterObject, 'READ')\")` вернёт только те документы, к которым есть доступ.",
+                "when_to_apply": "Включают, когда авторизацию переносят на сервисный слой; `@PostFilter` — для выборок, которые надо отфильтровать по правам.",
+                "edge_cases": "`prePostEnabled` включён по умолчанию, а `securedEnabled`/`jsr250Enabled` — нет; `@PostFilter` грузит всю коллекцию и фильтрует в памяти, что дорого на больших данных.",
+                "related": "[[spring-security-interview#Q18]] аннотации method security; [[spring-security-interview#Q19]] @PreFilter/@PostFilter; [[spring-security-interview#Q43]] @PostAuthorize и @Secured."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@EnableMethodSecurity` по умолчанию включает поддержку `@Secured` и `@RolesAllowed`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию включён только `prePostEnabled`; для `@Secured` нужен `securedEnabled=true`, для `@RolesAllowed` — `jsr250Enabled=true`.",
+                "source_of_confusion": "Кажется, что аннотация активирует все варианты method security разом.",
+                "if_it_were_true": "Будь так, не существовало бы отдельных флагов `securedEnabled`/`jsr250Enabled`.",
+                "how_it_should_be": "По умолчанию работают только `@PreAuthorize`/`@PostAuthorize`/фильтры; остальное включают флагами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@PreAuthorize` проверяется после выполнения метода, как и `@PostFilter`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@PreAuthorize` вычисляется до вызова метода и блокирует его при ложном условии; после метода работают `@PostAuthorize`/`@PostFilter`.",
+                "source_of_confusion": "Соседство аннотаций в одной теме смазывает момент проверки.",
+                "if_it_were_true": "Будь `@PreAuthorize` пост-проверкой, метод выполнялся бы даже при отказе — но он не вызывается вовсе.",
+                "how_it_should_be": "`@PreAuthorize` — до вызова; пост-проверка — это `@PostAuthorize`/`@PostFilter`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как одновременно настроить `CORS` и `CSRF` в `SecurityFilterChain`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Порядок не важен: CSRF можно настроить до CORS, результат будет тот же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CORS обрабатывают до CSRF и аутентификации; иначе preflight `OPTIONS` (без токенов/credentials) будет отклонён ещё до CORS-обработки.",
+                "source_of_confusion": "В fluent-DSL методы пишут подряд, отсюда впечатление, что порядок безразличен.",
+                "if_it_were_true": "Будь порядок безразличен, preflight мог бы получить `401`/`403` от CSRF до того, как сработает CORS.",
+                "how_it_should_be": "CORS ставят до CSRF; метод `cors()` гарантирует правильную позицию фильтра."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нельзя одновременно включить CSRF для веб-части и отключить его для `/api/**` в одной цепочке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Можно: CSRF оставляют включённым, но исключают API через `ignoringRequestMatchers(\"/api/**\")`, не трогая form-based пути.",
+                "source_of_confusion": "Кажется, что CSRF — это бинарный глобальный флаг on/off.",
+                "if_it_were_true": "Будь так, не существовало бы метода `ignoringRequestMatchers` для точечного исключения путей.",
+                "how_it_should_be": "CSRF настраивают избирательно: `ignoringRequestMatchers` отключает его только для указанных путей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В одном `SecurityFilterChain` вызывают `cors(...)` (до CSRF) и `csrf(...)`: CORS задают через `CorsConfigurationSource` (origins, методы, заголовки, credentials, maxAge), а CSRF для API-эндпоинтов на `JWT` игнорируют через `ignoringRequestMatchers(\"/api/**\")`, оставляя для form-based путей `CookieCsrfTokenRepository`. Preflight `OPTIONS` открывают через `requestMatchers(HttpMethod.OPTIONS, \"/**\").permitAll()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "CORS должен идти до CSRF и аутентификации; для SPA используют паттерн Double Submit Cookie с заголовком `X-XSRF-TOKEN`.",
+                "example": "`http.cors(c->c.configurationSource(corsSource())).csrf(csrf->csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).ignoringRequestMatchers(\"/api/**\"))`.",
+                "when_to_apply": "Применяют в смешанных приложениях, где есть и stateless API (JWT), и браузерная часть с cookie-сессиями.",
+                "edge_cases": "При `allowCredentials(true)` нельзя `*` в origins; забыть `permitAll` для `OPTIONS` — и preflight упрётся в `401`; нельзя глобально отключать CSRF, если есть cookie-сессии.",
+                "related": "[[spring-security-interview#Q21]] настройка CORS; [[spring-security-interview#Q22]] когда отключать CSRF; [[spring-security-interview#Q40]] SameSite как дополнение к CSRF."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для preflight `OPTIONS` не нужно явных правил доступа — `Spring Security` всегда пропускает `OPTIONS`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `OPTIONS` попадает под `anyRequest().authenticated()` и без `permitAll` для него preflight получит `401`; CORS-фильтр (через `cors()`) или явный `permitAll` это решает.",
+                "source_of_confusion": "Кажется, что preflight — служебный запрос вне правил авторизации.",
+                "if_it_were_true": "Будь так, не приходилось бы добавлять `requestMatchers(HttpMethod.OPTIONS, \"/**\").permitAll()`.",
+                "how_it_should_be": "Preflight либо обрабатывает CORS-фильтр до авторизации, либо `OPTIONS` явно делают `permitAll`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как ограничить доступ к `Actuator`-эндпоинтам через `SecurityFilterChain`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Actuator-эндпоинты `Spring Boot` защищает автоматически, отдельная конфигурация безопасности не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию защита Actuator настроена слабо/выборочно; чувствительные эндпоинты в production защищают явным `SecurityFilterChain` и ограничением `exposure.include`.",
+                "source_of_confusion": "Кажется, что раз эндпоинты «системные», фреймворк закрывает их сам.",
+                "if_it_were_true": "Будь так, не пришлось бы писать `actuatorSecurityFilterChain` и ограничивать `include`.",
+                "how_it_should_be": "Защиту Actuator настраивают явно: выделенная цепочка плюс ограничение экспонируемых эндпоинтов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для Actuator лучше матчить эндпоинты по строковым путям (`/actuator/**`), а не через `EndpointRequest`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуется `EndpointRequest.to(...)`/`toAnyEndpoint()` — он устойчив к смене `management.endpoints.web.base-path`, в отличие от хардкода путей.",
+                "source_of_confusion": "Привычка к `requestMatchers(\"/actuator/**\")` тянется из обычной URL-авторизации.",
+                "if_it_were_true": "Будь строковый матчинг лучше, смена base-path не ломала бы правила, но при хардкоде она их ломает.",
+                "how_it_should_be": "Используют `EndpointRequest`, чтобы матчинг не зависел от конкретного пути Actuator."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Выделенная цепочка для Actuator должна иметь самый низкий приоритет (`@Order` с большим числом), чтобы не мешать основной.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цепочке Actuator дают высокий приоритет (`@Order(1)`), иначе её перехватит более общая основная цепочка и правила не применятся.",
+                "source_of_confusion": "Кажется, что «вспомогательную» цепочку логично ставить последней.",
+                "if_it_were_true": "Будь приоритет низким, запросы к `/actuator/**` обработала бы первая (основная) цепочка по своим правилам.",
+                "how_it_should_be": "Цепочку Actuator ставят раньше (`@Order(1)`), чтобы её `securityMatcher` сработал первым."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Создают выделенный `SecurityFilterChain` с `@Order(1)` и `securityMatcher(EndpointRequest.toAnyEndpoint())`: `health`/`info` открывают через `EndpointRequest.to(HealthEndpoint.class, InfoEndpoint.class).permitAll()` (для k8s-probes), остальные — `hasRole(\"ACTUATOR_ADMIN\")` с `httpBasic`. В `application.yml` ограничивают `exposure.include` и `health.show-details: when-authorized`; Actuator часто выносят на отдельный порт.",
+              "correct": true,
+              "sections": {
+                "explanation": "`EndpointRequest.to(...)` матчит эндпоинты по типу, а не по строковому пути — устойчиво к смене base-path; `@Order(1)` даёт этой цепочке приоритет над основной.",
+                "example": "`http.securityMatcher(EndpointRequest.toAnyEndpoint()).authorizeHttpRequests(a->a.requestMatchers(EndpointRequest.to(HealthEndpoint.class, InfoEndpoint.class)).permitAll().anyRequest().hasRole(\"ACTUATOR_ADMIN\")).httpBasic(withDefaults())`.",
+                "when_to_apply": "Применяют в production, где `metrics`/`loggers`/`env` нельзя открывать всем, но `health` должен быть доступен оркестратору.",
+                "edge_cases": "`include: \"*\"` опасно открывает чувствительные эндпоинты; `/shutdown` и `/env` (POST) отключают или жёстко ограничивают; ручной матчинг путей ломается при смене base-path.",
+                "related": "[[spring-security-interview#Q4]] несколько SecurityFilterChain и @Order; [[spring-security-interview#Q10]] HTTP Basic; [[spring-security-interview#Q17]] авторизация по ролям."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `SecurityFilterChain` в `Spring Security 6` отличается от `WebSecurityConfigurerAdapter`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`WebSecurityConfigurerAdapter` удалён в `Spring Security 6` (deprecated с 5.7). Вместо наследования и переопределения `configure(HttpSecurity)` объявляют `@Bean SecurityFilterChain`, а `AuthenticationManager`/`PasswordEncoder` — отдельными бинами. Также `authorizeRequests()`/`antMatchers()` заменены на `authorizeHttpRequests()`/`requestMatchers()`, а конфигурация идёт через лямбды (`httpBasic(Customizer.withDefaults())`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Компонентный (бинный) подход устраняет проблемы наследования: несколько цепочек объявляют несколькими бинами с `@Order`, а не множественным переопределением методов.",
+                "example": "Было: `class SecurityConfig extends WebSecurityConfigurerAdapter { void configure(HttpSecurity http){...} }`. Стало: `@Bean SecurityFilterChain filterChain(HttpSecurity http){ return http....build(); }`.",
+                "when_to_apply": "Актуально при миграции на `Spring Security 6`/`Spring Boot 3` и при написании любой новой конфигурации безопасности.",
+                "edge_cases": "Старый код с `WebSecurityConfigurerAdapter`/`antMatchers`/`authorizeRequests` не компилируется на `Spring Security 6`; это типичная ошибка при апгрейде с устаревших туториалов.",
+                "related": "[[spring-security-interview#Q4]] как объявить SecurityFilterChain; [[spring-security-interview#Q17]] requestMatchers вместо antMatchers; [[spring-security-interview#Q34]] @EnableMethodSecurity."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Spring Security 6` по-прежнему наследуют `WebSecurityConfigurerAdapter`, просто метод называется иначе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Класс полностью удалён из `Spring Security 6`; наследовать нечего — конфигурацию задают бином `SecurityFilterChain`.",
+                "source_of_confusion": "Огромный объём старого кода и примеров с этим классом создаёт ложное ощущение его актуальности.",
+                "if_it_were_true": "Будь класс на месте, проект на `Spring Security 6` компилировался бы с ним, но импорт не разрешается.",
+                "how_it_should_be": "Адаптер удалён; используют `@Bean SecurityFilterChain`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Метод `antMatchers()` в `Spring Security 6` остался, изменилось только имя `configure`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`antMatchers()` удалён вместе с `authorizeRequests()`; используют `requestMatchers()` внутри `authorizeHttpRequests()`.",
+                "source_of_confusion": "Старые примеры с `antMatchers` всё ещё доминируют в поиске.",
+                "if_it_were_true": "Будь `antMatchers` доступен, код на 6-й версии компилировался бы с ним, но метода нет.",
+                "how_it_should_be": "Актуальный API — `authorizeHttpRequests()` и `requestMatchers()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В новом подходе `AuthenticationManager` создаётся автоматически и его нельзя объявлять бином.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: в `Spring Security 6` `AuthenticationManager` обычно объявляют бином через `AuthenticationConfiguration.getAuthenticationManager()`, чтобы инжектить его (например в логин-контроллер).",
+                "source_of_confusion": "Кажется, что раз `WebSecurityConfigurerAdapter` ушёл, менеджер «магически» доступен.",
+                "if_it_were_true": "Будь так, логин-эндпоинт не смог бы получить `AuthenticationManager` для вызова `authenticate`.",
+                "how_it_should_be": "`AuthenticationManager` достают из `AuthenticationConfiguration` и публикуют бином."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `OAuth2 Resource Server` через `spring-security-oauth2-resource-server`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для Resource Server обязательно вручную скачивать и обновлять публичные ключи провайдера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По `jwk-set-uri`/`issuer-uri` стартер сам скачивает и кэширует ключи JWKS, подхватывая их ротацию.",
+                "source_of_confusion": "Опыт ручной работы с ключами создаёт ожидание ручного управления.",
+                "if_it_were_true": "Будь ключи ручными, ротация у IdP ломала бы валидацию до ручного обновления.",
+                "how_it_should_be": "Ключи берутся автоматически по JWKS-endpoint; ручное управление не требуется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подключают `spring-boot-starter-oauth2-resource-server`, в `application.yml` указывают `jwk-set-uri` (или `issuer-uri` для auto-discovery через `.well-known/openid-configuration`), а в `SecurityFilterChain` — `oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(...)))` с `STATELESS` и `csrf.disable()`. Для непрозрачных токенов вместо `jwt` настраивают `opaquetoken` с `introspection-uri` и client credentials.",
+              "correct": true,
+              "sections": {
+                "explanation": "С `jwt` валидация локальна (подпись по JWKS); с `opaquetoken` сервер делает introspection-запрос к Authorization Server на каждый токен.",
+                "example": "`spring.security.oauth2.resourceserver.jwt.jwk-set-uri: https://keycloak.example.com/realms/my-realm/protocol/openid-connect/certs` + `.oauth2ResourceServer(o->o.jwt(...))`.",
+                "when_to_apply": "Применяют для микросервисов за общим IdP (Keycloak/Auth0/Okta): JWT для самостоятельной валидации, opaque — когда нужен централизованный отзыв.",
+                "edge_cases": "JWT валидируется без обращения к IdP (быстро, но отзыв сложен); opaque-токен требует introspection на каждый запрос (медленнее, но мгновенный отзыв); путать `jwt` и `opaquetoken`-конфиги нельзя.",
+                "related": "[[spring-security-interview#Q16]] базовый Resource Server; [[spring-security-interview#Q32]] кастомные claims; [[spring-security-interview#Q39]] JwtDecoder."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Opaque-токены валидируются локально по подписи, как и `JWT`, без обращения к Authorization Server.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Непрозрачный токен не несёт подписанных claims — его проверяют introspection-запросом к Authorization Server (`introspection-uri`).",
+                "source_of_confusion": "Кажется, что любой Bearer-токен проверяется одинаково.",
+                "if_it_were_true": "Будь opaque-токен самопроверяемым, не нужны были бы `introspection-uri`, `client-id` и `client-secret` для introspection.",
+                "how_it_should_be": "Opaque-токен валидируют через introspection-endpoint; локально по подписи проверяют только `JWT`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`issuer-uri` и `jwk-set-uri` — взаимоисключающие, и нужно настраивать оба одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достаточно одного: `issuer-uri` включает auto-discovery (сам найдёт jwks), либо явно задают `jwk-set-uri`; оба сразу не требуются.",
+                "source_of_confusion": "Наличие двух свойств наводит на мысль, что нужны оба.",
+                "if_it_were_true": "Будь нужны оба, конфигурация с одним `issuer-uri` (типовая для Keycloak) не работала бы, но она работает.",
+                "how_it_should_be": "Указывают либо `issuer-uri` (с auto-discovery), либо `jwk-set-uri`; одного достаточно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `JwtDecoder` и `BearerTokenAuthenticationFilter`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`BearerTokenAuthenticationFilter` нужно писать и регистрировать вручную, как кастомный JWT-фильтр.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это стандартный фильтр `Spring Security`, который подключается автоматически при `oauth2ResourceServer()`; вручную его не пишут.",
+                "source_of_confusion": "Опыт ручного `JwtAuthenticationFilter` (Q12) переносят на Resource Server.",
+                "if_it_were_true": "Будь нужно писать его руками, не было бы смысла в стартере `oauth2-resource-server`.",
+                "how_it_should_be": "Фильтр предоставляет фреймворк; разработчик настраивает лишь `JwtDecoder`/конвертер."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JwtDecoder` умеет работать только с JWKS-endpoint и не поддерживает HMAC-секрет или RSA-ключ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NimbusJwtDecoder` поддерживает `withJwkSetUri` (JWKS), `withSecretKey` (HMAC) и `withPublicKey` (RSA) — источник ключа выбирают по типу токена.",
+                "source_of_confusion": "Чаще всего показывают вариант с JWKS, отсюда впечатление единственного способа.",
+                "if_it_were_true": "Будь так, симметрично подписанные (HMAC) токены вообще нельзя было бы валидировать в `Spring Security`.",
+                "how_it_should_be": "Источник ключа выбирают: JWKS, секрет (HMAC) или публичный ключ (RSA)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`BearerTokenAuthenticationFilter` извлекает `Bearer`-токен из заголовка `Authorization` и передаёт его в `AuthenticationManager` → `JwtAuthenticationProvider` → `JwtDecoder` (валидация подписи и claims) → `JwtAuthenticationConverter` (claims → authorities) → `SecurityContext`. `JwtDecoder` создают через `NimbusJwtDecoder.withJwkSetUri(...)`, `.withSecretKey(...)` (HMAC) или `.withPublicKey(...)` (RSA); доп. проверки добавляют через `setJwtValidator(new DelegatingOAuth2TokenValidator<>(...))`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Фильтр и провайдер подключаются автоматически при `oauth2ResourceServer().jwt(...)`; кастомный `JwtDecoder`-бин переопределяет источник ключей и валидаторы.",
+                "example": "`@Bean JwtDecoder jwtDecoder(){ var d = NimbusJwtDecoder.withJwkSetUri(\"https://auth.example.com/jwks\").build(); d.setJwtValidator(new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator)); return d; }`",
+                "when_to_apply": "Применяют, когда нужен нестандартный источник ключей (HMAC-секрет, локальный RSA) или дополнительная валидация (issuer, audience).",
+                "edge_cases": "Для симметричных токенов берут `withSecretKey` (HMAC), для асимметричных — `withJwkSetUri`/`withPublicKey`; `setJwtValidator` заменяет валидатор целиком, поэтому базовые проверки оборачивают в `DelegatingOAuth2TokenValidator`.",
+                "related": "[[spring-security-interview#Q16]] Resource Server; [[spring-security-interview#Q32]] кастомные claims; [[spring-security-interview#Q38]] настройка через стартер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`setJwtValidator(...)` добавляет валидатор к стандартным проверкам, не заменяя их.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`setJwtValidator` заменяет валидатор целиком; чтобы сохранить базовые проверки (issuer/срок), их оборачивают в `DelegatingOAuth2TokenValidator` вместе со своими.",
+                "source_of_confusion": "Имя метода (`set...Validator`) звучит как «добавить ещё один».",
+                "if_it_were_true": "Будь это добавление, не пришлось бы вручную включать `JwtValidators.createDefaultWithIssuer(...)` в делегат.",
+                "how_it_should_be": "Валидатор заменяется целиком; базовые проверки явно включают через `DelegatingOAuth2TokenValidator`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда отключать `CSRF`-защиту и как `SameSite` cookies работают как альтернатива?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SameSite=Strict` полностью заменяет CSRF-токен, и при нём CSRF-защиту можно отключать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SameSite` — дополнение, а не замена: он не покрывает старые браузеры и часть сценариев, поэтому CSRF-токен оставляют включённым.",
+                "source_of_confusion": "Сильная защита `Strict` создаёт впечатление достаточности.",
+                "if_it_were_true": "Будь это полной заменой, документация не рекомендовала бы использовать оба механизма вместе.",
+                "how_it_should_be": "`SameSite` усиливает защиту, но CSRF-токен при cookie-сессиях сохраняют."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CSRF можно смело отключать в любом приложении, использующем session cookies, если включён HTTPS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При session cookies CSRF обязателен независимо от HTTPS — TLS защищает канал, но не от подделки запроса с чужого сайта через автоматически отправляемую cookie.",
+                "source_of_confusion": "Кажется, что HTTPS закрывает все вопросы безопасности запросов.",
+                "if_it_were_true": "Будь так, cookie-based приложение по HTTPS было бы беззащитно перед CSRF, что неверно.",
+                "how_it_should_be": "При cookie-сессиях CSRF оставляют включённым; HTTPS его не заменяет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SameSite=None` обеспечивает максимальную защиту от CSRF и его стоит использовать по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SameSite=None` означает отправку cookie всегда (в т.ч. cross-site) — это наименьшая защита и требует флага `Secure`; от CSRF защищают `Strict`/`Lax`.",
+                "source_of_confusion": "Значение `None` ошибочно ассоциируют с «без ограничений = безопасно».",
+                "if_it_were_true": "Будь `None` защитным, его не приходилось бы сопровождать `Secure` и предупреждениями об отсутствии защиты.",
+                "how_it_should_be": "От CSRF защищают `Strict`/`Lax`; `None` снимает ограничения и требует `Secure`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CSRF безопасно отключают только при выполнении всех условий: API полностью stateless (нет session cookies, токен в `Authorization`), нет browser-форм, клиенты — мобильные/бэкенды. Нельзя отключать при session cookies, HTML-формах или хранении токена в `HttpOnly` cookie. `SameSite` cookies (`Strict`/`Lax`) — дополнительная, но не заменяющая защита от CSRF; в `Spring Security 6` для браузерных приложений рекомендуют оба механизма.",
+              "correct": true,
+              "sections": {
+                "explanation": "`SameSite=Strict` не отправляет cookie даже при переходе по ссылке, `Lax` — отправляет при GET-навигации, но не при cross-site POST; для SPA используют `XorCsrfTokenRequestAttributeHandler` с `CookieCsrfTokenRepository`.",
+                "example": "`http.csrf(c->c.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler()))`; cookie: `serializer.setSameSite(\"Strict\")`.",
+                "when_to_apply": "Отключают для чистых stateless API; `SameSite` применяют как усиление для любых cookie-based приложений.",
+                "edge_cases": "`SameSite=Strict` может ломать сценарии входа по внешней ссылке; `None` без `Secure` браузер отвергнет; `SameSite` не покрывает все случаи (старые браузеры, поддомены), поэтому CSRF-токен всё равно нужен.",
+                "related": "[[spring-security-interview#Q22]] базовая CSRF-защита; [[spring-security-interview#Q35]] CORS и CSRF вместе; [[spring-security-interview#Q11]] почему JWT не нужен CSRF."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать `Spring Security` — `@WithMockUser` и `SecurityMockMvcRequestPostProcessors`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@WithMockUser(username=\"john\", roles={\"USER\"})` имитирует аутентифицированного пользователя на время теста; `@WithUserDetails(value=\"...\", userDetailsServiceBeanName=\"...\")` грузит реального пользователя через `UserDetailsService`. Для токенов используют `SecurityMockMvcRequestPostProcessors.jwt()`/`opaqueToken()` через `.with(jwt().authorities(...).jwt(t->t.subject(...).claim(...)))`. Повторяемые наборы прав выносят в кастомную meta-аннотацию поверх `@WithMockUser`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@WithMockUser` создаёт синтетический контекст без обращения к БД; `jwt()`/`opaqueToken()` имитируют Resource-Server-аутентификацию с нужными authorities и claims.",
+                "example": "`@Test @WithMockUser(roles=\"ADMIN\") void admin(){...}`; `mockMvc.perform(get(\"/api/orders\").with(jwt().authorities(new SimpleGrantedAuthority(\"ROLE_USER\"))))`.",
+                "when_to_apply": "Применяют для unit/slice-тестов правил доступа (`@WebMvcTest`/`@SpringBootTest` + `MockMvc`) без реального логина и внешнего IdP.",
+                "edge_cases": "`@WithMockUser` не вызывает `UserDetailsService` (для этого `@WithUserDetails`); `roles` автоматически получают префикс `ROLE_`, а `authorities` — нет, поэтому их легко перепутать.",
+                "related": "[[spring-security-interview#Q29]] базовое тестирование защищённых эндпоинтов; [[spring-security-interview#Q18]] method security; [[spring-security-interview#Q7]] UserDetailsService."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@WithMockUser` загружает пользователя через `UserDetailsService`, поэтому имя должно существовать в БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@WithMockUser` создаёт мок-`Authentication` с указанными ролями и не обращается к `UserDetailsService`; для реального пользователя есть `@WithUserDetails`.",
+                "source_of_confusion": "Обе аннотации «подставляют пользователя», отсюда путаница.",
+                "if_it_were_true": "Будь так, тест с `@WithMockUser(username=\"any\")` падал бы при отсутствии такого пользователя, но он проходит.",
+                "how_it_should_be": "`@WithMockUser` — синтетика; реального пользователя грузит `@WithUserDetails`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@WithMockUser(roles={\"ADMIN\"})` создаёт authority `ADMIN` без префикса `ROLE_`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`roles` автоматически получают префикс `ROLE_` (`ROLE_ADMIN`); чтобы задать authority без префикса, используют параметр `authorities`.",
+                "source_of_confusion": "Различие между `roles` и `authorities` часто упускают.",
+                "if_it_were_true": "Будь без префикса, `hasRole(\"ADMIN\")` (ожидающий `ROLE_ADMIN`) в тесте не срабатывал бы.",
+                "how_it_should_be": "`roles` → `ROLE_<name>`; для произвольной authority берут `authorities`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для имитации `JWT`/`Bearer`-токена в тесте нужно вручную подписывать настоящий токен и слать его в заголовке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достаточно `SecurityMockMvcRequestPostProcessors.jwt()`/`opaqueToken()` — они подставляют аутентификацию без реальной подписи и сети.",
+                "source_of_confusion": "Кажется, что без валидной подписи Resource Server тест не пройдёт.",
+                "if_it_were_true": "Будь нужен настоящий токен, тесты зависели бы от внешнего IdP и приватного ключа, что невозможно в slice-тесте.",
+                "how_it_should_be": "Используют post-processor `jwt()`/`opaqueToken()`; реальный подписанный токен в unit-тесте не нужен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как передавать `SecurityContext` между потоками и в реактивном стеке?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `WebFlux` используется тот же `ThreadLocal`-`SecurityContextHolder`, что и в сервлетном стеке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `WebFlux` нет привязки к потоку — контекст хранится в `Reactor Context`, доступ даёт `ReactiveSecurityContextHolder`.",
+                "source_of_confusion": "Одинаковое назначение классов наводит на мысль об одинаковой реализации.",
+                "if_it_were_true": "Будь это `ThreadLocal`, реактивная цепочка, прыгающая между потоками, теряла бы пользователя на каждом `flatMap`.",
+                "how_it_should_be": "Для `WebFlux` контекст идёт через `Reactor Context`; `ReactiveSecurityContextHolder` его читает."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SecurityContextHolder` по умолчанию использует `ThreadLocal`, поэтому в `@Async`/`CompletableFuture` контекст пуст. Решения: `DelegatingSecurityContextAsyncTaskExecutor` (копирует контекст в рабочий поток), `MODE_INHERITABLETHREADLOCAL` (только для `new Thread()`, не для пулов) или захват `SecurityContext` в текущем потоке и установка в дочернем с обязательным `clearContext()` в `finally`. В `WebFlux` контекст лежит в `Reactor Context` и читается через `ReactiveSecurityContextHolder`, пробрасываясь автоматически по цепочке `map/flatMap`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В реактивном стеке нет `ThreadLocal`: контекст хранится в `Reactor Context` и сам распространяется по оператору, поэтому явная передача не нужна.",
+                "example": "`return new DelegatingSecurityContextAsyncTaskExecutor(executor);` для `@Async`; `ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName)` для `WebFlux`.",
+                "when_to_apply": "Применяют, когда фоновому/реактивному коду нужен текущий пользователь (аудит, отчёты, действия от его имени).",
+                "edge_cases": "`MODE_INHERITABLETHREADLOCAL` не работает с пулами; ручная установка без `clearContext()` оставляет чужой контекст в переиспользуемом потоке; смешивать blocking `SecurityContextHolder` с реактивной цепочкой нельзя.",
+                "related": "[[spring-security-interview#Q5]] SecurityContextHolder и стратегии; [[spring-security-interview#Q31]] SecurityContext в @Async; [[spring-security-interview#Q1]] задачи Spring Security."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В реактивной цепочке `SecurityContext` нужно вручную передавать в каждый `flatMap` через параметр.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Reactor Context` распространяется по операторам автоматически, поэтому в `WebFlux` контекст доступен в `map`/`flatMap` без ручной передачи.",
+                "source_of_confusion": "Опыт ручной передачи в `CompletableFuture` переносят на реактивный стек.",
+                "if_it_were_true": "Будь передача ручной, не работал бы простой пример `ReactiveSecurityContextHolder.getContext()...flatMap(...)` без проброса параметров.",
+                "how_it_should_be": "`Reactor Context` propagates сам; явная передача в каждый оператор не нужна."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`MODE_INHERITABLETHREADLOCAL` корректно передаёт контекст в потоки `ThreadPoolTaskExecutor`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эта стратегия работает только для дочерних потоков (`new Thread()`); пул переиспользует существующие потоки, и контекст в них не наследуется.",
+                "source_of_confusion": "Слово «inheritable» создаёт впечатление наследования в любом случае.",
+                "if_it_were_true": "Будь так, не понадобился бы `DelegatingSecurityContextAsyncTaskExecutor` именно для пулов.",
+                "how_it_should_be": "Для пулов берут `DelegatingSecurityContext*Executor`; inheritable-стратегия — лишь для свежих потоков."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 43,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@PostAuthorize` и `@Secured` — когда использовать вместо `@PreAuthorize`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@PostAuthorize` проверяет права до выполнения метода, поэтому дорогой запрос не выполняется при отказе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@PostAuthorize` срабатывает после метода — запрос уже выполнен; чтобы избежать дорогой операции при отказе, нужен `@PreAuthorize`.",
+                "source_of_confusion": "Кажется, что любая авторизация предохраняет от выполнения метода.",
+                "if_it_were_true": "Будь проверка до вызова, не было бы доступа к `returnObject`, ради которого `@PostAuthorize` и существует.",
+                "how_it_should_be": "`@PostAuthorize` — пост-проверка результата; экономит вызов только `@PreAuthorize`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Secured` поддерживает SpEL и проверку параметров метода, как и `@PreAuthorize`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Secured` принимает только имена ролей и не вычисляет SpEL — ни `#param`, ни `authentication.name` в нём недоступны.",
+                "source_of_confusion": "Обе аннотации про авторизацию метода, отсюда ожидание одинаковых возможностей.",
+                "if_it_were_true": "Будь в `@Secured` SpEL, можно было бы писать `@Secured(\"#id == authentication.name\")`, но это бессмысленно — там только роли.",
+                "how_it_should_be": "Для SpEL и параметров берут `@PreAuthorize`; `@Secured` — лишь список ролей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@PostAuthorize` проверяет права после выполнения метода, имея доступ к `returnObject` (например `returnObject.userId == authentication.name or hasRole('ADMIN')`) — полезно, когда права нельзя проверить без загрузки объекта. `@Secured` — простая проверка роли без SpEL (`@Secured(\"ROLE_ADMIN\")`, `@Secured({\"ROLE_ADMIN\",\"ROLE_MANAGER\"})`). `@PreAuthorize` остаётся выбором по умолчанию для сложной логики до вызова.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@PostAuthorize` нужен, когда решение зависит от возвращённого объекта; `@Secured` — для тривиальной ролевой проверки, где SpEL и параметры не нужны.",
+                "example": "`@PostAuthorize(\"returnObject.userId == authentication.name or hasRole('ADMIN')\") Order getOrder(Long id)` — проверка владельца уже загруженного заказа; `@Secured(\"ROLE_ADMIN\") void deleteUser(...)`.",
+                "when_to_apply": "`@PostAuthorize` — когда права завязаны на результат; `@Secured` — для простых ролевых ограничений; `@PreAuthorize` — для всего остального (параметры, сложные условия).",
+                "edge_cases": "Минус `@PostAuthorize` — метод уже выполнился (SQL-запрос сделан) до отказа, поэтому для дорогих операций берут `@PreAuthorize`; `@Secured` не видит параметров и `authentication.name`; включают через `securedEnabled=true`.",
+                "related": "[[spring-security-interview#Q18]] обзор аннотаций method security; [[spring-security-interview#Q33]] @PreAuthorize и SpEL; [[spring-security-interview#Q34]] включение method security."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@PostAuthorize` и `@Secured` работают сразу после `@EnableMethodSecurity`, без дополнительных флагов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@PostAuthorize` входит в `prePostEnabled` (включён по умолчанию), а `@Secured` требует явного `securedEnabled=true`.",
+                "source_of_confusion": "Кажется, что одна аннотация-включатель активирует все варианты разом.",
+                "if_it_were_true": "Будь так, не существовало бы отдельного флага `securedEnabled` для `@Secured`.",
+                "how_it_should_be": "`@Secured` включают `securedEnabled=true`; `@PostAuthorize` доступен по умолчанию."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

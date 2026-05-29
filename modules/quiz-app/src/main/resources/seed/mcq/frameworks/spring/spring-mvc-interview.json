@@ -1,0 +1,2585 @@
+{
+  "topic_slug": "spring-mvc-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое паттерн `Front Controller` и как он реализован в `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Front Controller` — паттерн, в котором единая точка входа принимает все запросы, маршрутизирует их к обработчикам и координирует сквозную логику (безопасность, логирование, локализацию); в `Spring MVC` эту роль играет `DispatcherServlet`, который через `HandlerMapping` находит контроллер, вызывает его через `HandlerAdapter` и разрешает представление через `ViewResolver`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все HTTP-запросы проходят через один сервлет, поэтому общую логику можно настроить в одном месте, а не дублировать в каждом контроллере. Это даёт единообразную маршрутизацию и обработку ошибок.",
+                "example": "Запрос `GET /users/42` приходит в `DispatcherServlet`; тот по URL находит метод `getUser`, вызывает его и при возврате имени view отдаёт результат через `ViewResolver`.",
+                "when_to_apply": "Паттерн применяют в любом веб-фреймворке с централизованной точкой входа: `Spring MVC`, `JSF`, `Struts` — везде, где нужна единая координация запросов.",
+                "edge_cases": "Если сквозную логику навесить вне `DispatcherServlet` (например в обычном `Filter`), она не получит доступа к `HandlerMethod` и контексту контроллера.",
+                "related": "[[spring-mvc-interview#Q2]] что такое Spring MVC; [[spring-mvc-interview#Q20]] DispatcherServlet и ContextLoaderListener; [[spring-mvc-interview#Q31]] pipeline обработки запроса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Front Controller` — это отдельный контроллер для каждого URL, который браузер вызывает напрямую, минуя единую точку входа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Front Controller` — наоборот, единая точка входа для ВСЕХ запросов; в `Spring MVC` это один `DispatcherServlet`, а не контроллер на каждый URL.",
+                "source_of_confusion": "Слово «controller» в названии наводит на мысль об обычном `@Controller`-классе.",
+                "if_it_were_true": "Тогда сквозную логику пришлось бы дублировать в каждом контроллере, но смысл паттерна — собрать её в одном месте.",
+                "how_it_should_be": "Это единый диспетчер запросов; обычные контроллеры — это уже handler'ы за ним."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Роль `Front Controller` в `Spring MVC` выполняет `ViewResolver`, принимающий входящие HTTP-запросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Входящие запросы принимает `DispatcherServlet`, а `ViewResolver` лишь преобразует имя представления в объект `View` на финальном шаге.",
+                "source_of_confusion": "И `DispatcherServlet`, и `ViewResolver` — части MVC-конвейера, их роли путают.",
+                "if_it_were_true": "Тогда `ViewResolver` участвовал бы в REST-ответах без view, но в `@RestController` он вообще не вызывается.",
+                "how_it_should_be": "Точка входа — `DispatcherServlet`; `ViewResolver` отвечает только за разрешение представлений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Front Controller` — это паттерн, при котором каждый клиент держит постоянное соединение с выделенным потоком сервера на всё время сессии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание не относится к `Front Controller`; паттерн касается маршрутизации запросов, а не модели соединений или потоков.",
+                "source_of_confusion": "Архитектурные паттерны смешивают с моделями обработки соединений (thread-per-request, event loop).",
+                "if_it_were_true": "Тогда паттерн зависел бы от типа сервера, но `Front Controller` работает одинаково на `Tomcat` и `Jetty`.",
+                "how_it_should_be": "Это паттерн централизованной маршрутизации запросов, независимый от модели потоков."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring MVC` и из каких частей он состоит?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring MVC` — это ORM-фреймворк для маппинга Java-объектов на таблицы реляционной БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маппингом объектов на таблицы занимается `Spring Data JPA`/`Hibernate`; `Spring MVC` — это веб-слой обработки HTTP-запросов.",
+                "source_of_confusion": "И MVC, и Data JPA — модули `Spring`, их области ответственности путают.",
+                "if_it_were_true": "Тогда у `Spring MVC` были бы `@Entity` и репозитории, но он оперирует контроллерами и view.",
+                "how_it_should_be": "Это веб-MVC-фреймворк; за персистентность отвечает отдельный модуль `Spring Data`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring MVC` — реализация паттерна `Model-View-Controller` в `Spring Framework`: `Model` — данные и бизнес-логика (сервисы, DTO), `View` — отображение (`Thymeleaf`, `JSP`, `JSON` через `Jackson`), `Controller` — обработка запросов; фреймворк даёт маршрутизацию по `@RequestMapping`, связывание данных, валидацию, `Content Negotiation` и тесную интеграцию с `DI`/`AOP`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение на Model, View и Controller отделяет бизнес-логику от отображения, что упрощает тестирование и замену view-технологии. В `Spring Boot` веб-слой автоконфигурируется через `spring-boot-starter-web`.",
+                "example": "Контроллер `@GetMapping(\"/users\")` достаёт список из сервиса (Model), кладёт в модель и возвращает имя `\"userList\"` (View) — три роли в одном запросе.",
+                "when_to_apply": "Берут для серверного веба и REST API на JVM, когда нужна интеграция с экосистемой `Spring` и аннотационная маршрутизация.",
+                "edge_cases": "Для тысяч одновременных I/O-bound соединений MVC ограничен числом потоков — там уместнее `Spring WebFlux`.",
+                "related": "[[spring-mvc-interview#Q1]] паттерн Front Controller; [[spring-mvc-interview#Q14]] Controller vs RestController; [[spring-mvc-interview#Q43]] когда переходить на WebFlux."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Spring MVC` буква `M` означает `Middleware` — слой промежуточных фильтров между клиентом и сервером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`M` означает `Model` — данные и бизнес-логику; промежуточные фильтры — это `Filter`/`Interceptor`, отдельные понятия.",
+                "source_of_confusion": "Аббревиатуру MVC расшифровывают по аналогии с другими «M»-терминами.",
+                "if_it_were_true": "Тогда паттерн назывался бы по слою фильтров, но классический MVC — это Model-View-Controller.",
+                "how_it_should_be": "`M` — Model, `V` — View, `C` — Controller; middleware-логику добавляют интерцепторами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring MVC` работает только с `JSP` и не умеет отдавать `JSON`, поэтому для REST API нужен отдельный фреймворк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring MVC` отдаёт `JSON`/`XML` через `HttpMessageConverter` (например `Jackson`) и является штатным способом строить REST API.",
+                "source_of_confusion": "Исторически MVC ассоциируют с серверным рендерингом страниц на `JSP`.",
+                "if_it_were_true": "Тогда `@RestController` не существовал бы, но именно он — основа REST на `Spring MVC`.",
+                "how_it_should_be": "View — это и `JSON` через конвертеры, и шаблоны; отдельный фреймворк не нужен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как получить `ServletContext` и `ServletConfig` внутри бина в `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ServletContext` можно получить только статическим вызовом `ServletContext.getInstance()`, так как он синглтон JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метода `ServletContext.getInstance()` не существует; экземпляр получают через DI или Aware-интерфейс, а не статикой.",
+                "source_of_confusion": "Привычка к синглтонам через статический accessor переносится на сервлет-API.",
+                "if_it_were_true": "Тогда один `ServletContext` был бы на всю JVM, но он привязан к веб-приложению (context).",
+                "how_it_should_be": "`ServletContext` инжектится контейнером; статического фабричного метода нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы получить `ServletContext`, бин должен наследоваться от `HttpServlet`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наследование от `HttpServlet` не требуется; обычный `@Component` получает контекст через `@Autowired` или Aware-интерфейс.",
+                "source_of_confusion": "Кажется, что доступ к сервлет-API возможен только из самого сервлета.",
+                "if_it_were_true": "Тогда любой сервис стал бы сервлетом, но `Spring` инжектит контекст в обычные POJO.",
+                "how_it_should_be": "Достаточно объявить зависимость; наследование от `HttpServlet` не нужно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Двумя способами: через внедрение зависимостей (объявить поле/параметр конструктора типа `ServletContext` или `ServletConfig` с `@Autowired` — контейнер подставит те же экземпляры, что у `DispatcherServlet`) либо через Aware-интерфейсы (реализовать `ServletContextAware`/`ServletConfigAware`, и `Spring` вызовет сеттеры при инициализации бина).",
+              "correct": true,
+              "sections": {
+                "explanation": "Внедрение через DI короче и предпочтительно. Aware-интерфейсы полезны для кода без аннотаций или когда нужен явный хук на этап инициализации.",
+                "example": "`@Component class MyComp implements ServletContextAware { public void setServletContext(ServletContext ctx){...} }` — `Spring` вызовет сеттер на старте.",
+                "when_to_apply": "Используют, когда бину нужен доступ к параметрам контекста сервлета: init-параметры, реальные пути, атрибуты приложения.",
+                "edge_cases": "В тестах вне веб-контекста `ServletContext` может отсутствовать; для `@WebMvcTest` его предоставляет `MockServletContext`.",
+                "related": "[[spring-mvc-interview#Q20]] DispatcherServlet и контексты; [[spring-mvc-interview#Q2]] что такое Spring MVC; [[spring-mvc-interview#Q22]] InitBinder."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ServletConfig` доступен только в `web.xml` через тег `<init-param>` и недоступен из Java-кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ServletConfig` доступен из кода через DI или `ServletConfigAware`; `web.xml` лишь один из источников init-параметров.",
+                "source_of_confusion": "`ServletConfig` исторически ассоциируется с XML-дескриптором.",
+                "if_it_were_true": "Тогда без `web.xml` его нельзя было бы прочитать, но в `Spring Boot` без `web.xml` он доступен.",
+                "how_it_should_be": "`ServletConfig` инжектится в бин; XML — лишь один из способов задать параметры."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое локализация (i18n) и как она реализуется в `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Локализация в `Spring MVC` делается только на фронтенде через JavaScript, сервер всегда отдаёт строки на одном языке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring MVC` локализует на сервере через `MessageSource` и `LocaleResolver`; фронтенд-переводы — отдельный независимый подход.",
+                "source_of_confusion": "В SPA переводы часто делают на клиенте, и это переносят на серверный MVC.",
+                "if_it_were_true": "Тогда `MessageSource` и `LocaleResolver` были бы не нужны, но они — основа i18n в Spring.",
+                "how_it_should_be": "Сервер выбирает локаль и подставляет переводы из property-файлов через `MessageSource`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для локализации достаточно одного файла `messages.properties` со всеми языками внутри, разделёнными по секциям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для каждого языка заводят отдельный файл с суффиксом локали: `messages_ru.properties`, `messages_en.properties`.",
+                "source_of_confusion": "Идею «секций» переносят из других конфиг-форматов на ресурс-бандлы.",
+                "if_it_were_true": "Тогда `MessageSource` искал бы секции внутри файла, но он выбирает файл по суффиксу локали.",
+                "how_it_should_be": "Один property-файл на язык; общий `messages.properties` служит fallback."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`LocaleResolver` определяет локаль исключительно по IP-адресу клиента через geolocation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартные `LocaleResolver` берут локаль из заголовка `Accept-Language`, cookie или сессии, а не по IP.",
+                "source_of_confusion": "Геолокацию по IP путают с механизмом определения языка.",
+                "if_it_were_true": "Тогда VPN ломал бы язык интерфейса, но язык берут из настроек браузера/сессии.",
+                "how_it_should_be": "Локаль определяют по `Accept-Language`/cookie/сессии; geo-IP — нестандартное расширение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Локализация — адаптация приложения к языку и региону пользователя; в `Spring MVC` её собирают из файлов ресурсов (`messages_ru.properties`, `messages_en.properties`), бина `MessageSource` для получения строк по ключу и локали, `LocaleResolver` (определяет локаль из `Accept-Language`, cookie или сессии) и `LocaleChangeInterceptor` (меняет локаль через параметр `?lang=ru`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Тексты выносят из кода в property-файлы по языкам, а `Spring` подставляет нужный вариант по текущей локали. В `Thymeleaf` ключи используют так: `th:text=\"#{welcome.message}\"`.",
+                "example": "`SessionLocaleResolver` с дефолтом `ru` плюс `LocaleChangeInterceptor` с `paramName=\"lang\"` — переход на `/page?lang=en` переключает интерфейс на английский.",
+                "when_to_apply": "Применяют, когда приложение обслуживает пользователей из разных стран и нужны переводы интерфейса и сообщений об ошибках.",
+                "edge_cases": "`AcceptHeaderLocaleResolver` не умеет менять локаль программно (сеттер бросает исключение) — для переключения нужен `Session`/`CookieLocaleResolver`.",
+                "related": "[[spring-mvc-interview#Q5]] Interceptor; [[spring-mvc-interview#Q2]] что такое Spring MVC; [[spring-mvc-interview#Q26]] настройка шаблонов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `HandlerInterceptor` (Interceptor) в `Spring MVC` и какие у него методы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`HandlerInterceptor` — перехватчик, добавляющий сквозную логику (логирование, аутентификацию, метрики) до и после контроллера; у него три метода: `preHandle()` (до контроллера, возвращает `boolean` — продолжить или прервать), `postHandle()` (после контроллера, но до рендеринга View) и `afterCompletion()` (после полного завершения запроса, включая рендеринг).",
+              "correct": true,
+              "sections": {
+                "explanation": "Интерцепторы регистрируют через `WebMvcConfigurer.addInterceptors()` с указанием path-паттернов. В отличие от `Filter`, они работают внутри `Spring MVC` и имеют доступ к `HandlerMethod`.",
+                "example": "`registry.addInterceptor(new LoggingInterceptor()).addPathPatterns(\"/api/**\").excludePathPatterns(\"/api/health\")` — логировать всё под `/api`, кроме health-check.",
+                "when_to_apply": "Берут для логики уровня MVC, которой нужен доступ к контроллеру: аудит, тайминги, проверка прав на основе `HandlerMethod`.",
+                "edge_cases": "`postHandle()` не вызывается, если контроллер бросил исключение, а `afterCompletion()` вызывается всегда — туда кладут освобождение ресурсов.",
+                "related": "[[spring-mvc-interview#Q33]] HandlerInterceptor vs Filter; [[spring-mvc-interview#Q4]] локализация через LocaleChangeInterceptor; [[spring-mvc-interview#Q31]] pipeline обработки запроса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Interceptor` работает на уровне сервлет-контейнера, ещё до `DispatcherServlet`, и не имеет доступа к контроллеру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание `Filter`; `HandlerInterceptor` работает внутри `DispatcherServlet` и получает `handler` (метод контроллера).",
+                "source_of_confusion": "`Filter` и `Interceptor` оба перехватывают запросы, их уровни путают.",
+                "if_it_were_true": "Тогда `postHandle()` не получал бы `ModelAndView`, но он его получает именно потому, что работает внутри MVC.",
+                "how_it_should_be": "Интерцептор — это уровень `Spring MVC` с доступом к `HandlerMethod`; вне MVC работает `Filter`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "У `HandlerInterceptor` единственный метод `intercept()`, в котором вручную вызывают следующий обработчик в цепочке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У интерцептора три метода-хука (`preHandle`, `postHandle`, `afterCompletion`); цепочку вызывает сам `DispatcherServlet`, а не код хука.",
+                "source_of_confusion": "Модель `chain.doFilter()` из `Filter` переносят на интерцептор.",
+                "if_it_were_true": "Тогда нельзя было бы разделить логику «до» и «после» рендеринга, но три метода именно для этого.",
+                "how_it_should_be": "Три отдельных хука; продолжением занимается диспетчер, а `preHandle` лишь возвращает boolean."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Если `preHandle()` вернёт `true`, запрос немедленно прерывается и контроллер не вызывается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `true` означает продолжить цепочку и вызвать контроллер, а `false` — прервать обработку.",
+                "source_of_confusion": "Логику boolean-флага путают: кажется, что `true` = «обработано, дальше не идти».",
+                "if_it_were_true": "Тогда любой интерцептор блокировал бы все запросы по умолчанию, но обычно `preHandle` возвращает `true`.",
+                "how_it_should_be": "`true` — продолжить к контроллеру; `false` — прервать (например при неудачной авторизации)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@ModelAttribute` и как он применяется на параметре и на методе?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@ModelAttribute` можно ставить только на методы; на параметрах контроллера он не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@ModelAttribute` работает и на параметрах (биндинг формы в объект), и на методах (предзаполнение модели).",
+                "source_of_confusion": "Запоминают один из двух способов применения и считают его единственным.",
+                "if_it_were_true": "Тогда форм-биндинг через `@ModelAttribute User user` был бы невозможен, но это стандартный приём.",
+                "how_it_should_be": "Аннотация двунаправленная: на параметре — биндинг, на методе — наполнение модели."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@ModelAttribute` используют двумя способами: на параметре метода `Spring` привязывает параметры запроса к полям объекта (создаёт экземпляр, вызывает сеттеры через `WebDataBinder`, при `@Valid` валидирует и кладёт в модель); на методе — этот метод вызывается перед каждым обработчиком контроллера и добавляет атрибут в модель, делая его доступным во всех View.",
+              "correct": true,
+              "sections": {
+                "explanation": "На параметре — это основа форм-биндинга. На методе — способ предзаполнить модель данными, нужными всем обработчикам (например, список категорий для выпадающего списка).",
+                "example": "`@ModelAttribute(\"categories\") public List<Category> populate(){ return service.findAll(); }` — категории попадут в модель перед каждым методом контроллера.",
+                "when_to_apply": "На параметре — для биндинга HTML-форм; на методе — для общих справочных данных, нужных нескольким view контроллера.",
+                "edge_cases": "Метод-`@ModelAttribute` выполняется при КАЖДОМ запросе к контроллеру — тяжёлые запросы к БД там приводят к лишней нагрузке.",
+                "related": "[[spring-mvc-interview#Q9]] связывание форм; [[spring-mvc-interview#Q37]] @ModelAttribute на уровне метода; [[spring-mvc-interview#Q22]] InitBinder."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@ModelAttribute` на параметре читает тело HTTP-запроса как `JSON` и десериализует его через `Jackson`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из `JSON`-тела читает `@RequestBody`; `@ModelAttribute` собирает объект из query/form-параметров через `WebDataBinder`.",
+                "source_of_confusion": "Оба способа «наполняют объект», поэтому их источники данных смешивают.",
+                "if_it_were_true": "Тогда `@ModelAttribute` и `@RequestBody` были бы взаимозаменяемы, но они читают разные источники.",
+                "how_it_should_be": "`@ModelAttribute` — из параметров формы/query; `@RequestBody` — из тела запроса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Метод с `@ModelAttribute` выполняется один раз при старте приложения и кэширует результат на всё время работы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод-`@ModelAttribute` вызывается перед каждым запросом к контроллеру, а не один раз на старте.",
+                "source_of_confusion": "Поведение путают с инициализацией бина или статическим кэшем.",
+                "if_it_were_true": "Тогда данные модели не обновлялись бы между запросами, но они пересчитываются каждый раз.",
+                "how_it_should_be": "Вызывается при каждом запросе; для кэширования нужен отдельный механизм."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `Model`, `ModelMap` и `ModelAndView` в `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Model`, `ModelMap` и `ModelAndView` — это синонимы одного класса, отличаются только импортом из разных пакетов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это три разные сущности: интерфейс `Model`, класс `ModelMap` (Map+Model) и класс `ModelAndView` (модель + имя view).",
+                "source_of_confusion": "Похожие названия с корнем «Model» создают впечатление алиасов.",
+                "if_it_were_true": "Тогда `ModelAndView` не нёс бы имя view, но именно это его отличает от `Model`.",
+                "how_it_should_be": "Разные типы с разным назначением; `ModelAndView` дополнительно хранит имя представления."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ModelAndView` хранит только имя представления и не может нести данные модели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ModelAndView` хранит И модель (данные), И имя view — отсюда название «Model-And-View».",
+                "source_of_confusion": "По названию запоминают только часть «View» и забывают про «Model».",
+                "if_it_were_true": "Тогда конструктор `new ModelAndView(name, key, value)` был бы невозможен, но он принимает и данные.",
+                "how_it_should_be": "Объект объединяет данные и имя представления в одном возвращаемом значении."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Model` — интерфейс с методом `addAttribute()`, обычно объявляется параметром метода контроллера; `ModelMap` — класс, реализующий и `Map`, и `Model` (нужен, когда требуются map-операции); `ModelAndView` — объект, содержащий и модель, и имя View одновременно, удобен для возврата из метода, когда имя view определяется условно.",
+              "correct": true,
+              "sections": {
+                "explanation": "На практике чаще всего берут `Model` как параметр метода — это самый чистый подход. `ModelAndView` группирует данные и имя представления в одном возвращаемом объекте.",
+                "example": "`public String list(Model model){ model.addAttribute(\"users\", users); return \"userList\"; }` против `return new ModelAndView(\"userList\", \"users\", users);`.",
+                "when_to_apply": "`Model` — по умолчанию; `ModelMap` — когда нужны операции `Map`; `ModelAndView` — когда имя view выбирается логикой внутри метода.",
+                "edge_cases": "Смешение `Model`-параметра и возврата `ModelAndView` в одном методе допустимо, но запутывает — лучше выбрать один стиль.",
+                "related": "[[spring-mvc-interview#Q8]] put vs addAttribute; [[spring-mvc-interview#Q6]] ModelAttribute; [[spring-mvc-interview#Q17]] ViewResolver."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Model` нельзя объявить параметром метода контроллера — его можно только вернуть из метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Model` штатно объявляют параметром метода, и `Spring` его инжектит; возвращают обычно имя view, а не `Model`.",
+                "source_of_confusion": "Путают `Model` (инжектится как параметр) с `ModelAndView` (возвращается).",
+                "if_it_were_true": "Тогда `public String list(Model model)` не компилировался бы, но это самый частый паттерн.",
+                "how_it_should_be": "`Model` инжектится как параметр; возвращают строку-имя view или `ModelAndView`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `model.put()` и `model.addAttribute()`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`put()` и `addAttribute()` полностью идентичны: `addAttribute()` внутри просто вызывает `put()` без каких-либо отличий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`addAttribute()` отличается: запрещает `null`-ключ, поддерживает чейнинг и перегрузку без имени, чего нет у `put()`.",
+                "source_of_confusion": "Оба кладут пару ключ-значение в модель, что создаёт ощущение полной эквивалентности.",
+                "if_it_were_true": "Тогда `addAttribute(value)` без имени был бы невозможен, но эта перегрузка существует.",
+                "how_it_should_be": "`addAttribute()` богаче: защита от `null`, fluent-интерфейс и автогенерация имени."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`addAttribute()` принимает `null`-ключ, а `put()` бросает на нём исключение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё ровно наоборот: `addAttribute()` бросает на `null`-ключе, а `put()` (из `Map`) его допускает.",
+                "source_of_confusion": "Поведение двух методов при `null` запоминают в перевёрнутом виде.",
+                "if_it_were_true": "Тогда `addAttribute()` не давал бы защиты от `null`, но именно она — одно из его преимуществ.",
+                "how_it_should_be": "`addAttribute()` строже к `null`-ключу; `put()` его пропускает как обычный `Map`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`put()` поддерживает цепочку вызовов (chaining), а `addAttribute()` возвращает `void` и чейнить его нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `addAttribute()` возвращает `Model` и поддерживает чейнинг, а `put()` (из `Map`) возвращает прежнее значение, а не модель.",
+                "source_of_confusion": "Возвращаемые типы двух методов путают местами.",
+                "if_it_were_true": "Тогда `model.addAttribute(a).addAttribute(b)` не компилировался бы, но это рабочий паттерн.",
+                "how_it_should_be": "Чейнинг даёт `addAttribute()`; `put()` возвращает старое значение по контракту `Map`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`put(key, value)` — метод из интерфейса `Map`, принимает любой ключ (включая `null`); `addAttribute(name, value)` — метод из интерфейса `Model`, бросает исключение при `null`-ключе, поддерживает цепочку вызовов (method chaining) и имеет перегрузку `addAttribute(value)`, которая сама генерирует имя по типу объекта; предпочтительнее `addAttribute()` — он типобезопаснее и защищён от `null`-ключей.",
+              "correct": true,
+              "sections": {
+                "explanation": "`addAttribute()` — fluent (возвращает `Model`, можно чейнить), безопаснее при `null`. `put()` достался от `Map` и не даёт этих гарантий.",
+                "example": "`model.addAttribute(\"user\", user).addAttribute(\"roles\", roles);` — чейнинг; `model.put(\"user\", user);` — без чейнинга.",
+                "when_to_apply": "В обычном коде контроллеров используют `addAttribute()`; `put()` берут лишь когда уже работают с `ModelMap` как с `Map`.",
+                "edge_cases": "Перегрузка `addAttribute(value)` без имени генерирует имя по типу (например `user` для `User`) — для коллекций имя может оказаться неожиданным.",
+                "related": "[[spring-mvc-interview#Q7]] Model vs ModelMap vs ModelAndView; [[spring-mvc-interview#Q6]] ModelAttribute; [[spring-mvc-interview#Q9]] связывание форм."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое связывание форм (form binding) в `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Связывание форм — автоматическая привязка данных из HTML-формы к Java-объекту: `Spring MVC` сопоставляет имена полей формы с полями объекта и вызывает сеттеры через `WebDataBinder`; для безопасности рекомендуется ограничивать допустимые поля через `@InitBinder` + `setAllowedFields()`, чтобы защититься от mass assignment, когда злоумышленник подставляет поля, отсутствующие в форме.",
+              "correct": true,
+              "sections": {
+                "explanation": "Биндинг избавляет от ручного `request.getParameter()`. С `@Valid` сразу запускается валидация, а ошибки попадают в `BindingResult`.",
+                "example": "`<input th:field=\"*{name}\"/>` в форме → поле `name` объекта `User`, переданного как `@ModelAttribute(\"user\")`, заполняется автоматически.",
+                "when_to_apply": "Применяют в server-side формах (`Thymeleaf`/`JSP`), где данные приходят как form-параметры и связываются в command-объект.",
+                "edge_cases": "Без `setAllowedFields()` форма уязвима к mass assignment: запрос может подменить поля вроде `role` или `isAdmin`, не показанные в форме.",
+                "related": "[[spring-mvc-interview#Q6]] ModelAttribute; [[spring-mvc-interview#Q22]] InitBinder; [[spring-mvc-interview#Q12]] BindingResult."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Связывание форм работает только с `JSON`-телом запроса и не поддерживает обычные HTML-формы с `application/x-www-form-urlencoded`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Форм-биндинг как раз и предназначен для form-параметров (`x-www-form-urlencoded`/`multipart`); `JSON`-тело читает `@RequestBody`.",
+                "source_of_confusion": "Современный фронтенд шлёт `JSON`, и это переносят на классический форм-биндинг.",
+                "if_it_were_true": "Тогда `th:field` в `Thymeleaf`-форме не работал бы, но он именно про form-биндинг.",
+                "how_it_should_be": "Биндинг форм — про form/query-параметры; `JSON` обрабатывает `@RequestBody`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для защиты от mass assignment достаточно сделать поля объекта `private` — `Spring` не сможет их подменить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`private` не спасает: `WebDataBinder` пишет через сеттеры/reflection; ограничение задают `setAllowedFields()`/`setDisallowedFields()`.",
+                "source_of_confusion": "Модификатор доступа путают с механизмом разрешённых для биндинга полей.",
+                "if_it_were_true": "Тогда `@InitBinder` с `setAllowedFields()` был бы не нужен, но именно он закрывает уязвимость.",
+                "how_it_should_be": "Защита — белый список полей в `@InitBinder`, а не модификатор доступа."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Связывание форм требует, чтобы имена полей формы и полей объекта различались, иначе возникает конфликт имён.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: биндинг работает по СОВПАДЕНИЮ имён — поле формы `name` маппится на поле объекта `name`.",
+                "source_of_confusion": "Идею «конфликта имён» из других контекстов переносят на сопоставление полей.",
+                "if_it_were_true": "Тогда `th:field=\"*{name}\"` не находил бы поле `name`, но совпадение имён — основа биндинга.",
+                "how_it_should_be": "Имена должны совпадать; именно по совпадению `WebDataBinder` находит сеттер."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@PathVariable` в `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@PathVariable` читает значения из query-строки URL, например из `?id=42`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из query-строки (`?id=42`) читает `@RequestParam`; `@PathVariable` берёт значение из сегмента пути (`/users/42`).",
+                "source_of_confusion": "И то, и другое «часть URL», поэтому источники путают.",
+                "if_it_were_true": "Тогда `@PathVariable` и `@RequestParam` были бы одним и тем же, но они читают разные части URL.",
+                "how_it_should_be": "`@PathVariable` — сегмент пути `{id}`; `@RequestParam` — параметр `?id=`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@PathVariable` извлекает значение из шаблона URI-пути и подставляет в параметр метода: например `@GetMapping(\"/users/{id}\")` + `@PathVariable Long id`; если имя переменной в шаблоне совпадает с именем параметра, `value` можно не указывать, можно собрать все переменные в `Map`, а `@PathVariable(required = false)` делает переменную необязательной (тогда тип должен быть `Optional` или nullable).",
+              "correct": true,
+              "sections": {
+                "explanation": "Path-переменные — часть REST-URL, идентифицирующая ресурс. `Spring` сам конвертирует строку в нужный тип (`Long`, `UUID` и т.д.).",
+                "example": "`@GetMapping(\"/users/{userId}/orders/{orderId}\")` с двумя `@PathVariable` извлекает оба идентификатора из пути `/users/7/orders/42`.",
+                "when_to_apply": "Берут для идентификаторов ресурса в пути REST-API: `GET /users/{id}`, `DELETE /orders/{id}`.",
+                "edge_cases": "Если строка не приводится к типу (`/users/abc` для `Long id`), `Spring` бросит `MethodArgumentTypeMismatchException` → по умолчанию 400.",
+                "related": "[[spring-mvc-interview#Q27]] PathVariable vs RequestParam vs RequestBody; [[spring-mvc-interview#Q32]] варианты RequestMapping; [[spring-mvc-interview#Q10]] сам PathVariable."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Имя `@PathVariable` обязано всегда отличаться от имени параметра метода, иначе `Spring` не сможет их различить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: при совпадении имён `value` можно опустить — `Spring` сопоставляет по имени автоматически.",
+                "source_of_confusion": "Кажется, что одинаковые имена создадут неоднозначность.",
+                "if_it_were_true": "Тогда краткая форма `@PathVariable Long id` для `{id}` была бы невозможна, но она работает.",
+                "how_it_should_be": "При совпадении имён `value` не нужен; различать ничего не требуется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@PathVariable` всегда возвращает `String` и не умеет конвертировать значение в `Long`, `UUID` или `Integer`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring` конвертирует строку в тип параметра через систему `Converter`/`Formatter`: `Long`, `UUID`, `Integer` и др.",
+                "source_of_confusion": "URL — это текст, поэтому кажется, что результат всегда `String`.",
+                "if_it_were_true": "Тогда `@PathVariable Long id` не компилировался бы по смыслу, но Spring сам приводит тип.",
+                "how_it_should_be": "Тип параметра задаёт целевой тип; конверсию делает `ConversionService`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Validation` в `Spring MVC` и как она устроена?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Валидация в `Spring MVC` встроена в фреймворк и не требует ни аннотаций на DTO, ни пометки аргумента — она работает для всех контроллеров автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Валидация не автоматическая: нужны и аннотации ограничений на полях DTO, и пометка аргумента `@Valid`/`@Validated`.",
+                "source_of_confusion": "Автоконфигурацию `Spring Boot` принимают за автоматическую проверку всех входов.",
+                "if_it_were_true": "Тогда `@Valid` был бы не нужен, но без него ограничения просто не проверяются.",
+                "how_it_should_be": "Аннотации задают правила, а `@Valid` запускает их проверку — оба обязательны."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring MVC` использует собственный механизм валидации, не связанный с `Bean Validation` и `Hibernate Validator`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Валидация в MVC построена именно на `Bean Validation` (`JSR 380`) с реализацией `Hibernate Validator`.",
+                "source_of_confusion": "Кажется, что у Spring всё своё, без внешних спецификаций.",
+                "if_it_were_true": "Тогда аннотации `@NotBlank`/`@Email` из `jakarta.validation` не работали бы, но они стандартные.",
+                "how_it_should_be": "Под капотом — `Bean Validation`/`Hibernate Validator`; Spring лишь интегрирует их в MVC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Валидация в `Spring MVC` основана на `Bean Validation` (`JSR 380`, реализация — `Hibernate Validator`): на полях DTO ставят аннотации ограничений (`@NotBlank`, `@Email`, `@Size`), а в контроллере аргумент помечают `@Valid` — если есть ошибки, они попадают в `BindingResult` или приводят к `MethodArgumentNotValidException`; для кастомных правил пишут аннотацию с `ConstraintValidator`, для групп — `@Validated(OnCreate.class)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Декларативные ограничения выносят правила из кода в аннотации DTO. `@Valid` запускает проверку при биндинге, до бизнес-логики.",
+                "example": "`record UserCreateDto(@NotBlank String name, @Email @NotBlank String email, @Size(min=8) String password){}` плюс `@Valid` в контроллере — пустое имя даст ошибку валидации.",
+                "when_to_apply": "Применяют для проверки входных DTO на границе API: обязательность, формат, длина, диапазон значений.",
+                "edge_cases": "Без `@Valid` аннотации ограничений игнорируются; вложенные объекты требуют `@Valid` на поле, иначе их поля не проверяются.",
+                "related": "[[spring-mvc-interview#Q12]] BindingResult; [[spring-mvc-interview#Q28]] организация валидации; [[spring-mvc-interview#Q24]] ExceptionHandler для ошибок валидации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для кастомного правила валидации достаточно создать аннотацию — реализовывать `ConstraintValidator` не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомное правило требует и аннотацию, и класс `ConstraintValidator` с логикой `isValid()`; одна аннотация ничего не проверяет.",
+                "source_of_confusion": "Стандартные аннотации работают «из коробки», и это переносят на кастомные.",
+                "if_it_were_true": "Тогда логику проверки негде было бы написать, но её содержит именно валидатор.",
+                "how_it_should_be": "Аннотация + `ConstraintValidator` (через `@Constraint(validatedBy=...)`) — оба нужны."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `BindingResult` и где он должен стоять в сигнатуре метода?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`BindingResult` можно поставить в любом месте списка параметров метода — его положение не влияет на работу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Положение строго важно: `BindingResult` обязан идти сразу после валидируемого аргумента, иначе связь разрывается.",
+                "source_of_confusion": "Обычно порядок параметров не важен, и это правило переносят сюда.",
+                "if_it_were_true": "Тогда `Spring` не знал бы, к какому аргументу относятся ошибки, но он определяет это по соседству.",
+                "how_it_should_be": "`BindingResult` ставят непосредственно за `@Valid`-аргументом, без других параметров между ними."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Даже при наличии `BindingResult` `Spring` всё равно бросит `MethodArgumentNotValidException`, если есть ошибки валидации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При наличии `BindingResult` исключение НЕ бросается — ошибки кладутся в него, и контроллер решает, что делать.",
+                "source_of_confusion": "Кажется, что валидация всегда заканчивается исключением.",
+                "if_it_were_true": "Тогда `if(result.hasErrors())` был бы недостижим, но именно ради него и добавляют `BindingResult`.",
+                "how_it_should_be": "`BindingResult` перехватывает ошибки; исключение бросается лишь при его отсутствии."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`BindingResult` хранит только глобальные ошибки уровня объекта и не содержит ошибок по отдельным полям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BindingResult` хранит и `getFieldErrors()` (по полям), и `getGlobalErrors()` (по объекту) — оба вида.",
+                "source_of_confusion": "Запоминают один из двух типов ошибок как единственный.",
+                "if_it_were_true": "Тогда нельзя было бы показать ошибку у конкретного поля формы, но `getFieldErrors()` это даёт.",
+                "how_it_should_be": "Доступны и ошибки полей, и глобальные ошибки объекта."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`BindingResult` — объект, хранящий результат привязки данных и валидации; он обязан идти СРАЗУ ПОСЛЕ валидируемого аргумента в сигнатуре метода; если `BindingResult` не объявлен, а валидация провалилась, `Spring` бросит `MethodArgumentNotValidException` (для `@RequestBody`) или `BindException` (для `@ModelAttribute`), а при наличии `BindingResult` исключение не выбрасывается — контроллер сам решает, как обработать ошибки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Порядок критичен: `Spring` связывает каждый `BindingResult` с предшествующим ему валидируемым аргументом. Через него читают `getFieldErrors()` и `getGlobalErrors()`.",
+                "example": "`public String create(@Valid @ModelAttribute User user, BindingResult result, Model model){ if(result.hasErrors()) return \"userForm\"; }`.",
+                "when_to_apply": "Берут в server-side формах, когда нужно вернуть ту же страницу с ошибками, а не пробрасывать исключение в `@ControllerAdvice`.",
+                "edge_cases": "Если поставить `Model` между `@Valid`-аргументом и `BindingResult`, связь теряется и `Spring` снова начнёт бросать исключение.",
+                "related": "[[spring-mvc-interview#Q11]] Validation; [[spring-mvc-interview#Q9]] связывание форм; [[spring-mvc-interview#Q24]] ExceptionHandler."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое аннотации `@RequestBody` и `@ResponseBody`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@RequestBody` привязывает тело HTTP-запроса к Java-объекту, десериализуя `JSON`/`XML` через `HttpMessageConverter` (например `MappingJackson2HttpMessageConverter`); `@ResponseBody` указывает, что возвращаемое значение метода нужно записать прямо в тело ответа (не интерпретировать как имя View), сериализуя объект через тот же механизм; `@RestController` = `@Controller` + `@ResponseBody` на уровне класса, поэтому в REST-контроллерах `@ResponseBody` писать не нужно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти аннотации соединяют HTTP-тело с объектами через конвертеры. Без `@ResponseBody` возвращённая строка интерпретировалась бы как имя view.",
+                "example": "`@PostMapping(\"/users\") public User create(@RequestBody UserCreateDto dto){...}` — `JSON` из тела превращается в `dto`, а возвращённый `User` — обратно в `JSON`.",
+                "when_to_apply": "Используют в REST API: `@RequestBody` для приёма `JSON`-payload, `@ResponseBody` (или `@RestController`) для отдачи `JSON`.",
+                "edge_cases": "На один метод допустим лишь один `@RequestBody` (одно тело на запрос); для нескольких частей нужен `@RequestPart`/multipart.",
+                "related": "[[spring-mvc-interview#Q39]] HttpMessageConverter; [[spring-mvc-interview#Q14]] Controller vs RestController; [[spring-mvc-interview#Q27]] RequestBody vs RequestParam."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@ResponseBody` указывает `Spring` интерпретировать возвращённую строку как имя представления и искать её через `ViewResolver`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `@ResponseBody` отключает `ViewResolver` и пишет возвращённое значение прямо в тело ответа.",
+                "source_of_confusion": "Без аннотации строка и правда становится именем view, и логику переворачивают.",
+                "if_it_were_true": "Тогда REST-метод возвращал бы view вместо `JSON`, но `@ResponseBody` именно для тела ответа.",
+                "how_it_should_be": "`@ResponseBody` — это запись в тело через конвертер, минуя `ViewResolver`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@RequestBody` читает значения из query-параметров запроса (`?name=John`) и собирает из них объект.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из query-параметров собирает объект `@ModelAttribute`; `@RequestBody` читает именно тело запроса (`JSON`/`XML`).",
+                "source_of_confusion": "Оба «наполняют объект из запроса», поэтому источники смешивают.",
+                "if_it_were_true": "Тогда `@RequestBody` и `@ModelAttribute` были бы взаимозаменяемы, но они читают разные части запроса.",
+                "how_it_should_be": "`@RequestBody` — из тела запроса; query-параметры читает `@RequestParam`/`@ModelAttribute`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `@RestController` всё равно нужно ставить `@ResponseBody` на каждом методе, иначе ответ не сериализуется в `JSON`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@RestController` уже включает `@ResponseBody` на уровне класса, поэтому на методах его дублировать не надо.",
+                "source_of_confusion": "Привычку из `@Controller` (где `@ResponseBody` нужен явно) переносят на `@RestController`.",
+                "if_it_were_true": "Тогда `@RestController` не отличался бы от обычного `@Controller`, но в этом и его смысл.",
+                "how_it_should_be": "`@RestController` = `@Controller` + `@ResponseBody`; на методах он не нужен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `@Controller` и `@RestController`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@RestController` отличается от `@Controller` тем, что умеет работать только с `XML`, тогда как `@Controller` — только с `JSON`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба формата (`JSON`/`XML`) выбираются через `Content Negotiation` и конвертеры; различие аннотаций — в дефолте view vs тело ответа.",
+                "source_of_confusion": "Различие в типе ответа придумывают там, где его нет.",
+                "if_it_were_true": "Тогда нельзя было бы отдать `JSON` из `@RestController`, но это его основной сценарий.",
+                "how_it_should_be": "Формат определяет `Content Negotiation`; аннотации различаются дефолтной трактовкой возврата."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Controller` по умолчанию возвращает имя View (строку), которое разрешает `ViewResolver`, и для `JSON`-ответа на методе нужен явный `@ResponseBody`; `@RestController` = `@Controller` + `@ResponseBody` на уровне класса, поэтому каждый метод по умолчанию сериализует возвращаемый объект в `JSON`/`XML` через `HttpMessageConverter`, а `ViewResolver` не участвует — `@Controller` берут для веб-страниц, `@RestController` для REST API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разница в дефолтной трактовке возвращаемого значения: имя view против тела ответа. `@RestController` избавляет от `@ResponseBody` на каждом методе.",
+                "example": "`@Controller` метод `return \"home\"` → `home.html`; `@RestController` метод `return user` → `JSON` через `Jackson`.",
+                "when_to_apply": "`@Controller` — для серверного рендеринга (`Thymeleaf`/`JSP`); `@RestController` — для REST-эндпоинтов, отдающих данные.",
+                "edge_cases": "В `@Controller` можно смешивать view и `@ResponseBody`-методы, но это путает — лучше разделять по классам.",
+                "related": "[[spring-mvc-interview#Q13]] RequestBody и ResponseBody; [[spring-mvc-interview#Q17]] ViewResolver; [[spring-mvc-interview#Q2]] что такое Spring MVC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Controller` нельзя использовать для REST API ни при каких условиях — `@ResponseBody` на его методах не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Controller` + `@ResponseBody` на методе даёт ровно тот же REST-эффект; `@RestController` лишь убирает дублирование аннотации.",
+                "source_of_confusion": "Кажется, что REST возможен только через специальную аннотацию.",
+                "if_it_were_true": "Тогда `@RestController` не определялся бы через `@Controller`+`@ResponseBody`, но именно так он и устроен.",
+                "how_it_should_be": "`@Controller` тоже отдаёт `JSON`, если на методе стоит `@ResponseBody`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `@RestController` каждый метод по умолчанию возвращает имя view, которое ищет `ViewResolver`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `@RestController` возвращаемое значение по умолчанию пишется в тело ответа; `ViewResolver` не участвует.",
+                "source_of_confusion": "Дефолтное поведение `@Controller` (имя view) переносят на `@RestController`.",
+                "if_it_were_true": "Тогда `return user` искался бы как шаблон `user.html`, но он сериализуется в `JSON`.",
+                "how_it_should_be": "`@RestController` пишет тело ответа; именами view занимается обычный `@Controller`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@SessionAttributes` и `@SessionAttribute` и чем они отличаются?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@SessionAttributes` и `@SessionAttribute` — это один и тот же механизм, написание во множественном/единственном числе не меняет поведение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это две разные аннотации: `@SessionAttributes` (на классе) управляет атрибутами модели в сессии, `@SessionAttribute` (на параметре) лишь читает атрибут.",
+                "source_of_confusion": "Почти идентичные имена различаются только буквой `s`.",
+                "if_it_were_true": "Тогда `@SessionAttribute` можно было бы ставить на класс, но он применяется к параметру метода.",
+                "how_it_should_be": "Разные аннотации с разной областью: класс (управление) против параметра (чтение)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@SessionAttributes` сохраняет атрибуты в базе данных, а не в HTTP-сессии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SessionAttributes` хранит атрибуты именно в `HttpSession`; персистентность в БД — это отдельная задача (например `Spring Session` с БД-стором).",
+                "source_of_confusion": "Слово «сохраняет» наводит на мысль о долговременном хранилище.",
+                "if_it_were_true": "Тогда после рестарта сервера атрибуты сохранялись бы, но обычная сессия их теряет.",
+                "how_it_should_be": "Хранение — в HTTP-сессии; для БД нужен внешний session store."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@SessionAttributes` (на классе контроллера) сохраняет указанные атрибуты модели в HTTP-сессии между запросами и управляет их жизненным циклом (очистка через `SessionStatus.setComplete()`); `@SessionAttribute` (на параметре метода) просто достаёт уже существующий атрибут из `HttpSession` — разница в том, что первый управляет атрибутами модели в рамках контроллера, а второй лишь читает атрибут сессии.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@SessionAttributes` нужен для многошаговых форм (wizard), где объект живёт между запросами. `@SessionAttribute` — для чтения того, что положили ранее.",
+                "example": "`@SessionAttributes(\"wizard\")` на классе хранит форму мастера между шагами; `@SessionAttribute(\"user\") User u` в методе читает ранее сохранённого пользователя.",
+                "when_to_apply": "`@SessionAttributes` — для wizard-форм и conversation-state; `@SessionAttribute` — когда атрибут уже в сессии и его нужно прочитать.",
+                "edge_cases": "Без `SessionStatus.setComplete()` атрибуты `@SessionAttributes` остаются в сессии и накапливаются; в stateless REST такой подход неуместен.",
+                "related": "[[spring-mvc-interview#Q6]] ModelAttribute; [[spring-mvc-interview#Q9]] связывание форм; [[spring-mvc-interview#Q7]] Model."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@SessionAttribute` на параметре сам создаёт новый атрибут в сессии, если его там ещё нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SessionAttribute` только читает существующий атрибут; если его нет и `required=true`, будет исключение, а не создание.",
+                "source_of_confusion": "Поведение «создать при отсутствии» путают с `@ModelAttribute`-методами.",
+                "if_it_were_true": "Тогда чтение несуществующего атрибута молча создавало бы пустой объект, но Spring бросит ошибку.",
+                "how_it_should_be": "Это чтение; класть атрибут в сессию должен другой код заранее."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@EnableWebMvc` и когда его включать (а когда нет)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@EnableWebMvc` обязателен в любом `Spring Boot`-приложении, иначе контроллеры не будут работать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Spring Boot` MVC настраивается автоконфигурацией; `@EnableWebMvc` не нужен и даже вреден — он отключает автонастройки.",
+                "source_of_confusion": "Кажется, что без явного `@Enable...` фича не активируется.",
+                "if_it_were_true": "Тогда стартеры `spring-boot-starter-web` не работали бы из коробки, но они работают без этой аннотации.",
+                "how_it_should_be": "В Boot её не ставят; контроллеры работают благодаря `WebMvcAutoConfiguration`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@EnableWebMvc` лишь дополняет автоконфигурацию `Spring Boot`, ничего не отключая.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `@EnableWebMvc` отключает `WebMvcAutoConfiguration`, поэтому теряются дефолты Jackson, статики и т.д.",
+                "source_of_confusion": "Слово «enable» создаёт впечатление аддитивности.",
+                "if_it_were_true": "Тогда добавление аннотации было бы безопасным, но на практике оно ломает дефолты.",
+                "how_it_should_be": "Она переводит MVC в ручной режим, выключая автоконфигурацию."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы кастомизировать MVC в `Spring Boot`, обязательно нужен `@EnableWebMvc` вместе с `WebMvcConfigurer`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для кастомизации достаточно реализовать `WebMvcConfigurer` БЕЗ `@EnableWebMvc` — автоконфигурация при этом сохраняется.",
+                "source_of_confusion": "Думают, что `WebMvcConfigurer` работает только при включённом `@EnableWebMvc`.",
+                "if_it_were_true": "Тогда любая кастомизация ломала бы дефолты, но `WebMvcConfigurer` их сохраняет.",
+                "how_it_should_be": "Реализуют `WebMvcConfigurer` отдельно; `@EnableWebMvc` не добавляют."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@EnableWebMvc` активирует полную Java-конфигурацию `Spring MVC` (аналог `<mvc:annotation-driven/>`): регистрирует `HandlerMapping`, `HandlerAdapter`, `HttpMessageConverter`'ы, валидаторы, форматтеры; его берут в приложениях без `Spring Boot` или когда нужен полный контроль, но в `Spring Boot` его добавлять НЕ стоит — он отключает `WebMvcAutoConfiguration` и ломает дефолты (`Jackson`, статические ресурсы); для кастомизации достаточно реализовать `WebMvcConfigurer`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `Spring Boot` автоконфигурация уже всё настраивает. `@EnableWebMvc` переключает MVC в полностью ручной режим, выключая удобные дефолты.",
+                "example": "Чтобы добавить CORS в `Spring Boot`, реализуют `WebMvcConfigurer.addCorsMappings()` БЕЗ `@EnableWebMvc` — иначе отвалятся автонастройки.",
+                "when_to_apply": "Включают только в non-Boot приложениях (классический `Spring`) или когда осознанно нужен полностью ручной MVC-стек.",
+                "edge_cases": "Добавление `@EnableWebMvc` в Boot-приложение часто внезапно ломает сериализацию `JSON` и раздачу статики — типичная ловушка.",
+                "related": "[[spring-mvc-interview#Q35]] настройка CORS через WebMvcConfigurer; [[spring-mvc-interview#Q29]] Content Negotiation; [[spring-mvc-interview#Q39]] HttpMessageConverter."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `ViewResolver` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ViewResolver` — компонент, преобразующий логическое имя представления (строку из контроллера) в объект `View` для рендеринга; основные реализации: `ThymeleafViewResolver` (шаблоны Thymeleaf), `InternalResourceViewResolver` (JSP), `ContentNegotiatingViewResolver` (делегирует другим по `Accept`), `BeanNameViewResolver`; в чисто REST-приложениях с `@RestController` `ViewResolver` не участвует — ответ формирует `HttpMessageConverter`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Контроллер возвращает абстрактное имя, а `ViewResolver` находит конкретный шаблон по префиксу/суффиксу. Это разделяет имя view и его физическое расположение.",
+                "example": "Контроллер `return \"userList\"` + `ThymeleafViewResolver` с prefix `/templates/` и suffix `.html` → рендерит `/templates/userList.html`.",
+                "when_to_apply": "Нужен в приложениях с серверным рендерингом страниц; в REST-only сервисах его роль выполняют конвертеры.",
+                "edge_cases": "Несколько `ViewResolver` упорядочены по `Order`; если первый вернул null, пробуется следующий — неверный порядок даёт `404`/неправильный шаблон.",
+                "related": "[[spring-mvc-interview#Q26]] настройка шаблонов; [[spring-mvc-interview#Q29]] Content Negotiation; [[spring-mvc-interview#Q14]] Controller vs RestController."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ViewResolver` десериализует `JSON`-тело запроса в Java-объект перед вызовом контроллера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Десериализацией `JSON` занимается `HttpMessageConverter` (для `@RequestBody`); `ViewResolver` лишь разрешает имя представления на выходе.",
+                "source_of_confusion": "Оба — части MVC-конвейера, их роли путают.",
+                "if_it_were_true": "Тогда `ViewResolver` участвовал бы во входящих REST-запросах, но он про исходящие представления.",
+                "how_it_should_be": "`ViewResolver` — про разрешение view; десериализацию делает конвертер сообщений."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ViewResolver` участвует в каждом ответе, включая `JSON` из `@RestController`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `@RestController` (с `@ResponseBody`) `ViewResolver` пропускается — ответ пишется напрямую через `HttpMessageConverter`.",
+                "source_of_confusion": "Кажется, что любой ответ проходит через разрешение view.",
+                "if_it_were_true": "Тогда REST-эндпоинт искал бы шаблон под имя объекта, но он сериализует тело сразу.",
+                "how_it_should_be": "Для тела ответа (`@ResponseBody`) `ViewResolver` не вызывается."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ViewResolver` сам по себе рендерит HTML и отправляет его клиенту, не создавая объект `View`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ViewResolver` лишь возвращает объект `View`; рендеринг (`view.render(model,...)`) выполняет уже сам `View`.",
+                "source_of_confusion": "Шаги «разрешение имени» и «рендеринг» сливают в один.",
+                "if_it_were_true": "Тогда интерфейс `View` был бы не нужен, но именно он рендерит результат.",
+                "how_it_should_be": "Резолвер находит `View`; рендеринг делает найденный `View`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `POJO` и как это понятие связано с `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`POJO` — это объект, который обязан наследоваться от базового класса фреймворка, например `SpringBean`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "POJO — это как раз объект БЕЗ наследования от фреймворк-классов; обязательный базовый класс противоречит определению.",
+                "source_of_confusion": "Кажется, что «правильный» объект должен от чего-то наследоваться.",
+                "if_it_were_true": "Тогда POJO зависел бы от фреймворка, но смысл термина — независимость от него.",
+                "how_it_should_be": "POJO не наследует фреймворк-классы и не реализует их обязательных интерфейсов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`POJO` (Plain Old Java Object) — обычный Java-объект без привязки к фреймворку: нет наследования от специальных классов, нет обязательных интерфейсов; в `Spring MVC` POJO часто выступает как Command/Backing Object (объект, в который `Spring` привязывает данные формы через `@ModelAttribute`) или как DTO, а философия `Spring` — держать контроллеры и сервисы максимально POJO, чтобы бизнес-логика не зависела от `jakarta.servlet.*` и легко тестировалась.",
+              "correct": true,
+              "sections": {
+                "explanation": "POJO не тащит зависимостей фреймворка, поэтому его легко создавать в тестах и переиспользовать. Это основа тестируемости Spring-кода.",
+                "example": "`public class UserForm { private String name; private String email; /* getters/setters */ }` — чистый POJO как backing-объект формы.",
+                "when_to_apply": "POJO применяют для DTO, форм и доменных объектов везде, где не нужна привязка к инфраструктуре.",
+                "edge_cases": "Как только класс наследует, скажем, `HttpServlet` или реализует фреймворк-интерфейсы, он перестаёт быть строгим POJO и хуже тестируется.",
+                "related": "[[spring-mvc-interview#Q6]] ModelAttribute и command-объект; [[spring-mvc-interview#Q9]] связывание форм; [[spring-mvc-interview#Q11]] валидация DTO."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`POJO` обязательно должен реализовывать интерфейс `Serializable` и иметь аннотацию `@Entity`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "POJO не требует ни `Serializable`, ни `@Entity`; это просто обычный класс с полями и методами доступа.",
+                "source_of_confusion": "Конкретные требования JPA-сущностей переносят на общее понятие POJO.",
+                "if_it_were_true": "Тогда любой POJO был бы JPA-сущностью, но POJO — более широкое и нейтральное понятие.",
+                "how_it_should_be": "Никаких обязательных интерфейсов/аннотаций; POJO нейтрален к фреймворкам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Spring MVC` контроллеры принципиально не могут быть POJO, так как обязаны наследовать `AbstractController`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современные контроллеры — это POJO с аннотацией `@Controller`; наследование `AbstractController` — устаревший подход и не обязателен.",
+                "source_of_confusion": "Старый Spring-стиль с базовыми классами контроллеров считают обязательным.",
+                "if_it_were_true": "Тогда аннотационные `@RestController`-POJO были бы невозможны, но они — стандарт.",
+                "how_it_should_be": "Контроллеры пишут как POJO с аннотациями, без наследования базовых классов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое архитектуры Модель 1 и Модель 2 и какую из них реализует `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring MVC` реализует Модель 1: контроллер сам генерирует HTML и ходит в базу данных в одном методе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring MVC` реализует Модель 2 (MVC) с разделением слоёв; Модель 1 — это смешение логики и отображения в JSP/сервлете.",
+                "source_of_confusion": "Номера моделей легко перепутать местами.",
+                "if_it_were_true": "Тогда у Spring не было бы отдельных view и сервисов, но именно их разделение — суть Модели 2.",
+                "how_it_should_be": "Spring MVC — это Модель 2; Модель 1 — устаревший JSP-centric подход."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главное преимущество Модели 1 над Моделью 2 — лучшая тестируемость и разделение ответственности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тестируемость и разделение — преимущества Модели 2 (MVC); Модель 1 как раз смешивает всё и тестируется хуже.",
+                "source_of_confusion": "Преимущества двух моделей приписывают не той из них.",
+                "if_it_were_true": "Тогда не было бы смысла переходить к MVC, но переходят именно ради разделения слоёв.",
+                "how_it_should_be": "Разделение и тестируемость дают Модель 2; Модель 1 проще, но монолитнее."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Модель 1 — запрос обрабатывается прямо в `JSP`/сервлете, где бизнес-логика и отображение смешаны: быстро для простого, но плохо масштабируется; Модель 2 — это паттерн `MVC` с разделением на контроллер, модель и представление; `Spring MVC` реализует именно Модель 2, что даёт независимое тестирование слоёв, переиспользование бизнес-логики и замену view-технологии без переписывания контроллеров.",
+              "correct": true,
+              "sections": {
+                "explanation": "Модель 1 — JSP-centric, всё в одном месте. Модель 2 разносит ответственность по слоям, отделяя логику от представления.",
+                "example": "В Модели 1 `JSP` сама ходит в БД и рисует HTML; в Модели 2 контроллер вызывает сервис, кладёт данные в модель, а view только отображает.",
+                "when_to_apply": "Модель 2 (MVC) применяют во всех серьёзных веб-приложениях ради тестируемости и поддержки; Модель 1 — разве что для одноразовых прототипов.",
+                "edge_cases": "Формально следуя Модели 2, но засовывая бизнес-логику в контроллер, получают «толстый контроллер» — антипаттерн, теряющий преимущества разделения.",
+                "related": "[[spring-mvc-interview#Q1]] паттерн Front Controller; [[spring-mvc-interview#Q2]] что такое Spring MVC; [[spring-mvc-interview#Q18]] POJO и слои."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Модель 1 и Модель 2 различаются только версией спецификации `Servlet API`, а не архитектурой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие архитектурное: Модель 1 — смешение логики и view, Модель 2 — разделение на MVC; версия Servlet API ни при чём.",
+                "source_of_confusion": "Слово «модель» с номером ассоциируют с версионированием спецификации.",
+                "if_it_were_true": "Тогда обе работали бы одинаково на одной версии API, но они отличаются структурой кода.",
+                "how_it_should_be": "Это два разных архитектурных подхода, не версии спецификации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `DispatcherServlet` и `ContextLoaderListener` и как они связаны с контекстами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ContextLoaderListener` создаёт дочерний контекст для контроллеров, а `DispatcherServlet` — корневой контекст для сервисов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `ContextLoaderListener` создаёт КОРНЕВОЙ контекст (сервисы), а `DispatcherServlet` — ДОЧЕРНИЙ (контроллеры).",
+                "source_of_confusion": "Роли двух компонентов и направление иерархии путают местами.",
+                "if_it_were_true": "Тогда сервисы видели бы контроллеры, но видимость односторонняя: веб видит бизнес.",
+                "how_it_should_be": "Корневой контекст — у listener'а (бизнес), дочерний — у диспетчера (веб)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В иерархии контекстов корневой контекст видит бины веб-слоя (контроллеры, ViewResolver).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Видимость односторонняя: дочерний (веб) видит корневой (бизнес), но корневой бины веб-слоя НЕ видит.",
+                "source_of_confusion": "Кажется, что родитель имеет доступ ко всему, включая детей.",
+                "if_it_were_true": "Тогда сервис мог бы внедрить контроллер, но это запрещено направлением видимости.",
+                "how_it_should_be": "Дочерний контекст видит родительский, не наоборот."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`DispatcherServlet` — это просто `Filter`, который работает до создания `ApplicationContext`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DispatcherServlet` — это сервлет (Front Controller), и он работает поверх уже поднятого `WebApplicationContext`, а не до контекста.",
+                "source_of_confusion": "`Filter` и `Servlet` оба часть веб-стека, их путают.",
+                "if_it_were_true": "Тогда у диспетчера не было бы доступа к бинам, но он целиком построен на контексте.",
+                "how_it_should_be": "Это сервлет со своим дочерним контекстом, а не фильтр до контекста."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`DispatcherServlet` — центральный сервлет `Spring MVC` (паттерн Front Controller), координирующий цикл запроса через `HandlerMapping` → `HandlerAdapter` → контроллер → `ViewResolver`; `ContextLoaderListener` при старте создаёт КОРНЕВОЙ `ApplicationContext` (сервисы, репозитории), а `DispatcherServlet` создаёт свой ДОЧЕРНИЙ контекст (контроллеры, `ViewResolver`); бины веб-слоя видят корневые бины, но не наоборот; в `Spring Boot` это абстрагировано в один контекст.",
+              "correct": true,
+              "sections": {
+                "explanation": "Иерархия контекстов: общий корневой для бизнес-слоя и дочерний для веб-слоя. Видимость односторонняя — веб видит бизнес, но не наоборот.",
+                "example": "В классическом Spring `ContextLoaderListener` поднимает `applicationContext.xml` (сервисы), а `DispatcherServlet` — `dispatcher-servlet.xml` (контроллеры).",
+                "when_to_apply": "Понимание двух контекстов нужно в non-Boot приложениях и при отладке проблем «бин не найден» из-за неверной иерархии.",
+                "edge_cases": "Если объявить один и тот же бин в обоих контекстах, получится два экземпляра; в `Spring Boot` контекст один, и эта проблема исчезает.",
+                "related": "[[spring-mvc-interview#Q1]] Front Controller; [[spring-mvc-interview#Q31]] pipeline обработки запроса; [[spring-mvc-interview#Q38]] lifecycle DispatcherServlet."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `MultipartResolver` в `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`MultipartResolver` — стратегия разбора multipart-запросов (загрузка файлов); две реализации: `StandardServletMultipartResolver` (на Servlet 3.0+ API, дефолт в `Spring Boot`) и `CommonsMultipartResolver` (на Apache Commons FileUpload); файл доступен в контроллере как `MultipartFile` (`getOriginalFilename()`, `getSize()`, `transferTo()`), лимиты задают в `application.yml` (`max-file-size`, `max-request-size`), а при превышении `Spring` бросает `MaxUploadSizeExceededException`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Резолвер превращает multipart-тело в доступные `MultipartFile`. В `Spring Boot` он включён автоматически и настраивается через `spring.servlet.multipart.*`.",
+                "example": "`@PostMapping(\"/upload\") public String up(@RequestParam(\"file\") MultipartFile file){ file.transferTo(Path.of(\"/uploads/\"+file.getOriginalFilename())); }`.",
+                "when_to_apply": "Нужен везде, где принимают файлы: загрузка аватаров, документов, импорт CSV через форму.",
+                "edge_cases": "При превышении `max-file-size` исключение `MaxUploadSizeExceededException` ловят в `@ControllerAdvice` и отдают `413 Payload Too Large`.",
+                "related": "[[spring-mvc-interview#Q34]] обработка загрузки файлов; [[spring-mvc-interview#Q40]] RequestPart и MultipartFile; [[spring-mvc-interview#Q31]] pipeline и MultipartResolver."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`MultipartResolver` нужен для разбора `JSON`-тела запроса на отдельные поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JSON`-тело разбирает `HttpMessageConverter` (`Jackson`); `MultipartResolver` обрабатывает только `multipart/form-data` (файлы).",
+                "source_of_confusion": "Оба «разбирают тело запроса», поэтому их назначение смешивают.",
+                "if_it_were_true": "Тогда для приёма `JSON` нужен был бы multipart-резолвер, но он работает лишь с multipart.",
+                "how_it_should_be": "`MultipartResolver` — про файлы (`multipart/form-data`); `JSON` — про конвертеры."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Spring Boot` дефолтная реализация — `CommonsMultipartResolver` на базе Apache Commons FileUpload.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Spring Boot` по умолчанию используется `StandardServletMultipartResolver` (Servlet 3.0+); Commons — альтернатива для старых сред.",
+                "source_of_confusion": "Исторически Commons FileUpload был популярен, его и считают дефолтом.",
+                "if_it_were_true": "Тогда требовалась бы зависимость `commons-fileupload`, но Boot работает без неё.",
+                "how_it_should_be": "Дефолт — `StandardServletMultipartResolver`; Commons подключают отдельно при необходимости."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При превышении `max-file-size` `Spring` молча обрезает файл до лимита и продолжает обработку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring` не обрезает файл, а бросает `MaxUploadSizeExceededException`, которое нужно обработать.",
+                "source_of_confusion": "Поведение «truncate» из некоторых стримов переносят на загрузку файлов.",
+                "if_it_were_true": "Тогда сервер принимал бы повреждённые файлы, но он отклоняет запрос целиком.",
+                "how_it_should_be": "Превышение лимита — это исключение и ответ об ошибке, а не обрезка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@InitBinder` и для чего он применяется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@InitBinder` вызывается один раз при старте приложения и настраивает биндинг глобально на всё время работы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод `@InitBinder` вызывается перед КАЖДЫМ запросом к контроллеру, а не однократно на старте.",
+                "source_of_confusion": "Слово «init» наводит на мысль об одноразовой инициализации.",
+                "if_it_were_true": "Тогда per-request настройка `WebDataBinder` была бы невозможна, но она происходит каждый запрос.",
+                "how_it_should_be": "Вызывается на каждый запрос; настраивает `WebDataBinder` для конкретной обработки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Метод с `@InitBinder` вызывается перед каждым запросом и настраивает `WebDataBinder` — компонент привязки данных запроса к объектам: через него задают белый список полей (`setAllowedFields()` против mass assignment), регистрируют кастомные редакторы/форматтеры (например `CustomDateEditor`) и добавляют валидаторы; `@InitBinder` без `value` применяется ко всем аргументам, а с `value(\"order\")` — только к аргументу с этим именем.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это точка тонкой настройки биндинга на уровне контроллера. Чаще всего применяют для безопасности (allowed fields) и кастомной конверсии типов.",
+                "example": "`@InitBinder public void init(WebDataBinder b){ b.setAllowedFields(\"name\",\"email\"); b.registerCustomEditor(Date.class, new CustomDateEditor(fmt,true)); }`.",
+                "when_to_apply": "Берут для защиты от mass assignment, регистрации форматов дат/чисел и добавления per-controller валидаторов.",
+                "edge_cases": "`@InitBinder(\"order\")` действует только на аргумент с именем `order`; ошибка в имени тихо оставит биндинг без ограничений.",
+                "related": "[[spring-mvc-interview#Q9]] связывание форм и mass assignment; [[spring-mvc-interview#Q6]] ModelAttribute; [[spring-mvc-interview#Q25]] InitBinder в ControllerAdvice."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@InitBinder` предназначен исключительно для десериализации `JSON`-тела через `Jackson`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@InitBinder` настраивает `WebDataBinder` (биндинг form/query-параметров и редакторов), а не Jackson; `JSON`-тело конфигурируют через `ObjectMapper`.",
+                "source_of_confusion": "Любую «настройку парсинга запроса» приписывают одному месту.",
+                "if_it_were_true": "Тогда `setAllowedFields()` влиял бы на `@RequestBody`, но он работает с `WebDataBinder`-биндингом.",
+                "how_it_should_be": "Это про `WebDataBinder` (формы/конверсия), а не про десериализацию `JSON`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@InitBinder` с указанным именем, например `@InitBinder(\"order\")`, применяется ко всем аргументам контроллера сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С указанным именем `@InitBinder` действует только на аргумент с этим именем; ко всем применяется форма БЕЗ `value`.",
+                "source_of_confusion": "Наличие/отсутствие `value` и его эффект на область путают.",
+                "if_it_were_true": "Тогда нельзя было бы настроить биндинг для одного конкретного объекта, но именно для этого служит `value`.",
+                "how_it_should_be": "`@InitBinder` без `value` — для всех; с `value(\"order\")` — только для `order`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как происходит обработка исключений в веб-приложениях на `Spring MVC` (три уровня)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Глобальный `@ControllerAdvice` всегда срабатывает раньше локального `@ExceptionHandler` в самом контроллере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приоритет у локального `@ExceptionHandler`: для исключения из своего контроллера он обрабатывается раньше `@ControllerAdvice`.",
+                "source_of_confusion": "Слово «глобальный» создаёт впечатление наивысшего приоритета.",
+                "if_it_were_true": "Тогда нельзя было бы переопределить обработку в конкретном контроллере, но локальный handler это позволяет.",
+                "how_it_should_be": "Сначала локальный handler, затем глобальный `@ControllerAdvice`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Если на классе исключения стоит `@ResponseStatus`, `Spring` всё равно вернёт `500`, игнорируя аннотацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@ResponseStatus` на исключении заставляет `Spring` вернуть указанный в ней код (например `404`), а не `500`.",
+                "source_of_confusion": "Кажется, что без явного handler'а любая ошибка — это `500`.",
+                "if_it_were_true": "Тогда `@ResponseStatus` был бы бесполезен, но он именно задаёт HTTP-код исключения.",
+                "how_it_should_be": "`@ResponseStatus` определяет возвращаемый код; `500` — лишь дефолт при отсутствии обработки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Spring MVC` исключение обрабатывается по приоритету: сначала локальный `@ExceptionHandler` в самом контроллере, затем `@ControllerAdvice` с `@ExceptionHandler` (глобальный, самый частый подход), затем `@ResponseStatus` на классе исключения (вернёт указанный HTTP-код), и наконец `DefaultHandlerExceptionResolver` → `500`; в REST API обычно используют `@RestControllerAdvice` с единым форматом ответа (RFC 7807 Problem Details).",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring перебирает уровни сверху вниз, пока не найдёт подходящий обработчик. Локальный имеет приоритет над глобальным.",
+                "example": "`@ResponseStatus(HttpStatus.NOT_FOUND) public class ResourceNotFoundException ...` — при выбросе без явного handler'а Spring сам вернёт `404`.",
+                "when_to_apply": "`@ResponseStatus` — для простых исключений с фиксированным кодом; `@ControllerAdvice` — для единой обработки во всём приложении.",
+                "edge_cases": "Если ни один уровень не подошёл, `DefaultHandlerExceptionResolver` отдаст `500`; необработанная ошибка может «утечь» как страница ошибки контейнера.",
+                "related": "[[spring-mvc-interview#Q24]] ExceptionHandler; [[spring-mvc-interview#Q25]] ControllerAdvice; [[spring-mvc-interview#Q42]] порядок применения ExceptionHandler."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Spring MVC` есть только один способ обработки исключений — глобальный `@ControllerAdvice`; локальных обработчиков не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Способов несколько: локальный `@ExceptionHandler`, `@ControllerAdvice`, `@ResponseStatus` на исключении и стандартный resolver.",
+                "source_of_confusion": "`@ControllerAdvice` самый известный, поэтому его считают единственным.",
+                "if_it_were_true": "Тогда нельзя было бы обработать ошибку прямо в контроллере, но локальный `@ExceptionHandler` это умеет.",
+                "how_it_should_be": "Уровней несколько; они работают по приоритету от локального к глобальному."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@ExceptionHandler` и как его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Метод с `@ExceptionHandler` обязан возвращать только `void` и не может формировать тело ответа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод может возвращать `ResponseEntity`, объект (в REST → `JSON`), `ProblemDetail` или имя view — он формирует ответ.",
+                "source_of_confusion": "Обработчики путают с listener'ами, которые часто `void`.",
+                "if_it_were_true": "Тогда нельзя было бы вернуть `JSON` с описанием ошибки, но это его основное применение.",
+                "how_it_should_be": "Возвращаемое значение становится телом ответа об ошибке."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В одном `@ControllerAdvice` можно объявить сколько угодно `@ExceptionHandler`-методов для одного и того же типа исключения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для одного типа исключения в одном advice допустим лишь один обработчик; дубликат — ошибка конфигурации.",
+                "source_of_confusion": "Перегрузку методов по сигнатуре путают с привязкой по типу исключения.",
+                "if_it_were_true": "Тогда `Spring` не знал бы, какой из двух вызвать, но он запрещает неоднозначность на старте.",
+                "how_it_should_be": "Один тип исключения — один обработчик в пределах одного advice."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@ExceptionHandler` ловит исключения, возникшие на любом слое, включая фоновые `@Async`-задачи и потоки, не связанные с запросом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@ExceptionHandler` ловит исключения только в рамках обработки HTTP-запроса MVC; ошибки в отдельных `@Async`-потоках он не перехватывает.",
+                "source_of_confusion": "Кажется, что глобальный обработчик ловит вообще всё в приложении.",
+                "if_it_were_true": "Тогда не нужен был бы `AsyncUncaughtExceptionHandler`, но для async-ошибок существует он.",
+                "how_it_should_be": "Это обработчик web-слоя; для async-ошибок есть отдельные механизмы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@ExceptionHandler` помечает метод, который вызывается при выбросе указанного исключения в контроллере; метод может возвращать `ResponseEntity`, View или объект (в `@RestController`); часто его кладут в `@RestControllerAdvice` вместе с `@ResponseStatus` и возвращают `ProblemDetail` (Spring 6+, реализация RFC 7807); в одном `@ControllerAdvice` нельзя объявить два обработчика для одного и того же типа исключения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотация связывает тип исключения с методом-обработчиком. Это превращает падение в контролируемый HTTP-ответ нужного формата.",
+                "example": "`@ExceptionHandler(ResourceNotFoundException.class) @ResponseStatus(NOT_FOUND) public ProblemDetail handle(ex){ ... }` — вернёт `404` с телом Problem Details.",
+                "when_to_apply": "Берут для маппинга доменных исключений в конкретные HTTP-коды и единого формата ошибок REST API.",
+                "edge_cases": "Два `@ExceptionHandler` на один тип исключения в одном advice — ошибка конфигурации; при иерархии исключений выбирается самый специфичный.",
+                "related": "[[spring-mvc-interview#Q23]] уровни обработки исключений; [[spring-mvc-interview#Q25]] ControllerAdvice; [[spring-mvc-interview#Q36]] глобальная обработка ошибок."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@ControllerAdvice` и какие типы методов в нём бывают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@ControllerAdvice` помечает класс, чьи методы применяются ко всем (или к выбранным) контроллерам; в нём бывают три типа методов: `@ExceptionHandler` (глобальная обработка исключений), `@ModelAttribute` (общие атрибуты модели) и `@InitBinder` (глобальная настройка биндинга); область сужают через `basePackages`, `basePackageClasses`, `assignableTypes`, `annotations`; `@RestControllerAdvice` = `@ControllerAdvice` + `@ResponseBody` для REST API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это место для сквозной логики, общей всем контроллерам. Чаще всего его используют для единой обработки ошибок.",
+                "example": "`@ControllerAdvice(basePackages=\"com.example.api\") public class ApiAdvice { @ModelAttribute(\"apiVersion\") String v(){ return \"v2\"; } }`.",
+                "when_to_apply": "Берут для централизованной обработки исключений, общих атрибутов модели и единых правил биндинга во всём приложении.",
+                "edge_cases": "Без сужения области advice применяется ко ВСЕМ контроллерам; пересекающиеся advice требуют `@Order` для предсказуемого приоритета.",
+                "related": "[[spring-mvc-interview#Q24]] ExceptionHandler; [[spring-mvc-interview#Q36]] глобальная обработка ошибок; [[spring-mvc-interview#Q42]] порядок применения ExceptionHandler."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@ControllerAdvice` может содержать только `@ExceptionHandler`-методы и ничего больше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо `@ExceptionHandler`, в advice бывают `@ModelAttribute` (общие атрибуты) и `@InitBinder` (общий биндинг).",
+                "source_of_confusion": "Самое частое применение (обработка ошибок) принимают за единственно возможное.",
+                "if_it_were_true": "Тогда нельзя было бы добавить общий атрибут модели глобально, но `@ModelAttribute` в advice это делает.",
+                "how_it_should_be": "Три типа методов: `@ExceptionHandler`, `@ModelAttribute`, `@InitBinder`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@ControllerAdvice` всегда применяется ко всем контроллерам, и сузить его область невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Область сужают через `basePackages`, `basePackageClasses`, `assignableTypes`, `annotations`.",
+                "source_of_confusion": "Слово «advice» как «глобальный совет» воспринимают как «всегда для всех».",
+                "if_it_were_true": "Тогда нельзя было бы иметь разные advice для разных модулей, но их разделяют по пакетам.",
+                "how_it_should_be": "Область настраивается атрибутами аннотации; по умолчанию — для всех."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@RestControllerAdvice` отличается от `@ControllerAdvice` тем, что работает только с `@Controller`, но не с `@RestController`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@RestControllerAdvice` = `@ControllerAdvice` + `@ResponseBody`; он как раз удобен для REST (`@RestController`), а не ограничен обычными контроллерами.",
+                "source_of_confusion": "Похожие имена и приставку `Rest` трактуют наоборот.",
+                "if_it_were_true": "Тогда REST API не получал бы `JSON`-тело ошибки от advice, но именно для этого `@RestControllerAdvice` и нужен.",
+                "how_it_should_be": "`@RestControllerAdvice` добавляет `@ResponseBody` — для REST-ответов об ошибках."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить шаблоны (`Thymeleaf`, `JSP`) в `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы подключить `Thymeleaf` в `Spring Boot`, нужно вручную объявить бин `ThymeleafViewResolver` и настроить `TemplateEngine` — автоконфигурации для этого нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоконфигурация `Spring Boot` сама создаёт `ThymeleafViewResolver` и `TemplateEngine` при наличии стартера; ручной бин не требуется.",
+                "source_of_confusion": "Опыт классического Spring без автоконфигурации переносят на Boot.",
+                "if_it_were_true": "Тогда стартер не давал бы ничего полезного, но он именно автонастраивает Thymeleaf.",
+                "how_it_should_be": "Достаточно добавить стартер; резолвер и движок настроятся автоматически."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для `Thymeleaf` в `Spring Boot` достаточно зависимости `spring-boot-starter-thymeleaf` — автоконфигурация настроит `ThymeleafViewResolver` с дефолтами (prefix `classpath:/templates/`, suffix `.html`, `cache: false` для разработки); для `JSP` (не рекомендуется в новых проектах) задают `spring.mvc.view.prefix=/WEB-INF/jsp/` и `suffix=.jsp`; контроллер возвращает имя, а `ViewResolver` подставляет префикс/суффикс; в REST-приложениях с `@RestController` шаблоны не используются.",
+              "correct": true,
+              "sections": {
+                "explanation": "Шаблонизатор подключается стартером, а имя view превращается в путь к файлу через prefix/suffix. `Thymeleaf` — стандартный выбор в современных проектах.",
+                "example": "`return \"userList\"` + дефолты Thymeleaf → рендерит `classpath:/templates/userList.html`.",
+                "when_to_apply": "Шаблоны берут для серверного рендеринга HTML; в чисто REST-сервисах они не нужны.",
+                "edge_cases": "`cache: true` в проде ускоряет рендер, но в разработке скрывает правки шаблонов — для dev его выключают.",
+                "related": "[[spring-mvc-interview#Q17]] ViewResolver; [[spring-mvc-interview#Q4]] локализация в шаблонах; [[spring-mvc-interview#Q14]] Controller vs RestController."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Spring Boot` дефолтная директория шаблонов `Thymeleaf` — это `/WEB-INF/jsp/`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолт Thymeleaf — `classpath:/templates/`; `/WEB-INF/jsp/` — типичный путь для `JSP`, а не Thymeleaf.",
+                "source_of_confusion": "Путь JSP переносят на Thymeleaf.",
+                "if_it_were_true": "Тогда шаблоны лежали бы в `WEB-INF`, но Thymeleaf по умолчанию ищет в `templates`.",
+                "how_it_should_be": "Thymeleaf — `classpath:/templates/`; `WEB-INF/jsp` относится к JSP."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `@RestController` шаблоны `Thymeleaf` всё равно рендерятся, поэтому для REST нужно держать пустые HTML-файлы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `@RestController` (с `@ResponseBody`) шаблоны не используются — ответ формирует `HttpMessageConverter`; пустые HTML не нужны.",
+                "source_of_confusion": "Кажется, что любой ответ требует view.",
+                "if_it_were_true": "Тогда REST-сервис не мог бы работать без templates-каталога, но он прекрасно работает без него.",
+                "how_it_should_be": "REST отдаёт тело через конвертер; шаблоны не задействованы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `@RequestBody`, `@RequestParam` и `@PathVariable`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@RequestParam` читает данные из тела запроса (`JSON`), а `@RequestBody` — из query-строки URL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `@RequestBody` читает тело (`JSON`), а `@RequestParam` — query/form-параметры.",
+                "source_of_confusion": "Источники двух аннотаций путают местами.",
+                "if_it_were_true": "Тогда `?name=John` попадал бы в `@RequestBody`, но он читает именно тело запроса.",
+                "how_it_should_be": "`@RequestBody` — тело; `@RequestParam` — параметры query/form."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "На один метод можно повесить несколько `@RequestBody`-параметров, чтобы принять несколько `JSON`-объектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тело запроса одно, поэтому допустим лишь один `@RequestBody`; для нескольких частей используют `@RequestPart`/multipart.",
+                "source_of_confusion": "Множественность `@RequestParam` переносят на `@RequestBody`.",
+                "if_it_were_true": "Тогда Spring читал бы тело дважды, но HTTP-тело читается один раз.",
+                "how_it_should_be": "Один `@RequestBody` на запрос; несколько объектов — внутри одного DTO или через multipart."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@RequestBody` берёт данные из тела запроса (`JSON` → объект, одно тело на запрос, типично для POST/PUT); `@RequestParam` — из query/form-параметров (`?key=value` → параметр, много параметров, GET и form-POST); `@PathVariable` — из сегмента URL (`/path/{id}` → параметр, много переменных, GET/DELETE) — все три читают разные части HTTP-запроса и не взаимозаменяемы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Источник данных — ключевое различие: тело, query-строка или путь. Выбор зависит от семантики данных и REST-конвенций.",
+                "example": "`create(@RequestBody UserDto dto)`; `search(@RequestParam String name)`; `delete(@PathVariable Long id)` — три источника в трёх методах.",
+                "when_to_apply": "`@RequestBody` — для payload создания/обновления; `@RequestParam` — для фильтров/пагинации; `@PathVariable` — для идентификатора ресурса.",
+                "edge_cases": "`@RequestParam` по умолчанию обязателен (отсутствие → 400); делают необязательным через `required=false`/`defaultValue`.",
+                "related": "[[spring-mvc-interview#Q13]] RequestBody и ResponseBody; [[spring-mvc-interview#Q10]] PathVariable; [[spring-mvc-interview#Q32]] варианты RequestMapping."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@PathVariable` и `@RequestParam` — это синонимы, оба читают `?id=42` из строки запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@PathVariable` берёт сегмент пути (`/users/42`), а `@RequestParam` — параметр query (`?id=42`); это разные источники.",
+                "source_of_confusion": "Оба «достают id из URL», и их считают одинаковыми.",
+                "if_it_were_true": "Тогда `/users/{id}` и `/users?id=` маппились бы одинаково, но это разные стили URL.",
+                "how_it_should_be": "`@PathVariable` — часть пути; `@RequestParam` — query-параметр."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать валидацию входных данных в `Spring MVC` (полная цепочка)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Валидацию входных данных надо писать вручную в каждом контроллере через `if`-проверки полей — аннотации `Bean Validation` здесь не помогают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Декларативная валидация через аннотации DTO + `@Valid` заменяет ручные проверки; advice централизует ответы об ошибках.",
+                "source_of_confusion": "Привычка к императивным проверкам перевешивает декларативный подход.",
+                "if_it_were_true": "Тогда `@NotBlank`/`@Email` были бы бесполезны, но они и есть основа валидации.",
+                "how_it_should_be": "Правила объявляют аннотациями, запускают `@Valid`, ошибки ловят в advice."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для разных сценариев (создание vs обновление) нельзя переиспользовать один DTO — нужен отдельный класс на каждый случай.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один DTO переиспользуют с группами валидации (`@Validated(OnCreate.class)`/`OnUpdate.class`), не плодя классы.",
+                "source_of_confusion": "Не знают про validation groups и считают, что правила всегда одинаковы для DTO.",
+                "if_it_were_true": "Тогда groups были бы не нужны, но именно они решают эту задачу.",
+                "how_it_should_be": "Группы валидации включают разные правила для одного DTO по сценарию."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ошибки валидации `@RequestBody` и `@RequestParam` всегда приводят к одному и тому же исключению `MethodArgumentNotValidException`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@RequestBody` даёт `MethodArgumentNotValidException`, а ограничения `@RequestParam` (при `@Validated` на классе) — `ConstraintViolationException`.",
+                "source_of_confusion": "Оба «про валидацию», поэтому типы исключений объединяют.",
+                "if_it_were_true": "Тогда один handler покрывал бы оба случая, но для query-параметров нужен отдельный.",
+                "how_it_should_be": "Это разные исключения, и для них пишут разные `@ExceptionHandler`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Полная цепочка: DTO с аннотациями ограничений (`@NotBlank`, `@Size`, `@Email`) → пометка аргумента `@Valid`/`@Validated` в контроллере → ошибки попадают в `BindingResult` или дают `MethodArgumentNotValidException` → глобальный `@RestControllerAdvice` ловит исключение и возвращает `400` с `JSON` ошибок; для кастомных правил — своя аннотация + `ConstraintValidator`, для разных сценариев (создание vs обновление) — `@Validated(OnCreate.class)` с группами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Валидация декларативна и многослойна: правила на DTO, запуск через `@Valid`, единая обработка ошибок в advice. Это отделяет проверку от бизнес-логики.",
+                "example": "`@PostMapping(\"/users\") create(@Valid @RequestBody UserCreateDto dto)` + advice, собирающий `getFieldErrors()` в `Map<field,message>` → `400`.",
+                "when_to_apply": "Применяют на всех публичных эндпоинтах, принимающих данные, чтобы централизовать формат ответов об ошибках.",
+                "edge_cases": "Ошибки `@RequestParam`-ограничений дают `ConstraintViolationException` (нужен `@Validated` на классе и отдельный handler), а не `MethodArgumentNotValidException`.",
+                "related": "[[spring-mvc-interview#Q11]] что такое Validation; [[spring-mvc-interview#Q12]] BindingResult; [[spring-mvc-interview#Q36]] глобальная обработка ошибок."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Content Negotiation` и как его настроить в `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Content Negotiation` — механизм выбора формата ответа (`JSON`, `XML`, `HTML`) по запросу клиента; стратегии: заголовок `Accept` (по умолчанию в `Spring Boot`), параметр запроса (`?format=xml`) и расширение URL (`/users.xml`, deprecated); настраивают через `WebMvcConfigurer.configureContentNegotiation()` (`favorParameter`, `parameterName`, `defaultContentType`, `mediaType`); `JSON` доступен из коробки (`Jackson`), для `XML` нужна зависимость `jackson-dataformat-xml`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сервер подбирает формат, который клиент готов принять. `ContentNegotiationManager` определяет тип, а `HttpMessageConverter` выполняет сериализацию.",
+                "example": "Запрос с `Accept: application/xml` к одному и тому же эндпоинту вернёт `XML`, а с `Accept: application/json` — `JSON`, без изменений контроллера.",
+                "when_to_apply": "Нужен, когда один API обслуживает клиентов с разными форматами (браузер — HTML, мобильное приложение — `JSON`, легаси — `XML`).",
+                "edge_cases": "Стратегия по расширению URL (`/users.xml`) устарела и по умолчанию выключена из-за проблем безопасности (path traversal, спуфинг типа).",
+                "related": "[[spring-mvc-interview#Q39]] HttpMessageConverter; [[spring-mvc-interview#Q17]] ViewResolver; [[spring-mvc-interview#Q16]] EnableWebMvc."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Content Negotiation` определяет формат ответа только по расширению в URL (`/users.json`), другие стратегии не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стратегий несколько: заголовок `Accept` (дефолт), параметр запроса и расширение URL; последнее как раз устарело и обычно выключено.",
+                "source_of_confusion": "Старую стратегию по расширению считают единственной.",
+                "if_it_were_true": "Тогда без `.json` в URL формат был бы неопределён, но дефолт берёт его из `Accept`.",
+                "how_it_should_be": "Главная стратегия — заголовок `Accept`; расширение URL deprecated."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для отдачи `XML` в `Spring Boot` не нужно ничего добавлять — `XML` поддерживается из коробки так же, как `JSON`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JSON` доступен из коробки (`Jackson`), а для `XML` нужно добавить зависимость `jackson-dataformat-xml` (или JAXB).",
+                "source_of_confusion": "Кажется, что раз `JSON` работает сразу, то и `XML` тоже.",
+                "if_it_were_true": "Тогда `XML`-ответ работал бы без зависимостей, но без них доступен лишь `JSON`.",
+                "how_it_should_be": "`XML` требует отдельной зависимости; из коробки — только `JSON`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Content Negotiation` сам сериализует объект в нужный формат, не используя `HttpMessageConverter`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ContentNegotiationManager` лишь ВЫБИРАЕТ media type; саму сериализацию выполняет соответствующий `HttpMessageConverter`.",
+                "source_of_confusion": "Шаги «выбор формата» и «сериализация» сливают в один.",
+                "if_it_were_true": "Тогда конвертеры были бы не нужны, но именно они пишут тело ответа.",
+                "how_it_should_be": "Согласование выбирает тип; конвертер выполняет сериализацию."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать контроллеры с помощью `MockMvc`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`MockMvc` поднимает реальный HTTP-сервер (`Tomcat`) и шлёт настоящие сетевые запросы на `localhost`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MockMvc` работает БЕЗ сервера и без сети — он вызывает `DispatcherServlet` напрямую внутри JVM.",
+                "source_of_confusion": "Слово «perform(get(...))» создаёт впечатление реального HTTP-вызова.",
+                "if_it_were_true": "Тогда тесты были бы медленными и требовали свободного порта, но `MockMvc` этого избегает.",
+                "how_it_should_be": "Это вызов диспетчера в памяти; для реального сервера нужен `@SpringBootTest(webEnvironment=RANDOM_PORT)` + `TestRestTemplate`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`MockMvc` выполняет запросы через `DispatcherServlet` без запуска HTTP-сервера — тесты быстрые и детерминированные; `@WebMvcTest(UserController.class)` поднимает только веб-слой (контроллер, фильтры, `ControllerAdvice`), а сервисы подменяют `@MockBean`; альтернатива — `@SpringBootTest` + `@AutoConfigureMockMvc` для полного контекста; проверяют статус, заголовки и тело через `andExpect(status()...)`, `jsonPath(...)`; для безопасности — `@WithMockUser`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`MockMvc` имитирует HTTP-цикл внутри JVM, минуя сеть. Это идеальный срез для проверки маршрутизации, биндинга, валидации и формата ответа.",
+                "example": "`mockMvc.perform(get(\"/api/users/1\")).andExpect(status().isOk()).andExpect(jsonPath(\"$.name\").value(\"John\"))`.",
+                "when_to_apply": "Берут для unit/slice-тестов контроллеров: статус-коды, JSON-структура, обработка ошибок валидации.",
+                "edge_cases": "`@WebMvcTest` не поднимает сервисы и репозитории — забытый `@MockBean` для зависимости контроллера даёт ошибку отсутствующего бина.",
+                "related": "[[spring-mvc-interview#Q14]] Controller vs RestController; [[spring-mvc-interview#Q28]] валидация; [[spring-mvc-interview#Q24]] ExceptionHandler."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@WebMvcTest` поднимает полный контекст приложения, включая все сервисы и репозитории.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@WebMvcTest` — это срез только веб-слоя; сервисы/репозитории не создаются и подменяются `@MockBean`.",
+                "source_of_confusion": "Путают slice-тест с полным `@SpringBootTest`.",
+                "if_it_were_true": "Тогда тест был бы тяжёлым и тянул всю инфраструктуру, но `@WebMvcTest` нарочно лёгкий.",
+                "how_it_should_be": "Поднимается только web-слой; зависимости мокируют."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`MockMvc` не умеет проверять тело `JSON`-ответа — он валидирует только HTTP-статус.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MockMvc` проверяет и тело через `jsonPath(...)`/`content()`, и заголовки, и статус — всё вместе.",
+                "source_of_confusion": "Знакомы только с `status()` и считают его единственной проверкой.",
+                "if_it_were_true": "Тогда нельзя было бы убедиться в корректности `JSON`, но `jsonPath` именно для этого.",
+                "how_it_should_be": "Доступны проверки тела (`jsonPath`/`content`), заголовков и статуса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен pipeline обработки запроса в `DispatcherServlet`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`DispatcherServlet` вызывает контроллер напрямую, без `HandlerMapping` и `HandlerAdapter` — он сам ищет метод по аннотациям при каждом запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Диспетчер сначала находит handler через `HandlerMapping`, затем вызывает его через `HandlerAdapter`; прямого вызова контроллера в обход этих компонентов нет.",
+                "source_of_confusion": "Кажется, что диспетчер «знает» все контроллеры и зовёт их сам.",
+                "if_it_were_true": "Тогда нельзя было бы поддержать разные типы handler'ов, но именно для этого есть адаптеры.",
+                "how_it_should_be": "Pipeline: `HandlerMapping` находит, `HandlerAdapter` вызывает."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`postHandle()` интерцепторов вызывается даже когда контроллер бросил исключение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При исключении `postHandle()` ПРОПУСКАЕТСЯ; вызывается только `afterCompletion()` (всегда) и срабатывает `HandlerExceptionResolver`.",
+                "source_of_confusion": "`postHandle` и `afterCompletion` путают по гарантиям вызова.",
+                "if_it_were_true": "Тогда `postHandle` мог бы работать с несуществующим `ModelAndView`, но при ошибке его нет.",
+                "how_it_should_be": "Гарантированно вызывается `afterCompletion`; `postHandle` — только при успехе."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`DispatcherServlet` обрабатывает каждый запрос фиксированной цепочкой: `getHandler()` через `HandlerMapping` возвращает `HandlerExecutionChain` (handler + interceptors) → `preHandle()` всех интерцепторов → `HandlerAdapter.handle()` вызывает контроллер → возвращается `ModelAndView` → `postHandle()` интерцепторов в обратном порядке → `ViewResolver.resolveViewName()` → `view.render()` → `afterCompletion()` (вызывается всегда, даже при исключении); при `@ResponseBody` шаг с `ViewResolver` пропускается.",
+              "correct": true,
+              "sections": {
+                "explanation": "Цепочка детерминирована: маппинг, интерцепторы, адаптер, контроллер, рендеринг. Ключевые компоненты — `HandlerMapping`, `HandlerAdapter`, `ViewResolver`, `HandlerExceptionResolver`.",
+                "example": "`GET /users/1` → `RequestMappingHandlerMapping` находит метод → `preHandle` логирует → `RequestMappingHandlerAdapter` вызывает контроллер → `JSON` через конвертер (view пропущен).",
+                "when_to_apply": "Понимание pipeline нужно при отладке интерцепторов, кастомных конвертеров и нестандартного разрешения view.",
+                "edge_cases": "При исключении `postHandle` пропускается, отрабатывает `HandlerExceptionResolver`, но `afterCompletion` всё равно вызывается — туда кладут гарантированную очистку.",
+                "related": "[[spring-mvc-interview#Q20]] DispatcherServlet и контексты; [[spring-mvc-interview#Q5]] Interceptor; [[spring-mvc-interview#Q38]] lifecycle и выбор HandlerMapping."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Даже для `@ResponseBody`-методов `DispatcherServlet` обязательно проходит через `ViewResolver`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `@ResponseBody` шаг `ViewResolver` пропускается — ответ пишется напрямую через `HttpMessageConverter`.",
+                "source_of_confusion": "Кажется, что pipeline всегда одинаков и включает разрешение view.",
+                "if_it_were_true": "Тогда REST-ответ искал бы шаблон под именем объекта, но он сериализуется сразу.",
+                "how_it_should_be": "Для тела ответа `ViewResolver` не участвует; работает конвертер."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `@RequestMapping`: какие есть варианты маппинга?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@RequestMapping` умеет маппить только по URL-пути и HTTP-методу; по заголовкам, параметрам и типу контента маппинг невозможен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маппинг можно сузить по `consumes`, `produces`, `params` и `headers` — не только по пути и методу.",
+                "source_of_confusion": "Знают самые частые атрибуты (`value`, `method`) и считают их единственными.",
+                "if_it_were_true": "Тогда нельзя было бы версионировать API через заголовок, но `headers=` это позволяет.",
+                "how_it_should_be": "Доступны условия по типу контента, параметрам и заголовкам."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Атрибут `consumes` задаёт `Accept`-заголовок ответа, а `produces` — `Content-Type` входящего запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `consumes` — Content-Type ВХОДЯЩЕГО тела, `produces` — Accept/тип ОТВЕТА.",
+                "source_of_confusion": "Значения `consumes`/`produces` легко перепутать местами.",
+                "if_it_were_true": "Тогда сервер фильтровал бы запросы по тому, что сам отдаёт, но логика обратная.",
+                "how_it_should_be": "`consumes` — что метод принимает; `produces` — что отдаёт."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "На один метод можно указать только один путь — список путей в `@GetMapping({\"/me\",\"/current\"})` не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Несколько путей поддерживаются: `@GetMapping({\"/me\",\"/current\"})` маппит метод на оба URL.",
+                "source_of_confusion": "Кажется, что один обработчик соответствует ровно одному URL.",
+                "if_it_were_true": "Тогда для алиаса URL нужен был бы второй метод, но массив путей решает это сразу.",
+                "how_it_should_be": "`value`/`path` принимает массив — один метод на несколько путей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@RequestMapping` (и его специализации `@GetMapping`/`@PostMapping`/...) поддерживает: `value`/`path` — URL-паттерн с Ant-wildcards (`*`, `**`, `?`); `method` — HTTP-методы; `consumes` — Content-Type входящего запроса; `produces` — Accept/тип ответа; `params` — обязательные/запрещённые параметры; `headers` — обязательные заголовки; можно маппить несколько путей, использовать `@PathVariable` и `@MatrixVariable`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Маппинг можно сузить по методу, типу контента, параметрам и заголовкам — это даёт несколько обработчиков одного URL для разных условий.",
+                "example": "`@PostMapping(consumes=APPLICATION_JSON_VALUE, produces=APPLICATION_JSON_VALUE)` — метод принимает и отдаёт только `JSON`.",
+                "when_to_apply": "Берут для версионирования (`headers=\"X-API-Version=2\"`), форматных вариантов (`params=\"format=csv\"`) и точного контроля над контрактом.",
+                "edge_cases": "Два метода с одинаковым URL и пересекающимися условиями дают `Ambiguous mapping` на старте — условия должны быть взаимоисключающими.",
+                "related": "[[spring-mvc-interview#Q10]] PathVariable; [[spring-mvc-interview#Q27]] RequestParam vs PathVariable; [[spring-mvc-interview#Q29]] Content Negotiation через produces/consumes."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `HandlerInterceptor` и чем он отличается от `Filter`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`HandlerInterceptor` работает ВНУТРИ `DispatcherServlet` и имеет доступ к handler'у (методу контроллера) и `ModelAndView`; `Filter` (`jakarta.servlet.Filter`) работает на уровне сервлет-контейнера ДО `DispatcherServlet` и не знает о контроллере; интерцептор имеет полный доступ к Spring-бинам, а фильтр — только через `DelegatingFilterProxy`; фильтры берут для аутентификации/кодировки/CORS, интерцепторы — для логики уровня MVC (логирование, авторизация по `HandlerMethod`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевое различие — уровень: фильтр снаружи MVC, интерцептор внутри. Только интерцептор видит, какой именно контроллер будет вызван.",
+                "example": "Интерцептор в `preHandle` проверяет `X-API-Key` и возвращает `false` при невалидном ключе; фильтр же ставит кодировку UTF-8 ещё до диспетчера.",
+                "when_to_apply": "`Filter` — для сквозной обработки на границе контейнера; `HandlerInterceptor` — когда нужен доступ к контроллеру и модели.",
+                "edge_cases": "При исключении в контроллере у `Filter` отработает блок после `chain.doFilter()` (как finally), а у интерцептора — `afterCompletion`, но не `postHandle`.",
+                "related": "[[spring-mvc-interview#Q5]] что такое Interceptor; [[spring-mvc-interview#Q35]] CORS через CorsFilter; [[spring-mvc-interview#Q31]] pipeline обработки запроса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`HandlerInterceptor` работает на уровне сервлет-контейнера до `DispatcherServlet` и не имеет доступа к контроллеру, а `Filter` — внутри Spring MVC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Filter` — на уровне контейнера (вне Spring), `HandlerInterceptor` — внутри `DispatcherServlet` с доступом к handler'у.",
+                "source_of_confusion": "Уровни двух механизмов путают местами.",
+                "if_it_were_true": "Тогда интерцептор не получал бы `ModelAndView`, но он его получает именно потому, что внутри MVC.",
+                "how_it_should_be": "Интерцептор — внутри MVC (видит контроллер); фильтр — снаружи, на уровне контейнера."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Filter` имеет прямой доступ к `ModelAndView` и `HandlerMethod`, поэтому может модифицировать модель перед рендерингом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Filter` не имеет доступа к `ModelAndView`/`HandlerMethod` — это есть только у `HandlerInterceptor` (в `postHandle`).",
+                "source_of_confusion": "Возможности интерцептора приписывают фильтру.",
+                "if_it_were_true": "Тогда фильтр мог бы добавлять атрибуты в модель, но он работает с сырыми request/response.",
+                "how_it_should_be": "Доступ к модели и handler'у — у интерцептора; фильтр оперирует request/response."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Filter` может внедрять Spring-бины через `@Autowired` так же легко, как любой `@Component`, без каких-либо обёрток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Классический `Filter` живёт вне Spring-контекста; для интеграции с бинами его оборачивают в `DelegatingFilterProxy` (или регистрируют как бин в Boot).",
+                "source_of_confusion": "В Spring Boot фильтр-бин работает «как обычно», и нюанс с контекстом забывают.",
+                "if_it_were_true": "Тогда `DelegatingFilterProxy` был бы не нужен, но он существует именно для этой связки.",
+                "how_it_should_be": "Фильтр интегрируют через `DelegatingFilterProxy`/регистрацию бина; интерцептор — нативный бин."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать загрузку файлов (`Multipart`) в `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы принять файл, контроллер должен читать `InputStream` из `HttpServletRequest` вручную — абстракции `MultipartFile` в `Spring MVC` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring MVC` предоставляет `MultipartFile` с методами `getOriginalFilename()`, `getSize()`, `transferTo()` — ручной разбор не нужен.",
+                "source_of_confusion": "Низкоуровневый сервлет-подход считают единственным.",
+                "if_it_were_true": "Тогда `@RequestParam(\"file\") MultipartFile` не работал бы, но это стандартный приём.",
+                "how_it_should_be": "Файл инжектится как `MultipartFile`; разбор делает `MultipartResolver`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Spring Boot` multipart работает из коробки; лимиты задают в `spring.servlet.multipart.*` (`max-file-size`, `max-request-size`, `location`); в контроллере один файл принимают как `@RequestParam(\"file\") MultipartFile`, несколько — `List<MultipartFile>`, а смешанный запрос (файл + `JSON`) — через `@RequestPart` с `consumes = MULTIPART_FORM_DATA_VALUE`; проверяют `isEmpty()` и `getContentType()`, сохраняют через `transferTo()`/`StorageService`, отдают файл `ResponseEntity<Resource>` с заголовком `Content-Disposition`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Файл доступен как `MultipartFile`. Валидацию типа и размера делают вручную или через лимиты конфигурации; скачивание отдают как `Resource`.",
+                "example": "`@PostMapping(\"/upload\") upload(@RequestParam(\"file\") MultipartFile f){ if(f.isEmpty()) throw...; storage.save(f); }`.",
+                "when_to_apply": "Применяют для загрузки изображений, документов и пакетной загрузки нескольких файлов с метаданными.",
+                "edge_cases": "Доверять `getContentType()` от клиента небезопасно — его легко подделать; для строгой проверки определяют тип по magic bytes содержимого.",
+                "related": "[[spring-mvc-interview#Q21]] MultipartResolver; [[spring-mvc-interview#Q40]] RequestPart и ограничения; [[spring-mvc-interview#Q27]] RequestParam."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Лимит размера файла задаётся только в коде через `if (file.getSize() > LIMIT)`, конфигурацией его выставить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лимиты задают декларативно в `spring.servlet.multipart.max-file-size`/`max-request-size`; превышение даёт `MaxUploadSizeExceededException`.",
+                "source_of_confusion": "Не знают про свойства multipart и проверяют размер вручную.",
+                "if_it_were_true": "Тогда огромный файл успевал бы целиком загрузиться в память, но лимит обрывает запрос раньше.",
+                "how_it_should_be": "Лимиты — в конфигурации; ручная проверка лишь дополняет её."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Смешанный запрос «файл + JSON-метаданные» невозможен — в одном multipart-запросе может быть только файл.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смешанный запрос делают через `@RequestPart(\"metadata\")` (JSON-часть) + `@RequestPart(\"file\")` (файл) с `consumes=MULTIPART_FORM_DATA_VALUE`.",
+                "source_of_confusion": "Multipart ассоциируют исключительно с файлами.",
+                "if_it_were_true": "Тогда нельзя было бы прислать описание вместе с файлом, но `@RequestPart` это решает.",
+                "how_it_should_be": "Multipart несёт несколько частей; `@RequestPart` маппит и файл, и `JSON`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `CORS` в `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CORS` — это серверный механизм безопасности, который сервер применяет ко всем клиентам, включая мобильные приложения и `curl`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CORS` — это БРАУЗЕРНЫЙ механизм; мобильные приложения и `curl` его игнорируют, ограничение действует только в браузере.",
+                "source_of_confusion": "CORS воспринимают как полноценную серверную защиту вместо браузерной политики.",
+                "if_it_were_true": "Тогда `curl` тоже блокировался бы CORS-заголовками, но он их попросту не проверяет.",
+                "how_it_should_be": "CORS обеспечивает браузер; для серверной защиты нужны аутентификация/авторизация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Preflight-запрос (`OPTIONS`) нужно обрабатывать вручную, написав отдельный `@RequestMapping(method=OPTIONS)`-метод в каждом контроллере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring` обрабатывает preflight `OPTIONS` автоматически на основе CORS-конфигурации — ручной метод не нужен.",
+                "source_of_confusion": "Кажется, что любой HTTP-метод требует явного обработчика.",
+                "if_it_were_true": "Тогда CORS требовал бы дублирования OPTIONS-методов везде, но Spring снимает это бремя.",
+                "how_it_should_be": "Preflight обрабатывается автоматически из настроек CORS."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CORS` (Cross-Origin Resource Sharing) настраивают на нескольких уровнях: аннотацией `@CrossOrigin` на контроллере/методе; глобально через `WebMvcConfigurer.addCorsMappings()` (`allowedOrigins`, `allowedMethods`, `allowedHeaders`, `allowCredentials`, `maxAge`); или через `CorsFilter` (работает до `DispatcherServlet`, нужен при `Spring Security`); preflight-запрос (`OPTIONS`) `Spring` обрабатывает автоматически, возвращая `200` с нужными заголовками без вызова контроллера.",
+              "correct": true,
+              "sections": {
+                "explanation": "CORS — браузерный механизм, разрешающий запросы к другому origin. Уровень настройки выбирают по охвату: точечно, глобально или до security-фильтров.",
+                "example": "`registry.addMapping(\"/api/**\").allowedOrigins(\"https://app.example.com\").allowedMethods(\"GET\",\"POST\").allowCredentials(true).maxAge(3600)`.",
+                "when_to_apply": "Нужен, когда фронтенд на другом домене/порту обращается к API: SPA на `app.example.com` к `api.example.com`.",
+                "edge_cases": "С `allowCredentials(true)` нельзя использовать `allowedOrigins(\"*\")` — браузер запретит; нужен `allowedOriginPatterns` или явный список доменов.",
+                "related": "[[spring-mvc-interview#Q33]] CorsFilter vs Interceptor; [[spring-mvc-interview#Q16]] WebMvcConfigurer; [[spring-mvc-interview#Q32]] маппинг OPTIONS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "С `allowCredentials(true)` можно спокойно указывать `allowedOrigins(\"*\")` — это разрешит куки для любого источника.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Комбинация `allowCredentials(true)` + `allowedOrigins(\"*\")` запрещена браузером; нужен явный список или `allowedOriginPatterns`.",
+                "source_of_confusion": "Удобство `*` переносят на сценарий с учётными данными.",
+                "if_it_were_true": "Тогда любой сайт мог бы слать запросы с вашими куками, но спецификация это запрещает.",
+                "how_it_should_be": "С credentials указывают конкретные origin (или `allowedOriginPatterns`), не `*`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@ControllerAdvice` и как строить глобальную обработку ошибок?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Глобальная обработка ошибок строится одним методом `@ExceptionHandler(Exception.class)`, который один обрабатывает все типы исключений одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычно объявляют несколько обработчиков по типам (404/400/409/500), а `Exception.class` — лишь fallback для непредвиденного.",
+                "source_of_confusion": "Кажется, что один catch-all проще и достаточен.",
+                "if_it_were_true": "Тогда клиент на все ошибки получал бы один код, но разным ситуациям нужны разные статусы.",
+                "how_it_should_be": "Несколько `@ExceptionHandler` от конкретных к общему fallback."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `@ControllerAdvice` обработчик `Exception.class` имеет приоритет над обработчиком конкретного подтипа исключения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приоритет у самого СПЕЦИФИЧНОГО обработчика; `Exception.class` срабатывает, только если не нашлось более точного.",
+                "source_of_confusion": "Порядок объявления методов путают с приоритетом по специфичности типа.",
+                "if_it_were_true": "Тогда специфичные handler'ы никогда не вызывались бы, но Spring выбирает ближайший по иерархии тип.",
+                "how_it_should_be": "Сначала конкретный тип, затем общий `Exception` как запасной."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@RestControllerAdvice` не может вернуть `JSON`-тело ошибки — для этого нужно вручную писать ответ в `HttpServletResponse`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@RestControllerAdvice` включает `@ResponseBody`, поэтому возвращённый объект/`ProblemDetail` автоматически сериализуется в `JSON`.",
+                "source_of_confusion": "Думают, что для тела ответа всегда нужен ручной вывод.",
+                "if_it_were_true": "Тогда единый формат ошибок был бы невозможен без бойлерплейта, но advice его автоматизирует.",
+                "how_it_should_be": "Достаточно вернуть объект; `@ResponseBody` сериализует его в `JSON`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@ControllerAdvice` (а для REST — `@RestControllerAdvice` = `+ @ResponseBody`) — глобальный перехватчик для всех контроллеров, объединяющий `@ExceptionHandler`, `@InitBinder` и `@ModelAttribute`; для обработки ошибок объявляют несколько `@ExceptionHandler` от конкретных к общим: `ResourceNotFoundException` → `404`, `MethodArgumentNotValidException` → `400` с картой ошибок полей, `DuplicateResourceException` → `409`, `Exception` → `500`; область сужают через `basePackages`/`assignableTypes`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Глобальный advice централизует ответы об ошибках в едином формате (DTO или `ProblemDetail`). Конкретные исключения обрабатывают раньше общих.",
+                "example": "`@ExceptionHandler(MethodArgumentNotValidException.class)` собирает `getFieldErrors()` в `Map<field,message>` и возвращает `ValidationErrorResponse` с кодом `400`.",
+                "when_to_apply": "Применяют, чтобы все эндпоинты возвращали ошибки в одном формате и не дублировали обработку в контроллерах.",
+                "edge_cases": "Слишком общий `@ExceptionHandler(Exception.class)` может перехватить и те ошибки, что должны были дать специфичный код — порядок специфичности важен.",
+                "related": "[[spring-mvc-interview#Q25]] что такое ControllerAdvice; [[spring-mvc-interview#Q24]] ExceptionHandler; [[spring-mvc-interview#Q42]] порядок применения ExceptionHandler."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@ModelAttribute` на уровне метода и как он взаимодействует с моделью?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@ModelAttribute` на методе — механизм предзаполнения модели данными, нужными ВСЕМ методам контроллера (или `@ControllerAdvice`): такой метод вызывается ПЕРЕД каждым `@RequestMapping`-методом и добавляет атрибут в модель (`@ModelAttribute(\"categories\")` кладёт `categories`, либо метод принимает `Model` и кладёт несколько атрибутов); порядок в `DispatcherServlet`: сначала все `@ModelAttribute`-методы, затем `@RequestMapping`-метод, затем `postHandle` и рендеринг.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это способ переиспользовать общие данные (справочники, текущий пользователь) во всех view контроллера без дублирования. В `@ControllerAdvice` работает глобально.",
+                "example": "`@ModelAttribute(\"categories\") List<Category> populate(){ return service.findAll(); }` — выпадающий список категорий доступен во всех формах контроллера.",
+                "when_to_apply": "Берут для общих справочных данных, текущего пользователя, версии приложения — всего, что нужно нескольким обработчикам.",
+                "edge_cases": "Метод выполняется на КАЖДЫЙ запрос — тяжёлый запрос к БД там бьёт по производительности всех эндпоинтов контроллера.",
+                "related": "[[spring-mvc-interview#Q6]] два способа применения ModelAttribute; [[spring-mvc-interview#Q25]] ControllerAdvice; [[spring-mvc-interview#Q7]] Model."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Метод с `@ModelAttribute` вызывается ПОСЛЕ `@RequestMapping`-метода, чтобы дополнить уже сформированную модель.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод-`@ModelAttribute` вызывается ПЕРЕД обработчиком, наполняя модель до выполнения основного метода.",
+                "source_of_confusion": "Кажется логичным «дополнять» модель в конце.",
+                "if_it_were_true": "Тогда данные были бы недоступны внутри обработчика, но они доступны именно потому, что готовятся заранее.",
+                "how_it_should_be": "Сначала `@ModelAttribute`-методы, затем `@RequestMapping`-метод."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@ModelAttribute` на методе добавляет атрибут только в один конкретный view, указанный в его параметрах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Атрибут попадает в модель и доступен ВСЕМ view контроллера (или всем контроллерам, если в advice), а не одному.",
+                "source_of_confusion": "Думают, что атрибут привязан к конкретному представлению.",
+                "if_it_were_true": "Тогда не было бы смысла выносить общие данные в отдельный метод, но смысл именно в переиспользовании.",
+                "how_it_should_be": "Атрибут общий для всех обработчиков контроллера/advice."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `@ControllerAdvice` `@ModelAttribute` не работает — он применим только внутри конкретного контроллера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `@ControllerAdvice` `@ModelAttribute` работает глобально, добавляя атрибут в модель всех контроллеров.",
+                "source_of_confusion": "`@ModelAttribute` ассоциируют исключительно с контроллером.",
+                "if_it_were_true": "Тогда нельзя было бы задать общий атрибут (например версию API) для всего приложения, но advice это умеет.",
+                "how_it_should_be": "В advice `@ModelAttribute` действует на все контроллеры сразу."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен lifecycle `DispatcherServlet` — инициализация и выбор `HandlerMapping`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`DispatcherServlet` загружает все свои стратегии (`HandlerMapping`, `ViewResolver` и др.) заново на каждый HTTP-запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стратегии загружаются ОДИН раз при инициализации (`initStrategies()`); на запрос лишь выбирается подходящий из уже загруженных.",
+                "source_of_confusion": "Инициализацию путают с per-request обработкой.",
+                "if_it_were_true": "Тогда каждый запрос был бы дорогим из-за пересоздания бинов, но они создаются единожды.",
+                "how_it_should_be": "Стратегии инициализируются один раз; на запрос — только выбор."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При инициализации (первый запрос или `load-on-startup=1`) `DispatcherServlet.init()` создаёт `WebApplicationContext` и через `onRefresh()` → `initStrategies()` загружает стратегии: `initHandlerMappings()`, `initHandlerAdapters()`, `initHandlerExceptionResolvers()`, `initViewResolvers()`, `initMultipartResolver()`, `initLocaleResolver()`; при запросе `getHandler()` перебирает `HandlerMapping` по `Order` (`RequestMappingHandlerMapping` приоритет 0, `BeanNameUrlHandlerMapping` — 2) и возвращает `HandlerExecutionChain`, затем `getHandlerAdapter()` выбирает адаптер.",
+              "correct": true,
+              "sections": {
+                "explanation": "Инициализация поднимает все стратегии один раз; на каждый запрос диспетчер выбирает первый подходящий `HandlerMapping` по приоритету. Кастомный mapping добавляют с высоким `@Order`.",
+                "example": "`@Bean @Order(HIGHEST_PRECEDENCE) HandlerMapping subdomainMapping()` перехватит запросы РАНЬШЕ `RequestMappingHandlerMapping`.",
+                "when_to_apply": "Понимание lifecycle нужно при кастомных `HandlerMapping`/`HandlerAdapter` и отладке «почему не тот контроллер вызвался».",
+                "edge_cases": "Если несколько `HandlerMapping` подходят, выигрывает первый по `Order`; неверный приоритет кастомного mapping тихо перехватит чужие запросы.",
+                "related": "[[spring-mvc-interview#Q31]] pipeline обработки запроса; [[spring-mvc-interview#Q20]] DispatcherServlet и контексты; [[spring-mvc-interview#Q32]] RequestMapping."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Среди `HandlerMapping` выбор делается случайно — приоритет (`Order`) на это не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HandlerMapping` упорядочены по `Order`; `getHandler()` берёт первый подходящий по приоритету, а не случайный.",
+                "source_of_confusion": "Не знают про сортировку по `Ordered`/`@Order`.",
+                "if_it_were_true": "Тогда нельзя было бы предсказуемо подменить mapping кастомным, но `@Order` это обеспечивает.",
+                "how_it_should_be": "Перебор идёт строго по `Order`; первый подходящий побеждает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`RequestMappingHandlerAdapter` вызывается для всех типов handler'ов, включая `HttpRequestHandler` и интерфейс `Controller`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для каждого типа handler'а свой адаптер: `RequestMappingHandlerAdapter` (для `@RequestMapping`-методов), `HttpRequestHandlerAdapter`, `SimpleControllerHandlerAdapter`.",
+                "source_of_confusion": "Самый частый адаптер считают универсальным.",
+                "if_it_were_true": "Тогда механизм адаптеров был бы лишним, но он существует ради разных типов handler'ов.",
+                "how_it_should_be": "`getHandlerAdapter()` подбирает адаптер под конкретный тип handler'а."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают `@RequestBody` и `@ResponseBody` через цепочку `HttpMessageConverter`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@RequestBody` всегда использует только `Jackson` и не умеет читать `byte[]`, `String` или `XML`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конвертеров несколько: `ByteArray`, `String`, `Resource`, `Jackson` (JSON), JAXB/Jackson XML — выбор зависит от `Content-Type` и типа параметра.",
+                "source_of_confusion": "`JSON` — самый частый случай, и `Jackson` считают единственным конвертером.",
+                "if_it_were_true": "Тогда нельзя было бы принять `byte[]` или `text/plain`, но для них есть свои конвертеры.",
+                "how_it_should_be": "Работает цепочка конвертеров; `Jackson` — лишь один из них."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`configureMessageConverters()` лишь добавляет конвертер к существующим, не затрагивая дефолтные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`configureMessageConverters()` ПОЛНОСТЬЮ заменяет список (дефолты теряются); добавляет, не ломая, метод `extendMessageConverters()`.",
+                "source_of_confusion": "Два похожих метода различаются эффектом, который путают.",
+                "if_it_were_true": "Тогда `extendMessageConverters()` был бы не нужен, но он существует именно для аддитивности.",
+                "how_it_should_be": "Для добавления — `extendMessageConverters()`; `configure...` заменяет всё."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@RequestBody` десериализует тело запроса в объект, а `@ResponseBody` сериализует объект в тело ответа — оба через цепочку `HttpMessageConverter`; для входа `Spring` по `Content-Type` перебирает список конвертеров (`ByteArray`, `String`, `Resource`, `MappingJackson2` для `application/json` и т.д.) и вызывает первый подходящий; для выхода — по `Accept` через `canWrite()`; кастомный конвертер добавляют через `extendMessageConverters()` (предпочтительно) или `configureMessageConverters()` (полная замена).",
+              "correct": true,
+              "sections": {
+                "explanation": "Конвертеры — мост между HTTP-телом и Java-объектами. Порядок важен: побеждает первый, чей `canRead()`/`canWrite()` истинен для типа и media type.",
+                "example": "`Content-Type: application/json` → `MappingJackson2HttpMessageConverter.read()` → `Jackson.readValue(body, Dto.class)`; на выходе наоборот по `Accept`.",
+                "when_to_apply": "Знание нужно при добавлении форматов (`Protobuf`, `CSV`), кастомной настройке `Jackson` и отладке `415`/`406`.",
+                "edge_cases": "`configureMessageConverters()` полностью ЗАМЕНЯЕТ список (теряются дефолты `Jackson`) — обычно используют `extendMessageConverters()`, чтобы лишь добавить свой.",
+                "related": "[[spring-mvc-interview#Q13]] RequestBody и ResponseBody; [[spring-mvc-interview#Q29]] Content Negotiation; [[spring-mvc-interview#Q31]] pipeline и конвертеры."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Порядок конвертеров в списке не имеет значения — `Spring` всегда выбирает `Jackson` для любого тела.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок важен: побеждает ПЕРВЫЙ конвертер, чей `canRead()`/`canWrite()` подходит для типа и media type.",
+                "source_of_confusion": "Раз `JSON` доминирует, кажется, что выбор всегда один.",
+                "if_it_were_true": "Тогда кастомный конвертер с высоким приоритетом не имел бы смысла, но его ставят в начало списка.",
+                "how_it_should_be": "Выбирается первый подходящий по порядку; приоритет регулируют позицией."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать Multipart-запросы — `@RequestPart`, `MultipartFile`, ограничения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@RequestPart` и `@RequestParam` для файлов абсолютно идентичны и взаимозаменяемы во всех случаях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@RequestPart` дополнительно умеет десериализовать именованную часть (например `JSON`) через `HttpMessageConverter`, чего `@RequestParam` для сложных частей не делает.",
+                "source_of_confusion": "Для простого файла обе аннотации работают, и различие для сложных частей теряется.",
+                "if_it_were_true": "Тогда `@RequestPart(\"metadata\") @Valid Dto` был бы не нужен, но он именно для структурированных частей.",
+                "how_it_should_be": "`@RequestParam` — простые значения/файлы; `@RequestPart` — части с десериализацией и валидацией."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`file-size-threshold` задаёт максимальный размер файла, после которого запрос отклоняется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Максимум задаёт `max-file-size`; `file-size-threshold` — это порог, после которого часть пишется на диск вместо памяти, а не лимит отклонения.",
+                "source_of_confusion": "Слово «threshold» путают с «лимитом».",
+                "if_it_were_true": "Тогда `max-file-size` был бы лишним, но именно он определяет отклонение по размеру.",
+                "how_it_should_be": "`file-size-threshold` управляет память/диск; отклонение — по `max-file-size`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@RequestPart` не поддерживает валидацию `@Valid` — проверять структуру части можно только вручную после десериализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@RequestPart(\"metadata\") @Valid ProductRequest` запускает `Bean Validation` так же, как `@RequestBody` с `@Valid`.",
+                "source_of_confusion": "Валидацию ассоциируют только с `@RequestBody`.",
+                "if_it_were_true": "Тогда метаданные multipart нельзя было бы проверить декларативно, но `@Valid` на части работает.",
+                "how_it_should_be": "`@Valid` применим к части `@RequestPart`, как и к телу запроса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Multipart (`Content-Type: multipart/form-data`) принимают так: один файл — `@RequestParam(\"file\") MultipartFile`, несколько — `List<MultipartFile>`, сложный запрос (JSON + файл) — `@RequestPart(\"metadata\") @Valid ProductRequest` + `@RequestPart(\"image\") MultipartFile` (часть `metadata` десериализуется через `MappingJackson2HttpMessageConverter`); ограничения задают в `spring.servlet.multipart.*` (`max-file-size`, `max-request-size`, `file-size-threshold`, `location`), а `MaxUploadSizeExceededException` ловят в `@ControllerAdvice` → `413`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@RequestParam` подходит для простых файлов/полей, а `@RequestPart` — когда нужна десериализация и валидация именованной части как объекта. Лимиты декларативны.",
+                "example": "`@RequestPart(\"metadata\") @Valid ProductRequest meta, @RequestPart(\"image\") MultipartFile img` — `JSON`-часть валидируется, файл сохраняется.",
+                "when_to_apply": "Берут при загрузке файлов с метаданными, опциональными частями (`required=false`) и валидацией структуры.",
+                "edge_cases": "`file-size-threshold` определяет порог: до него часть держится в памяти, после — пишется на диск в `location`; неверная `location` ведёт к ошибкам записи временных файлов.",
+                "related": "[[spring-mvc-interview#Q34]] обработка загрузки файлов; [[spring-mvc-interview#Q21]] MultipartResolver; [[spring-mvc-interview#Q11]] валидация частей через Valid."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать асинхронные запросы в `Spring MVC` — `Callable`, `DeferredResult`, `@Async`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring MVC` поддерживает три подхода без блокировки Servlet-потока: `Callable<T>` — метод возвращает `Callable`, который выполняется в `AsyncTaskExecutor` (простая фоновая задача); `DeferredResult<T>` — результат устанавливается ВНЕШНИМ кодом/событием (Kafka, push, SSE) через `setResult()`, с поддержкой `onTimeout()`; `@Async` на сервисном методе возвращает `CompletableFuture<T>` и выполняется в отдельном пуле; общий смысл — Servlet-поток освобождается сразу, а ответ формируется позже.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все три снимают нагрузку с пула Servlet-потоков. `Callable`/`@Async` управляются Spring-executor'ом, а `DeferredResult` завершается внешним источником.",
+                "example": "`@GetMapping(\"/deferred\") DeferredResult<...> d(){ var r=new DeferredResult<>(5000L); eventBus.subscribe(e->r.setResult(ok(e))); return r; }`.",
+                "when_to_apply": "`Callable` — для фоновых вычислений; `DeferredResult` — для событийных/push-сценариев; `@Async` — для fire-and-forget в сервисном слое.",
+                "edge_cases": "Таймаут настраивают через `AsyncSupportConfigurer.setDefaultTimeout()` или конструктор `DeferredResult`; по истечении — `onTimeout`, иначе зависший запрос займёт ресурсы.",
+                "related": "[[spring-mvc-interview#Q43]] переход на WebFlux; [[spring-mvc-interview#Q31]] pipeline обработки запроса; [[spring-mvc-interview#Q24]] обработка исключений в async."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Возврат `Callable` или `DeferredResult` ничего не меняет: Servlet-поток остаётся заблокированным до завершения задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл этих типов в том, что Servlet-поток освобождается СРАЗУ, а задача выполняется в другом потоке/по событию.",
+                "source_of_confusion": "Кажется, что любой метод контроллера держит поток до конца.",
+                "if_it_were_true": "Тогда async-подходы не давали бы выигрыша, но именно освобождение потока — их цель.",
+                "how_it_should_be": "Servlet-поток освобождается немедленно; ответ досылается позже."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`DeferredResult` завершается автоматически самим `Spring` по таймеру, без внешнего вызова `setResult()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DeferredResult` завершают ВНЕШНИМ кодом через `setResult()`/`setErrorResult()`; без этого сработает лишь `onTimeout`.",
+                "source_of_confusion": "Путают `DeferredResult` (внешнее завершение) с `Callable` (Spring сам исполняет задачу).",
+                "if_it_were_true": "Тогда `eventBus.subscribe(...setResult...)` был бы не нужен, но именно так результат и доставляют.",
+                "how_it_should_be": "Результат устанавливает внешний источник; Spring лишь ждёт его или таймаут."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Async` на сервисном методе работает без какой-либо конфигурации — аннотации `@EnableAsync` и пула потоков не требуются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Async` требует `@EnableAsync` и (желательно) настроенного `TaskExecutor`; без `@EnableAsync` метод выполнится синхронно.",
+                "source_of_confusion": "Кажется, что аннотация на методе самодостаточна.",
+                "if_it_were_true": "Тогда `@EnableAsync` был бы декоративным, но без него async не активируется.",
+                "how_it_should_be": "Нужен `@EnableAsync`; иначе вызов остаётся синхронным."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каков порядок применения `ExceptionHandler` — `@ControllerAdvice` vs локальный?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Глобальный `@ControllerAdvice` всегда перехватывает исключение раньше локального `@ExceptionHandler` в контроллере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Локальный `@ExceptionHandler` имеет ВЫСШИЙ приоритет для исключений своего контроллера; advice — следующий уровень.",
+                "source_of_confusion": "«Глобальный» воспринимают как «срабатывающий первым».",
+                "if_it_were_true": "Тогда контроллер не мог бы переопределить обработку, но локальный handler именно для этого.",
+                "how_it_should_be": "Сначала локальный handler, затем `@ControllerAdvice`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring MVC` ищет обработчик по приоритету: сначала локальный `@ExceptionHandler` в самом контроллере (высший приоритет), затем `@ExceptionHandler` в `@ControllerAdvice` (advice сортируются по `@Order`/`Ordered`, специфичности `basePackages` и специфичности типа исключения), затем `ResponseStatusExceptionResolver` (`@ResponseStatus`), `DefaultHandlerExceptionResolver` (стандартные исключения Spring) и наконец страница ошибки контейнера; локальный handler ВСЕГДА имеет приоритет над advice для исключений своего контроллера.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поиск идёт от самого узкого к самому широкому. Среди advice выигрывает меньший `@Order` и более специфичный тип исключения.",
+                "example": "Локальный `@ExceptionHandler(OrderNotFoundException.class)` в `OrderController` перехватит исключение раньше, чем такой же в глобальном `@RestControllerAdvice`.",
+                "when_to_apply": "Понимание порядка нужно, когда специфичный контроллер/модуль должен переопределить глобальную обработку ошибки.",
+                "edge_cases": "Пересекающиеся advice без явного `@Order` дают недетерминированный приоритет — для предсказуемости порядок задают явно.",
+                "related": "[[spring-mvc-interview#Q23]] уровни обработки исключений; [[spring-mvc-interview#Q24]] ExceptionHandler; [[spring-mvc-interview#Q36]] глобальная обработка ошибок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Несколько `@ControllerAdvice` применяются в случайном порядке, и `@Order` на них не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Advice сортируются по `@Order`/`Ordered` (меньше — раньше), а также по специфичности пакетов и типов; порядок управляем.",
+                "source_of_confusion": "Не знают, что advice поддерживают `Ordered`.",
+                "if_it_were_true": "Тогда нельзя было бы гарантировать, какой advice сработает, но `@Order` это решает.",
+                "how_it_should_be": "Порядок advice задают `@Order`; меньшее значение — выше приоритет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Среди `@ExceptionHandler` базовый тип `Exception` обрабатывается раньше более конкретного подтипа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring выбирает самый СПЕЦИФИЧНЫЙ по иерархии тип; `Exception` срабатывает лишь при отсутствии более точного.",
+                "source_of_confusion": "Порядок объявления методов путают с приоритетом специфичности.",
+                "if_it_were_true": "Тогда конкретные handler'ы были бы недостижимы, но Spring выбирает ближайший тип.",
+                "how_it_should_be": "Сначала конкретный подтип, затем общий `Exception`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 43,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда переходить с `Spring MVC` на `Spring WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring WebFlux` всегда быстрее `Spring MVC` для любых задач, поэтому новые проекты надо начинать только на WebFlux.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebFlux выигрывает на I/O-bound нагрузке с тысячами соединений; для CRUD на JDBC он не быстрее и сложнее MVC.",
+                "source_of_confusion": "«Неблокирующий» отождествляют с «всегда быстрее».",
+                "if_it_were_true": "Тогда MVC устарел бы, но для блокирующих зависимостей он остаётся правильным выбором.",
+                "how_it_should_be": "WebFlux уместен под I/O-bound масштаб; иначе MVC проще и не медленнее."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "На `Spring WebFlux` можно спокойно использовать блокирующий JDBC внутри `Mono`/`Flux` — реактивность сама уберёт блокировку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Блокирующий JDBC в реактивном стеке блокирует поток event-loop и убивает выгоду; нужен неблокирующий R2DBC.",
+                "source_of_confusion": "Кажется, что обёртка в `Mono` автоматически делает вызов неблокирующим.",
+                "if_it_were_true": "Тогда R2DBC был бы не нужен, но он создан именно ради неблокирующего доступа к БД.",
+                "how_it_should_be": "В WebFlux весь I/O должен быть неблокирующим (R2DBC, `WebClient`)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring MVC` — блокирующий стек на Servlet API (`Tomcat`/`Jetty`, thread-per-request, большой пул потоков), `Spring WebFlux` — неблокирующий на Reactive Streams (`Netty`, event loop, маленький пул, `Mono<T>`/`Flux<T>`); на WebFlux переходят при тысячах одновременных соединений (WebSocket, SSE, streaming), большом числе I/O-bound вызовов, уже используемом реактивном стеке (R2DBC, `WebClient`) и нужде в backpressure; остаются на MVC при CRUD с умеренной нагрузкой, незнакомстве команды с реактивностью и блокирующих зависимостях (JDBC).",
+              "correct": true,
+              "sections": {
+                "explanation": "WebFlux эффективен на I/O-bound нагрузке с малым пулом потоков, но требует полностью неблокирующего стека. MVC проще и зрелее для типовых задач.",
+                "example": "MVC: `ProductDto get(){ return repo.findById(id).orElseThrow(); }` (блокирует); WebFlux: `Mono<ProductDto> get(){ return repo.findById(id).map(...); }` (R2DBC, не блокирует).",
+                "when_to_apply": "Переходят, когда узким местом стало число потоков под I/O-bound нагрузкой и есть реактивные драйверы для всего стека.",
+                "edge_cases": "Нельзя смешивать блокирующий код (JDBC) с реактивным в одном стеке — блокировка event-loop потока сводит на нет всю выгоду WebFlux.",
+                "related": "[[spring-mvc-interview#Q41]] асинхронность в MVC; [[spring-mvc-interview#Q2]] что такое Spring MVC; [[spring-mvc-interview#Q31]] pipeline обработки запроса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring MVC` и `WebFlux` можно свободно смешивать в одном контроллере, чередуя блокирующие и реактивные методы без последствий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смешивать блокирующий и реактивный стек не следует — переход на WebFlux это решение для всего сервиса, не частичное.",
+                "source_of_confusion": "Оба — части Spring, поэтому кажется, что их легко комбинировать.",
+                "if_it_were_true": "Тогда не было бы «золотого правила» не смешивать стеки, но оно существует по веской причине.",
+                "how_it_should_be": "Стек выбирают целиком для сервиса; частичное смешение создаёт скрытые блокировки."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

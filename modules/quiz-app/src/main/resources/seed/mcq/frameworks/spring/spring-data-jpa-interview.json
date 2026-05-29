@@ -1,0 +1,2525 @@
+{
+  "topic_slug": "spring-data-jpa-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Data JPA` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Data JPA` — подпроект `Spring Data`, надстройка над `JPA` (через `Hibernate`), которая автоматически генерирует реализацию репозиториев по интерфейсу: достаточно объявить `interface UserRepository extends JpaRepository<User, Long>`, и CRUD, пагинация, методы вида `findByEmail` работают без единой строки реализации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная идея — убрать boilerplate: не нужен `@Repository`-класс с ручным `EntityManager`. `Spring Data` создаёт прокси, генерирует запросы по именам методов и интегрируется с `@Transactional`, аудитом, кэшем.",
+                "example": "`interface UserRepository extends JpaRepository<User, Long> { Optional<User> findByEmail(String email); boolean existsByEmail(String email); }` — реализацию пишет Spring.",
+                "when_to_apply": "Берут практически в любом Spring-приложении с реляционной БД, когда нужен быстрый доступ к данным без рукописных DAO.",
+                "edge_cases": "Это не замена `JPA`, а надстройка: под капотом всё равно работает реализация `JPA` (`Hibernate`), и её особенности (lazy, dirty checking) никуда не деваются.",
+                "related": "[[spring-data-jpa-interview#Q2]] иерархия репозиториев; [[spring-data-jpa-interview#Q4]] как создаётся реализация; [[spring-data-jpa-interview#Q5]] query methods."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Data JPA` — это собственная ORM-реализация от Spring, которая заменяет `Hibernate` и сама маппит объекты на таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Data JPA` не реализует сам `JPA`: под капотом работает провайдер `JPA`, обычно `Hibernate`, а Spring Data лишь генерирует репозитории поверх него.",
+                "source_of_confusion": "В названии есть `JPA`, и кажется, что библиотека сама и есть ORM.",
+                "if_it_were_true": "Тогда можно было бы убрать `Hibernate` из зависимостей и всё работало бы, но без провайдера `JPA` приложение не стартует.",
+                "how_it_should_be": "Это надстройка над `JPA`-провайдером (`Hibernate`), а не замена ORM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Data JPA` — это драйвер JDBC, который напрямую открывает соединения с БД и выполняет SQL без участия ORM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Data JPA` работает через `EntityManager` и провайдер `JPA`, а не как JDBC-драйвер; за соединения отвечает `DataSource`/пул (`HikariCP`).",
+                "source_of_confusion": "И то, и другое связано с доступом к БД, поэтому уровни абстракции путают.",
+                "if_it_were_true": "Тогда не было бы сущностей, persistence context и dirty checking, но всё это присутствует в Spring Data JPA.",
+                "how_it_should_be": "JDBC-драйвер — низкий уровень; Spring Data JPA работает на уровне ORM поверх него."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Data JPA` нужен только для написания нативных SQL-запросов и не умеет генерировать запросы по именам методов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Генерация запросов по именам методов (`findByEmail`, `countByStatus`) — одна из ключевых возможностей; нативный SQL через `@Query(nativeQuery=true)` лишь дополнительная опция.",
+                "source_of_confusion": "Нативные запросы заметны, и можно решить, что только они и поддерживаются.",
+                "if_it_were_true": "Тогда пришлось бы писать `@Query` для каждого простого поиска, но `findByEmail` работает сам.",
+                "how_it_should_be": "Derived query methods — основной механизм; нативный SQL — для специфичных случаев."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова иерархия репозиториев в `Spring Data`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Базовый интерфейс — `JpaRepository`, а `CrudRepository` и `Repository` наследуются от него и лишь урезают набор методов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Направление наследования обратное: `JpaRepository` наследует `CrudRepository`, который наследует `Repository`; самый общий — `Repository`, самый богатый — `JpaRepository`.",
+                "source_of_confusion": "`JpaRepository` используют чаще всего, и его ошибочно считают корнем иерархии.",
+                "if_it_were_true": "Тогда `CrudRepository` имел бы методы `flush`/`deleteAllInBatch`, но их там нет — они только в `JpaRepository`.",
+                "how_it_should_be": "`Repository` — корень-маркер, `JpaRepository` — самый специализированный потомок."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Иерархия идёт от общего к конкретному: `Repository` (маркер) → `CrudRepository` (save, findById, delete, count) → `PagingAndSortingRepository` (findAll с `Pageable`/`Sort`) → `JpaRepository` (flush, saveAndFlush, deleteAllInBatch, getReferenceById), который объединяет всё плюс JPA-специфичные методы.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Repository<T, ID>` — пустой маркерный интерфейс. `CrudRepository` добавляет базовый CRUD, `PagingAndSortingRepository` — пагинацию/сортировку, а `JpaRepository` собирает их вместе и добавляет `flush`, batch-операции и `getReferenceById` (lazy-прокси без запроса).",
+                "example": "`JpaRepository<User, Long>` — стандартный выбор; если нужен минимум, берут `CrudRepository<User, Long>` с одним лишь CRUD.",
+                "when_to_apply": "`JpaRepository` — для большинства проектов; `CrudRepository` — для микросервисов с простыми операциями; `Repository` — когда хотят объявить только пару методов.",
+                "edge_cases": "Наследование от `Repository` без CRUD-методов даёт репозиторий, в котором доступны только явно объявленные методы — удобно для строгого ограничения API.",
+                "related": "[[spring-data-jpa-interview#Q1]] что такое Spring Data JPA; [[spring-data-jpa-interview#Q4]] генерация реализации; [[spring-data-jpa-interview#Q15]] пагинация."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Repository<T, ID>` уже содержит готовые методы `save`, `findById` и `count`, а `CrudRepository` лишь добавляет пагинацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Repository` — пустой маркерный интерфейс без методов; `save`/`findById`/`count` появляются именно в `CrudRepository`, а пагинация — в `PagingAndSortingRepository`.",
+                "source_of_confusion": "Слово `Repository` намекает на «хранилище с операциями», поэтому кажется, что методы уже там.",
+                "if_it_were_true": "Тогда наследование от `Repository` сразу давало бы CRUD, но на деле он не даёт ни одного метода.",
+                "how_it_should_be": "`Repository` — пустой маркер; CRUD начинается с `CrudRepository`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`PagingAndSortingRepository` — это отдельная ветка, не связанная с `CrudRepository`, и не имеет доступа к базовому CRUD.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PagingAndSortingRepository` расширяет `CrudRepository`, поэтому к пагинации добавляется и полный базовый CRUD.",
+                "source_of_confusion": "Название подчёркивает только пагинацию/сортировку, и связь с CRUD незаметна.",
+                "if_it_were_true": "Тогда у пагинируемого репозитория не было бы `save`/`findById`, но они доступны через наследование.",
+                "how_it_should_be": "Это потомок `CrudRepository`, добавляющий `findAll(Pageable)` и `findAll(Sort)`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `JPQL` и чем он отличается от `SQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`JPQL` оперирует именами таблиц и колонок БД, точно так же как обычный `SQL`, поэтому различий между ними почти нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JPQL` оперирует сущностями и их Java-полями (`User`, `u.firstName`), а не таблицами и колонками (`users`, `first_name`) — это принципиальное отличие.",
+                "source_of_confusion": "Синтаксис `SELECT ... FROM ... WHERE` визуально похож на SQL.",
+                "if_it_were_true": "Тогда `SELECT u FROM users u` был бы валидным JPQL, но JPQL требует имя сущности `User`, а не таблицы.",
+                "how_it_should_be": "JPQL — это объектный язык запросов над сущностями, а не над таблицами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JPQL` всегда быстрее `SQL`, потому что выполняется на стороне приложения без обращения к базе данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JPQL` транслируется в SQL и выполняется в БД так же, как обычный запрос; на стороне приложения он не «выполняется».",
+                "source_of_confusion": "Кажется, что раз JPQL ближе к коду, то и работает внутри JVM.",
+                "if_it_were_true": "Тогда JPQL не нуждался бы в соединении с БД, но без БД он вернуть данные не может.",
+                "how_it_should_be": "JPQL компилируется в SQL под диалект и исполняется в базе данных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JPQL` (`Java Persistence Query Language`) оперирует сущностями и их полями (`SELECT u FROM User u WHERE u.firstName = :name`), а не таблицами и колонками БД; запрос абстрагирован от диалекта и переносим между БД, тогда как `SQL` работает напрямую с таблицами (`users.first_name`) и зависит от конкретной СУБД.",
+              "correct": true,
+              "sections": {
+                "explanation": "`JPQL` ссылается на имена Java-классов (`User`) и Java-полей (`u.firstName`), а провайдер `JPA` транслирует это в SQL под нужный диалект. Поддерживаются полиморфные запросы по иерархии сущностей.",
+                "example": "JPQL: `@Query(\"SELECT u FROM User u WHERE u.status = :status\")`; нативный SQL: `@Query(value=\"SELECT * FROM users WHERE status = :status\", nativeQuery=true)`.",
+                "when_to_apply": "JPQL берут для переносимых запросов средней сложности; нативный SQL — для оконных функций, `CTE`, JSON-операторов и специфичных функций БД.",
+                "edge_cases": "JPQL не покрывает всё: оконные функции, `CTE` и многие функции конкретной БД в нём недоступны — тогда нужен `nativeQuery=true`.",
+                "related": "[[spring-data-jpa-interview#Q6]] аннотация @Query; [[spring-data-jpa-interview#Q7]] нативные запросы; [[spring-data-jpa-interview#Q5]] query methods."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JPQL` поддерживает любые функции конкретной СУБД, включая оконные функции и `CTE`, наравне с нативным `SQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Набор функций JPQL ограничен и абстрагирован; оконные функции и `CTE` в нём недоступны — для них нужен нативный SQL.",
+                "source_of_confusion": "JPQL мощный для типовых запросов, и границы его возможностей неочевидны.",
+                "if_it_were_true": "Тогда `RANK() OVER (...)` работал бы в JPQL, но это требует `nativeQuery=true`.",
+                "how_it_should_be": "Для оконных функций и CTE используют нативный SQL, а не JPQL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Spring Data JPA` создаёт реализацию репозиториев?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Data JPA` генерирует и компилирует `.java`-классы реализации репозиториев на диск во время сборки проекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реализация создаётся в рантайме как динамический прокси через `JpaRepositoryFactoryBean`, никаких `.java`-файлов на диск не пишется.",
+                "source_of_confusion": "Аннотационные процессоры (например, для метамоделей) действительно генерируют код при сборке, и это переносят на репозитории.",
+                "if_it_were_true": "Тогда в `build/`-каталоге лежали бы сгенерированные классы репозиториев, но их там нет.",
+                "how_it_should_be": "Реализация — это рантайм-прокси поверх `SimpleJpaRepository`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для каждого метода репозитория Spring требует вручную написать реализацию в классе с суффиксом `Impl`, иначе метод не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Impl`-класс нужен только для custom-методов; стандартный CRUD и derived-методы Spring реализует сам без `Impl`.",
+                "source_of_confusion": "Механизм custom repository с суффиксом `Impl` существует и кажется обязательным для всех методов.",
+                "if_it_were_true": "Тогда `findByEmail` не работал бы без рукописной реализации, но он работает из коробки.",
+                "how_it_should_be": "`Impl` — только для нестандартной логики; остальное генерируется автоматически."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Имена методов вроде `findByEmail` разбираются и превращаются в запрос только при первом вызове в рантайме, а не на старте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разбор имён и построение запросов происходит при инициализации репозиториев на старте контекста; ошибки в именах падают сразу, а не при первом вызове.",
+                "source_of_confusion": "Lazy-инициализация бинов существует, и кажется, что разбор тоже откладывается.",
+                "if_it_were_true": "Тогда опечатка в имени поля проявлялась бы только в проде при вызове, но обычно контекст не стартует.",
+                "how_it_should_be": "Метаданные методов разбираются при старте; некорректное имя ломает запуск приложения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При старте `@EnableJpaRepositories` сканирует интерфейсы и для каждого через `JpaRepositoryFactoryBean` создаёт прокси: базовый CRUD делегируется в `SimpleJpaRepository` (она использует `EntityManager`), методы вида `findByEmail` разбираются `PartTree`-парсером в `Criteria`/JPQL, а методы с `@Query` транслируются напрямую.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реализации классов вы не пишете — Spring генерирует прокси. `SimpleJpaRepository` закрывает стандартные операции, а имена кастомных методов превращаются в дерево предикатов (`PartTree`) и далее в запрос.",
+                "example": "`findByEmail(String email)` Spring превращает в `Criteria`-запрос с `cb.equal(root.get(\"email\"), email)` — без рукописного кода.",
+                "when_to_apply": "Понимание процесса нужно при отладке `PropertyReferenceException`, кастомных фабриках репозиториев и настройке базового класса репозитория.",
+                "edge_cases": "Если имя поля в методе не совпадает с полем сущности, парсер `PartTree` бросит ошибку уже на старте контекста, а не в рантайме.",
+                "related": "[[spring-data-jpa-interview#Q1]] что такое Spring Data JPA; [[spring-data-jpa-interview#Q5]] query methods; [[spring-data-jpa-interview#Q32]] custom repository."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Query Methods` и какие ключевые слова поддерживаются?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Query Methods` — методы репозитория, имена которых `Spring Data` парсит и превращает в запросы: `findBy`, `countBy`, `existsBy`, `deleteBy` как префиксы и `And`/`Or`, `Between`, `LessThan`/`GreaterThan`, `Like`/`Containing`, `In`, `IsNull`, `OrderBy`, `Top`/`First`, `Distinct` как условия — например, `findByStatusAndLastNameContainingIgnoreCase`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это основной механизм для простых и средних запросов: имя метода декларативно описывает `WHERE`/`ORDER BY`/лимит, а Spring строит JPQL. Поддерживается обращение к вложенным полям через `_` или camelCase (`findByAddress_City`).",
+                "example": "`List<User> findTop10ByStatusOrderByCreatedAtDesc(UserStatus status)` → `WHERE status = ?1 ORDER BY created_at DESC` с `LIMIT 10`.",
+                "when_to_apply": "Берут, когда условие выражается коротким читаемым именем; для 1-3 предикатов это самый быстрый способ.",
+                "edge_cases": "Когда имя разрастается (`findByStatusAndCityAndAgeGreaterThanAndCreatedAtAfter`), оно становится нечитаемым — лучше перейти на `@Query` или `Specifications`.",
+                "related": "[[spring-data-jpa-interview#Q6]] аннотация @Query; [[spring-data-jpa-interview#Q17]] Specifications; [[spring-data-jpa-interview#Q36]] derived query methods."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Query Methods` работают только с одним условием: комбинации через `And`/`Or` и сортировка `OrderBy` в имени метода не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Комбинации `And`/`Or`, `OrderBy`, `Between`, `In` и другие ключевые слова поддерживаются — можно собрать многоусловные запросы прямо в имени метода.",
+                "source_of_confusion": "Простые примеры вроде `findByEmail` создают впечатление, что разбор примитивный.",
+                "if_it_were_true": "Тогда `findByFirstNameAndLastName` не компилировался бы, но это валидный query method.",
+                "how_it_should_be": "Парсер понимает `And`, `Or`, `OrderBy` и десятки операторов сравнения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы `findByEmail` заработал, метод обязательно нужно пометить аннотацией `@Query` с явным JPQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Derived query methods работают без `@Query`: запрос строится из имени метода автоматически; `@Query` нужен только когда имени недостаточно.",
+                "source_of_confusion": "`@Query` — заметная аннотация, и кажется, что без неё запрос не построится.",
+                "if_it_were_true": "Тогда любой `findBy...` без `@Query` падал бы, но они работают из коробки.",
+                "how_it_should_be": "Имя метода само задаёт запрос; `@Query` — опциональная альтернатива."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В именах query methods нельзя обращаться к полям связанных сущностей — поддерживаются только поля корневой сущности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "К вложенным полям обращаются через `_` или camelCase, например `findByAddress_City(String city)` идёт по связи `address.city`.",
+                "source_of_confusion": "Большинство примеров используют плоские поля, и навигация по связям незаметна.",
+                "if_it_were_true": "Тогда фильтрацию по полю связанной сущности пришлось бы всегда писать через `@Query`, но `findByAddress_City` работает сам.",
+                "how_it_should_be": "Навигация по связям доступна через `_`/camelCase в имени метода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает аннотация `@Query`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Query` поддерживает только нативный `SQL`; писать `JPQL` в ней нельзя — для JPQL есть отдельная аннотация.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `@Query` принимает именно JPQL; нативный SQL включается флагом `nativeQuery=true`.",
+                "source_of_confusion": "Нативные запросы заметны, и кажется, что `@Query` создана только для них.",
+                "if_it_were_true": "Тогда `@Query(\"SELECT u FROM User u\")` без `nativeQuery` падал бы, но это валидный JPQL.",
+                "how_it_should_be": "Значение по умолчанию — JPQL; SQL — через `nativeQuery=true`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Query` задаёт JPQL (или нативный SQL при `nativeQuery=true`) прямо на методе репозитория, когда имени метода недостаточно: поддерживает именованные (`:userId`) и позиционные (`?1`) параметры, `JOIN FETCH`, конструктор DTO в `SELECT new`, пагинацию через `Pageable` и `@Modifying` для UPDATE/DELETE.",
+              "correct": true,
+              "sections": {
+                "explanation": "Приоритет разрешения запросов: сначала `@Query` на методе, затем именованный запрос (`@NamedQuery`), затем разбор имени метода. Параметры связываются через `@Param` (именованные) или по позиции.",
+                "example": "`@Query(\"SELECT o FROM Order o WHERE o.user.id = :userId AND o.status = :status\") List<Order> findUserOrders(@Param(\"userId\") Long userId, @Param(\"status\") OrderStatus status);`",
+                "when_to_apply": "Берут, когда query method становится нечитаемым, нужен `JOIN FETCH`, агрегация или DTO-проекция через конструктор.",
+                "edge_cases": "При нативном запросе с пагинацией нужно явно задать `countQuery`, иначе Spring не сможет корректно посчитать общее число строк.",
+                "related": "[[spring-data-jpa-interview#Q5]] query methods; [[spring-data-jpa-interview#Q7]] нативные запросы; [[spring-data-jpa-interview#Q8]] @Modifying."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параметры в `@Query` можно передавать только по имени через `@Param`; позиционные параметры `?1` не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддерживаются оба способа: именованные (`:name` + `@Param`) и позиционные (`?1`, `?2`) — выбирают по удобству.",
+                "source_of_confusion": "Именованные параметры рекомендуют как более читаемые, и про позиционные забывают.",
+                "if_it_were_true": "Тогда `WHERE o.createdAt > ?1` не работал бы, но позиционная привязка валидна.",
+                "how_it_should_be": "Доступны и `:name`, и `?1`; именованные просто читабельнее."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Если на методе есть и `@Query`, и имя в стиле `findBy...`, Spring выполнит разбор имени метода, игнорируя `@Query`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Query` имеет наивысший приоритет: при её наличии имя метода не разбирается, выполняется именно текст из аннотации.",
+                "source_of_confusion": "Кажется, что имя метода всегда важнее, раз оно «описывает» запрос.",
+                "if_it_were_true": "Тогда `@Query` была бы бесполезна на методах с осмысленными именами, но она их переопределяет.",
+                "how_it_should_be": "Порядок приоритета: `@Query` → named query → разбор имени метода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выполнять нативные `SQL`-запросы в `Spring Data JPA`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для нативного SQL достаточно написать SQL в `@Query` — флаг `nativeQuery=true` не нужен, Spring сам определит, что это SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `nativeQuery=true` Spring трактует текст как JPQL и попытается распарсить его как объектный запрос, что упадёт на именах таблиц/колонок.",
+                "source_of_confusion": "Строка выглядит как SQL, и кажется, что Spring «угадает» язык.",
+                "if_it_were_true": "Тогда `SELECT * FROM products` в `@Query` работал бы без флага, но JPQL-парсер не знает таблицу `products`.",
+                "how_it_should_be": "Нативный SQL обязательно помечают `nativeQuery=true`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нативные запросы не умеют возвращать проекции — результат можно получить только как полную сущность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нативный запрос можно маппить в интерфейсную проекцию (алиасы колонок = имена геттеров) или в `Object[]`, не только в сущность.",
+                "source_of_confusion": "Проекции чаще показывают на JPQL, и кажется, что для нативных они недоступны.",
+                "if_it_were_true": "Тогда `List<ProductSummary> findSummaryByCategory(...)` с `nativeQuery` не компилировался бы, но это работает.",
+                "how_it_should_be": "Интерфейсные проекции поддерживаются и для нативных запросов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Нативный SQL включается через `@Query(value = \"...\", nativeQuery = true)`: тогда в строке пишут настоящий SQL с именами таблиц и колонок. Это нужно для оконных функций, `CTE`, полнотекстового поиска и JSON-операторов, которых нет в JPQL; для пагинации обязательно указывают отдельный `countQuery`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`nativeQuery=true` говорит Spring не транслировать запрос как JPQL, а отдать его в БД как есть. Результат можно маппить в сущность, в интерфейсную проекцию (алиасы колонок = имена геттеров) или в `Object[]`.",
+                "example": "`@Query(value=\"SELECT * FROM products WHERE active=true ORDER BY rating DESC\", countQuery=\"SELECT COUNT(*) FROM products WHERE active=true\", nativeQuery=true) Page<Product> findTopRated(Pageable pageable);`",
+                "when_to_apply": "Берут, когда нужны возможности конкретной СУБД, недоступные в JPQL: `RANK() OVER (...)`, рекурсивные `CTE`, операторы `jsonb`.",
+                "edge_cases": "Без `countQuery` при пагинации Spring пытается обернуть запрос в `SELECT COUNT(*)` автоматически, что ломается на сложных запросах с `GROUP BY`/оконными функциями.",
+                "related": "[[spring-data-jpa-interview#Q3]] JPQL vs SQL; [[spring-data-jpa-interview#Q6]] аннотация @Query; [[spring-data-jpa-interview#Q13]] проекции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При нативном запросе с пагинацией указывать `countQuery` не требуется — Spring всегда корректно считает количество строк сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для сложных нативных запросов автоматический count часто строится неверно; нужно задавать `countQuery` явно.",
+                "source_of_confusion": "Для простых запросов автоматический count иногда срабатывает, что усыпляет бдительность.",
+                "if_it_were_true": "Тогда пагинация по запросу с `GROUP BY` всегда давала бы правильный total, но это типичный источник ошибок.",
+                "how_it_should_be": "Для нативной пагинации почти всегда задают отдельный `countQuery`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@Modifying` и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Modifying` не нужна: `@Query` с текстом `UPDATE`/`DELETE` Spring выполнит как изменяющий запрос автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@Modifying` Spring выполняет `@Query` как `SELECT` через `getResultList`, и для UPDATE/DELETE это приводит к ошибке.",
+                "source_of_confusion": "Текст запроса очевидно изменяющий, и кажется, что Spring это поймёт сам.",
+                "if_it_were_true": "Тогда `@Query(\"DELETE FROM User u WHERE ...\")` без `@Modifying` работал бы, но он выбросит исключение.",
+                "how_it_should_be": "Любой DML через `@Query` помечают `@Modifying`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Флаг `clearAutomatically=true` сбрасывает изменения сущностей в БД перед выполнением запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`clearAutomatically=true` очищает persistence context после выполнения; сброс pending changes перед запросом делает `flushAutomatically=true`.",
+                "source_of_confusion": "Оба флага про синхронизацию с контекстом, и их назначение легко перепутать.",
+                "if_it_were_true": "Тогда после bulk-update контекст всё равно хранил бы устаревшие сущности, но `clear` именно их и убирает.",
+                "how_it_should_be": "`clearAutomatically` — очистка после; `flushAutomatically` — flush до."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Bulk-update через `@Modifying` проходит через persistence context и автоматически обновляет уже загруженные сущности в памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bulk-запрос идёт в БД напрямую, минуя L1-кэш; загруженные сущности в контексте остаются устаревшими, пока их не очистить.",
+                "source_of_confusion": "Кажется логичным, что ORM держит память и БД синхронными.",
+                "if_it_were_true": "Тогда `clearAutomatically` был бы не нужен, но именно его добавляют, чтобы убрать рассинхрон.",
+                "how_it_should_be": "Bulk DML минует кэш; синхронизацию обеспечивают `clear`/`flush`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Modifying` помечает метод репозитория как изменяющий данные (`UPDATE`/`DELETE`/`INSERT`); без неё `Spring Data` трактует `@Query` как `SELECT` и падает. Дополнительно `clearAutomatically=true` очищает persistence context после запроса, а `flushAutomatically=true` сбрасывает pending changes перед ним.",
+              "correct": true,
+              "sections": {
+                "explanation": "Bulk-`UPDATE`/`DELETE` через `@Modifying` — один SQL-запрос вместо загрузки N сущностей и их по-штучного изменения. Эти запросы идут в БД напрямую, минуя кэш первого уровня.",
+                "example": "`@Modifying(clearAutomatically=true) @Query(\"UPDATE User u SET u.status=:s WHERE u.lastLoginAt<:before\") int deactivate(@Param(\"s\") UserStatus s, @Param(\"before\") LocalDateTime before);`",
+                "when_to_apply": "Берут для массовых изменений/удалений, когда не нужны каскады и lifecycle-callbacks, и важна производительность одного запроса.",
+                "edge_cases": "Без `clearAutomatically` после bulk-update сущности в persistence context хранят старые данные, и повторный `findById` вернёт устаревшую кэшированную версию.",
+                "related": "[[spring-data-jpa-interview#Q6]] аннотация @Query; [[spring-data-jpa-interview#Q33]] derived delete; [[spring-data-jpa-interview#Q42]] @Modifying для bulk."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `@Query` с `SpEL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SpEL` в `@Query` позволяет писать переиспользуемые запросы: выражение `#{#entityName}` подставляет имя сущности из дженерика репозитория, поэтому один запрос в базовом интерфейсе `BaseRepository<T>` работает для любой сущности-наследника (`#{#entityName}` становится `User`, `Product` и т.д.).",
+              "correct": true,
+              "sections": {
+                "explanation": "`SpEL` вычисляется один раз при создании запроса на старте, а не при каждом вызове. Это удобно для общих абстрактных репозиториев, где нельзя жёстко зашить имя сущности.",
+                "example": "`@Query(\"SELECT e FROM #{#entityName} e WHERE e.active = true\") List<T> findAllActive();` в `BaseRepository<T>` — `UserRepository extends BaseRepository<User>` даёт `FROM User e`.",
+                "when_to_apply": "Берут в базовых репозиториях с общим поведением (например, фильтр `active=true`) для многих сущностей, чтобы не дублировать одинаковые `@Query`.",
+                "edge_cases": "Помимо `#{#entityName}` можно использовать `#{#root.args[0]}` для доступа к аргументам, но на практике именованные параметры `@Param` безопаснее и читабельнее.",
+                "related": "[[spring-data-jpa-interview#Q6]] аннотация @Query; [[spring-data-jpa-interview#Q2]] иерархия репозиториев; [[spring-data-jpa-interview#Q32]] custom repository."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`#{#entityName}` в `@Query` подставляет имя таблицы в БД, поэтому запрос становится фактически нативным SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`#{#entityName}` подставляет имя JPA-сущности (`User`), а не имя таблицы; запрос остаётся JPQL.",
+                "source_of_confusion": "В голове `FROM ...` ассоциируется с таблицей, а не с сущностью.",
+                "if_it_were_true": "Тогда `SELECT e FROM #{#entityName} e` ссылался бы на таблицу `users`, но подставляется класс `User`.",
+                "how_it_should_be": "Подставляется имя сущности; это JPQL, не нативный SQL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SpEL`-выражение в `@Query` вычисляется заново при каждом вызове метода, что заметно замедляет запросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SpEL` для построения текста запроса вычисляется один раз при создании запроса на старте, а не на каждый вызов.",
+                "source_of_confusion": "Динамический вид `#{...}` наводит на мысль о вычислении в рантайме при каждом обращении.",
+                "if_it_were_true": "Тогда `findAllActive()` тратил бы время на парсинг SpEL при каждом вызове, но текст запроса фиксируется заранее.",
+                "how_it_should_be": "SpEL вычисляется однократно при инициализации запроса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SpEL` в `@Query` может подставлять только константы и не имеет доступа к аргументам метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Через `#{#root.args[0]}` и подобные выражения SpEL имеет доступ к аргументам метода, хотя обычно предпочитают `@Param`.",
+                "source_of_confusion": "Чаще всего показывают только `#{#entityName}`, и кажется, что аргументы недоступны.",
+                "if_it_were_true": "Тогда нельзя было бы динамически собрать выражение из параметра, но `#{#root.args[0]}` это позволяет.",
+                "how_it_should_be": "SpEL видит аргументы метода, но для значений безопаснее `@Param`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@Transactional` и как она работает через прокси?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Transactional` работает на уровне байткода метода, поэтому self-invocation (`this.method()`) тоже открывает транзакцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Transactional` реализована через прокси; вызов `this.method()` идёт напрямую к реальному объекту, минуя прокси, и транзакция не создаётся.",
+                "source_of_confusion": "Кажется, что аннотация «встроена» в метод и работает при любом вызове.",
+                "if_it_were_true": "Тогда внутренний вызов `this.updateUser()` всегда был бы транзакционным, но это классическая ловушка self-invocation.",
+                "how_it_should_be": "Транзакция применяется только при вызове через прокси (извне бина)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Transactional` объявляет метод/класс транзакционным: Spring оборачивает бин в прокси (`CGLIB` или `JDK Proxy`), который перед вызовом открывает транзакцию, после успешного возврата делает commit, а при `RuntimeException` — rollback. Ключевой нюанс — self-invocation: вызов аннотированного метода через `this` не проходит через прокси, и транзакция не создаётся.",
+              "correct": true,
+              "sections": {
+                "explanation": "Прокси-обёртка управляет жизненным циклом транзакции через `TransactionManager`. По умолчанию откат происходит на `RuntimeException`/`Error`; для checked-исключений нужно указать `rollbackFor`.",
+                "example": "Внутри `doSomething()` вызов `this.updateUser(1L)` (метод с `@Transactional`) идёт мимо прокси — транзакции НЕТ; нужно вынести метод в другой бин или вызывать через self-прокси.",
+                "when_to_apply": "Ставят на сервисные методы, меняющие данные; `readOnly=true` — для чтения, чтобы отключить dirty checking.",
+                "edge_cases": "Self-invocation и `private`/`final`-методы не перехватываются прокси; также по умолчанию checked exceptions не вызывают rollback без `rollbackFor`.",
+                "related": "[[spring-data-jpa-interview#Q11]] propagation; [[spring-data-jpa-interview#Q12]] @Lock; [[spring-data-jpa-interview#Q19]] состояния сущности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "По умолчанию `@Transactional` откатывает транзакцию на любых исключениях, включая проверяемые (checked).",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию rollback происходит только на `RuntimeException` и `Error`; для checked-исключений нужно явно указать `rollbackFor`.",
+                "source_of_confusion": "Интуитивно «исключение = откат», и разница checked/unchecked теряется.",
+                "if_it_were_true": "Тогда `rollbackFor` был бы не нужен, но его добавляют именно для checked-исключений.",
+                "how_it_should_be": "Откат по умолчанию — на unchecked; checked требует `rollbackFor`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Transactional`, поставленная на `private`-метод, корректно перехватывается прокси и открывает транзакцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прокси не перехватывает `private`-методы (и `final`); транзакция на них не работает — аннотацию ставят на `public`-методы.",
+                "source_of_confusion": "Аннотация компилируется без ошибок на любом методе, что создаёт ложное ощущение работоспособности.",
+                "if_it_were_true": "Тогда `@Transactional` на `private`-методе создавала бы транзакцию, но прокси его не видит.",
+                "how_it_should_be": "Транзакционными делают `public`-методы, доступные через прокси."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `propagation` транзакций?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`REQUIRES_NEW` всегда присоединяется к уже существующей транзакции, а не создаёт отдельную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REQUIRES_NEW` приостанавливает текущую транзакцию и открывает новую независимую; присоединяется к существующей именно `REQUIRED`.",
+                "source_of_confusion": "Названия `REQUIRED` и `REQUIRES_NEW` похожи, и их поведение путают.",
+                "if_it_were_true": "Тогда аудит-лог откатывался бы вместе с основной транзакцией, но `REQUIRES_NEW` его сохраняет.",
+                "how_it_should_be": "`REQUIRES_NEW` всегда заводит отдельную транзакцию, приостановив текущую."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Propagation по умолчанию — `REQUIRES_NEW`, поэтому каждый `@Transactional`-метод выполняется в собственной транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `REQUIRED`: вложенный метод присоединяется к уже открытой транзакции, а не создаёт новую.",
+                "source_of_confusion": "Кажется логичным, что каждый метод изолирован своей транзакцией.",
+                "if_it_were_true": "Тогда вложенные вызовы всегда коммитились бы независимо, но при `REQUIRED` они делят одну транзакцию.",
+                "how_it_should_be": "Дефолт — `REQUIRED`; отдельная транзакция только при `REQUIRES_NEW`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Propagation` определяет поведение `@Transactional`-метода относительно уже существующей транзакции. По умолчанию `REQUIRED`: присоединяется к текущей или создаёт новую. `REQUIRES_NEW` приостанавливает текущую и открывает отдельную; `NESTED` создаёт savepoint; `MANDATORY` требует существующую (иначе исключение); `SUPPORTS`/`NOT_SUPPORTED`/`NEVER` — варианты без обязательной транзакции.",
+              "correct": true,
+              "sections": {
+                "explanation": "`REQUIRES_NEW` полезен для аудит-логов, которые должны сохраниться даже при откате основной операции. `NESTED` откатывает только до savepoint, не трогая внешнюю транзакцию.",
+                "example": "`AuditService.logAction` с `@Transactional(propagation=REQUIRES_NEW)` сохранит лог в отдельной транзакции, даже если внешний `placeOrder` откатится.",
+                "when_to_apply": "`REQUIRES_NEW` — для независимых побочных операций (аудит, нотификации); `MANDATORY` — когда метод обязан выполняться внутри чужой транзакции.",
+                "edge_cases": "При `REQUIRED` если внутренний метод бросил исключение, вся транзакция помечается rollback-only — даже если внешний метод поймал исключение, commit уже невозможен.",
+                "related": "[[spring-data-jpa-interview#Q10]] @Transactional и прокси; [[spring-data-jpa-interview#Q12]] @Lock; [[spring-data-jpa-interview#Q19]] состояния сущности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При `REQUIRED`, если внешний метод поймает исключение из внутреннего, транзакция успешно закоммитится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После исключения во вложенном методе транзакция помечается rollback-only; commit невозможен, даже если исключение поймано — будет `UnexpectedRollbackException`.",
+                "source_of_confusion": "Поимка исключения обычно «гасит» проблему, и кажется, что транзакция спасена.",
+                "if_it_were_true": "Тогда try/catch вокруг внутреннего вызова позволял бы закоммитить, но транзакция уже rollback-only.",
+                "how_it_should_be": "Для независимого вложенного метода нужен `REQUIRES_NEW`, иначе откат общий."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@Lock` и какие есть стратегии блокировок?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PESSIMISTIC_WRITE` использует поле `@Version` и проверяет его при commit, не блокируя строку в БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание оптимистической блокировки; `PESSIMISTIC_WRITE` выполняет `SELECT ... FOR UPDATE` и блокирует строку в БД сразу.",
+                "source_of_confusion": "Все стратегии относятся к «блокировкам», и механизмы пессимистической и оптимистической смешивают.",
+                "if_it_were_true": "Тогда `PESSIMISTIC_WRITE` не требовал бы поддержки `FOR UPDATE` от БД, но он именно её и использует.",
+                "how_it_should_be": "`@Version`-проверка — это `OPTIMISTIC`; `PESSIMISTIC_WRITE` — `SELECT ... FOR UPDATE`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оптимистическая блокировка (`OPTIMISTIC`) удерживает строку заблокированной в БД на всё время транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OPTIMISTIC` не блокирует строку: она лишь сверяет `@Version` при commit и бросает `OptimisticLockException` при конфликте.",
+                "source_of_confusion": "Слово «блокировка» в названии наводит на мысль о реальном lock строки.",
+                "if_it_were_true": "Тогда оптимистическая стратегия снижала бы параллелизм как пессимистическая, но её плюс — отсутствие lock.",
+                "how_it_should_be": "Оптимистическая не блокирует, а детектирует конфликт по версии."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`PESSIMISTIC_READ` запрещает другим транзакциям даже читать заблокированную строку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PESSIMISTIC_READ` транслируется в shared-lock (`FOR SHARE`): другие могут читать, но не изменять строку до конца транзакции.",
+                "source_of_confusion": "«Read lock» звучит как запрет на чтение, хотя это разделяемая блокировка.",
+                "if_it_were_true": "Тогда параллельные читатели блокировались бы, но shared-lock как раз допускает совместное чтение.",
+                "how_it_should_be": "`PESSIMISTIC_READ` запрещает изменение, но разрешает совместное чтение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Lock` задаёт стратегию блокировки при чтении: `PESSIMISTIC_WRITE` → `SELECT ... FOR UPDATE` (эксклюзивная блокировка строки), `PESSIMISTIC_READ` → `SELECT ... FOR SHARE`, `OPTIMISTIC` → проверка поля `@Version` при commit. Пессимистические блокируют строку в БД сразу, оптимистическая ловит конфликт через версию при сохранении.",
+              "correct": true,
+              "sections": {
+                "explanation": "Пессимистическая блокировка защищает критичные обновления (балансы, остатки), удерживая строку до конца транзакции. Оптимистическая хороша при редких конфликтах: при расхождении `@Version` бросается `OptimisticLockException`.",
+                "example": "`@Lock(LockModeType.PESSIMISTIC_WRITE) @Query(\"SELECT a FROM Account a WHERE a.id=:id\") Optional<Account> findByIdForUpdate(@Param(\"id\") Long id);` — строка заблокирована до commit.",
+                "when_to_apply": "Пессимистический WRITE — для конкурентных обновлений (переводы, списания); оптимистический — для высокого параллелизма чтения с редкими записями.",
+                "edge_cases": "Пессимистические блокировки повышают риск deadlock и снижают параллелизм; их держат как можно короче и в стабильном порядке захвата.",
+                "related": "[[spring-data-jpa-interview#Q10]] @Transactional; [[spring-data-jpa-interview#Q11]] propagation; [[spring-data-jpa-interview#Q39]] @Version и аудит."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Projections` и какие виды бывают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Projections` выбирают только нужные поля вместо всей сущности. Виды: закрытая интерфейсная проекция (Spring генерирует `SELECT` только указанных колонок), DTO/class-based через `SELECT new ...` или record, открытая проекция с `@Value`-SpEL (вычисляемые поля) и вложенная проекция. Самая эффективная — закрытая интерфейсная.",
+              "correct": true,
+              "sections": {
+                "explanation": "Закрытая интерфейсная проекция содержит только геттеры реальных полей — Spring запрашивает ровно эти колонки. Открытая проекция с `@Value` вычисляет поле в Java и поэтому загружает всю сущность.",
+                "example": "`interface UserSummary { String getFirstName(); String getEmail(); }` + `List<UserSummary> findByStatus(UserStatus s);` → `SELECT first_name, email FROM users WHERE status=?`.",
+                "when_to_apply": "Берут на широких таблицах и в списочных API, где нужны 2-3 поля, чтобы не тащить всю строку в память и по сети.",
+                "edge_cases": "Открытая проекция (`@Value(\"#{target.firstName + ' ' + target.lastName}\")`) загружает все поля сущности и фильтрует в Java — экономии на уровне БД нет.",
+                "related": "[[spring-data-jpa-interview#Q14]] динамические проекции; [[spring-data-jpa-interview#Q38]] projection-интерфейсы; [[spring-data-jpa-interview#Q6]] @Query."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Закрытая интерфейсная проекция всё равно загружает всю сущность из БД, а потом просто скрывает лишние поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Закрытая интерфейсная проекция генерирует `SELECT` только нужных колонок — лишние поля не загружаются из БД вообще.",
+                "source_of_confusion": "Открытая проекция действительно тащит всю сущность, и это переносят на закрытую.",
+                "if_it_were_true": "Тогда не было бы выигрыша по объёму данных, но именно ради него закрытую проекцию и применяют.",
+                "how_it_should_be": "Закрытая проекция → SELECT только указанных колонок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DTO-проекция через `SELECT new com.example.UserDto(...)` требует, чтобы у класса был сеттер на каждое поле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DTO-проекция через `SELECT new` использует конструктор с соответствующими параметрами (идеально подходит `record`), а не сеттеры.",
+                "source_of_confusion": "Многие DTO привычно создают через сеттеры, и это правило переносят на JPQL.",
+                "if_it_were_true": "Тогда immutable `record` нельзя было бы использовать как проекцию, но он работает отлично.",
+                "how_it_should_be": "`SELECT new` вызывает конструктор; сеттеры не нужны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Открытая проекция с `@Value`-SpEL вычисляет поле прямо в SQL, поэтому так же эффективна, как закрытая.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Value`-SpEL вычисляется в Java после загрузки всей сущности, поэтому БД-экономии нет — это менее эффективно закрытой проекции.",
+                "source_of_confusion": "Обе называются «проекциями», и кажется, что эффективность одинаковая.",
+                "if_it_were_true": "Тогда `getFullName()` через SpEL не требовал бы загрузки всех полей, но он их загружает.",
+                "how_it_should_be": "Открытая проекция загружает сущность целиком и считает в памяти."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать динамические проекции?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Динамическая проекция требует отдельного метода репозитория под каждый тип результата (`findSummaryBy...`, `findAdminBy...`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть динамической проекции — один метод с параметром `Class<T> type`, покрывающий все типы; отдельные методы не нужны.",
+                "source_of_confusion": "Без динамической проекции действительно приходится плодить методы, и это считают нормой.",
+                "if_it_were_true": "Тогда не было бы выигрыша от `Class<T>`-параметра, но именно он устраняет дублирование.",
+                "how_it_should_be": "Один метод `findByStatus(status, type)` возвращает любую проекцию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Динамическая проекция — метод репозитория с дженерик-параметром `Class<T> type`, например `<T> List<T> findByStatus(UserStatus status, Class<T> type)`. Один метод возвращает разные представления в зависимости от переданного типа: `findByStatus(ACTIVE, UserSummary.class)`, `findByStatus(ACTIVE, UserAdmin.class)` или `findByStatus(ACTIVE, User.class)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Тип проекции передаётся как аргумент, и Spring строит выборку под него. Это убирает дублирование: не нужно объявлять `findSummaryByStatus`, `findAdminByStatus` и т.п. отдельными методами.",
+                "example": "`getPublicList()` вызывает `repo.findByStatus(ACTIVE, UserSummary.class)` для минимума полей, а `getAdminList()` — `repo.findByStatus(ACTIVE, UserAdmin.class)` для расширенного набора.",
+                "when_to_apply": "Берут, когда одна и та же выборка нужна в разных контекстах (публичный API vs админка) с разным набором полей.",
+                "edge_cases": "Передача `User.class` тоже работает и возвращает полную сущность — удобно, но теряется выигрыш проекции, если делать это по привычке.",
+                "related": "[[spring-data-jpa-interview#Q13]] виды проекций; [[spring-data-jpa-interview#Q38]] projection-интерфейсы; [[spring-data-jpa-interview#Q5]] query methods."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В динамическую проекцию нельзя передать `User.class` — параметр `Class<T>` принимает только интерфейсы-проекции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Передача `User.class` валидна и вернёт полную сущность; параметр `Class<T>` работает и с сущностью, и с проекциями/DTO.",
+                "source_of_confusion": "Динамические проекции показывают на интерфейсах, и кажется, что только они и допустимы.",
+                "if_it_were_true": "Тогда `findByStatus(ACTIVE, User.class)` не компилировался бы, но это рабочий вызов.",
+                "how_it_should_be": "Тип может быть сущностью, интерфейсной проекцией или DTO."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Тип проекции в динамическом методе задаётся аннотацией на самом методе и не может меняться в рантайме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип передаётся аргументом `Class<T>` в момент вызова, поэтому одно и то же место кода может вернуть разные проекции в зависимости от переданного класса.",
+                "source_of_confusion": "Привычка задавать возвращаемый тип статически в сигнатуре метода.",
+                "if_it_were_true": "Тогда метод возвращал бы фиксированный тип, но динамическая проекция как раз выбирает его в рантайме.",
+                "how_it_should_be": "Тип результата определяется аргументом `Class<T>` при каждом вызове."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает пагинация в `Spring Data JPA`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы получить страницу, нужно вручную вычислять `OFFSET`/`LIMIT` и подставлять их в `@Query` — `Pageable` лишь хранит числа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достаточно передать `Pageable` в метод: Spring сам добавит `LIMIT`/`OFFSET` (или эквивалент) и применит сортировку — ручной расчёт не нужен.",
+                "source_of_confusion": "Под капотом действительно используется offset, и кажется, что его надо считать самому.",
+                "if_it_were_true": "Тогда `findByStatus(status, pageable)` не работал бы без ручного SQL, но он работает из коробки.",
+                "how_it_should_be": "`Pageable` декларативен; пагинацию формирует Spring/провайдер."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В контроллере `Spring MVC` нельзя принять `Pageable` напрямую — его всегда строят руками из `@RequestParam`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring MVC` умеет резолвить `Pageable` прямо из параметров запроса (`page`, `size`, `sort`) через `PageableHandlerMethodArgumentResolver`.",
+                "source_of_confusion": "Часто показывают ручное создание `PageRequest`, и авто-биндинг остаётся незамеченным.",
+                "if_it_were_true": "Тогда `getUsers(Pageable pageable)` не компилировался бы как эндпоинт, но это рабочая сигнатура.",
+                "how_it_should_be": "`Pageable` можно объявить параметром метода контроллера."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Пагинация работает через объект `Pageable` (обычно `PageRequest.of(page, size, Sort)`): метод репозитория принимает `Pageable` и возвращает `Page<T>`/`Slice<T>`. В `Spring MVC` можно принять `Pageable` прямо как параметр контроллера — Spring соберёт его из query-параметров `page`, `size`, `sort`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`PageRequest` инкапсулирует номер страницы, размер и сортировку. Для `Page` Spring дополнительно выполняет `COUNT`-запрос, чтобы вернуть общее число элементов и страниц.",
+                "example": "`Pageable p = PageRequest.of(0, 20, Sort.by(Sort.Order.desc(\"createdAt\"), Sort.Order.asc(\"id\")));` — стабильная сортировка с tie-breaker по `id`.",
+                "when_to_apply": "Берут для списков с постраничной навигацией; в контроллере принимают `Pageable` напрямую для авто-биндинга из запроса.",
+                "edge_cases": "Сортировка без уникального tie-breaker (например, только по `createdAt`) может давать нестабильный порядок между страницами при равных значениях — добавляют сортировку по `id`.",
+                "related": "[[spring-data-jpa-interview#Q16]] Page vs Slice vs List; [[spring-data-jpa-interview#Q6]] @Query с Pageable; [[spring-data-jpa-interview#Q41]] EntityGraph и пагинация."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Номера страниц в `PageRequest.of(page, size)` начинаются с 1, поэтому первая страница — это `page=1`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нумерация страниц нулевая: первая страница — `page=0`; передача `1` вернёт вторую страницу.",
+                "source_of_confusion": "Люди привыкли считать страницы с единицы в UI.",
+                "if_it_were_true": "Тогда `PageRequest.of(0, 20)` пропускал бы первую страницу, но он возвращает именно её.",
+                "how_it_should_be": "Индексация страниц с нуля: первая — `page=0`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `Page`, `Slice` и `List`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "И `Page`, и `Slice` выполняют дополнительный `COUNT`-запрос, поэтому по числу запросов они одинаковы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`COUNT`-запрос делает только `Page`; `Slice` его не выполняет — он запрашивает `size+1` записей, чтобы определить наличие следующей страницы.",
+                "source_of_confusion": "Оба типа похожи на пагинацию, и разницу в COUNT упускают.",
+                "if_it_were_true": "Тогда не было бы смысла выбирать `Slice` ради производительности, но именно отсутствие COUNT — его плюс.",
+                "how_it_should_be": "`Page` → +COUNT; `Slice` → один запрос с `size+1`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Slice<T>` предоставляет `getTotalElements()` и `getTotalPages()`, как и `Page<T>`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Slice` не знает общего количества: у него есть только `hasNext()`/`hasPrevious()`, а `getTotalElements()`/`getTotalPages()` — это методы `Page`.",
+                "source_of_confusion": "`Slice` — родитель `Page` по иерархии, и их API смешивают.",
+                "if_it_were_true": "Тогда `Slice` нечем бы отличался от `Page`, но именно отсутствие total и отделяет его.",
+                "how_it_should_be": "Total-метаданные есть только у `Page`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`List<T>` при передаче `Pageable` всё равно возвращает полную информацию о страницах и общем числе элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`List<T>` отдаёт только сами записи без каких-либо метаданных пагинации; информации о страницах и total в нём нет.",
+                "source_of_confusion": "Раз `Pageable` передан, кажется, что метаданные «прилагаются».",
+                "if_it_were_true": "Тогда не нужны были бы `Page`/`Slice`, но `List` намеренно не несёт метаданных.",
+                "how_it_should_be": "`List` — только данные; для метаданных берут `Page`/`Slice`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Page<T>` делает дополнительный `COUNT`-запрос и знает общее число элементов и страниц — для классической пагинации с номерами. `Slice<T>` не считает total (запрашивает `size+1` записей, чтобы узнать `hasNext()`) — для бесконечного скролла. `List<T>` возвращает данные без метаданных и без COUNT.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное различие — наличие `COUNT`-запроса и метаданных. `Page` дороже из-за второго запроса, `Slice` дешевле (один запрос с `size+1`), `List` — самый лёгкий, но без информации о следующей странице.",
+                "example": "`Page<User> findByStatus(...)` → SELECT + SELECT COUNT(*); `Slice<User> findByCity(...)` → один SELECT с `size+1`; `List<User> findByLastName(..., Pageable)` → один SELECT.",
+                "when_to_apply": "`Page` — когда нужны номера страниц и total; `Slice` — для «Load more»/бесконечного скролла; `List` — когда метаданные не нужны.",
+                "edge_cases": "Для таблиц в миллионы строк `Page` может тормозить из-за `COUNT(*)`; тогда берут `Slice` или `List` плюс кэшированный счётчик.",
+                "related": "[[spring-data-jpa-interview#Q15]] пагинация; [[spring-data-jpa-interview#Q35]] best practices; [[spring-data-jpa-interview#Q41]] EntityGraph и пагинация."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Specifications` и как их использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Specifications` — способ динамически собирать условия запроса через JPA `Criteria API`. Репозиторий расширяет `JpaSpecificationExecutor<T>`, а условия описываются лямбдами `(root, query, cb) -> ...` и комбинируются через `Specification.where(...).and(...).or(...)`. Идеальны для фильтров с опциональными параметрами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый предикат — переиспользуемая `Specification`. Условия добавляются только если соответствующий фильтр задан, поэтому один метод `findAll(spec, pageable)` покрывает все комбинации фильтров без множества `findBy...`-методов.",
+                "example": "`Specification<Product> spec = Specification.where(isActive()); if (filter.category()!=null) spec = spec.and(hasCategory(filter.category())); return repo.findAll(spec, pageable);`",
+                "when_to_apply": "Берут для поисковых форм и API с набором опциональных фильтров (категория, цена, ключевое слово), когда комбинаций слишком много для query methods.",
+                "edge_cases": "При JOIN коллекций возможны дубликаты строк — тогда ставят `query.distinct(true)` или используют отдельную count-стратегию.",
+                "related": "[[spring-data-jpa-interview#Q5]] query methods; [[spring-data-jpa-interview#Q37]] Specification API; [[spring-data-jpa-interview#Q15]] пагинация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы использовать `Specifications`, репозиторий должен расширять `PagingAndSortingRepository`, а `JpaSpecificationExecutor` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для работы со спецификациями репозиторий обязан расширять `JpaSpecificationExecutor<T>` — именно он добавляет `findAll(Specification, ...)`.",
+                "source_of_confusion": "Спецификации часто идут вместе с пагинацией, и интерфейсы путают.",
+                "if_it_were_true": "Тогда `repo.findAll(spec, pageable)` был бы доступен без `JpaSpecificationExecutor`, но метод приходит именно из него.",
+                "how_it_should_be": "Нужно `extends JpaRepository<T,ID>, JpaSpecificationExecutor<T>`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Specifications` генерируют запрос из строкового JPQL-шаблона, а не через `Criteria API`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Specification` строится программно через `Criteria API` (`root`, `query`, `cb`), без строкового JPQL.",
+                "source_of_confusion": "`@Query` использует строки, и это переносят на спецификации.",
+                "if_it_were_true": "Тогда в `Specification` писали бы текст `SELECT ... WHERE`, но там предикаты строятся объектами `CriteriaBuilder`.",
+                "how_it_should_be": "Спецификации — типобезопасный `Criteria API`, а не строки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Спецификации нельзя комбинировать: для каждой комбинации фильтров придётся писать отдельную `Specification`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Спецификации свободно комбинируются через `.and()`/`.or()`/`Specification.where(...)`, поэтому одна выборка покрывает любые сочетания фильтров.",
+                "source_of_confusion": "Каждый предикат выглядит как самостоятельный объект, и композиция неочевидна.",
+                "if_it_were_true": "Тогда преимущество над множеством `findBy...`-методов исчезало бы, но именно композиция его и даёт.",
+                "how_it_should_be": "Спецификации компонуются логическими операторами в один запрос."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `Auditing` в `Spring Data JPA`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Поля `@CreatedDate` и `@LastModifiedDate` нужно заполнять вручную в сервисе перед каждым `save()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Их заполняет `AuditingEntityListener` автоматически на событиях `@PrePersist`/`@PreUpdate`; ручное проставление не требуется.",
+                "source_of_confusion": "Раньше время изменения часто ставили руками, и привычка сохраняется.",
+                "if_it_were_true": "Тогда смысл аудита терялся бы, но он именно убирает ручное проставление.",
+                "how_it_should_be": "Listener сам ставит время/автора при `save()`/`update()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Auditing` автоматически заполняет поля «кто и когда создал/изменил запись». Включается через `@EnableJpaAuditing(auditorAwareRef=\"auditorProvider\")`; базовый `@MappedSuperclass` с `@EntityListeners(AuditingEntityListener.class)` содержит `@CreatedDate`, `@LastModifiedDate`, `@CreatedBy`, `@LastModifiedBy`. При `save()` Spring сам проставляет время и имя пользователя из `AuditorAware`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`AuditorAware` отдаёт текущего пользователя (например, из `SecurityContextHolder`). При создании заполняются все четыре поля; при обновлении меняются только `@LastModifiedDate` и `@LastModifiedBy`.",
+                "example": "`@Bean AuditorAware<String> auditorProvider() { return () -> Optional.ofNullable(SecurityContextHolder.getContext()).map(c->c.getAuthentication()).map(Authentication::getName); }`",
+                "when_to_apply": "Берут, когда нужно прозрачно фиксировать метаданные изменений во всех сущностях без ручного проставления в коде.",
+                "edge_cases": "Поля `@CreatedDate`/`@CreatedBy` обычно делают `updatable=false`, иначе они перезапишутся при апдейте; `@CreatedBy` пуст, если в контексте нет аутентификации (фоновые задачи).",
+                "related": "[[spring-data-jpa-interview#Q20]] @EntityListeners; [[spring-data-jpa-interview#Q39]] @CreatedDate и @EnableJpaAuditing; [[spring-data-jpa-interview#Q19]] состояния сущности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для аудита достаточно поставить `@CreatedDate`/`@CreatedBy` на поля — `@EnableJpaAuditing` включать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@EnableJpaAuditing` инфраструктура аудита не активируется и аннотации полей не срабатывают.",
+                "source_of_confusion": "Аннотации на полях выглядят самодостаточными.",
+                "if_it_were_true": "Тогда поля заполнялись бы без явного включения, но без `@EnableJpaAuditing` они останутся `null`.",
+                "how_it_should_be": "Нужно включить `@EnableJpaAuditing` и подключить `AuditingEntityListener`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При обновлении записи `@CreatedDate` и `@CreatedBy` тоже перезаписываются текущими значениями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При обновлении меняются только `@LastModifiedDate`/`@LastModifiedBy`; поля создания обычно помечают `updatable=false` и не трогают.",
+                "source_of_confusion": "Кажется, что все аудит-поля обновляются синхронно.",
+                "if_it_were_true": "Тогда терялась бы дата первоначального создания, но её специально сохраняют неизменной.",
+                "how_it_should_be": "Поля создания фиксируются один раз; апдейт меняет только last-modified."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие состояния имеет сущность в `JPA`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Detached-сущность отслеживается `EntityManager`, поэтому изменения в ней автоматически попадут в БД при commit.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Detached-объект НЕ отслеживается: изменения в нём не сохранятся, пока его не вернуть в контекст через `merge`.",
+                "source_of_confusion": "Объект «выглядит» тем же, что был managed, и кажется, что слежение продолжается.",
+                "if_it_were_true": "Тогда `merge` был бы не нужен, но именно он возвращает detached-объект под управление.",
+                "how_it_should_be": "Detached не отслеживается; для сохранения изменений делают `merge`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`merge(detached)` изменяет переданный объект на managed, и дальше можно работать с тем же экземпляром.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`merge` возвращает новый managed-экземпляр, а исходный остаётся detached; продолжать работу нужно с возвращённым объектом.",
+                "source_of_confusion": "Кажется, что `merge` «оживляет» именно переданный объект.",
+                "if_it_were_true": "Тогда `User merged = em.merge(user)` и `user` были бы одним объектом, но это разные экземпляры.",
+                "how_it_should_be": "Работают с результатом `merge`, а не с переданным аргументом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Четыре состояния: `New`/Transient (создан через `new`, не связан с контекстом), `Managed`/Persistent (привязан к `EntityManager`, отслеживается dirty checking), `Detached` (был managed, но контекст закрыт/очищен — изменения не отслеживаются) и `Removed` (помечен на удаление, будет `DELETE` при flush). Переходы: `persist`→Managed, `detach`/`clear`/`close`→Detached, `merge`→снова Managed, `remove`→Removed.",
+              "correct": true,
+              "sections": {
+                "explanation": "Только Managed-сущности отслеживаются: их изменения автоматически попадают в БД при flush/commit (dirty checking). Detached-объект менять бесполезно — изменения не сохранятся, пока не сделать `merge`.",
+                "example": "`User u = new User(); em.persist(u); // Managed` → `u.setEmail(...) // dirty checking сработает` → `em.detach(u); u.setEmail(...) // НЕ попадёт в БД`.",
+                "when_to_apply": "Понимание состояний нужно при работе с долгоживущими объектами, передаче сущностей между слоями и отладке «почему изменения не сохранились».",
+                "edge_cases": "`merge(detached)` возвращает НОВЫЙ managed-объект, а переданный остаётся detached — работать дальше нужно именно с возвращённым объектом.",
+                "related": "[[spring-data-jpa-interview#Q20]] @EntityListeners; [[spring-data-jpa-interview#Q21]] FlushMode; [[spring-data-jpa-interview#Q10]] @Transactional."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сущность в состоянии `New` (Transient) уже отслеживается контекстом сразу после `new`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`New`/Transient-объект не связан с контекстом и не отслеживается до вызова `persist`/`save`.",
+                "source_of_confusion": "Объект уже создан, и кажется, что он «в системе».",
+                "if_it_were_true": "Тогда `persist` был бы не нужен для сохранения, но без него объект в БД не попадёт.",
+                "how_it_should_be": "Слежение начинается с `persist`/`save`, переводящего объект в Managed."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@EntityListeners` и callback-методы жизненного цикла?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В callback-методах вроде `@PrePersist` можно безопасно вызывать `EntityManager` для загрузки и сохранения других сущностей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вызов `EntityManager` внутри lifecycle-callback запрещён и ведёт к непредсказуемому поведению; для этого используют `@TransactionalEventListener`.",
+                "source_of_confusion": "Метод выполняется в контексте транзакции, и кажется, что `EntityManager` доступен как обычно.",
+                "if_it_were_true": "Тогда из `@PrePersist` можно было бы инициировать новые запросы, но это явно не рекомендовано спецификацией.",
+                "how_it_should_be": "В callback меняют только саму сущность; внешние операции — через Spring Events."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Callback-методы можно объявлять только в самой сущности; вынести их в отдельный listener-класс нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Логику можно вынести в отдельный класс и подключить через `@EntityListeners(OrderAuditListener.class)` — это рекомендуется для сложных случаев.",
+                "source_of_confusion": "Чаще показывают callback прямо в сущности, и внешний listener остаётся незамеченным.",
+                "if_it_were_true": "Тогда `@EntityListeners` была бы бесполезна, но именно она подключает внешний listener.",
+                "how_it_should_be": "Callback-логику размещают и в сущности, и во внешнем listener-классе."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@PostLoad` срабатывает перед загрузкой сущности из БД, позволяя подменить запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@PostLoad` вызывается ПОСЛЕ загрузки сущности из БД; подменить или перехватить сам SQL-запрос он не может.",
+                "source_of_confusion": "Префикс `Post` в спешке читают как «до загрузки».",
+                "if_it_were_true": "Тогда можно было бы влиять на сам SELECT, но callback выполняется уже над загруженным объектом.",
+                "how_it_should_be": "`@PostLoad` — это пост-обработка уже загруженной сущности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JPA` позволяет перехватывать события жизненного цикла сущности callback-методами: `@PrePersist`/`@PostPersist` (до/после INSERT), `@PreUpdate`/`@PostUpdate`, `@PreRemove`/`@PostRemove`, `@PostLoad` (после загрузки). Их пишут прямо в сущности или выносят в отдельный listener-класс, подключаемый через `@EntityListeners(MyListener.class)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Callback-методы удобны для проставления времени, инициализации значений по умолчанию и валидации перед удалением. Вынос в отдельный listener-класс делает код чище для сложной логики.",
+                "example": "`@PrePersist void onCreate(){ this.createdAt = LocalDateTime.now(); if (status==null) status=CREATED; }` — заполнение перед INSERT.",
+                "when_to_apply": "Берут для простой подготовки сущности к сохранению/удалению, проставления служебных полей и инвариантов уровня сущности.",
+                "edge_cases": "В callback нельзя вызывать `EntityManager` (новые запросы/изменения других сущностей) — это даёт непредсказуемое поведение; для сложной логики используют `@TransactionalEventListener`/Spring Events.",
+                "related": "[[spring-data-jpa-interview#Q18]] Auditing; [[spring-data-jpa-interview#Q19]] состояния сущности; [[spring-data-jpa-interview#Q39]] @CreatedDate."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `FlushMode` и когда его менять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`FlushMode` определяет, когда `Hibernate` синхронизирует persistence context с БД. `AUTO` (по умолчанию) делает flush перед каждым запросом и при commit — чтобы запрос видел pending changes. `COMMIT` сбрасывает только при commit (экономит flush при batch). `MANUAL` — только по явному `flush()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "При `AUTO` любой SELECT внутри транзакции вызывает flush, гарантируя актуальность, но в batch-обработке это лишний overhead. Переключение на `COMMIT` снимает авто-flush на каждый запрос.",
+                "example": "`session.setHibernateFlushMode(FlushMode.COMMIT);` в batch-цикле, затем периодически `em.flush(); em.clear();` каждые N записей для контроля памяти.",
+                "when_to_apply": "Меняют на `COMMIT` при массовых вставках/обновлениях, где промежуточные SELECT не зависят от ещё не сброшенных изменений.",
+                "edge_cases": "При `COMMIT`/`MANUAL` запрос может не увидеть изменения, сделанные в той же транзакции, но ещё не сброшенные — это источник неожиданных «пропавших» данных.",
+                "related": "[[spring-data-jpa-interview#Q19]] состояния сущности; [[spring-data-jpa-interview#Q28]] batch-обработка; [[spring-data-jpa-interview#Q10]] @Transactional."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При `FlushMode.AUTO` `Hibernate` синхронизирует контекст с БД только в момент commit, но не перед запросами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AUTO` делает flush и перед запросами (чтобы они видели pending changes), и при commit — а не только при commit.",
+                "source_of_confusion": "Кажется, что flush логично откладывать до самого конца транзакции.",
+                "if_it_were_true": "Тогда SELECT внутри транзакции мог бы не увидеть свежие изменения, но `AUTO` именно это и предотвращает.",
+                "how_it_should_be": "`AUTO` → flush перед запросом и при commit."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`FlushMode.COMMIT` ускоряет работу, потому что вообще не делает flush — изменения пишутся напрямую при каждом изменении сущности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`COMMIT` делает flush при commit (а не на каждый запрос); изменения не пишутся «сразу» — они накапливаются и сбрасываются позже.",
+                "source_of_confusion": "Слова «без flush на запрос» превращают в «без flush вообще».",
+                "if_it_were_true": "Тогда не нужен был бы commit для сохранения, но именно на нём `COMMIT` и сбрасывает изменения.",
+                "how_it_should_be": "`COMMIT` откладывает flush до commit, а не отменяет его."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Дефолтный `FlushMode` — `MANUAL`, поэтому без явного `flush()` изменения никогда не попадают в БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию используется `AUTO`, а не `MANUAL`; изменения сбрасываются автоматически перед запросами и при commit.",
+                "source_of_confusion": "Явный `flush()` часто встречается в коде, и кажется, что без него ничего не сохраняется.",
+                "if_it_were_true": "Тогда обычный `save()` без ручного flush ничего бы не записывал, но он работает по умолчанию.",
+                "how_it_should_be": "Дефолт — `AUTO`; `MANUAL` включают сознательно для тестов/миграций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `FetchType LAZY` vs `EAGER`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@OneToMany` по умолчанию `EAGER`, а `@ManyToOne` — `LAZY`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолты обратные: `@ManyToOne`/`@OneToOne` — `EAGER`, а `@OneToMany`/`@ManyToMany` — `LAZY`.",
+                "source_of_confusion": "Дефолтные значения fetch для разных связей легко перепутать местами.",
+                "if_it_were_true": "Тогда коллекции грузились бы всегда сразу, а одиночные связи лениво — но это не так.",
+                "how_it_should_be": "`*ToOne` → EAGER по умолчанию, `*ToMany` → LAZY по умолчанию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`FetchType` определяет, когда грузятся связанные сущности. `EAGER` (по умолчанию для `@ManyToOne`/`@OneToOne`) грузит связь сразу вместе с родителем. `LAZY` (по умолчанию для `@OneToMany`/`@ManyToMany`) грузит при первом обращении к коллекции/полю. Best practice — ставить `LAZY` на всё и подгружать явно через `JOIN FETCH`/`@EntityGraph`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`EAGER` — частая ловушка: тащит лишние данные и провоцирует N+1 при выборках. `LAZY` экономит, но требует открытого persistence context на момент обращения (иначе `LazyInitializationException`).",
+                "example": "`@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name=\"department_id\") private Department department;` — явный LAZY вместо дефолтного EAGER на `@ManyToOne`.",
+                "when_to_apply": "`LAZY` ставят по умолчанию на все связи; данные грузят явно там, где они реально нужны, через fetch-стратегии.",
+                "edge_cases": "Обращение к LAZY-связи после закрытия сессии даёт `LazyInitializationException`; OSIV (`spring.jpa.open-in-view=true`, включён по умолчанию) маскирует проблему, но его рекомендуют отключать.",
+                "related": "[[spring-data-jpa-interview#Q23]] N+1 проблема; [[spring-data-jpa-interview#Q24]] @EntityGraph; [[spring-data-jpa-interview#Q25]] CascadeType."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`EAGER` — рекомендуемый best practice, потому что гарантированно избегает проблемы N+1.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Best practice — `LAZY`: `EAGER` как раз провоцирует N+1 и загрузку лишних данных при выборках списков.",
+                "source_of_confusion": "EAGER «всё сразу» кажется безопаснее ленивой загрузки.",
+                "if_it_were_true": "Тогда `EAGER` решал бы N+1, но он его, наоборот, усугубляет при выборке многих сущностей.",
+                "how_it_should_be": "Рекомендуется `LAZY` + явная подгрузка через `JOIN FETCH`/`@EntityGraph`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обращение к `LAZY`-связи после закрытия сессии безопасно: `Hibernate` сам откроет новое соединение и догрузит данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Доступ к LAZY-полю вне открытого контекста бросает `LazyInitializationException` — новое соединение автоматически не открывается.",
+                "source_of_confusion": "OSIV держит сессию открытой до конца запроса, и в dev-режиме ошибка не проявляется.",
+                "if_it_were_true": "Тогда LAZY работал бы где угодно, но именно закрытие контекста и вызывает исключение.",
+                "how_it_should_be": "LAZY-данные грузят, пока контекст открыт (в сервисном слое)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое N+1 проблема и как её решить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "N+1 — это проблема, когда один запрос возвращает слишком много колонок, и решается через проекции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "N+1 — это про количество ЗАПРОСОВ (1 за список + N за связи), а не про число колонок; решается fetch-стратегиями.",
+                "source_of_confusion": "И проекции, и N+1 относятся к оптимизации, и их смешивают.",
+                "if_it_were_true": "Тогда сужение колонок убирало бы N+1, но лишние запросы остаются, пока связи грузятся лениво в цикле.",
+                "how_it_should_be": "N+1 решают `JOIN FETCH`/`@EntityGraph`/batch-fetch."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Переключение всех связей на `EAGER` гарантированно устраняет N+1.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EAGER` не решает N+1 при выборке списков — наоборот, часто его и порождает; нужен явный `JOIN FETCH`/`@EntityGraph`.",
+                "source_of_confusion": "Кажется, что «загрузить всё сразу» автоматически объединяет запросы.",
+                "if_it_were_true": "Тогда EAGER был бы лекарством от N+1, но при `findAll()` он генерирует отдельный запрос на каждую сущность.",
+                "how_it_should_be": "От N+1 спасает явная пакетная/join-загрузка, а не глобальный EAGER."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "N+1 — это один запрос за список из N сущностей плюс N дополнительных запросов за связанные данные при ленивом обращении в цикле. Решения: `JOIN FETCH` в JPQL, `@EntityGraph`, `@BatchSize`/`default_batch_fetch_size` (грузит связи пачками через `IN`), и DTO-проекция без загрузки сущностей вовсе.",
+              "correct": true,
+              "sections": {
+                "explanation": "Классический пример: `findAll()` достаёт N пользователей, а `user.getOrders().size()` в цикле порождает N запросов. `JOIN FETCH`/`@EntityGraph` сводят всё к одному запросу, batch-fetch — к `ceil(N/size)` запросам.",
+                "example": "`@Query(\"SELECT u FROM User u JOIN FETCH u.orders WHERE u.status=:s\")` грузит пользователей и заказы одним запросом вместо 1+N.",
+                "when_to_apply": "Устраняют N+1 везде, где в цикле/маппинге обходят ленивые связи; обнаруживают через лог SQL (`logging.level.org.hibernate.SQL=DEBUG`).",
+                "edge_cases": "`JOIN FETCH` нескольких коллекций сразу бросает `MultipleBagFetchException`; для нескольких коллекций используют `@BatchSize` или последовательные fetch.",
+                "related": "[[spring-data-jpa-interview#Q22]] LAZY vs EAGER; [[spring-data-jpa-interview#Q24]] @EntityGraph; [[spring-data-jpa-interview#Q41]] EntityGraph vs JOIN FETCH."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JOIN FETCH` можно применять сразу к нескольким коллекциям в одном запросе без каких-либо ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Одновременный `JOIN FETCH` нескольких коллекций (bag) бросает `MultipleBagFetchException`; для них используют `@BatchSize` или `Set`.",
+                "source_of_confusion": "JOIN FETCH удобен, и кажется, что его можно множить произвольно.",
+                "if_it_were_true": "Тогда `JOIN FETCH u.orders JOIN FETCH u.roles` всегда работал бы, но это типичная ошибка.",
+                "how_it_should_be": "Несколько коллекций грузят через batch-fetch, не одним JOIN FETCH."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@EntityGraph` и как он работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@EntityGraph` навсегда меняет fetch-стратегию связи в маппинге сущности для всех запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@EntityGraph` действует только для конкретного запроса/метода; глобальный fetch-маппинг сущности он не переопределяет.",
+                "source_of_confusion": "Граф «описывает загрузку», и кажется, что это свойство самой сущности.",
+                "if_it_were_true": "Тогда один `@EntityGraph` влиял бы на все выборки сущности, но он локален для метода.",
+                "how_it_should_be": "Граф задаёт стратегию per-query, не меняя маппинг."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`EntityGraphType.FETCH` оставляет неуказанные связи такими, как в их аннотациях (например, `@ManyToOne` остаётся EAGER).",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `FETCH` неуказанные связи становятся `LAZY`; вариант, оставляющий их по аннотациям, — это `LOAD`.",
+                "source_of_confusion": "Типы `LOAD` и `FETCH` похожи, и их поведение для «остальных» связей путают.",
+                "if_it_were_true": "Тогда `FETCH` и `LOAD` вели бы себя одинаково, но именно в обработке неуказанных связей они расходятся.",
+                "how_it_should_be": "`FETCH` → остальные LAZY; `LOAD` → остальные по аннотации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@EntityGraph` на коллекции никогда не приводит к дубликатам строк, поэтому `DISTINCT` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LEFT JOIN` коллекции в графе порождает дубликаты родителя; для уникальности применяют `DISTINCT` или `Set`.",
+                "source_of_confusion": "Декларативность графа создаёт ощущение, что он сам решает проблему дублей.",
+                "if_it_were_true": "Тогда выборка пользователей с заказами не дублировала бы пользователей, но JOIN коллекции их размножает.",
+                "how_it_should_be": "При JOIN коллекций нужен `DISTINCT`/`Set` для устранения дублей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@EntityGraph` — декларативный способ указать, какие связи загрузить вместе с сущностью, избегая N+1 без написания JPQL. Задаётся ad-hoc через `attributePaths={\"orders\"}` или именованным `@NamedEntityGraph` на сущности. Тип `FETCH` делает указанные связи EAGER, а все остальные LAZY; тип `LOAD` — указанные EAGER, остальные по их аннотациям.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@EntityGraph` добавляет `LEFT JOIN` для перечисленных путей, поэтому связи приходят одним запросом. Поддерживает вложенные пути (`orders.items`) и комбинируется с `@Query`.",
+                "example": "`@EntityGraph(attributePaths={\"orders\", \"orders.items\"}) List<User> findByStatus(UserStatus status);` — Spring добавит LEFT JOIN для orders и items.",
+                "when_to_apply": "Берут, когда нужно подгрузить связи для конкретного use case без изменения глобального fetch-маппинга сущности.",
+                "edge_cases": "На коллекциях `@EntityGraph` через `LEFT JOIN` даёт дубликаты строк — используют `DISTINCT` или `Set` вместо `List`.",
+                "related": "[[spring-data-jpa-interview#Q22]] LAZY vs EAGER; [[spring-data-jpa-interview#Q23]] N+1 проблема; [[spring-data-jpa-interview#Q41]] EntityGraph vs JOIN FETCH."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CascadeType` и когда применять каскады?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CascadeType` распространяет операции с родительской сущностью на дочерние: `PERSIST` (сохранение), `MERGE` (обновление), `REMOVE` (удаление), `ALL` (всё). Отдельно `orphanRemoval=true` удаляет дочернюю запись из БД при изъятии её из коллекции. Каскады применяют для строго зависимых сущностей (`Order` → `OrderItem`).",
+              "correct": true,
+              "sections": {
+                "explanation": "С `cascade={PERSIST, MERGE}` сохранение `Order` автоматически сохранит его `OrderItem`. `orphanRemoval` — это не `CascadeType`, а отдельный флаг: удаление item из списка влечёт `DELETE`.",
+                "example": "`@OneToMany(mappedBy=\"order\", cascade={PERSIST, MERGE}, orphanRemoval=true)` — один `save(order)` делает INSERT order + INSERT каждого item.",
+                "when_to_apply": "Берут для parent-child связей, где дочерние сущности не имеют смысла без родителя (агрегат в терминах DDD).",
+                "edge_cases": "`CascadeType.ALL` на `@ManyToMany` (`User` → `Role`) опасен: удаление пользователя удалит роли, используемые другими — антипаттерн.",
+                "related": "[[spring-data-jpa-interview#Q22]] LAZY vs EAGER; [[spring-data-jpa-interview#Q26]] @Embedded; [[spring-data-jpa-interview#Q27]] наследование сущностей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`orphanRemoval=true` — это синоним `CascadeType.REMOVE`, они делают абсолютно одно и то же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные механизмы: `REMOVE` каскадирует `delete(parent)` на детей, а `orphanRemoval` удаляет ребёнка при изъятии его из коллекции родителя.",
+                "source_of_confusion": "Оба связаны с удалением дочерних записей.",
+                "if_it_were_true": "Тогда `items.remove(item)` без `orphanRemoval` тоже удалял бы строку, но он лишь разрывает связь.",
+                "how_it_should_be": "`REMOVE` — при удалении родителя; `orphanRemoval` — при выходе ребёнка из коллекции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Без каскадов сохранение родителя автоматически сохраняет и новые дочерние сущности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `CascadeType.PERSIST` новые дочерние сущности не сохранятся при `save(parent)` — будет ошибка transient-объекта или они просто не попадут в БД.",
+                "source_of_confusion": "Кажется, что ORM «сам разберётся» со связанными объектами.",
+                "if_it_were_true": "Тогда каскады были бы не нужны, но без `PERSIST` детей надо сохранять отдельно.",
+                "how_it_should_be": "Для авто-сохранения детей нужен `CascadeType.PERSIST`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CascadeType.ALL` на `@ManyToMany` — безопасный выбор по умолчанию для любых связей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CascadeType.ALL` на `@ManyToMany` — антипаттерн: удаление одной стороны удалит общие записи (роли), используемые другими.",
+                "source_of_confusion": "`ALL` выглядит как «всё включено и удобно».",
+                "if_it_were_true": "Тогда удаление пользователя безопасно чистило бы только его данные, но оно затронет общие роли.",
+                "how_it_should_be": "Каскады применяют точечно для строго зависимых связей, не `ALL` на ManyToMany."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@Embedded` и `@Embeddable`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Embeddable`-объект имеет собственный `@Id` и хранится в отдельной таблице, связанной с сущностью по внешнему ключу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Embeddable не имеет своего `@Id` и своей таблицы: его поля становятся колонками таблицы сущности-владельца.",
+                "source_of_confusion": "Embeddable выглядит как полноценный класс, и кажется, что у него должна быть своя таблица.",
+                "if_it_were_true": "Тогда `Money` хранился бы отдельно с JOIN, но `amount`/`currency` лежат в таблице владельца.",
+                "how_it_should_be": "Embeddable — это группа колонок в таблице сущности, без своей идентичности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Embeddable` помечает Value Object без собственной идентичности (например, `Money`, `Address`), чьи колонки маппятся в таблицу владельца. `@Embedded` встраивает такой объект в сущность. Когда в одной сущности несколько `@Embedded` одного типа, нужен `@AttributeOverrides`, чтобы развести колонки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Embeddable не имеет своего `@Id` и своей таблицы — его поля становятся колонками сущности-владельца. Это удобно для группировки логически связанных полей и переиспользования (`record` с `@Embeddable` идеален для immutable VO).",
+                "example": "Два `@Embedded Address` (shipping и billing) в `Order` требуют `@AttributeOverride(name=\"city\", column=@Column(name=\"shipping_city\"))` и т.п., иначе колонки `city` конфликтуют.",
+                "when_to_apply": "Берут для Value Objects (деньги, адрес, период), которые не имеют самостоятельной жизни и всегда принадлежат сущности.",
+                "edge_cases": "Без `@AttributeOverrides` при двух embeddable одного типа маппинг падает из-за дублирования имён колонок в одной таблице.",
+                "related": "[[spring-data-jpa-interview#Q25]] CascadeType; [[spring-data-jpa-interview#Q27]] наследование сущностей; [[spring-data-jpa-interview#Q19]] состояния сущности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@AttributeOverrides` нужен только для переименования полей и никак не связан с конфликтом колонок при нескольких `@Embedded`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@AttributeOverrides` как раз и решает конфликт колонок, когда в сущности несколько `@Embedded` одного типа (shipping/billing адреса).",
+                "source_of_confusion": "Переименование кажется чисто косметической задачей.",
+                "if_it_were_true": "Тогда два `@Embedded Address` работали бы без override, но они дали бы дубликаты колонок.",
+                "how_it_should_be": "Override разводит одинаковые поля двух embeddable по разным колонкам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Java `record` нельзя использовать с `@Embeddable` — подходят только обычные классы с сеттерами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`record` отлично работает с `@Embeddable` (Java 16+) и идеален для immutable Value Objects.",
+                "source_of_confusion": "JPA исторически требовала пустой конструктор/сеттеры, и это переносят на embeddable.",
+                "if_it_were_true": "Тогда `record Money(...)` как embeddable не компилировался бы, но это рекомендуемый паттерн.",
+                "how_it_should_be": "`record` — удобный носитель `@Embeddable` для неизменяемых VO."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает наследование сущностей (`JPA Inheritance`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SINGLE_TABLE` создаёт отдельную таблицу для каждого подтипа и соединяет их JOIN-ом при запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отдельные таблицы на подтипы с JOIN — это стратегия `JOINED`; `SINGLE_TABLE` хранит всю иерархию в одной таблице с дискриминатором.",
+                "source_of_confusion": "Стратегии наследования легко перепутать по структуре таблиц.",
+                "if_it_were_true": "Тогда `SINGLE_TABLE` требовал бы JOIN на каждый запрос, но его плюс — как раз отсутствие JOIN.",
+                "how_it_should_be": "`SINGLE_TABLE` — одна таблица + колонка-дискриминатор."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `SINGLE_TABLE` на колонки подтипов можно ставить NOT NULL-ограничения на уровне БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `SINGLE_TABLE` колонки подтипа должны быть nullable, ведь для других подтипов они пусты; NOT NULL на них поставить нельзя.",
+                "source_of_confusion": "Кажется естественным требовать обязательность поля для своего подтипа.",
+                "if_it_were_true": "Тогда строка `BankPayment` нарушала бы NOT NULL на `card_number`, но именно поэтому ограничение недопустимо.",
+                "how_it_should_be": "Колонки подтипов в общей таблице nullable; целостность — в коде."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Три стратегии: `SINGLE_TABLE` (одна таблица на всю иерархию + колонка-дискриминатор, подтипы дают nullable-колонки), `JOINED` (таблица на каждый класс, подтипы через JOIN с базовой), `TABLE_PER_CLASS` (отдельная полная таблица на каждый конкретный класс, полиморфные запросы через `UNION ALL`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`SINGLE_TABLE` — самые быстрые полиморфные запросы (без JOIN), но колонки подтипов nullable и без NOT NULL constraints. `JOINED` нормализован, но требует JOIN. `TABLE_PER_CLASS` изолирует таблицы ценой медленного UNION.",
+                "example": "`@Inheritance(strategy=SINGLE_TABLE) @DiscriminatorColumn(name=\"payment_type\")` на `Payment`, а `@DiscriminatorValue(\"CARD\")` на `CardPayment` — обе хранятся в одной таблице.",
+                "when_to_apply": "`SINGLE_TABLE` — когда подтипов мало и у них мало уникальных полей; `JOINED` — при необходимости строгой нормализации; `TABLE_PER_CLASS` — почти никогда.",
+                "edge_cases": "В `SINGLE_TABLE` нельзя поставить NOT NULL на колонки подтипа, ведь для других подтипов она пуста — целостность приходится контролировать в коде.",
+                "related": "[[spring-data-jpa-interview#Q25]] CascadeType; [[spring-data-jpa-interview#Q26]] @Embedded; [[spring-data-jpa-interview#Q2]] иерархия репозиториев."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TABLE_PER_CLASS` выполняет полиморфные запросы максимально быстро, без накладных расходов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полиморфные запросы в `TABLE_PER_CLASS` идут через `UNION ALL` по всем таблицам и обычно медленнее остальных стратегий.",
+                "source_of_confusion": "Изоляция таблиц кажется признаком хорошей производительности.",
+                "if_it_were_true": "Тогда `findByAmountGreaterThan` по базовому типу был бы быстрым, но он объединяет таблицы через UNION.",
+                "how_it_should_be": "Полиморфизм в `TABLE_PER_CLASS` дорогой из-за UNION ALL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает batch-обработка в `Spring Data JPA`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`GenerationType.IDENTITY` отлично поддерживает batch INSERT, ведь id выделяется заранее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`IDENTITY` блокирует batch INSERT: id генерируется БД в момент самого `INSERT`, поэтому заранее зарезервировать и сгруппировать вставки нельзя.",
+                "source_of_confusion": "`IDENTITY` — частый дефолт, и кажется, что он совместим со всем.",
+                "if_it_were_true": "Тогда batch работал бы с любым генератором, но именно `IDENTITY` его и ломает.",
+                "how_it_should_be": "Для batch INSERT берут `SEQUENCE` с `allocationSize`, не `IDENTITY`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно выставить `batch_size`, и `em.flush()`/`em.clear()` в цикле уже не нужны — Hibernate всё сделает сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без периодических `flush()`+`clear()` persistence context раздувается и держит все сущности в памяти, рискуя `OutOfMemoryError`; их вызывают вручную.",
+                "source_of_confusion": "`batch_size` звучит как «всё настроено», и про управление памятью забывают.",
+                "if_it_were_true": "Тогда импорт миллионов строк не требовал бы очистки контекста, но память переполнится.",
+                "how_it_should_be": "`batch_size` + периодические `flush()`/`clear()` каждые N записей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`order_inserts=true` сортирует строки по значениям полей перед вставкой, чтобы данные легли в нужном порядке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`order_inserts` группирует `INSERT` по ТИПУ сущности (для эффективного батчинга одинаковых запросов), а не сортирует данные по значениям.",
+                "source_of_confusion": "Слово «order» воспринимают как сортировку данных.",
+                "if_it_were_true": "Тогда флаг влиял бы на порядок строк в таблице, но он влияет на группировку statement'ов.",
+                "how_it_should_be": "`order_inserts` группирует одинаковые INSERT для батча."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Batch объединяет много `INSERT`/`UPDATE` в один round-trip к БД. Включается через `hibernate.jdbc.batch_size=50`, `order_inserts=true`, `order_updates=true`. В цикле периодически делают `em.flush()` + `em.clear()` (каждые N записей), чтобы отправить батч и освободить память persistence context.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без batch каждый `INSERT` — отдельный запрос к БД. С `batch_size` Hibernate группирует операции. Ключевой нюанс: с `GenerationType.IDENTITY` batch INSERT невозможен, нужен `SEQUENCE` с `allocationSize`.",
+                "example": "`@SequenceGenerator(name=\"product_seq\", sequenceName=\"product_seq\", allocationSize=50)` позволяет зарезервировать 50 id одним запросом и батчить 50 INSERT.",
+                "when_to_apply": "Берут для массовых импортов/обновлений (CSV, миграции данных), где важно минимизировать число обращений к БД.",
+                "edge_cases": "`GenerationType.IDENTITY` отключает batching INSERT: id выдаётся БД только в момент `INSERT`, поэтому сгруппировать вставки невозможно.",
+                "related": "[[spring-data-jpa-interview#Q21]] FlushMode; [[spring-data-jpa-interview#Q19]] состояния сущности; [[spring-data-jpa-interview#Q35]] best practices."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить второуровневый кэш (`L2 cache`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "L2-кэш работает на уровне `SessionFactory` (общий для всех сессий), в отличие от L1 (persistence context — в рамках одной транзакции). Включается `use_second_level_cache=true` + провайдер (EhCache/Hazelcast), сущность помечается `@Cacheable` и `@Cache(usage=...)` с выбором стратегии: `READ_ONLY`, `READ_WRITE`, `NONSTRICT_READ_WRITE`, `TRANSACTIONAL`.",
+              "correct": true,
+              "sections": {
+                "explanation": "L1 живёт в пределах транзакции, L2 переживает её и разделяется между сессиями — повторные `findById` тех же справочных данных не идут в БД. Стратегию выбирают по соотношению чтений/записей.",
+                "example": "`@Cacheable @Cache(usage=CacheConcurrencyStrategy.READ_WRITE)` на сущности `Category` кэширует справочник между сессиями.",
+                "when_to_apply": "Берут для редко меняющихся, часто читаемых данных: справочники, категории, конфигурации.",
+                "edge_cases": "L2 ускоряет чтение, но усложняет инвалидацию: для часто меняющихся данных он даёт устаревшие значения, а `READ_ONLY` вовсе запрещает изменения.",
+                "related": "[[spring-data-jpa-interview#Q19]] состояния сущности; [[spring-data-jpa-interview#Q21]] FlushMode; [[spring-data-jpa-interview#Q35]] best practices."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "L2-кэш работает в рамках одной транзакции, а L1 — общий для всех сессий приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: L1 (persistence context) живёт в пределах транзакции, а L2 — на уровне `SessionFactory`, общий для сессий.",
+                "source_of_confusion": "Уровни кэша легко перепутать по области видимости.",
+                "if_it_were_true": "Тогда L2 не давал бы выигрыша между запросами, но именно межсессионность — его суть.",
+                "how_it_should_be": "L1 — per-transaction; L2 — per-SessionFactory (между сессиями)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "L2-кэш включается автоматически в Spring Boot, без `use_second_level_cache` и провайдера кэша.",
+              "correct": false,
+              "sections": {
+                "what_actually": "L2 по умолчанию выключен: нужно явно включить `use_second_level_cache=true`, подключить провайдер и пометить сущности `@Cacheable`.",
+                "source_of_confusion": "L1 работает «из коробки», и это ожидание переносят на L2.",
+                "if_it_were_true": "Тогда любые сущности кэшировались бы между сессиями без настройки, но без конфигурации L2 неактивен.",
+                "how_it_should_be": "L2 требует явного включения, провайдера и `@Cacheable`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Стратегия `READ_ONLY` подходит для часто изменяемых данных, так как обеспечивает быстрый апдейт кэша.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`READ_ONLY` предназначена для неизменяемых данных (справочники, enum-таблицы); изменять такие сущности нельзя.",
+                "source_of_confusion": "«Read only» воспринимают как «быстрое чтение при любых данных».",
+                "if_it_were_true": "Тогда `READ_ONLY` годился бы для меняющихся записей, но попытка их изменить вызовет ошибку.",
+                "how_it_should_be": "Для часто меняющихся данных берут `READ_WRITE`/`NONSTRICT_READ_WRITE`, не `READ_ONLY`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Soft Delete` и как его реализовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "При soft delete запись физически удаляется из таблицы, но дублируется в архивную таблицу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Soft delete не удаляет строку физически: она остаётся в таблице с проставленным флагом (`deleted_at`); копирование в архив — это другой подход.",
+                "source_of_confusion": "Архивирование и soft delete оба «сохраняют» данные, и их смешивают.",
+                "if_it_were_true": "Тогда `findDeleted()` искал бы в архивной таблице, но он ищет в той же по `deleted_at IS NOT NULL`.",
+                "how_it_should_be": "Строка остаётся на месте с флагом удаления."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Soft Delete` — логическое удаление: запись не удаляется физически, а помечается флагом (например, `deleted_at`). В `Hibernate 6.4+` фильтр задаётся `@SQLRestriction(\"deleted_at IS NULL\")` (замена `@Where`), который автоматически добавляет условие ко всем запросам сущности; само удаление делают `@Modifying`-апдейтом, проставляющим `deleted_at`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@SQLRestriction` статически дописывает `WHERE deleted_at IS NULL`, поэтому `findAll()` не видит «удалённых». Чтобы найти удалённых, используют нативный запрос без фильтра.",
+                "example": "`@Modifying @Query(\"UPDATE User u SET u.deletedAt=CURRENT_TIMESTAMP WHERE u.id=:id\")` помечает запись удалённой, не стирая её.",
+                "when_to_apply": "Берут, когда данные нужно сохранять для аудита/восстановления и нельзя физически удалять (история, регуляторика).",
+                "edge_cases": "Уникальный индекс мешает создать новую запись с тем же email после soft delete — решают частичным индексом `... WHERE deleted_at IS NULL`.",
+                "related": "[[spring-data-jpa-interview#Q8]] @Modifying; [[spring-data-jpa-interview#Q31]] Hibernate Filters; [[spring-data-jpa-interview#Q33]] derived delete."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@SQLRestriction` нужно вручную дописывать в каждый метод репозитория, иначе фильтр не применится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SQLRestriction` на сущности применяется автоматически ко всем запросам по ней; дописывать его в каждый метод не нужно.",
+                "source_of_confusion": "Фильтрация ассоциируется с явным `WHERE` в каждом запросе.",
+                "if_it_were_true": "Тогда `findAll()` без ручного условия возвращал бы и удалённых, но аннотация фильтрует их сама.",
+                "how_it_should_be": "Аннотация на сущности задаёт глобальное условие для всех запросов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Уникальный индекс по email не мешает soft delete: можно сколько угодно раз пересоздавать пользователя с тем же email.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный уникальный индекс учитывает и «удалённые» строки, поэтому второй пользователь с тем же email нарушит уникальность; нужен частичный индекс.",
+                "source_of_confusion": "Кажется, что раз запись «удалена», она не влияет на ограничения.",
+                "if_it_were_true": "Тогда повторная регистрация после soft delete всегда проходила бы, но обычный unique-индекс её заблокирует.",
+                "how_it_should_be": "Используют частичный индекс `UNIQUE ... WHERE deleted_at IS NULL`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Hibernate Filters`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Hibernate Filters` всегда активны и не могут быть отключены в рантайме, как и `@SQLRestriction`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключевое отличие фильтров — динамичность: их включают/выключают через `enableFilter`/`disableFilter`; статичен именно `@SQLRestriction`.",
+                "source_of_confusion": "И фильтры, и `@SQLRestriction` дописывают `WHERE`, и их поведение смешивают.",
+                "if_it_were_true": "Тогда фильтры ничем бы не отличались от `@SQLRestriction`, но их плюс — управляемость.",
+                "how_it_should_be": "Фильтры включаются/выключаются динамически в сессии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Фильтр применяется автоматически ко всем сессиям сразу после объявления `@FilterDef`, без явного включения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Объявление `@FilterDef`/`@Filter` лишь регистрирует фильтр; чтобы он действовал, его нужно явно включить в сессии через `enableFilter`.",
+                "source_of_confusion": "Аннотация выглядит достаточной для активации.",
+                "if_it_were_true": "Тогда условие фильтра действовало бы без `enableFilter`, но без него запросы не фильтруются.",
+                "how_it_should_be": "После объявления фильтр включают в нужной сессии вручную."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Hibernate Filters` — динамическая фильтрация на уровне сессии: фильтр объявляется `@FilterDef`/`@Filter` с параметром, а включается/выключается в рантайме через `session.enableFilter(\"tenantFilter\").setParameter(...)`. В отличие от статического `@SQLRestriction`, фильтр можно активировать только когда нужно — типичный сценарий multi-tenancy.",
+              "correct": true,
+              "sections": {
+                "explanation": "Пока фильтр активен, его `WHERE`-условие дописывается ко всем запросам сущности. Его включают, например, в AOP-аспекте по началу запроса и выключают по завершении.",
+                "example": "`@Filter(name=\"tenantFilter\", condition=\"tenant_id = :tenantId\")` + `session.enableFilter(\"tenantFilter\").setParameter(\"tenantId\", currentTenant)` ограничивает выборки текущим арендатором.",
+                "when_to_apply": "Берут для multi-tenancy и контекстной фильтрации, где условие зависит от рантайм-контекста (текущий пользователь, арендатор).",
+                "edge_cases": "Фильтр действует только пока включён в текущей сессии — забыли включить (или вызвали вне аспекта), и данные других арендаторов утекут.",
+                "related": "[[spring-data-jpa-interview#Q30]] Soft Delete; [[spring-data-jpa-interview#Q8]] @Modifying; [[spring-data-jpa-interview#Q22]] LAZY vs EAGER."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Параметры фильтра нельзя задавать в рантайме — значение `:tenantId` фиксируется на этапе компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметры передаются в рантайме через `setParameter(\"tenantId\", value)` при включении фильтра — это и делает фильтры контекстными.",
+                "source_of_confusion": "Параметр в аннотации выглядит как статическая константа.",
+                "if_it_were_true": "Тогда нельзя было бы фильтровать по текущему арендатору, но `setParameter` именно это и даёт.",
+                "how_it_should_be": "Значение параметра задают динамически при `enableFilter`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как создать custom repository implementation?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Класс с кастомной реализацией может называться как угодно — Spring находит его по типу, а не по имени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring находит реализацию по конвенции имени: класс должен иметь суффикс `Impl` (или настроенный postfix), иначе он не подхватится.",
+                "source_of_confusion": "Обычная DI ищет бины по типу, и это правило переносят на custom repository.",
+                "if_it_were_true": "Тогда `UserRepoExtra` подхватился бы автоматически, но без суффикса `Impl` Spring его проигнорирует.",
+                "how_it_should_be": "Имя реализации = имя интерфейса + `Impl`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Кастомный метод нельзя смешивать в одном репозитории с derived-методами и `@Query` — нужен отдельный репозиторий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Основной репозиторий расширяет и `JpaRepository`, и кастомный интерфейс, поэтому query methods, `@Query` и custom-логика сосуществуют в одном.",
+                "source_of_confusion": "Custom-логика кажется чем-то отдельным от автогенерируемого репозитория.",
+                "if_it_were_true": "Тогда пришлось бы инжектить два репозитория, но один интерфейс объединяет всё.",
+                "how_it_should_be": "Один репозиторий наследует базовый + custom-интерфейс."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В custom-реализации нельзя использовать `EntityManager` — доступ к нему есть только у автогенерируемой части.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EntityManager` инжектируется прямо в `Impl`-класс и активно используется для Criteria/нативных запросов — это и есть смысл custom-реализации.",
+                "source_of_confusion": "Кажется, что `EntityManager` скрыт инфраструктурой Spring Data.",
+                "if_it_were_true": "Тогда сложные Criteria-запросы нельзя было бы писать вручную, но именно для этого `Impl` и нужен.",
+                "how_it_should_be": "В `Impl` инжектят `EntityManager` и работают с ним напрямую."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Когда стандартных методов и `@Query` мало (сложная динамическая логика, прямая работа с `EntityManager`/`Criteria`), создают интерфейс `XxxRepositoryCustom` с нужными методами, реализуют его в классе с суффиксом `Impl` (`XxxRepositoryCustomImpl`), а основной репозиторий расширяет и `JpaRepository`, и кастомный интерфейс — Spring сам подмешивает реализацию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring находит реализацию по конвенции имени (`Impl`-суффикс) и объединяет её с автогенерируемым репозиторием. Так в одном репозитории сосуществуют query methods, `@Query` и рукописная логика.",
+                "example": "`UserRepositoryCustomImpl implements UserRepositoryCustom` с `EntityManager` и `CriteriaBuilder`; `UserRepository extends JpaRepository<User,Long>, UserRepositoryCustom`.",
+                "when_to_apply": "Берут для динамических Criteria-запросов, нативной оптимизации, batch-логики через `EntityManager`, которую не выразить декларативно.",
+                "edge_cases": "Суффикс `Impl` — конвенция по умолчанию; её можно изменить через `@EnableJpaRepositories(repositoryImplementationPostfix=\"CustomImpl\")`, иначе реализация не подхватится.",
+                "related": "[[spring-data-jpa-interview#Q4]] генерация реализации; [[spring-data-jpa-interview#Q6]] @Query; [[spring-data-jpa-interview#Q17]] Specifications."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое derived delete и `deleteBy`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Derived delete` — методы вида `deleteBy...`/`removeBy...`, которые `Spring Data` реализует по имени. Важный нюанс: они выполняют `SELECT` найденных сущностей + по-штучный `DELETE`, чтобы сработали каскады и lifecycle-callbacks. Для массового удаления без каскадов эффективнее `@Modifying @Query(\"DELETE ...\")` — один SQL-запрос.",
+              "correct": true,
+              "sections": {
+                "explanation": "`deleteByExpiredAtBefore` сначала загрузит сущности, потом удалит их по одной (с каскадами). Возвращаемый тип `long` даёт число удалённых, `List<Entity>` — сами удалённые объекты.",
+                "example": "`@Modifying @Query(\"DELETE FROM Session s WHERE s.expiredAt < :before\") int bulkDeleteExpired(@Param(\"before\") LocalDateTime before)` — один DELETE вместо SELECT+N DELETE.",
+                "when_to_apply": "`deleteBy...` берут, когда нужны каскады/callbacks; bulk `@Modifying` — для массового удаления без зависимостей, где важна скорость.",
+                "edge_cases": "На больших объёмах `deleteBy...` дорог из-за SELECT+N DELETE; путают его производительность с одним bulk-DELETE и получают неожиданную нагрузку.",
+                "related": "[[spring-data-jpa-interview#Q8]] @Modifying; [[spring-data-jpa-interview#Q30]] Soft Delete; [[spring-data-jpa-interview#Q42]] @Modifying для bulk."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`deleteByExpiredAtBefore` выполняет один `DELETE`-запрос, не загружая сущности в память.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Derived delete делает `SELECT` найденных сущностей и затем по-штучный `DELETE` (ради каскадов/callbacks), а не один bulk-DELETE.",
+                "source_of_confusion": "Имя `deleteBy...` выглядит как прямой DELETE по условию.",
+                "if_it_were_true": "Тогда `deleteBy...` и bulk `@Modifying DELETE` были бы равны по нагрузке, но первый порождает SELECT + N DELETE.",
+                "how_it_should_be": "Для одного DELETE-запроса используют `@Modifying @Query`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Derived delete не запускает каскады и lifecycle-callbacks, поэтому всегда безопасен по сайд-эффектам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно derived delete и срабатывает каскады/callbacks (для этого он и грузит сущности); каскады не выполняет как раз bulk `@Modifying DELETE`.",
+                "source_of_confusion": "Кажется, что любой delete минует ORM-логику и идёт напрямую в БД.",
+                "if_it_were_true": "Тогда `removeByUserId` не вызывал бы `@PreRemove`, но он его вызывает.",
+                "how_it_should_be": "Каскады/callbacks работают у derived delete; bulk-DELETE их пропускает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Bulk `@Modifying @Query(\"DELETE ...\")` тоже выполняет каскадное удаление дочерних сущностей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bulk-DELETE идёт напрямую в БД и НЕ запускает JPA-каскады/callbacks; дочерние записи нужно удалять отдельно или через FK с `ON DELETE CASCADE`.",
+                "source_of_confusion": "Каскады ассоциируются с любым удалением через репозиторий.",
+                "if_it_were_true": "Тогда bulk-DELETE родителя удалял бы детей, но он их не трогает на уровне JPA.",
+                "how_it_should_be": "Bulk-DELETE минует каскады; зависимости чистят явно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать `Spring Data JPA` репозитории?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@DataJpaTest` поднимает полный контекст приложения, включая web-слой и все сервисы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@DataJpaTest` — это slice-тест: поднимается только JPA-слой (репозитории, `EntityManager`), без контроллеров и сервисов.",
+                "source_of_confusion": "Его путают с `@SpringBootTest`, который грузит весь контекст.",
+                "if_it_were_true": "Тогда в `@DataJpaTest` можно было бы инжектить контроллеры, но они не поднимаются.",
+                "how_it_should_be": "`@DataJpaTest` — узкий срез только персистентного слоя."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@DataJpaTest` — slice-тест, поднимающий только JPA-слой (без web и сервисов). Чтобы тестировать на реальной БД, отключают замену на embedded (`@AutoConfigureTestDatabase(replace=NONE)`) и поднимают `Testcontainers` PostgreSQL. Для подготовки данных используют `TestEntityManager`, а после `@Modifying` делают `entityManager.clear()` для сброса L1-кэша.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@DataJpaTest` по умолчанию подменяет БД на embedded и оборачивает каждый тест в откатываемую транзакцию. `Testcontainers` даёт реальный PostgreSQL, где работают специфичные фичи, недоступные в H2.",
+                "example": "`@DataJpaTest @AutoConfigureTestDatabase(replace=NONE) @Testcontainers` + `@Container static PostgreSQLContainer<?> pg = new PostgreSQLContainer<>(\"postgres:16-alpine\");`",
+                "when_to_apply": "Берут для проверки query methods, `@Query`, маппинга и `@Modifying` на реальной БД, изолированно от остального контекста.",
+                "edge_cases": "После `@Modifying`-запроса L1-кэш хранит старые сущности; без `entityManager.clear()` повторный `findById` вернёт устаревшую версию и тест даст ложный результат.",
+                "related": "[[spring-data-jpa-interview#Q8]] @Modifying; [[spring-data-jpa-interview#Q19]] состояния сущности; [[spring-data-jpa-interview#Q40]] интеграция Flyway."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "По умолчанию `@DataJpaTest` использует ту же реальную БД, что и приложение, без `@AutoConfigureTestDatabase`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `@DataJpaTest` подменяет datasource на embedded (H2); чтобы тестировать на реальной БД, ставят `@AutoConfigureTestDatabase(replace=NONE)` + Testcontainers.",
+                "source_of_confusion": "Кажется, что тест берёт конфигурацию приложения как есть.",
+                "if_it_were_true": "Тогда тесты шли бы по PostgreSQL без настройки, но без `replace=NONE` подставится H2.",
+                "how_it_should_be": "Для реальной БД отключают замену и поднимают Testcontainers."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После `@Modifying`-запроса `entityManager.clear()` вызывать не нужно — кэш L1 синхронизируется сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bulk-update минует L1, поэтому после `@Modifying` контекст хранит устаревшие сущности; перед проверкой делают `entityManager.clear()`.",
+                "source_of_confusion": "Ожидание, что ORM держит память и БД согласованными.",
+                "if_it_were_true": "Тогда повторный `findById` после апдейта возвращал бы свежие данные, но вернёт кэшированные старые.",
+                "how_it_should_be": "После `@Modifying` сбрасывают L1 через `clear()` перед чтением."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие best practices для производительности `JPA`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для производительности нужно ставить `EAGER` на все связи, чтобы данные всегда были под рукой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Best practice — `LAZY` на всех связях с явной подгрузкой; глобальный `EAGER` тащит лишнее и провоцирует N+1.",
+                "source_of_confusion": "EAGER «всё готово сразу» кажется быстрее.",
+                "if_it_were_true": "Тогда EAGER ускорял бы списочные выборки, но он, наоборот, замедляет их.",
+                "how_it_should_be": "`LAZY` по умолчанию + `@EntityGraph`/`JOIN FETCH` точечно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Transactional(readOnly=true)` не влияет на производительность чтения — это просто документирующая пометка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`readOnly=true` реально оптимизирует: Hibernate может пропускать dirty checking и снижает overhead, плюс может выбирать read-реплику.",
+                "source_of_confusion": "Флаг выглядит как декларативное намерение без эффекта.",
+                "if_it_were_true": "Тогда его ставили бы только для читаемости, но он даёт измеримый выигрыш.",
+                "how_it_should_be": "`readOnly=true` снимает dirty checking для read-методов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ключевые практики: `LAZY` на всех связях + явная подгрузка через `@EntityGraph`/`JOIN FETCH`; проекции (interface/DTO) вместо полной сущности; `batch_size`=50 с `SEQUENCE`-генератором для массовых вставок; `@Transactional(readOnly=true)` для чтения (отключает dirty checking); индексы и `EXPLAIN ANALYZE`; отключение OSIV (`spring.jpa.open-in-view=false`); L2-кэш для справочников; мониторинг через `Hibernate Statistics`/datasource-proxy.",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство проблем JPA — это лишние данные и лишние запросы. Сочетание LAZY + явная загрузка устраняет N+1; `readOnly` снимает overhead dirty checking; проекции уменьшают объём выборки.",
+                "example": "Сервис с `@Transactional(readOnly=true)` на уровне класса, проекциями в списках и `@Transactional` только на пишущих методах — типовой оптимальный паттерн.",
+                "when_to_apply": "Применяют системно во всех сервисах доступа к данным, особенно на высоконагруженных эндпоинтах со списками.",
+                "edge_cases": "Отключение OSIV ломает lazy-загрузку в контроллерах/view — нужно явно грузить все необходимые связи в сервисном слое до выхода из транзакции.",
+                "related": "[[spring-data-jpa-interview#Q22]] LAZY vs EAGER; [[spring-data-jpa-interview#Q23]] N+1 проблема; [[spring-data-jpa-interview#Q28]] batch-обработка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Отключение OSIV (`open-in-view=false`) никак не влияет на код — lazy-загрузка в контроллере продолжит работать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `open-in-view=false` сессия закрывается до контроллера, и обращение к LAZY-связи в нём даст `LazyInitializationException`; связи нужно грузить в сервисе.",
+                "source_of_confusion": "OSIV скрыт, и его влияние на lazy-доступ незаметно, пока он включён.",
+                "if_it_were_true": "Тогда отключение OSIV было бы безопасным без правок, но оно требует явной загрузки данных.",
+                "how_it_should_be": "При выключенном OSIV все нужные связи грузят в сервисном слое."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают derived query methods и каков их синтаксис?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Префикс метода может быть только `find` — `count`, `exists`, `delete` в derived query methods не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддерживаются префиксы `count`, `exists`, `delete`/`remove`, а также синонимы `read`/`get`/`query`/`stream`, не только `find`.",
+                "source_of_confusion": "`find` встречается чаще всего, и про другие префиксы забывают.",
+                "if_it_were_true": "Тогда `countByStatus`/`existsByEmail` не работали бы, но это валидные derived-методы.",
+                "how_it_should_be": "Доступны `find/read/get/query/stream/count/exists/delete`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Ограничение результата (`Top`/`First`) нельзя задать в имени метода — для лимита всегда нужен `@Query`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Top`/`First` (`findTop5By...`, `findFirstBy...`) задают лимит прямо в имени метода без `@Query`.",
+                "source_of_confusion": "Лимит ассоциируется с явным SQL `LIMIT`.",
+                "if_it_were_true": "Тогда `findTop5ByStatusOrderByCreatedAtDesc` не компилировался бы, но это рабочий метод.",
+                "how_it_should_be": "Лимит выражается через `Top`/`First` в имени метода."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сортировку (`OrderBy`) в имени метода указать нельзя — её передают только через `Sort`/`Pageable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OrderBy...` (например, `findByStatusOrderByCreatedAtDesc`) задаёт сортировку прямо в имени метода; `Sort`/`Pageable` — дополнительная опция.",
+                "source_of_confusion": "Сортировку часто прокидывают через `Pageable`, и про `OrderBy` в имени забывают.",
+                "if_it_were_true": "Тогда статичную сортировку нельзя было бы зашить в метод, но `OrderBy` это позволяет.",
+                "how_it_should_be": "`OrderBy` в имени и `Sort`/`Pageable` — два рабочих способа."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Derived query methods — механизм, при котором `Spring Data JPA` парсит имя метода и генерирует JPQL. Структура: префикс (`find`/`read`/`get`/`query`/`stream`/`count`/`exists`/`delete`) + `By` + условия (`And`, `Or`, `Like`, `Containing`, `In`, `Between`, `LessThan`/`GreaterThan`, `IsNull`, `True`/`False`) + опциональный `OrderBy`. Ограничение результата — `Top`/`First`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Имя метода декларативно описывает запрос: `findByAgeBetweenOrderByLastNameAsc` → `WHERE age BETWEEN ?1 AND ?2 ORDER BY last_name ASC`. Это основная «магия» Spring Data для типовых выборок.",
+                "example": "`List<User> findTop5ByStatusOrderByCreatedAtDesc(UserStatus status)` → `WHERE status=?1 ORDER BY created_at DESC LIMIT 5`.",
+                "when_to_apply": "Берут для простых и средних выборок, где имя метода остаётся читаемым (1-3 условия).",
+                "edge_cases": "При сложных условиях (несколько JOIN, подзапросы, агрегации) имя метода становится нечитаемым — переходят на `@Query` или `Specification`.",
+                "related": "[[spring-data-jpa-interview#Q5]] query methods; [[spring-data-jpa-interview#Q6]] @Query; [[spring-data-jpa-interview#Q37]] Specification API."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `Specification` API для построения динамических запросов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Specification` — функциональный интерфейс-обёртка над JPA `Criteria API`. Условие пишут лямбдой `(root, query, cb) -> ...`; чтобы «пропустить» незаданный фильтр, возвращают `cb.conjunction()` (всегда true). Спецификации комбинируют через `Specification.where(...).and(...).or(...)`, JOIN делают через `root.join(...)`. Репозиторий должен расширять `JpaSpecificationExecutor`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый предикат — статический фабричный метод, возвращающий `Specification`. Опциональные фильтры обрабатываются внутри лямбды (`null → cb.conjunction()`), а композиция собирает финальный запрос из активных условий.",
+                "example": "`Specification.where(isActive()).and(hasCategory(filter.getCategory())).and(priceBetween(min, max))` — `null`-фильтры внутри возвращают `conjunction()` и не влияют на результат.",
+                "when_to_apply": "Берут для динамических фильтров с множеством опциональных параметров и для запросов с JOIN, которые неудобно выражать query methods.",
+                "edge_cases": "JOIN коллекций в спецификации даёт дубликаты — добавляют `query.distinct(true)`; при пагинации это влияет и на count-запрос.",
+                "related": "[[spring-data-jpa-interview#Q17]] Specifications основы; [[spring-data-jpa-interview#Q36]] derived query methods; [[spring-data-jpa-interview#Q15]] пагинация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы спецификация «пропустила» незаданный фильтр, она должна вернуть `null`, и Spring корректно его проигнорирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для нейтрального условия возвращают `cb.conjunction()` (всегда true); возврат `null` хотя и обрабатывается в новых версиях, идиоматично использовать `conjunction()`.",
+                "source_of_confusion": "`null` интуитивно воспринимается как «нет условия».",
+                "if_it_were_true": "Тогда `cb.conjunction()` был бы лишним приёмом, но он — рекомендуемый способ нейтрализовать условие.",
+                "how_it_should_be": "Опциональный фильтр возвращает `cb.conjunction()` при отсутствии значения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "JOIN в спецификации сделать невозможно — `Criteria API` внутри `Specification` поддерживает только поля корневой сущности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JOIN делают через `root.join(\"brand\", JoinType.INNER)` прямо внутри лямбды спецификации — связи доступны.",
+                "source_of_confusion": "Спецификации показывают на простых предикатах, и JOIN остаётся незамеченным.",
+                "if_it_were_true": "Тогда фильтр по полю связанной сущности был бы невозможен, но `root.join` его обеспечивает.",
+                "how_it_should_be": "JOIN выполняют через `root.join(...)` внутри спецификации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Спецификации работают в любом репозитории автоматически — расширять `JpaSpecificationExecutor` не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Методы `findAll(Specification, ...)` приходят из `JpaSpecificationExecutor`; без его наследования спецификации использовать нельзя.",
+                "source_of_confusion": "`Specification` — отдельный класс, и кажется, что репозиторий не при чём.",
+                "if_it_were_true": "Тогда `repo.findAll(spec)` компилировался бы в любом репозитории, но метода там не будет.",
+                "how_it_should_be": "Нужно `extends JpaSpecificationExecutor<T>`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают `Projection`-интерфейсы в `Spring Data JPA`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Interface-based проекция всегда загружает всю сущность из БД и лишь скрывает ненужные геттеры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Закрытая interface-based проекция генерирует `SELECT` только нужных колонок — остальные поля из БД не извлекаются.",
+                "source_of_confusion": "Открытая проекция с `@Value` действительно тащит всё, и это обобщают.",
+                "if_it_were_true": "Тогда проекции не давали бы экономии, но их выигрыш — именно сужение SELECT.",
+                "how_it_should_be": "Закрытая проекция → SELECT только перечисленных полей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Projection`-интерфейс — способ загрузить только нужные поля сущности. Три вида: interface-based (Spring создаёт прокси и генерирует `SELECT` только указанных колонок; вычисляемые поля — через `@Value`-SpEL), class-based/DTO (immutable record без прокси, лучшая производительность) и dynamic (`<T> List<T> findBy...(..., Class<T> type)`). Поддерживаются вложенные проекции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Interface-based проекция содержит геттеры нужных полей — Spring запрашивает ровно эти колонки. Class-based DTO через `SELECT new ...` строит объект конструктором. Dynamic выбирает тип в рантайме.",
+                "example": "`interface UserSummary { Long getId(); String getFirstName(); @Value(\"#{target.firstName + ' ' + target.lastName}\") String getFullName(); }` — `getFullName` вычисляется в памяти.",
+                "when_to_apply": "Берут на широких таблицах и в списочных API, чтобы уменьшить объём данных из БД и по сети.",
+                "edge_cases": "`@Value`-SpEL в открытой проекции вычисляется в памяти и не переносит фильтрацию/вычисление в SQL — экономии на уровне БД нет.",
+                "related": "[[spring-data-jpa-interview#Q13]] виды проекций; [[spring-data-jpa-interview#Q14]] динамические проекции; [[spring-data-jpa-interview#Q6]] @Query."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Class-based DTO-проекция требует прокси Spring в рантайме, как и interface-based, поэтому медленнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Class-based DTO (record) создаётся напрямую конструктором без прокси, что делает её обычно быстрее прокси-проекции интерфейса.",
+                "source_of_confusion": "Обе называются «проекциями», и механизм их создания смешивают.",
+                "if_it_were_true": "Тогда `record UserDto(...)` оборачивался бы прокси, но он инстанцируется конструктором.",
+                "how_it_should_be": "DTO — без прокси (конструктор); интерфейс — через прокси."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Вложенные проекции (проекция внутри проекции, например `getCustomer()`) в Spring Data JPA не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вложенные проекции поддерживаются: интерфейс-проекция может возвращать другую проекцию (`CustomerInfo getCustomer()`).",
+                "source_of_confusion": "Примеры чаще плоские, и вложенность кажется недоступной.",
+                "if_it_were_true": "Тогда нельзя было бы спроецировать связанную сущность, но вложенные интерфейсы это позволяют.",
+                "how_it_should_be": "Проекция может содержать вложенную проекцию связанной сущности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает аудит через `@CreatedDate`, `@LastModifiedDate` и `@EnableJpaAuditing`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Аннотации `@CreatedDate`/`@CreatedBy` работают сами по себе, и `@EnableJpaAuditing` добавлять необязательно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@EnableJpaAuditing` инфраструктура аудита не активируется, и аннотации полей остаются незаполненными.",
+                "source_of_confusion": "Аннотации на полях выглядят самодостаточными.",
+                "if_it_were_true": "Тогда поля заполнялись бы и без явного включения, но без `@EnableJpaAuditing` они будут `null`.",
+                "how_it_should_be": "Нужно явно включить аудит через `@EnableJpaAuditing`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@CreatedBy` всегда заполняется именем пользователя, даже когда запись создаётся фоновой задачей без аутентификации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@CreatedBy` берёт значение из `AuditorAware`; если в `SecurityContext` нет аутентификации (фоновый поток), значение будет `null` или дефолтным.",
+                "source_of_confusion": "Кажется, что автор определяется всегда автоматически.",
+                "if_it_were_true": "Тогда у фоновых вставок всегда был бы автор, но без контекста безопасности его нет.",
+                "how_it_should_be": "Без аутентификации `@CreatedBy` пуст; для фоновых задач задают системного пользователя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Аудит включается `@EnableJpaAuditing(auditorAwareRef=\"auditorProvider\")`; базовый `@MappedSuperclass` с `@EntityListeners(AuditingEntityListener.class)` содержит `@CreatedDate`/`@LastModifiedDate` (время) и `@CreatedBy`/`@LastModifiedBy` (автор из `AuditorAware`). Слушатель заполняет поля на `@PrePersist`/`@PreUpdate`. Отдельно `@Version` обеспечивает оптимистичную блокировку.",
+              "correct": true,
+              "sections": {
+                "explanation": "`AuditorAware<String>` отдаёт текущего пользователя (из `SecurityContextHolder`). При создании заполняются все поля; при обновлении — только last-modified. `@Version` инкрементируется при каждом UPDATE.",
+                "example": "`@EnableJpaAuditing(auditorAwareRef=\"auditorProvider\")` + `@CreatedDate @Column(updatable=false) Instant createdAt;` в `AuditableEntity`, от которого наследуются сущности.",
+                "when_to_apply": "Берут для прозрачной фиксации метаданных изменений и автора во всех сущностях без ручного кода в сервисах.",
+                "edge_cases": "Без `@EnableJpaAuditing` аннотации полей не срабатывают; `@CreatedBy` будет `null`, если в `SecurityContext` нет аутентификации (фоновые задачи).",
+                "related": "[[spring-data-jpa-interview#Q18]] Auditing основы; [[spring-data-jpa-interview#Q20]] @EntityListeners; [[spring-data-jpa-interview#Q12]] @Lock."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Version` нужен для аудита времени изменения и заменяет `@LastModifiedDate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Version` отвечает за оптимистичную блокировку (счётчик ревизий), а не за аудит времени; время изменения хранит `@LastModifiedDate`.",
+                "source_of_confusion": "Оба поля меняются при обновлении, и их роли смешивают.",
+                "if_it_were_true": "Тогда `@Version` хранил бы timestamp, но он хранит числовую версию для контроля конкурентности.",
+                "how_it_should_be": "`@Version` — оптимистичная блокировка; `@LastModifiedDate` — время изменения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как интегрировать `Flyway` со `Spring Data JPA`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "С Flyway корректно ставить `ddl-auto: update`, чтобы Hibernate тоже мог дополнять схему при необходимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При Flyway ставят `ddl-auto: validate`: схемой управляет только Flyway, а `update`/`create` создают конфликт двух источников изменений схемы.",
+                "source_of_confusion": "`update` удобен в dev и кажется безопасным дополнением.",
+                "if_it_were_true": "Тогда Hibernate и Flyway мирно делили бы схему, но параллельные изменения ведут к рассинхрону.",
+                "how_it_should_be": "С Flyway — `ddl-auto: validate`, без авто-DDL от Hibernate."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hibernate валидирует схему ДО того, как Flyway успевает накатить миграции, поэтому Flyway бесполезен на старте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Boot запускает Flyway раньше инициализации `EntityManagerFactory`: миграции накатываются до Hibernate-валидации.",
+                "source_of_confusion": "Порядок автоконфигурации неочевиден, и кажется, что Hibernate стартует первым.",
+                "if_it_were_true": "Тогда `validate` всегда падал бы на свежей БД, но Flyway успевает создать схему до проверки.",
+                "how_it_should_be": "Порядок: DataSource → Flyway → Hibernate (validate)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Repeatable-миграции (`R__...`) обязаны иметь номер версии, как и `V<N>__...`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Repeatable-миграции `R__...` намеренно без версии: они выполняются при каждом изменении их checksum, а не один раз по версии.",
+                "source_of_confusion": "Все миграции ассоциируются с версионной нумерацией.",
+                "if_it_were_true": "Тогда `R__refresh_view.sql` требовал бы номер, но именно отсутствие версии и делает её repeatable.",
+                "how_it_should_be": "`V<N>__` — версионные (раз), `R__` — repeatable (по checksum)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Flyway` версионирует схему БД, а `Spring Data JPA` работает поверх неё. Ключевое правило: `ddl-auto: validate` (не `create`/`update`) — схемой управляет именно `Flyway`. Порядок старта: инициализация `DataSource` → `FlywayAutoConfiguration` накатывает миграции (`V1__...`, `R__...`) → `Hibernate` создаёт `EntityManagerFactory` и валидирует схему.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Boot гарантирует, что Flyway отработает до Hibernate-валидации. Миграции лежат в `classpath:db/migration`; версионные `V<N>__...` применяются один раз по возрастанию, repeatable `R__...` — при изменении checksum.",
+                "example": "`spring.jpa.hibernate.ddl-auto: validate` + `spring.flyway.locations: classpath:db/migration` — Hibernate только проверяет соответствие сущностей накатанной схеме.",
+                "when_to_apply": "Берут в любом проде, где схема должна меняться контролируемо и воспроизводимо, а не автогенерироваться Hibernate.",
+                "edge_cases": "`ddl-auto: update`/`create` вместе с Flyway — конфликт: Hibernate начнёт менять схему параллельно миграциям; в проде всегда ставят `validate`.",
+                "related": "[[spring-data-jpa-interview#Q34]] тестирование репозиториев; [[spring-data-jpa-interview#Q39]] аудит; [[spring-data-jpa-interview#Q35]] best practices."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `@EntityGraph` и когда он предпочтительнее `JOIN FETCH`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@EntityGraph` — декларативный способ задать стратегию загрузки связей для конкретного запроса без правки маппинга. Его плюсы перед `JOIN FETCH`: переиспользование (`@NamedEntityGraph` по имени), корректная работа с пагинацией (Hibernate грузит в память без проблем с count), поддержка нескольких коллекций (отдельными SELECT, без `MultipleBagFetchException`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`JOIN FETCH` с `Page` ломается: Hibernate тянет все строки в память для подсчёта (warning HHH90003004). `@EntityGraph` + отдельный `countQuery` решает это. Граф задаётся `attributePaths` или именованно.",
+                "example": "`@EntityGraph(attributePaths=\"items\") @Query(value=\"SELECT o FROM Order o WHERE o.status=:s\", countQuery=\"SELECT COUNT(o) FROM Order o WHERE o.status=:s\") Page<Order> findByStatus(...)` — корректная пагинация со связями.",
+                "when_to_apply": "Предпочитают `@EntityGraph`, когда нужна пагинация со связями, несколько коллекций или переиспользуемая стратегия загрузки.",
+                "edge_cases": "`@EntityGraph` управляет только LEFT OUTER JOIN; если нужен явный INNER JOIN или фильтрация по связи, берут `JOIN FETCH` в JPQL.",
+                "related": "[[spring-data-jpa-interview#Q24]] @EntityGraph основы; [[spring-data-jpa-interview#Q23]] N+1 проблема; [[spring-data-jpa-interview#Q15]] пагинация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JOIN FETCH` прекрасно работает с `Page`: Hibernate корректно применяет `LIMIT` в БД и считает total без проблем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JOIN FETCH` + `Page` приводит к загрузке всех строк в память для пагинации (warning HHH90003004); правильно использовать `@EntityGraph` + отдельный `countQuery`.",
+                "source_of_confusion": "JOIN FETCH удобен и кажется универсальным решением для подгрузки.",
+                "if_it_were_true": "Тогда пагинация с `JOIN FETCH` коллекции не имела бы проблем, но Hibernate предупреждает об in-memory paging.",
+                "how_it_should_be": "Для пагинации со связями берут `@EntityGraph`, не `JOIN FETCH`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@EntityGraph` позволяет явно указать тип JOIN — INNER или LEFT — прямо в аннотации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@EntityGraph` всегда использует LEFT OUTER JOIN; явный INNER JOIN задают только через `JOIN FETCH` в JPQL.",
+                "source_of_confusion": "Гибкость графа создаёт ожидание контроля над типом JOIN.",
+                "if_it_were_true": "Тогда в `@EntityGraph` был бы параметр join-типа, но его там нет.",
+                "how_it_should_be": "Граф — только LEFT OUTER; INNER — через `JOIN FETCH`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@EntityGraph` не умеет загружать несколько коллекций сразу и так же падает с `MultipleBagFetchException`, как `JOIN FETCH`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@EntityGraph` грузит несколько коллекций отдельными SELECT и не вызывает `MultipleBagFetchException` — это одно из его преимуществ.",
+                "source_of_confusion": "Ограничение `JOIN FETCH` на несколько bag переносят на граф.",
+                "if_it_were_true": "Тогда граф не имел бы преимущества при нескольких коллекциях, но именно здесь он и выигрывает.",
+                "how_it_should_be": "`@EntityGraph` справляется с несколькими коллекциями (отдельные SELECT)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно использовать `@Modifying` с `@Query` для bulk-операций?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Modifying` можно опустить: если в `@Query` стоит `UPDATE`/`DELETE`, Spring сам определит DML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@Modifying` Spring выполняет `@Query` как SELECT (через `getResultList`) и для DML это даёт ошибку.",
+                "source_of_confusion": "Текст запроса явно изменяющий, и кажется, что Spring это распознает.",
+                "if_it_were_true": "Тогда `@Query(\"UPDATE ...\")` без `@Modifying` работал бы, но он выбросит исключение.",
+                "how_it_should_be": "Любой DML через `@Query` помечают `@Modifying`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Modifying` сигнализирует, что `@Query` выполняет DML (`UPDATE`/`DELETE`/`INSERT`), а не SELECT; без неё запрос трактуется как чтение и падает. DML требует транзакции (`@Transactional`). Флаги: `clearAutomatically=true` очищает persistence context после запроса, `flushAutomatically=true` сбрасывает pending changes до него. Возврат `int` — число затронутых строк.",
+              "correct": true,
+              "sections": {
+                "explanation": "Bulk-запрос идёт напрямую в БД, минуя L1-кэш, поэтому загруженные сущности устаревают. `clearAutomatically` нужен, если в той же транзакции читают изменённые сущности; `flushAutomatically` — если перед DML были несброшенные изменения.",
+                "example": "`@Modifying(clearAutomatically=true, flushAutomatically=true) @Transactional @Query(\"UPDATE Product p SET p.price=p.price*:f WHERE p.category=:c\") int adjustPrices(...)`",
+                "when_to_apply": "Берут для массовых апдейтов/удалений одним запросом без загрузки сущностей, когда не нужны каскады и lifecycle-callbacks.",
+                "edge_cases": "Без `clearAutomatically` после bulk-update повторное чтение в той же транзакции вернёт устаревшие кэшированные сущности; bulk DML также минует JPA-каскады.",
+                "related": "[[spring-data-jpa-interview#Q8]] @Modifying основы; [[spring-data-jpa-interview#Q33]] derived delete; [[spring-data-jpa-interview#Q6]] @Query."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Bulk-`@Modifying` запросы запускают JPA-каскады и lifecycle-callbacks для дочерних сущностей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bulk DML идёт напрямую в БД, минуя ORM, и НЕ запускает каскады/callbacks; зависимые записи чистят отдельно или через FK `ON DELETE CASCADE`.",
+                "source_of_confusion": "Каскады ассоциируются с любым изменением через репозиторий.",
+                "if_it_were_true": "Тогда bulk-DELETE родителя удалял бы детей через JPA, но он их не трогает.",
+                "how_it_should_be": "Bulk DML пропускает каскады; зависимости обрабатывают явно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Флаг `flushAutomatically=true` очищает persistence context после выполнения запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Очистку контекста после запроса делает `clearAutomatically=true`; `flushAutomatically=true` сбрасывает pending changes ДО выполнения запроса.",
+                "source_of_confusion": "Оба флага про синхронизацию с контекстом, и их назначение путают.",
+                "if_it_were_true": "Тогда после bulk-update сущности в контексте автоматически обновлялись бы, но за это отвечает `clear`, а не `flush`.",
+                "how_it_should_be": "`flushAutomatically` — flush до; `clearAutomatically` — clear после."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

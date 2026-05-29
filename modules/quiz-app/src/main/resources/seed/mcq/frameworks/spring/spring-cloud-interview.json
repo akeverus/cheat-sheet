@@ -1,0 +1,2585 @@
+{
+  "topic_slug": "spring-cloud-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud` — набор библиотек поверх `Spring Boot` для построения микросервисов: даёт готовые решения задач распределённых систем (service discovery через `Eureka`/`Consul`, централизованную конфигурацию `Config Server`, API Gateway, Circuit Breaker `Resilience4j`, клиентскую балансировку, distributed tracing). Это не облачная платформа, а зависимости, которые работают и в облаке, и on-premise.",
+              "correct": true,
+              "sections": {
+                "explanation": "Распределённые системы порождают повторяющиеся задачи: где найти сервис, как раздать конфиг, как не уронить всё каскадом. `Spring Cloud` закрывает их типовыми компонентами вместо самописных решений.",
+                "example": "В сборку добавляют `spring-cloud-starter-config` и `spring-cloud-starter-netflix-eureka-client`, и сервис автоматически тянет конфиг из `Config Server` и регистрируется в `Eureka`.",
+                "when_to_apply": "Берут, когда строят систему из нескольких микросервисов на `Spring Boot` и нужны discovery, общий конфиг, отказоустойчивость и трассировка.",
+                "edge_cases": "Для одного монолита `Spring Cloud` избыточен; в `Kubernetes` часть функций (discovery, config) дублируется нативными механизмами.",
+                "related": "[[spring-cloud-interview#Q2]] ключевые компоненты; [[spring-cloud-interview#Q3]] отличие от `Spring Boot`; [[spring-cloud-interview#Q4]] отличие от `Kubernetes`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud` — это управляемая облачная PaaS-платформа от `VMware`, на которой хостятся и масштабируются микросервисы без своей инфраструктуры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Cloud` — это набор Java-библиотек (зависимостей), а не хостинг; деплой и масштабирование остаются на стороне команды.",
+                "source_of_confusion": "Слово `Cloud` в названии наводит на мысль об облачном сервисе вроде `Cloud Foundry` или `AWS`.",
+                "if_it_were_true": "Тогда `Spring Cloud` нельзя было бы запустить on-premise, но он спокойно работает на собственных серверах.",
+                "how_it_should_be": "Это библиотеки поверх `Spring Boot`; PaaS — это отдельные продукты вроде `Cloud Foundry`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud` — это форк `Spring Boot` с другим стартером, заменяющий `Spring Boot` при разработке микросервисов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Cloud` не заменяет `Spring Boot`, а строится поверх него и добавляет распределённые возможности.",
+                "source_of_confusion": "Похожие названия создают иллюзию, что это конкурирующие версии одного фреймворка.",
+                "if_it_were_true": "Тогда нельзя было бы использовать `Spring Boot` без `Spring Cloud`, но `Spring Boot` самодостаточен.",
+                "how_it_should_be": "`Spring Boot` — основа одного приложения, `Spring Cloud` — координация многих."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Cloud` — это система оркестрации контейнеров, которая запускает и перезапускает поды вместо `Kubernetes`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оркестрацией контейнеров `Spring Cloud` не занимается — это задача `Kubernetes`/`Docker Swarm`.",
+                "source_of_confusion": "И `Spring Cloud`, и `Kubernetes` решают задачи микросервисов, темы пересекаются.",
+                "if_it_were_true": "Тогда `Spring Cloud` управлял бы жизненным циклом подов, но он работает внутри уже запущенного процесса.",
+                "how_it_should_be": "Оркестрация — это `Kubernetes`; `Spring Cloud` даёт прикладные абстракции внутри сервиса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ключевые компоненты входят в `Spring Cloud`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ядро `Spring Cloud` сегодня — `Ribbon`, `Hystrix` и `Zuul`; именно они рекомендуются для новых проектов как основные компоненты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ribbon`, `Hystrix` и `Zuul` устарели и удалены в `2022.0`; новые проекты используют `LoadBalancer`, `Resilience4j` и `Gateway`.",
+                "source_of_confusion": "Старые статьи и legacy-проекты всё ещё описывают эти Netflix-компоненты как стандарт.",
+                "if_it_were_true": "Тогда их стартеры были бы в актуальном BOM, но они оттуда удалены.",
+                "how_it_should_be": "Это deprecated-стек; актуальны `Spring Cloud LoadBalancer`, `Resilience4j` и `Spring Cloud Gateway`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В актуальный `Spring Cloud` входят: `Spring Cloud Config` (централизованная конфигурация), `Eureka` и `Consul` (service discovery), `Spring Cloud Gateway` (реактивный API Gateway), `Spring Cloud LoadBalancer` (клиентская балансировка, замена `Ribbon`), `Spring Cloud CircuitBreaker`/`Resilience4j` (отказоустойчивость), `OpenFeign` (декларативный HTTP-клиент), `Micrometer Tracing` (трассировка, замена `Sleuth`) и `Spring Cloud Stream` (event-driven).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый компонент закрывает свой аспект распределённой системы. Часть Netflix-компонентов (`Ribbon`, `Hystrix`, `Zuul`, `Sleuth`) переведены в maintenance и заменены.",
+                "example": "Микросервис заказов берёт `Config` для настроек, `Eureka` для регистрации, `OpenFeign` для вызова склада и `Resilience4j` для fallback.",
+                "when_to_apply": "Знание состава нужно при выборе стартеров под конкретную задачу — discovery, конфиг или маршрутизацию.",
+                "edge_cases": "`Ribbon`, `Hystrix`, `Zuul` удалены в `2022.0`; их нельзя добавить в новый проект на `Spring Boot 3`.",
+                "related": "[[spring-cloud-interview#Q1]] что такое `Spring Cloud`; [[spring-cloud-interview#Q30]] устаревшие Netflix-компоненты; [[spring-cloud-interview#Q29]] `Spring Cloud Commons`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud` включает собственную реляционную СУБД и встроенный ORM для микросервисов вместо `Spring Data`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой СУБД или ORM в `Spring Cloud` нет; за доступ к данным отвечает `Spring Data`, а БД ставится отдельно.",
+                "source_of_confusion": "Кажется, что фреймворк для микросервисов должен закрывать и слой данных.",
+                "if_it_were_true": "Тогда не нужны были бы `Spring Data JPA` и внешние БД, но они остаются обязательными.",
+                "how_it_should_be": "Данные — зона `Spring Data` и отдельной СУБД; `Spring Cloud` про инфраструктуру взаимодействия."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главный компонент `Spring Cloud` — встроенный брокер сообщений, заменяющий `Kafka` и `RabbitMQ` в проекте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Cloud Stream` не брокер, а абстракция-биндер поверх внешних `Kafka`/`RabbitMQ`, которые ставятся отдельно.",
+                "source_of_confusion": "`Spring Cloud Stream` упрощает работу с брокерами и кажется самим брокером.",
+                "if_it_were_true": "Тогда не нужно было бы поднимать `Kafka`, но `Stream` требует реального брокера за биндером.",
+                "how_it_should_be": "`Stream` — обёртка; брокер (`Kafka`/`RabbitMQ`) разворачивается как внешняя система."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `Spring Cloud` и `Spring Boot`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud` и `Spring Boot` — независимые фреймворки: `Spring Cloud` можно подключить в проект, где `Spring Boot` вообще не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Cloud` строится поверх `Spring Boot` и без его автоконфигурации не работает.",
+                "source_of_confusion": "Раздельные группы стартеров создают впечатление полной независимости.",
+                "if_it_were_true": "Тогда существовал бы `Spring Cloud`-проект без зависимости на `Spring Boot`, но стартеры её всегда тянут.",
+                "how_it_should_be": "`Spring Cloud` — надстройка над `Spring Boot`, а не альтернатива ему."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Boot` предназначен для распределённых систем и координации сервисов, а `Spring Cloud` — для одного standalone-приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Spring Boot` — одно приложение, `Spring Cloud` — распределённая координация.",
+                "source_of_confusion": "Роли путают, если запоминать названия без привязки к уровню (одно приложение vs много).",
+                "if_it_were_true": "Тогда `Config Server` и `Gateway` жили бы в `Spring Boot`, но они — часть `Spring Cloud`.",
+                "how_it_should_be": "`Spring Boot` — про отдельный сервис, `Spring Cloud` — про связь между сервисами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Boot` отвечает за создание отдельного standalone-приложения (один микросервис: REST API, web, batch), а `Spring Cloud` — за координацию множества сервисов в распределённой системе (`Config Server`, `Gateway`, `Eureka`). `Spring Cloud` не самостоятелен: он строится поверх `Spring Boot` и использует его автоконфигурацию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Уровень разный: `Spring Boot` — одно приложение, `Spring Cloud` — взаимодействие приложений. Поэтому `Spring Cloud`-стартеры всегда тянут за собой `Spring Boot`.",
+                "example": "Сервис заказов поднят на `Spring Boot` (контроллеры, JPA), а `Spring Cloud` добавляет ему регистрацию в `Eureka` и вызов склада через `OpenFeign`.",
+                "when_to_apply": "Различие важно при объяснении архитектуры: `Spring Boot` — обязателен всегда, `Spring Cloud` — когда сервисов несколько.",
+                "edge_cases": "Использовать `Spring Cloud` без `Spring Boot` нельзя; обратное возможно — монолит на `Spring Boot` не требует `Spring Cloud`.",
+                "related": "[[spring-cloud-interview#Q1]] что такое `Spring Cloud`; [[spring-cloud-interview#Q2]] компоненты; [[spring-cloud-interview#Q4]] сравнение с `Kubernetes`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Разница только в версии: `Spring Cloud` — это просто более новый релиз `Spring Boot` с тем же назначением.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные проекты с разным назначением и собственными циклами релизов, а не версии одного.",
+                "source_of_confusion": "У обоих есть нумерованные релизы, что подталкивает считать их одной линейкой.",
+                "if_it_were_true": "Тогда хватило бы обновить `Spring Boot`, чтобы получить `Config Server`, но это отдельная зависимость.",
+                "how_it_should_be": "Это два проекта; `Spring Cloud` BOM привязан к совместимым версиям `Spring Boot`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `Spring Cloud` и `Kubernetes`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud` и `Kubernetes` решают совершенно разные задачи и никогда не пересекаются по функциям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Функции заметно пересекаются: discovery, конфигурация и балансировка есть и там, и там, но на разных уровнях.",
+                "source_of_confusion": "Один — Java-библиотека, другой — платформа, поэтому кажется, что общих задач нет.",
+                "if_it_were_true": "Тогда не существовало бы `Spring Cloud Kubernetes`, который как раз стыкует пересекающиеся функции.",
+                "how_it_should_be": "Задачи пересекаются (discovery, config), а уровни решения разные — приложение vs платформа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud` работает на уровне инфраструктуры и контейнеров, а `Kubernetes` — это набор Java-библиотек внутри приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уровни перепутаны: `Spring Cloud` — библиотеки в JVM, `Kubernetes` — платформа оркестрации контейнеров.",
+                "source_of_confusion": "Обе технологии про микросервисы, и легко перепутать, кто где работает.",
+                "if_it_were_true": "Тогда `Kubernetes` добавлялся бы в `build.gradle`, но он разворачивается как кластер.",
+                "how_it_should_be": "`Spring Cloud` — внутри процесса, `Kubernetes` — снаружи, на уровне инфраструктуры."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Балансировка в `Spring Cloud` серверная (через `Service`), а в `Kubernetes` — клиентская (через `LoadBalancer` в коде).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Spring Cloud` даёт клиентскую балансировку (`LoadBalancer`), а `Kubernetes` — серверную через `Service`/kube-proxy.",
+                "source_of_confusion": "Термины «клиентская/серверная» легко перепутать местами при сравнении.",
+                "if_it_were_true": "Тогда `@LoadBalanced RestTemplate` относился бы к `K8s`, но это компонент `Spring Cloud`.",
+                "how_it_should_be": "Клиентская балансировка — `Spring Cloud LoadBalancer`; серверная — `Kubernetes Service`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Оба решают задачи микросервисов, но на разных уровнях: `Spring Cloud` — на уровне приложения (библиотеки: `Eureka`, `Config Server`, клиентская балансировка, `Actuator`), а `Kubernetes` — на уровне платформы/инфраструктуры (`kube-dns`/`CoreDNS`, `ConfigMap`/`Secret`, серверная балансировка `Service`, liveness/readiness probes, деплой). Их можно комбинировать через `Spring Cloud Kubernetes`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Spring Cloud` работает внутри JVM-процесса, `Kubernetes` — снаружи, на уровне контейнеров и сети. Поэтому функции пересекаются (discovery, config), но реализованы по-разному.",
+                "example": "В `K8s` сервис находят через DNS-имя `order-service`, а конфиг берут из `ConfigMap` — это заменяет `Eureka` и `Config Server`.",
+                "when_to_apply": "Сравнение всплывает при выборе: тащить ли `Eureka`/`Config Server`, если кластер уже даёт DNS и `ConfigMap`.",
+                "edge_cases": "В `K8s` часть `Spring Cloud`-компонентов избыточна; `Spring Cloud Kubernetes` мостит DiscoveryClient на `K8s` API.",
+                "related": "[[spring-cloud-interview#Q39]] `Spring Cloud Kubernetes`; [[spring-cloud-interview#Q10]] `Eureka` discovery; [[spring-cloud-interview#Q1]] что такое `Spring Cloud`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие наиболее популярные аннотации в `Spring Cloud`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ключевые аннотации: `@EnableDiscoveryClient`/`@EnableEurekaServer` (service discovery), `@EnableConfigServer` (запуск `Config Server`), `@RefreshScope` (перечитывание конфигурации без рестарта), `@EnableFeignClients` и `@FeignClient` (декларативные HTTP-клиенты), `@CircuitBreaker` (отказоустойчивость через `Resilience4j`). С `Spring Cloud 2022.0` многие `@Enable*` стали необязательны — автоконфигурация работает через стартеры.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотации включают конкретные возможности: одна регистрирует сервис в реестре, другая делает бин перечитываемым, третья оборачивает вызов в Circuit Breaker.",
+                "example": "Над интерфейсом ставят `@FeignClient(name = \"order-service\")`, а над методом — `@CircuitBreaker(name = \"backendA\", fallbackMethod = \"fallback\")`.",
+                "when_to_apply": "Нужны при настройке discovery, конфигурации, Feign-клиентов и Circuit Breaker в коде сервиса.",
+                "edge_cases": "С `2022.0` `@EnableDiscoveryClient` часто не требуется — наличие стартера в classpath уже включает регистрацию.",
+                "related": "[[spring-cloud-interview#Q11]] настройка `Eureka`; [[spring-cloud-interview#Q23]] `OpenFeign`; [[spring-cloud-interview#Q40]] `@RefreshScope`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для регистрации сервиса в `Eureka` обязательна аннотация `@EnableKafka`, а конфигурацию перечитывает `@Transactional`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Регистрацию включает `@EnableDiscoveryClient` (или просто стартер), а перечитывание конфигурации — `@RefreshScope`.",
+                "source_of_confusion": "Знакомые Spring-аннотации подставляют наугад вместо специфичных Cloud-аннотаций.",
+                "if_it_were_true": "Тогда `@EnableKafka` поднимал бы регистрацию в реестре, но он относится к Kafka-листенерам.",
+                "how_it_should_be": "Discovery — `@EnableDiscoveryClient`; refresh — `@RefreshScope`; `@EnableKafka`/`@Transactional` тут ни при чём."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Декларативный клиент создаётся аннотацией `@RestController` над интерфейсом, а Circuit Breaker включает `@Service`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Декларативный клиент — это `@FeignClient` на интерфейсе, а Circuit Breaker — `@CircuitBreaker`.",
+                "source_of_confusion": "`@RestController` и `@Service` — самые узнаваемые аннотации, их и называют по привычке.",
+                "if_it_were_true": "Тогда `@RestController` на интерфейсе генерировал бы HTTP-клиент, но он создаёт endpoint.",
+                "how_it_should_be": "Feign-клиент — `@FeignClient`; отказоустойчивость — `@CircuitBreaker`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Spring Cloud 2022.0` все `@Enable*`-аннотации стали обязательными, без них автоконфигурация не запускается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: многие `@Enable*` стали необязательны, автоконфигурация включается наличием стартера.",
+                "source_of_confusion": "Привычка из ранних версий, где `@EnableEurekaServer`/`@EnableDiscoveryClient` требовались всегда.",
+                "if_it_were_true": "Тогда без `@EnableDiscoveryClient` сервис не регистрировался бы, но стартер делает это сам.",
+                "how_it_should_be": "Часть `@Enable*` опциональна; достаточно нужного стартера в classpath."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каким рекомендациям следовать при разработке приложений `Spring Cloud`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Конфигурацию и секреты лучше зашивать прямо в код и Docker-образ — так меньше внешних зависимостей и проще деплой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конфиг и секреты выносят наружу (`Config Server`, `Vault`); хардкод в образе нарушает 12-factor и небезопасен.",
+                "source_of_confusion": "Кажется, что меньше внешних систем = проще; на деле это ломает переносимость и ротацию секретов.",
+                "if_it_were_true": "Тогда смена пароля требовала бы пересборки образа, но цель — менять конфиг без редеплоя.",
+                "how_it_should_be": "Externalized configuration: настройки в `Config Server`, секреты в `Vault`, инъекция через окружение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Основные практики: externalized configuration (все настройки в `Config Server`, секреты в `Vault`), service discovery вместо hardcoded URL, Circuit Breaker с fallback на всех внешних вызовах, distributed tracing (`Micrometer Tracing`) на всех сервисах, health checks `/actuator/health` с liveness/readiness, contract testing (`Spring Cloud Contract`), graceful shutdown и принципы 12-factor app (stateless, конфиг через окружение, логи в stdout).",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти рекомендации делают систему наблюдаемой, отказоустойчивой и переносимой. Каждая закрывает типовую боль распределённых систем.",
+                "example": "В `application.yml` задают `server.shutdown: graceful` и `config.import: configserver:...`, exposing `health,info,metrics,prometheus`.",
+                "when_to_apply": "Применяют при проектировании любого нового микросервиса в экосистеме `Spring Cloud`.",
+                "edge_cases": "Без readiness probe `K8s` шлёт трафик на ещё не прогретый инстанс; без graceful shutdown теряются запросы в полёте.",
+                "related": "[[spring-cloud-interview#Q7]] `Config Server`; [[spring-cloud-interview#Q20]] Circuit Breaker; [[spring-cloud-interview#Q25]] distributed tracing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Адреса других сервисов следует прописывать жёстко (hardcoded URL) — это надёжнее, чем зависеть от реестра discovery.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hardcoded URL ломаются при масштабировании и смене инстансов; адреса резолвят через discovery по имени сервиса.",
+                "source_of_confusion": "Прямой URL кажется проще и предсказуемее, чем поход в `Eureka`.",
+                "if_it_were_true": "Тогда добавление инстанса не требовало бы перенастройки, но при hardcode пришлось бы править конфиг.",
+                "how_it_should_be": "Только имена сервисов через `DiscoveryClient`/`LoadBalancer`, без зашитых адресов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Distributed tracing включают только на одном пограничном сервисе — этого достаточно для сквозной трассировки всей цепочки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для сквозной трассировки контекст должен пробрасываться на ВСЕХ сервисах, иначе цепочка обрывается.",
+                "source_of_confusion": "Кажется, что Gateway видит весь трафик, поэтому хватит трассировки только на нём.",
+                "if_it_were_true": "Тогда спаны downstream-сервисов попадали бы в трейс без их участия, но они их не сгенерируют.",
+                "how_it_should_be": "`Micrometer Tracing` подключают на каждом сервисе, чтобы `traceId` шёл сквозь всю цепочку."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud Config` и как он работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Config Server` хранит конфигурацию исключительно в собственной встроенной БД и не умеет читать её из `Git`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Основной backend `Config Server` — именно `Git` (а также файловая система и `Vault`); собственной обязательной БД у него нет.",
+                "source_of_confusion": "Слово «сервер» наводит на мысль о хранилище данных внутри него самого.",
+                "if_it_were_true": "Тогда не было бы версионирования через Git-историю, но именно оно — ключевая фишка.",
+                "how_it_should_be": "Backend — `Git`/файлы/`Vault`; конфиг версионируется коммитами в репозитории."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Config Client` получает конфигурацию однократно при сборке проекта, и поменять её в рантайме нельзя в принципе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Клиент тянет конфиг при старте (рантайм), а с `@RefreshScope` и `/actuator/refresh` обновляет её без рестарта.",
+                "source_of_confusion": "Сборочные `application.properties` создают ощущение, что конфиг фиксируется на этапе build.",
+                "if_it_were_true": "Тогда `@RefreshScope` был бы бесполезен, но он как раз меняет настройки на лету.",
+                "how_it_should_be": "Конфиг загружается в рантайме и может обновляться через refresh без пересборки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud Config` — централизованное хранилище конфигурации для всех микросервисов. Состоит из двух частей: `Config Server` (HTTP-сервер, раздаёт конфиг из `Git`, файловой системы или `Vault`) и `Config Client` (подключается при старте и получает свои настройки). Поддерживает профили окружений, шифрование секретов, обновление без рестарта (`@RefreshScope` + `/actuator/refresh`) и версионирование через `Git`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Клиент при старте делает `GET /{application}/{profile}`, сервер читает соответствующий файл из `Git` и отдаёт настройки. Конфиг лежит в одном месте, а не в каждом сервисе.",
+                "example": "Сервис `order-service` с профилем `prod` получает `order-service-prod.yml` из Git-репозитория конфигурации.",
+                "when_to_apply": "Берут, когда нужно управлять конфигурацией многих сервисов централизованно и версионировать её.",
+                "edge_cases": "Если `Config Server` недоступен при старте, поможет `fail-fast` + retry; иначе сервис стартует с дефолтами.",
+                "related": "[[spring-cloud-interview#Q8]] настройка Server/Client; [[spring-cloud-interview#Q9]] `Spring Cloud Bus`; [[spring-cloud-interview#Q40]] `@RefreshScope`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Config Server` не поддерживает профили окружений — для `dev` и `prod` нужно поднимать отдельные серверы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Профили — встроенная возможность: один сервер отдаёт `app-dev.yml`, `app-prod.yml` по запросу `{application}/{profile}`.",
+                "source_of_confusion": "Кажется логичным изолировать окружения на уровне отдельных серверов.",
+                "if_it_were_true": "Тогда не было бы паттерна `{application}/{profile}` в запросе, но он — основа маршрутизации конфига.",
+                "how_it_should_be": "Один `Config Server` обслуживает все профили; окружение выбирается параметром запроса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `Config Server` и `Config Client`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для `Config Server` достаточно аннотации `@EnableEurekaServer`, а клиент подключается через `spring.cloud.discovery.uri`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Config Server` включается `@EnableConfigServer`, а клиент — через `spring.config.import: configserver:...`, не через discovery.uri.",
+                "source_of_confusion": "Cloud-аннотации похожи, и `@EnableEurekaServer` подставляют по созвучию.",
+                "if_it_were_true": "Тогда `@EnableEurekaServer` раздавал бы конфиги, но он поднимает реестр сервисов.",
+                "how_it_should_be": "Сервер — `@EnableConfigServer`; клиент — `spring.config.import: configserver:...`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Клиент указывает путь к Git-репозиторию напрямую (`spring.cloud.config.server.git.uri`), а сервер вообще не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Git-репозиторий настраивается на стороне сервера; клиент знает только адрес `Config Server`, а не Git.",
+                "source_of_confusion": "Хочется убрать лишний компонент и связать клиент с Git напрямую.",
+                "if_it_were_true": "Тогда каждый клиент сам бы клонировал репозиторий, но конфиг централизует именно сервер.",
+                "how_it_should_be": "Git знает только сервер; клиент обращается к серверу по HTTP."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы клиент перечитывал значения, достаточно `@Value` без `@RefreshScope` — поля обновляются автоматически при каждом запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Value` без `@RefreshScope` фиксирует значение при создании бина; для обновления нужен `@RefreshScope` и `/actuator/refresh`.",
+                "source_of_confusion": "Кажется, что `@Value` перечитывает плейсхолдер при каждом обращении.",
+                "if_it_were_true": "Тогда `@RefreshScope` был бы не нужен, но он обязателен для горячего обновления.",
+                "how_it_should_be": "Для refresh бин помечают `@RefreshScope` и дёргают `/actuator/refresh`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "На сервере: добавить `spring-cloud-config-server`, поставить `@EnableConfigServer` и задать `spring.cloud.config.server.git.uri` (репозиторий с конфигами), при необходимости включить шифрование. На клиенте: добавить `spring-cloud-starter-config`, указать `spring.application.name` и `spring.config.import: configserver:http://config-server:8888`, а для устойчивости — `fail-fast: true` и retry. Бины с `@Value`/`@RefreshScope` получают значения с сервера.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сервер указывает на Git-репозиторий и раздаёт конфиги, клиент при старте подключается по `config.import`. Имя приложения определяет, какой файл конфигурации заберёт клиент.",
+                "example": "Клиент `order-service` с `config.import: configserver:http://config-server:8888` подтянет `order-service.yml` из репозитория сервера.",
+                "when_to_apply": "Настраивают при подключении нового сервиса к централизованной конфигурации.",
+                "edge_cases": "Без `fail-fast` сбой сервера на старте проходит молча; с retry клиент повторяет попытки до 5 раз.",
+                "related": "[[spring-cloud-interview#Q7]] что такое `Config`; [[spring-cloud-interview#Q9]] `Spring Cloud Bus`; [[spring-cloud-interview#Q40]] обновление без рестарта."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud Bus` и как он обновляет конфигурацию?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Bus` связывает узлы распределённой системы через шину сообщений (`RabbitMQ` или `Kafka`) и используется для массового обновления конфигурации без рестарта. Вместо вызова `/actuator/refresh` на каждом инстансе достаточно одного `POST /actuator/busrefresh` на любом узле — событие `RefreshRemoteApplicationEvent` распространится через брокер на все подключённые сервисы, и они перечитают конфиг из `Config Server`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Bus` решает проблему масштаба: при десятках инстансов дёргать refresh по одному непрактично. Шина рассылает событие всем сразу.",
+                "example": "Webhook из `Git` дёргает `busrefresh` на `Config Server`; событие через `RabbitMQ` доходит до всех инстансов `order-service`.",
+                "when_to_apply": "Берут, когда инстансов много и нужно обновить конфиг одним вызовом, а не обходить каждый.",
+                "edge_cases": "Нужен живой брокер (`RabbitMQ`/`Kafka`); endpoint `busrefresh` должен быть открыт в `management.endpoints`.",
+                "related": "[[spring-cloud-interview#Q7]] `Config Server`; [[spring-cloud-interview#Q8]] настройка клиента; [[spring-cloud-interview#Q40]] `@RefreshScope` и refresh."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud Bus` — это самостоятельный брокер сообщений, который заменяет `RabbitMQ` и `Kafka` в системе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Bus` не брокер, а абстракция поверх внешнего `RabbitMQ`/`Kafka`, который надо развернуть отдельно.",
+                "source_of_confusion": "Слово «шина» наводит на мысль о собственном транспорте сообщений.",
+                "if_it_were_true": "Тогда не требовалось бы настраивать `spring.rabbitmq.host`, но без брокера `Bus` не работает.",
+                "how_it_should_be": "`Bus` использует внешний брокер; сам он только рассылает события поверх него."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud Bus` обновляет конфигурацию, перезапуская каждый сервис целиком при получении события.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сервисы не перезапускаются: они перечитывают конфиг через механизм `@RefreshScope` без рестарта процесса.",
+                "source_of_confusion": "Кажется, что применить новый конфиг можно только полным рестартом.",
+                "if_it_were_true": "Тогда обновление вызывало бы простой и потерю сессий, но смысл `Bus` — обновлять на лету.",
+                "how_it_should_be": "Событие триггерит refresh бинов; процесс продолжает работать без перезапуска."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы обновить все инстансы, нужно вызвать `/actuator/busrefresh` отдельно на каждом узле системы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достаточно одного вызова `busrefresh` на любом узле — `Bus` сам разошлёт событие остальным через брокер.",
+                "source_of_confusion": "Опыт с одиночным `/actuator/refresh` переносят на распределённый `busrefresh`.",
+                "if_it_were_true": "Тогда `Bus` не давал бы выигрыша над обычным refresh, но его суть — один вызов на всех.",
+                "how_it_should_be": "Один `POST /actuator/busrefresh` рассылается всем через шину сообщений."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Eureka` и как работает service discovery?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Eureka` — это CP-система с master-узлом: записи в реестр идут только через master, при его падении discovery останавливается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Eureka` — AP-система с peer-to-peer репликацией между инстансами, без выделенного master.",
+                "source_of_confusion": "Привычка к master-based хранилищам переносится на реестр сервисов.",
+                "if_it_were_true": "Тогда падение master блокировало бы discovery, но узлы `Eureka` равноправны и реплицируют реестр.",
+                "how_it_should_be": "Это AP, peer-to-peer; при разделе сети каждая часть продолжает отдавать реестр."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Eureka` — сервер обнаружения сервисов из экосистемы Netflix OSS, реализующий паттерн Service Registry. Каждый микросервис при старте регистрируется в `Eureka` (Register), каждые ~30 секунд шлёт heartbeat (Renew), клиенты периодически забирают актуальный реестр (Fetch Registry), а инстансы без heartbeat ~90 секунд удаляются (Eviction). Self-preservation останавливает массовое удаление при сетевых партициях.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реестр позволяет вызывать сервисы по имени, а не по адресу: клиент берёт из `Eureka` список живых инстансов и сам выбирает один. Это AP-система: доступность важнее строгой консистентности реестра.",
+                "example": "`order-service` регистрируется в `Eureka`, а `gateway` получает список его инстансов и балансирует запросы между ними.",
+                "when_to_apply": "Используют, когда нужен динамический реестр сервисов без жёстко зашитых адресов в чисто Spring/Java-стеке.",
+                "edge_cases": "Из-за eventual consistency удалённый инстанс может ещё какое-то время быть в реестре клиента; self-preservation может удерживать «мёртвые» записи.",
+                "related": "[[spring-cloud-interview#Q11]] настройка Server/Client; [[spring-cloud-interview#Q13]] сравнение с `Consul`/`ZooKeeper`; [[spring-cloud-interview#Q14]] сколько инстансов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Обнаружение в `Eureka` серверное: сам `Eureka` проксирует запросы к нужному инстансу, как балансировщик нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Eureka` только хранит реестр; выбор инстанса и вызов делает клиент (клиентская балансировка), а не сервер.",
+                "source_of_confusion": "Реестр путают с прокси/балансировщиком, через который якобы идёт трафик.",
+                "if_it_were_true": "Тогда весь трафик шёл бы через `Eureka` и он стал бы bottleneck, но он в пути запроса не участвует.",
+                "how_it_should_be": "`Eureka` отдаёт список инстансов; вызывает клиент через `LoadBalancer`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Heartbeat в `Eureka` шлёт сервер каждому сервису, опрашивая его по health-URL, чтобы проверить доступность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Eureka` heartbeat (Renew) отправляет сам клиент серверу каждые ~30 секунд, а не сервер клиенту.",
+                "source_of_confusion": "Модель серверных health-check из `Consul` переносят на `Eureka`.",
+                "if_it_were_true": "Тогда сервер опрашивал бы все инстансы, но в `Eureka` ответственность за heartbeat на клиенте.",
+                "how_it_should_be": "Клиент сам шлёт heartbeat; отсутствие ~90 секунд приводит к eviction."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `Eureka Server` и `Client`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для запуска `Eureka Server` достаточно `@EnableConfigServer`, а клиент включается аннотацией `@EnableGateway`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сервер реестра поднимает `@EnableEurekaServer`, а клиент — стартер `eureka-client` (опционально `@EnableDiscoveryClient`).",
+                "source_of_confusion": "Cloud-аннотации похожи, и `@EnableConfigServer`/`@EnableGateway` подставляют наугад.",
+                "if_it_were_true": "Тогда `@EnableConfigServer` поднимал бы реестр сервисов, но он раздаёт конфигурацию.",
+                "how_it_should_be": "Реестр — `@EnableEurekaServer`; клиент — eureka-client стартер."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Eureka Server` обязан регистрировать сам себя (`register-with-eureka: true`), иначе он не сможет обслуживать клиентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Одиночный сервер выключает саморегистрацию (`register-with-eureka: false`); это не мешает обслуживать клиентов.",
+                "source_of_confusion": "Кажется, что любой узел должен быть в реестре, в том числе сам сервер.",
+                "if_it_were_true": "Тогда дефолтный single-node конфиг был бы нерабочим, но он как раз отключает саморегистрацию.",
+                "how_it_should_be": "В single-node `register-with-eureka: false`; регистрация себя нужна лишь для репликации в кластере."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "На сервере: добавить `spring-cloud-starter-netflix-eureka-server`, поставить `@EnableEurekaServer` и в `application.yml` выключить саморегистрацию (`register-with-eureka: false`, `fetch-registry: false`). На клиенте: добавить `spring-cloud-starter-netflix-eureka-client`, указать `spring.application.name` и `eureka.client.service-url.defaultZone`. Для HA в production поднимают 2-3 инстанса сервера, которые реплицируют реестр друг другу через `defaultZone` со списком пиров.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сервер сам себя не регистрирует, чтобы не дублировать запись. Клиент же указывает адрес реестра и своё имя, по которому его будут находить другие сервисы.",
+                "example": "Клиент `order-service` с `eureka.client.service-url.defaultZone: http://eureka-server:8761/eureka/` регистрируется и тянет реестр.",
+                "when_to_apply": "Настраивают при поднятии реестра и подключении к нему каждого микросервиса.",
+                "edge_cases": "В одиночном сервере `register-with-eureka: false`; в кластере, наоборот, серверы регистрируются друг у друга для репликации.",
+                "related": "[[spring-cloud-interview#Q10]] как работает `Eureka`; [[spring-cloud-interview#Q14]] сколько инстансов; [[spring-cloud-interview#Q5]] аннотации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Клиент находит сервер автоматически через broadcast в сети, поэтому адрес `defaultZone` указывать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Клиент должен явно знать адрес реестра через `eureka.client.service-url.defaultZone`; автодискавери по broadcast нет.",
+                "source_of_confusion": "Кажется, что discovery «само себя находит» без начального адреса.",
+                "if_it_were_true": "Тогда конфиг клиента не содержал бы `defaultZone`, но без него регистрация не пройдёт.",
+                "how_it_should_be": "Адрес реестра задают явно в `defaultZone`; это точка входа для регистрации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каким протоколам следует `Eureka`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Eureka` общается исключительно по бинарному gRPC-протоколу, а REST/HTTP вообще не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Eureka` использует именно REST over HTTP с JSON/XML; gRPC в её протоколе не задействован.",
+                "source_of_confusion": "Современные системные сервисы часто на gRPC, и это переносят на `Eureka`.",
+                "if_it_were_true": "Тогда нельзя было бы дёрнуть `GET /eureka/apps` curl-ом, но это работает.",
+                "how_it_should_be": "Протокол — REST over HTTP; данные в JSON/XML."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Регистрация в `Eureka` идёт по протоколу AMQP через брокер `RabbitMQ`, а не по HTTP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Регистрация — это HTTP `POST /eureka/apps/{appId}`; `RabbitMQ`/AMQP в discovery `Eureka` не участвует.",
+                "source_of_confusion": "AMQP встречается в `Spring Cloud Bus`, и его путают с механизмом регистрации.",
+                "if_it_were_true": "Тогда `Eureka` требовала бы брокер, но она самодостаточна на HTTP.",
+                "how_it_should_be": "Регистрация — HTTP REST; AMQP относится к `Spring Cloud Bus`, не к discovery."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Реестр между серверами `Eureka` синхронизируется через внешний `ZooKeeper`, а не напрямую между узлами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Серверы `Eureka` реплицируют реестр напрямую друг другу по REST (peer-to-peer), без `ZooKeeper`.",
+                "source_of_confusion": "Опыт `Kafka`/`HBase` с `ZooKeeper` для координации переносят на `Eureka`.",
+                "if_it_were_true": "Тогда без `ZooKeeper` кластер `Eureka` не работал бы, но он самодостаточен.",
+                "how_it_should_be": "Peer-репликация по REST между инстансами; внешний реестр не нужен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Eureka` работает поверх REST over HTTP: все операции (register, renew, cancel, fetch) — это HTTP-запросы (`POST /eureka/apps/{appId}`, `PUT .../{id}` для heartbeat, `DELETE` для де-регистрации, `GET /eureka/apps` для получения реестра). Формат обмена данными — JSON (или XML). Серверы `Eureka` синхронизируют реестр между собой через peer-to-peer репликацию (тоже REST), опционально возможна интеграция с DNS.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ничего экзотического: обычный HTTP REST + JSON. Это упрощает интеграцию и отладку — реестр можно посмотреть curl-ом.",
+                "example": "`GET http://eureka:8761/eureka/apps/ORDER-SERVICE` вернёт JSON со списком инстансов сервиса заказов.",
+                "when_to_apply": "Знание протокола нужно при отладке регистрации, написании кастомных клиентов или анализе трафика.",
+                "edge_cases": "DNS-интеграция опциональна; основной путь — REST. XML тоже поддерживается, но JSON используется чаще.",
+                "related": "[[spring-cloud-interview#Q10]] механизм discovery; [[spring-cloud-interview#Q11]] настройка; [[spring-cloud-interview#Q13]] сравнение с `Consul`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём преимущества `Eureka` по сравнению с `Consul` и `Zookeeper`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Eureka` — AP-система (eventual consistency) с клиентским heartbeat и встроенным self-preservation, написана на Java и имеет нативную интеграцию со `Spring`. Её берут, когда приоритет — доступность (AP по CAP) в чисто Java/Spring-стеке с минимумом внешних зависимостей. `Consul` — CP (Raft), с серверным health-check, KV-store, DNS и service mesh; его выбирают при нужде в консистентности, multi-DC и polyglot. `ZooKeeper` — CP (ZAB) с ephemeral-нодами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевое различие — модель консистентности по CAP. `Eureka` жертвует консистентностью ради доступности: при сетевых проблемах она лучше продолжает отдавать (пусть устаревший) реестр.",
+                "example": "При разделе сети `Eureka` продолжит отдавать список инстансов каждой части кластера, тогда как `Consul`/`ZooKeeper` могут отказать в записи без кворума.",
+                "when_to_apply": "`Eureka` берут в Spring-моностеке, где важна доступность; `Consul` — при KV-store, DNS и не только Java.",
+                "edge_cases": "Self-preservation `Eureka` может удерживать в реестре уже мёртвые инстансы — это плата за AP.",
+                "related": "[[spring-cloud-interview#Q10]] как работает `Eureka`; [[spring-cloud-interview#Q32]] `Consul` как discovery; [[spring-cloud-interview#Q14]] сколько инстансов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Eureka` — CP-система с Raft-консенсусом и встроенным KV-store, поэтому она консистентнее `Consul`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Eureka` — AP (eventual consistency) без KV-store; Raft и KV — это как раз про `Consul`.",
+                "source_of_confusion": "Свойства `Consul` ошибочно приписывают `Eureka`, путая их модели.",
+                "if_it_were_true": "Тогда `Eureka` отказывала бы в записи без кворума, но она остаётся доступной при разделе сети.",
+                "how_it_should_be": "`Eureka` — AP без KV; CP и Raft — у `Consul`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное преимущество `Eureka` — встроенный DNS и service mesh, которых нет ни у `Consul`, ни у `ZooKeeper`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенный DNS и service mesh (Connect) — это как раз сильные стороны `Consul`, а не `Eureka`.",
+                "source_of_confusion": "Возможности `Consul` приписывают `Eureka`, перечисляя «всё лучшее в одном».",
+                "if_it_were_true": "Тогда `Eureka` резолвила бы сервисы через DNS из коробки, но эта фича есть у `Consul`.",
+                "how_it_should_be": "DNS и service mesh — у `Consul`; у `Eureka` их нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Eureka` использует серверный health-check (агент опрашивает сервисы), что делает её точнее `Consul` в обнаружении сбоев.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Health-check у `Eureka` клиентский (heartbeat от сервиса); серверный health-check — модель `Consul`.",
+                "source_of_confusion": "Модели проверки здоровья двух систем путают местами.",
+                "if_it_were_true": "Тогда `Eureka` сама опрашивала бы инстансы, но она ждёт heartbeat от них.",
+                "how_it_should_be": "`Eureka` — клиентский heartbeat; серверный health-check — у `Consul`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сколько экземпляров `Eureka` запускать в production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В production достаточно одного инстанса `Eureka` — при его падении клиенты сами поднимут реестр из локального кэша навсегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один инстанс — единая точка отказа; рекомендуется минимум 3 узла в разных зонах для HA.",
+                "source_of_confusion": "Клиентский кэш реестра создаёт ложное ощущение, что сервер можно не дублировать.",
+                "if_it_were_true": "Тогда HA-кластер `Eureka` был бы не нужен, но именно для production его и строят.",
+                "how_it_should_be": "Минимум 3 инстанса в разных AZ с peer-репликацией реестра."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В production рекомендуется минимум 3 инстанса `Eureka`, размещённых в разных зонах доступности (Availability Zone) и реплицирующих реестр друг другу. При потере одного узла два оставшихся продолжают обслуживать запросы. Поскольку `Eureka` — AP-система, при разделении сети каждая часть кластера продолжит отдавать (возможно, устаревший) реестр, что обеспечивает высокую доступность discovery.",
+              "correct": true,
+              "sections": {
+                "explanation": "Несколько инстансов в разных AZ нужны для отказоустойчивости и кворумной устойчивости к сбоям зоны. Реестр реплицируется peer-to-peer, поэтому каждый узел знает обо всех сервисах.",
+                "example": "Три инстанса `Eureka` в AZ-1/AZ-2/AZ-3; падение AZ-2 не нарушает discovery — клиенты переключаются на оставшиеся.",
+                "when_to_apply": "Применяют при проектировании production-кластера discovery с требованием HA.",
+                "edge_cases": "Один инстанс — единая точка отказа; два дают минимальную избыточность, но три устойчивее к потере зоны.",
+                "related": "[[spring-cloud-interview#Q10]] как работает `Eureka`; [[spring-cloud-interview#Q11]] настройка кластера; [[spring-cloud-interview#Q13]] AP по CAP."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Инстансы `Eureka` нельзя реплицировать между собой, поэтому каждый сервис должен регистрироваться отдельно в каждом узле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Узлы `Eureka` реплицируют реестр друг другу (peer-to-peer); регистрация в одном узле расходится на остальные.",
+                "source_of_confusion": "AP-модель путают с отсутствием синхронизации между узлами вообще.",
+                "if_it_were_true": "Тогда `defaultZone` со списком пиров был бы бессмысленным, но он как раз настраивает репликацию.",
+                "how_it_should_be": "Регистрация в одном узле реплицируется на все остальные через peer-to-peer."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для production `Eureka` нужно нечётное число инстансов (5, 7) ради кворума Raft, иначе кластер не выберет лидера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Eureka` нет Raft и выбора лидера — это AP-система без кворума; требование нечётности относится к CP-системам.",
+                "source_of_confusion": "Правило нечётного кворума из `ZooKeeper`/`Consul` переносят на `Eureka`.",
+                "if_it_were_true": "Тогда `Eureka` зависала бы при чётном числе узлов, но кворум ей не нужен.",
+                "how_it_should_be": "`Eureka` работает при любом числе узлов; рекомендация — 3 для HA, без требования нечётности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud Gateway`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Gateway` построен на блокирующем `Spring MVC` и Servlet API (thread-per-request), как и `Tomcat`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway реактивный: он на `Spring WebFlux`/`Netty` с event loop, а не на блокирующем Servlet-стеке.",
+                "source_of_confusion": "Привычные Spring-приложения на MVC создают ожидание блокирующей модели.",
+                "if_it_were_true": "Тогда Gateway не масштабировался бы при высокой конкуренции лучше `Zuul`, но реактивность ему это даёт.",
+                "how_it_should_be": "Это `WebFlux`/Netty, non-blocking; блокирующий Servlet-стек — у `Zuul 1.x`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud Gateway` — это серверный балансировщик нагрузки, который сам хранит реестр сервисов вместо `Eureka`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway не реестр: список инстансов он берёт из discovery (`Eureka`) через `LoadBalancer` по схеме `lb://`.",
+                "source_of_confusion": "Gateway виден как «входная точка», и его путают с реестром/балансировщиком целиком.",
+                "if_it_were_true": "Тогда `Eureka` была бы не нужна рядом с Gateway, но именно она даёт ему список инстансов.",
+                "how_it_should_be": "Gateway маршрутизирует и фильтрует; реестр — отдельный `Eureka`/discovery."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud Gateway` — реактивный API Gateway на базе `Spring WebFlux` и `Project Reactor` (Netty), заменивший устаревший `Zuul`. Возможности: маршрутизация запросов к сервисам по path/header/host, фильтры для модификации запросов/ответов (заголовки, rate limiting, аутентификация), интеграция с `Spring Cloud LoadBalancer` и `Eureka` (схема `lb://`), поддержка WebSocket-проксирования и встроенный `RequestRateLimiter` через `Redis`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это единая точка входа в систему: клиент стучится в Gateway, а тот направляет запрос нужному сервису и применяет кросс-cutting логику (auth, rate limit, логирование). Реактивная модель даёт высокую пропускную способность.",
+                "example": "Маршрут с `Path=/api/orders/**` и `uri: lb://order-service` направляет запросы на инстансы сервиса заказов через балансировщик.",
+                "when_to_apply": "Берут как API Gateway для маршрутизации, фильтрации и rate limiting в реактивном Spring-стеке.",
+                "edge_cases": "Gateway реактивный — блокирующий код в фильтрах душит event loop; нужен неблокирующий стиль или вынос на отдельный пул.",
+                "related": "[[spring-cloud-interview#Q16]] маршруты и фильтры; [[spring-cloud-interview#Q17]] отличие от `Zuul`; [[spring-cloud-interview#Q33]] rate limiting."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Cloud Gateway` не поддерживает WebSocket и работает только с обычными HTTP-запросами «запрос-ответ».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway поддерживает WebSocket-проксирование — это одно из его преимуществ над `Zuul 1.x`.",
+                "source_of_confusion": "Многие API Gateway раньше работали только с REST, и это обобщают.",
+                "if_it_were_true": "Тогда таблицы сравнения с `Zuul` не отмечали бы WebSocket как фичу Gateway, но они отмечают.",
+                "how_it_should_be": "WebSocket поддерживается; этого как раз не умеет `Zuul 1.x`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить маршруты и фильтры в `Spring Cloud Gateway`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Маршруты в `Spring Cloud Gateway` можно задать только в Java-коде; конфигурация через YAML не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маршруты задают и через YAML (`spring.cloud.gateway.routes`), и программно — оба способа равноправны.",
+                "source_of_confusion": "Кастомные фильтры пишут на Java, и это распространяют на всю маршрутизацию.",
+                "if_it_were_true": "Тогда не было бы секции `routes` в `application.yml`, но она — основной декларативный способ.",
+                "how_it_should_be": "Маршруты конфигурируют YAML-ом или `RouteLocatorBuilder` — на выбор."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Фильтр `StripPrefix=1` добавляет один сегмент в начало пути, чтобы downstream-сервис получил полный `/api/...`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`StripPrefix=1` наоборот убирает первый сегмент пути (например `/api`) перед отправкой downstream.",
+                "source_of_confusion": "Слово «strip» иногда трактуют как «обернуть/добавить», а не «срезать».",
+                "if_it_were_true": "Тогда downstream получал бы `/api/api/orders`, но `StripPrefix` именно срезает префикс.",
+                "how_it_should_be": "`StripPrefix=1` удаляет первый сегмент; для добавления используют `PrefixPath`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Предикаты (`Path`, `Method`) и фильтры — это одно и то же; и те, и другие решают, какой запрос попадёт на маршрут.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Предикаты определяют, подходит ли запрос маршруту; фильтры модифицируют запрос/ответ уже выбранного маршрута.",
+                "source_of_confusion": "Оба объявляются внутри маршрута, и роли смешивают.",
+                "if_it_were_true": "Тогда фильтр `AddRequestHeader` влиял бы на выбор маршрута, но он лишь меняет запрос.",
+                "how_it_should_be": "Предикаты — условие матчинга; фильтры — обработка запроса/ответа."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Маршруты задают через YAML (`spring.cloud.gateway.routes`) или программно (`RouteLocatorBuilder`): у каждого маршрута есть `id`, `uri` (например `lb://order-service`), предикаты (`Path`, `Method`, `Header`) и фильтры (`StripPrefix`, `AddRequestHeader`, `CircuitBreaker`, `Retry`, `RequestRateLimiter`). Кастомные фильтры пишут, наследуясь от `AbstractGatewayFilterFactory`, и применяют для аутентификации, обогащения заголовков и т.п.",
+              "correct": true,
+              "sections": {
+                "explanation": "Предикаты решают, какой запрос пойдёт по маршруту, а фильтры модифицируют запрос/ответ. `default-filters` применяются ко всем маршрутам сразу.",
+                "example": "Маршрут `order-service` с `Path=/api/orders/**`, `StripPrefix=1` и фильтром `CircuitBreaker` с `fallbackUri: forward:/fallback/orders`.",
+                "when_to_apply": "Настраивают при описании входной маршрутизации и cross-cutting логики на Gateway.",
+                "edge_cases": "Кастомный фильтр в реактивном Gateway должен быть неблокирующим; иначе он тормозит event loop.",
+                "related": "[[spring-cloud-interview#Q15]] что такое Gateway; [[spring-cloud-interview#Q33]] rate limiting; [[spring-cloud-interview#Q38]] Gateway vs `Zuul`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `Spring Cloud Gateway` и `Zuul`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Gateway` — реактивный (Netty + WebFlux), с event loop и малым числом потоков, поддерживает WebSocket и активно развивается. `Zuul 1.x` — блокирующий (Servlet), модель thread-per-request, без WebSocket, хуже под высокой нагрузкой и переведён в maintenance mode. Фильтры тоже разные: `GatewayFilter`/`GlobalFilter` у Gateway против `ZuulFilter` (pre/route/post) у `Zuul`. Для новых проектов используют `Spring Cloud Gateway`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное отличие — модель ввода-вывода: реактивная против блокирующей. Реактивность даёт лучшую пропускную способность при высокой конкуренции и поддержку WebSocket.",
+                "example": "Под нагрузкой 10k одновременных соединений Gateway на event loop держится лучше, чем `Zuul` с пулом потоков.",
+                "when_to_apply": "Сравнение нужно при выборе Gateway для нового проекта или планировании миграции с `Zuul`.",
+                "edge_cases": "`Zuul 1.x` несовместим с `Spring Boot 3` (Servlet API на `javax`), поэтому миграция на Gateway часто вынужденная.",
+                "related": "[[spring-cloud-interview#Q15]] что такое Gateway; [[spring-cloud-interview#Q38]] Gateway vs `Zuul` подробно; [[spring-cloud-interview#Q30]] устаревшие компоненты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Zuul 1.x` реактивен (Netty + WebFlux), а `Spring Cloud Gateway` блокирующий (Servlet) — поэтому `Zuul` быстрее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Gateway` реактивный на Netty/WebFlux, а `Zuul 1.x` блокирующий на Servlet.",
+                "source_of_confusion": "Модели ввода-вывода двух систем путают местами при сравнении.",
+                "if_it_were_true": "Тогда `Zuul` поддерживал бы WebSocket и Spring Boot 3, но это умеет именно Gateway.",
+                "how_it_should_be": "Реактивный — `Gateway`; блокирующий Servlet — `Zuul 1.x`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud Gateway` и `Zuul` используют одинаковые фильтры `ZuulFilter`, так что миграция не требует переписывания фильтров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Gateway свои `GatewayFilter`/`GlobalFilter`; `ZuulFilter` из `Zuul` несовместим и требует переписывания.",
+                "source_of_confusion": "Кажется, что у API Gateway-ев фильтры взаимозаменяемы.",
+                "if_it_were_true": "Тогда миграция была бы тривиальной копипастой фильтров, но их API различаются.",
+                "how_it_should_be": "Фильтры разные: `GatewayFilter`/`GlobalFilter` против `ZuulFilter` (pre/route/post)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Zuul` находится в активной разработке и рекомендуется для новых проектов, а `Spring Cloud Gateway` устарел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Zuul 1.x` в maintenance mode, а `Spring Cloud Gateway` активно развивается и рекомендуется для нового.",
+                "source_of_confusion": "Историческая известность `Zuul` от Netflix создаёт впечатление актуальности.",
+                "if_it_were_true": "Тогда `Zuul` поддерживал бы `Spring Boot 3`, но он несовместим с ним.",
+                "how_it_should_be": "Для нового — `Spring Cloud Gateway`; `Zuul` оставлен для legacy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает балансировка нагрузки в `Spring Cloud`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Балансировка в `Spring Cloud` серверная: отдельный балансировщик стоит в пути запроса и проксирует трафик к инстансам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Spring Cloud` балансировка клиентская — выбор инстанса делает сам клиент через `LoadBalancer`, без прокси в пути.",
+                "source_of_confusion": "Опыт с nginx/ELB в пути запроса переносят на клиентскую модель Spring.",
+                "if_it_were_true": "Тогда `@LoadBalanced` был бы не нужен, но именно он включает клиентскую балансировку.",
+                "how_it_should_be": "Это клиентская балансировка; серверная — это nginx/`K8s Service`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud` использует клиентскую балансировку: клиент сам получает из реестра (`Eureka`) список инстансов целевого сервиса и выбирает один (по умолчанию Round Robin). Это включается аннотацией `@LoadBalanced` на `RestTemplate`/`WebClient`, после чего в URL вместо адреса указывают имя сервиса (`http://product-service/products/{id}`), а `Spring Cloud LoadBalancer` резолвит его в конкретный инстанс.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от серверной балансировки (отдельный балансировщик в пути запроса), здесь решение о выборе инстанса принимает сам клиент — это снижает число сетевых хопов.",
+                "example": "`@LoadBalanced RestTemplate` обращается к `http://product-service/products/1`; LoadBalancer выбирает `inst1:8081` по Round Robin.",
+                "when_to_apply": "Применяют для межсервисных вызовов внутри Spring-системы с discovery.",
+                "edge_cases": "Кэш инстансов имеет TTL — только что упавший инстанс может попасть в выбор до обновления; health-check это смягчает.",
+                "related": "[[spring-cloud-interview#Q19]] `Spring Cloud LoadBalancer`; [[spring-cloud-interview#Q10]] `Eureka`; [[spring-cloud-interview#Q23]] `OpenFeign`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы балансировка заработала, в `RestTemplate` нужно вручную указывать IP-адрес инстанса вместо имени сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `@LoadBalanced` в URL пишут имя сервиса (`http://product-service/...`), а LoadBalancer сам резолвит его в инстанс.",
+                "source_of_confusion": "Кажется, что без IP-адреса HTTP-клиент не поймёт, куда идти.",
+                "if_it_were_true": "Тогда смена инстансов требовала бы правки кода, но смысл discovery — обращаться по имени.",
+                "how_it_should_be": "В URL — имя сервиса; резолв в адрес делает `LoadBalancer` по реестру."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@LoadBalanced` не влияет на `RestTemplate` — балансировка работает автоматически для любого HTTP-клиента без аннотаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@LoadBalanced` `RestTemplate` не резолвит имена сервисов; аннотация обязательна для клиентской балансировки.",
+                "source_of_confusion": "Кажется, что discovery «само» подхватывает все исходящие вызовы.",
+                "if_it_were_true": "Тогда `@LoadBalanced` был бы декоративным, но он добавляет интерсептор резолва.",
+                "how_it_should_be": "`@LoadBalanced` явно включает балансировку для конкретного бина клиента."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud Load Balancer`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud LoadBalancer` — это серверный балансировщик-прокси, который надо разворачивать как отдельный сервис.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это библиотека клиентской балансировки внутри процесса-клиента, а не отдельный прокси-сервис.",
+                "source_of_confusion": "Слово LoadBalancer ассоциируется с инфраструктурным балансировщиком вроде HAProxy.",
+                "if_it_were_true": "Тогда его надо было бы деплоить отдельно, но он работает как зависимость в клиенте.",
+                "how_it_should_be": "Это in-process клиентская балансировка, замена `Ribbon`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud LoadBalancer` поддерживает только одну стратегию — взвешенный балансинг по нагрузке CPU инстансов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из коробки идут Round Robin (по умолчанию) и Random; CPU-взвешенной стратегии по умолчанию нет.",
+                "source_of_confusion": "Продвинутые балансировщики умеют учитывать нагрузку, и это обобщают.",
+                "if_it_were_true": "Тогда не было бы выбора между `RoundRobin` и `Random`, но они доступны из коробки.",
+                "how_it_should_be": "Стратегии — `RoundRobinLoadBalancer` и `RandomLoadBalancer`; кастомные пишут вручную."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud LoadBalancer` — замена устаревшего `Netflix Ribbon`, предоставляющая клиентскую балансировку с двумя стратегиями из коробки: `RoundRobinLoadBalancer` (по умолчанию, последовательный перебор) и `RandomLoadBalancer` (случайный выбор). Конфигурируется per-client через `@LoadBalancerClient`, поддерживает кэш инстансов с TTL и health-check для отсева недоступных инстансов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это реактивная, лёгкая замена `Ribbon`, интегрированная с discovery. Стратегию можно переопределить, объявив свой бин `ReactorLoadBalancer` для конкретного сервиса.",
+                "example": "`@LoadBalancerClient(name = \"product-service\", configuration = ProductServiceLBConfig.class)` задаёт `RandomLoadBalancer` для одного сервиса.",
+                "when_to_apply": "Используют для клиентской балансировки межсервисных вызовов вместо `Ribbon` в актуальном Spring-стеке.",
+                "edge_cases": "Кэш инстансов с TTL может временно содержать упавший инстанс; `health-check.interval` управляет частотой проверки.",
+                "related": "[[spring-cloud-interview#Q18]] как работает балансировка; [[spring-cloud-interview#Q30]] `Ribbon` устарел; [[spring-cloud-interview#Q10]] `Eureka`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Cloud LoadBalancer` — это новое название `Netflix Ribbon`, тот же код просто переименовали.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это самостоятельная реактивная реализация, написанная с нуля как замена `Ribbon`, а не его ребрендинг.",
+                "source_of_confusion": "Оба решают одну задачу, поэтому их считают одним продуктом под разными именами.",
+                "if_it_were_true": "Тогда конфиги `Ribbon` работали бы один в один, но API и стратегии у них различаются.",
+                "how_it_should_be": "Это отдельный проект, заменивший `Ribbon`, с собственным API."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое паттерн `Circuit Breaker` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Circuit Breaker` повторяет упавший запрос бесконечно, пока сервис не ответит успешно — это и есть его основная функция.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бесконечные повторы — это анти-паттерн; CB наоборот быстро отклоняет запросы в `OPEN` (fail-fast), а повторы — это отдельный паттерн `Retry`.",
+                "source_of_confusion": "Retry и Circuit Breaker часто соседствуют, и их функции смешивают.",
+                "if_it_were_true": "Тогда CB усиливал бы нагрузку на падающий сервис, но его смысл — снять её.",
+                "how_it_should_be": "CB размыкает цепь и отвечает fallback; повторы — задача `Retry` с ограничением попыток."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Circuit Breaker` имеет только два состояния: `ON` (всё работает) и `OFF` (сервис полностью отключён вручную).",
+              "correct": false,
+              "sections": {
+                "what_actually": "У CB три состояния — `CLOSED`, `OPEN`, `HALF_OPEN`; переключение автоматическое по метрикам ошибок, а не ручное.",
+                "source_of_confusion": "Аналогия с обычным выключателем наводит на бинарную модель.",
+                "if_it_were_true": "Тогда не было бы автоматического восстановления, но `HALF_OPEN` именно для него.",
+                "how_it_should_be": "Три состояния с автопереходами; `HALF_OPEN` проверяет, ожил ли сервис."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Circuit Breaker` нужен только для ускорения успешных запросов и не связан с защитой от каскадных сбоев.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная цель CB — предотвращение каскадных сбоев и fail-fast при деградации зависимости.",
+                "source_of_confusion": "Кажется, что паттерн про производительность, а не про устойчивость.",
+                "if_it_were_true": "Тогда его не относили бы к resilience-паттернам, но он именно про отказоустойчивость.",
+                "how_it_should_be": "CB защищает от каскадных сбоев, давая graceful degradation через fallback."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Circuit Breaker` — паттерн отказоустойчивости, предотвращающий каскадные сбои: он работает как предохранитель с тремя состояниями. В `CLOSED` запросы проходят и считаются ошибки в sliding window; при превышении `failureRateThreshold` он переходит в `OPEN` и сразу отклоняет запросы (вызывая fallback); после `waitDurationInOpenState` переходит в `HALF_OPEN` и пропускает пробные запросы. Это даёт fail-fast, graceful degradation и автоматическое восстановление.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без него медленный/упавший сервис копит висящие запросы и через таймауты утаскивает за собой вызывающие сервисы. CB обрывает эту цепочку, отвечая мгновенно через fallback.",
+                "example": "Если `product-service` отдаёт 60% ошибок при пороге 50%, CB открывается и возвращает кэшированный/дефолтный продукт вместо ожидания таймаута.",
+                "when_to_apply": "Оборачивают все внешние/межсервисные вызовы, которые могут зависнуть или начать массово падать.",
+                "edge_cases": "Слишком низкий порог открывает CB на случайных всплесках; `HALF_OPEN` с малым числом проб может ошибочно решить, что сервис ожил.",
+                "related": "[[spring-cloud-interview#Q21]] настройка `Resilience4j`; [[spring-cloud-interview#Q22]] `Hystrix` vs `Resilience4j`; [[spring-cloud-interview#Q43]] абстракция `CircuitBreaker`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `Resilience4j Circuit Breaker` в `Spring Cloud`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Добавляют `spring-cloud-starter-circuitbreaker-resilience4j`, в `application.yml` под `resilience4j.circuitbreaker.instances.<name>` задают параметры (`sliding-window-size`, `minimum-number-of-calls`, `failure-rate-threshold`, `wait-duration-in-open-state`, `permitted-number-of-calls-in-half-open-state`, `record-exceptions`/`ignore-exceptions`), а в коде помечают метод `@CircuitBreaker(name = \"...\", fallbackMethod = \"...\")`. Часто дополняют `@Retry` и `@TimeLimiter`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Конфигурация декларативная: параметры окна и порогов — в YAML, обвязка метода — аннотацией. Fallback-метод вызывается при `OPEN` или при ошибке и имеет ту же сигнатуру плюс `Throwable`.",
+                "example": "`@CircuitBreaker(name = \"productService\", fallbackMethod = \"getProductFallback\")` с порогом `failure-rate-threshold: 50` и окном `sliding-window-size: 10`.",
+                "when_to_apply": "Настраивают на каждом методе, делающем рискованный внешний вызов (HTTP к другому сервису, внешний API).",
+                "edge_cases": "`ignore-exceptions` исключает бизнес-ошибки из подсчёта; иначе валидные 4xx-ответы будут открывать CB напрасно.",
+                "related": "[[spring-cloud-interview#Q20]] что такое CB; [[spring-cloud-interview#Q31]] `Retry`/`Bulkhead`; [[spring-cloud-interview#Q43]] `Spring Cloud CircuitBreaker`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Resilience4j` настраивается только программно через Java-конфиг; параметры в `application.yml` он игнорирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Resilience4j` в Spring Boot конфигурируется как раз через `application.yml` (`resilience4j.circuitbreaker.instances.*`), плюс возможен программный API.",
+                "source_of_confusion": "Старый `Hystrix` настраивался через `Archaius`, и это переносят на `Resilience4j`.",
+                "if_it_were_true": "Тогда не существовало бы свойств `resilience4j.*`, но они — основной способ.",
+                "how_it_should_be": "Параметры задают в YAML; программный API — опционально."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Fallback-метод должен иметь совершенно другую сигнатуру, без параметров исходного метода и без `Throwable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fallback повторяет параметры исходного метода и принимает дополнительный `Throwable` причины сбоя.",
+                "source_of_confusion": "Кажется, что заглушка не нуждается в аргументах оригинала.",
+                "if_it_were_true": "Тогда `Resilience4j` не нашёл бы подходящий fallback, и он бы не вызвался.",
+                "how_it_should_be": "Сигнатура fallback = аргументы метода + `Throwable`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для включения `Circuit Breaker` достаточно аннотации `@Retryable`; отдельный стартер `resilience4j` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Circuit Breaker включает `@CircuitBreaker` из `Resilience4j` (нужен его стартер); `@Retryable` — это Spring Retry для повторов, не CB.",
+                "source_of_confusion": "Аннотации отказоустойчивости похожи и их подменяют.",
+                "if_it_were_true": "Тогда `@Retryable` открывал бы цепь по порогу ошибок, но он лишь повторяет вызов.",
+                "how_it_should_be": "CB — `@CircuitBreaker` + стартер `resilience4j`; `@Retryable` — это про retry."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `Hystrix` и `Resilience4j`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Resilience4j` устарел и находится в maintenance mode, а `Hystrix` активно развивается и рекомендуется для нового.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Hystrix` deprecated, а `Resilience4j` активно развивается и рекомендуется для новых проектов.",
+                "source_of_confusion": "Историческая известность `Hystrix` от Netflix создаёт иллюзию его актуальности.",
+                "if_it_were_true": "Тогда новые стартеры были бы под `Hystrix`, но актуален `circuitbreaker-resilience4j`.",
+                "how_it_should_be": "Активный — `Resilience4j`; `Hystrix` в maintenance mode."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Hystrix` — deprecated (maintenance mode), на Java 6+, с изоляцией через отдельный thread pool на команду, ограниченной реактивностью (RxJava 1) и метриками через Hystrix Dashboard. `Resilience4j` — активно развивается, на Java 17+, реализован через лёгкие декораторы, полностью реактивен (Reactor, RxJava 2/3), даёт модули `CircuitBreaker`, `RateLimiter`, `Retry`, `Bulkhead`, `TimeLimiter`, конфигурируется через Spring Boot properties и интегрирован с `Micrometer`. В новых проектах берут `Resilience4j`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Resilience4j` легче (нет thread pool на команду), модульнее и дружит с реактивным стеком и `Micrometer`/Prometheus. `Hystrix` остался только в legacy.",
+                "example": "Вместо Hystrix-команды с отдельным пулом потоков в `Resilience4j` метод просто декорируют `@CircuitBreaker` + `@Bulkhead`.",
+                "when_to_apply": "Сравнение нужно при выборе библиотеки или планировании миграции с `Hystrix`.",
+                "edge_cases": "`Hystrix` несовместим с актуальным стеком; миграция меняет и конфигурацию (`Archaius` → Spring properties), и метрики.",
+                "related": "[[spring-cloud-interview#Q20]] что такое CB; [[spring-cloud-interview#Q21]] настройка `Resilience4j`; [[spring-cloud-interview#Q30]] устаревшие компоненты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Resilience4j` изолирует каждый вызов в отдельном thread pool, а `Hystrix` использует лёгкие декораторы без потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модели перепутаны: thread-pool-изоляция — у `Hystrix`, а лёгкие декораторы — у `Resilience4j`.",
+                "source_of_confusion": "Подходы двух библиотек к изоляции путают местами.",
+                "if_it_were_true": "Тогда `Resilience4j` был бы тяжелее `Hystrix`, но он как раз легковеснее.",
+                "how_it_should_be": "Декораторы — `Resilience4j`; thread pool на команду — `Hystrix`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Hystrix` предоставляет модули `RateLimiter`, `Retry` и `Bulkhead`, которых нет в `Resilience4j`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Богатый набор модулей (`RateLimiter`, `Retry`, `Bulkhead`, `TimeLimiter`) — это как раз `Resilience4j`, а не `Hystrix`.",
+                "source_of_confusion": "Возможности `Resilience4j` ошибочно приписывают `Hystrix`.",
+                "if_it_were_true": "Тогда у `Hystrix` был бы отдельный `RateLimiter`, но его модульность ограничена.",
+                "how_it_should_be": "Модульный набор паттернов — у `Resilience4j`; `Hystrix` в основном про CB и thread isolation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud OpenFeign`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`OpenFeign` — это генератор серверных REST-контроллеров: по интерфейсу он создаёт endpoint-ы, принимающие запросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OpenFeign` генерирует HTTP-клиент (исходящие вызовы), а не серверные контроллеры; endpoint-ы делает `@RestController`.",
+                "source_of_confusion": "Аннотации `@GetMapping` те же, что у контроллеров, и направление путают.",
+                "if_it_were_true": "Тогда `@FeignClient` поднимал бы HTTP-сервер, но он делает исходящие запросы.",
+                "how_it_should_be": "Это клиент для вызова чужих API; сервер — `@RestController`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `OpenFeign` нужно вручную писать реализацию интерфейса с телом каждого метода и кодом HTTP-вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реализацию генерирует Spring/Feign автоматически по аннотациям; разработчик пишет только интерфейс.",
+                "source_of_confusion": "Кажется, что интерфейс без реализации работать не может.",
+                "if_it_were_true": "Тогда декларативность терялась бы, но её суть — отсутствие ручной реализации.",
+                "how_it_should_be": "Описывают интерфейс с аннотациями; тело генерируется на лету."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`OpenFeign` — декларативный HTTP-клиент: вместо ручного `RestTemplate`/`WebClient` описывают Java-интерфейс с аннотациями (`@FeignClient`, `@GetMapping`, `@PostMapping`), а Spring генерирует его реализацию. Клиент автоматически интегрируется с клиентской балансировкой (`LoadBalancer`/`Eureka`) и Circuit Breaker (`Resilience4j`), поддерживает кастомную конфигурацию (`Logger.Level`, `RequestInterceptor`, `Retryer`) и fallback через `fallback`/`fallbackFactory`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная идея — убрать boilerplate: HTTP-вызов описывается как обычный метод интерфейса. Имя в `@FeignClient(name=...)` резолвится через discovery, поэтому URL не хардкодят.",
+                "example": "`@FeignClient(name = \"product-service\")` с методом `@GetMapping(\"/products/{id}\") Product getProduct(@PathVariable Long id)`.",
+                "when_to_apply": "Берут для межсервисных HTTP-вызовов, когда хочется типобезопасный декларативный клиент вместо ручного кода.",
+                "edge_cases": "`fallbackFactory` даёт доступ к причине сбоя (`Throwable`), а простой `fallback` — нет; путать их — частая ошибка.",
+                "related": "[[spring-cloud-interview#Q24]] настройка Feign с CB; [[spring-cloud-interview#Q36]] Feign + fallback; [[spring-cloud-interview#Q42]] как работает `OpenFeign`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@FeignClient(name=...)` всегда требует полный URL в `name`, потому что с discovery `OpenFeign` не интегрируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`name` — это логическое имя сервиса, резолвимое через discovery/`LoadBalancer`; полный URL указывают опционально через `url`.",
+                "source_of_confusion": "Кажется, что HTTP-клиенту обязательно нужен явный адрес.",
+                "if_it_were_true": "Тогда смена инстансов ломала бы клиент, но Feign резолвит имя через реестр.",
+                "how_it_should_be": "`name` — имя для discovery; явный `url` нужен только без реестра."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `Feign Client` с балансировкой и `Circuit Breaker`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Балансировку для Feign нужно включать вручную: без отдельной аннотации `@LoadBalanced` имя сервиса не резолвится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Feign балансировка работает из коробки через интеграцию с `LoadBalancer`; отдельный `@LoadBalanced` (как у `RestTemplate`) не нужен.",
+                "source_of_confusion": "Требование `@LoadBalanced` для `RestTemplate` переносят на Feign.",
+                "if_it_were_true": "Тогда `@FeignClient(name=...)` без аннотации не находил бы инстансы, но он их находит.",
+                "how_it_should_be": "Feign балансирует автоматически; ручной `@LoadBalanced` ему не требуется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Circuit Breaker у Feign включён по умолчанию, флаг `openfeign.circuitbreaker.enabled` ни на что не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Интеграция с CB по умолчанию выключена; её включают `spring.cloud.openfeign.circuitbreaker.enabled: true`.",
+                "source_of_confusion": "Наличие поля `fallback` в `@FeignClient` создаёт впечатление, что CB уже активен.",
+                "if_it_were_true": "Тогда fallback срабатывал бы без флага, но без него он игнорируется.",
+                "how_it_should_be": "CB включают явным флагом; иначе fallback не задействуется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Имя инстанса Circuit Breaker для Feign — это всегда просто `spring.application.name` вызывающего сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию имя CB формируется как `FeignClient#method(args)`, а не как имя приложения.",
+                "source_of_confusion": "Кажется логичным привязать CB к имени приложения целиком.",
+                "if_it_were_true": "Тогда нельзя было бы задать разные пороги на разные методы, но Feign это позволяет.",
+                "how_it_should_be": "Имя CB — `ClientName#methodName(ArgTypes)`; настраивается per-method."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Балансировка у Feign включена автоматически: имя в `@FeignClient(name=...)` резолвится через `LoadBalancer`/`Eureka`. Circuit Breaker включают флагом `spring.cloud.openfeign.circuitbreaker.enabled: true` (интеграция с `Resilience4j`). Таймауты и логирование задают в `spring.cloud.openfeign.client.config` (отдельно `default` и per-client). Параметры CB настраивают в `resilience4j.circuitbreaker.instances` под именем вида `FeignClient#method(args)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Имя инстанса Circuit Breaker для Feign по умолчанию формируется как `ClientName#methodName(ArgTypes)` — это надо учитывать при настройке порогов в YAML.",
+                "example": "Для `ProductClient.getProduct(Long)` инстанс CB именуется `ProductClient#getProduct(Long)` — под этим ключом и задают `failure-rate-threshold`.",
+                "when_to_apply": "Настраивают, когда Feign-вызовы должны быть отказоустойчивыми и сбалансированными по инстансам.",
+                "edge_cases": "Если забыть `circuitbreaker.enabled: true`, fallback не сработает, даже если он объявлен в `@FeignClient`.",
+                "related": "[[spring-cloud-interview#Q23]] что такое `OpenFeign`; [[spring-cloud-interview#Q36]] Feign + fallback; [[spring-cloud-interview#Q21]] настройка `Resilience4j`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать distributed tracing в `Spring Cloud`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Distributed tracing отслеживает путь запроса через цепочку микросервисов: каждому запросу присваивается `traceId` (общий на весь путь), а каждому вызову внутри — свой `spanId`. Ключевые понятия: Trace (полный путь), Span (единица работы), Baggage (пользовательские данные, пробрасываемые через все сервисы), Sampling (процент трассируемых запросов). Начиная со `Spring Cloud 2022.0` (`Spring Boot 3.x`) `Sleuth` заменён на `Micrometer Tracing`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Один общий `traceId` склеивает спаны всех сервисов в единый трейс. Контекст пробрасывается через заголовки при межсервисных вызовах, а спаны экспортируются в `Zipkin`/`Jaeger`.",
+                "example": "Запрос с `traceId=abc123` проходит Gateway → order-service (span s1) → product-service (span s2); все спаны видны как один трейс в `Zipkin`.",
+                "when_to_apply": "Применяют для отладки и анализа задержек в системе из многих сервисов.",
+                "edge_cases": "В production sampling ставят 1-10% (а не 100%), иначе хранилище трейсов и overhead взрывообразно растут.",
+                "related": "[[spring-cloud-interview#Q26]] настройка `Micrometer Tracing`; [[spring-cloud-interview#Q34]] propagation заголовков; [[spring-cloud-interview#Q6]] рекомендации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При distributed tracing каждый сервис генерирует собственный независимый `traceId`, не связанный с другими.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`traceId` один на весь путь запроса и пробрасывается между сервисами; внутри меняются только `spanId`.",
+                "source_of_confusion": "Кажется, что каждый сервис заводит свой идентификатор для своих логов.",
+                "if_it_were_true": "Тогда нельзя было бы склеить вызовы в один трейс, но именно для этого `traceId` общий.",
+                "how_it_should_be": "`traceId` общий на цепочку; per-вызов уникален `spanId`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Spring Boot 3.x` для трассировки по-прежнему используется `Spring Cloud Sleuth`, а `Micrometer Tracing` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `Spring Cloud 2022.0` (`Spring Boot 3.x`) `Sleuth` заменён на `Micrometer Tracing`; `Sleuth` под Boot 3 не поддерживается.",
+                "source_of_confusion": "Многолетняя популярность `Sleuth` создаёт инерцию выбора.",
+                "if_it_were_true": "Тогда стартер `Sleuth` работал бы на Boot 3, но он несовместим.",
+                "how_it_should_be": "В Boot 3 трассировка — это `Micrometer Tracing` (+ bridge brave/otel)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В production sampling всегда ставят 100%, иначе часть запросов вообще не обрабатывается сервисами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sampling влияет только на сбор трейсов, не на обработку запросов; в production его снижают до 1-10% ради overhead.",
+                "source_of_confusion": "Кажется, что несэмплированный запрос «пропускается» системой.",
+                "if_it_were_true": "Тогда снижение sampling теряло бы заказы, но оно лишь сокращает объём трейсов.",
+                "how_it_should_be": "Все запросы обрабатываются; sampling задаёт лишь долю собираемых трейсов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `Micrometer Tracing` (замена `Sleuth`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для трассировки в `Spring Boot 3.x` подключают зависимость `spring-cloud-starter-sleuth` и аннотацию `@EnableSleuth`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Boot 3 используют `micrometer-tracing-bridge-*` + экспортёр; `Sleuth` и `@EnableSleuth` несовместимы и не нужны.",
+                "source_of_confusion": "Старые гайды по `Sleuth` всё ещё распространены.",
+                "if_it_were_true": "Тогда стартер `Sleuth` подтянулся бы в Boot 3, но он несовместим.",
+                "how_it_should_be": "Подключают `micrometer-tracing-bridge-brave`/`-otel` и reporter, без `Sleuth`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Spring Boot 3.x` добавляют `spring-boot-starter-actuator`, мост `micrometer-tracing-bridge-brave` (или `-otel`) и экспортёр (`zipkin-reporter-brave`). В `application.yml` задают `management.tracing.sampling.probability`, `propagation.type` (b3/w3c) и `management.zipkin.tracing.endpoint`. В лог-паттерн добавляют `%X{traceId}`/`%X{spanId}`. HTTP-вызовы, Kafka/RabbitMQ и JDBC трассируются автоматически; для кастомных спанов используют Observation API.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Micrometer Tracing` — это фасад: bridge подключает конкретный трейсер (Brave или OpenTelemetry), а reporter экспортирует спаны в `Zipkin`/`Jaeger`. Большая часть трассировки работает автоматически.",
+                "example": "Зависимости `micrometer-tracing-bridge-brave` + `zipkin-reporter-brave` и `sampling.probability: 1.0` дают полную трассировку в dev.",
+                "when_to_apply": "Настраивают на каждом сервисе `Spring Boot 3.x`, которому нужна distributed tracing.",
+                "edge_cases": "Кастомные спаны создают через Observation API; прямое использование низкоуровневого `Tracer` менее переносимо между bridge.",
+                "related": "[[spring-cloud-interview#Q25]] что такое tracing; [[spring-cloud-interview#Q34]] propagation; [[spring-cloud-interview#Q6]] рекомендации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Micrometer Tracing` сам по себе экспортирует спаны в `Zipkin` без отдельного reporter — экспортёр не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужен отдельный reporter/exporter (например `zipkin-reporter-brave`); сам фасад спаны наружу не отправляет.",
+                "source_of_confusion": "Кажется, что фасад трассировки делает всё, включая экспорт.",
+                "if_it_were_true": "Тогда трейсы появлялись бы в `Zipkin` без reporter, но без него их некуда отправить.",
+                "how_it_should_be": "Bridge собирает спаны, reporter их экспортирует — нужны оба."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кастомные спаны в `Micrometer Tracing` создаются только через аннотацию `@Transactional` на методе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомные спаны создают через Observation API (`Observation.createNotStarted(...)`); `@Transactional` относится к транзакциям БД.",
+                "source_of_confusion": "Знакомую аннотацию подставляют наугад вместо специфичного API.",
+                "if_it_were_true": "Тогда каждая транзакция была бы спаном, но это разные механизмы.",
+                "how_it_should_be": "Спаны — Observation API; `@Transactional` — про транзакции, не трассировку."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud Stream`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Stream` — это собственный брокер сообщений, поэтому `Kafka` или `RabbitMQ` ставить не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Stream` — абстракция-биндер поверх реального брокера; `Kafka`/`RabbitMQ` всё равно нужно развернуть отдельно.",
+                "source_of_confusion": "Упрощённая работа с брокером создаёт иллюзию встроенного транспорта.",
+                "if_it_were_true": "Тогда биндеры `binder-kafka`/`binder-rabbit` были бы не нужны, но именно они подключают брокер.",
+                "how_it_should_be": "`Stream` — обёртка; брокер разворачивают как внешнюю систему."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В актуальной версии `Spring Cloud Stream` единственный способ объявить обработчик — аннотация `@StreamListener`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С версии 3.x основная модель — функциональная (`Supplier`/`Function`/`Consumer`); `@StreamListener` устарел.",
+                "source_of_confusion": "Старые примеры на `@StreamListener` всё ещё попадаются.",
+                "if_it_were_true": "Тогда функциональные бины-обработчики не работали бы, но они — рекомендуемый способ.",
+                "how_it_should_be": "Обработчики — функциональные бины; `@StreamListener` — legacy."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud Stream` — фреймворк для event-driven микросервисов, абстрагирующий работу с брокерами (`Kafka`, `RabbitMQ`) через биндеры. Ключевые концепции: Binder (адаптер к конкретному брокеру, например `spring-cloud-stream-binder-kafka`), Binding (связь между logical destination — topic/queue — и функцией приложения) и функциональная модель (с версии 3.x — `Supplier`/`Function`/`Consumer` вместо аннотаций `@StreamListener`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Бизнес-код пишут как обычные функции, а привязку к топикам и брокеру задают конфигурацией. Сменить `Kafka` на `RabbitMQ` можно заменой биндера без правки логики.",
+                "example": "Бин `Consumer<OrderEvent> processOrder` привязывают к топику `orders-topic` через `bindings.processOrder-in-0.destination`.",
+                "when_to_apply": "Берут для event-driven сервисов, когда хочется единую модель поверх разных брокеров.",
+                "edge_cases": "Абстракция протекает: специфика `Kafka` (партиции, DLQ) всё равно настраивается в `kafka.binder`/`kafka.bindings`.",
+                "related": "[[spring-cloud-interview#Q28]] настройка с `Kafka`; [[spring-cloud-interview#Q41]] функциональная модель; [[spring-cloud-interview#Q2]] компоненты."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Binder` в `Spring Cloud Stream` — это сериализатор сообщений (JSON/Avro), не связанный с выбором брокера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Binder` — адаптер к конкретному брокеру (`Kafka`/`RabbitMQ`); сериализацию задаёт `content-type`, а не binder.",
+                "source_of_confusion": "Термин `Binder` путают с binding/конвертацией формата сообщения.",
+                "if_it_were_true": "Тогда смена брокера не требовала бы смены binder, но именно binder отвечает за брокер.",
+                "how_it_should_be": "`Binder` — мост к брокеру; формат — это `content-type`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `Spring Cloud Stream` с `Kafka`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Имена binding (`<имя>-in-0`) можно задавать произвольно — они не связаны с именами бинов-функций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имена binding формируются по соглашению из имени функции: `<functionName>-in-0`/`-out-0`; связь жёсткая.",
+                "source_of_confusion": "Кажется, что binding — отдельная произвольная сущность.",
+                "if_it_were_true": "Тогда конфиг не находил бы канал функции, но соглашение об именах его связывает.",
+                "how_it_should_be": "Имя binding выводится из имени функции по схеме `name-in/out-index`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы функция-обработчик заработала, её НЕ нужно перечислять в `spring.cloud.function.definition` — она активируется сама.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Несколько функций требуют явного перечисления в `spring.cloud.function.definition`, иначе они не привязываются.",
+                "source_of_confusion": "Одна-единственная функция действительно подхватывается без `definition`, и это обобщают.",
+                "if_it_were_true": "Тогда лишние бины-функции тоже стартовали бы, но их активируют только перечислением.",
+                "how_it_should_be": "Активные функции указывают в `function.definition` (через `;`)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DLQ (dead-letter queue) в `Spring Cloud Stream` с `Kafka` включён по умолчанию и настраивать его не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DLQ выключен по умолчанию; его включают `consumer.enable-dlq: true` и задают `dlq-name`.",
+                "source_of_confusion": "Кажется, что обработка ошибок «из коробки» включает и DLQ.",
+                "if_it_were_true": "Тогда сбойные сообщения автоматически уходили бы в DLQ, но без флага они ретраятся.",
+                "how_it_should_be": "DLQ включают явно через `enable-dlq` в consumer-настройках binding."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Добавляют `spring-cloud-starter-stream-kafka`, объявляют бины-функции (`Supplier` — producer, `Function` — processor, `Consumer` — consumer) и регистрируют их в `spring.cloud.function.definition`. Привязку задают в `spring.cloud.stream.bindings` по соглашению `<имя>-in-0`/`<имя>-out-0` (destination = topic, group = consumer group). Специфику `Kafka` (`brokers`, `replication-factor`, DLQ через `enable-dlq`/`dlq-name`) настраивают в `spring.cloud.stream.kafka`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Имя бина определяет имя binding по соглашению: для `enrichOrder` входной канал — `enrichOrder-in-0`. Активные функции перечисляют в `function.definition`.",
+                "example": "`Function<OrderEvent, EnrichedOrderEvent> enrichOrder` с `enrichOrder-in-0.destination: orders-topic` и `enrichOrder-out-0.destination: enriched-orders-topic`.",
+                "when_to_apply": "Настраивают при подключении event-driven сервиса к `Kafka` через `Stream`.",
+                "edge_cases": "DLQ включают через `consumer.enable-dlq: true`; иначе «ядовитые» сообщения зацикливают обработку.",
+                "related": "[[spring-cloud-interview#Q27]] что такое `Stream`; [[spring-cloud-interview#Q41]] функциональная модель; [[spring-cloud-interview#Q9]] `Spring Cloud Bus`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud Commons`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Commons` — базовый модуль с общими абстракциями, которые используют все остальные проекты `Spring Cloud`: `DiscoveryClient` (единый интерфейс service discovery поверх `Eureka`/`Consul`/`K8s`), `ServiceInstance` (модель инстанса), `LoadBalancerClient` (абстракция клиентской балансировки), аннотации `@LoadBalanced` и `@RefreshScope`, а также абстракция `CircuitBreaker`. Благодаря Commons код приложения не привязан к конкретной реализации discovery или CB.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это слой абстракций: вы программируете против `DiscoveryClient`, а под капотом может быть `Eureka` или `Consul`. Сменить реализацию можно заменой стартера без правки бизнес-кода.",
+                "example": "`discoveryClient.getInstances(\"order-service\")` работает одинаково и с `Eureka`, и с `Consul`, и с `K8s`.",
+                "when_to_apply": "Используют, когда нужен код, не зависящий от конкретного провайдера discovery/балансировки.",
+                "edge_cases": "Commons — только абстракции; без стартера конкретной реализации `DiscoveryClient` будет no-op/пустым.",
+                "related": "[[spring-cloud-interview#Q10]] `Eureka`; [[spring-cloud-interview#Q19]] `LoadBalancer`; [[spring-cloud-interview#Q43]] абстракция `CircuitBreaker`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud Commons` — это сам `Eureka Server`: он хранит реестр и обслуживает регистрацию инстансов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Commons — это набор абстракций (интерфейсов), а не реестр; `Eureka` — отдельная конкретная реализация поверх них.",
+                "source_of_confusion": "Наличие `DiscoveryClient` в Commons путают с самим сервером реестра.",
+                "if_it_were_true": "Тогда не нужен был бы стартер `eureka-server`, но реестр поднимает именно он.",
+                "how_it_should_be": "Commons даёт интерфейсы; реестр — это `Eureka`/`Consul`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud Commons` содержит готовую реализацию `DiscoveryClient`, поэтому стартер `Eureka`/`Consul` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Commons даёт только интерфейс `DiscoveryClient`; рабочую реализацию приносит стартер `Eureka`/`Consul`/`K8s`.",
+                "source_of_confusion": "Наличие интерфейса в Commons принимают за готовую реализацию.",
+                "if_it_were_true": "Тогда discovery работал бы без провайдера, но без стартера `getInstances` пуст.",
+                "how_it_should_be": "Реализацию `DiscoveryClient` подключает конкретный стартер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Аннотации `@LoadBalanced` и `@RefreshScope` определены в `Spring Boot`, а не в `Spring Cloud Commons`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@LoadBalanced` и `@RefreshScope` — это абстракции из `Spring Cloud Commons`, а не из ядра `Spring Boot`.",
+                "source_of_confusion": "Они используются как обычные Spring-аннотации, и происхождение путают.",
+                "if_it_were_true": "Тогда они работали бы в чистом `Spring Boot` без Cloud, но это не так.",
+                "how_it_should_be": "Эти аннотации принадлежат `Spring Cloud Commons`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud Netflix` и какие компоненты устарели?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `Spring Cloud Netflix` сегодня активны все исходные компоненты — `Eureka`, `Ribbon`, `Hystrix`, `Zuul` и `Feign`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Активен только `Eureka`; `Ribbon`/`Hystrix`/`Zuul` удалены в `2022.0`, а `Feign` перенесён в `OpenFeign`.",
+                "source_of_confusion": "Исторический полный состав Netflix-стека помнят как актуальный.",
+                "if_it_were_true": "Тогда их стартеры были бы в текущем BOM, но они оттуда удалены.",
+                "how_it_should_be": "Из Netflix-стека активен лишь `Eureka`; остальное заменено."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud Netflix` — интеграция библиотек Netflix OSS со `Spring Cloud`. Изначально включал `Eureka`, `Ribbon`, `Hystrix`, `Zuul`, `Feign`. На текущий момент активен только `Eureka`; `Ribbon` (→ `Spring Cloud LoadBalancer`), `Hystrix` (→ `Resilience4j`), `Zuul` (→ `Spring Cloud Gateway`) удалены в `2022.0`; `Feign` перенесён в `Spring Cloud OpenFeign`; `Archaius` и `Turbine` тоже удалены. На собеседовании важно знать и старые, и новые компоненты — много legacy-систем ещё на `Hystrix`/`Ribbon`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Из Netflix-стека «выжил» только `Eureka`. Остальное заменено активно поддерживаемыми проектами. Это типовая тема миграции legacy-проектов на актуальный `Spring Cloud`.",
+                "example": "Миграция меняет стартеры: `netflix-ribbon`→`loadbalancer`, `netflix-hystrix`→`circuitbreaker-resilience4j`, `netflix-zuul`→`gateway`.",
+                "when_to_apply": "Знание нужно при поддержке legacy-систем и планировании их миграции на `Spring Boot 3`.",
+                "edge_cases": "Удалённые компоненты нельзя использовать на `Spring Boot 3`; их остатки в classpath ломают сборку/автоконфигурацию.",
+                "related": "[[spring-cloud-interview#Q2]] компоненты; [[spring-cloud-interview#Q19]] `LoadBalancer` вместо `Ribbon`; [[spring-cloud-interview#Q22]] `Resilience4j` вместо `Hystrix`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Zuul` из `Spring Cloud Netflix` был заменён на `Spring Cloud LoadBalancer`, а `Ribbon` — на `Spring Cloud Gateway`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Замены перепутаны: `Zuul` → `Spring Cloud Gateway`, а `Ribbon` → `Spring Cloud LoadBalancer`.",
+                "source_of_confusion": "Несколько замен происходили одновременно, и их сопоставляют неверно.",
+                "if_it_were_true": "Тогда `LoadBalancer` маршрутизировал бы HTTP как Gateway, но он лишь балансирует.",
+                "how_it_should_be": "`Zuul`→`Gateway` (маршрутизация); `Ribbon`→`LoadBalancer` (балансировка)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Eureka`, как и `Ribbon` с `Hystrix`, удалён в `2022.0` и больше не рекомендуется для новых проектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Eureka` остаётся активным и рекомендуемым; удалены `Ribbon`, `Hystrix`, `Zuul`, но не `Eureka`.",
+                "source_of_confusion": "Все компоненты родом из Netflix-стека, и судьбу `Eureka` приравнивают к остальным.",
+                "if_it_were_true": "Тогда не было бы стартера `netflix-eureka-client`, но он актуален.",
+                "how_it_should_be": "`Eureka` живой; deprecated — `Ribbon`/`Hystrix`/`Zuul`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `Retry` и `Bulkhead` через `Resilience4j` в `Spring Cloud`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Retry` в `Resilience4j` по умолчанию повторяет любые исключения, включая бизнес-ошибки валидации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Повторяемые типы задают в `retry-exceptions`, а бизнес-ошибки кладут в `ignore-exceptions`, чтобы их не повторять.",
+                "source_of_confusion": "Кажется, что retry «слепо» повторяет всё подряд.",
+                "if_it_were_true": "Тогда невалидный платёж повторялся бы трижды зря, но `ignore-exceptions` это отсекает.",
+                "how_it_should_be": "Повторяют только перечисленные транзиентные исключения; бизнес-ошибки игнорируют."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Bulkhead` увеличивает число параллельных вызовов до максимума, чтобы ускорить обработку под нагрузкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Bulkhead` наоборот ограничивает параллелизм (`max-concurrent-calls`), изолируя ресурсы, а не наращивая их.",
+                "source_of_confusion": "Кажется, что паттерн про увеличение пропускной способности.",
+                "if_it_were_true": "Тогда `max-concurrent-calls` поднимал бы лимит динамически, но он его ограничивает.",
+                "how_it_should_be": "`Bulkhead` ставит потолок одновременных вызовов для изоляции ресурсов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Resilience4j` даёт помимо CB паттерны `Retry` (повтор вызова) и `Bulkhead` (ограничение параллелизма). `Retry` настраивают в `resilience4j.retry.instances` (`max-attempts`, `wait-duration`, `retry-exceptions`/`ignore-exceptions`), `Bulkhead` — в `resilience4j.bulkhead` (`max-concurrent-calls`, `max-wait-duration`) или `thread-pool-bulkhead`. В коде ставят `@Retry`, `@Bulkhead`, `@CircuitBreaker`. Порядок применения: `Bulkhead` → `TimeLimiter` → `CircuitBreaker` → `Retry` → `RateLimiter`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Bulkhead` изолирует ресурсы: ограничивает число одновременных вызовов, чтобы один зависший сервис не съел все потоки. `Retry` повторяет лишь повторяемые ошибки, бизнес-ошибки исключают.",
+                "example": "`paymentService`: `retry.max-attempts: 3`, `wait-duration: 500ms` и `bulkhead.max-concurrent-calls: 10` на методе `processPayment`.",
+                "when_to_apply": "`Retry` — для транзиентных сбоев (сеть, таймаут); `Bulkhead` — чтобы ограничить нагрузку на нестабильную зависимость.",
+                "edge_cases": "Бизнес-ошибки кладут в `ignore-exceptions`, иначе `Retry` повторяет заведомо неуспешный вызов; неверный порядок аннотаций даёт неожиданное поведение.",
+                "related": "[[spring-cloud-interview#Q20]] что такое CB; [[spring-cloud-interview#Q21]] настройка CB; [[spring-cloud-interview#Q22]] `Resilience4j` vs `Hystrix`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Порядок аннотаций `Resilience4j` не имеет значения — `Retry`, `Bulkhead` и `CircuitBreaker` применяются произвольно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок фиксирован: `Bulkhead` → `TimeLimiter` → `CircuitBreaker` → `Retry` → `RateLimiter`, и он влияет на поведение.",
+                "source_of_confusion": "Кажется, что независимые аннотации работают изолированно.",
+                "if_it_were_true": "Тогда retry поверх CB и под CB вели бы себя одинаково, но это не так.",
+                "how_it_should_be": "Порядок задан и важен; при необходимости его уточняют через `@Order`/программный API."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `Consul` как Service Discovery в `Spring Cloud`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Consul` — это AP-система с eventual consistency, точно как `Eureka`, и не использует консенсус.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Consul` — CP-система с Raft-консенсусом; eventual consistency без консенсуса — это модель `Eureka`.",
+                "source_of_confusion": "Обе системы — реестры сервисов, и их CAP-модели смешивают.",
+                "if_it_were_true": "Тогда `Consul` отдавал бы реестр при любом разделе сети, но без кворума он блокирует запись.",
+                "how_it_should_be": "`Consul` — CP (Raft); AP — это `Eureka`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Consul` health-check клиентский: сам сервис шлёт heartbeat агенту, как в `Eureka`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Consul` health-check серверный — агент сам опрашивает `health-check-path` сервиса; heartbeat от клиента — модель `Eureka`.",
+                "source_of_confusion": "Модель проверки здоровья из `Eureka` переносят на `Consul`.",
+                "if_it_were_true": "Тогда настройка `health-check-path` была бы лишней, но агент использует именно её.",
+                "how_it_should_be": "`Consul` опрашивает сервисы сам; heartbeat-модель — у `Eureka`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Consul` не умеет хранить конфигурацию и не может заменить `Config Server` — только discovery.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Consul` есть встроенный KV-store, и через `consul-config` он работает как источник конфигурации.",
+                "source_of_confusion": "Сравнение только по discovery упускает KV-возможности `Consul`.",
+                "if_it_were_true": "Тогда не было бы стартера `spring-cloud-starter-consul-config`, но он существует.",
+                "how_it_should_be": "`Consul` через KV заменяет и `Config Server`, не только discovery."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`HashiCorp Consul` — альтернатива `Eureka`: подключают `spring-cloud-starter-consul-discovery` (и `-config`), указывают адрес агента (`spring.cloud.consul.host/port`) и параметры регистрации (`register`, `health-check-path`, `health-check-interval`). В отличие от `Eureka`, `Consul` — CP (Raft-консенсус), использует серверный health-check (агент опрашивает сервисы), имеет встроенный KV-store, DNS и service mesh (Connect). Может выступать и как Config-хранилище через KV.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевые отличия от `Eureka` — консистентность (CP vs AP) и серверная модель health-check. `Consul` берут, когда нужны строгая консистентность реестра, KV-store, DNS или polyglot.",
+                "example": "Сервис регистрируется в `Consul` с `health-check-path: /actuator/health`; агент сам периодически опрашивает этот endpoint.",
+                "when_to_apply": "Выбирают вместо `Eureka` при нужде в CP, KV-store, DNS, multi-DC или не только Java-сервисах.",
+                "edge_cases": "Как CP-система `Consul` требует кворума: при потере большинства узлов записи в реестр блокируются.",
+                "related": "[[spring-cloud-interview#Q10]] `Eureka`; [[spring-cloud-interview#Q13]] `Eureka` vs `Consul`; [[spring-cloud-interview#Q7]] `Config Server`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить rate limiting в `Spring Cloud Gateway`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Rate limiting в Gateway делают фильтром `RequestRateLimiter`, который по умолчанию использует `Redis` и алгоритм Token Bucket. Подключают `spring-boot-starter-data-redis-reactive`, в маршруте задают `replenishRate` (токенов/сек), `burstCapacity` (макс. токенов), `requestedTokens` и `key-resolver` (Spring-бин, например по API-ключу или IP). При превышении лимита Gateway возвращает `429 Too Many Requests` с заголовками `X-RateLimit-Remaining`/`X-RateLimit-Burst-Capacity`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Redis` хранит счётчики токенов, поэтому лимит общий для всех инстансов Gateway. `KeyResolver` определяет, по какому ключу считать лимит (пользователь, IP, API-ключ).",
+                "example": "`redis-rate-limiter.replenishRate: 10`, `burstCapacity: 20`, `key-resolver: \"#{@userKeyResolver}\"` — 10 запросов/сек с burst до 20 на ключ.",
+                "when_to_apply": "Применяют для защиты downstream-сервисов от перегрузки и злоупотреблений на уровне входа.",
+                "edge_cases": "Без `Redis` распределённый лимит не работает; локальный счётчик в каждом инстансе давал бы суммарный лимит выше заданного.",
+                "related": "[[spring-cloud-interview#Q15]] что такое Gateway; [[spring-cloud-interview#Q16]] маршруты и фильтры; [[spring-cloud-interview#Q38]] Gateway vs `Zuul`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RequestRateLimiter` в Gateway хранит счётчики в памяти каждого инстанса, поэтому `Redis` не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `RequestRateLimiter` использует `Redis` для общего распределённого счётчика между всеми инстансами Gateway.",
+                "source_of_confusion": "Кажется, что счётчик можно держать локально без внешнего хранилища.",
+                "if_it_were_true": "Тогда суммарный лимит превышал бы заданный кратно числу инстансов, но `Redis` его консолидирует.",
+                "how_it_should_be": "Счётчики в `Redis`; локально лимит был бы рассогласован между инстансами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При превышении лимита Gateway возвращает `503 Service Unavailable`, как при сбое downstream-сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При превышении rate limit возвращается `429 Too Many Requests`, а не `503`.",
+                "source_of_confusion": "И rate limit, и сбой выглядят как «сервис недоступен», коды путают.",
+                "if_it_were_true": "Тогда клиент не отличал бы перегрузку от падения сервиса, но `429` явно про лимит.",
+                "how_it_should_be": "Превышение лимита — `429 Too Many Requests`; `503` — про недоступность."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`KeyResolver` задаёт downstream-URL маршрута, а не ключ, по которому считается лимит запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`KeyResolver` вычисляет ключ для лимитирования (пользователь/IP/API-ключ); URL маршрута задаётся в `uri`.",
+                "source_of_confusion": "Термин «resolver» ассоциируют с разрешением адреса, а не ключа лимита.",
+                "if_it_were_true": "Тогда лимит был бы общим без разбивки по клиентам, но `KeyResolver` его как раз дробит.",
+                "how_it_should_be": "`KeyResolver` определяет ключ счётчика; маршрут — это `uri`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как передавать заголовки трассировки между сервисами (propagation)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Заголовки трассировки нужно вручную копировать в каждый исходящий вызов — автоматического propagation в `Spring Cloud` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Micrometer Tracing` добавляет заголовки автоматически в инструментированные Feign/`RestTemplate`/`WebClient`-вызовы.",
+                "source_of_confusion": "Кажется, что прокидывание контекста — ручная работа разработчика.",
+                "if_it_were_true": "Тогда забытый заголовок везде рвал бы трейс, но инструментация делает это сама.",
+                "how_it_should_be": "Propagation автоматический; ручное копирование нужно лишь для неинструментированных клиентов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Контекст трассировки (`traceId`, `spanId`) пробрасывается через HTTP-заголовки при межсервисных вызовах. Форматы: B3 (`X-B3-TraceId`, `X-B3-SpanId`, `X-B3-Sampled` — legacy `Sleuth`) и W3C TraceContext (`traceparent`, `tracestate` — актуальный для `Micrometer Tracing`), плюс Baggage для пользовательских данных. С `Micrometer Tracing` заголовки добавляются автоматически в исходящие запросы Feign/`RestTemplate`/`WebClient`; формат задают через `management.tracing.propagation.type`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Propagation — это то, что склеивает спаны разных сервисов в один трейс: входящий запрос несёт `traceId`, исходящий его прокидывает дальше. Всё это происходит автоматически на инструментированных клиентах.",
+                "example": "Feign-вызов `inventory-service` автоматически добавляет `traceparent`/`X-B3-TraceId`, и спаны склада попадают в тот же трейс.",
+                "when_to_apply": "Важно при настройке сквозной трассировки и выборе формата propagation в гетерогенной системе.",
+                "edge_cases": "Несовпадение форматов (один сервис на B3, другой на W3C) разрывает трейс; формат унифицируют через `propagation.type`.",
+                "related": "[[spring-cloud-interview#Q25]] tracing; [[spring-cloud-interview#Q26]] `Micrometer Tracing`; [[spring-cloud-interview#Q42]] `OpenFeign`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "W3C TraceContext использует заголовки `X-B3-TraceId`/`X-B3-SpanId`, а формат B3 — `traceparent`/`tracestate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Заголовки перепутаны: W3C — это `traceparent`/`tracestate`, а `X-B3-*` — это формат B3.",
+                "source_of_confusion": "Два формата заголовков легко перепутать местами.",
+                "if_it_were_true": "Тогда `propagation.type: w3c` слал бы `X-B3-*`, но он использует `traceparent`.",
+                "how_it_should_be": "W3C — `traceparent`/`tracestate`; B3 — `X-B3-TraceId`/`X-B3-SpanId`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Baggage — это формат экспорта спанов в `Zipkin`, не связанный с передачей пользовательских данных между сервисами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Baggage — это механизм проброса пользовательских данных через контекст трассировки между сервисами, а не формат экспорта.",
+                "source_of_confusion": "Незнакомый термин относят к экспорту, путая с reporter.",
+                "if_it_were_true": "Тогда нельзя было бы протащить `tenantId` сквозь цепочку, но Baggage именно для этого.",
+                "how_it_should_be": "Baggage переносит пользовательские пары ключ-значение по всей трассе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как защитить межсервисные вызовы через `OAuth2` в `Spring Cloud`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для machine-to-machine между сервисами используют `Authorization Code` grant с редиректом пользователя в браузер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для M2M используют `Client Credentials` grant (без пользователя); `Authorization Code` с редиректом — для интерактивного входа пользователя.",
+                "source_of_confusion": "`Authorization Code` — самый известный OAuth2-флоу, его называют по умолчанию.",
+                "if_it_were_true": "Тогда межсервисный вызов требовал бы браузера и пользователя, но они тут отсутствуют.",
+                "how_it_should_be": "M2M — это `Client Credentials`; редирект-флоу — для пользователей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Resource Server валидирует токен, обращаясь к базе данных вызывающего сервиса, а не по `issuer-uri`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Resource Server валидирует JWT по `issuer-uri` auth-сервера (подпись/ключи), а не через БД вызывающего сервиса.",
+                "source_of_confusion": "Кажется, что проверка прав требует похода в чью-то БД.",
+                "if_it_were_true": "Тогда сервисы были бы связаны общей базой, но JWT валидируется по подписи issuer.",
+                "how_it_should_be": "Валидация по `issuer-uri`/JWK-ключам auth-сервера, без обращения к БД клиента."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Стандартный подход — `OAuth2 Client Credentials` grant (machine-to-machine): принимающий сервис настраивают как Resource Server (`spring.security.oauth2.resourceserver.jwt.issuer-uri`), а вызывающий — как OAuth2 Client (`registration` с `client-credentials` grant и `provider.token-uri`). Feign-клиенту добавляют `RequestInterceptor`, который через `OAuth2AuthorizedClientManager` получает токен и кладёт его в заголовок `Authorization`. В `Kubernetes` ту же задачу решают mTLS через service mesh (`Istio`) без правки кода.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сервис-клиент сам получает access token у auth-сервера по своим credentials и прикрепляет его к каждому вызову; resource server валидирует JWT по issuer. Это аутентификация сервиса, не пользователя.",
+                "example": "`order-service` с grant `client_credentials` и scope `inventory:read` шлёт `Authorization: Bearer ...` в `inventory-service`.",
+                "when_to_apply": "Применяют, когда сервисы должны аутентифицировать друг друга без участия пользователя.",
+                "edge_cases": "В service mesh (`Istio` mTLS) аутентификация делается на уровне sidecar — код приложения не меняется.",
+                "related": "[[spring-cloud-interview#Q23]] `OpenFeign`; [[spring-cloud-interview#Q36]] Feign + fallback; [[spring-cloud-interview#Q42]] `OpenFeign`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Токен в Feign-вызов добавляется автоматически без какой-либо конфигурации, как заголовки трассировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OAuth2-токен в Feign кладут явно через `RequestInterceptor` поверх `OAuth2AuthorizedClientManager`; автоматически он не добавляется.",
+                "source_of_confusion": "Автопроброс trace-заголовков переносят на токены авторизации.",
+                "if_it_were_true": "Тогда любой Feign-вызов был бы авторизован сам собой, но это требует настройки.",
+                "how_it_should_be": "Токен добавляет настроенный `RequestInterceptor`; в `K8s` — mTLS на уровне mesh."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `OpenFeign` с Circuit Breaker и Fallback?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Разница между `fallback` и `fallbackFactory` только в синтаксисе — оба одинаково дают доступ к причине сбоя `Throwable`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только `fallbackFactory` получает `Throwable` причины; простой `fallback` причину сбоя не видит.",
+                "source_of_confusion": "Оба задают поведение при сбое, и их считают взаимозаменяемыми.",
+                "if_it_were_true": "Тогда `fallbackFactory` был бы избыточен, но он существует именно ради доступа к причине.",
+                "how_it_should_be": "`fallback` — без причины; `fallbackFactory` — с `Throwable`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Fallback в `@FeignClient` срабатывает даже без `openfeign.circuitbreaker.enabled` — этот флаг отвечает только за метрики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `spring.cloud.openfeign.circuitbreaker.enabled: true` интеграция с CB не активна и fallback не вызывается.",
+                "source_of_confusion": "Наличие поля `fallback` создаёт впечатление, что оно работает само.",
+                "if_it_were_true": "Тогда флаг был бы про метрики, но он включает сам механизм CB/fallback.",
+                "how_it_should_be": "Флаг включает интеграцию с CB; без него fallback не задействуется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Fallback-класс должен наследовать сам `@FeignClient`-интерфейс через `extends`, а не реализовывать его методы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fallback-класс реализует (`implements`) интерфейс клиента и переопределяет его методы заглушками.",
+                "source_of_confusion": "Путают `extends`/`implements` для интерфейса.",
+                "if_it_were_true": "Тогда нельзя было бы реализовать интерфейс, но fallback именно `implements` его.",
+                "how_it_should_be": "Fallback `implements` интерфейс клиента и даёт тела методов-заглушек."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключают `spring-cloud-starter-openfeign` и `spring-cloud-starter-circuitbreaker-resilience4j`, включают интеграцию `spring.cloud.openfeign.circuitbreaker.enabled: true`. В `@FeignClient` указывают `fallback = ...Class` (простая заглушка, реализующая интерфейс клиента) или `fallbackFactory = ...Factory` (даёт доступ к причине сбоя `Throwable`). При сбое/`OPEN` вызывается fallback-реализация. Таймауты задают в `openfeign.client.config.<client>` (`connectTimeout`, `readTimeout`, `loggerLevel`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`fallback` проще, но не знает причину; `fallbackFactory` принимает `Throwable` и позволяет логировать/ветвить логику по типу ошибки. Без `circuitbreaker.enabled: true` fallback не сработает.",
+                "example": "`@FeignClient(name = \"product-service\", fallback = ProductClientFallback.class)`, где fallback возвращает `ProductDto.unavailable(id)`.",
+                "when_to_apply": "Настраивают, когда Feign-вызов должен деградировать корректно (заглушка/кэш) вместо проброса ошибки.",
+                "edge_cases": "`fallback` не видит причину сбоя — для логирования/условной логики берут `fallbackFactory`.",
+                "related": "[[spring-cloud-interview#Q23]] что такое `OpenFeign`; [[spring-cloud-interview#Q24]] Feign + CB; [[spring-cloud-interview#Q20]] Circuit Breaker."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud Contract` и как он помогает при тестировании микросервисов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Contract` — инструмент Consumer-Driven Contract Testing: контракт (Groovy/YAML) описывает ожидаемое взаимодействие, на стороне провайдера из него генерируются тесты (проверяют, что API соответствует контракту), а для потребителя генерируется stub (`WireMock`), который он использует в своих тестах. Это ловит несовместимость API на этапе разработки, а не деплоя, и не требует поднимать все сервисы для интеграционных проверок.",
+              "correct": true,
+              "sections": {
+                "explanation": "Контракт — единый источник правды: провайдер обязан ему соответствовать (генерируемые тесты падают при расхождении), а потребитель тестируется против stub-а, повторяющего контракт. Так совместимость проверяется без живой инфраструктуры.",
+                "example": "Контракт `shouldReturnProduct` описывает `GET /products/1` → 200 с `{id, name, price}`; из него генерится тест провайдера и `WireMock`-stub для потребителя.",
+                "when_to_apply": "Применяют, когда нужно гарантировать API-совместимость между командами без сквозных интеграционных стендов.",
+                "edge_cases": "Если контракт не обновлён под новое поведение API, тесты провайдера всё равно зелёные — контракт надо держать в актуальном состоянии.",
+                "related": "[[spring-cloud-interview#Q23]] `OpenFeign`; [[spring-cloud-interview#Q6]] рекомендации (contract testing); [[spring-cloud-interview#Q42]] `OpenFeign`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud Contract` требует поднимать все реальные сервисы целиком, чтобы прогнать интеграционные тесты между ними.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Его смысл как раз в отказе от поднятия всех сервисов: потребитель тестируется против `WireMock`-stub, провайдер — против генерируемых тестов.",
+                "source_of_confusion": "Слово «интеграционные» наводит на мысль о полном поднятии окружения.",
+                "if_it_were_true": "Тогда не нужны были бы stub-ы `WireMock`, но они — ключевая часть подхода.",
+                "how_it_should_be": "Тесты идут против stub/контракта, без живой инфраструктуры."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Spring Cloud Contract` контракт пишет провайдер, а потребитель обязан подстраивать свой код под него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подход Consumer-Driven: контракт исходит от потребностей потребителя, а провайдер обязан ему соответствовать.",
+                "source_of_confusion": "Кажется логичным, что владелец API (провайдер) диктует контракт.",
+                "if_it_were_true": "Тогда подход не назывался бы Consumer-Driven, но он именно так называется.",
+                "how_it_should_be": "Контракт отражает ожидания потребителя; провайдер проверяется на соответствие."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Cloud Contract` генерирует только документацию API и не создаёт ни тестов провайдера, ни stub-ов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он генерирует тесты на стороне провайдера и stub-ы (`WireMock`) для потребителя, а не просто документацию.",
+                "source_of_confusion": "Контракты ассоциируют с OpenAPI-документацией.",
+                "if_it_were_true": "Тогда совместимость не проверялась бы автоматически, но генерируемые тесты её проверяют.",
+                "how_it_should_be": "Из контракта генерятся тесты провайдера и stub потребителя."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`Spring Cloud Gateway` vs `Zuul` — актуальность и ключевые отличия?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Zuul 1.x` полностью поддерживается в `Spring Boot 3` и остаётся рекомендуемым Gateway наравне со `Spring Cloud Gateway`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Zuul 1.x` несовместим со `Spring Boot 3` (Servlet API на `javax`) и находится в maintenance mode; рекомендуется только Gateway.",
+                "source_of_confusion": "Историческая известность `Zuul` создаёт иллюзию актуальности.",
+                "if_it_were_true": "Тогда был бы рабочий стартер `Zuul` под Boot 3, но его нет.",
+                "how_it_should_be": "Для нового — `Spring Cloud Gateway`; `Zuul 1.x` несовместим с Boot 3."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Zuul 1.x` (Netflix) — первое поколение API Gateway: блокирующая модель на Servlet API, ограниченная пулом потоков, без WebSocket и HTTP/2, в maintenance mode и несовместима со `Spring Boot 3` (использует `javax`). `Spring Cloud Gateway` — современная замена: non-blocking на Reactor Netty/WebFlux, высокая пропускная способность, WebSocket и HTTP/2, фильтры `GatewayFilter`+`GlobalFilter`, активная разработка и полная поддержка `Spring Boot 3`. Для новых проектов — только Gateway.",
+              "correct": true,
+              "sections": {
+                "explanation": "Несовместимость `Zuul` со `Spring Boot 3` (jakarta vs javax) делает миграцию на Gateway зачастую обязательной, а не опциональной. Плюс Gateway лучше масштабируется и умеет WebSocket/HTTP/2.",
+                "example": "Маршрут Gateway `Path=/api/orders/**` → `uri: lb://order-service` с фильтрами `StripPrefix` и `CircuitBreaker` — декларативно в YAML или через `RouteLocatorBuilder`.",
+                "when_to_apply": "Сравнение нужно при выборе Gateway для нового проекта или обосновании миграции с `Zuul`.",
+                "edge_cases": "Перенос с `Zuul` требует переписать `ZuulFilter` на `GatewayFilter`/`GlobalFilter` — прямой совместимости нет.",
+                "related": "[[spring-cloud-interview#Q15]] что такое Gateway; [[spring-cloud-interview#Q17]] Gateway vs `Zuul`; [[spring-cloud-interview#Q30]] устаревшие компоненты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud Gateway` блокирующий (Servlet), а `Zuul 1.x` неблокирующий (Netty) — поэтому `Zuul` держит больше соединений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модели перепутаны: Gateway non-blocking на Netty/WebFlux, а `Zuul 1.x` блокирующий на Servlet.",
+                "source_of_confusion": "Модели ввода-вывода двух систем меняют местами.",
+                "if_it_were_true": "Тогда `Zuul` поддерживал бы WebSocket/HTTP/2, но это умеет Gateway.",
+                "how_it_should_be": "Non-blocking — Gateway; блокирующий Servlet — `Zuul 1.x`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Фильтры `ZuulFilter` работают в `Spring Cloud Gateway` без изменений, поэтому миграция не требует их переписывания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ZuulFilter` несовместим с Gateway; нужно переписать логику на `GatewayFilter`/`GlobalFilter`.",
+                "source_of_confusion": "Кажется, что фильтры Gateway-ев взаимозаменяемы.",
+                "if_it_were_true": "Тогда миграция была бы простым копированием фильтров, но их API различаются.",
+                "how_it_should_be": "Фильтры переписывают: `ZuulFilter` → `GatewayFilter`/`GlobalFilter`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud Kubernetes` и как он заменяет `Eureka`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Kubernetes` требует, чтобы в кластере дополнительно работал `Eureka Server` — он лишь проксирует к нему.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он заменяет `Eureka` нативным `K8s` discovery (DNS + `Service`); отдельный `Eureka Server` не нужен.",
+                "source_of_confusion": "Кажется, что discovery всегда требует выделенный реестр вроде `Eureka`.",
+                "if_it_were_true": "Тогда смысла в `Spring Cloud Kubernetes` не было бы, но он как раз убирает `Eureka`.",
+                "how_it_should_be": "Discovery идёт через `K8s` API/DNS; `Eureka` не разворачивают."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Конфигурацию `Spring Cloud Kubernetes` берёт только из внешнего `Config Server`, а `ConfigMap` не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он читает конфигурацию из `ConfigMap`/`Secret` напрямую через `K8s` API, заменяя `Config Server`.",
+                "source_of_confusion": "Привычка к `Config Server` как единственному источнику конфига.",
+                "if_it_were_true": "Тогда `spring.cloud.kubernetes.config` был бы не нужен, но он подключает `ConfigMap`.",
+                "how_it_should_be": "Конфиг — из `ConfigMap`/`Secret`; внешний `Config Server` не требуется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud Kubernetes` интегрирует Spring-приложения с нативными механизмами `Kubernetes`, заменяя Netflix-компоненты: вместо `Eureka` — `Kubernetes` DNS + `Service` (`DiscoveryClient` работает через `K8s` API, находя поды по labels), вместо `Config Server` — `ConfigMap`/`Secret`. Подключают стартер (`spring-cloud-starter-kubernetes-fabric8-all`), включают `spring.cloud.kubernetes.discovery`/`config`, а для доступа к `K8s` API настраивают RBAC (`ServiceAccount` с правами читать `services`/`endpoints`/`configmaps`).",
+              "correct": true,
+              "sections": {
+                "explanation": "В кластере уже есть встроенный discovery (DNS) и хранилище конфигов (`ConfigMap`), поэтому `Eureka`/`Config Server` становятся избыточны. `Spring Cloud Kubernetes` мостит `DiscoveryClient` на `K8s` API.",
+                "example": "`discoveryClient.getInstances(\"order-service\")` возвращает поды из `K8s`; вызов идёт через kube-dns по `http://order-service/...`.",
+                "when_to_apply": "Берут, когда приложения уже работают в `Kubernetes` и хочется убрать дублирующую инфраструктуру (`Eureka`/`Config Server`).",
+                "edge_cases": "Без корректного RBAC `ServiceAccount` приложение не сможет читать `K8s` API — discovery и config-загрузка упадут.",
+                "related": "[[spring-cloud-interview#Q4]] `Spring Cloud` vs `Kubernetes`; [[spring-cloud-interview#Q10]] `Eureka`; [[spring-cloud-interview#Q7]] `Config Server`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для работы `Spring Cloud Kubernetes` не нужны никакие права в кластере — он читает `K8s` API анонимно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Доступ к `K8s` API требует RBAC: `ServiceAccount` с правами читать `services`/`endpoints`/`configmaps`.",
+                "source_of_confusion": "Кажется, что приложение в кластере имеет доступ к API по умолчанию без настройки.",
+                "if_it_were_true": "Тогда RBAC-манифесты были бы лишними, но без них API возвращает 403.",
+                "how_it_should_be": "Нужен `ServiceAccount` с RBAC-правами на нужные ресурсы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обновить конфигурацию без рестарта — `@RefreshScope` и `/actuator/refresh`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@RefreshScope` пересоздаёт бин автоматически каждые несколько секунд, поэтому вызывать `/actuator/refresh` не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бин с `@RefreshScope` пересоздаётся не по таймеру, а по триггеру `/actuator/refresh` (или событию `Bus`).",
+                "source_of_confusion": "Кажется, что «refresh scope» подразумевает фоновый периодический рефреш.",
+                "if_it_were_true": "Тогда endpoint `/actuator/refresh` был бы лишним, но именно он запускает обновление.",
+                "how_it_should_be": "Пересоздание триггерится `/actuator/refresh`/`busrefresh`, а не таймером."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`/actuator/refresh` перезапускает весь JVM-процесс приложения, чтобы применить новую конфигурацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`/actuator/refresh` не перезапускает процесс — он лишь пересоздаёт `@RefreshScope`-бины внутри живого приложения.",
+                "source_of_confusion": "Кажется, что применить конфиг можно только полным рестартом.",
+                "if_it_were_true": "Тогда смысл refresh без рестарта терялся бы, но он как раз про обновление на лету.",
+                "how_it_should_be": "Процесс продолжает работать; обновляются только помеченные бины."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один вызов `/actuator/refresh` обновляет сразу все инстансы сервиса, поэтому `Spring Cloud Bus` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`/actuator/refresh` обновляет только тот инстанс, на котором вызван; для всех сразу нужен `Bus` и `busrefresh`.",
+                "source_of_confusion": "`refresh` и `busrefresh` путают по похожим именам.",
+                "if_it_were_true": "Тогда `Spring Cloud Bus` был бы избыточен, но он существует именно для массового обновления.",
+                "how_it_should_be": "`refresh` — один инстанс; `busrefresh` через `Bus` — все инстансы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Проблема: при изменении конфигурации в `Config Server` приложение продолжает использовать закешированные значения до перезапуска. Решение: бины с `@RefreshScope` пересоздаются при вызове `POST /actuator/refresh` (нужно открыть endpoint в `management.endpoints`), подхватывая новые значения. Для массового обновления всех инстансов используют `Spring Cloud Bus` и один вызов `POST /actuator/busrefresh`. Ограничения: `@Scheduled`-бины не перезапускаются, вызовы «в полёте» могут завершиться по старой конфигурации.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@RefreshScope` оборачивает бин в прокси, который при refresh пересоздаёт его с новыми значениями `@Value`/`@ConfigurationProperties`. `/actuator/refresh` обновляет один инстанс, `busrefresh` — все сразу.",
+                "example": "`POST /actuator/refresh` возвращает список изменённых ключей, например `[\"feature.new-ui.enabled\", \"app.max-connections\"]`.",
+                "when_to_apply": "Применяют для горячего изменения feature-флагов и настроек без простоя сервиса.",
+                "edge_cases": "`@RefreshScope` не работает для `@Bean` в `@Configuration` без аннотации на самом классе; `@Scheduled`-бины refresh не перезапускает.",
+                "related": "[[spring-cloud-interview#Q7]] `Config Server`; [[spring-cloud-interview#Q8]] настройка клиента; [[spring-cloud-interview#Q9]] `Spring Cloud Bus`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена модель программирования `Spring Cloud Stream` на основе функций?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "С версии 3.x `Spring Cloud Stream` использует функциональную модель из `java.util.function.*`: бин `Supplier<T>` — источник (producer), `Function<T,R>` — трансформация (processor), `Consumer<T>` — потребитель. Бины объявляют как `@Bean`, активные функции перечисляют в `spring.cloud.function.definition`, а binding именуются по соглашению `<имя>-in-0`/`<имя>-out-0`. Поддерживаются композиция через `|` (`f1|f2`) и реактивные сигнатуры (`Function<Flux<T>, Flux<R>>`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместо аннотаций `@StreamListener` обработчики — это обычные функциональные бины, что упрощает тестирование и композицию. Привязка к топикам — в конфиге, бизнес-логика — в функции.",
+                "example": "`Function<OrderCreatedEvent, OrderConfirmedEvent> orderProcessor` с binding `orderProcessor-in-0.destination: orders.created`.",
+                "when_to_apply": "Используют для event-driven сервисов на актуальном `Spring Cloud Stream` вместо legacy-аннотаций.",
+                "edge_cases": "`Supplier` по умолчанию вызывается по таймеру (polling каждую секунду) — для событийной отправки используют `StreamBridge`.",
+                "related": "[[spring-cloud-interview#Q27]] что такое `Stream`; [[spring-cloud-interview#Q28]] настройка с `Kafka`; [[spring-cloud-interview#Q9]] `Spring Cloud Bus`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Обработчики в актуальном `Spring Cloud Stream` объявляют аннотацией `@StreamListener`, а функциональная модель не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С версии 3.x основная модель — функциональная (`Supplier`/`Function`/`Consumer`); `@StreamListener` устарел.",
+                "source_of_confusion": "Старые примеры на `@StreamListener` всё ещё распространены.",
+                "if_it_were_true": "Тогда `spring.cloud.function.definition` был бы не нужен, но он активирует функции.",
+                "how_it_should_be": "Обработчики — функциональные бины; `@StreamListener` — legacy."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В функциональной модели роли перепутаны: `Supplier` принимает сообщения, а `Consumer` их генерирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Supplier` — источник (producer), `Consumer` — потребитель; роли строго заданы и не перепутаны.",
+                "source_of_confusion": "Английские термины supplier/consumer интуитивно толкуют наоборот.",
+                "if_it_were_true": "Тогда `Consumer` слал бы сообщения в топик, но он их получает.",
+                "how_it_should_be": "`Supplier` производит, `Function` трансформирует, `Consumer` потребляет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Имена binding (`<имя>-in-0`) задаются полностью произвольно и никак не связаны с именем функции-бина.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имена binding выводятся из имени функции по соглашению `<functionName>-in-0`/`-out-0`.",
+                "source_of_confusion": "Кажется, что binding — отдельная произвольная сущность.",
+                "if_it_were_true": "Тогда конфиг не находил бы канал функции, но соглашение их связывает.",
+                "how_it_should_be": "Binding именуется по имени функции и индексу канала."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud OpenFeign` и как он работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`OpenFeign` генерирует серверные контроллеры из интерфейса — он поднимает HTTP-эндпоинты, а не вызывает чужие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OpenFeign` генерирует HTTP-клиент (исходящие вызовы); серверные эндпоинты создаёт `@RestController`.",
+                "source_of_confusion": "Одинаковые аннотации `@GetMapping` маскируют направление вызова.",
+                "if_it_were_true": "Тогда `@FeignClient` принимал бы запросы, но он их отправляет.",
+                "how_it_should_be": "Feign — клиент для исходящих вызовов; сервер — `@RestController`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud OpenFeign` — декларативный HTTP-клиент: описывают интерфейс с аннотациями (`@FeignClient`, `@GetMapping`/`@PostMapping`), а Spring на старте генерирует его реализацию (через `@EnableFeignClients`). `name` в `@FeignClient` резолвится через discovery/`LoadBalancer` (опционально фиксируют `url`), поддерживаются `fallback`/`fallbackFactory`, кастомная конфигурация (`RequestInterceptor`, `Retryer`, `loggerLevel`) и интеграция с Circuit Breaker. Клиент инжектят как обычный Spring-бин и вызывают как локальный метод.",
+              "correct": true,
+              "sections": {
+                "explanation": "Под капотом Feign превращает вызов метода в HTTP-запрос по аннотациям, добавляет балансировку и (при включении) Circuit Breaker. Разработчик пишет только интерфейс — реализация генерируется.",
+                "example": "`@FeignClient(name = \"product-service\", fallback = ProductClientFallback.class)` с `@GetMapping(\"/products/{id}\")`; вызов `productClient.getProduct(id)` идёт по HTTP.",
+                "when_to_apply": "Берут для типобезопасных межсервисных HTTP-вызовов вместо ручного `RestTemplate`/`WebClient`.",
+                "edge_cases": "Для активации нужен `@EnableFeignClients` (с `basePackages`); без него интерфейсы не превращаются в бины.",
+                "related": "[[spring-cloud-interview#Q23]] что такое `OpenFeign`; [[spring-cloud-interview#Q24]] Feign + CB; [[spring-cloud-interview#Q36]] Feign + fallback."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы активировать Feign-клиенты, не нужна аннотация `@EnableFeignClients` — интерфейсы становятся бинами сами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Активация требует `@EnableFeignClients` (часто с `basePackages`); без неё `@FeignClient`-интерфейсы не сканируются.",
+                "source_of_confusion": "Автоконфигурация Spring Boot создаёт впечатление, что всё включается само.",
+                "if_it_were_true": "Тогда инжект `ProductClient` всегда работал бы, но без `@EnableFeignClients` бин не создан.",
+                "how_it_should_be": "Нужен `@EnableFeignClients`, указывающий пакеты с клиентами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `@FeignClient` поле `name` обязано быть полным URL с протоколом и портом, иначе вызов не пройдёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`name` — логическое имя сервиса для discovery/`LoadBalancer`; полный URL задают опционально через `url`.",
+                "source_of_confusion": "Кажется, что HTTP-клиенту нужен явный адрес назначения.",
+                "if_it_were_true": "Тогда смена инстансов ломала бы клиент, но Feign резолвит имя через реестр.",
+                "how_it_should_be": "`name` — имя для discovery; явный `url` нужен лишь без реестра."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 43,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring Cloud Circuit Breaker` — абстракция над `Resilience4j` и `Sentinel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Circuit Breaker` жёстко привязан к `Hystrix` и не работает с `Resilience4j` или `Sentinel`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это абстракция над несколькими реализациями (`Resilience4j`, `Sentinel`, `Spring Retry`); по умолчанию — `Resilience4j`, а `Hystrix` устарел.",
+                "source_of_confusion": "Исторически CB-абстракция ассоциируется с `Hystrix` от Netflix.",
+                "if_it_were_true": "Тогда нельзя было бы выбрать `Sentinel`, но абстракция это позволяет.",
+                "how_it_should_be": "Это нейтральный API над разными реализациями; дефолт — `Resilience4j`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CircuitBreakerFactory` — это то же самое, что аннотация `@CircuitBreaker` из `Resilience4j`, просто другой синтаксис.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@CircuitBreaker` — прямой API `Resilience4j`; `CircuitBreakerFactory` — нейтральная абстракция `Spring Cloud` над любой реализацией.",
+                "source_of_confusion": "Оба про Circuit Breaker, и их считают синонимами.",
+                "if_it_were_true": "Тогда смена реализации затрагивала бы код с `@CircuitBreaker`, но `Factory` от неё развязан.",
+                "how_it_should_be": "`Factory` — реализация-независимый API; `@CircuitBreaker` привязан к `Resilience4j`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud Circuit Breaker` — единый API (`CircuitBreakerFactory`) поверх разных реализаций: `Resilience4j`, `Sentinel`, `Spring Retry`. Код не привязан к конкретной библиотеке: `cb.run(() -> call(), throwable -> fallback())` оборачивает защищённый вызов и fallback. Настройку делают через `Customizer<Resilience4JCircuitBreakerFactory>` (`configureDefault`/`configure`), интегрируется с `Spring Cloud Gateway` (фильтр `CircuitBreaker`). По умолчанию используется `Resilience4j` (`Hystrix` устарел).",
+              "correct": true,
+              "sections": {
+                "explanation": "Это слой абстракции, как `DiscoveryClient` для discovery: можно сменить `Resilience4j` на `Sentinel` без правки бизнес-кода. `CircuitBreakerFactory.create(name)` даёт именованный CB с fallback в `run`.",
+                "example": "`circuitBreakerFactory.create(\"product-service\").run(() -> productClient.getProduct(id), t -> ProductDto.empty(id))`.",
+                "when_to_apply": "Берут, когда нужен программный CB без жёсткой привязки к конкретной библиотеке отказоустойчивости.",
+                "edge_cases": "Аннотация `@CircuitBreaker` — это прямой API `Resilience4j`; `CircuitBreakerFactory` — нейтральная абстракция `Spring Cloud`, их не путают.",
+                "related": "[[spring-cloud-interview#Q20]] что такое CB; [[spring-cloud-interview#Q21]] настройка `Resilience4j`; [[spring-cloud-interview#Q22]] `Resilience4j` vs `Hystrix`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Cloud Circuit Breaker` нельзя использовать в `Spring Cloud Gateway` — он работает только в обычных сервисах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway интегрирован с абстракцией через фильтр `CircuitBreaker` (с `fallbackUri`), так что CB применяется и на уровне маршрута.",
+                "source_of_confusion": "Программный `CircuitBreakerFactory` ассоциируют только с кодом сервиса.",
+                "if_it_were_true": "Тогда у Gateway не было бы фильтра `CircuitBreaker`, но он есть.",
+                "how_it_should_be": "Gateway применяет CB через фильтр маршрута поверх той же абстракции."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

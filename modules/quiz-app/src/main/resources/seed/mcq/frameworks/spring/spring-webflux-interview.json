@@ -1,0 +1,2585 @@
+{
+  "topic_slug": "spring-webflux-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Project Reactor` и `Spring WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Project Reactor` — самостоятельная реактивная библиотека (`Flux`, `Mono`, операторы), реализующая контракт `Reactive Streams`; `Spring WebFlux` — модуль `Spring Framework`, который использует Reactor и приносит неблокирующий ввод-вывод в веб-слой, обрабатывая много одновременных запросов малым числом потоков.",
+              "correct": true,
+              "sections": {
+                "explanation": "Reactor даёт типы данных и операторы для асинхронных потоков, а WebFlux встраивает их в обработку HTTP: контроллеры возвращают `Mono`/`Flux`, под капотом работает `Netty` с event loop.",
+                "example": "Контроллер `@GetMapping(\"/users/{id}\") Mono<User> get(...)` возвращает `Mono` — WebFlux подписывается на него и пишет ответ без блокировки потока.",
+                "when_to_apply": "Reactor берут везде, где нужны реактивные потоки; WebFlux — именно для веб-приложений с высокой конкуренцией запросов.",
+                "edge_cases": "Внутри реактивной цепочки нельзя блокировать (`.block()`, JDBC) — это останавливает event loop и сводит выигрыш на нет.",
+                "related": "[[spring-webflux-interview#Q2]] отличие Reactor от WebFlux; [[spring-webflux-interview#Q9]] что такое Flux и Mono; [[spring-webflux-interview#Q24]] когда выбирать WebFlux."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Project Reactor` и `Spring WebFlux` — это одно и то же: два названия одного модуля Spring для реактивного веба.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные вещи: Reactor — отдельная библиотека реактивных типов, WebFlux — модуль Spring, который её использует в веб-слое.",
+                "source_of_confusion": "Их почти всегда упоминают вместе, поэтому кажется, что это синонимы.",
+                "if_it_were_true": "Тогда Reactor нельзя было бы применить вне Spring, но `Flux`/`Mono` работают и в обычном Java-приложении.",
+                "how_it_should_be": "Reactor — библиотека потоков, WebFlux — веб-модуль поверх неё; это два разных артефакта."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring WebFlux` — это блокирующий веб-фреймворк, который параллелит запросы за счёт большого пула потоков, как `Spring MVC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebFlux неблокирующий: он строится на event loop и обслуживает тысячи соединений малым числом потоков, а не пулом thread-per-request.",
+                "source_of_confusion": "Привычка к модели thread-per-request из `Spring MVC` переносится на WebFlux.",
+                "if_it_were_true": "Тогда WebFlux не давал бы преимущества при высокой конкуренции, но именно ради неблокирующего I/O его и выбирают.",
+                "how_it_should_be": "WebFlux неблокирующий на `Netty`; масштабирование идёт за счёт event loop, а не роста числа потоков."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Project Reactor` — это HTTP-сервер, а `Spring WebFlux` — клиентская библиотека для вызова внешних API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor — библиотека реактивных типов и операторов, а не сервер; WebFlux — это серверный веб-модуль, а HTTP-клиент в нём — `WebClient`.",
+                "source_of_confusion": "Названия звучат абстрактно, поэтому роли сервера и клиента легко перепутать.",
+                "if_it_were_true": "Тогда Reactor слушал бы порт и принимал запросы, но он лишь предоставляет `Flux`/`Mono` и операторы.",
+                "how_it_should_be": "Reactor — потоки и операторы; WebFlux — веб-стек; исходящие вызовы делает `WebClient`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём отличие между `Project Reactor` и `Spring WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Отличие в том, что `Reactor` работает только с `Mono`, а `Spring WebFlux` — только с `Flux`; они дополняют друг друга по типам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба типа — `Mono` и `Flux` — принадлежат Reactor; WebFlux лишь использует их, разделения по типам между библиотеками нет.",
+                "source_of_confusion": "Кажется логичным «поделить» два главных типа между двумя технологиями.",
+                "if_it_were_true": "Тогда контроллер WebFlux не мог бы вернуть `Mono`, но `Mono<User>` — типичный возврат эндпоинта.",
+                "how_it_should_be": "И `Mono`, и `Flux` — это Reactor; WebFlux работает с обоими."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Project Reactor` — самостоятельная реактивная библиотека (`Flux`, `Mono`, операторы, `Reactive Streams`), применимая в любом Java-коде; `Spring WebFlux` — модуль `Spring`, который использует Reactor для веба: аннотированные контроллеры (`@RestController` с возвратом `Mono`/`Flux`) или функциональные маршруты (`RouterFunction`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Reactor отвечает за сами потоки и операторы и не зависит от Spring; WebFlux — это веб-обвязка вокруг Reactor: маршрутизация, привязка тела запроса, интеграция с контекстом Spring.",
+                "example": "В батч-задаче без веба можно использовать `Flux.fromIterable(list).flatMap(...)` — это чистый Reactor; а `@GetMapping Flux<Order> orders()` — это уже WebFlux.",
+                "when_to_apply": "Reactor — критерий «нужны асинхронные потоки в любом коде»; WebFlux — критерий «строю реактивное веб-приложение на Spring».",
+                "edge_cases": "Reactor можно использовать и поверх Spring MVC (например, в сервисном слое), но без WebFlux запрос на уровне HTTP всё равно обрабатывается блокирующим Servlet-стеком.",
+                "related": "[[spring-webflux-interview#Q1]] что это такое; [[spring-webflux-interview#Q3]] архитектура Reactor; [[spring-webflux-interview#Q4]] архитектура WebFlux."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Reactor` зависит от `Spring`, поэтому его нельзя подключить без `Spring Boot`, тогда как `WebFlux` автономен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: Reactor — независимая библиотека без зависимости от Spring, а WebFlux — модуль Spring, который зависит от Reactor.",
+                "source_of_confusion": "Их часто видят вместе в Spring-проектах, отсюда вывод о зависимости Reactor от Spring.",
+                "if_it_were_true": "Тогда `reactor-core` тянул бы Spring как зависимость, но он самодостаточен и используется вне Spring.",
+                "how_it_should_be": "Reactor не зависит от Spring; зависимость обратная — WebFlux требует Reactor."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`WebFlux` поддерживает только функциональные маршруты `RouterFunction`, а аннотации `@RestController` в нём недоступны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebFlux поддерживает обе модели: аннотированные контроллеры (`@RestController`) и функциональные `RouterFunction`.",
+                "source_of_confusion": "Функциональный стиль активно продвигают как «новый», отсюда мысль, что он единственный.",
+                "if_it_were_true": "Тогда привычные `@GetMapping`-контроллеры не работали бы в WebFlux, но они полностью поддержаны.",
+                "how_it_should_be": "Доступны обе модели; выбор между ними — вопрос стиля, а не возможностей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова архитектура `Project Reactor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Архитектура `Reactor` основана на pull-модели как у `Iterator`: подписчик сам вызывает `next()` и забирает каждый элемент синхронно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor использует push-модель с backpressure: `Publisher` шлёт `onNext` асинхронно, но не больше, чем подписчик запросил через `request(n)`.",
+                "source_of_confusion": "Аналогия с `Iterator`/`Stream` из коллекций наводит на чистый pull.",
+                "if_it_were_true": "Тогда не было бы асинхронности — поток блокировался бы на каждом `next()`, но Reactor неблокирующий.",
+                "how_it_should_be": "Это push с управлением спросом (request-driven), а не синхронный pull."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Reactor` нет понятия `Subscription`; `Publisher` и `Subscriber` общаются напрямую, без управления объёмом данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Subscription` — ключевой элемент контракта: именно через неё `Subscriber` делает `request(n)` и `cancel()`, обеспечивая backpressure.",
+                "source_of_confusion": "В простом коде `subscribe(System.out::println)` `Subscription` скрыта, поэтому кажется лишней.",
+                "if_it_were_true": "Тогда быстрый publisher завалил бы медленного подписчика, но `request(n)` это предотвращает.",
+                "how_it_should_be": "`Subscription` есть всегда; через неё реализуется управление спросом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В основе — контракт `Reactive Streams`: `Publisher` (источник; в Reactor это `Flux`/`Mono`), `Subscriber` (потребитель), `Subscription` (управление потоком через `request(n)`) и `Processor`; подписка идёт через `subscribe()`, данные передаются по запросу (backpressure), а Reactor добавляет богатый набор операторов поверх этого контракта.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Publisher` не шлёт данные, пока `Subscriber` не запросит их через `Subscription.request(n)`. Сигналы — `onSubscribe`, `onNext`, `onComplete`/`onError`. Reactor реализует этот контракт и слои `reactor-core`, операторы, `reactor-netty`.",
+                "example": "`Flux.range(1, 100).subscribe(sub)` — при подписке Reactor вызывает `onSubscribe`, подписчик делает `request(n)`, и только тогда приходят `onNext`.",
+                "when_to_apply": "Понимание контракта нужно при отладке backpressure, написании кастомных операторов и интеграции с `java.util.concurrent.Flow` из JDK 9+.",
+                "edge_cases": "`Reactive Streams` API включён в JDK как `Flow`; мост к нему — `JdkFlowAdapter`; забытый `request(n)` означает, что данные не пойдут вовсе.",
+                "related": "[[spring-webflux-interview#Q4]] архитектура WebFlux; [[spring-webflux-interview#Q14]] backpressure; [[spring-webflux-interview#Q9]] Flux и Mono."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Reactor` построен поверх `RxJava` и просто переэкспортирует её классы `Observable` и `Single`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor — независимая реализация `Reactive Streams` от Pivotal/VMware с типами `Flux`/`Mono`, а не обёртка над `RxJava`.",
+                "source_of_confusion": "RxJava появилась раньше и решает похожие задачи, отсюда мысль о наследовании.",
+                "if_it_were_true": "Тогда `reactor-core` зависел бы от `rxjava`, но это самостоятельная библиотека.",
+                "how_it_should_be": "Reactor — отдельная реализация контракта; с RxJava связывает лишь общий стандарт Reactive Streams."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова архитектура `Spring WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`WebFlux` использует тот же `DispatcherServlet` и Servlet API, что и `Spring MVC`, просто оборачивая результат в `Mono`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebFlux построен на `DispatcherHandler` и неблокирующем I/O, а не на `DispatcherServlet`/Servlet API; это принципиально другой стек.",
+                "source_of_confusion": "Похожая аннотационная модель (`@GetMapping`) создаёт иллюзию того же движка.",
+                "if_it_were_true": "Тогда WebFlux наследовал бы модель thread-per-request Servlet-контейнера, но он работает на event loop.",
+                "how_it_should_be": "Это `DispatcherHandler` поверх неблокирующего стека; Servlet API здесь не используется по умолчанию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `WebFlux` обработчик обязан вернуть синхронный объект (`User`, `List<User>`), а реактивные типы используются только во внешних вызовах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Handler в WebFlux возвращает именно `Mono<T>` или `Flux<T>` — это и есть тело ответа, которое стек подписывает и пишет.",
+                "source_of_confusion": "Привычка возвращать POJO из контроллеров MVC переносится на WebFlux.",
+                "if_it_were_true": "Тогда не было бы стриминга `Flux` в ответ, но именно реактивный возврат делает обработку неблокирующей.",
+                "how_it_should_be": "Контроллер WebFlux возвращает `Mono`/`Flux`; синхронный объект — это анти-паттерн в реактивном стеке."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`WebFlux` поддерживает только `Tomcat` в качестве сервера, а `Netty` совместим лишь со `Spring MVC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebFlux по умолчанию работает на `Netty` (event loop), а также на реактивных `Tomcat`/`Jetty`/`Undertow`; именно `Netty` — основной выбор.",
+                "source_of_confusion": "`Tomcat` исторически ассоциируется со Spring, отсюда путаница, какой сервер где.",
+                "if_it_were_true": "Тогда неблокирующая модель была бы невозможна на стандартном Netty, но именно Netty её и обеспечивает.",
+                "how_it_should_be": "Сервер по умолчанию — `Netty`; блокирующий Servlet-Tomcat — это стек `Spring MVC`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Похожа на `MVC`, но на неблокирующем стеке: `DispatcherHandler` принимает запрос, `HandlerMapping` сопоставляет `URL` с обработчиком, `HandlerAdapter` его вызывает, а обработчик возвращает `Mono`/`Flux`; маршруты задаются аннотациями (`@RestController`) или `RouterFunction`, под капотом — `Netty` с event loop, исходящие вызовы делает `WebClient`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Запрос проходит цепочку `Netty` → `DispatcherHandler` → `HandlerMapping` → `HandlerAdapter` → handler. Handler возвращает реактивный тип, `ResultHandler` пишет ответ. Всё работает без блокировки потока event loop.",
+                "example": "`@GetMapping(\"/items\") Flux<Item> items()` — `DispatcherHandler` находит контроллер через `HandlerMapping`, вызывает метод и стримит `Flux` в ответ.",
+                "when_to_apply": "Знание стека нужно при настройке кастомных `WebFilter`, выборе между аннотациями и `RouterFunction`, диагностике блокировок event loop.",
+                "edge_cases": "В отличие от `Spring MVC` с `DispatcherServlet` и Servlet API (поток на запрос), здесь `DispatcherHandler` и неблокирующий I/O — блокирующий вызов в handler ломает модель.",
+                "related": "[[spring-webflux-interview#Q3]] архитектура Reactor; [[spring-webflux-interview#Q8]] асинхронность в WebFlux; [[spring-webflux-interview#Q22]] RouterFunction vs контроллеры."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое реактивное программирование?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Реактивное программирование — это парадигма обработки и реагирования на потоки данных, события и изменения состояния в асинхронном, неблокирующем стиле; вместо синхронного ожидания результата код декларативно описывает преобразования потока (`map`, `filter`, `flatMap`) и реагирует на поступающие элементы по мере их появления.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная идея — обработка событий по мере поступления, без блокировки потока выполнения. Данные представлены как потоки (`streams`), над которыми применяют функциональные операторы; подписка определяет, что делать с элементами, ошибками и завершением.",
+                "example": "Вместо `List<User> users = repo.findAll()` (ждём результат) пишут `Flux<User> users = repo.findAll()` и подписываются, обрабатывая каждого пользователя по мере прихода.",
+                "when_to_apply": "Подходит для веб-приложений, микросервисов и систем с большим числом асинхронных событий и потоков данных, где важна отзывчивость и масштабируемость.",
+                "edge_cases": "Декларативность повышает сложность отладки: stacktrace размазан по операторам, а ошибки в подписчике легко потерять без `doOnError`.",
+                "related": "[[spring-webflux-interview#Q6]] принципы реактивного программирования; [[spring-webflux-interview#Q1]] Reactor и WebFlux; [[spring-webflux-interview#Q9]] Flux и Mono."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Реактивное программирование — это синоним многопоточности: запуск задач в отдельных потоках через `new Thread()` и `synchronized`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реактивность — это про асинхронные потоки данных и неблокирующую обработку событий, а не про ручное управление потоками и блокировки.",
+                "source_of_confusion": "И то и другое связано с параллелизмом, поэтому понятия смешивают.",
+                "if_it_were_true": "Тогда реактивность не давала бы выигрыша на малом числе потоков, но именно это её ключевое свойство.",
+                "how_it_should_be": "Это декларативная работа с потоками данных; число потоков минимально и не управляется вручную."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Реактивное программирование — это шаблон проектирования, при котором каждый объект хранит ссылки на всех слушателей и вызывает их методы вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хотя в основе лежит идея наблюдателя, реактивность — это парадигма с декларативными операторами и backpressure, а не ручная рассылка вызовов.",
+                "source_of_confusion": "Паттерн Observer действительно близок, поэтому реактивность сводят к нему.",
+                "if_it_were_true": "Тогда не было бы операторов `map`/`flatMap` и управления спросом, но именно они отличают реактивность.",
+                "how_it_should_be": "Это парадигма поверх потоков с операторами и backpressure, а не голый паттерн Observer."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Реактивное программирование требует синхронного выполнения всех операций по очереди, чтобы гарантировать порядок данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реактивность асинхронна по своей сути; порядок при необходимости обеспечивают конкретными операторами (`concatMap`), а не синхронным выполнением.",
+                "source_of_confusion": "Желание сохранить порядок ошибочно приравнивают к синхронности.",
+                "if_it_were_true": "Тогда пропадала бы отзывчивость и параллелизм, но они — главная цель реактивного подхода.",
+                "how_it_should_be": "Выполнение асинхронное; порядок — отдельная гарантия операторов вроде `concatMap`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные принципы реактивного программирования?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главный принцип реактивности — обязательная блокировка потока на каждой I/O-операции для гарантии целостности данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реактивность строится на неблокирующем I/O; блокировка потока на I/O прямо нарушает её принципы.",
+                "source_of_confusion": "В императивном коде блокировка кажется естественным способом дождаться данных.",
+                "if_it_were_true": "Тогда нельзя было бы обслуживать тысячи соединений малым числом потоков, но это и есть цель реактивности.",
+                "how_it_should_be": "I/O должен быть неблокирующим; блокировку выносят на `boundedElastic`, а не делают принципом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Ключевые принципы: асинхронность (неблокирующая обработка множества событий), отзывчивость (минимальная задержка реакции), эластичность (масштабирование под нагрузку), отказоустойчивость (обработка ошибок и восстановление) и обработка потоков данных через функциональные операторы с обратной связью (backpressure).",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти принципы (близкие к Reactive Manifesto) описывают, как система ведёт себя под нагрузкой и при сбоях: реагирует быстро, гибко масштабируется, изолирует отказы и обрабатывает данные декларативно с управлением спросом.",
+                "example": "Сервис на WebFlux под пиковой нагрузкой не плодит потоки (эластичность), отвечает быстро (отзывчивость), а при сбое внешнего API возвращает fallback через `onErrorResume` (отказоустойчивость).",
+                "when_to_apply": "Принципы используют как чек-лист при проектировании реактивной системы и аргументации выбора в пользу реактивного стека.",
+                "edge_cases": "Принципы не бесплатны: эластичность и отзывчивость достигаются ценой сложности кода и отладки; нарушение неблокирующего контракта рушит все остальные свойства.",
+                "related": "[[spring-webflux-interview#Q5]] что такое реактивное программирование; [[spring-webflux-interview#Q14]] backpressure; [[spring-webflux-interview#Q30]] best practices."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Реактивные системы принципиально не предусматривают обработку ошибок — любой сбой завершает приложение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отказоустойчивость — один из ключевых принципов; ошибки обрабатываются операторами `onErrorResume`, `retry`, `onErrorReturn`.",
+                "source_of_confusion": "Ошибки в реактивном потоке менее заметны, отсюда вывод об их игнорировании.",
+                "if_it_were_true": "Тогда реактивность была бы непригодна для production, но устойчивость — её заявленное свойство.",
+                "how_it_should_be": "Обработка ошибок встроена в контракт через сигнал `onError` и операторы восстановления."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Эластичность в реактивном программировании означает фиксированный размер пула потоков, который нельзя менять во время работы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эластичность — это способность системы масштабироваться под нагрузку; фиксированный неизменяемый пул — противоположность этого принципа.",
+                "source_of_confusion": "Слово «эластичность» путают со стабильностью/неизменностью конфигурации.",
+                "if_it_were_true": "Тогда система не адаптировалась бы к скачкам нагрузки, но именно адаптация — суть эластичности.",
+                "how_it_should_be": "Эластичность — это гибкое масштабирование вверх/вниз под текущую нагрузку."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализована асинхронность в `Project Reactor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Асинхронность в `Reactor` реализована через автоматическое создание нового потока ОС на каждый элемент `Flux`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor не создаёт поток на элемент; исполнение идёт на пулах `Schedulers`, а переключение контекста задают `publishOn`/`subscribeOn`.",
+                "source_of_confusion": "Кажется, что асинхронность всегда означает «новый поток на задачу».",
+                "if_it_were_true": "Тогда `Flux.range(1, 1_000_000)` породил бы миллион потоков, но Reactor использует фиксированные пулы.",
+                "how_it_should_be": "Элементы обрабатываются на потоках планировщика; число потоков ограничено пулом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Reactor` асинхронность обеспечивается ключевым словом `async`/`await`, как в C# или JavaScript.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Java нет `async`/`await`; Reactor выражает асинхронность через реактивные типы и операторы, а контекст задают `Schedulers`.",
+                "source_of_confusion": "Опыт `async`/`await` из других языков переносят на Java и Reactor.",
+                "if_it_were_true": "Тогда в коде Reactor встречались бы `await`, но там цепочки операторов и `subscribe()`.",
+                "how_it_should_be": "Асинхронность выражается через `Flux`/`Mono` и операторы, а не через `async`/`await`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Асинхронность достигается через реактивные потоки (`Flux`/`Mono`) и планировщики (`Schedulers`): операторы выполняются неблокирующим способом и возвращают реактивные типы, а `Schedulers` задают пул потоков (контекст выполнения), переключение между которыми делают `publishOn`/`subscribeOn`; в основе — паттерн наблюдателя с уведомлением подписчиков по мере поступления данных.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Flux`/`Mono` описывают поток данных, а `Schedulers` определяют, на каких потоках он исполняется. `Schedulers.parallel()` — параллельная обработка, `Schedulers.single()` — последовательная на одном потоке. Подписчики получают `onNext` по мере готовности данных.",
+                "example": "`Mono.fromCallable(() -> compute()).subscribeOn(Schedulers.parallel())` — вычисление уходит в пул `parallel`, не блокируя вызывающий поток.",
+                "when_to_apply": "Понимание нужно при выборе планировщика под задачу (CPU-bound vs блокирующий I/O) и при переносе блокирующего кода в реактивную цепочку.",
+                "edge_cases": "Без явного `subscribeOn`/`publishOn` вся цепочка выполняется на потоке подписки; ошибочный выбор планировщика (например, блокирующий вызов на `parallel`) истощает пул.",
+                "related": "[[spring-webflux-interview#Q8]] асинхронность в WebFlux; [[spring-webflux-interview#Q17]] Schedulers; [[spring-webflux-interview#Q3]] архитектура Reactor."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Schedulers` в `Reactor` отвечают только за логирование и не влияют на то, на каком потоке выполняются операторы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Schedulers` напрямую определяют контекст выполнения — пул потоков, на котором работают операторы downstream/upstream.",
+                "source_of_confusion": "Название «scheduler» иногда ассоциируют с планировщиком задач/cron, а не с пулом потоков.",
+                "if_it_were_true": "Тогда `subscribeOn(Schedulers.boundedElastic())` не переносил бы блокирующий вызов, но он именно для этого.",
+                "how_it_should_be": "`Schedulers` задают пул потоков для исполнения; это основа управления конкуренцией."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализована асинхронность в `Spring WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Асинхронность в `WebFlux` достигается тем, что на каждый HTTP-запрос выделяется отдельный поток из большого пула, как в `Spring MVC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebFlux использует event loop с малым числом потоков, обслуживающих много соединений; модель thread-per-request — это `Spring MVC`.",
+                "source_of_confusion": "Это модель `Spring MVC`, привычная по Servlet-контейнерам.",
+                "if_it_were_true": "Тогда WebFlux не давал бы выигрыша при тысячах соединений, но именно ради этого его выбирают.",
+                "how_it_should_be": "Малое число event-loop-потоков обслуживает множество соединений неблокирующе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`WebFlux` асинхронен, потому что `Netty` запускает по одному потоку на каждое открытое соединение и держит их активными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netty в WebFlux держит малый пул event-loop-потоков (1-2 на ядро), а не поток на соединение; потоки переключаются между соединениями.",
+                "source_of_confusion": "Кажется, что у каждого соединения должен быть «свой» поток.",
+                "if_it_were_true": "Тогда 10 000 соединений = 10 000 потоков, но Netty обходится единицами потоков.",
+                "how_it_should_be": "Event loop разделяет несколько потоков между всеми соединениями."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для асинхронности `WebFlux` требует, чтобы методы контроллера были помечены `@Async` и возвращали `CompletableFuture`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebFlux не использует `@Async`/`CompletableFuture` для веб-слоя; асинхронность выражается через возврат `Mono`/`Flux`.",
+                "source_of_confusion": "`@Async` — знакомый способ асинхронности в Spring MVC, его переносят на WebFlux.",
+                "if_it_were_true": "Тогда не было бы стриминга `Flux` и реактивных операторов, но именно они — основа WebFlux.",
+                "how_it_should_be": "Метод возвращает `Mono`/`Flux`; `@Async` здесь не нужен и не используется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "За счёт реактивного стека: контроллеры возвращают `Flux`/`Mono` (асинхронные типы), используется неблокирующий I/O, а сервер `Netty` работает по модели event loop — один-два потока на ядро обрабатывают множество соединений, переключаясь между ними при завершении I/O-событий, вместо выделения отдельного потока на каждый запрос.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от thread-per-request (поток занят всё время обработки, включая ожидание I/O), event loop при ожидании I/O освобождает поток для других запросов. Это позволяет обслуживать тысячи соединений малым числом потоков.",
+                "example": "При 10 000 одновременных HTTP-соединений MVC потребовал бы огромный пул потоков, а WebFlux на `Netty` обходится несколькими event-loop-потоками на ядро.",
+                "when_to_apply": "Модель раскрывается при высокой конкуренции и I/O-bound нагрузке: шлюзы, агрегаторы вызовов, стриминг (`SSE`, `WebSocket`).",
+                "edge_cases": "Любой блокирующий вызов в обработчике останавливает event-loop-поток и обрушивает пропускную способность; такие вызовы выносят на `Schedulers.boundedElastic()`.",
+                "related": "[[spring-webflux-interview#Q7]] асинхронность в Reactor; [[spring-webflux-interview#Q4]] архитектура WebFlux; [[spring-webflux-interview#Q24]] когда выбирать WebFlux."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Flux` и `Mono` в `Project Reactor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Flux` — реактивный поток на ноль или более элементов (асинхронный аналог `Stream<T>`), а `Mono` — поток на ноль или один элемент (асинхронный аналог `Optional<T>`); оба реализуют `Publisher` из `Reactive Streams`, поддерживают операторы (`map`, `flatMap`, `filter`, `reduce`) и backpressure.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Flux` представляет последовательность (может быть бесконечной), `Mono` — единичный результат или его отсутствие. Оба декларативны и ленивы: операторы лишь описывают конвейер, а выполнение начинается при `subscribe()`.",
+                "example": "`Flux.just(1,2,3,4,5).map(n -> n*2).filter(n -> n>5)` — поток из нескольких элементов; `Mono.just(\"Hello\").map(s -> s + \" World\")` — единичное значение.",
+                "when_to_apply": "`Mono` берут для операций «0..1» (поиск по id, сохранение одной сущности), `Flux` — для коллекций и стримов (список, события, SSE).",
+                "edge_cases": "Без подписки оба ничего не делают (lazy); преобразования между ними — `flatMapMany` (`Mono`→`Flux`), `collectList`/`next` (`Flux`→`Mono`).",
+                "related": "[[spring-webflux-interview#Q10]] методы работы с потоками; [[spring-webflux-interview#Q20]] комбинирование Mono и Flux; [[spring-webflux-interview#Q37]] важные операторы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Flux` содержит ровно один элемент, а `Mono` — много элементов; названия отражают «много» и «один».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Flux` — 0..N элементов, `Mono` — 0..1; «mono» означает «один».",
+                "source_of_confusion": "Латинские корни легко перепутать местами без запоминания семантики.",
+                "if_it_were_true": "Тогда список из БД возвращали бы как `Mono`, но коллекции отдают именно через `Flux`.",
+                "how_it_should_be": "`Flux` — много элементов, `Mono` — ноль или один; mono = один."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Flux` и `Mono` выполняются немедленно при создании, ещё до вызова `subscribe()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба ленивы: создание лишь описывает конвейер, а исполнение запускается только при подписке (`subscribe()`/`block()`).",
+                "source_of_confusion": "Привычка к императивному коду, где выражение выполняется сразу.",
+                "if_it_were_true": "Тогда `Mono.fromCallable(...)` без подписки уже звал бы внешний сервис, но этого не происходит.",
+                "how_it_should_be": "Cold-publisher запускается только при подписке; без `subscribe()` ничего не выполняется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Mono` не реализует интерфейс `Publisher` и потому не совместим с `Reactive Streams`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "И `Mono`, и `Flux` реализуют `Publisher` из `Reactive Streams` и полностью совместимы со стандартом.",
+                "source_of_confusion": "Кажется, что «одиночный» тип не вписывается в потоковый контракт.",
+                "if_it_were_true": "Тогда `Mono` нельзя было бы подписать или скомбинировать с `Flux`, но это рутинные операции.",
+                "how_it_should_be": "`Mono` — это `Publisher` на 0..1 элемент, полностью в рамках Reactive Streams."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие методы (операторы) доступны для работы с реактивными потоками в `Spring WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Реактивные потоки в `WebFlux` поддерживают только два метода — `subscribe()` и `block()` — без операторов преобразования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо подписки доступны десятки операторов: `map`, `flatMap`, `filter`, `zip`, `retry` и другие — это ядро реактивного API.",
+                "source_of_confusion": "`subscribe()` и `block()` чаще всего на виду в примерах, отсюда вывод об их единственности.",
+                "if_it_were_true": "Тогда нельзя было бы преобразовать или отфильтровать поток, но это базовые операции.",
+                "how_it_should_be": "Доступен богатый набор операторов; `subscribe`/`block` — лишь точки запуска."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Доступен богатый набор операторов Reactor: `map` (синхронное преобразование), `flatMap` (асинхронное, разворачивает вложенный поток), `filter` (отбор по условию), `take` (ограничить число элементов), `reduce` (агрегация), `zip` (комбинирование потоков), `onErrorResume` (альтернативный поток при ошибке), `retry` (повтор при ошибке); плюс инфраструктурные компоненты `WebClient` и `R2DBC`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Операторы делятся на преобразующие (`map`, `flatMap`), фильтрующие (`filter`, `take`), агрегирующие (`reduce`, `collectList`), комбинирующие (`zip`, `merge`) и обработки ошибок (`onErrorResume`, `retry`). Они декларативно описывают конвейер над `Flux`/`Mono`.",
+                "example": "`flux.map(n -> n*2).filter(n -> n>5)` — преобразование и фильтрация; `flux.flatMap(id -> repo.findById(id))` — асинхронный разворот; `flux.onErrorResume(e -> fallback())` — восстановление.",
+                "when_to_apply": "`map` — для чистых преобразований, `flatMap` — когда функция возвращает `Publisher`, `onErrorResume`/`retry` — для устойчивости к сбоям.",
+                "edge_cases": "Путаница `map` и `flatMap`: если вернуть `Publisher` из `map`, получится `Flux<Mono<T>>` вместо развёрнутого `Flux<T>`.",
+                "related": "[[spring-webflux-interview#Q9]] Flux и Mono; [[spring-webflux-interview#Q37]] важнейшие операторы; [[spring-webflux-interview#Q11]] обработка ошибок в Reactor."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оператор `map` в реактивном потоке предназначен для асинхронного вызова другого `Publisher` и разворачивания вложенного потока.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для асинхронного разворота вложенного `Publisher` служит `flatMap`; `map` делает синхронное преобразование значения 1:1.",
+                "source_of_confusion": "Оба оператора преобразуют элементы, отсюда смешение их ролей.",
+                "if_it_were_true": "Тогда `repo.findById` в `map` дал бы готовый объект, но получился бы `Flux<Mono<T>>`.",
+                "how_it_should_be": "`map` — синхронно, `flatMap` — асинхронно с разворотом `Publisher`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Оператор `retry` повторяет операцию только при успешном завершении потока, чтобы продублировать результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`retry` переподписывается на поток при сигнале `onError` (ошибке), а не при успехе; успех завершает поток.",
+                "source_of_confusion": "Слово «повтор» ассоциируют с дублированием удачного результата.",
+                "if_it_were_true": "Тогда `retry(3)` множил бы корректные данные, но он реагирует именно на ошибки.",
+                "how_it_should_be": "`retry` повторяет подписку при ошибке для восстановления, а не при успехе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать ошибки в `Project Reactor`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ошибки в `Reactor` обрабатываются исключительно блоком `try-catch`, обернутым вокруг цепочки операторов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`try-catch` не ловит асинхронные ошибки реактивной цепочки — они приходят сигналом `onError` и обрабатываются операторами `onErrorResume`/`onErrorReturn`.",
+                "source_of_confusion": "Императивная привычка ловить исключения через `try-catch` переносится на реактивный код.",
+                "if_it_were_true": "Тогда `try { flux.subscribe(); } catch(...)` ловил бы ошибку потока, но она приходит асинхронно мимо блока.",
+                "how_it_should_be": "Ошибки ловят операторами в цепочке, а не внешним `try-catch`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оператор `onErrorResume` молча игнорирует ошибку и продолжает исходный поток с того же места, как ни в чём не бывало.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`onErrorResume` не продолжает исходный поток, а переключает на новый `Publisher`, который вы возвращаете в обработчике.",
+                "source_of_confusion": "Слово «resume» наводит на мысль о продолжении прежнего потока.",
+                "if_it_were_true": "Тогда после ошибки исходный publisher досылал бы оставшиеся элементы, но он уже завершён сигналом `onError`.",
+                "how_it_should_be": "`onErrorResume` подставляет альтернативный поток; исходный завершён ошибкой."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Reactor даёт набор операторов: `onErrorReturn` (вернуть значение по умолчанию), `onErrorResume` (переключиться на альтернативный поток), `retry(n)` (повторить операцию при ошибке), `doOnError` (побочное действие — например, лог — без поглощения ошибки); ошибка распространяется как терминальный сигнал `onError`, завершая поток, если её не обработать.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сигнал `onError` — терминальный: после него поток не продолжается. Операторы восстановления перехватывают ошибку и либо подменяют значение/поток, либо повторяют подписку. `doOnError` лишь наблюдает, не меняя сигнал.",
+                "example": "`mono.onErrorReturn(\"Default\")` — при ошибке вернуть значение; `flux.onErrorResume(e -> fallbackFlux())` — переключиться на запасной поток; `flux.retry(3)` — повторить до трёх раз.",
+                "when_to_apply": "`onErrorReturn` — для простого fallback-значения, `onErrorResume` — для альтернативного источника, `retry` — для временных сбоев, `doOnError` — для логирования и метрик.",
+                "edge_cases": "`retry` повторяет всю цепочку от источника — для повторов сетевого вызова это норма, но для неидемпотентных операций опасно; для управляемых повторов используют `retryWhen(Retry.backoff(...))`.",
+                "related": "[[spring-webflux-interview#Q12]] обработка ошибок в WebFlux; [[spring-webflux-interview#Q25]] таймауты и retry; [[spring-webflux-interview#Q10]] операторы потоков."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`doOnError` полностью поглощает ошибку и превращает поток в успешно завершённый без значений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`doOnError` — это side-effect (лог/метрика); он не меняет сигнал, и ошибка продолжает распространяться дальше по цепочке.",
+                "source_of_confusion": "Приставка `do` создаёт впечатление активной обработки, а не наблюдения.",
+                "if_it_were_true": "Тогда подписчик не получил бы `onError`, но `doOnError` пропускает ошибку дальше.",
+                "how_it_should_be": "Для поглощения ошибки нужен `onErrorResume`/`onErrorReturn`; `doOnError` лишь наблюдает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать ошибки в `Spring WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Единственный способ обработать ошибку в `WebFlux` — глобальный `@ControllerAdvice`; операторы вроде `onErrorResume` в реактивном стеке не работают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Операторы Reactor (`onErrorResume`, `onErrorReturn`) полностью работают в WebFlux и часто предпочтительны для локальной обработки.",
+                "source_of_confusion": "`@ControllerAdvice` хорошо знаком по MVC, поэтому кажется единственным механизмом.",
+                "if_it_were_true": "Тогда нельзя было бы вернуть fallback прямо в цепочке, но `onErrorResume` делает именно это.",
+                "how_it_should_be": "Доступны оба пути: операторы в цепочке и централизованные хендлеры."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `WebFlux` глобальную обработку ошибок делают через `HandlerExceptionResolver`, как в `Spring MVC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HandlerExceptionResolver` относится к Servlet-стеку MVC; в реактивном WebFlux его роль выполняет `WebExceptionHandler`.",
+                "source_of_confusion": "Имя и назначение похожи, поэтому MVC-компонент переносят на WebFlux.",
+                "if_it_were_true": "Тогда `resolveException(HttpServletRequest, ...)` работал бы в WebFlux, но там нет `HttpServletRequest`.",
+                "how_it_should_be": "Глобальный обработчик реактивного стека — `WebExceptionHandler` с `ServerWebExchange`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Метод `@ExceptionHandler` в `WebFlux` обязан возвращать синхронный объект, а `Mono`/`Flux` в нём запрещены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В WebFlux обработчик исключений может (и обычно должен) возвращать `Mono<ServerResponse>` или другой реактивный тип.",
+                "source_of_confusion": "В MVC `@ExceptionHandler` возвращает POJO/`ResponseEntity`, эту привычку переносят.",
+                "if_it_were_true": "Тогда обработка была бы блокирующей, но это нарушает неблокирующую модель WebFlux.",
+                "how_it_should_be": "Возврат реактивный (`Mono<ServerResponse>`), чтобы не блокировать поток."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Несколько уровней: операторы Reactor в цепочке (`onErrorResume` и др.) для локальной обработки; методы `@ExceptionHandler` в контроллере/`@ControllerAdvice` для конкретных исключений; глобальный `WebExceptionHandler` (реактивный аналог) для централизованной обработки на уровне приложения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Локально ошибку гасят оператором `onErrorResume`, возвращая запасной ответ. На уровне контроллера `@ExceptionHandler(MyException.class)` формирует кастомный ответ. Глобально `WebExceptionHandler` перехватывает всё, работая с `ServerWebExchange`.",
+                "example": "`@ExceptionHandler(YourException.class)` возвращает `ServerResponse.status(500).bodyValue(...)`; либо в цепочке `flux.onErrorResume(ex -> Mono.just(\"Error occurred\"))`.",
+                "when_to_apply": "Операторы — для точечной обработки в конкретной цепочке; `@ExceptionHandler` — для типизированных ошибок эндпоинта; `WebExceptionHandler` — для единой политики ошибок всего приложения.",
+                "edge_cases": "В WebFlux обработчики возвращают `Mono<ServerResponse>`/`Mono<Void>`, а не синхронный объект; сервлетный `HandlerExceptionResolver` к реактивному стеку не относится.",
+                "related": "[[spring-webflux-interview#Q11]] обработка ошибок в Reactor; [[spring-webflux-interview#Q32]] WebFilter; [[spring-webflux-interview#Q23]] валидация запросов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать реактивные приложения на `Project Reactor` и `Spring WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Используют несколько инструментов: `WebTestClient` для интеграционного тестирования эндпоинтов (HTTP-запросы и проверка ответов), `StepVerifier` для unit-тестирования реактивных цепочек (проверка элементов, ошибок, завершения), JUnit + `Mockito` для сервисов/репозиториев и тестовые БД (`H2`, Testcontainers) для интеграции с данными.",
+              "correct": true,
+              "sections": {
+                "explanation": "`WebTestClient` бьёт по контроллерам и проверяет статус/тело без поднятия реального клиента. `StepVerifier` подписывается на `Flux`/`Mono` и пошагово проверяет сигналы. Реактивные тесты требуют внимания к асинхронности и виртуальному времени.",
+                "example": "`StepVerifier.create(service.find(id)).expectNext(user).expectComplete().verify()` — unit-проверка `Mono`; `webTestClient.get().uri(\"/users/1\").exchange().expectStatus().isOk()` — интеграция.",
+                "when_to_apply": "`StepVerifier` — для логики реактивных цепочек, `WebTestClient` — для эндпоинтов целиком, `Mockito` — для изоляции зависимостей сервисов.",
+                "edge_cases": "Без вызова `verify()` `StepVerifier` не подписывается и ничего не проверяет; для операторов с задержкой нужен `StepVerifier.withVirtualTime`, иначе тест будет реально ждать.",
+                "related": "[[spring-webflux-interview#Q27]] StepVerifier; [[spring-webflux-interview#Q43]] WebTestClient и StepVerifier; [[spring-webflux-interview#Q31]] тестирование RouterFunction."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Реактивные цепочки тестируют, вызывая `.block()` и сравнивая результат через `assertEquals`, без специальных инструментов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.block()` проверяет только итоговое значение, но не последовательность сигналов, ошибки и тайминг; для этого есть `StepVerifier`.",
+                "source_of_confusion": "`.block()` даёт привычный синхронный результат, что выглядит проще.",
+                "if_it_were_true": "Тогда нельзя было бы проверить промежуточные `onNext` и сигнал `onError`, но `StepVerifier` это умеет.",
+                "how_it_should_be": "Для полноценной проверки потока используют `StepVerifier`, а не голый `block()`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для интеграционного тестирования эндпоинтов `WebFlux` используют `MockMvc`, как в `Spring MVC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MockMvc` рассчитан на Servlet-стек MVC; для реактивных эндпоинтов служит `WebTestClient`.",
+                "source_of_confusion": "`MockMvc` — стандарт тестирования контроллеров в MVC, его переносят на WebFlux.",
+                "if_it_were_true": "Тогда `MockMvc` понимал бы `Flux`-ответы и стриминг, но он работает с Servlet-моделью.",
+                "how_it_should_be": "Реактивные эндпоинты тестируют через `WebTestClient`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`StepVerifier` нельзя использовать для `Mono` — он работает только с `Flux` из нескольких элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`StepVerifier` работает и с `Mono`, и с `Flux`; для `Mono` обычно проверяют один `expectNext` и `expectComplete`.",
+                "source_of_confusion": "Слово «step» (шаги) ассоциируют только с многоэлементным потоком.",
+                "if_it_were_true": "Тогда нельзя было бы протестировать `Mono<User>` сервиса, но это рутинный сценарий.",
+                "how_it_should_be": "`StepVerifier.create(...)` принимает любой `Publisher`, включая `Mono`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `backpressure` и как с ним работать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Backpressure` — это автоматическое ускорение издателя, чтобы он успевал заполнить буфер потребителя до отказа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backpressure делает обратное — ограничивает поток данных под спрос потребителя, а не ускоряет издателя.",
+                "source_of_confusion": "Слово «pressure» (давление) ошибочно ассоциируют с «надавить/ускорить».",
+                "if_it_were_true": "Тогда медленный потребитель захлёбывался бы данными, но именно это backpressure и предотвращает.",
+                "how_it_should_be": "Это управление спросом: потребитель задаёт темп через `request(n)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Backpressure` — механизм `Reactive Streams`, при котором подписчик через `Subscription.request(n)` сообщает издателю, сколько элементов готов принять, предотвращая переполнение медленного потребителя; стратегии — `onBackpressureBuffer` (буфер до лимита), `onBackpressureDrop` (отбрасывать лишнее), `onBackpressureLatest` (хранить только последний), а параллелизм медленных операций ограничивают через `flatMap(..., maxConcurrency)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без backpressure быстрый издатель завалил бы медленного потребителя. `request(n)` задаёт спрос, а операторы определяют, что делать при отставании: буферизовать, дропать или хранить последнее значение.",
+                "example": "`Flux.range(1, 1000).flatMap(id -> repo.save(entity(id)), 5)` — не более 5 одновременных сохранений в БД; `Flux.interval(...).onBackpressureLatest()` — для «текущего значения» (курс, температура).",
+                "when_to_apply": "`buffer` — когда терять данные нельзя и хватает памяти; `drop` — когда допустима потеря (сенсорные сэмплы); `latest` — когда важно только актуальное значение.",
+                "edge_cases": "`onBackpressureBuffer` по умолчанию при переполнении кидает `BufferOverflowError`; неограниченный `flatMap` без `maxConcurrency` может открыть слишком много параллельных операций к медленному ресурсу.",
+                "related": "[[spring-webflux-interview#Q3]] архитектура Reactor; [[spring-webflux-interview#Q17]] Schedulers; [[spring-webflux-interview#Q30]] best practices."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Стратегия `onBackpressureDrop` буферизует все необработанные элементы и доставляет их позже, когда потребитель освободится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`onBackpressureDrop` отбрасывает элементы, которые потребитель не успел запросить; буферизует — это `onBackpressureBuffer`.",
+                "source_of_confusion": "Стратегии backpressure легко перепутать по названиям.",
+                "if_it_were_true": "Тогда `drop` и `buffer` не различались бы, но их поведение противоположно по потере данных.",
+                "how_it_should_be": "`drop` теряет лишнее без буфера; для сохранения данных нужен `buffer`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Ограничить параллелизм обращений к медленной БД можно только уменьшив пул потоков `Schedulers`, оператор `flatMap` для этого не подходит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`flatMap` принимает параметр `maxConcurrency`, который напрямую ограничивает число одновременных подпотоков — это штатный способ.",
+                "source_of_confusion": "Кажется, что параллелизм управляется только пулом потоков.",
+                "if_it_were_true": "Тогда `flux.flatMap(this::save, 10)` не ограничивал бы сохранения, но он держит максимум 10 параллельно.",
+                "how_it_should_be": "`flatMap(..., maxConcurrency)` ограничивает параллелизм на уровне оператора."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `WebClient` отличается от `RestTemplate`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`WebClient` — это блокирующий клиент, а `RestTemplate` — реактивный неблокирующий; именно поэтому в WebFlux рекомендуют RestTemplate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `WebClient` реактивный и неблокирующий, а `RestTemplate` — блокирующий; в WebFlux рекомендуют `WebClient`.",
+                "source_of_confusion": "Названия не подсказывают модель, поэтому их роли легко перепутать.",
+                "if_it_were_true": "Тогда `RestTemplate` возвращал бы `Mono`/`Flux`, но он отдаёт `ResponseEntity`/тело синхронно.",
+                "how_it_should_be": "`WebClient` неблокирующий и предпочтителен в WebFlux; `RestTemplate` блокирующий."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`WebClient` не умеет стримить тело ответа и всегда полностью загружает его в память перед возвратом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WebClient` умеет стриминг через `bodyToFlux(...)`, обрабатывая элементы по мере поступления без полной загрузки в память.",
+                "source_of_confusion": "Многие используют только `bodyToMono`, отсюда впечатление об отсутствии стриминга.",
+                "if_it_were_true": "Тогда нельзя было бы потреблять большой `Flux<Item>` лениво, но `bodyToFlux` это позволяет.",
+                "how_it_should_be": "`WebClient` поддерживает потоковое тело через `bodyToFlux`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`WebClient` — реактивный неблокирующий HTTP-клиент: возвращает `Mono<T>`/`Flux<T>`, работает на `Netty`, масштабируется малым числом потоков при высокой конкуренции; `RestTemplate` — блокирующий (один запрос — один поток), возвращает `ResponseEntity<T>`/тело напрямую и находится в maintenance-режиме.",
+              "correct": true,
+              "sections": {
+                "explanation": "В реактивном стеке `WebClient` обязателен: блокирующий вызов `RestTemplate` останавливает event loop. `WebClient` умеет стриминг тела (`bodyToFlux`), фильтры, ретраи и таймауты в реактивном стиле.",
+                "example": "`webClient.get().uri(\"/users/{id}\", id).retrieve().bodyToMono(User.class)` — неблокирующий запрос; `bodyToFlux(Item.class)` — стриминг списка.",
+                "when_to_apply": "`WebClient` — для реактивного стека, высокой нагрузки и стриминга; `RestTemplate` — только для legacy/синхронного кода, где переход затруднён.",
+                "edge_cases": "Если `RestTemplate` нельзя убрать из WebFlux, его выносят на отдельный пул: `Mono.fromCallable(() -> restTemplate.getForObject(...)).subscribeOn(Schedulers.boundedElastic())`.",
+                "related": "[[spring-webflux-interview#Q34]] настройка WebClient с retry; [[spring-webflux-interview#Q42]] WebClient vs RestTemplate vs RestClient; [[spring-webflux-interview#Q17]] Schedulers."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Вызов `RestTemplate` внутри реактивной цепочки `WebFlux` безопасен и не влияет на event loop.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Блокирующий вызов `RestTemplate` останавливает поток event loop и резко снижает пропускную способность WebFlux.",
+                "source_of_confusion": "Код компилируется и «работает» в простом тесте, отсюда ложное ощущение безопасности.",
+                "if_it_were_true": "Тогда не нужен был бы `subscribeOn(boundedElastic())` для блокирующих вызовов, но он обязателен.",
+                "how_it_should_be": "Блокирующий `RestTemplate` выносят на `boundedElastic`, а лучше заменяют на `WebClient`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `R2DBC` с `Spring Data`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Репозитории `R2DBC` наследуют `JpaRepository` и их методы возвращают `List<T>` и `Optional<T>`, как в `Spring Data JPA`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реактивные репозитории наследуют `ReactiveCrudRepository`/`R2dbcRepository`, а методы возвращают `Mono`/`Flux`, а не `List`/`Optional`.",
+                "source_of_confusion": "Опыт `Spring Data JPA` напрямую переносят на R2DBC.",
+                "if_it_were_true": "Тогда вызов БД был бы блокирующим (ждём `List`), что ломает реактивный стек.",
+                "how_it_should_be": "Наследуют `ReactiveCrudRepository`; возврат — `Mono`/`Flux`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`R2DBC` — это блокирующая обёртка над `JDBC`, поэтому в реактивном приложении его всё равно нужно выносить на `boundedElastic`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`R2DBC` — самостоятельный реактивный (неблокирующий) драйвер, а не обёртка над JDBC; выносить его на отдельный пул не нужно.",
+                "source_of_confusion": "Оба работают с реляционными БД, отсюда мысль, что R2DBC поверх JDBC.",
+                "if_it_were_true": "Тогда R2DBC не давал бы выигрыша в неблокирующем стеке, но он именно неблокирующий.",
+                "how_it_should_be": "R2DBC неблокирующий по своей природе; `boundedElastic` для него не требуется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`R2DBC` со `Spring Data` полностью поддерживает lazy loading и `@OneToMany`, как `Hibernate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В R2DBC нет lazy loading и автоматических связей `@OneToMany`/`@ManyToOne`; их реализуют вручную через JOIN или отдельные запросы.",
+                "source_of_confusion": "Привычные ORM-возможности JPA ожидают и от реактивного стека.",
+                "if_it_were_true": "Тогда не было бы предупреждений о ручной загрузке связей, но это явное ограничение R2DBC.",
+                "how_it_should_be": "Связи и join загружают явно; lazy loading отсутствует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключают `spring-boot-starter-data-r2dbc` и драйвер, настраивают `ConnectionFactory`; репозитории наследуют `ReactiveCrudRepository`, а их методы возвращают `Mono`/`Flux`; поддерживаются derived-queries и `@Query`, транзакции — через `@Transactional` (реактивный менеджер) или `TransactionalOperator`; кэша L2 и lazy-связей, как в `JPA`, нет.",
+              "correct": true,
+              "sections": {
+                "explanation": "`R2DBC` — реактивный драйвер для реляционных БД, неблокирующий аналог JDBC. `Spring Data R2DBC` даёт привычную модель репозиториев, но без ORM-магии Hibernate: связи и join делают вручную.",
+                "example": "`interface UserRepository extends ReactiveCrudRepository<User, Long> { Flux<User> findByEmail(String email); }` — derived-query возвращает `Flux`.",
+                "when_to_apply": "Берут, когда весь стек реактивный (WebFlux + R2DBC + WebClient) и нужна масштабируемость без блокировок на доступе к БД.",
+                "edge_cases": "Нет lazy loading и `@OneToMany`/`@ManyToOne` — связи грузят отдельными запросами или JOIN через `@Query`; DDL auto-create нет, схему накатывают `Flyway`/`Liquibase`.",
+                "related": "[[spring-webflux-interview#Q36]] полностью реактивный стек с R2DBC; [[spring-webflux-interview#Q41]] R2DBC vs JDBC; [[spring-webflux-interview#Q28]] транзакции в R2DBC."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Schedulers` и когда какой использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Schedulers` задают пул потоков (контекст выполнения) для операторов: `parallel()` — фиксированный пул по числу ядер для CPU-bound задач, `boundedElastic()` — растущий пул с лимитом для блокирующего I/O (JDBC, файлы), `single()` — один поток для последовательных задач, `immediate()` — текущий поток без переключения; `publishOn` меняет scheduler для downstream, `subscribeOn` — для всей цепочки от источника.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор планировщика зависит от характера работы. CPU-bound — `parallel`, блокирующий I/O — `boundedElastic` (он не истощит фиксированный пул). `publishOn` влияет на операторы после себя, `subscribeOn` — на источник и всю цепочку.",
+                "example": "`Flux.range(1,100).publishOn(Schedulers.parallel()).map(this::heavy)` — CPU-обработка на parallel; `Mono.fromCallable(blocking::call).subscribeOn(Schedulers.boundedElastic())` — блокирующий вызов на boundedElastic.",
+                "when_to_apply": "`boundedElastic` — обязательный приём, чтобы изолировать блокирующие вызовы от event loop; `parallel` — для тяжёлых вычислений; `single` — для строго последовательной обработки.",
+                "edge_cases": "Блокирующий вызов на `parallel()` истощает маленький пул и блокирует event loop; для блокировок всегда `boundedElastic`. Несколько `publishOn` подряд приводят к лишним переключениям контекста.",
+                "related": "[[spring-webflux-interview#Q7]] асинхронность в Reactor; [[spring-webflux-interview#Q15]] WebClient vs RestTemplate; [[spring-webflux-interview#Q38]] WebFlux и Virtual Threads."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Schedulers.parallel()` — правильный выбор для блокирующих вызовов вроде JDBC, потому что у него много потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для блокирующих вызовов используют `Schedulers.boundedElastic()`; `parallel()` имеет малый фиксированный пул и предназначен для CPU-bound.",
+                "source_of_confusion": "Слово «parallel» наводит на мысль «больше потоков = подходит для всего».",
+                "if_it_were_true": "Тогда блокирующий вызов на `parallel` был бы безопасен, но он истощает пул и блокирует обработку.",
+                "how_it_should_be": "Блокирующий I/O — на `boundedElastic`; `parallel` — для вычислений."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`subscribeOn` и `publishOn` — синонимы и оба меняют поток только для операторов, идущих после них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`publishOn` влияет на downstream-операторы после себя, а `subscribeOn` задаёт поток для источника и всей цепочки независимо от позиции.",
+                "source_of_confusion": "Оба оператора связаны с переключением потоков, отсюда смешение.",
+                "if_it_were_true": "Тогда позиция `subscribeOn` в цепочке имела бы значение, но он влияет на источник в любом месте.",
+                "how_it_should_be": "`publishOn` — downstream после себя; `subscribeOn` — источник и вся цепочка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Schedulers.immediate()` всегда создаёт новый поток для каждой операции, чтобы гарантировать изоляцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`immediate()` выполняет работу на текущем потоке без переключения и без создания новых потоков.",
+                "source_of_confusion": "Слово «immediate» можно ошибочно прочесть как «немедленно в новом потоке».",
+                "if_it_were_true": "Тогда не было бы планировщика «без переключения контекста», но именно для этого `immediate`.",
+                "how_it_should_be": "`immediate()` работает на текущем потоке без смены контекста."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать `Server-Sent Events` (`SSE`) в `WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для `SSE` контроллер должен вернуть `Mono<String>` с типом `application/json`, и браузер сам начнёт стримить события.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SSE требует `Flux` (поток событий) с `MediaType.TEXT_EVENT_STREAM_VALUE`; `Mono` с JSON отдаст одно тело, а не поток.",
+                "source_of_confusion": "Привычка возвращать `Mono`+JSON из обычных эндпоинтов переносится на стриминг.",
+                "if_it_were_true": "Тогда соединение закрывалось бы после одного ответа, но SSE держит его открытым для многих событий.",
+                "how_it_should_be": "Возврат — `Flux<ServerSentEvent<T>>` с `text/event-stream`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Контроллер возвращает `Flux<ServerSentEvent<T>>` (или `Flux<T>`) с `MediaType.TEXT_EVENT_STREAM_VALUE`; соединение держится открытым, и сервер шлёт события по мере появления через `ServerSentEvent.builder().data(...).build()`, а клиент подписывается через `EventSource` в браузере или `WebTestClient.bodyToFlux(ServerSentEvent.class)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "SSE — однонаправленный push от сервера к клиенту поверх HTTP. WebFlux отдаёт его естественно через `Flux` с типом `text/event-stream`: каждый элемент `Flux` становится событием в открытом соединении.",
+                "example": "`@GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE) Flux<ServerSentEvent<String>> stream() { return Flux.interval(Duration.ofSeconds(1)).map(i -> ServerSentEvent.builder(\"event-\" + i).build()); }`.",
+                "when_to_apply": "Подходит для push-уведомлений, прогресса задач, котировок, лент событий — там, где нужен поток server→client без двунаправленности.",
+                "edge_cases": "SSE однонаправлен (только server→client); для двусторонней связи нужен `WebSocket`. Соединение долгоживущее — важно корректно завершать `Flux` и обрабатывать отключение клиента.",
+                "related": "[[spring-webflux-interview#Q33]] WebSocket в WebFlux; [[spring-webflux-interview#Q9]] Flux и Mono; [[spring-webflux-interview#Q24]] когда выбирать WebFlux."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SSE` в `WebFlux` обеспечивает полноценную двунаправленную связь: и сервер, и клиент шлют друг другу сообщения по одному каналу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SSE однонаправлен — только сервер шлёт клиенту; для двунаправленного обмена используют `WebSocket`.",
+                "source_of_confusion": "SSE и WebSocket оба про «реалтайм», отсюда приписывание SSE двунаправленности.",
+                "if_it_were_true": "Тогда клиент мог бы слать данные по тому же SSE-каналу, но протокол это не предусматривает.",
+                "how_it_should_be": "SSE — только server→client; двунаправленность даёт WebSocket."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SSE`-эндпоинт открывает новое HTTP-соединение на каждое отдельное событие и тут же его закрывает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SSE держит одно долгоживущее соединение открытым и шлёт по нему множество событий по мере появления.",
+                "source_of_confusion": "Модель «запрос-ответ» обычного HTTP проецируют на стриминг.",
+                "if_it_were_true": "Тогда не было бы выигрыша перед polling, но именно одно открытое соединение — суть SSE.",
+                "how_it_should_be": "Соединение одно и долгоживущее; события идут потоком."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cold и hot publishers?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Cold`-publisher шлёт данные всем подписчикам одновременно из единого общего потока — это и есть широковещание.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Общий поток для всех с момента подписки — это hot-publisher; cold же перевыполняет генерацию для каждого подписчика отдельно.",
+                "source_of_confusion": "Определения cold и hot легко перепутать местами.",
+                "if_it_were_true": "Тогда `Flux.just(1,2,3)` был бы общим на всех, но каждый подписчик получает полный набор заново.",
+                "how_it_should_be": "Общий поток с момента подписки — это hot; cold стартует заново для каждого."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Hot`-publisher гарантирует, что любой подписчик, подключившийся позже, всё равно получит все элементы с самого начала.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hot-publisher отдаёт только элементы с момента подписки; пропущенное до подключения не повторяется (если нет буфера/replay).",
+                "source_of_confusion": "Ожидание «полного результата» переносят с cold на hot.",
+                "if_it_were_true": "Тогда поздний подписчик чата видел бы всю историю, но он получает только новые сообщения.",
+                "how_it_should_be": "Hot отдаёт элементы с момента подписки; для истории нужен replay/буфер."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Cold`-publisher запускает генерацию данных заново при каждой подписке (например, `Flux.just`, `Mono.defer`), так что каждый подписчик получает полный поток с начала; `hot`-publisher имеет один общий поток, и подписчики получают только элементы с момента своей подписки (например, `share()`, `publish().refCount()`, `ConnectableFlux`, `Sinks`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Cold — как файл, который читается с начала при каждом открытии. Hot — как радиотрансляция: подключился позже — пропустил начало. Hot применяют для событий и широковещательной рассылки нескольким подписчикам.",
+                "example": "`Flux.range(1,3)` — cold: каждый подписчик увидит 1,2,3. `flux.share()` — hot: второй подписчик, подключившийся позже, увидит только новые элементы.",
+                "when_to_apply": "Cold — для повторяемых запросов (БД, HTTP), где каждый подписчик хочет полный результат; hot — для событий, котировок, чатов, где источник один на всех.",
+                "edge_cases": "Превращение cold в hot (`share()`) меняет семантику: повторная подписка не перевыполняет запрос; забытый `cache()`/`share()` приводит к лишним повторным вызовам источника.",
+                "related": "[[spring-webflux-interview#Q33]] WebSocket и Sinks; [[spring-webflux-interview#Q9]] Flux и Mono; [[spring-webflux-interview#Q37]] оператор cache."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Различие cold/hot чисто терминологическое и не влияет на повторное выполнение запроса при второй подписке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие принципиальное: cold перевыполняет источник при каждой подписке (повторный HTTP/SQL), hot — нет.",
+                "source_of_confusion": "В простых примерах с одной подпиской разница незаметна.",
+                "if_it_were_true": "Тогда два `subscribe()` на cold-`Mono` не делали бы два запроса, но они делают именно два.",
+                "how_it_should_be": "Cold перезапускает источник на каждую подписку; это влияет на число вызовов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как комбинировать `Mono` и `Flux` (`zip`, `merge`, `concat`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Flux.merge` гарантирует строгий порядок: сначала все элементы первого потока, затем все элементы второго.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Строгий последовательный порядок даёт `concat`; `merge` чередует элементы по мере их готовности из всех источников.",
+                "source_of_confusion": "`merge` и `concat` оба объединяют потоки, отсюда смешение их гарантий порядка.",
+                "if_it_were_true": "Тогда `merge` и `concat` были бы эквивалентны, но первый параллелен, второй последователен.",
+                "how_it_should_be": "Для порядка используют `concat`; `merge` — по готовности без порядка."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Mono.zip(a, b)` выполняет источники строго по очереди: сначала полностью `a`, потом `b`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`zip` подписывается на источники параллельно и объединяет их результаты попарно, а не выполняет последовательно.",
+                "source_of_confusion": "Кажется, что объединение «по парам» подразумевает очередность.",
+                "if_it_were_true": "Тогда `zip` не давал бы выигрыша по времени, но параллельный запрос — его главная ценность.",
+                "how_it_should_be": "`zip` запускает источники параллельно и собирает результаты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`flatMap` всегда сохраняет исходный порядок элементов при асинхронном преобразовании в новые потоки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`flatMap` не гарантирует порядок (подпотоки идут параллельно по готовности); порядок сохраняет `concatMap`.",
+                "source_of_confusion": "Привычка к синхронному `map`, который порядок не меняет.",
+                "if_it_were_true": "Тогда не нужен был бы отдельный `concatMap`, но он существует именно ради порядка.",
+                "how_it_should_be": "Для сохранения порядка используют `concatMap`; `flatMap` — по готовности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Mono.zip(a, b)`/`zipWith` объединяют источники попарно по позиции (параллельно), `Flux.merge` выдаёт элементы по мере готовности из нескольких потоков (порядок не гарантирован), `Flux.concat` склеивает потоки строго последовательно (сначала первый, потом второй), а `flatMap` преобразует элемент в новый поток и сливает результаты.",
+              "correct": true,
+              "sections": {
+                "explanation": "`zip` — для сбора связанных данных из нескольких источников в один результат. `merge` — для объединения событий без учёта порядка. `concat` — когда порядок важен (приоритетный fallback). `flatMap`/`concatMap` — для 1:N развёртки.",
+                "example": "`Mono.zip(userService.findById(id), orderService.findByUserId(id)).map(t -> new UserProfile(t.getT1(), t.getT2()))` — параллельно собрать профиль; `Flux.concat(cache.find(q), db.find(q)).take(10)` — сначала кэш, потом БД.",
+                "when_to_apply": "`zip` — параллельный сбор из источников; `merge` — объединение событий; `concat` — приоритетный/упорядоченный fallback; `flatMap` — запрос вложенных данных.",
+                "edge_cases": "`merge` не сохраняет порядок (для порядка — `concat`/`concatMap`); `zip` ждёт по элементу из каждого источника и завершается, когда самый короткий исчерпан.",
+                "related": "[[spring-webflux-interview#Q9]] Flux и Mono; [[spring-webflux-interview#Q37]] важные операторы; [[spring-webflux-interview#Q10]] операторы потоков."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить безопасность в `WebFlux` (`Spring Security`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В реактивном стеке используют реактивные аналоги компонентов: `ReactiveUserDetailsService` вместо `UserDetailsService`, `ServerSecurityContextRepository` вместо `SecurityContextRepository`, `SecurityWebFilterChain` вместо `SecurityFilterChain`; фильтры работают с `ServerWebExchange` вместо `HttpServletRequest`, а контекст безопасности передаётся через `Reactor Context`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Servlet-компоненты Spring Security не подходят неблокирующему стеку, поэтому есть зеркальный набор реактивных абстракций. Аутентификация и авторизация реактивны, а `SecurityContext` хранится не в `ThreadLocal`, а в `Reactor Context`.",
+                "example": "`@EnableWebFluxSecurity` + бин `SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http)` с `http.authorizeExchange(...).pathMatchers(\"/admin/**\").hasRole(\"ADMIN\")`.",
+                "when_to_apply": "Применяют всегда при защите WebFlux-приложения: подключают `@EnableWebFluxSecurity` и настраивают реактивную цепочку фильтров.",
+                "edge_cases": "`SecurityContextHolder` (ThreadLocal) в реактивном стеке не работает — текущего пользователя получают через `ReactiveSecurityContextHolder.getContext()`; контекст автоматически кладёт `ReactorContextWebFilter`.",
+                "related": "[[spring-webflux-interview#Q40]] Spring Security в реактивном стеке; [[spring-webflux-interview#Q26]] Reactor Context; [[spring-webflux-interview#Q32]] WebFilter."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `WebFlux` используют те же `UserDetailsService` и `SecurityFilterChain`, что и в `Spring MVC`, без реактивных аналогов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реактивный стек требует `ReactiveUserDetailsService` и `SecurityWebFilterChain`; servlet-версии работают только с блокирующим MVC.",
+                "source_of_confusion": "Имена компонентов почти совпадают, поэтому различие легко пропустить.",
+                "if_it_were_true": "Тогда `SecurityFilterChain` принимал бы `ServerWebExchange`, но он завязан на `HttpServletRequest`.",
+                "how_it_should_be": "В WebFlux — реактивные аналоги: `ReactiveUserDetailsService`, `SecurityWebFilterChain`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Текущего пользователя в `WebFlux` получают из `SecurityContextHolder`, который хранит контекст в `ThreadLocal`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ThreadLocal`-хранилище несовместимо с переключением потоков в реактивном стеке; контекст берут из `ReactiveSecurityContextHolder` через `Reactor Context`.",
+                "source_of_confusion": "`SecurityContextHolder` — стандарт в MVC, его привычно вызывать везде.",
+                "if_it_were_true": "Тогда после `publishOn` пользователь сохранялся бы в ThreadLocal, но поток меняется и контекст теряется.",
+                "how_it_should_be": "Контекст безопасности хранится в `Reactor Context` и читается через `ReactiveSecurityContextHolder`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Безопасность в `WebFlux` настраивается аннотацией `@EnableWebSecurity`, как в обычном Spring MVC приложении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реактивный стек включают аннотацией `@EnableWebFluxSecurity`; `@EnableWebSecurity` относится к Servlet-стеку MVC.",
+                "source_of_confusion": "Аннотации почти одноимённые, разница в `WebFlux`-части неочевидна.",
+                "if_it_were_true": "Тогда `@EnableWebSecurity` поднимал бы реактивную цепочку фильтров, но она требует `@EnableWebFluxSecurity`.",
+                "how_it_should_be": "Реактивную безопасность включает `@EnableWebFluxSecurity`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `RouterFunction` vs `@RestController`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`RouterFunction` доступен только в `Spring MVC`, а в `WebFlux` маршруты можно объявлять исключительно аннотациями `@RestController`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RouterFunction` — это в первую очередь модель WebFlux (реактивная), и она работает наряду с `@RestController`.",
+                "source_of_confusion": "Функциональная модель появилась позже, отсюда путаница, где она поддержана.",
+                "if_it_were_true": "Тогда в WebFlux не было бы примеров `RouterFunctions.route()`, но это его штатный API.",
+                "how_it_should_be": "В WebFlux доступны обе модели, включая функциональный `RouterFunction`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RouterFunction` — функциональная модель WebFlux: маршруты и обработчики описываются явно в коде (`RouterFunctions.route().GET(...).build()`); `@RestController` — аннотационная модель, как в MVC; обе поддерживаются в WebFlux, причём `RouterFunction` удобен для динамических маршрутов и тестирования без сервера, а `@RestController` привычнее для типичного REST API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это два равноправных способа объявления эндпоинтов. Функциональный стиль делает маршрутизацию явной и композируемой (легко комбинировать роутеры и фильтры), аннотационный — декларативен и знаком большинству.",
+                "example": "Функционально: `RouterFunctions.route().GET(\"/users/{id}\", handler::getById).build()`. Аннотационно: `@GetMapping(\"/users/{id}\") Mono<User> getById(@PathVariable Long id)`.",
+                "when_to_apply": "`RouterFunction` — когда нужны динамические/композируемые маршруты и тесты `bindToRouterFunction`; `@RestController` — для стандартных REST-контроллеров и команды, привыкшей к аннотациям.",
+                "edge_cases": "Обе модели можно использовать в одном приложении; функциональный обработчик принимает `ServerRequest` и возвращает `Mono<ServerResponse>`, а не `@PathVariable`/POJO.",
+                "related": "[[spring-webflux-interview#Q31]] RouterFunction для функционального стиля; [[spring-webflux-interview#Q4]] архитектура WebFlux; [[spring-webflux-interview#Q32]] WebFilter и HandlerFilterFunction."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `RouterFunction` обработчик помечается `@GetMapping` и возвращает POJO, как метод `@RestController`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Функциональный обработчик — это метод `(ServerRequest) -> Mono<ServerResponse>` без аннотаций маппинга; маршрут задаётся в роутере.",
+                "source_of_confusion": "Опыт аннотированных контроллеров переносят на функциональную модель.",
+                "if_it_were_true": "Тогда в роутере не нужно было бы указывать пути, но именно роутер связывает путь и обработчик.",
+                "how_it_should_be": "Обработчик возвращает `Mono<ServerResponse>`; путь задаёт `RouterFunction`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@RestController` и `RouterFunction` нельзя использовать в одном приложении — нужно выбрать что-то одно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обе модели сосуществуют в одном WebFlux-приложении; Spring собирает все роутеры и контроллеры вместе.",
+                "source_of_confusion": "Кажется, что два стиля маршрутизации конфликтуют.",
+                "if_it_were_true": "Тогда добавление `RouterFunction`-бина ломало бы существующие контроллеры, но они работают параллельно.",
+                "how_it_should_be": "Стили можно смешивать; ограничения «только один» нет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как валидировать запросы в реактивном стеке?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Валидация `@Valid` в `WebFlux` выполняется синхронно при входе в метод контроллера, ещё до подписки на тело запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В реактивном стеке проверка ленивая: она срабатывает в момент подписки на `Mono`/`Flux` тела, а не синхронно на входе.",
+                "source_of_confusion": "В MVC `@Valid` срабатывает до тела метода, эту модель переносят на WebFlux.",
+                "if_it_were_true": "Тогда тело уже было бы прочитано и провалидировано до реактивной цепочки, но чтение тоже неблокирующее.",
+                "how_it_should_be": "Проверка происходит при подписке на реактивное тело."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В реактивном стеке аннотации Bean Validation (`@NotNull`, `@Size`) не поддерживаются — валидацию пишут только вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bean Validation поддерживается в WebFlux через `@Valid`; ручная валидация через `Validator` — лишь дополнительный вариант для функционального стиля.",
+                "source_of_confusion": "Ленивость проверки создаёт впечатление, что стандартные аннотации не работают.",
+                "if_it_were_true": "Тогда `@Valid @RequestBody Mono<Dto>` не имел бы смысла, но это рабочая конструкция.",
+                "how_it_should_be": "Bean Validation работает через `@Valid`; ручной `Validator` опционален."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Используют `@Valid` с телом запроса в реактивном типе, например `@Valid @RequestBody Mono<Dto> body` — валидация срабатывает при подписке на `body`; для кастомной обработки ошибок ловят `WebExchangeBindException` в `@ControllerAdvice`, а Spring поддерживает реактивную валидацию через `Validator`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотация `@Valid` работает и в WebFlux, но проверка выполняется лениво — в момент подписки на реактивное тело, а не синхронно при входе в метод. Ошибки валидации представлены `WebExchangeBindException`.",
+                "example": "`Mono<ResponseEntity<User>> create(@Valid @RequestBody Mono<CreateUserRequest> body)` — при невалидном теле подписка завершится `WebExchangeBindException`, который превращают в 400.",
+                "when_to_apply": "Берут для проверки входных DTO (Bean Validation: `@NotNull`, `@Size`, `@Email`) в реактивных контроллерах и функциональных обработчиках.",
+                "edge_cases": "Валидация ленивая — если на тело не подписаться, проверка не выполнится; в функциональном стиле (`RouterFunction`) валидацию часто вызывают вручную через `Validator`.",
+                "related": "[[spring-webflux-interview#Q12]] обработка ошибок в WebFlux; [[spring-webflux-interview#Q22]] RouterFunction vs контроллеры; [[spring-webflux-interview#Q9]] Flux и Mono."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Ошибки валидации в `WebFlux` приходят как `MethodArgumentNotValidException` и ловятся стандартным сервлетным резолвером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В реактивном стеке ошибки валидации представлены `WebExchangeBindException`, который обрабатывают в `@ControllerAdvice`.",
+                "source_of_confusion": "В MVC именно `MethodArgumentNotValidException`, его ожидают и в WebFlux.",
+                "if_it_were_true": "Тогда работал бы сервлетный `HandlerExceptionResolver`, но реактивный стек его не использует.",
+                "how_it_should_be": "Ловят `WebExchangeBindException` реактивными хендлерами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбирать `WebFlux` вместо `Spring MVC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`WebFlux` всегда быстрее `Spring MVC` на любой нагрузке, поэтому его следует выбирать во всех новых проектах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebFlux выигрывает на I/O-bound нагрузке с высокой конкуренцией; при умеренной нагрузке или CPU-bound он не быстрее, но сложнее.",
+                "source_of_confusion": "Маркетинг «реактивность = производительность» обобщают на все случаи.",
+                "if_it_were_true": "Тогда не было бы причин оставлять MVC, но для простого CRUD он проще и достаточен.",
+                "how_it_should_be": "Выбор зависит от нагрузки и стека; WebFlux не универсально быстрее."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`WebFlux` отлично сочетается с блокирующим `JPA`/`JDBC`, поэтому ради него менять слой данных не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Блокирующий `JPA`/`JDBC` нарушает неблокирующую модель WebFlux; для полного выигрыша нужен реактивный доступ (R2DBC).",
+                "source_of_confusion": "JPA — стандарт доступа к данным, кажется совместимым со всем.",
+                "if_it_were_true": "Тогда не было бы R2DBC и предупреждений о блокировках, но именно они существуют ради WebFlux.",
+                "how_it_should_be": "Под WebFlux берут реактивный доступ (R2DBC) или изолируют блокировки на `boundedElastic`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Переход с `MVC` на `WebFlux` — это просто замена одной стартовой зависимости в `build.gradle`, код менять не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Миграция требует переписать цепочки на `Mono`/`Flux` и убрать блокирующие вызовы — это не замена зависимости.",
+                "source_of_confusion": "Похожие аннотации создают иллюзию совместимости кода.",
+                "if_it_were_true": "Тогда любой MVC-проект мгновенно стал бы реактивным, но блокирующие вызовы остались бы и всё сломали.",
+                "how_it_should_be": "Нужна переработка кода под неблокирующую модель, а не только смена стартера."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`WebFlux` берут при большом числе одновременных соединений (long polling, `SSE`, `WebSocket`), потоковой передаче данных и для шлюзов/агрегаторов с множеством исходящих вызовов; `Spring MVC` выбирают при блокирующем стеке (`JPA`, legacy-библиотеки), простом `CRUD` и команде без опыта в реактивном программировании, так как WebFlux сложнее и требует неблокирующих зависимостей.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главный критерий — модель I/O и характер нагрузки. WebFlux выигрывает на I/O-bound нагрузке с высокой конкуренцией; MVC проще и достаточен для умеренной нагрузки и блокирующих библиотек. Реактивность не «бесплатна»: растёт сложность кода и отладки.",
+                "example": "API-gateway, делающий по 5 параллельных вызовов к downstream-сервисам на каждый запрос, — кандидат на WebFlux; простой `CRUD` поверх `JPA` — на MVC.",
+                "when_to_apply": "WebFlux — высокая конкуренция, стриминг, реактивный стек (R2DBC, MongoDB Reactive); MVC — блокирующий стек, простота, отсутствие реактивного опыта.",
+                "edge_cases": "Миграция MVC→WebFlux — это не замена зависимости: нужно переписать цепочки на `Mono`/`Flux` и убрать все блокирующие вызовы; один забытый блокирующий вызов сводит выигрыш к нулю.",
+                "related": "[[spring-webflux-interview#Q8]] асинхронность в WebFlux; [[spring-webflux-interview#Q38]] WebFlux и Virtual Threads; [[spring-webflux-interview#Q16]] R2DBC со Spring Data."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать таймауты и retry в реактивных цепочках?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`timeout(Duration)` прерывает цепочку ошибкой `TimeoutException`, если элемент не пришёл за заданное время; `timeout(Duration, fallback)` подставляет запасной `Publisher`; `retry(n)` повторяет при ошибке, `retryWhen(Retry.backoff(...))` — с экспоненциальной задержкой и jitter; их комбинируют с `onErrorResume` для финального fallback.",
+              "correct": true,
+              "sections": {
+                "explanation": "Таймаут защищает от зависшего источника, retry — от временных сбоев. `retryWhen` с `Retry.backoff` управляет числом попыток, задержкой, максимальным бэкоффом и фильтром по типу исключения — это production-вариант вместо простого `retry(n)`.",
+                "example": "`mono.timeout(Duration.ofSeconds(8)).retryWhen(Retry.backoff(3, Duration.ofMillis(500)).maxBackoff(Duration.ofSeconds(5)).jitter(0.5)).onErrorReturn(fallback)`.",
+                "when_to_apply": "`timeout` — для внешних вызовов с риском зависания; `retry`/`retryWhen` — для идемпотентных операций с временными сбоями; `onErrorResume` — для финального запасного ответа.",
+                "edge_cases": "`retry` переподписывается на весь источник — для неидемпотентных операций (платёж, запись) это опасно; без `jitter` множество клиентов ретраят синхронно, создавая retry-storm.",
+                "related": "[[spring-webflux-interview#Q34]] WebClient с retry и таймаутами; [[spring-webflux-interview#Q39]] Resilience4j с WebFlux; [[spring-webflux-interview#Q11]] обработка ошибок в Reactor."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оператор `timeout(Duration)` при истечении времени тихо завершает поток через `onComplete` без какого-либо сигнала об ошибке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`timeout(Duration)` сигнализирует ошибку `TimeoutException` (`onError`); тихое завершение не позволило бы отличить успех от таймаута.",
+                "source_of_confusion": "Кажется, что «время вышло» — это нормальное завершение.",
+                "if_it_were_true": "Тогда подписчик не узнал бы о превышении лимита, но `timeout` именно сообщает об ошибке.",
+                "how_it_should_be": "По таймауту приходит `TimeoutException`; для fallback есть перегрузка с запасным `Publisher`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`retryWhen(Retry.backoff(...))` повторяет операцию с фиксированной нулевой задержкой между всеми попытками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Retry.backoff` использует экспоненциально растущую задержку (с `maxBackoff` и `jitter`), а не фиксированный нулевой интервал.",
+                "source_of_confusion": "Простой `retry(n)` повторяет сразу, эту модель переносят на `backoff`.",
+                "if_it_were_true": "Тогда не было бы разницы между `retry(n)` и `Retry.backoff`, но backoff специально добавляет нарастающую задержку.",
+                "how_it_should_be": "`Retry.backoff` даёт нарастающую задержку с jitter для сглаживания нагрузки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`retry` безопасно применять к любым операциям, включая неидемпотентные записи и платежи, без риска дублирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`retry` переподписывается на весь источник, поэтому неидемпотентные операции могут выполниться повторно (двойное списание).",
+                "source_of_confusion": "Retry воспринимают как «магическую» гарантию успеха без последствий.",
+                "if_it_were_true": "Тогда не нужно было бы думать об идемпотентности при ретраях, но это ключевое требование.",
+                "how_it_should_be": "Retry применяют к идемпотентным операциям; для записей нужна защита от дублей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Reactor Context` и для чего он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Reactor Context` — это просто синоним `ThreadLocal`, который автоматически работает в реактивных цепочках без изменений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Reactor Context` создан как замена `ThreadLocal`, потому что в реактивном стеке поток меняется и `ThreadLocal` теряет данные.",
+                "source_of_confusion": "Оба хранят «контекст текущего выполнения», отсюда отождествление.",
+                "if_it_were_true": "Тогда не нужен был бы отдельный механизм, но `ThreadLocal` именно поэтому и не подходит.",
+                "how_it_should_be": "Это альтернатива ThreadLocal, привязанная к подписке, а не к потоку."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Context` — иммутабельное хранилище ключ-значение, привязанное к подписке и доступное по всей цепочке без явной передачи аргументов; пишут в него через `contextWrite`, читают через `deferContextual`; используют для трассировки, аутентификации и локали, так как `ThreadLocal` в реактивном стеке ненадёжен из-за смены потоков.",
+              "correct": true,
+              "sections": {
+                "explanation": "В реактивном коде один поток обслуживает много цепочек, поэтому `ThreadLocal` не работает как «текущий контекст». `Reactor Context` распространяется вместе с подпиской (снизу вверх по цепочке) и заменяет ThreadLocal для сквозных данных.",
+                "example": "`mono.contextWrite(Context.of(\"userId\", id))` кладёт значение; ниже по цепочке `Mono.deferContextual(ctx -> Mono.just(ctx.get(\"userId\")))` его читает.",
+                "when_to_apply": "Берут для проброса traceId/correlationId, текущего пользователя, локали — всего, что в императивном коде хранили бы в `ThreadLocal`.",
+                "edge_cases": "Контекст распространяется от подписчика вверх (`contextWrite` влияет на операторы выше него); при новой подписке контекст не наследуется — его задают заново.",
+                "related": "[[spring-webflux-interview#Q21]] безопасность в WebFlux; [[spring-webflux-interview#Q32]] WebFilter и contextWrite; [[spring-webflux-interview#Q40]] Spring Security и Reactor Context."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Значения в `Reactor Context` записывают через `doOnNext`, и они распространяются вниз по цепочке к подписчику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Записывают через `contextWrite`, а распространяется контекст снизу вверх (от подписчика к источнику), а не вниз.",
+                "source_of_confusion": "Интуитивно данные «текут вниз» вместе с элементами потока.",
+                "if_it_were_true": "Тогда `contextWrite` в конце цепочки не влиял бы на операторы выше, но он влияет именно на них.",
+                "how_it_should_be": "Пишут через `contextWrite`; контекст идёт вверх по цепочке."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Reactor Context` мутабелен: любой оператор может изменить уже записанное значение прямо на месте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Context` иммутабелен — `contextWrite` создаёт новый контекст, а не меняет существующий; это гарантирует предсказуемость.",
+                "source_of_confusion": "Привычка к мутабельным `Map`/`ThreadLocal` переносится на `Context`.",
+                "if_it_were_true": "Тогда одна цепочка могла бы случайно перетереть данные другой, но иммутабельность это исключает.",
+                "how_it_should_be": "`Context` иммутабелен; каждое изменение порождает новый контекст."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать с `StepVerifier`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "После настройки ожиданий `StepVerifier` можно не вызывать `verify()` — подписка и проверка происходят автоматически при создании.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без явного `verify()` (или `verifyThenAssertThat()`) подписка не выполняется, и ни одно ожидание не проверяется.",
+                "source_of_confusion": "Цепочка `expectNext(...)` выглядит самодостаточной, как будто уже всё проверяет.",
+                "if_it_were_true": "Тогда тесты без `verify()` ловили бы баги, но они проходят, ничего не проверив.",
+                "how_it_should_be": "Цепочку всегда завершают `verify()`/`verify(Duration)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`StepVerifier.withVirtualTime` реально ждёт указанное время, просто логируя прогресс в консоль.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`withVirtualTime` использует виртуальные часы и продвигает время мгновенно через `thenAwait(...)`, без реального ожидания.",
+                "source_of_confusion": "Слово «time» наводит на мысль о настоящем ожидании.",
+                "if_it_were_true": "Тогда тест `interval` на час шёл бы час, но виртуальное время делает его мгновенным.",
+                "how_it_should_be": "Виртуальное время продвигается логически, не блокируя тест реальным ожиданием."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`StepVerifier.create(fluxOrMono)` создаёт верификатор, затем шагами проверяют сигналы: `expectNext(...)`, `expectNextCount(n)`, `expectNextMatches(...)`, `expectError(...)`, `expectComplete()`, и завершают вызовом `verify()`/`verify(Duration)`, который запускает подписку; для операторов с задержками используют `StepVerifier.withVirtualTime(() -> flux).thenAwait(...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`StepVerifier` подписывается на поток и сверяет фактическую последовательность сигналов с ожидаемой. Без `verify()` подписка не происходит, и тест ничего не проверяет. Виртуальное время позволяет тестировать `delay`/`interval` без реального ожидания.",
+                "example": "`StepVerifier.create(service.getUser(id)).expectNextMatches(u -> u.getName().equals(\"Alice\")).expectComplete().verify(Duration.ofSeconds(2))`.",
+                "when_to_apply": "Используют для unit-тестов реактивных цепочек: проверки значений, числа элементов, ошибок и завершения; виртуальное время — для отложенных операторов.",
+                "edge_cases": "Забытый `verify()` — самая частая ошибка: тест «зелёный», но фактически ничего не проверял; для `interval`/`delay` без `withVirtualTime` тест реально ждёт и становится медленным.",
+                "related": "[[spring-webflux-interview#Q13]] тестирование реактивных приложений; [[spring-webflux-interview#Q43]] WebTestClient и StepVerifier; [[spring-webflux-interview#Q11]] обработка ошибок."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`expectError()` проверяет, что поток успешно завершился сигналом `onComplete` без выброса исключений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`expectError()` проверяет терминальный сигнал `onError`; успешное завершение проверяет `expectComplete()`.",
+                "source_of_confusion": "Оба — терминальные ожидания, отсюда их смешение.",
+                "if_it_were_true": "Тогда `expectError` и `expectComplete` были бы взаимозаменяемы, но они проверяют противоположные исходы.",
+                "how_it_should_be": "`expectError` — ожидание ошибки; `expectComplete` — успешного завершения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить транзакционность в `R2DBC`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Транзакции `R2DBC` работают через обычный синхронный `PlatformTransactionManager`, как в `JDBC`/`JPA`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реактивные транзакции используют `ReactiveTransactionManager`; синхронный `PlatformTransactionManager` рассчитан на блокирующий доступ.",
+                "source_of_confusion": "`@Transactional` выглядит одинаково, поэтому кажется, что и менеджер тот же.",
+                "if_it_were_true": "Тогда транзакция держала бы соединение в `ThreadLocal`, но в реактивном стеке поток меняется.",
+                "how_it_should_be": "Используется `ReactiveTransactionManager` с контекстом подписки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `R2DBC` транзакция автоматически охватывает все асинхронные подписки, даже запущенные отдельным `subscribe()` вне цепочки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Транзакция привязана к одной реактивной цепочке/контексту; отдельная независимая подписка выходит за её пределы.",
+                "source_of_confusion": "Кажется, что `@Transactional` «накрывает» весь метод целиком, как в синхронном коде.",
+                "if_it_were_true": "Тогда побочный `subscribe()` тоже откатывался бы, но он выполняется вне транзакционного контекста.",
+                "how_it_should_be": "Транзакция охватывает только текущую цепочку, распространённую через `Reactor Context`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`R2DBC` вообще не поддерживает транзакции, потому что неблокирующий доступ несовместим с ACID.",
+              "correct": false,
+              "sections": {
+                "what_actually": "R2DBC поддерживает транзакции — через `@Transactional`, `TransactionalOperator` или прямой `beginTransaction()`/`commit()`.",
+                "source_of_confusion": "Неблокирующую модель ошибочно считают несовместимой с транзакциями.",
+                "if_it_were_true": "Тогда атомарность нескольких операций была бы невозможна, но это штатный сценарий R2DBC.",
+                "how_it_should_be": "Транзакции есть и работают через реактивный менеджер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Транзакции в R2DBC реактивны: используют `@Transactional` поверх `ReactiveTransactionManager`, либо программно `TransactionalOperator` (обёртка над цепочкой), либо вручную через `Connection.beginTransaction()` → бизнес-операции → `commit()`/`rollback()`; при ошибке в цепочке транзакция откатывается.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку доступ неблокирующий, транзакция привязана не к `ThreadLocal`-соединению, а распространяется через `Reactor Context`. `@Transactional` на реактивном методе работает через `ReactiveTransactionManager`, охватывая всю цепочку `Mono`/`Flux`.",
+                "example": "`@Transactional Mono<User> create(req) { return userRepo.save(user).flatMap(saved -> auditRepo.save(log).thenReturn(saved)); }` — если `auditRepo.save` упадёт, оба сохранения откатятся.",
+                "when_to_apply": "Применяют, когда нужно атомарно выполнить несколько реактивных операций с БД (например, сохранить сущность и аудит-запись вместе).",
+                "edge_cases": "Транзакция работает только в пределах одной реактивной цепочки и одного соединения; смешивание с блокирующими вызовами или отдельной подпиской разрывает транзакционный контекст.",
+                "related": "[[spring-webflux-interview#Q16]] R2DBC со Spring Data; [[spring-webflux-interview#Q36]] полностью реактивный стек; [[spring-webflux-interview#Q41]] R2DBC vs JDBC."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие метрики и мониторинг для `WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Используют `Actuator` (метрики WebFlux: число запросов, ошибки, тайминги эндпоинтов), метрики Reactor Netty (`reactor.netty`: соединения, пулы), кастомные метрики через `MeterRegistry` (`Micrometer`), оператор `log()` для логирования сигналов в цепочке и распределённую трассировку через `Reactor Context` + `Micrometer Tracing`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Мониторинг WebFlux строится на `Micrometer`/`Actuator`: автометрики HTTP-эндпоинтов и Netty, плюс кастомные таймеры/счётчики на критичных операторах. Трассировка завязана на `Reactor Context`, так как ThreadLocal-подход MDC ненадёжен.",
+                "example": "`http.server.requests` в Actuator даёт latency и коды ответов; кастомно — `meterRegistry.timer(\"db.query\").record(() -> ...)` или `flux.name(\"orders\").metrics()`.",
+                "when_to_apply": "Подключают для production-наблюдаемости: SLO по latency/error-rate, контроль пулов соединений Netty, трассировка межсервисных вызовов.",
+                "edge_cases": "MDC и ThreadLocal-логирование в реактивном стеке теряют контекст при смене потока; correlationId пробрасывают через `Reactor Context`, а не MDC напрямую.",
+                "related": "[[spring-webflux-interview#Q26]] Reactor Context; [[spring-webflux-interview#Q39]] Resilience4j с WebFlux; [[spring-webflux-interview#Q30]] best practices."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для логирования внутри реактивной цепочки достаточно обычного `MDC`/`ThreadLocal`, контекст сохраняется автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MDC на ThreadLocal теряет контекст при смене потока в реактивном стеке; сквозные данные пробрасывают через `Reactor Context`.",
+                "source_of_confusion": "MDC — стандарт корреляции логов в блокирующих приложениях.",
+                "if_it_were_true": "Тогда traceId сохранялся бы после `publishOn`, но поток меняется и MDC теряется.",
+                "how_it_should_be": "Корреляцию ведут через `Reactor Context` + `Micrometer Tracing`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`WebFlux` несовместим с `Actuator` и `Micrometer`, поэтому метрики собирают только внешними агентами вне приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebFlux полностью поддерживает `Actuator`/`Micrometer`: есть автометрики HTTP и Netty, можно регистрировать кастомные.",
+                "source_of_confusion": "Кажется, что инструменты для MVC не работают в реактивном стеке.",
+                "if_it_were_true": "Тогда не было бы метрики `http.server.requests` в WebFlux, но она доступна из коробки.",
+                "how_it_should_be": "Actuator/Micrometer работают в WebFlux штатно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Оператор `log()` в реактивной цепочке отправляет данные во внешнюю систему логирования по сети и блокирует поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`log()` лишь логирует сигналы (`onSubscribe`, `onNext`, `onComplete`/`onError`) через логгер, не блокируя поток и не делая сетевых вызовов.",
+                "source_of_confusion": "Слово «log» ассоциируют с отправкой в централизованное хранилище.",
+                "if_it_were_true": "Тогда `log()` нельзя было бы ставить в горячую цепочку, но это диагностический неблокирующий оператор.",
+                "how_it_should_be": "`log()` пишет сигналы потока в логгер локально, без блокировки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие best practices для реактивных приложений?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Лучшая практика — завершать каждую цепочку вызовом `.block()`, чтобы гарантированно получить результат синхронно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.block()` в реактивном стеке блокирует поток и нарушает неблокирующую модель; в WebFlux его на event loop вызывать нельзя.",
+                "source_of_confusion": "`.block()` даёт привычный синхронный результат и упрощает понимание.",
+                "if_it_were_true": "Тогда смысл WebFlux терялся бы, но именно отказ от блокировок — его основа.",
+                "how_it_should_be": "Цепочку оставляют реактивной; `block()` используют лишь в тестах/main, не в обработке запросов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Не блокировать внутри реактивной цепочки (блокирующие вызовы выносить на `subscribeOn(Schedulers.boundedElastic())`); избегать пустых `subscribe()`; обрабатывать ошибки через `onErrorResume`/`doOnError`; учитывать backpressure; не плодить лишние подписки; тестировать через `StepVerifier`; документировать контракты (cold/hot, одноразовость потока).",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное правило — неблокирующий контракт: любая блокировка на event loop убивает выигрыш. Остальное — гигиена: явная обработка ошибок, контроль backpressure, осознанные подписки и тестируемость.",
+                "example": "Вместо `repo.find().block()` в цепочке — `repo.find().flatMap(...)`; блокирующий legacy-вызов — `Mono.fromCallable(legacy::call).subscribeOn(Schedulers.boundedElastic())`.",
+                "when_to_apply": "Применяют постоянно при разработке на WebFlux/Reactor как чек-лист код-ревью реактивного кода.",
+                "edge_cases": "Пустой `subscribe()` без обработчика ошибок молча проглатывает `onError`; повторные подписки на cold-`Mono` дублируют дорогие вызовы (БД/HTTP) — для переиспользования есть `cache()`.",
+                "related": "[[spring-webflux-interview#Q14]] backpressure; [[spring-webflux-interview#Q17]] Schedulers; [[spring-webflux-interview#Q27]] StepVerifier."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Пустой `subscribe()` без аргументов — рекомендуемый способ запуска, он корректно обрабатывает ошибки потока.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пустой `subscribe()` молча проглатывает сигнал `onError`; ошибки нужно обрабатывать явно (`doOnError`/`onErrorResume` или обработчик в `subscribe`).",
+                "source_of_confusion": "Кажется, что вызов `subscribe()` уже «всё запускает и обрабатывает».",
+                "if_it_were_true": "Тогда не было бы рекомендации избегать пустых подписок, но она существует именно из-за потери ошибок.",
+                "how_it_should_be": "Ошибки обрабатывают явно; пустых `subscribe()` избегают."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Backpressure в реактивных приложениях можно игнорировать — фреймворк сам решит проблему медленного потребителя без участия разработчика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хотя backpressure встроен, разработчик выбирает стратегию (`buffer`/`drop`/`latest`) и ограничивает параллелизм; игнорирование ведёт к OOM или потере данных.",
+                "source_of_confusion": "Автоматическая поддержка backpressure создаёт впечатление, что думать о ней не нужно.",
+                "if_it_were_true": "Тогда не было бы операторов `onBackpressure*`, но они нужны именно для осознанного выбора.",
+                "how_it_should_be": "Стратегию backpressure выбирают осознанно под характер данных."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `RouterFunction` для функционального стиля маршрутизации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В функциональном стиле handler помечают `@GetMapping`/`@PostMapping`, а `RouterFunction` лишь регистрирует контроллер в контексте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Функциональные handler'ы не используют аннотации маппинга; путь и метод задаёт сам `RouterFunction` через `.GET(...)`/`.POST(...)`.",
+                "source_of_confusion": "Аннотационная и функциональная модели смешиваются в голове.",
+                "if_it_were_true": "Тогда `RouterFunctions.route().GET(...)` дублировал бы аннотации, но он их заменяет.",
+                "how_it_should_be": "Маршруты задаёт роутер; handler — это просто метод `(ServerRequest)->Mono<ServerResponse>`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Метод-обработчик в `RouterFunction` принимает `HttpServletRequest` и возвращает `ResponseEntity`, как в Servlet-стеке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработчик принимает `ServerRequest` и возвращает `Mono<ServerResponse>` — реактивные типы WebFlux, без Servlet API.",
+                "source_of_confusion": "Сигнатуры Servlet-обработчиков переносят на реактивный функциональный стиль.",
+                "if_it_were_true": "Тогда функциональный стиль был бы блокирующим, но он полностью реактивен.",
+                "how_it_should_be": "Сигнатура — `Mono<ServerResponse> handle(ServerRequest req)`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Объявляют `@Bean RouterFunction<ServerResponse>` через `RouterFunctions.route()`, привязывая HTTP-методы к методам handler-компонента (`(ServerRequest) -> Mono<ServerResponse>`), например `.GET(\"/{id}\", handler::getById).POST(\"\", handler::create)`; роутеры можно группировать через `path(...)`, объединять и оборачивать фильтрами, а тестировать без сервера через `WebTestClient.bindToRouterFunction(router)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Маршруты описаны явно в коде, а не размазаны по аннотациям. Handler — это компонент с методами вида `Mono<ServerResponse> getById(ServerRequest req)`. Несколько роутеров Spring собирает автоматически, либо их комбинируют вручную с общими фильтрами.",
+                "example": "`RouterFunctions.route().path(\"/api/users\", b -> b.GET(\"\", h::getAll).GET(\"/{id}\", h::getById).POST(\"\", h::create)).build()`; тест — `WebTestClient.bindToRouterFunction(router).build()`.",
+                "when_to_apply": "Удобен для динамических/композируемых маршрутов, общих фильтров на группу путей и лёгкого тестирования без поднятия HTTP-сервера.",
+                "edge_cases": "Handler читает путь через `request.pathVariable(\"id\")`, а тело — через `request.bodyToMono(...)`; пустой результат обрабатывают `switchIfEmpty(ServerResponse.notFound().build())`.",
+                "related": "[[spring-webflux-interview#Q22]] RouterFunction vs контроллеры; [[spring-webflux-interview#Q32]] HandlerFilterFunction; [[spring-webflux-interview#Q13]] тестирование реактивных приложений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`RouterFunction` нельзя протестировать без запуска полноценного встроенного HTTP-сервера на реальном порту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роутер тестируют изолированно через `WebTestClient.bindToRouterFunction(router)` — без сервера и реального порта.",
+                "source_of_confusion": "Интеграционные тесты обычно ассоциируют с поднятием сервера.",
+                "if_it_were_true": "Тогда юнит-тесты роутеров были бы медленными, но `bindToRouterFunction` делает их быстрыми.",
+                "how_it_should_be": "Тестируют через `bindToRouterFunction` без HTTP-сервера."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `WebFilter` и как он работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`WebFilter` — это сервлетный `javax.servlet.Filter`, который WebFlux запускает в блокирующем режиме на каждом запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WebFilter` — реактивный неблокирующий аналог `Filter`: он работает с `ServerWebExchange` и возвращает `Mono<Void>`, а не сервлетный API.",
+                "source_of_confusion": "Идея фильтра одна и та же, отсюда отождествление с Servlet-фильтром.",
+                "if_it_were_true": "Тогда фильтр блокировал бы event loop, но `WebFilter` неблокирующий по контракту.",
+                "how_it_should_be": "Это реактивный фильтр с `ServerWebExchange` и `Mono<Void> filter(...)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`WebFilter` не может продолжить обработку запроса дальше — он всегда завершает ответ сам, не вызывая следующую цепочку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чтобы передать запрос дальше, фильтр обязан вернуть `chain.filter(exchange)`; завершать ответ сам он лишь в особых случаях (например, отказ авторизации).",
+                "source_of_confusion": "Кажется, что фильтр всегда «перехватывает» и обрывает запрос.",
+                "if_it_were_true": "Тогда после первого `WebFilter` запрос не доходил бы до контроллера, но цепочка идёт дальше через `chain.filter`.",
+                "how_it_should_be": "Для продолжения вызывают `chain.filter(exchange)`; обрыв — исключение, а не правило."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Передать данные из `WebFilter` в обработчик можно только через статические переменные, так как `Reactor Context` фильтрам недоступен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Данные пробрасывают через `Reactor Context` — `chain.filter(exchange).contextWrite(Context.of(\"userId\", ...))`; статические переменные небезопасны при конкуренции.",
+                "source_of_confusion": "Привычка к глобальному состоянию из синхронного кода.",
+                "if_it_were_true": "Тогда параллельные запросы перетирали бы данные друг друга, но `Reactor Context` изолирует их по подписке.",
+                "how_it_should_be": "Проброс — через `contextWrite` в `Reactor Context`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`WebFilter` — реактивный аналог сервлетного `Filter`: бин, реализующий `Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain)`, который встраивается в цепочку обработки до `DispatcherHandler` и работает с `ServerWebExchange`; порядок задают `@Order`, продолжение цепочки — `chain.filter(exchange)`, а данные пробрасывают через `Reactor Context` (`contextWrite`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`WebFilter` применяется ко всем запросам глобально (логирование, аутентификация, CORS). Он обязан вернуть результат `chain.filter(exchange)` (или завершить ответ сам), при этом всё неблокирующее: побочные эффекты вешают на `doOnSuccess`/`doOnError`.",
+                "example": "Логирующий фильтр: `chain.filter(exchange).doOnSuccess(v -> log.info(\"{} {} -> {}\", method, path, status))`; авторизация: при отсутствии токена `exchange.getResponse().setStatusCode(UNAUTHORIZED); return setComplete();`.",
+                "when_to_apply": "Берут для сквозной логики на все эндпоинты: логирование, проверка токена, добавление заголовков, трассировка; для группы функциональных маршрутов есть `HandlerFilterFunction`.",
+                "edge_cases": "`HandlerFilterFunction` (`.filter((req, next) -> next.handle(req))`) работает только внутри своего `RouterFunction` и типобезопаснее; `WebFilter` — глобальный для всего приложения.",
+                "related": "[[spring-webflux-interview#Q21]] безопасность в WebFlux; [[spring-webflux-interview#Q26]] Reactor Context; [[spring-webflux-interview#Q31]] RouterFunction."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать `WebSocket` в `Spring WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Реализуют интерфейс `WebSocketHandler` с методом `Mono<Void> handle(WebSocketSession session)`: входящие сообщения читают через `session.receive()`, исходящие отправляют через `session.send(Flux<WebSocketMessage>)`, для широковещания используют `Sinks.Many`; маршрут регистрируют через `SimpleUrlHandlerMapping` (с приоритетом перед `DispatcherHandler`) и бин `WebSocketHandlerAdapter`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от SSE, WebSocket двунаправлен. `session.receive()` даёт `Flux` входящих сообщений, `session.send(...)` принимает `Flux` исходящих. `Sinks.Many.multicast()` позволяет раздать поток нескольким подписчикам (чат).",
+                "example": "`return session.send(chatSink.asFlux().map(session::textMessage)).and(session.receive().doOnNext(m -> chatSink.tryEmitNext(...)).then())` — приём и рассылка в чате.",
+                "when_to_apply": "Берут для двунаправленного реалтайма: чаты, совместное редактирование, игры, дашборды с командами от клиента; для однонаправленного push достаточно SSE.",
+                "edge_cases": "`WebTestClient` не поддерживает WebSocket — нужен реактивный клиент `ReactorNettyWebSocketClient`; `SimpleUrlHandlerMapping` для WS должен иметь `order = -1`, чтобы сработать раньше `DispatcherHandler`.",
+                "related": "[[spring-webflux-interview#Q18]] Server-Sent Events; [[spring-webflux-interview#Q19]] cold и hot publishers; [[spring-webflux-interview#Q4]] архитектура WebFlux."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`WebSocket` в `WebFlux` реализуют, возвращая `Flux<ServerSentEvent>` из обычного `@GetMapping`-контроллера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flux<ServerSentEvent>` из контроллера — это SSE (однонаправленный); WebSocket реализуют через `WebSocketHandler` с `session.receive()`/`session.send()`.",
+                "source_of_confusion": "SSE и WebSocket оба «реалтайм», отсюда смешение их реализаций.",
+                "if_it_were_true": "Тогда клиент не мог бы слать сообщения серверу, но WebSocket двунаправлен.",
+                "how_it_should_be": "WebSocket — это `WebSocketHandler`, а не SSE-эндпоинт."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`WebSocket`-эндпоинты в `WebFlux` тестируют через `WebTestClient`, как и обычные HTTP-маршруты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WebTestClient` не поддерживает WebSocket; для тестов нужен реактивный WS-клиент вроде `ReactorNettyWebSocketClient`.",
+                "source_of_confusion": "`WebTestClient` — универсальный инструмент для эндпоинтов, кажется, что и для WS.",
+                "if_it_were_true": "Тогда не нужен был бы отдельный WS-клиент, но именно он требуется для WebSocket.",
+                "how_it_should_be": "WebSocket тестируют через `ReactorNettyWebSocketClient`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для рассылки одного входящего сообщения сразу всем подключённым клиентам используют `Mono.just`, который сам делает broadcast.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Broadcast нескольким подписчикам делают через hot-publisher `Sinks.Many.multicast()`; `Mono.just` — это cold-источник на одно значение для одного потребителя.",
+                "source_of_confusion": "Кажется, что любой `Mono`/`Flux` можно раздать всем сразу.",
+                "if_it_were_true": "Тогда не нужны были бы `Sinks`, но именно они обеспечивают multicast в чате.",
+                "how_it_should_be": "Для рассылки используют `Sinks.Many.multicast()` и `asFlux()`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить реактивный `WebClient` с retry и таймаутами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "У `WebClient` есть единственный глобальный таймаут, который автоматически покрывает и установку соединения, и чтение, и общий лимит вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Таймауты настраивают раздельно: connect/read/write на уровне Netty `HttpClient` и логический `.timeout()` на цепочке; одного «всеобъемлющего» нет.",
+                "source_of_confusion": "Хочется одного простого параметра «таймаут на всё».",
+                "if_it_were_true": "Тогда не было бы отдельных `ReadTimeoutHandler` и `responseTimeout`, но они существуют для разных фаз.",
+                "how_it_should_be": "Настраивают транспортные таймауты Netty и логический `.timeout()` отдельно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Настраивают `HttpClient` (Reactor Netty) с `CONNECT_TIMEOUT_MILLIS`, `responseTimeout` и `ReadTimeoutHandler`/`WriteTimeoutHandler`, подключают его через `ReactorClientHttpConnector` в `WebClient.builder()`; на уровне вызова добавляют `.timeout(Duration)`, `.retryWhen(Retry.backoff(...).filter(...).jitter(...))`, обработку статусов `.onStatus(...)` и финальный `.onErrorReturn(...)`/`onErrorResume`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Таймауты задают на двух уровнях: транспортном (connect/read/write через Netty) и логическом (`.timeout()` на цепочке). Retry с `Retry.backoff` фильтруют по типу исключения, добавляют jitter и логируют попытки; `.onStatus` маппит 4xx/5xx в доменные исключения.",
+                "example": "`webClient.post().uri(\"/charges\").retrieve().onStatus(HttpStatusCode::is5xxServerError, r -> Mono.error(new ServiceUnavailableException())).bodyToMono(Result.class).timeout(Duration.ofSeconds(8)).retryWhen(Retry.backoff(3, Duration.ofMillis(500)).jitter(0.5))`.",
+                "when_to_apply": "Применяют для устойчивых интеграций с внешними API: ограничить время вызова, повторить временные сбои, отдать fallback при недоступности сервиса.",
+                "edge_cases": "Retry стоит фильтровать по типу исключения (`filter(ex -> ex instanceof ServiceUnavailableException)`), иначе повторяются и бизнес-ошибки 4xx; без `jitter` синхронные ретраи многих клиентов дают retry-storm.",
+                "related": "[[spring-webflux-interview#Q15]] WebClient vs RestTemplate; [[spring-webflux-interview#Q25]] таймауты и retry; [[spring-webflux-interview#Q39]] Resilience4j с WebFlux."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`retryWhen(Retry.backoff(...))` повторяет вызов при любой ошибке, включая 4xx-ошибки клиента вроде неверного запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без фильтра `retryWhen` действительно повторит всё подряд, поэтому его фильтруют по типу исключения, чтобы не ретраить 4xx.",
+                "source_of_confusion": "Кажется, что retry «по умолчанию умный» и сам исключает клиентские ошибки.",
+                "if_it_were_true": "Тогда повтор `400 Bad Request` имел бы смысл, но запрос всё равно невалиден и ответ не изменится.",
+                "how_it_should_be": "Retry фильтруют по типу (`is5xx`/`ServiceUnavailableException`), исключая 4xx."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Таймауты и retry в `WebClient` нужно реализовывать вручную через `Thread.sleep` и циклы, встроенных операторов для этого нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть встроенные операторы `.timeout(Duration)` и `.retryWhen(Retry.backoff(...))`; `Thread.sleep` в реактивной цепочке недопустим (блокировка).",
+                "source_of_confusion": "Императивный опыт ретраев через циклы и sleep переносят на реактивный код.",
+                "if_it_were_true": "Тогда не было бы реактивных операторов для устойчивости, но `Retry`/`timeout` встроены в Reactor.",
+                "how_it_should_be": "Используют встроенные `timeout`/`retryWhen`; блокирующий `sleep` запрещён."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как управлять `WebSession` в реактивном стеке?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В реактивном стеке используют обычный сервлетный `HttpSession`, полученный из `HttpServletRequest`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebFlux не использует Servlet API; вместо `HttpSession` есть реактивный `WebSession`, доступный через `exchange.getSession()`.",
+                "source_of_confusion": "`HttpSession` — привычный механизм сессий из MVC.",
+                "if_it_were_true": "Тогда в WebFlux был бы `HttpServletRequest`, но реактивный стек работает с `ServerWebExchange`.",
+                "how_it_should_be": "Используют `WebSession`, а не сервлетный `HttpSession`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`exchange.getSession()` возвращает сессию синхронно как объект `WebSession`, без обёртки в реактивный тип.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`exchange.getSession()` возвращает `Mono<WebSession>` — доступ к сессии реактивный, как и всё в WebFlux.",
+                "source_of_confusion": "Привычка к синхронному `request.getSession()` из Servlet API.",
+                "if_it_were_true": "Тогда получение сессии было бы блокирующим, но в реактивном стеке это `Mono`.",
+                "how_it_should_be": "Возвращается `Mono<WebSession>`; значение получают через цепочку операторов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`WebSession` — реактивный аналог `HttpSession`, управляемый `WebSessionManager` (по умолчанию in-memory `DefaultWebSessionManager`); сессию получают как параметр метода (`WebSession session`) или через `exchange.getSession()` (возвращает `Mono<WebSession>`), читают/пишут атрибуты через `getAttributes()`, инвалидируют через `session.invalidate()`, а для распределённого хранения подключают `spring-session-data-redis`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от блокирующего `HttpSession`, доступ к `WebSession` реактивен: `exchange.getSession()` возвращает `Mono`. Атрибуты хранят пользовательские данные между запросами; по умолчанию хранилище in-memory, в кластере — Redis.",
+                "example": "`@PostMapping(\"/cart/add\") addToCart(WebSession session, @RequestBody CartItem item) { session.getAttributes().put(\"cart\", cart); }`; logout — `session.invalidate()`.",
+                "when_to_apply": "Берут для хранения состояния между запросами (корзина, флаги, шаги визарда) в WebFlux-приложении с серверными сессиями.",
+                "edge_cases": "In-memory сессии не переживают рестарт и не шарятся между инстансами — в кластере включают Redis (`@EnableRedisWebSession`, `store-type: redis`); доступ к сессии реактивный (`Mono<WebSession>`), не синхронный.",
+                "related": "[[spring-webflux-interview#Q21]] безопасность в WebFlux; [[spring-webflux-interview#Q26]] Reactor Context; [[spring-webflux-interview#Q4]] архитектура WebFlux."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "In-memory `WebSession` по умолчанию автоматически реплицируется между всеми инстансами приложения в кластере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "In-memory сессии локальны для инстанса и не шарятся; для распределённого хранения подключают Redis (`spring-session-data-redis`).",
+                "source_of_confusion": "Кажется, что фреймворк сам решает проблему сессий в кластере.",
+                "if_it_were_true": "Тогда не нужен был бы `@EnableRedisWebSession`, но он существует именно для распределённых сессий.",
+                "how_it_should_be": "Для кластера сессии выносят в Redis; in-memory локальны."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как интегрировать `R2DBC` со `Spring Data` и получить полностью реактивный стек?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сущности `R2DBC` помечают JPA-аннотациями `@Entity`/`@OneToMany`, и `Hibernate` управляет их жизненным циклом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "R2DBC использует аннотации Spring Data (`@Table`, `@Id`, `@Column`), а не JPA; `Hibernate` и его Session в реактивном стеке не участвуют.",
+                "source_of_confusion": "Опыт JPA/Hibernate переносят на реактивный доступ к данным.",
+                "if_it_were_true": "Тогда работал бы lazy loading и `@OneToMany`, но в R2DBC их нет.",
+                "how_it_should_be": "Маппинг — через Spring Data `@Table`/`@Id`; без Hibernate."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`R2DBC` автоматически создаёт схему БД из сущностей (DDL auto-create), как `hibernate.ddl-auto`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В R2DBC нет автоматического создания DDL из сущностей; схему накатывают миграциями (`Flyway`/`Liquibase`) или init-скриптом.",
+                "source_of_confusion": "`ddl-auto` из JPA/Hibernate ожидают и здесь.",
+                "if_it_were_true": "Тогда таблицы появлялись бы сами по `@Table`, но R2DBC этого не делает.",
+                "how_it_should_be": "Схему создают миграциями; auto-DDL из сущностей отсутствует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Полностью реактивный стек допускает использование блокирующего `JdbcTemplate` рядом с `R2DBC` без вреда для производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Блокирующий `JdbcTemplate` на event loop останавливает поток и разрушает «полностью реактивный» характер стека.",
+                "source_of_confusion": "Кажется, что можно «дополнить» реактивный доступ привычным JDBC.",
+                "if_it_were_true": "Тогда не было бы смысла в R2DBC, но именно отказ от блокировок — цель стека.",
+                "how_it_should_be": "Для реактивного стека доступ к БД делают только через R2DBC (или изолируют блокировки)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключают `spring-boot-starter-data-r2dbc` и драйвер (`r2dbc-postgresql`), задают `spring.r2dbc.url`/пул; сущность помечают `@Table`/`@Id` (без JPA-аннотаций), репозиторий наследует `ReactiveCrudRepository`/`R2dbcRepository` с методами `Mono`/`Flux`, поддерживаются derived-queries и `@Query` (включая `@Modifying`); транзакции — реактивный `@Transactional`; вместе с WebFlux и WebClient получается стек без блокировок.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полностью реактивный стек = WebFlux (веб) + R2DBC (БД) + WebClient (исходящие вызовы). Нигде нет блокировок, поэтому event loop не простаивает. Spring Data R2DBC даёт привычную модель репозиториев поверх неблокирующего драйвера.",
+                "example": "`@Table(\"users\") class User { @Id Long id; ... }` + `interface UserRepository extends ReactiveCrudRepository<User, Long> { @Query(\"...\") Flux<User> findRecent(...); }` + `@Transactional Mono<User> create(...)`.",
+                "when_to_apply": "Выбирают, когда нужна максимальная масштабируемость без блокировок и весь путь запроса (HTTP→БД→внешний API) можно сделать реактивным.",
+                "edge_cases": "Нет lazy loading и `Hibernate Session` (нет N+1 по умолчанию); связи — вручную через JOIN/отдельные запросы; DDL не создаётся автоматически — схему накатывают `Flyway`/`Liquibase`.",
+                "related": "[[spring-webflux-interview#Q16]] R2DBC со Spring Data; [[spring-webflux-interview#Q41]] R2DBC vs JDBC; [[spring-webflux-interview#Q28]] транзакции в R2DBC."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие операторы `Project Reactor` важнее всего знать для собеседования?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ключевой набор: `map` (синхронное 1:1), `flatMap` (асинхронное, порядок не гарантирован) и `concatMap` (асинхронное с сохранением порядка), `filter`, `reduce`/`collectList`, `zip`/`merge`/`concat`, `switchIfEmpty`/`defaultIfEmpty`, `doOnNext`/`doOnError` (side-effects), `onErrorResume`, `cache`, `take`/`skip`, `buffer`, `groupBy`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Минимум для собеседования — понимать разницу `map` vs `flatMap` vs `concatMap`, способы комбинирования (`zip`/`merge`/`concat`), обработку пустоты (`switchIfEmpty`) и ошибок (`onErrorResume`), а также `cache` для переиспользования результата.",
+                "example": "`flux.flatMap(id -> repo.findById(id))` — параллельно, порядок может нарушиться; `concatMap` — последовательно с порядком; `mono.cache(Duration.ofMinutes(5))` — вычислить один раз и переиспользовать.",
+                "when_to_apply": "Эти операторы покрывают большинство реальных задач: преобразование, развёртка, агрегация, комбинирование, обработка ошибок и пустых результатов.",
+                "edge_cases": "`flatMap` не сохраняет порядок (для порядка — `concatMap`); `map` с возвратом `Publisher` даёт `Flux<Mono<T>>` вместо развёрнутого потока; `cache` фиксирует первый результат, последующие подписки его переиспользуют.",
+                "related": "[[spring-webflux-interview#Q10]] методы работы с потоками; [[spring-webflux-interview#Q20]] комбинирование Mono и Flux; [[spring-webflux-interview#Q19]] cold/hot и cache."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`flatMap` и `concatMap` полностью идентичны: оба гарантируют сохранение исходного порядка элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`concatMap` сохраняет порядок (последовательно), а `flatMap` — нет (подпотоки идут параллельно по готовности).",
+                "source_of_confusion": "Оба разворачивают вложенный `Publisher`, отсюда мысль об эквивалентности.",
+                "if_it_were_true": "Тогда не существовало бы двух разных операторов, но различие в порядке — их главное отличие.",
+                "how_it_should_be": "`concatMap` — порядок; `flatMap` — параллельно без гарантии порядка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`map` подходит для асинхронного вызова репозитория, возвращающего `Mono`, и сам развернёт вложенный поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для развёртки `Publisher` нужен `flatMap`; `map` с возвратом `Mono` даст вложенный `Flux<Mono<T>>`, а не `Flux<T>`.",
+                "source_of_confusion": "Оба преобразуют элементы, разница в работе с `Publisher` неочевидна.",
+                "if_it_were_true": "Тогда `map(id -> repo.findById(id))` дал бы готовые сущности, но получится вложенность.",
+                "how_it_should_be": "Асинхронный вызов оборачивают в `flatMap`/`concatMap`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Оператор `cache` заставляет источник перевыполняться при каждой новой подписке, обновляя результат заново.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`cache` делает обратное: фиксирует первый результат и переиспользует его при последующих подписках (превращает cold в hot-подобный).",
+                "source_of_confusion": "Слово «cache» иногда воспринимают как «обновить кэш заново».",
+                "if_it_were_true": "Тогда `cache` не давал бы экономии на повторных подписках, но именно для этого он и нужен.",
+                "how_it_should_be": "`cache` запоминает результат и переиспользует; источник не перевыполняется."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `WebFlux` работает совместно с Virtual Threads (Java 21)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Virtual Threads полностью заменяют `WebFlux`: после Java 21 реактивный стек устарел и его не следует использовать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Virtual Threads и WebFlux сосуществуют; для streaming/SSE/WebSocket и реактивного стека WebFlux остаётся актуальным, Loom его не отменяет.",
+                "source_of_confusion": "Хайп вокруг Loom создаёт впечатление вытеснения реактивности.",
+                "if_it_were_true": "Тогда не было бы смысла развивать WebFlux после Java 21, но он активно поддерживается.",
+                "how_it_should_be": "Это разные инструменты под разные задачи; выбор зависит от сценария."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Virtual Threads (Project Loom) и WebFlux решают одну задачу — масштабируемость на I/O — разными способами: WebFlux через неблокирующий event loop, Loom через дешёвые блокирующие потоки; комбинация осмысленна, когда часть операций блокирующая (legacy JDBC, синхронные SDK) — их выносят на `Schedulers.boundedElastic()` или включают `spring.threads.virtual.enabled=true`, но при полностью реактивном стеке (R2DBC, WebClient) виртуальные потоки не нужны.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это не обязательная связка. Если весь стек реактивный — достаточно WebFlux. Если есть блокирующие зависимости — Virtual Threads дают читаемый императивный код без операторов. Для простых REST API альтернатива — Spring MVC + Virtual Threads (Spring Boot 3.2+).",
+                "example": "`Mono.fromCallable(() -> blockingLegacyService.call()).subscribeOn(Schedulers.boundedElastic())` — перенос блокирующего вызова; либо `spring.threads.virtual.enabled: true` в `application.yml`.",
+                "when_to_apply": "Комбинируют, когда в реактивном приложении остаются блокирующие участки; чисто реактивный стек обходится без виртуальных потоков.",
+                "edge_cases": "Главный вывод — это не «всегда вместе»: для streaming/SSE/WebSocket выигрывает WebFlux, для CRUD с блокирующим I/O может хватить Spring MVC + Virtual Threads без перехода на реактивность.",
+                "related": "[[spring-webflux-interview#Q17]] Schedulers и boundedElastic; [[spring-webflux-interview#Q24]] когда выбирать WebFlux; [[spring-webflux-interview#Q8]] асинхронность в WebFlux."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы включить Virtual Threads в реактивном `WebFlux`-приложении с R2DBC и WebClient, это обязательное условие максимальной производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При полностью реактивном стеке (R2DBC + WebClient) виртуальные потоки не нужны — выигрыша они не дают, выигрыш уже обеспечивает неблокирующий I/O.",
+                "source_of_confusion": "Кажется, что «новая фича = всегда быстрее».",
+                "if_it_were_true": "Тогда без Virtual Threads реактивный стек был бы медленным, но он и так неблокирующий.",
+                "how_it_should_be": "Virtual Threads полезны при блокирующих участках, а не для чисто реактивного стека."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Virtual Threads делают блокирующие вызовы неблокирующими, поэтому `Thread.sleep` в реактивной цепочке `WebFlux` становится безопасным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Виртуальные потоки удешевляют блокировку, но `Thread.sleep` на event-loop-потоке WebFlux всё равно блокирует обработку; блокирующий код выносят на отдельный планировщик.",
+                "source_of_confusion": "«Дешёвая блокировка» Loom воспринимается как «блокировки больше нет».",
+                "if_it_were_true": "Тогда можно было бы блокировать прямо в обработчике, но event loop от этого встанет.",
+                "how_it_should_be": "Блокирующий код изолируют (`boundedElastic`/virtual scheduler), а не оставляют на event loop."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как интегрировать `Resilience4j` с `WebFlux`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для интеграции `Resilience4j` с реактивным стеком подключают обычный синхронный модуль `resilience4j-core` без реактивных операторов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для реактивного стека нужен `resilience4j-reactor`, дающий операторы-трансформеры под `Mono`/`Flux`; синхронный core оборачивает блокирующие вызовы.",
+                "source_of_confusion": "Кажется, что любой модуль Resilience4j подойдёт к WebFlux.",
+                "if_it_were_true": "Тогда не было бы `CircuitBreakerOperator.of(...)`, но именно он связывает Resilience4j с Reactor.",
+                "how_it_should_be": "Подключают `resilience4j-reactor` с реактивными операторами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Circuit breaker оборачивают через `transform`, потому что он применяется один раз при сборке цепочки и кэширует решение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используют `transformDeferred`: circuit breaker должен проверяться при каждой подписке (лениво), а не один раз при сборке; `transform` для CB некорректен.",
+                "source_of_confusion": "`transform` и `transformDeferred` похожи по имени и сигнатуре.",
+                "if_it_were_true": "Тогда состояние CB фиксировалось бы при создании цепочки, но оно должно учитываться на каждом вызове.",
+                "how_it_should_be": "Для CB применяют ленивый `transformDeferred`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подключают модуль `resilience4j-reactor` (и `resilience4j-spring-boot3`): операторы-трансформеры оборачивают `Mono`/`Flux` через `.transformDeferred(CircuitBreakerOperator.of(cb))`, аналогично `RetryOperator`, `RateLimiterOperator`, `BulkheadOperator`; либо используют аннотации (`@CircuitBreaker(name=..., fallbackMethod=...)`) с реактивным методом, возвращающим `Mono`/`Flux`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`resilience4j-reactor` даёт реактивные операторы устойчивости. `transformDeferred` применяется лениво — circuit breaker проверяется при каждой подписке, что корректно для cold-publisher. Fallback ловят `onErrorResume(CallNotPermittedException.class, ...)`.",
+                "example": "`webClient.get().uri(\"/users/{id}\", id).retrieve().bodyToMono(User.class).transformDeferred(CircuitBreakerOperator.of(cb)).onErrorResume(CallNotPermittedException.class, ex -> Mono.just(User.fallback()))`.",
+                "when_to_apply": "Берут для защиты межсервисных вызовов в реактивном стеке: circuit breaker, rate limiter, retry, bulkhead вокруг `WebClient`-запросов.",
+                "edge_cases": "Важно использовать `transformDeferred`, а не `transform`: первый применяет оператор лениво при подписке (правильно для CB), второй — один раз при сборке цепочки; fallback-метод аннотации должен иметь совместимую сигнатуру с типом исключения.",
+                "related": "[[spring-webflux-interview#Q25]] таймауты и retry; [[spring-webflux-interview#Q34]] WebClient с retry; [[spring-webflux-interview#Q15]] WebClient vs RestTemplate."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При аннотационной интеграции (`@CircuitBreaker`) реактивный метод обязан возвращать синхронный объект, иначе fallback не сработает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `resilience4j-spring-boot3` аннотированный метод может (и должен) возвращать `Mono`/`Flux`; реактивный возврат поддержан.",
+                "source_of_confusion": "Аннотация выглядит как из блокирующего мира, отсюда ожидание синхронного возврата.",
+                "if_it_were_true": "Тогда нельзя было бы защитить `Mono<User> getUser(...)`, но это типичный пример из документации.",
+                "how_it_should_be": "Метод возвращает `Mono`/`Flux`; fallback тоже реактивный."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Spring Security` работает в реактивном стеке?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В реактивном `WebFlux` текущего пользователя получают из `SecurityContextHolder.getContext()`, который надёжно работает через `ThreadLocal`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ThreadLocal`-`SecurityContextHolder` теряет данные при смене потока; в WebFlux используют `ReactiveSecurityContextHolder` поверх `Reactor Context`.",
+                "source_of_confusion": "`SecurityContextHolder` — стандарт получения пользователя в MVC.",
+                "if_it_were_true": "Тогда после `publishOn` пользователь оставался бы доступен через ThreadLocal, но он теряется.",
+                "how_it_should_be": "Используют `ReactiveSecurityContextHolder.getContext()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Безопасность реактивного приложения настраивают бином `SecurityFilterChain` с объектом `HttpSecurity`, как в Spring MVC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В WebFlux настраивают `SecurityWebFilterChain` с `ServerHttpSecurity`; `SecurityFilterChain`/`HttpSecurity` — это Servlet-стек MVC.",
+                "source_of_confusion": "Имена компонентов почти совпадают, отличается лишь префикс.",
+                "if_it_were_true": "Тогда `HttpSecurity.authorizeHttpRequests` работал бы в WebFlux, но там `authorizeExchange` на `ServerHttpSecurity`.",
+                "how_it_should_be": "Настраивают `SecurityWebFilterChain` поверх `ServerHttpSecurity`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В реактивном стеке отсутствует механизм автоматического помещения `SecurityContext` в контекст, поэтому его нужно прокидывать вручную в каждом методе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Security сам кладёт `SecurityContext` в `Reactor Context` через `ReactorContextWebFilter` на каждом запросе — ручной проброс не нужен.",
+                "source_of_confusion": "Кажется, что раз ThreadLocal не работает, контекст придётся таскать руками.",
+                "if_it_were_true": "Тогда каждый метод принимал бы `Authentication` параметром, но его достают из контекста.",
+                "how_it_should_be": "`SecurityContext` доступен автоматически через `Reactor Context`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В WebFlux Spring Security использует реактивный стек безопасности: `ReactiveSecurityContextHolder` вместо `SecurityContextHolder`, `SecurityWebFilterChain` вместо `SecurityFilterChain`, `ReactiveUserDetailsService` и `ReactiveAuthenticationManager`; настраивают через `@EnableWebFluxSecurity` и бин `SecurityWebFilterChain(ServerHttpSecurity http)`, а `SecurityContext` кладётся в `Reactor Context` фильтром `ReactorContextWebFilter`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку поток в реактивном стеке меняется, `ThreadLocal`-`SecurityContextHolder` не подходит. Spring Security помещает `SecurityContext` в `Reactor Context`, а текущего пользователя достают через `ReactiveSecurityContextHolder.getContext()` в цепочке.",
+                "example": "`ReactiveSecurityContextHolder.getContext().map(ctx -> ctx.getAuthentication().getName())` — получить имя пользователя; настройка — `http.authorizeExchange(...).pathMatchers(\"/admin/**\").hasRole(\"ADMIN\").oauth2ResourceServer(...)`.",
+                "when_to_apply": "Применяют для аутентификации/авторизации WebFlux-приложений: JWT resource server, ролевой доступ, кастомный `ReactiveUserDetailsService`.",
+                "edge_cases": "`SecurityContextHolder` (ThreadLocal) в реактивном коде вернёт пустоту после смены потока; контекст автоматически кладёт `ReactorContextWebFilter`, поэтому его читают реактивно, а не из ThreadLocal.",
+                "related": "[[spring-webflux-interview#Q21]] безопасность в WebFlux; [[spring-webflux-interview#Q26]] Reactor Context; [[spring-webflux-interview#Q32]] WebFilter."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `R2DBC` отличается от `JDBC` и как использовать `R2dbcRepository`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`R2DBC` — стандарт реактивного (неблокирующего) доступа к реляционным БД, возвращающий `Publisher` (`Mono`/`Flux`), тогда как `JDBC` блокирующий; интеграция идёт через `Spring Data R2DBC` с репозиторием `R2dbcRepository<Entity, Id>`, поддержкой derived-queries, `@Query` и реактивного `@Transactional`; lazy loading и автоматических связей нет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное различие — модель I/O: JDBC блокирует поток на время запроса, R2DBC — нет. `R2dbcRepository` даёт реактивные CRUD-методы; сложные выборки пишут через `@Query` или `DatabaseClient`, так как join-fetch и HQL отсутствуют.",
+                "example": "`@Table(\"users\") record User(@Id Long id, String username, String email) {}` + `interface UserRepository extends R2dbcRepository<User, Long> { @Query(\"SELECT * FROM users WHERE username ILIKE :p\") Flux<User> search(String p); }`.",
+                "when_to_apply": "Выбирают R2DBC, когда весь стек реактивный (WebFlux + R2DBC + WebClient) и нужна масштабируемость без блокировок на доступе к данным.",
+                "edge_cases": "Нет lazy loading и кэшей первого/второго уровня; связи `@OneToMany`/`@ManyToOne` отсутствуют — их делают через `@Query`/`DatabaseClient`; транзакции реактивные, но всё ещё через `@Transactional`.",
+                "related": "[[spring-webflux-interview#Q16]] R2DBC со Spring Data; [[spring-webflux-interview#Q36]] полностью реактивный стек; [[spring-webflux-interview#Q28]] транзакции в R2DBC."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JDBC` неблокирующий и возвращает `Mono`/`Flux`, а `R2DBC` — блокирующий синхронный стандарт с `ResultSet`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `JDBC` блокирующий (`ResultSet`), а `R2DBC` неблокирующий и возвращает `Publisher` (`Mono`/`Flux`).",
+                "source_of_confusion": "Аббревиатуры похожи, и их свойства легко перепутать местами.",
+                "if_it_were_true": "Тогда JDBC годился бы для WebFlux без блокировок, но именно его блокирующая модель — проблема.",
+                "how_it_should_be": "`JDBC` блокирующий; `R2DBC` неблокирующий с реактивным возвратом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`R2dbcRepository` поддерживает `join fetch` и автоматическую загрузку связей `@OneToMany`, как `JpaRepository` с `Hibernate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В R2DBC нет автоматических связей и join-fetch; такие выборки пишут вручную через `@Query` или `DatabaseClient`.",
+                "source_of_confusion": "Возможности JPA-репозиториев ожидают и от реактивного аналога.",
+                "if_it_were_true": "Тогда не было бы ручных JOIN-запросов, но это обязательный приём в R2DBC.",
+                "how_it_should_be": "Связи и join делают через `@Query`/`DatabaseClient`; авто-загрузки нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`R2DBC` поддерживает кэш первого и второго уровня, поэтому повторный `findById` берёт сущность из кэша без обращения к БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В R2DBC нет кэшей уровней (persistence context отсутствует); каждый `findById` идёт в БД, если кэширование не реализовано вручную.",
+                "source_of_confusion": "First-level cache `Hibernate` ассоциируют с любым Spring Data.",
+                "if_it_were_true": "Тогда повторные чтения были бы бесплатными, но в R2DBC они каждый раз бьют в БД.",
+                "how_it_should_be": "Кэшей уровней нет; при необходимости кэшируют явно (`cache()`/Redis)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`WebClient` vs `RestTemplate` vs `RestClient` — когда что выбирать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`RestClient` — это реактивный неблокирующий клиент, возвращающий `Mono`/`Flux`, и потому он рекомендуется для `WebFlux`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RestClient` синхронный и блокирующий (возвращает `T`); реактивный клиент для WebFlux — это `WebClient`.",
+                "source_of_confusion": "`RestClient` похож на `WebClient` по fluent-стилю, отсюда вывод о реактивности.",
+                "if_it_were_true": "Тогда `RestClient` умел бы `bodyToFlux` и SSE, но он отдаёт результат синхронно.",
+                "how_it_should_be": "Для реактивного стека берут `WebClient`; `RestClient` — синхронный."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`WebClient` — реактивный неблокирующий клиент (`Mono`/`Flux`) для WebFlux и стриминга; `RestClient` (Spring 6.1+) — синхронный fluent-клиент в стиле WebClient, но блокирующий, для Spring MVC и новых проектов; `RestTemplate` — старый блокирующий шаблонный клиент в maintenance-режиме, с которого мигрируют на `RestClient`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три клиента различаются моделью I/O и стилем API. WebClient — единственный реактивный и умеет `Flux<T>`/SSE. RestClient повторяет fluent-стиль WebClient, но синхронный — удобная замена RestTemplate в блокирующем коде.",
+                "example": "WebFlux → `WebClient ...bodyToMono(User.class)`; Spring MVC, новый проект → `RestClient ...retrieve().body(User.class)`; legacy → миграция `RestTemplate`→`RestClient`.",
+                "when_to_apply": "WebClient — реактивный стек и стриминг; RestClient — Spring MVC и новые синхронные интеграции; RestTemplate — только существующий legacy до миграции.",
+                "edge_cases": "Стриминг/SSE умеет только WebClient (через `Flux<T>`); RestClient и RestTemplate синхронны и тестируются через `MockRestServiceServer`, тогда как WebClient — через `MockWebServer`.",
+                "related": "[[spring-webflux-interview#Q15]] WebClient vs RestTemplate; [[spring-webflux-interview#Q34]] настройка WebClient; [[spring-webflux-interview#Q18]] SSE-стриминг."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Стриминг и `SSE` одинаково хорошо поддерживают все три клиента: `RestTemplate`, `WebClient` и `RestClient`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стриминг через `Flux<T>` и SSE умеет только `WebClient`; `RestTemplate` и `RestClient` синхронны и полностью загружают ответ.",
+                "source_of_confusion": "Кажется, что современные клиенты эквивалентны по возможностям.",
+                "if_it_were_true": "Тогда синхронный `RestClient` отдавал бы `Flux`, но его возврат — обычный `T`.",
+                "how_it_should_be": "Для стриминга/SSE подходит только реактивный `WebClient`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для новых проектов на `Spring MVC` рекомендуется `RestTemplate`, так как он активно развивается и заменяет `RestClient`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RestTemplate` в maintenance-режиме; для новых MVC-проектов рекомендуют `RestClient` (Spring 6.1+), а с RestTemplate мигрируют.",
+                "source_of_confusion": "`RestTemplate` исторически самый известный клиент, кажется «основным».",
+                "if_it_were_true": "Тогда RestClient был бы лишним, но он создан именно как современная замена RestTemplate.",
+                "how_it_should_be": "Новые MVC-проекты — на `RestClient`; `RestTemplate` — только legacy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 43,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать `WebFlux`-приложения с `WebTestClient` и `StepVerifier`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Эндпоинты `WebFlux` тестируют через `MockMvc` и `RestAssured`, а `WebTestClient` предназначен только для блокирующих контроллеров `Spring MVC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WebTestClient` — основной инструмент для реактивных эндпоинтов; `MockMvc` рассчитан на Servlet-стек MVC.",
+                "source_of_confusion": "`MockMvc` — привычный способ тестирования контроллеров в MVC.",
+                "if_it_were_true": "Тогда `MockMvc` понимал бы `Flux`-ответы и стриминг, но он работает с Servlet-моделью.",
+                "how_it_should_be": "Реактивные эндпоинты тестируют через `WebTestClient`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`StepVerifier` и `WebTestClient` взаимозаменяемы: оба одинаково подходят и для проверки сервисной логики, и для интеграционных HTTP-тестов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные инструменты: `WebTestClient` тестирует HTTP-эндпоинты, `StepVerifier` — реактивные цепочки сервисов; они дополняют, а не заменяют друг друга.",
+                "source_of_confusion": "Оба связаны с тестированием реактивного кода, отсюда отождествление.",
+                "if_it_were_true": "Тогда хватало бы одного инструмента, но у каждого своя зона ответственности.",
+                "how_it_should_be": "`WebTestClient` — эндпоинты; `StepVerifier` — цепочки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`WebTestClient` — для интеграционных тестов эндпоинтов: выполняет HTTP-запросы и проверяет статус/заголовки/тело (`expectStatus().isOk()`, `expectBody(...)`, `expectBodyList(...)`); `StepVerifier` — для unit-тестов реактивных цепочек (проверка сигналов и завершения); их комбинируют — `WebTestClient` для слоя контроллеров, `StepVerifier` для сервисной логики.",
+              "correct": true,
+              "sections": {
+                "explanation": "`WebTestClient` поднимается через `@SpringBootTest(webEnvironment = RANDOM_PORT)` или биндится к контроллеру/роутеру и бьёт по эндпоинтам без реального внешнего клиента. `StepVerifier` подписывается на `Mono`/`Flux` и сверяет последовательность сигналов.",
+                "example": "`webTestClient.get().uri(\"/users/1\").exchange().expectStatus().isOk().expectBody(User.class).consumeWith(r -> assertThat(r.getResponseBody().id()).isEqualTo(1L))`; список — `expectBodyList(User.class).hasSize(3)`.",
+                "when_to_apply": "`WebTestClient` — для эндпоинтов целиком (включая безопасность с `@WithMockUser`); `StepVerifier` — для изолированной проверки реактивных цепочек сервисов.",
+                "edge_cases": "`WebTestClient` не поддерживает WebSocket — для WS нужен реактивный WS-клиент; `StepVerifier` без `verify()` не подписывается и ничего не проверяет.",
+                "related": "[[spring-webflux-interview#Q13]] тестирование реактивных приложений; [[spring-webflux-interview#Q27]] StepVerifier; [[spring-webflux-interview#Q31]] тестирование RouterFunction."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`WebTestClient` полноценно тестирует `WebSocket`-эндпоинты так же, как обычные HTTP-маршруты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WebTestClient` не поддерживает WebSocket; для WS-тестов нужен реактивный клиент `ReactorNettyWebSocketClient`.",
+                "source_of_confusion": "`WebTestClient` кажется универсальным для всех типов эндпоинтов.",
+                "if_it_were_true": "Тогда не требовался бы отдельный WS-клиент, но для WebSocket он обязателен.",
+                "how_it_should_be": "WebSocket тестируют отдельным реактивным WS-клиентом."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
