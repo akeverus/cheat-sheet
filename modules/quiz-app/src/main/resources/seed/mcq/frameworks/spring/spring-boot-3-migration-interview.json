@@ -1,0 +1,905 @@
+{
+  "topic_slug": "spring-boot-3-migration-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ключевые изменения принёс `Spring Boot 3.0`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Boot 3.0` (ноябрь 2022) поднял baseline до `Java 17`, перевёл платформу с `javax.*` на `jakarta.*` (Jakarta EE 9+), перешёл на `Spring Framework 6`, добавил первоклассную поддержку `GraalVM Native Image`, единую Observability (Micrometer + OpenTelemetry), декларативные `HTTP Interface Clients` и `Problem Details` (RFC 7807).",
+              "correct": true,
+              "sections": {
+                "explanation": "Это самый крупный релиз Spring Boot за годы: меняется и минимальный JDK, и пространства имён пакетов, и базовый фреймворк, поэтому миграция затрагивает почти весь проект.",
+                "example": "Проект на `Spring Boot 2.7` + `Java 8` после апгрейда требует `Java 17`, замены всех `import javax.persistence.*` на `jakarta.persistence.*` и обновления стартеров до `3.x`.",
+                "when_to_apply": "Помнить весь список изменений нужно при планировании апгрейда и на собеседовании, чтобы оценить объём работ и риски.",
+                "edge_cases": "Последующие версии добавили ещё: `3.1` (май 2023), `3.2` (ноябрь 2023, Virtual Threads и `RestClient`), `3.3`, `3.4` — миграция на 3.0 это только первый шаг.",
+                "related": "[[spring-boot-3-migration-interview#Q2]] переход javax→jakarta; [[spring-boot-3-migration-interview#Q7]] GraalVM Native Image; [[spring-boot-3-migration-interview#Q10]] Virtual Threads в 3.2+."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Boot 3.0` оставил baseline на `Java 8`, а `Java 17` стал лишь рекомендованной, но не обязательной версией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Spring Boot 3.0` минимальная версия — именно `Java 17`, на `Java 8` или `11` приложение просто не запустится.",
+                "source_of_confusion": "В эпоху `Spring Boot 2.x` baseline действительно был `Java 8`, и эта привычка переносится на 3.0.",
+                "if_it_were_true": "Тогда можно было бы апгрейднуть Boot, не трогая JDK, но `Spring Framework 6` скомпилирован под bytecode 17.",
+                "how_it_should_be": "Сначала переводят проект на `Java 17`, и только потом обновляют `spring-boot-starter-parent` до `3.x`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное изменение `3.0` — это переименование всех `org.springframework.*` пакетов в `org.springboot.*`, всё остальное осталось как в `2.x`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пакеты самого Spring (`org.springframework.*`) не переименовывались; менялись пакеты Jakarta EE (`javax.*` → `jakarta.*`).",
+                "source_of_confusion": "Из-за громкой темы «переименование пакетов» легко решить, что переименовали и сам Spring.",
+                "if_it_were_true": "Тогда пришлось бы переписать каждый импорт Spring-классов, но `@RestController` и `@Service` остались в тех же пакетах.",
+                "how_it_should_be": "Переименование коснулось только Jakarta-зависимостей; импорты Spring API остались неизменными."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Boot 3.0` полностью убрал поддержку MVC (`spring-webmvc`) и оставил только реактивный `WebFlux`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MVC никуда не делся: `spring-webmvc` остаётся основным стеком, а `WebFlux` — это альтернатива, а не замена.",
+                "source_of_confusion": "Усиление реактивности и Observability создаёт впечатление, что Spring «уходит в реактив».",
+                "if_it_were_true": "Тогда классические `@Controller` с `Model` перестали бы работать, но они полностью поддерживаются в 3.x.",
+                "how_it_should_be": "В `Spring Boot 3` доступны оба стека — выбор MVC или WebFlux остаётся за разработчиком."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое миграция с `javax` на `jakarta` и почему она понадобилась?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Переход на `jakarta.*` нужен ради производительности: пакеты `jakarta` оптимизированы и работают быстрее старых `javax`-аналогов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Переименование чисто юридическое из-за trademark; на скорость работы API смена префикса никак не влияет.",
+                "source_of_confusion": "Любое крупное изменение хочется объяснить выигрышем в производительности, а не правовыми причинами.",
+                "if_it_were_true": "Тогда сам по себе rename давал бы ускорение, но классы под `jakarta` функционально идентичны прежним.",
+                "how_it_should_be": "Причина миграции — потеря прав на имя `javax`; ускорение даёт не она, а новые Hibernate 6 и Tomcat 10."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В 2017 Oracle передала `Java EE` в Eclipse Foundation, но из-за trademark Eclipse не смогла сохранить имя пакетов `javax.*`. Платформу переименовали в `Jakarta EE`, и все её пакеты сменили префикс на `jakarta.*`: `javax.persistence` → `jakarta.persistence`, `javax.servlet` → `jakarta.servlet`, `javax.validation` → `jakarta.validation`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это не косметика, а вынужденное юридическое переименование: API остались те же, но импорты и зависимости (Tomcat 10+, Jetty 11+, Hibernate 6+) надо менять массово.",
+                "example": "`import javax.persistence.Entity;` превращается в `import jakarta.persistence.Entity;`, а `javax.validation.constraints.NotNull` — в `jakarta.validation.constraints.NotNull`.",
+                "when_to_apply": "Замену делают при апгрейде на `Spring Boot 3`, обычно автоматически через OpenRewrite, а не руками по всему проекту.",
+                "edge_cases": "Затронуты JPA, Servlet API, JAX-RS, Bean Validation, JMS, Mail — но не пакеты из JDK (`javax.sql`, `javax.crypto`), которые остаются `javax.*`.",
+                "related": "[[spring-boot-3-migration-interview#Q4]] какие javax остались; [[spring-boot-3-migration-interview#Q3]] последовательность миграции; [[spring-boot-3-migration-interview#Q1]] ключевые изменения Boot 3."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Миграция произошла потому, что Oracle решила сделать `javax.*` платным и закрыть исходники Java EE.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java EE передали в Eclipse Foundation как открытый проект; проблема была в правах на имя, а не в платности.",
+                "source_of_confusion": "У Oracle есть репутация платного лицензирования JDK, и это переносят на тему Java EE.",
+                "if_it_were_true": "Тогда `jakarta.*` тоже был бы платным, но это полностью открытая спецификация под Eclipse Foundation.",
+                "how_it_should_be": "Java EE стала открытой Jakarta EE; смена префикса вызвана trademark, а не лицензионными платежами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно добавить зависимость `javax-to-jakarta-bridge`, и старые `javax.*` импорты продолжат работать без изменения кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Универсального runtime-моста нет: импорты `javax.*` надо реально заменять на `jakarta.*` в исходниках.",
+                "source_of_confusion": "Для отдельных библиотек существуют transformer-плагины, и кажется, что есть готовый общий bridge.",
+                "if_it_were_true": "Тогда код вообще не пришлось бы трогать, но классы `javax.persistence.Entity` в Hibernate 6 просто отсутствуют.",
+                "how_it_should_be": "Импорты переписывают (обычно OpenRewrite-рецептом), а зависимости обновляют до Jakarta-совместимых версий."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выполнить миграцию с `Spring Boot 2.7` на `3.x`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Правильный порядок — сразу поднять parent до `3.x`, а уже потом разбираться с версией JDK и заменой импортов по ходу появления ошибок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JDK обновляют первым: на `Java 8/11` проект под `Spring Framework 6` даже не скомпилируется, так что начинать с parent бессмысленно.",
+                "source_of_confusion": "Хочется «сразу к цели» — обновить главную зависимость, а остальное чинить реактивно.",
+                "if_it_were_true": "Тогда хватило бы одного bump версии parent, но без `Java 17` сборка падает на bytecode-несовместимости.",
+                "how_it_should_be": "Сначала `Java 17` и свежие `2.7.x`, и лишь затем подъём parent до `3.x` и замена пакетов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Миграцию делают единственной командой `mvn spring-boot:migrate-3`, которая сама меняет JDK, импорты и версии без дополнительных шагов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такой команды у `spring-boot-maven-plugin` нет; автоматизацию импортов даёт OpenRewrite, а JDK и parent правят вручную.",
+                "source_of_confusion": "Существование OpenRewrite-рецептов создаёт ощущение единой «волшебной» команды миграции.",
+                "if_it_were_true": "Тогда апгрейд сводился бы к одному вызову, но смену `java.version` и parent rewrite всё равно не делает.",
+                "how_it_should_be": "Используют рецепт `org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0` плюс ручную правку JDK и зависимостей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сначала перейти на `Java 17`, затем обновить зависимости до последних `2.7.x`, прогнать OpenRewrite-рецепт `UpgradeSpringBoot_3_0`, поднять `spring-boot-starter-parent` до `3.x`, заменить `javax.*` на `jakarta.*` (кроме `javax.sql.DataSource`, `javax.crypto`), обновить сторонние библиотеки и протестировать.",
+              "correct": true,
+              "sections": {
+                "explanation": "Порядок важен: сначала фундамент (JDK и свежие 2.x), потом автоматизированный апгрейд, и только затем ручная доводка несовместимых мест — так проще локализовать поломки.",
+                "example": "В `pom.xml` ставят `<version>3.2.0</version>` у parent и `<java.version>17</java.version>`, а команда `rewrite-maven-plugin:run` с рецептом `boot3.UpgradeSpringBoot_3_0` массово правит импорты.",
+                "when_to_apply": "Этот пошаговый план применяют при любом апгрейде с 2.7 на 3.x, чтобы не делать всё разом и не тонуть в ошибках компиляции.",
+                "edge_cases": "OpenRewrite автоматизирует большую часть, но Security 6, переименованные Actuator-properties и Hibernate 6 dialects всё равно требуют ручной проверки.",
+                "related": "[[spring-boot-3-migration-interview#Q2]] javax→jakarta; [[spring-boot-3-migration-interview#Q14]] Properties Migrator; [[spring-boot-3-migration-interview#Q15]] частые проблемы миграции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При миграции нужно заменить на `jakarta.*` абсолютно все `javax.*` импорты, включая `javax.sql.DataSource` и `javax.crypto`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пакеты из JDK (`javax.sql`, `javax.crypto`, `javax.net`) НЕ мигрировали и должны остаться `javax.*`.",
+                "source_of_confusion": "Правило «меняем javax на jakarta» запоминается как тотальное, без исключений для Java SE.",
+                "if_it_were_true": "Тогда `import jakarta.sql.DataSource;` компилировался бы, но такого пакета не существует — он часть JDK.",
+                "how_it_should_be": "Меняют только Java EE пакеты; всё, что относится к Java SE/JDK, оставляют под префиксом `javax.*`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие `javax`-пакеты НЕ мигрировали на `jakarta`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "На `javax.*` остались только аннотации `@PostConstruct` и `@PreDestroy`, всё остальное, включая `javax.sql` и `javax.crypto`, переименовано в `jakarta.*`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `@PostConstruct`/`@PreDestroy` переехали в `jakarta.annotation`, а `javax.sql`/`javax.crypto` остались `javax.*`.",
+                "source_of_confusion": "Жизненные-цикл аннотации на виду, и кажется, что именно они «застряли» в старом пространстве имён.",
+                "if_it_were_true": "Тогда `import javax.annotation.PostConstruct;` работал бы в Boot 3, но он требует замены на `jakarta.annotation`.",
+                "how_it_should_be": "Lifecycle-аннотации мигрировали в `jakarta.annotation`; неизменными остались JDK-пакеты вроде `javax.sql.DataSource`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Не мигрировал ни один пакет: и `javax.persistence`, и `javax.servlet` по-прежнему доступны под старым префиксом ради совместимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java EE пакеты мигрировали обязательно: `javax.persistence` и `javax.servlet` в Boot 3 существуют только как `jakarta.*`.",
+                "source_of_confusion": "Желание избежать массовых правок порождает миф, что старые импорты всё ещё валидны.",
+                "if_it_were_true": "Тогда менять импорты не пришлось бы вовсе, но Hibernate 6 и Tomcat 10 не содержат `javax`-классов.",
+                "how_it_should_be": "JPA и Servlet API доступны под `jakarta.*`; старые `javax`-импорты этих API в Boot 3 не компилируются."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сохранение под `javax.*` зависит от версии библиотеки: любой пакет можно оставить старым, если зафиксировать зависимость на версии до 2022 года.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дело не в датах: пакет остаётся `javax`, если он часть JDK; зафиксировать старую библиотеку Boot 3 не позволит из-за несовместимости.",
+                "source_of_confusion": "Кажется, что можно «заморозить» зависимости и обойтись без перехода на jakarta.",
+                "if_it_were_true": "Тогда смешивание старых `javax`-библиотек с Boot 3 работало бы, но это даёт `NoClassDefFoundError` на рантайме.",
+                "how_it_should_be": "Граница фиксирована спецификацией: Java SE → `javax`, Java EE → `jakarta`, независимо от версии зависимости."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Остались `javax.*` все пакеты, которые входят в Java SE (JDK): `javax.sql.DataSource` (JDBC API), `javax.crypto.*`, `javax.net.*` (SSL/networking), `javax.management.*` (JMX), `javax.naming.*` (JNDI). Мигрировали только пакеты Java EE: `jakarta.persistence`, `jakarta.servlet`, `jakarta.validation`, `jakarta.jms`, `jakarta.mail`, `jakarta.annotation`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Граница проходит по принадлежности к платформе: Java SE поставляется с JDK и не управляется Eclipse Foundation, поэтому её пакеты сохранили имя `javax`.",
+                "example": "В коде `DataSource ds` импортируется как `javax.sql.DataSource`, а `@Entity` — как `jakarta.persistence.Entity`; первый не трогают, второй меняют.",
+                "when_to_apply": "Это знание критично при ручной правке импортов и при настройке OpenRewrite, чтобы не «исправить» JDK-пакеты по ошибке.",
+                "edge_cases": "Простое правило: пакет из Java SE (JDK) → остаётся `javax`; пакет из Java EE → становится `jakarta`. `@PostConstruct`/`@PreDestroy` (`jakarta.annotation`) — это Java EE, их меняют.",
+                "related": "[[spring-boot-3-migration-interview#Q2]] суть перехода javax→jakarta; [[spring-boot-3-migration-interview#Q3]] исключения в плане миграции; [[spring-boot-3-migration-interview#Q15]] частые ошибки с пакетами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `HTTP Interface Clients` в `Spring 6`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это встроенный в `Spring Framework 6` декларативный HTTP-клиент (аналог Feign): вы описываете API интерфейсом с аннотациями `@GetExchange`/`@PostExchange`, а реализацию генерирует `HttpServiceProxyFactory` поверх `WebClient` (реактивный) или `RestClient` (блокирующий, Spring 6.1+).",
+              "correct": true,
+              "sections": {
+                "explanation": "Подход переносит стиль декларативных клиентов прямо в ядро Spring: не нужно писать тело запроса руками и не требуется внешний Feign.",
+                "example": "`interface WeatherClient { @GetExchange(\"/api/weather/{city}\") Weather getWeather(@PathVariable String city); }`, а клиент создаётся через `factory.createClient(WeatherClient.class)`.",
+                "when_to_apply": "Используют, когда нужен типобезопасный клиент к чужому REST API без бойлерплейта ручных вызовов и без подключения Spring Cloud OpenFeign.",
+                "edge_cases": "Для блокирующего кода адаптер — `RestClientAdapter` (Spring 6.1+); для реактивного — `WebClientAdapter`; интерфейс может возвращать как `Weather`, так и `Flux<Forecast>`.",
+                "related": "[[spring-boot-3-migration-interview#Q12]] декларативный RestClient; [[spring-boot-3-migration-interview#Q1]] что нового в Boot 3; [[spring-boot-3-migration-interview#Q6]] Problem Details для ошибок API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`HTTP Interface Clients` — это обязательная зависимость `spring-cloud-openfeign`, которую `Spring 6` подключает автоматически вместо собственного решения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это собственный механизм Spring Framework 6 на `HttpServiceProxyFactory`; Spring Cloud OpenFeign — отдельный сторонний проект.",
+                "source_of_confusion": "Идея декларативного клиента ассоциируется именно с Feign, поэтому новый API путают со старым.",
+                "if_it_were_true": "Тогда без `spring-cloud-*` интерфейсные клиенты не работали бы, но они часть ядра `spring-web`.",
+                "how_it_should_be": "Декларативные клиенты Spring 6 не требуют Feign: интерфейс + `HttpServiceProxyFactory` дают готовый прокси."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Эти клиенты работают только реактивно через `WebClient`; блокирующего варианта на `RestClient` для них не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С Spring 6.1 есть `RestClientAdapter` для блокирующего стека, так что интерфейсные клиенты работают и синхронно.",
+                "source_of_confusion": "Первая версия в Spring 6.0 опиралась на `WebClient`, и это запомнилось как единственный вариант.",
+                "if_it_were_true": "Тогда в MVC-приложении без реактивного стека их нельзя было бы применить, но `RestClientAdapter` это решает.",
+                "how_it_should_be": "Адаптер выбирают по стеку: `WebClientAdapter` — реактивно, `RestClientAdapter` — блокирующе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@GetExchange` и `@PostExchange` — это аннотации для серверных контроллеров, описывающие эндпоинты, которые приложение само обслуживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это клиентские аннотации: они описывают исходящие вызовы к чужому API, а не серверные эндпоинты.",
+                "source_of_confusion": "По синтаксису `@GetExchange` похож на серверный `@GetMapping`, отсюда и путаница ролей.",
+                "if_it_were_true": "Тогда интерфейс с `@GetExchange` принимал бы входящие запросы, но он лишь генерирует исходящие через прокси.",
+                "how_it_should_be": "Серверные эндпоинты — это `@GetMapping`/`@PostMapping`; `@GetExchange`/`@PostExchange` описывают вызовы наружу."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Problem Details` (RFC 7807) в `Spring Boot 3`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Problem Details` — это формат для описания структуры запросов (request body), а не ответов об ошибках; он задаёт схему входящих данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RFC 7807 описывает именно формат ответов об ошибках; к схеме входящих запросов он отношения не имеет.",
+                "source_of_confusion": "Слово «details» звучит обобщённо и его приписывают любой части HTTP-обмена, включая запрос.",
+                "if_it_were_true": "Тогда `ProblemDetail` валидировал бы входящий JSON, но он лишь сериализует ответ об ошибке.",
+                "how_it_should_be": "Это стандарт error-response: возвращается с кодом ошибки и Content-Type `application/problem+json`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это стандарт RFC 7807 для машиночитаемых JSON-ответов об ошибках REST API с полями `type`, `title`, `status`, `detail`, `instance` и Content-Type `application/problem+json`. В Spring Boot 3 он поддержан из коробки через класс `ProblemDetail`, который можно вернуть из `@ExceptionHandler` и обогатить через `setProperty`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместо самописных JSON-структур ошибок появляется единый формат, понятный клиентам и инструментам, и встроенная интеграция с `ResponseEntityExceptionHandler`.",
+                "example": "`ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.PAYMENT_REQUIRED, ex.getMessage()); pd.setType(URI.create(\"https://example.com/errors/insufficient-funds\")); pd.setProperty(\"accountBalance\", ex.getBalance());`",
+                "when_to_apply": "Применяют для единообразной обработки ошибок в REST API, особенно когда клиентов несколько и им нужен предсказуемый формат.",
+                "edge_cases": "Можно добавлять произвольные поля через `setProperty`; Content-Type меняется на `application/problem+json`, что некоторые старые клиенты могут не ожидать.",
+                "related": "[[spring-boot-3-migration-interview#Q5]] HTTP Interface Clients; [[spring-boot-3-migration-interview#Q11]] изменения в Security 6; [[spring-boot-3-migration-interview#Q1]] обзор изменений Boot 3."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы использовать `Problem Details`, нужно подключить отдельный стартер `spring-boot-starter-problem`, иначе класс `ProblemDetail` недоступен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отдельного стартера нет: `ProblemDetail` входит в `spring-web` и доступен в Boot 3 из коробки.",
+                "source_of_confusion": "В Spring многие фичи идут отдельными стартерами, и этот шаблон ошибочно применяют к Problem Details.",
+                "if_it_were_true": "Тогда без дополнительной зависимости код не компилировался бы, но `ProblemDetail` уже в classpath.",
+                "how_it_should_be": "Никакого спец-стартера не требуется — достаточно вернуть `ProblemDetail` из `@ExceptionHandler`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Problem Details` поле `status` всегда дублирует поле `type`, а `instance` обязано быть абсолютным URL с доменом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`status` — это HTTP-код (число), а `type` — URI категории ошибки; `instance` может быть относительным путём вроде `/orders/12345`.",
+                "source_of_confusion": "И `type`, и `instance` выглядят как URI, отсюда домысел про обязательные абсолютные URL и дублирование.",
+                "if_it_were_true": "Тогда `status: 402` повторял бы строку `type`, но это разные по смыслу и типу поля.",
+                "how_it_should_be": "`status` хранит числовой HTTP-код, `type` — URI категории, `instance` — путь конкретного случая, в т.ч. относительный."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `GraalVM Native Image` и как `Spring Boot 3` его поддерживает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`GraalVM Native Image` ускоряет старт за счёт JIT-компиляции в рантайме, поэтому никаких подсказок по reflection заранее давать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native Image — это AOT, а не JIT: вся компиляция происходит при сборке, и reflection надо объявлять hints заранее.",
+                "source_of_confusion": "JIT — привычный механизм ускорения JVM, и его по инерции приписывают и нативной сборке.",
+                "if_it_were_true": "Тогда reflection «находился» бы сам в рантайме, но в нативном образе нет JIT и неизвестные классы недоступны.",
+                "how_it_should_be": "Native — это ahead-of-time компиляция; рефлексию и ресурсы регистрируют через `RuntimeHints`/`@RegisterReflection`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нативный образ потребляет столько же памяти, сколько JVM (~100% от JVM), а его преимущество только в размере файла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Память нативного образа примерно 30% от JVM; ключевые выигрыши — старт ~100 мс и низкое потребление RAM.",
+                "source_of_confusion": "Кажется, что раз код тот же, то и память не изменится, а меняется лишь упаковка.",
+                "if_it_were_true": "Тогда смысла в native для serverless почти не было бы, но именно экономия памяти и старта его оправдывает.",
+                "how_it_should_be": "Native даёт и быстрый старт (~100 мс), и память около трети от JVM — это главные мотивы его применения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`GraalVM Native Image` — это AOT-компиляция JVM-приложения в нативный executable: старт ~100 мс вместо 2-5 с, память ~30% от JVM, размер ~80 МБ. `Spring Boot 3` поддерживает его из коробки через `native-maven-plugin` и подсказки компилятору (`@RegisterReflectionForBinding`, `RuntimeHintsRegistrar`) для reflection и ресурсов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Нативный образ убирает прогрев JVM, что критично для serverless и быстрых рестартов, но требует заранее объявить всё, что использует рефлексию.",
+                "example": "Сборка: `./mvnw -Pnative native:compile`, запуск `./target/myapp`; для DTO с рефлексией добавляют `@RegisterReflectionForBinding(MyDto.class)` или регистрируют типы в `RuntimeHints`.",
+                "when_to_apply": "Выбирают, когда важны мгновенный старт и низкое потребление памяти — FaaS, CLI-утилиты, контейнеры с частым масштабированием.",
+                "edge_cases": "Ограничения native: reflection, динамическая загрузка классов и `Unsafe` требуют явных hints, иначе приложение падает в рантайме, хотя на JVM работало.",
+                "related": "[[spring-boot-3-migration-interview#Q8]] AOT processing; [[spring-boot-3-migration-interview#Q1]] что нового в Boot 3; [[spring-boot-3-migration-interview#Q10]] Virtual Threads."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для нативной сборки в `Spring Boot 3` обязательно переписать приложение на реактивный `WebFlux` — MVC в native не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нативная компиляция работает и для MVC, и для WebFlux; стек приложения менять для native не требуется.",
+                "source_of_confusion": "Native ассоциируется с «современным» стеком, и реактивность ошибочно считают обязательной.",
+                "if_it_were_true": "Тогда любое MVC-приложение нельзя было бы скомпилировать нативно, но `native-maven-plugin` работает и с MVC.",
+                "how_it_should_be": "Выбор MVC/WebFlux не влияет на возможность native-сборки; ограничения касаются reflection, а не веб-стека."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает AOT processing в `Spring Boot 3`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "AOT processing работает только вместе с GraalVM native image и не даёт никакого ускорения обычному JAR на JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AOT полезен и без native: обычный JAR с `-Dspring.aot.enabled=true` стартует на 30-50% быстрее.",
+                "source_of_confusion": "AOT чаще всего упоминают в связке с GraalVM, и кажется, что без native он бесполезен.",
+                "if_it_were_true": "Тогда команда `spring-boot:process-aot` для JVM-сборки не имела бы смысла, но она ускоряет и обычный запуск.",
+                "how_it_should_be": "AOT — самостоятельная оптимизация старта; для native он обязателен, для JVM — опциональное ускорение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "AOT processing выполняется при каждом старте приложения в рантайме, анализируя бины заново на лету.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AOT работает на этапе сборки (`process-aot`), а не в рантайме; его цель — убрать анализ со старта.",
+                "source_of_confusion": "Слово «processing» наводит на мысль о работе во время выполнения, как у обычного контекста.",
+                "if_it_were_true": "Тогда AOT только замедлял бы старт лишним анализом, но он, наоборот, переносит работу на сборку.",
+                "how_it_should_be": "Генерация AOT-кода происходит при сборке; в рантайме приложение лишь использует готовые артефакты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "AOT processing генерирует исключительно reflection hints и не создаёт ни bean definitions, ни proxy/resource hints.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AOT генерирует целый набор: pre-computed bean definitions, оптимизированные конфигурации, а также proxy и resource hints.",
+                "source_of_confusion": "Reflection hints — самая обсуждаемая часть AOT, поэтому остальное выпадает из памяти.",
+                "if_it_were_true": "Тогда граф бинов всё равно строился бы рефлексией на старте, но AOT как раз вычисляет его заранее.",
+                "how_it_should_be": "AOT охватывает bean definitions, конфигурации, reflection, resource и proxy hints — не только reflection."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "AOT (Ahead-of-Time) processing анализирует приложение на этапе сборки и генерирует дополнительный код: pre-computed bean definitions без рефлексии, оптимизированные конфигурации, reflection/resource/proxy hints. Это нужно прежде всего для GraalVM, но ускоряет старт на 30-50% даже в обычном JAR при `-Dspring.aot.enabled=true`.",
+              "correct": true,
+              "sections": {
+                "explanation": "AOT переносит часть работы со старта на сборку: вместо того чтобы вычислять граф бинов рефлексией при запуске, Spring готовит код заранее.",
+                "example": "`./mvnw spring-boot:process-aot` генерирует артефакты, а запуск `java -Dspring.aot.enabled=true -jar app.jar` использует их, ускоряя старт без native-образа.",
+                "when_to_apply": "Включают для GraalVM-сборок обязательно, а для обычного JAR — когда важен быстрый старт (например, частые рестарты или autoscaling).",
+                "edge_cases": "AOT фиксирует bean definitions на этапе сборки, поэтому динамическое изменение конфигурации в рантайме ограничено; профили и условия вычисляются заранее.",
+                "related": "[[spring-boot-3-migration-interview#Q7]] GraalVM Native Image; [[spring-boot-3-migration-interview#Q13]] изменения в auto-configuration; [[spring-boot-3-migration-interview#Q1]] обзор Boot 3."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие изменения в Observability принёс `Spring Boot 3`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Boot 3` ввёл единый Micrometer-based API для метрик и трассировки: вместо `Spring Cloud Sleuth` используется `Observation API` и `micrometer-tracing` (например, мост `micrometer-tracing-bridge-otel`). Один объект `Observation` одновременно создаёт span для tracing и замеряет метрики, экспортируясь в Zipkin/OpenTelemetry.",
+              "correct": true,
+              "sections": {
+                "explanation": "Раньше метрики и трейсинг были разными подсистемами; теперь `Observation` объединяет их, и инструментирование описывается единообразно.",
+                "example": "`Observation.createNotStarted(\"order.process\", registry).contextualName(\"process-order\").lowCardinalityKeyValue(\"type\", cmd.type()).observe(() -> doProcess(cmd));` — блок и трассируется, и замеряется.",
+                "when_to_apply": "Применяют при настройке наблюдаемости в Boot 3 и при миграции старых проектов со Sleuth, который полностью удалён.",
+                "edge_cases": "`Spring Cloud Sleuth` удалён — его обязательно мигрируют на `micrometer-tracing`; sampling настраивается через `management.tracing.sampling.probability`.",
+                "related": "[[spring-boot-3-migration-interview#Q1]] ключевые изменения Boot 3; [[spring-boot-3-migration-interview#Q14]] переименованные properties; [[spring-boot-3-migration-interview#Q15]] частые проблемы миграции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Spring Boot 3` трассировку по-прежнему обеспечивает `Spring Cloud Sleuth`, а `Observation API` — это лишь обёртка над ним.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Cloud Sleuth` в Boot 3 удалён; трассировку даёт `micrometer-tracing`, а `Observation API` работает поверх Micrometer, а не Sleuth.",
+                "source_of_confusion": "Sleuth годами был стандартом трейсинга в Spring Cloud, и его по привычке считают актуальным.",
+                "if_it_were_true": "Тогда зависимость `spring-cloud-sleuth` подключалась бы как раньше, но в Boot 3 её просто нет.",
+                "how_it_should_be": "Sleuth заменён на `micrometer-tracing`; именно его мост (например, на OTel) обеспечивает span-ы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Observability в `Spring Boot 3` требует ручного создания отдельного span-а и отдельного таймера на каждый бизнес-метод, единого API нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Единый `Observation API` как раз и убирает дублирование: один `Observation` сразу даёт и span, и метрику.",
+                "source_of_confusion": "В старом подходе метрики и трейсинг действительно настраивались раздельно, эта картина переносится на Boot 3.",
+                "if_it_were_true": "Тогда `observe(() -> ...)` не имел бы смысла, но именно он объединяет замер и трассировку в одном вызове.",
+                "how_it_should_be": "Используют один `Observation`, который инкапсулирует и span, и метрику для обёрнутого блока."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sampling трассировки в `Spring Boot 3` настраивается только в коде через `@Sampled` на методе и не имеет конфигурации в `application.yml`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sampling задаётся в конфигурации: `management.tracing.sampling.probability` управляет долей трассируемых запросов.",
+                "source_of_confusion": "Аннотационный стиль Spring создаёт ожидание, что и sampling включается аннотацией.",
+                "if_it_were_true": "Тогда нельзя было бы менять долю sampling без пересборки, но property правится в yml на лету.",
+                "how_it_should_be": "Долю трассировки настраивают через `management.tracing.sampling.probability` в `application.yml`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что нужно знать о поддержке Virtual Threads в `Spring Boot 3.2+`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Virtual Threads в `Spring Boot 3.2` дают прирост производительности для любых задач, включая CPU-bound вычисления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Виртуальные потоки помогают I/O-bound нагрузкам; для CPU-bound выигрыша нет, так как там ограничивает число ядер.",
+                "source_of_confusion": "«Больше потоков = быстрее» — упрощение, которое не учитывает разницу I/O- и CPU-bound.",
+                "if_it_were_true": "Тогда тяжёлый расчёт ускорялся бы простым включением VT, но он по-прежнему упрётся в CPU.",
+                "how_it_should_be": "VT выгодны там, где поток в основном ждёт I/O; для счёта они не дают преимущества."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Boot 3.2` добавил первоклассную поддержку Java 21 Virtual Threads: достаточно `spring.threads.virtual.enabled: true`, чтобы Tomcat, `@Async` и `@Scheduled` стали использовать виртуальные потоки. При желании executor настраивается вручную через `TomcatProtocolHandlerCustomizer` с `Executors.newVirtualThreadPerTaskExecutor()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Виртуальные потоки дёшевы и многочисленны, поэтому блокирующий код на каждый запрос перестаёт упираться в пул платформенных потоков для I/O-bound нагрузок.",
+                "example": "`spring: threads: virtual: enabled: true` — и `@Async public CompletableFuture<Order> processAsync(Order o)` уже выполняется на виртуальном потоке без ручной настройки executor.",
+                "when_to_apply": "Включают для I/O-bound сервисов (много вызовов БД/внешних API), где раньше упирались в размер пула потоков Tomcat.",
+                "edge_cases": "Для CPU-bound нагрузки выигрыша нет — там по-прежнему ограничивает число ядер, а не потоков; нужна Java 21.",
+                "related": "[[spring-boot-3-migration-interview#Q1]] версии и фичи Boot 3; [[spring-boot-3-migration-interview#Q12]] RestClient для блокирующих вызовов; [[spring-boot-3-migration-interview#Q9]] Observability."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы включить Virtual Threads, нужно везде вручную писать `Thread.startVirtualThread(...)`; единого флага конфигурации в `Spring Boot 3.2` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть один флаг `spring.threads.virtual.enabled: true`, который включает VT для Tomcat, `@Async` и `@Scheduled` сразу.",
+                "source_of_confusion": "Низкоуровневый API VT (`startVirtualThread`) на виду, и кажется, что Spring не даёт интеграции.",
+                "if_it_were_true": "Тогда «первоклассная поддержка» сводилась бы к ручным вызовам, но смысл фичи — именно автоматизация через property.",
+                "how_it_should_be": "Достаточно выставить `spring.threads.virtual.enabled: true`; ручной executor — лишь опция тонкой настройки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Поддержка Virtual Threads появилась уже в `Spring Boot 3.0` и работает на `Java 17` без обновления JDK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Первоклассная поддержка VT добавлена в `Spring Boot 3.2`, а сами виртуальные потоки требуют `Java 21`.",
+                "source_of_confusion": "Все фичи Boot 3 хочется отнести к первому релизу 3.0, не разделяя минорные версии.",
+                "if_it_were_true": "Тогда `spring.threads.virtual.enabled` работал бы на Java 17, но VT там просто отсутствуют в JDK.",
+                "how_it_should_be": "VT нужен `Java 21`, а интеграция в Spring появилась в `3.2` (ноябрь 2023), а не в 3.0."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие breaking changes принёс `Spring Security 6`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `Spring Security 6` `WebSecurityConfigurerAdapter` сохранён, а `SecurityFilterChain` — лишь альтернативный, необязательный способ настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WebSecurityConfigurerAdapter` полностью удалён; единственный поддерживаемый путь — бин `SecurityFilterChain`.",
+                "source_of_confusion": "Адаптер был каноном настройки безопасности годами, и кажется, что его лишь «не рекомендуют».",
+                "if_it_were_true": "Тогда старый `class SecurityConfig extends WebSecurityConfigurerAdapter` компилировался бы, но этого класса в SS6 нет.",
+                "how_it_should_be": "Конфигурацию переписывают на `@Bean SecurityFilterChain`, наследование адаптера убирают полностью."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Spring Security 6` метод `antMatchers` остался основным, а `requestMatchers` добавлен лишь для реактивного стека.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`antMatchers` удалён в SS6; `requestMatchers` — единый замена для обоих стеков, а не только реактивного.",
+                "source_of_confusion": "Похожие имена методов создают впечатление, что старый просто получил «реактивного брата».",
+                "if_it_were_true": "Тогда `antMatchers(\"/public\")` компилировался бы в MVC, но этого метода больше нет в API.",
+                "how_it_should_be": "Везде используют `requestMatchers`; `antMatchers` и `mvcMatchers` из API убраны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Spring Security 6` (SB 3.x) удалён `WebSecurityConfigurerAdapter`: конфигурацию задают бином `SecurityFilterChain`. Также `authorizeRequests` заменён на `authorizeHttpRequests`, `antMatchers` — на `requestMatchers`, а все настройки описываются через лямбды `Customizer`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Старый стиль через наследование адаптера и `configure(HttpSecurity)` больше не работает — нужен компонентный, lambda-DSL подход с возвратом `http.build()`.",
+                "example": "`@Bean SecurityFilterChain chain(HttpSecurity http){ http.authorizeHttpRequests(a -> a.requestMatchers(\"/public\").permitAll().anyRequest().authenticated()).formLogin(Customizer.withDefaults()); return http.build(); }`",
+                "when_to_apply": "Этот рефакторинг обязателен при апгрейде любого приложения, использующего Spring Security, на Boot 3.x.",
+                "edge_cases": "`antMatchers`/`mvcMatchers` удалены — `requestMatchers` теперь сам выбирает стратегию; забытый `return http.build()` оставит конфигурацию без эффекта.",
+                "related": "[[spring-boot-3-migration-interview#Q15]] частые проблемы миграции; [[spring-boot-3-migration-interview#Q1]] изменения Boot 3; [[spring-boot-3-migration-interview#Q3]] последовательность апгрейда."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Spring Security 6` конфигурацию по-прежнему пишут через переопределение `configure(HttpSecurity http)`, а лямбды `Customizer` запрещены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод `configure` убран вместе с адаптером; настройка идёт именно через лямбды `Customizer` и возврат `http.build()`.",
+                "source_of_confusion": "Императивный `configure(...)` глубоко в мышечной памяти разработчиков Security 5.",
+                "if_it_were_true": "Тогда `@Override protected void configure(HttpSecurity)` работал бы, но переопределять нечего — базового класса нет.",
+                "how_it_should_be": "Цепочку фильтров собирают в бине через lambda-DSL `Customizer` и возвращают `http.build()`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое декларативный `RestClient` в `Spring Boot 3.2`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`RestClient` — это реактивный неблокирующий клиент, который полностью дублирует `WebClient` и требует реактивного стека.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RestClient` блокирующий: он заменяет `RestTemplate`, а реактивный клиент — это отдельный `WebClient`.",
+                "source_of_confusion": "Fluent API у `RestClient` визуально похож на `WebClient`, отсюда вывод, что он тоже реактивный.",
+                "if_it_were_true": "Тогда `RestClient` возвращал бы `Mono`/`Flux` по умолчанию, но он отдаёт обычные объекты синхронно.",
+                "how_it_should_be": "`RestClient` блокирующий и проще; для неблокирующего стиля используют `WebClient`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RestClient` появился ещё в `Spring Boot 2.x` и является устаревшим API, которое в Boot 3 рекомендуют заменять на `RestTemplate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `RestClient` пришёл в `Spring Boot 3.2` как современная замена устаревшему `RestTemplate`.",
+                "source_of_confusion": "Похожие имена `RestClient`/`RestTemplate` легко перепутать по «возрасту» и статусу.",
+                "if_it_were_true": "Тогда миграция шла бы от `RestClient` к `RestTemplate`, но направление обратное.",
+                "how_it_should_be": "`RestTemplate` — старый клиент, `RestClient` (3.2) — новый рекомендуемый блокирующий API."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `RestClient` обработка ошибок невозможна: при коде 404 он молча возвращает `null`, без исключений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RestClient` бросает типизированные исключения вроде `HttpClientErrorException.NotFound`, которые можно перехватывать.",
+                "source_of_confusion": "Лаконичный fluent-вызов создаёт впечатление, что ошибки «теряются» где-то внутри.",
+                "if_it_were_true": "Тогда отличить 404 от пустого тела было бы нельзя, но клиент явно сигнализирует исключением.",
+                "how_it_should_be": "Ошибочные статусы превращаются в исключения (`HttpClientErrorException` и подклассы), которые ловят в `try/catch`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`RestClient` — новый блокирующий HTTP-клиент с fluent API, появившийся в `Spring Boot 3.2` как современная замена `RestTemplate`. Он строится цепочкой вызовов (`get().uri(...).retrieve().body(Class)`), поддерживает обработку ошибок через типизированные исключения и при необходимости даёт реактивный мост через `exchange`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`RestClient` сочетает простоту блокирующего стиля с удобным fluent-DSL, который раньше был только у реактивного `WebClient`.",
+                "example": "`Order order = client.get().uri(\"/orders/{id}\", 123).retrieve().body(Order.class);` — лаконичный GET; ошибки ловятся как `HttpClientErrorException.NotFound`.",
+                "when_to_apply": "Выбирают для блокирующих приложений, которым нужен современный клиент, но не нужна реактивность `WebClient`.",
+                "edge_cases": "`RestClient` блокирующий и проще, `WebClient` реактивный и сложнее; для реактивного результата у `RestClient` есть `exchange`, возвращающий `Mono`.",
+                "related": "[[spring-boot-3-migration-interview#Q5]] HTTP Interface Clients; [[spring-boot-3-migration-interview#Q10]] Virtual Threads для блокирующих вызовов; [[spring-boot-3-migration-interview#Q1]] фичи Boot 3."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие изменения в auto-configuration в `Spring Boot 3`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `Spring Boot 3` авто-конфигурации декларируются в файле `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` (по одному имени класса на строку) вместо ключа в `spring.factories`. Также добавлена marker-аннотация `@AutoConfiguration`. Старый `spring.factories` ещё поддерживается ради обратной совместимости.",
+              "correct": true,
+              "sections": {
+                "explanation": "Новый формат проще и читается без лишнего синтаксиса свойств; имя файла прямо указывает на его назначение.",
+                "example": "Раньше: `EnableAutoConfiguration=com.example.MyAutoConfiguration` в `spring.factories`; теперь — строка `com.example.MyAutoConfiguration` в файле `...AutoConfiguration.imports`.",
+                "when_to_apply": "Это важно для авторов стартеров и библиотек: при апгрейде свои авто-конфигурации переносят в новый файл.",
+                "edge_cases": "Класс помечают `@AutoConfiguration` (часто с `@ConditionalOnClass`); `spring.factories` для авто-конфигов всё ещё работает, но считается устаревшим способом.",
+                "related": "[[spring-boot-3-migration-interview#Q8]] AOT processing; [[spring-boot-3-migration-interview#Q1]] изменения Boot 3; [[spring-boot-3-migration-interview#Q14]] Properties Migrator."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Spring Boot 3` авто-конфигурации полностью отменены: теперь все бины надо объявлять вручную через `@Bean`, механизма автоконфигурации больше нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Авто-конфигурация осталась ключевым механизмом Boot 3; изменился лишь способ её декларирования (новый файл imports).",
+                "source_of_confusion": "Смена формата регистрации воспринимается как отмена самой фичи.",
+                "if_it_were_true": "Тогда стартеры перестали бы работать «из коробки», но они по-прежнему авто-настраивают бины.",
+                "how_it_should_be": "Авто-конфигурация работает как раньше; поменялось место её объявления и появилась `@AutoConfiguration`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Файл `spring.factories` в `Spring Boot 3` удалён мгновенно, и любые библиотеки, использующие его, перестают загружаться без правок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`spring.factories` всё ещё поддерживается для обратной совместимости; новый файл imports — рекомендуемый, но не единственный способ.",
+                "source_of_confusion": "Появление нового механизма воспринимается как немедленное удаление старого.",
+                "if_it_were_true": "Тогда старые стартеры сразу ломались бы на Boot 3, но многие из них работают через legacy `spring.factories`.",
+                "how_it_should_be": "Новый формат предпочтителен, но `spring.factories` для авто-конфигов пока продолжает работать."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Новый формат требует записывать авто-конфигурации в `application.yml` под ключом `spring.autoconfigure.imports`, а не в `META-INF`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Декларация идёт в файле `META-INF/spring/...AutoConfiguration.imports`, а не в `application.yml` приложения.",
+                "source_of_confusion": "Слово `imports` ассоциируется с конфигурацией приложения, а не с метаданными библиотеки.",
+                "if_it_were_true": "Тогда каждый потребитель библиотеки прописывал бы её авто-конфиги в своём yml, но они идут внутри артефакта.",
+                "how_it_should_be": "Список классов лежит в `META-INF/spring/...AutoConfiguration.imports` самой библиотеки, не в `application.yml`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Configuration Properties Migrator` в `Spring Boot 3`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Configuration Properties Migrator` автоматически переписывает устаревшие properties в `application.yml` прямо при старте приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Migrator только предупреждает в логах об устаревших ключах; править `application.yml` нужно вручную.",
+                "source_of_confusion": "Слово «migrator» подразумевает активное изменение, а не только диагностику.",
+                "if_it_were_true": "Тогда после первого запуска yml сам бы обновился, но файл остаётся прежним — меняются лишь логи.",
+                "how_it_should_be": "Зависимость подсвечивает проблемы; исправления в конфигурации разработчик вносит сам."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это runtime-зависимость `spring-boot-properties-migrator`, которую добавляют со `scope=runtime` на время миграции. При старте она выводит в логи предупреждения об устаревших и переименованных properties (например, `management.metrics.export.prometheus.enabled` → `management.prometheus.metrics.export.enabled`), помогая исправить конфигурацию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Многие property переименовались между версиями, и migrator автоматически подсказывает, что и на что заменить, вместо ручного поиска по гайдам.",
+                "example": "В логах появляется `The following properties have been renamed: management.metrics.export.prometheus.enabled → management.prometheus.metrics.export.enabled`.",
+                "when_to_apply": "Подключают временно во время апгрейда, чтобы найти все устаревшие ключи в `application.yml`/`application.properties`.",
+                "edge_cases": "После исправления всех properties зависимость удаляют — держать её в проде не нужно, она только для диагностики на этапе миграции.",
+                "related": "[[spring-boot-3-migration-interview#Q3]] последовательность миграции; [[spring-boot-3-migration-interview#Q9]] переименования в Observability; [[spring-boot-3-migration-interview#Q15]] частые проблемы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Эту зависимость подключают с `scope=compile` и оставляют в проде навсегда для контроля корректности properties.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подключают с `scope=runtime` и только на время миграции; после исправления её удаляют, в проде она не нужна.",
+                "source_of_confusion": "Полезный диагностический инструмент хочется оставить «на всякий случай» постоянно.",
+                "if_it_were_true": "Тогда каждый прод-запуск тратил бы ресурсы на сканирование устаревших ключей без пользы.",
+                "how_it_should_be": "Migrator — временный (`scope=runtime`) помощник миграции, который удаляют после правки properties."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Configuration Properties Migrator` мигрирует не properties, а схему базы данных, генерируя SQL для обновления таблиц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он работает исключительно с конфигурационными свойствами Spring Boot; к схеме БД отношения не имеет.",
+                "source_of_confusion": "Термин «migrator» сильно ассоциируется с миграциями БД (Flyway/Liquibase).",
+                "if_it_were_true": "Тогда он генерировал бы DDL, но он лишь печатает предупреждения о переименованных property-ключах.",
+                "how_it_should_be": "Миграцией схемы БД занимаются Flyway/Liquibase; этот инструмент — про `application.yml`/`.properties`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие проблемы часто возникают при миграции на `Spring Boot 3`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Самая частая проблема миграции — это смена синтаксиса самого языка Java, ведь `Java 17` несовместим с кодом, написанным под `Java 8`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Код на Java 8 в основном совместим с Java 17; реальные проблемы миграции — библиотеки, Security 6 и переименованные properties.",
+                "source_of_confusion": "Скачок версии JDK кажется источником несовместимости, хотя язык сохраняет обратную совместимость.",
+                "if_it_were_true": "Тогда пришлось бы переписывать бизнес-логику под новый синтаксис, но компилируется она почти без правок.",
+                "how_it_should_be": "Java 17 запускает старый код; чинить приходится зависимости и конфигурацию, а не язык."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Ошибка `NoClassDefFoundError: javax/servlet/...` при миграции означает, что нужно вернуть JDK обратно на `Java 8`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эта ошибка указывает на старую библиотеку без Jakarta-поддержки; решение — обновить или заменить зависимость, а не откатывать JDK.",
+                "source_of_confusion": "Любую ошибку при апгрейде хочется списать на «не ту версию Java».",
+                "if_it_were_true": "Тогда откат на Java 8 чинил бы её, но проблема в том, что классы `javax.servlet` отсутствуют в Tomcat 10.",
+                "how_it_should_be": "Находят зависимость, тянущую `javax.servlet`, и обновляют её до Jakarta-совместимой версии."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Типичные проблемы: несовместимость библиотек с Jakarta EE (`NoClassDefFoundError: javax/servlet/...`), устаревшие версии (Hibernate 5→6, Sleuth→Micrometer Tracing, springfox→springdoc, Lombok до 1.18.24+), breaking changes Security 6, переименование Actuator-properties, изменения route handling, более строгий Jackson 2.14+ и укороченные дефолты HikariCP.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поломки идут сразу с нескольких сторон — зависимости, безопасность, конфигурация, поэтому без поэтапного плана легко утонуть в ошибках.",
+                "example": "`NoClassDefFoundError: javax/servlet/http/HttpServletRequest` означает старую библиотеку без Jakarta-поддержки — её обновляют или заменяют.",
+                "when_to_apply": "Этот чек-лист держат под рукой во время апгрейда, чтобы заранее знать, где искать причины падений.",
+                "edge_cases": "Best practice — дробить миграцию: сначала `Java 17`, затем последние `2.x`-зависимости, затем `3.0`, затем `3.x++`, чтобы локализовать каждую группу проблем.",
+                "related": "[[spring-boot-3-migration-interview#Q3]] последовательность миграции; [[spring-boot-3-migration-interview#Q11]] breaking changes Security 6; [[spring-boot-3-migration-interview#Q4]] какие javax остались."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Рекомендуемый подход — выполнить всю миграцию одним коммитом: сразу сменить JDK, parent, все зависимости и пакеты, чтобы не было промежуточных состояний.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Best practice — поэтапная миграция (Java 17 → свежие 2.x → 3.0 → 3.x), чтобы локализовать поломки по группам.",
+                "source_of_confusion": "«Сделать всё разом» выглядит чище в истории, но скрывает источник ошибок.",
+                "if_it_were_true": "Тогда при падении было бы видно причину, но в большом коммите десятки изменений маскируют друг друга.",
+                "how_it_should_be": "Миграцию дробят на этапы, проверяя сборку и тесты после каждого, — так проще найти виновника."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

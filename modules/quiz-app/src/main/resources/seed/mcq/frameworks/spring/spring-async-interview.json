@@ -1,0 +1,905 @@
+{
+  "topic_slug": "spring-async-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@Async` в Spring и как его включить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Async` — аннотация для декларативного запуска метода в отдельном потоке: вызов возвращается сразу, а тело выполняется на пуле потоков Spring; включается через `@EnableAsync` на классе с `@Configuration`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотированный метод не блокирует caller — Spring перехватывает вызов через AOP-прокси и отдаёт работу `TaskExecutor`. Без `@EnableAsync` аннотация просто игнорируется.",
+                "example": "`@Configuration @EnableAsync class AsyncConfig {}`, а в сервисе `@Async public void sendEmail(...) { emailClient.send(...); }` — вызов `sendEmail()` вернётся сразу, письмо уйдёт в фоне.",
+                "when_to_apply": "Подходит для fire-and-forget операций (рассылка писем, уведомления, аудит) и для параллельного сбора данных, когда нужно не блокировать поток запроса.",
+                "edge_cases": "Без `@EnableAsync` метод выполнится синхронно без единой ошибки — это частая причина «почему мой `@Async` не работает».",
+                "related": "[[spring-async-interview#Q3]] как работает под капотом; [[spring-async-interview#Q9]] проблема self-invocation; [[spring-async-interview#Q2]] поддерживаемые типы возврата."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Async` — это аннотация для кеширования результата метода, чтобы повторные вызовы возвращали значение из кеша без повторного выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кеширование результата делает `@Cacheable`, а `@Async` лишь переносит выполнение метода в другой поток и ничего не запоминает.",
+                "source_of_confusion": "Обе аннотации работают через AOP-прокси и «оптимизируют» вызов, поэтому их легко перепутать как ускорители.",
+                "if_it_were_true": "Тогда второй вызов `@Async`-метода возвращал бы старый результат мгновенно, но он каждый раз заново запускает задачу в пуле.",
+                "how_it_should_be": "Для кеша берут `@Cacheable`/`@CacheEvict`, а `@Async` применяют, когда нужно не ждать завершения операции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Async` включается автоматически в любом Spring Boot приложении и не требует никаких дополнительных аннотаций конфигурации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддержка асинхронности не включена по умолчанию: нужен `@EnableAsync` (или авто-конфигурация через свойства), иначе прокси не создаётся.",
+                "source_of_confusion": "Многие starter-ы Spring Boot включают функции «из коробки», и кажется, что `@Async` тоже работает сразу.",
+                "if_it_were_true": "Тогда любой `@Async`-метод сразу уходил бы в фон, но без `@EnableAsync` он выполняется в текущем потоке.",
+                "how_it_should_be": "Нужно явно поставить `@EnableAsync` на конфигурацию, тогда Spring начнёт оборачивать `@Async`-методы прокси."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Async` — это аннотация уровня класса, которая делает все методы бина потокобезопасными за счёт автоматической синхронизации доступа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Async` не добавляет синхронизацию и не гарантирует потокобезопасность — наоборот, он запускает метод в отдельном потоке, что требует аккуратности с разделяемым состоянием.",
+                "source_of_confusion": "Слова «асинхронный» и «потоки» ассоциируются с конкурентностью, и кажется, что Spring сам защитит данные.",
+                "if_it_were_true": "Тогда `@Async` ставил бы `synchronized` вокруг тела метода, но он лишь делегирует вызов в `TaskExecutor`.",
+                "how_it_should_be": "Потокобезопасность обеспечивает сам разработчик через `synchronized`/`Lock`/иммутабельность; `@Async` только переносит выполнение в другой поток."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы возврата поддерживает `@Async`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Async` поддерживает только `void`-методы, поэтому получить результат асинхронной операции в принципе невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кроме `void`, поддерживаются `Future<T>` и `CompletableFuture<T>`, через которые результат вполне доступен вызывающему коду.",
+                "source_of_confusion": "Самый частый пример `@Async` — fire-and-forget на `void`, и кажется, что других вариантов нет.",
+                "if_it_were_true": "Тогда нельзя было бы написать `@Async CompletableFuture<User> findUserAsync(...)`, но именно это и есть рекомендуемый способ.",
+                "how_it_should_be": "Для возврата результата используют `CompletableFuture<T>`, а `void` оставляют для операций без ответа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поддерживаются `void` (fire-and-forget), `Future<T>`, `CompletableFuture<T>` и `ListenableFuture<T>`; рекомендуется `CompletableFuture<T>`, а любой другой тип приведёт к возврату `null`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring умеет завернуть в фоне только асинхронные обёртки и `void`. Для остального прокси вернёт `null`, потому что реальный результат ещё не готов в момент возврата.",
+                "example": "`@Async public CompletableFuture<User> findUserAsync(Long id) { return CompletableFuture.completedFuture(repo.findById(id)); }` — результат оборачивают вручную через `completedFuture`.",
+                "when_to_apply": "`CompletableFuture<T>` берут, когда нужен результат и композиция; `void` — для операций без результата вроде отправки уведомления.",
+                "edge_cases": "Если объявить `@Async public User find()` (не-обёрточный тип), вызывающий код получит `null`, а не объект — типичная ошибка разработчика.",
+                "related": "[[spring-async-interview#Q1]] что такое `@Async`; [[spring-async-interview#Q7]] обработка исключений; [[spring-async-interview#Q12]] комбинирование нескольких вызовов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При возврате `CompletableFuture` Spring сам оборачивает результат метода в `completedFuture`, поэтому достаточно вернуть обычный объект.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring не оборачивает результат автоматически: внутри `@Async`-метода нужно самому вызвать `CompletableFuture.completedFuture(...)` или `supplyAsync(...)`.",
+                "source_of_confusion": "Прокси и так «магически» переносит выполнение, и кажется логичным, что и обёртку он сделает сам.",
+                "if_it_were_true": "Тогда `return user;` в методе с типом `CompletableFuture<User>` компилировался бы, но это ошибка типов.",
+                "how_it_should_be": "Тело метода должно вернуть готовый `CompletableFuture`, например `CompletableFuture.completedFuture(user)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Если объявить `@Async` метод с обычным типом возврата вроде `User`, Spring выбросит исключение на старте приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring не падает на старте — он просто вернёт `null` из такого метода в рантайме, что приводит к незаметной ошибке.",
+                "source_of_confusion": "Хочется верить, что фреймворк защитит от неверного типа на этапе инициализации контекста.",
+                "if_it_were_true": "Тогда приложение не запустилось бы с `@Async User find()`, но оно стартует и молча возвращает `null`.",
+                "how_it_should_be": "Возвращать нужно `void`, `Future` или `CompletableFuture`; иначе caller получит `null` без всякой ошибки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `@Async` под капотом?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Async` работает через отдельный поток, который Spring создаёт прямо внутри тела метода с помощью байткод-инструментирования на этапе компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого compile-time инструментирования нет — Spring оборачивает бин рантайм-прокси и делегирует вызов в `TaskExecutor`.",
+                "source_of_confusion": "AspectJ умеет compile-time weaving, и это переносят на Spring AOP, который на самом деле runtime-проксирующий.",
+                "if_it_were_true": "Тогда для `@Async` нужен был бы специальный компилятор аспектов, но достаточно `@EnableAsync` и обычной сборки.",
+                "how_it_should_be": "Spring создаёт прокси в рантайме при инициализации бина и через него переносит выполнение в пул потоков."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Async` запускает новый поток через `new Thread(...).start()` на каждый вызов метода, не используя никакого пула потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выполнение делегируется в `TaskExecutor` (обычно `ThreadPoolTaskExecutor`), а не в сырой `new Thread` на каждый вызов.",
+                "source_of_confusion": "«Отдельный поток» воспринимают буквально как создание `Thread` вручную, без абстракции пула.",
+                "if_it_were_true": "Тогда нельзя было бы ограничить число потоков через `corePoolSize`/`maxPoolSize`, но эти настройки реально работают.",
+                "how_it_should_be": "Прокси отдаёт задачу в `TaskExecutor`, а тот переиспользует потоки из пула в соответствии с настройками."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Async` работает через Spring AOP-прокси: прокси перехватывает вызов метода и делегирует его выполнение в `TaskExecutor`, сразу возвращая управление вызывающему коду.",
+              "correct": true,
+              "sections": {
+                "explanation": "Контейнер подменяет бин прокси-объектом; при вызове `@Async`-метода прокси не выполняет тело напрямую, а отправляет задачу в пул потоков и возвращает `CompletableFuture` или `null`.",
+                "example": "`Caller -> Proxy.asyncMethod() -> executor.submit(task)`, прокси сразу отдаёт результат-обёртку, а worker-поток выполняет тело метода позже.",
+                "when_to_apply": "Понимание прокси-механизма нужно при отладке, почему `@Async` не сработал, и при оценке ограничений (`public`-методы, self-invocation).",
+                "edge_cases": "Из-за прокси `@Async` не работает для `private`/`final`/`static` методов и при self-invocation (`this.method()`), потому что вызов идёт мимо прокси.",
+                "related": "[[spring-async-interview#Q9]] почему ломается self-invocation; [[spring-async-interview#Q11]] требования к методам; [[spring-async-interview#Q1]] что такое `@Async`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Async` модифицирует caller-поток так, что он сам разбивает работу на части и выполняет метод по кусочкам между другими задачами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Caller-поток ничего не разбивает: прокси отдаёт всю задачу целиком другому потоку из пула, а caller сразу продолжает свою работу.",
+                "source_of_confusion": "Кооперативную многозадачность из корутин/реактивщины ошибочно приписывают потоковому `@Async`.",
+                "if_it_were_true": "Тогда `@Async` работал бы как event-loop в одном потоке, но он использует реальные потоки пула.",
+                "how_it_should_be": "Метод целиком выполняется на отдельном worker-потоке пула, а caller-поток не участвует в его выполнении."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой executor используется в `@Async` по умолчанию?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "По умолчанию `@Async` всегда использует `ForkJoinPool.commonPool()`, тот же, что и параллельные стримы Java.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолт Spring — `SimpleAsyncTaskExecutor` (до 3.2) или `ThreadPoolTaskExecutor` (3.2+), а не общий `ForkJoinPool`.",
+                "source_of_confusion": "`CompletableFuture.supplyAsync` без executor берёт `commonPool`, и это переносят на `@Async`.",
+                "if_it_were_true": "Тогда настройки `spring.task.execution.pool.*` ни на что не влияли бы, но они управляют именно дефолтным executor.",
+                "how_it_should_be": "Дефолтный пул задаётся Spring (`SimpleAsyncTaskExecutor`/`ThreadPoolTaskExecutor`), а `commonPool` относится к `supplyAsync`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "По умолчанию используется `ThreadPoolTaskExecutor` с жёстко ограниченным размером очереди в 100 задач во всех версиях Spring Boot.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже в 3.2+ дефолтная `queue-capacity` фактически неограничена (`Integer.MAX_VALUE`), а до 3.2 пула вообще не было.",
+                "source_of_confusion": "Пример с `queue-capacity: 100` часто встречается в туториалах и принимается за дефолт.",
+                "if_it_were_true": "Тогда при 101-й задаче срабатывал бы reject уже на дефолте, но без явной настройки очередь практически безразмерная.",
+                "how_it_should_be": "Чтобы ограничить очередь, её нужно задать явно; дефолтное значение очень велико и от версии зависит сам тип executor."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "По умолчанию `@Async` выполняет метод синхронно в caller-потоке, пока не сконфигурирован какой-нибудь `TaskExecutor`-бин.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При включённом `@EnableAsync` метод всегда уходит в фон на дефолтный executor; синхронным он становится только без `@EnableAsync` или мимо прокси.",
+                "source_of_confusion": "Путают «нет кастомного executor» с «нет асинхронности вообще».",
+                "if_it_were_true": "Тогда `@Async` без явного бина был бы бесполезен, но он работает на дефолтном executor сразу.",
+                "how_it_should_be": "С `@EnableAsync` Spring подставляет дефолтный executor, и метод выполняется асинхронно даже без кастомного бина."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "До Spring Boot 3.2 по умолчанию использовался `SimpleAsyncTaskExecutor`, создающий новый поток на каждый вызов без пула; с Spring Boot 3.2+ дефолтом стал `ThreadPoolTaskExecutor`, но в production executor стоит задавать явно.",
+              "correct": true,
+              "sections": {
+                "explanation": "`SimpleAsyncTaskExecutor` не переиспользует потоки и под нагрузкой может породить их тысячи, что опасно. В 3.2+ появился пул с `core-size=8`, но дефолтные `max-size`/`queue-capacity` всё ещё неограничены.",
+                "example": "Явно: `spring.task.execution.pool.core-size: 8`, `max-size: 50`, `queue-capacity: 100` в `application.yml` ограничивают пул разумными значениями.",
+                "when_to_apply": "Указывать executor явно нужно всегда в production, чтобы контролировать число потоков, размер очереди и поведение при перегрузке.",
+                "edge_cases": "На старом Boot < 3.2 «работающий» `@Async` под пиковой нагрузкой может исчерпать память из-за неограниченного создания потоков.",
+                "related": "[[spring-async-interview#Q5]] кастомный `TaskExecutor`; [[spring-async-interview#Q6]] `AsyncConfigurer`; [[spring-async-interview#Q3]] как работает под капотом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сконфигурировать кастомный `TaskExecutor` для `@Async`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Объявляют `@Bean` типа `Executor` (обычно `ThreadPoolTaskExecutor` с заданными `corePoolSize`/`maxPoolSize`/`queueCapacity`/`threadNamePrefix`) и ссылаются на него по имени через `@Async(\"имяБина\")`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Так получают полный контроль над пулом: число постоянных и пиковых потоков, размер очереди, политику при переполнении и префикс имён потоков для логов.",
+                "example": "`@Bean(name=\"emailExecutor\") Executor emailExecutor() { var e = new ThreadPoolTaskExecutor(); e.setCorePoolSize(5); e.setMaxPoolSize(10); e.setQueueCapacity(100); e.initialize(); return e; }`, затем `@Async(\"emailExecutor\")`.",
+                "when_to_apply": "Используют, когда у разных задач разные требования к параллелизму — например, отдельный пул для писем и отдельный для тяжёлых отчётов.",
+                "edge_cases": "Без вызова `initialize()` (или при создании не как бина) пул не стартует корректно; забытый `RejectedExecutionHandler` приводит к `AbortPolicy` по умолчанию.",
+                "related": "[[spring-async-interview#Q4]] дефолтный executor; [[spring-async-interview#Q6]] `AsyncConfigurer`; [[spring-async-interview#Q1]] включение `@Async`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Кастомный executor задают, реализуя интерфейс `Runnable` в классе конфигурации и переопределяя метод `run()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Executor конфигурируют как `@Bean` типа `Executor`/`ThreadPoolTaskExecutor`, а не реализуя `Runnable` — `Runnable` это сама задача, а не пул.",
+                "source_of_confusion": "И `Runnable`, и executor связаны с потоками, поэтому роли «что выполнять» и «чем выполнять» смешивают.",
+                "if_it_were_true": "Тогда конфиг-класс сам был бы задачей, но executor — это объект, управляющий потоками и очередью.",
+                "how_it_should_be": "Создают бин `ThreadPoolTaskExecutor` с настройками пула и ссылаются на него из `@Async`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы выбрать кастомный executor, имя бина передают в `@EnableAsync(\"имяБина\")`, а не в саму аннотацию `@Async`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя executor указывают в `@Async(\"имяБина\")` на конкретном методе; `@EnableAsync` не принимает имя executor таким способом.",
+                "source_of_confusion": "Обе аннотации относятся к асинхронности, и кажется логичным настраивать executor «в одном месте» на `@EnableAsync`.",
+                "if_it_were_true": "Тогда все методы делили бы один executor через `@EnableAsync`, но выбор делается per-метод в `@Async`.",
+                "how_it_should_be": "Конкретный пул выбирают через `@Async(\"emailExecutor\")`, а централизованный дефолт — через `AsyncConfigurer`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Размер пула задаётся только через `application.yml`, и программно через `setCorePoolSize`/`setMaxPoolSize` его поменять нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметры пула как раз и задают программно через сеттеры `ThreadPoolTaskExecutor`, а YAML — лишь один из способов для дефолтного пула.",
+                "source_of_confusion": "Spring Boot активно продвигает конфигурацию через свойства, и кажется, что код-настройка недоступна.",
+                "if_it_were_true": "Тогда нельзя было бы создать два разных пула в коде, но именованные бины с разными сеттерами — стандартный приём.",
+                "how_it_should_be": "Для кастомных пулов используют сеттеры в `@Bean`-методе; YAML удобен для глобального дефолтного executor."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `AsyncConfigurer` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AsyncConfigurer` — это аннотация, которой помечают `@Async`-методы, чтобы они использовали отдельный пул потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AsyncConfigurer` — это интерфейс конфигурации, а не аннотация; пул per-метод выбирают через `@Async(\"имя\")`.",
+                "source_of_confusion": "Имена многих Spring-аннотаций похожи на `*Configurer`/`*Configuration`, поэтому интерфейс принимают за аннотацию.",
+                "if_it_were_true": "Тогда можно было бы писать `@AsyncConfigurer` над методом, но такой аннотации нет — есть интерфейс для реализации в конфиге.",
+                "how_it_should_be": "Реализуют интерфейс `AsyncConfigurer` в `@Configuration`-классе и переопределяют его методы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`AsyncConfigurer` — интерфейс для централизованной настройки: его реализация задаёт default executor через `getAsyncExecutor()` и глобальный обработчик ошибок через `getAsyncUncaughtExceptionHandler()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Он заменяет именно дефолтный executor (используемый при `@Async` без имени) и обработчик для `void`-методов, давая единую точку конфигурации асинхронности.",
+                "example": "`class AsyncConfig implements AsyncConfigurer { public Executor getAsyncExecutor() { ... return executor; } public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() { return (ex, m, p) -> log.error(...); } }`.",
+                "when_to_apply": "Берут, когда нужен один общий пул-по-умолчанию для всех `@Async` и единый обработчик исключений, а не выбор пула per-метод.",
+                "edge_cases": "`AsyncConfigurer` влияет на дефолтный executor; если метод помечен `@Async(\"имя\")`, он всё равно возьмёт именованный бин, а не дефолт.",
+                "related": "[[spring-async-interview#Q5]] именованный executor через `@Bean`; [[spring-async-interview#Q8]] `AsyncUncaughtExceptionHandler`; [[spring-async-interview#Q4]] дефолтный executor."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`AsyncConfigurer` обязателен: без его реализации `@Async` вообще не будет работать, даже при наличии `@EnableAsync`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AsyncConfigurer` не обязателен — `@Async` работает и с дефолтным executor; интерфейс нужен лишь для кастомизации дефолта и обработчика.",
+                "source_of_confusion": "Кажется, что раз есть специальный интерфейс настройки, без него фича не заработает.",
+                "if_it_were_true": "Тогда минимальный пример из `@EnableAsync` + `@Async` не запускался бы, но он прекрасно работает на дефолте.",
+                "how_it_should_be": "Достаточно `@EnableAsync`; `AsyncConfigurer` подключают только когда нужно поменять дефолтный пул или обработчик ошибок."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`AsyncConfigurer` настраивает только обработчик исключений и не позволяет задать default executor.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Интерфейс задаёт и default executor (`getAsyncExecutor`), и обработчик (`getAsyncUncaughtExceptionHandler`) — оба метода.",
+                "source_of_confusion": "Обработчик ошибок — самая заметная часть интерфейса, и про executor-метод забывают.",
+                "if_it_were_true": "Тогда метода `getAsyncExecutor()` в интерфейсе не было бы, но он там есть и определяет дефолтный пул.",
+                "how_it_should_be": "Через `getAsyncExecutor()` задают дефолтный executor, через `getAsyncUncaughtExceptionHandler()` — обработчик."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать исключения в `@Async`-методах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Исключение из `@Async`-метода можно поймать обычным try/catch вокруг вызова в caller — оно всплывёт как при синхронном вызове.",
+              "correct": false,
+              "sections": {
+                "what_actually": "try/catch в caller не сработает: метод выполняется в другом потоке, и исключение не возвращается синхронно к месту вызова.",
+                "source_of_confusion": "Вызов внешне выглядит как обычный метод, поэтому ждут привычного синхронного проброса исключения.",
+                "if_it_were_true": "Тогда `try { service.asyncVoid(); } catch (Exception e) {}` ловил бы ошибку, но к моменту выброса caller уже ушёл дальше.",
+                "how_it_should_be": "Для `void` регистрируют `AsyncUncaughtExceptionHandler`, для `CompletableFuture` используют `.exceptionally()`/`.handle()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для `void @Async`-методов исключения автоматически логируются Spring на уровне ERROR без какой-либо настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `AsyncUncaughtExceptionHandler` исключение из `void`-метода по сути проглатывается, а не гарантированно логируется как ERROR.",
+                "source_of_confusion": "Кажется логичным, что фреймворк хотя бы запишет ошибку, раз поймать её иначе нельзя.",
+                "if_it_were_true": "Тогда не нужен был бы отдельный handler, но именно ради логирования/алертинга его и регистрируют.",
+                "how_it_should_be": "Чтобы не терять ошибки `void`-методов, явно регистрируют `AsyncUncaughtExceptionHandler` через `AsyncConfigurer`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для `CompletableFuture` исключения ловят через `.exceptionally()`/`.handle()` у вызывающего кода; для `void`-методов обычный try/catch не сработает — нужен глобальный `AsyncUncaughtExceptionHandler`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Исключение возникает в worker-потоке, поэтому caller его не поймает напрямую. У `CompletableFuture` оно прокидывается в pipeline, а у `void` — проглатывается и попадает только в зарегистрированный handler.",
+                "example": "`fetchData().exceptionally(ex -> { log.error(\"Failed\", ex); return Data.empty(); }).thenAccept(this::process);` — обработка ошибки прямо в цепочке `CompletableFuture`.",
+                "when_to_apply": "`.exceptionally()` применяют, когда нужен результат и fallback; `AsyncUncaughtExceptionHandler` — для fire-and-forget `void`-операций.",
+                "edge_cases": "У `Future<T>` исключение оборачивается в `ExecutionException` и всплывает только при `.get()`; для `void` без handler ошибка теряется бесследно.",
+                "related": "[[spring-async-interview#Q8]] что такое `AsyncUncaughtExceptionHandler`; [[spring-async-interview#Q2]] типы возврата; [[spring-async-interview#Q6]] регистрация обработчика."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для `CompletableFuture`-методов исключения обрабатывает зарегистрированный `AsyncUncaughtExceptionHandler`, как и для `void`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AsyncUncaughtExceptionHandler` работает только для `void`; у `CompletableFuture` ошибка идёт в саму обёртку и обрабатывается через `.exceptionally()`.",
+                "source_of_confusion": "Один общий handler кажется удобным универсальным решением для всех типов возврата.",
+                "if_it_were_true": "Тогда `.exceptionally()` был бы не нужен для `@Async`, но именно он и ловит ошибки `CompletableFuture`.",
+                "how_it_should_be": "Handler применяют к `void`, а исключения `CompletableFuture` обрабатывают методами самого future."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `AsyncUncaughtExceptionHandler`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AsyncUncaughtExceptionHandler` перехватывает исключения из всех `@Async`-методов, включая возвращающие `CompletableFuture`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Handler работает только для `void`-методов; у `CompletableFuture` исключение уходит в саму обёртку и handler игнорируется.",
+                "source_of_confusion": "Слово «uncaught» звучит как «любое непойманное», поэтому область применения кажется универсальной.",
+                "if_it_were_true": "Тогда `.exceptionally()` не понадобился бы вовсе, но именно он обрабатывает ошибки `CompletableFuture`.",
+                "how_it_should_be": "Для `void` — handler, для `CompletableFuture` — `.exceptionally()`/`.handle()` на самом future."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`AsyncUncaughtExceptionHandler` — это аннотация над `@Async`-методом, указывающая, какой класс обработает его ошибки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это интерфейс, реализацию которого регистрируют глобально через `AsyncConfigurer`, а не аннотация над методом.",
+                "source_of_confusion": "В Spring многое настраивается аннотациями, поэтому интерфейс по привычке принимают за одну из них.",
+                "if_it_were_true": "Тогда можно было бы писать `@AsyncUncaughtExceptionHandler(...)` над методом, но такой аннотации не существует.",
+                "how_it_should_be": "Реализуют интерфейс и возвращают его из `getAsyncUncaughtExceptionHandler()` в `AsyncConfigurer`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`AsyncUncaughtExceptionHandler` подменяет результат упавшего `@Async`-метода значением по умолчанию и продолжает выполнение caller.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Handler не возвращает результат и ничего не подменяет — у `void`-метода результата нет; он лишь реагирует на ошибку (лог, алерт).",
+                "source_of_confusion": "По аналогии с `.exceptionally(ex -> fallback)` ждут, что handler тоже даст fallback-значение.",
+                "if_it_were_true": "Тогда `handleUncaughtException` возвращал бы объект, но его сигнатура — `void`, без подмены результата.",
+                "how_it_should_be": "Handler только обрабатывает факт ошибки `void`-метода; fallback-значения дают через `.exceptionally()` у future."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`AsyncUncaughtExceptionHandler` — глобальный обработчик исключений, выброшенных из `void @Async`-методов; его метод `handleUncaughtException(ex, method, params)` получает ошибку, метод и аргументы вызова.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку исключение из `void`-метода иначе теряется, этот handler — единственное место, где его можно залогировать, отправить алерт или иначе среагировать.",
+                "example": "`class Handler implements AsyncUncaughtExceptionHandler { public void handleUncaughtException(Throwable ex, Method m, Object... p) { log.error(\"Async error in {}: {}\", m.getName(), ex.getMessage()); } }`.",
+                "when_to_apply": "Регистрируют через `AsyncConfigurer.getAsyncUncaughtExceptionHandler()`, когда есть fire-and-forget `void`-методы и важно не терять их ошибки.",
+                "edge_cases": "Handler срабатывает только для `void`: для `CompletableFuture` он игнорируется, и ошибку нужно обрабатывать через `.exceptionally()`.",
+                "related": "[[spring-async-interview#Q7]] обработка исключений; [[spring-async-interview#Q6]] регистрация через `AsyncConfigurer`; [[spring-async-interview#Q2]] типы возврата."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему `@Async` не работает при self-invocation?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Async` работает через Spring AOP-прокси, а при self-invocation (`this.method()`) вызов идёт напрямую внутри объекта, минуя прокси, поэтому async-обёртка не применяется и метод выполняется синхронно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Прокси перехватывает только внешние вызовы через ссылку-бин. Внутренний `this.method()` адресован самому целевому объекту, а не прокси, так что делегирования в `TaskExecutor` не происходит.",
+                "example": "В `processOrder()` вызов `sendEmailAsync(order)` — это `this.sendEmailAsync()`, и письмо отправится синхронно; нужно вынести метод в `EmailService` и вызвать `emailService.sendEmailAsync(order)`.",
+                "when_to_apply": "Знание нужно при отладке «тихого» синхронного поведения и при проектировании: async-метод лучше держать в отдельном бине.",
+                "edge_cases": "Альтернатива выносу — self-injection через `@Autowired @Lazy private OrderService self;` и вызов `self.sendEmailAsync(...)`, который пойдёт через прокси.",
+                "related": "[[spring-async-interview#Q3]] прокси-механизм; [[spring-async-interview#Q11]] требования к методам; [[spring-async-interview#Q1]] включение `@Async`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Async` не работает при self-invocation, потому что метод нельзя дважды пометить аннотацией в одном классе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дело не в «двойной аннотации» — проблема в том, что внутренний вызов `this.method()` обходит прокси, который и реализует асинхронность.",
+                "source_of_confusion": "Звучит правдоподобно, что Spring запрещает повторное аннотирование, хотя ограничение совсем в другом.",
+                "if_it_were_true": "Тогда хватило бы убрать «лишнюю» аннотацию, но проблема остаётся при единственном `@Async` и self-invocation.",
+                "how_it_should_be": "Вызов должен идти через бин-ссылку (другой бин или `@Lazy self`), чтобы попасть на прокси."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Async` не работает при self-invocation, потому что внутри одного потока запрещено запускать вложенные асинхронные задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого запрета на вложенные async-задачи нет; причина в обходе прокси при `this.method()`, а не в ограничении на вложенность.",
+                "source_of_confusion": "Слово «асинхронный» наводит на мысли о вложенности и реентерабельности потоков.",
+                "if_it_were_true": "Тогда `@Async`-метод не мог бы вызвать другой `@Async`-метод вообще, но через бин-ссылку это прекрасно работает.",
+                "how_it_should_be": "Вложенные async-вызовы допустимы, если идут через прокси (другой бин или `self` с `@Lazy`)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Async` не работает при self-invocation, потому что аннотация действует только на первый вызванный метод бина за время жизни приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Async` действует на каждый внешний вызов через прокси, а не «только на первый»; проблема self-invocation в обходе прокси.",
+                "source_of_confusion": "Путают с инициализацией один раз (как у синглтона), приписывая аннотации одноразовость.",
+                "if_it_were_true": "Тогда второй внешний вызов метода был бы синхронным, но он тоже идёт через прокси и остаётся асинхронным.",
+                "how_it_should_be": "Любой внешний вызов через прокси асинхронен; синхронным делает именно внутренний `this.method()`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `@Async` взаимодействует с `@Transactional`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Async`-метод автоматически участвует в той же транзакции, что и вызывающий метод, как при обычном вложенном вызове.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Транзакция привязана к `ThreadLocal`, а async-метод выполняется в другом потоке, поэтому транзакция caller-а ему не передаётся.",
+                "source_of_confusion": "Привычное распространение транзакции при синхронных вложенных вызовах переносят на асинхронный случай.",
+                "if_it_were_true": "Тогда rollback в caller откатывал бы и работу async-метода, но они в разных потоках и транзакциях.",
+                "how_it_should_be": "Async-метод работает в своей транзакции; для согласованности используют события `AFTER_COMMIT`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Async` запускает метод в новом потоке, а `@Transactional` хранит транзакцию в `ThreadLocal`, поэтому транзакция caller-а НЕ передаётся в async-метод — он работает вне неё или открывает свою новую.",
+              "correct": true,
+              "sections": {
+                "explanation": "Контекст транзакции привязан к потоку. Уйдя в worker-поток, async-метод не видит транзакцию вызывающего и не участвует в её коммите/откате.",
+                "example": "В `@Transactional processOrder()` вызов `sendNotification(order)` уходит в другой поток; если на нём стоит `@Async @Transactional`, откроется НОВАЯ транзакция, независимая от первой.",
+                "when_to_apply": "Учитывают, когда нужно гарантировать порядок: не читать в async-методе данные, ещё не закоммиченные в caller-транзакции.",
+                "edge_cases": "Надёжный паттерн — `@TransactionalEventListener(phase = AFTER_COMMIT)` + `@Async`, чтобы async-обработка стартовала только после успешного коммита.",
+                "related": "[[spring-async-interview#Q3]] поток и прокси; [[spring-async-interview#Q13]] передача контекста в async; [[spring-async-interview#Q9]] self-invocation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Если поставить `@Async` и `@Transactional` на один метод, Spring выбросит исключение, так как их нельзя комбинировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Комбинировать можно: `@Async @Transactional` валиден — просто транзакция открывается в worker-потоке, отдельная от caller.",
+                "source_of_confusion": "Кажется, что две прокси-аннотации на одном методе конфликтуют и приводят к ошибке.",
+                "if_it_were_true": "Тогда `@Async @Transactional void sendNotification(...)` не компилировался бы/падал, но это рабочая конфигурация.",
+                "how_it_should_be": "Сочетание допустимо; нужно лишь помнить, что транзакция async-метода независима от транзакции caller."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Async` гарантирует, что транзакция caller-а зафиксируется (commit) до начала выполнения async-метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Async` сам по себе не даёт такой гарантии: async-метод может стартовать до коммита caller-транзакции — нужен явный `AFTER_COMMIT`.",
+                "source_of_confusion": "Кажется логичным, что «отложенный» async-запуск дождётся завершения текущей транзакции.",
+                "if_it_were_true": "Тогда чтение свежесохранённых данных в async-методе всегда было бы безопасным, но они могут быть ещё не закоммичены.",
+                "how_it_should_be": "Для запуска после коммита используют `@TransactionalEventListener(phase = AFTER_COMMIT)` вместе с `@Async`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие есть требования к `@Async`-методам?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Async`-метод обязан возвращать только `void` — методы с возвращаемым значением аннотировать `@Async` нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возвращаемый тип не входит в требования к async: метод может возвращать `Future`/`CompletableFuture`; ограничения касаются `public`/non-final/non-static и прокси.",
+                "source_of_confusion": "Тип возврата (отдельный вопрос) путают с требованиями к самому методу и его видимости.",
+                "if_it_were_true": "Тогда `@Async CompletableFuture<User> find()` был бы запрещён, но это рекомендуемый способ вернуть результат.",
+                "how_it_should_be": "Требования — про модификаторы и прокси; тип возврата выбирают отдельно (`void`/`Future`/`CompletableFuture`)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Async`-метод должен быть объявлен в классе, помеченном специальной аннотацией `@AsyncService`, иначе он игнорируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации `@AsyncService` не существует; достаточно, чтобы класс был обычным Spring-бином (`@Service`/`@Component`).",
+                "source_of_confusion": "По аналогии с `@Service`/`@Repository` ждут отдельный специализированный стереотип для async.",
+                "if_it_were_true": "Тогда без `@AsyncService` ни один `@Async`-метод не работал бы, но он работает в любом бине при `@EnableAsync`.",
+                "how_it_should_be": "Класс должен быть Spring-бином; специального стереотипа для async не требуется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Метод должен быть `public`, не `final` и не `static`, класс — Spring-бином, и вызывать его нужно не через self-invocation; иначе AOP-прокси не сможет перехватить вызов и async не сработает.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все требования следуют из прокси-механизма: CGLIB не переопределяет `final`/`static`, не перехватывает `private`, а внутренний вызов идёт мимо прокси.",
+                "example": "`@Async private void processInternal()` не станет асинхронным даже при внешнем вызове, потому что `private` метод прокси не перехватывает.",
+                "when_to_apply": "Чек-лист требований проверяют при ревью и при отладке «почему `@Async` молча выполняется синхронно».",
+                "edge_cases": "`protected`-метод можно сделать async при `proxyTargetClass = true` (CGLIB), но `private`/`final`/`static` не работают ни при каких настройках прокси.",
+                "related": "[[spring-async-interview#Q9]] self-invocation; [[spring-async-interview#Q3]] прокси под капотом; [[spring-async-interview#Q2]] типы возврата."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Async`-метод может быть `private`, если класс помечен `@EnableAsync`, потому что прокси видит все методы бина.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прокси не перехватывает `private`-методы: их нельзя переопределить ни через JDK-, ни через CGLIB-прокси, поэтому `private @Async` не работает.",
+                "source_of_confusion": "`@EnableAsync` кажется «всемогущим» переключателем, снимающим ограничения видимости.",
+                "if_it_were_true": "Тогда `@Async private void processInternal()` уходил бы в фон, но он всегда выполняется синхронно.",
+                "how_it_should_be": "Async-метод должен быть `public` (или `protected` с CGLIB), чтобы прокси мог его перехватить."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как комбинировать несколько `@Async`-вызовов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Несколько `@Async`-вызовов комбинируют, вызывая методы последовательно и ожидая `.get()` после каждого вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Последовательный `.get()` после каждого вызова блокирует caller и делает задачи фактически синхронными — теряется весь смысл параллелизма.",
+                "source_of_confusion": "`.get()` действительно нужен для результата, и кажется естественным звать его сразу после каждого метода.",
+                "if_it_were_true": "Тогда три задачи по 1 секунде заняли бы суммарно 3 секунды, но при параллельном запуске — около 1 секунды.",
+                "how_it_should_be": "Сначала запускают все методы (получая `CompletableFuture`), а ожидают один раз через `allOf().join()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для комбинирования `@Async`-вызовов используют аннотацию `@AsyncAll` над методом-агрегатором, и Spring сам соберёт результаты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации `@AsyncAll` не существует; результаты собирают вручную через API `CompletableFuture` (`allOf`/`thenApply`/`join`).",
+                "source_of_confusion": "Spring любит декларативные аннотации, поэтому ждут готовую аннотацию и для агрегации.",
+                "if_it_were_true": "Тогда хватило бы `@AsyncAll` над методом, но агрегацию пишут императивно через `CompletableFuture`.",
+                "how_it_should_be": "Композицию строят кодом: `CompletableFuture.allOf(...)` плюс `join()` для сбора результатов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CompletableFuture.allOf(...)` возвращает `CompletableFuture` со списком всех результатов, который сразу содержит готовые значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`allOf` возвращает `CompletableFuture<Void>` — он сигнализирует о завершении всех задач, но сами результаты нужно доставать через `join()` у каждого future.",
+                "source_of_confusion": "Имя `allOf` наводит на мысль, что он соберёт «все результаты» в одну коллекцию.",
+                "if_it_were_true": "Тогда `allOf(...).get()` сразу отдавал бы список значений, но его тип — `Void`, без агрегированных данных.",
+                "how_it_should_be": "После `allOf(...).join()` берут результат каждого future отдельно через `uF.join()`/`oF.join()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Каждый async-метод возвращает `CompletableFuture`, их запускают параллельно, а затем собирают результаты через `CompletableFuture.allOf(...)` и `.join()`/`thenApply`, получая агрегат после завершения всех задач.",
+              "correct": true,
+              "sections": {
+                "explanation": "Возврат `CompletableFuture` позволяет не блокировать caller на каждом вызове: задачи стартуют почти одновременно, а ожидание происходит один раз в точке сборки.",
+                "example": "`var uF=fetchUser(id); var oF=fetchOrders(id); var pF=fetchProfile(id); CompletableFuture.allOf(uF,oF,pF).thenApply(v -> new Aggregate(uF.join(), oF.join(), pF.join())).join();`.",
+                "when_to_apply": "Применяют, когда нужно параллельно собрать данные из нескольких источников (пользователь, заказы, профиль) и уменьшить суммарную latency.",
+                "edge_cases": "`join()` бросает `CompletionException`, оборачивающую исходную ошибку; если хоть одна задача упала, `allOf` завершится исключительно при попытке получить результат.",
+                "related": "[[spring-async-interview#Q2]] типы возврата; [[spring-async-interview#Q7]] обработка исключений; [[spring-async-interview#Q15]] сравнение с `supplyAsync`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как передать контекст (`SecurityContext`, `MDC`) в `@Async`-метод?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "По умолчанию `SecurityContext` и `MDC` привязаны к `ThreadLocal` и в async-потоке пусты; `SecurityContext` пробрасывают через `DelegatingSecurityContextAsyncTaskExecutor`, а `MDC` — через `TaskDecorator`, копирующий map в worker-поток.",
+              "correct": true,
+              "sections": {
+                "explanation": "Async-метод выполняется на другом потоке, у которого свои `ThreadLocal`. Чтобы контекст не потерялся, его нужно явно скопировать при передаче задачи в executor.",
+                "example": "Для MDC: `executor.setTaskDecorator(r -> { var ctx = MDC.getCopyOfContextMap(); return () -> { try { if (ctx!=null) MDC.setContextMap(ctx); r.run(); } finally { MDC.clear(); } }; });`.",
+                "when_to_apply": "Нужно, когда async-логика опирается на текущего пользователя (`SecurityContext`) или сквозной `traceId`/`requestId` в логах (`MDC`).",
+                "edge_cases": "Без очистки `MDC` в `finally` переиспользуемый из пула поток сохранит чужой контекст и «потечёт» trace-id между задачами.",
+                "related": "[[spring-async-interview#Q10]] потеря транзакции в новом потоке; [[spring-async-interview#Q5]] кастомный executor; [[spring-async-interview#Q3]] под капотом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SecurityContext` и `MDC` передаются в `@Async`-метод автоматически, потому что Spring копирует все `ThreadLocal` в worker-поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring не копирует произвольные `ThreadLocal` сам: в async-потоке `SecurityContext`/`MDC` по умолчанию пусты, и их нужно пробрасывать явно.",
+                "source_of_confusion": "Раз Spring управляет потоками пула, кажется, что он заодно переносит и весь контекст.",
+                "if_it_were_true": "Тогда `traceId` в логах async-метода появлялся бы сам, но без `TaskDecorator` MDC окажется пустым.",
+                "how_it_should_be": "Контекст переносят вручную: `DelegatingSecurityContextAsyncTaskExecutor` для security и `TaskDecorator` для MDC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы передать контекст, достаточно пометить `@Async`-метод аннотацией `@PropagateContext`, и Spring перенесёт `SecurityContext` и `MDC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации `@PropagateContext` для этого нет; контекст переносят через специальный executor и `TaskDecorator`, а не аннотацией над методом.",
+                "source_of_confusion": "Декларативный стиль Spring создаёт ожидание готовой аннотации на любой случай.",
+                "if_it_were_true": "Тогда хватило бы одной аннотации над методом, но проброс настраивают на уровне executor.",
+                "how_it_should_be": "Используют `DelegatingSecurityContextAsyncTaskExecutor` и `TaskDecorator`, копирующий нужный контекст в задачу."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`MDC` в async-потоке доступен всегда, так как это статическая глобальная map, общая для всех потоков приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MDC` реализован поверх `ThreadLocal`, то есть он per-thread, а не глобальная общая map; в новом потоке он пуст.",
+                "source_of_confusion": "Статические методы `MDC.put/get` выглядят как обращение к глобальному состоянию.",
+                "if_it_were_true": "Тогда `traceId` был бы виден из любого потока без копирования, но MDC изолирован по потокам.",
+                "how_it_should_be": "MDC привязан к потоку; для async его копируют через `TaskDecorator` и очищают в `finally`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать `@Async`-методы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Async`-методы тестируют так же, как синхронные: сразу после вызова проверяют результат через `assertThat`, без всякого ожидания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без ожидания результат может быть ещё не готов: assert сразу после вызова часто проходит ложно или падает из-за гонки.",
+                "source_of_confusion": "В тесте вызов выглядит как обычный метод, и кажется, что результат доступен мгновенно.",
+                "if_it_were_true": "Тогда `service.asyncMethod(); verify(repo).save(any());` был бы стабилен, но он флапает без `SyncTaskExecutor`/`Awaitility`.",
+                "how_it_should_be": "Применяют синхронный executor или `Awaitility`, чтобы дождаться завершения async-задачи перед проверкой."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Используют синхронный executor (`SyncTaskExecutor`) в тестовой конфигурации, либо `Awaitility` (`await().atMost(...).untilAsserted(...)`) для ожидания результата, либо `CompletableFuture.get(timeout)` — чтобы проверки не падали из-за неготового результата.",
+              "correct": true,
+              "sections": {
+                "explanation": "Async усложняет тесты: к моменту assert результат может быть ещё не готов. `SyncTaskExecutor` выполняет задачу в текущем потоке, а `Awaitility`/`get` дают детерминированное ожидание.",
+                "example": "`@TestConfiguration class C { @Bean @Primary Executor taskExecutor() { return new SyncTaskExecutor(); } }` — async-методы в тесте выполняются синхронно, и `verify(repo).save(any())` работает сразу.",
+                "when_to_apply": "`SyncTaskExecutor` берут для unit-тестов логики; `Awaitility` — когда важно проверить именно асинхронное поведение и тайминги.",
+                "edge_cases": "`future.get()` без таймаута может заблокировать тест навсегда при «зависшей» задаче — всегда задают `get(5, SECONDS)`.",
+                "related": "[[spring-async-interview#Q5]] подмена executor; [[spring-async-interview#Q2]] типы возврата; [[spring-async-interview#Q1]] включение `@Async`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы протестировать `@Async`, обязательно нужен реальный многопоточный пул и фиксированный `Thread.sleep(...)` перед проверкой результата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Thread.sleep` — ненадёжный и медленный приём; детерминированно тестируют через `SyncTaskExecutor` или `Awaitility` с условием готовности.",
+                "source_of_confusion": "`sleep` кажется простым способом «дать задаче время» доработать.",
+                "if_it_were_true": "Тогда тесты зависели бы от подобранной паузы, но `Awaitility` опрашивает условие без жёсткого ожидания.",
+                "how_it_should_be": "Заменяют `sleep` на `await().atMost(...).untilAsserted(...)` или выполняют задачу синхронно в тесте."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SyncTaskExecutor` в тестах запускает задачу в отдельном потоке, но дожидается её завершения перед возвратом из метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SyncTaskExecutor` выполняет задачу прямо в вызывающем потоке (никакого нового потока), поэтому результат готов сразу после вызова.",
+                "source_of_confusion": "Слово «Executor» ассоциируется с пулом потоков, и кажется, что поток всё равно создаётся.",
+                "if_it_were_true": "Тогда у задачи был бы другой `Thread.currentThread()`, но в `SyncTaskExecutor` поток тот же, что и у caller.",
+                "how_it_should_be": "`SyncTaskExecutor` делает выполнение синхронным в текущем потоке — именно поэтому он удобен для тестов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `@Async` отличается от `CompletableFuture.supplyAsync`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Разницы нет: `@Async` — это просто синтаксический сахар, который при компиляции превращается в `CompletableFuture.supplyAsync` с тем же `ForkJoinPool`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные механизмы: `@Async` работает через runtime AOP-прокси и Spring `TaskExecutor`, а не разворачивается в `supplyAsync` на `ForkJoinPool`.",
+                "source_of_confusion": "Оба дают `CompletableFuture`, поэтому кажется, что под капотом это одно и то же.",
+                "if_it_were_true": "Тогда у `@Async` не было бы AOP-ограничений (self-invocation), но именно прокси-природа их создаёт.",
+                "how_it_should_be": "`@Async` — декларативный прокси-механизм Spring; `supplyAsync` — программный API JDK на отдельном пуле."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Async` нельзя использовать вместе с `CompletableFuture`, а `supplyAsync` нельзя запускать на Spring `TaskExecutor`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Async` отлично возвращает `CompletableFuture`, а `supplyAsync` принимает любой `Executor`, включая Spring `ThreadPoolTaskExecutor`.",
+                "source_of_confusion": "Кажется, что подходы взаимоисключающие, раз один декларативный, а другой программный.",
+                "if_it_were_true": "Тогда `@Async CompletableFuture<Order>` был бы невозможен, но это рекомендуемый способ возврата результата.",
+                "how_it_should_be": "Подходы совместимы: `@Async` возвращает `CompletableFuture`, а `supplyAsync` может использовать Spring-executor."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Async` — декларативный путь (аннотация) на Spring `TaskExecutor` с интеграцией в фреймворк, но с AOP-ограничениями (self-invocation, прокси); `CompletableFuture.supplyAsync` — программный API на `ForkJoinPool`/кастомном executor, без Spring-интеграции, но и без AOP-ограничений.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оба запускают код асинхронно, но различаются способом (аннотация vs вызов API), источником потоков и тем, кто заботится о контексте и ограничениях прокси.",
+                "example": "`@Async CompletableFuture<Order> fetchOrder(id)` — декларативно через прокси; `CompletableFuture.supplyAsync(() -> repo.findById(id), customExecutor)` — программно с явным executor.",
+                "when_to_apply": "`@Async` берут для простых случаев «сделать метод async одной аннотацией»; `supplyAsync` — когда нужен явный контроль над pipeline и смешением sync/async.",
+                "edge_cases": "У `@Async` без явного executor и пропагации `SecurityContext`/`MDC` теряется; у `supplyAsync` без указания executor работа уходит в общий `ForkJoinPool.commonPool`.",
+                "related": "[[spring-async-interview#Q2]] типы возврата; [[spring-async-interview#Q12]] комбинирование вызовов; [[spring-async-interview#Q13]] передача контекста."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CompletableFuture.supplyAsync` подвержен тем же proxy-ограничениям (self-invocation), что и `@Async`, так как оба используют Spring AOP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`supplyAsync` — чистый JDK-вызов без AOP, поэтому self-invocation и прочие прокси-ограничения к нему не относятся.",
+                "source_of_confusion": "Обе техники про асинхронность в Spring-приложении, и ограничения одной приписывают другой.",
+                "if_it_were_true": "Тогда вызов `supplyAsync` внутри того же класса ломался бы, но он работает независимо от прокси.",
+                "how_it_should_be": "AOP-ограничения есть только у `@Async`; `supplyAsync` вызывают напрямую, без участия прокси."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,905 @@
+{
+  "topic_slug": "spring-ai-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Spring AI` и какие задачи он решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring AI` — официальный модуль экосистемы Spring для интеграции AI-моделей через унифицированный API поверх разных провайдеров (`OpenAI`, `Anthropic`, `Vertex AI`, `Mistral`, `Ollama`); даёт абстракции `ChatClient`, `EmbeddingModel`, `VectorStore`, `ImageModel`, `AudioTranscriptionModel` и позволяет менять провайдера без переписывания кода.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная ценность — единый API: бизнес-код вызывает `ChatClient`, а конкретная модель (`GPT-4`, `Claude`, `Gemini`) подставляется через стартер и конфигурацию.",
+                "example": "Подключив `spring-ai-openai-spring-boot-starter`, вы зовёте `chatClient.prompt().user(q).call().content()`; смена на `Ollama` — это замена стартера и `application.yml`, код сервиса не трогается.",
+                "when_to_apply": "Применяют, когда нужно встроить chat-модель, эмбеддинги или RAG в Spring-приложение и сохранить переносимость между AI-провайдерами.",
+                "edge_cases": "Не все провайдеры поддерживают все фичи: например, function calling или streaming доступны не везде, и абстракция не скроет отсутствующую возможность модели.",
+                "related": "[[spring-ai-interview#Q2]] настройка под OpenAI; [[spring-ai-interview#Q5]] VectorStore; [[spring-ai-interview#Q13]] отличие от прямого OpenAI SDK."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring AI` — это собственная LLM от Spring, которую разворачивают локально вместо `OpenAI` или `Anthropic`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring AI` не содержит модели: это библиотека-обёртка, которая обращается к внешним провайдерам (`OpenAI`, `Anthropic`, `Ollama` и др.).",
+                "source_of_confusion": "Название «Spring AI» наводит на мысль, что Spring сам обучил и поставляет нейросеть.",
+                "if_it_were_true": "Тогда не нужны были бы API-ключи провайдеров и стартеры вроде `spring-ai-openai-...`, но они обязательны для работы.",
+                "how_it_should_be": "Spring AI — это унифицированный клиент к чужим моделям, а саму модель предоставляет провайдер."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring AI` — это плагин IDE для автодополнения Java-кода на основе нейросети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring AI` — runtime-библиотека для приложения, а не инструмент разработчика в IDE для подсказок кода.",
+                "source_of_confusion": "AI-ассистенты для написания кода на слуху, поэтому «AI» путают с copilot-подобными плагинами.",
+                "if_it_were_true": "Тогда зависимость не попадала бы в рантайм-classpath и не имела бы бинов `ChatClient`, но именно они и есть суть библиотеки.",
+                "how_it_should_be": "Spring AI работает внутри запущенного приложения и вызывает модели на проде, а не подсказывает код в редакторе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring AI` — это драйвер для векторной БД, заменяющий `JDBC` и работающий только с `PgVector`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring AI` гораздо шире: chat, эмбеддинги, RAG; а `VectorStore` поддерживает много backend-ов, не только `PgVector`.",
+                "source_of_confusion": "`VectorStore` действительно умеет работать с `PgVector` через `JdbcTemplate`, что создаёт ложное впечатление «драйвера БД».",
+                "if_it_were_true": "Тогда не было бы абстракций `ChatClient` и `EmbeddingModel`, но они — центральная часть API.",
+                "how_it_should_be": "Векторное хранилище — лишь одна из абстракций Spring AI; основное — унифицированный доступ к моделям."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `Spring AI` для работы с `OpenAI`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно добавить аннотацию `@EnableOpenAI` на главный класс — стартер и ключ не нужны, всё подхватится автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужны стартер `spring-ai-openai-spring-boot-starter` и `api-key` в конфигурации; аннотации `@EnableOpenAI` в Spring AI нет.",
+                "source_of_confusion": "В Spring многие фичи включаются `@EnableXxx`, поэтому ожидают такую же аннотацию и тут.",
+                "if_it_were_true": "Тогда приложение ходило бы в OpenAI без ключа, что невозможно — запросы требуют аутентификации.",
+                "how_it_should_be": "Подключают стартер, задают `spring.ai.openai.api-key`, и автоконфигурация создаёт `ChatClient.Builder`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Добавить стартер `spring-ai-openai-spring-boot-starter`, задать `spring.ai.openai.api-key` (например, из `${OPENAI_API_KEY}`) и опции модели (`model: gpt-4o`, `temperature`) в `application.yml`; затем инжектить готовый `ChatClient.Builder` и собирать `ChatClient`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Автоконфигурация по стартеру и ключу создаёт `ChatClient.Builder`; из него билдят `ChatClient`, при желании задавая `defaultSystem(...)`.",
+                "example": "В `application.yml`: `spring.ai.openai.chat.options.model: gpt-4o`; в коде `@Bean ChatClient chatClient(ChatClient.Builder b){ return b.defaultSystem(\"You are a helpful assistant\").build(); }`.",
+                "when_to_apply": "Используют при старте проекта на OpenAI: вынести ключ в переменную окружения, а модель и температуру — в конфиг.",
+                "edge_cases": "Если ключ не задан или невалиден, автоконфигурация не создаст рабочий клиент, а вызовы упадут с ошибкой аутентификации `401`.",
+                "related": "[[spring-ai-interview#Q1]] что такое Spring AI; [[spring-ai-interview#Q3]] prompt templates; [[spring-ai-interview#Q14]] управление токенами и опциями."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Нужно вручную создать `RestTemplate`, прописать URL `api.openai.com` и парсить JSON-ответ — стартер ничего не настраивает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стартер как раз и избавляет от ручного HTTP-клиента: он сам настраивает обращение к OpenAI и парсинг ответов.",
+                "source_of_confusion": "Без Spring AI интеграция действительно делается через ручной HTTP-клиент, и это переносят на сам Spring AI.",
+                "if_it_were_true": "Тогда не было бы автоконфигурации `ChatClient.Builder`, но именно она появляется при подключении стартера.",
+                "how_it_should_be": "Стартер настраивает транспорт и сериализацию автоматически; разработчик работает с `ChatClient`, а не с `RestTemplate`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Опции `model` и `temperature` можно задавать только в Java-коде, в `application.yml` их указывать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Опции модели задаются именно в `application.yml` под `spring.ai.openai.chat.options`, а в коде их можно лишь переопределить.",
+                "source_of_confusion": "Возможность переопределить опции в коде создаёт впечатление, что конфиг для них не работает.",
+                "if_it_were_true": "Тогда ключ `spring.ai.openai.chat.options.model` игнорировался бы, но он штатно читается автоконфигурацией.",
+                "how_it_should_be": "Базовые опции удобно держать в `application.yml`, а в коде менять их точечно для конкретного запроса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `Prompt Templates` в `Spring AI`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Шаблоны промптов в `Spring AI` поддерживают только статический текст; подстановка параметров вроде `{language}` невозможна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шаблоны как раз поддерживают плейсхолдеры `{name}`, которые заполняются через `.param(\"name\", value)`.",
+                "source_of_confusion": "Простые примеры часто показывают статичный системный промпт, и кажется, что параметров нет.",
+                "if_it_were_true": "Тогда метод `.param(...)` был бы бесполезен, но он штатно подставляет значения в плейсхолдеры.",
+                "how_it_should_be": "В тексте пишут `{language}` и `{code}`, а значения передают через `.param(...)`, формируя финальный промпт."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`entity(CodeReview.class)` лишь логирует ответ модели как строку и всегда возвращает `null` вместо объекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.entity(CodeReview.class)` парсит JSON-ответ модели в POJO через `BeanOutputConverter` и возвращает заполненный объект.",
+                "source_of_confusion": "Структурированный вывод нов для многих, поэтому `entity(...)` принимают за служебный метод логирования.",
+                "if_it_were_true": "Тогда не было бы смысла в `record CodeReview(...)`, но именно в него мапится ответ.",
+                "how_it_should_be": "`entity(Class)` инструктирует модель вернуть JSON по схеме класса и десериализует его в объект."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параметры подставляют через плейсхолдеры в тексте system/user промпта и метод `.param(\"name\", value)`; для структурированного ответа используют `.entity(CodeReview.class)`, который инструктирует модель вернуть JSON и парсит его в POJO через `BeanOutputConverter`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Плейсхолдеры `{code}`, `{language}` заполняются `.param(...)`, а `.entity(...)` превращает ответ модели в типизированный объект без ручного парсинга JSON.",
+                "example": "`.user(u -> u.text(\"Review this code:\\n{code}\").param(\"code\", code))` подставит код; а `.call().entity(CodeReview.class)` вернёт `record CodeReview(List<String> issues, int score, String summary)`.",
+                "when_to_apply": "Шаблоны нужны для переиспользуемых промптов с переменными частями; `.entity(...)` — когда от модели нужен строго структурированный, машинно-читаемый ответ.",
+                "edge_cases": "Если модель вернёт невалидный JSON, `BeanOutputConverter` упадёт при парсинге; для надёжности задают низкую `temperature` и чёткую схему.",
+                "related": "[[spring-ai-interview#Q2]] базовая настройка ChatClient; [[spring-ai-interview#Q9]] Advisors; [[spring-ai-interview#Q14]] опции модели."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Системный промпт со `{language}` нельзя комбинировать с user-промптом — в одном запросе допускается только одно сообщение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В одном запросе можно задать и system, и user сообщения, причём оба могут содержать плейсхолдеры.",
+                "source_of_confusion": "Минимальные примеры с одним `.user(...)` создают впечатление, что больше сообщений нельзя.",
+                "if_it_were_true": "Тогда `system(...)` и `user(...)` были бы взаимоисключающими, но их штатно используют вместе.",
+                "how_it_should_be": "Запрос собирается из нескольких сообщений: `system(...)` задаёт роль/контекст, `user(...)` — конкретный запрос."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Embedding` и как получить векторное представление текста в `Spring AI`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Embedding` — это сжатие текста алгоритмом вроде `gzip` для экономии места в БД, без какого-либо смысла семантики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Embedding` — числовой вектор, кодирующий семантику текста, а не алгоритм сжатия для уменьшения размера.",
+                "source_of_confusion": "И сжатие, и эмбеддинг превращают текст в компактное представление, что путает их назначение.",
+                "if_it_were_true": "Тогда близкие по смыслу тексты не имели бы близких векторов, но именно семантическая близость — суть эмбеддинга.",
+                "how_it_should_be": "Эмбеддинг сохраняет смысл: семантически похожие тексты получают близкие векторы, что и используют для поиска."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для получения вектора нужно вручную дернуть HTTP `OpenAI` embeddings endpoint; абстракции `EmbeddingModel` в `Spring AI` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Spring AI есть `EmbeddingModel` с методами `embed(text)` и `embedForResponse(...)`, ручной HTTP не нужен.",
+                "source_of_confusion": "Без фреймворка эмбеддинги получают прямым вызовом API, и это переносят на Spring AI.",
+                "if_it_were_true": "Тогда не было бы бина `EmbeddingModel`, но он автоконфигурируется по стартеру так же, как `ChatClient`.",
+                "how_it_should_be": "Инжектят `EmbeddingModel` и зовут `embeddingModel.embed(text)`, а транспорт скрыт абстракцией."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`EmbeddingModel.embed(text)` всегда возвращает один и тот же вектор для любого текста, поэтому для поиска он бесполезен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для разных текстов `embed(...)` возвращает разные векторы; именно различия позволяют сравнивать тексты по смыслу.",
+                "source_of_confusion": "Детерминированность модели (один текст — один вектор) ошибочно расширяют до «один вектор на всё».",
+                "if_it_were_true": "Тогда косинусное сходство было бы всегда 1, и семантический поиск не работал бы.",
+                "how_it_should_be": "Каждый текст получает свой вектор; близость векторов отражает близость смыслов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Embedding` — числовой вектор, кодирующий семантический смысл текста (близкие по смыслу тексты дают близкие векторы); в `Spring AI` его получают через бин `EmbeddingModel`: `embeddingModel.embed(text)` для одного текста и `embedForResponse(...)` для батча.",
+              "correct": true,
+              "sections": {
+                "explanation": "`EmbeddingModel` автоконфигурируется по стартеру; `embed(text)` возвращает `float[]`, а сходство считают косинусной мерой между векторами.",
+                "example": "`float[] v = embeddingModel.embed(\"Spring AI\");` затем `EmbeddingUtil.cossineSimilarity(a, b)` оценивает близость двух текстов; применяют для семантического поиска и RAG.",
+                "when_to_apply": "Эмбеддинги нужны для семантического поиска, поиска дубликатов, кластеризации и как первый шаг RAG-пайплайна.",
+                "edge_cases": "Векторы от разных моделей несовместимы по размерности и смыслу: индекс, построенный на `text-embedding-3-small`, нельзя искать вектором другой модели.",
+                "related": "[[spring-ai-interview#Q5]] VectorStore для хранения векторов; [[spring-ai-interview#Q6]] RAG-пайплайн; [[spring-ai-interview#Q12]] ETL-индексирование."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `VectorStore` в `Spring AI` и как его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`VectorStore` — абстракция над базой, хранящей документы вместе с их embedding-векторами и умеющей искать семантически похожие; добавляют документы через `vectorStore.add(docs)`, ищут через `similaritySearch(SearchRequest.query(q).withTopK(k))`, эмбеддинги считаются автоматически.",
+              "correct": true,
+              "sections": {
+                "explanation": "`VectorStore` скрывает конкретный backend (`PgVector`, `Chroma`, `Pinecone`, `Redis` и др.): вы работаете с `Document` и `SearchRequest`, а индексация и поиск по векторам идут под капотом.",
+                "example": "`vectorStore.add(List.of(new Document(text, metadata)))` индексирует, а `vectorStore.similaritySearch(SearchRequest.query(\"как настроить\").withTopK(5).withSimilarityThreshold(0.7))` вернёт похожие документы.",
+                "when_to_apply": "Используют для семантического поиска по корпусу документов и как retrieval-слой в RAG, где нужно найти релевантный контекст под запрос.",
+                "edge_cases": "При смене embedding-модели старые векторы становятся несовместимыми, и индекс нужно перестраивать; иначе поиск даст мусорные результаты.",
+                "related": "[[spring-ai-interview#Q4]] что такое embedding; [[spring-ai-interview#Q6]] RAG-пайплайн; [[spring-ai-interview#Q12]] ETL-индексирование документов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`VectorStore` хранит только сырые тексты без векторов; эмбеддинги нужно считать и сравнивать вручную после выборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`VectorStore` хранит документы вместе с векторами и сам считает эмбеддинги при `add(...)`, поиск идёт по векторам.",
+                "source_of_confusion": "Похож на обычную таблицу с текстом, поэтому векторную природу хранилища упускают.",
+                "if_it_were_true": "Тогда `similaritySearch(...)` не мог бы ранжировать по смыслу, но он именно это и делает.",
+                "how_it_should_be": "При `add(...)` хранилище получает эмбеддинг через `EmbeddingModel` и ищет ближайшие векторы автоматически."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`similaritySearch` возвращает документы в случайном порядке, поэтому параметр `withTopK` не влияет на результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`similaritySearch` возвращает наиболее похожие документы, а `withTopK(k)` ограничивает их количество.",
+                "source_of_confusion": "Без понимания ранжирования по сходству результат кажется произвольной выборкой.",
+                "if_it_were_true": "Тогда RAG не получал бы релевантный контекст, но именно релевантность — смысл векторного поиска.",
+                "how_it_should_be": "Результаты упорядочены по убыванию сходства, а `withTopK` берёт k самых близких."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`VectorStore` поддерживает единственный backend `PgVector` и не работает с `Chroma`, `Pinecone` или `Redis`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`VectorStore` — абстракция над многими backend-ами: `PgVector`, `Chroma`, `Weaviate`, `Pinecone`, `Redis`, `Elasticsearch`, `Milvus`.",
+                "source_of_confusion": "`PgVector` — частый пример в туториалах, и его принимают за единственный вариант.",
+                "if_it_were_true": "Тогда не было бы отдельных стартеров под другие хранилища, но они существуют.",
+                "how_it_should_be": "Backend выбирают подключением соответствующего стартера; код поверх `VectorStore` остаётся тем же."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как построить `RAG`-пайплайн в `Spring AI`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "RAG в `Spring AI` означает дообучение (fine-tuning) модели на ваших документах при старте приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RAG не меняет веса модели: он ищет релевантные документы и добавляет их в контекст промпта во время запроса.",
+                "source_of_confusion": "И fine-tuning, и RAG «добавляют знания» модели, поэтому их часто смешивают.",
+                "if_it_were_true": "Тогда нужен был бы тренировочный пайплайн и GPU, но RAG работает на инференсе без обучения.",
+                "how_it_should_be": "RAG = retrieval из `VectorStore` + добавление найденного текста в промпт; веса модели остаются неизменными."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "RAG (Retrieval-Augmented Generation) — это поиск релевантных документов в `VectorStore` через `similaritySearch`, сборка их в контекст и передача в промпт модели; в `Spring AI` это делают вручную (search → join → prompt) или автоматически через `QuestionAnswerAdvisor`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сначала по вопросу извлекают топ-документы, склеивают их в текст контекста и подмешивают в system-промпт; `QuestionAnswerAdvisor` инкапсулирует эти шаги в один advisor.",
+                "example": "Вручную: `docs = vectorStore.similaritySearch(query(q).withTopK(5))`, затем `system(\"Answer based on context: \" + join(docs))`. Авто: `builder.defaultAdvisors(new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults().withTopK(5)))`.",
+                "when_to_apply": "RAG нужен, когда модель должна отвечать по вашим данным (документация, база знаний), которых нет в её обучающем корпусе.",
+                "edge_cases": "Если retrieval вернёт нерелевантный контекст, модель может галлюцинировать; полезно ограничить ответ контекстом фразой «если ответа нет в контексте — скажи I don't know».",
+                "related": "[[spring-ai-interview#Q5]] VectorStore; [[spring-ai-interview#Q9]] Advisors; [[spring-ai-interview#Q12]] ETL-индексирование для RAG."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`QuestionAnswerAdvisor` нужно вызывать вручную в каждом методе сервиса, иначе он не подмешивает контекст.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`QuestionAnswerAdvisor`, заданный как `defaultAdvisors`, срабатывает автоматически на каждом запросе через `ChatClient`.",
+                "source_of_confusion": "Ручной вариант RAG требует явного кода, и это ожидание переносят на advisor.",
+                "if_it_were_true": "Тогда смысл advisor как middleware терялся бы, но он встраивается в цепочку обработки запроса.",
+                "how_it_should_be": "Достаточно зарегистрировать advisor в билдере; он сам выполнит retrieval и добавит контекст к промпту."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В RAG контекст из документов передают только в `user`-сообщение; вставлять его в `system`-промпт запрещено.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекст можно класть и в system-промпт (что часто и делают), и в user-сообщение — ограничения нет.",
+                "source_of_confusion": "Часть примеров кладёт вопрос в user, что наводит на мысль, будто и контекст обязан быть там же.",
+                "if_it_were_true": "Тогда пример с `system(\"... Context: \" + context)` был бы нерабочим, но это стандартный приём.",
+                "how_it_should_be": "Контекст удобно держать в system-промпте с инструкцией отвечать только по нему, а вопрос — в user."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Function Calling` в `Spring AI` и как его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Function Calling` — это когда модель сама выполняет произвольный код на сервере без участия приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модель не выполняет код: она лишь решает вызвать функцию и формирует аргументы, а сам вызов делает приложение (Spring-бин).",
+                "source_of_confusion": "Фраза «модель вызывает функцию» воспринимается буквально как исполнение кода моделью.",
+                "if_it_were_true": "Тогда не нужен был бы Spring-бин-обработчик, но именно он реально исполняет логику и возвращает результат модели.",
+                "how_it_should_be": "Модель возвращает запрос на вызов с аргументами, Spring AI исполняет соответствующий бин и подаёт результат обратно в модель."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Функция должна быть статическим методом, помеченным `@FunctionMapping`; обычный `@Bean` типа `Function<>` не подойдёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Функцию определяют как `@Bean` типа `Function<Req, Resp>` с аннотацией `@Description`; аннотации `@FunctionMapping` нет.",
+                "source_of_confusion": "По аналогии с `@RequestMapping` ожидают специальную аннотацию-маппинг для функций.",
+                "if_it_were_true": "Тогда пример с `@Bean @Description Function<WeatherRequest, WeatherResponse>` не работал бы, но это канонический способ.",
+                "how_it_should_be": "Функция — это `@Bean` `Function<>` с человекочитаемым `@Description`, по которому модель решает её вызвать."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Function Calling` — механизм, где модель решает вызвать внешнюю функцию вместо генерации текста; функцию объявляют как `@Bean` типа `Function<Req, Resp>` с `@Description`, а в запросе подключают по имени бина через `.functions(\"weatherFunction\")`, и модель сама выбирает, когда её вызвать.",
+              "correct": true,
+              "sections": {
+                "explanation": "Модель по `@Description` понимает назначение функции, формирует аргументы, Spring AI исполняет бин и возвращает результат модели для финального ответа.",
+                "example": "`@Bean @Description(\"Get current weather\") Function<WeatherRequest, WeatherResponse> weatherFunction(...)`, затем `chatClient.prompt().user(q).functions(\"weatherFunction\").call().content()`.",
+                "when_to_apply": "Применяют, когда модель должна получать актуальные данные или выполнять действия (погода, поиск заказов, создание тикета), а не отвечать из памяти.",
+                "edge_cases": "Поддержка function calling зависит от модели/провайдера; качество `@Description` и схемы аргументов напрямую влияет на то, выберет ли модель функцию правильно.",
+                "related": "[[spring-ai-interview#Q9]] Advisors; [[spring-ai-interview#Q13]] декларативность против ручного SDK; [[spring-ai-interview#Q15]] агенты на функциях."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В один запрос можно подключить ровно одну функцию; передать несколько имён в `.functions(...)` нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В запрос можно подключить несколько функций, и модель сама выберет нужную (или несколько при parallel calling).",
+                "source_of_confusion": "Минимальные примеры показывают одну функцию, и это принимают за жёсткое ограничение.",
+                "if_it_were_true": "Тогда агент с несколькими инструментами был бы невозможен, но это типовой сценарий Spring AI.",
+                "how_it_should_be": "В `.functions(...)` передают несколько имён бинов; модель решает, какую и когда вызвать."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает потоковая генерация (`Streaming`) в `Spring AI`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Streaming в `Spring AI` означает, что ответ сначала полностью генерируется, а затем целиком отдаётся одним блоком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл streaming как раз обратный: токены отдаются по мере генерации, не дожидаясь полного ответа.",
+                "source_of_confusion": "Слово «поток» иногда трактуют как «большой объём за раз», а не как инкрементальную выдачу.",
+                "if_it_were_true": "Тогда `.stream()` ничем не отличался бы от `.call()`, но они дают разное поведение и тип.",
+                "how_it_should_be": "Streaming выдаёт ответ частями (`Flux<String>`), что важно для UX: пользователь видит текст по мере генерации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Streaming-ответ возвращается как `List<String>`, который нужно собрать перед отправкой клиенту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Streaming в Spring AI возвращает реактивный `Flux<String>`, а не собранный заранее `List<String>`.",
+                "source_of_confusion": "Привычка работать с коллекциями подталкивает ожидать `List` вместо реактивного типа.",
+                "if_it_were_true": "Тогда нельзя было бы отдавать токены по мере поступления, но `Flux` именно для этого.",
+                "how_it_should_be": "`.stream().content()` возвращает `Flux<String>`, элементы которого приходят по мере генерации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для streaming обязателен `WebFlux`; в обычном MVC-приложении метод `.stream()` недоступен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.stream()` доступен независимо от стека; `WebFlux` лишь удобен для отдачи `Flux` как SSE, но не обязателен для самого streaming.",
+                "source_of_confusion": "Пример с SSE-контроллером на WebFlux создаёт впечатление жёсткой зависимости от него.",
+                "if_it_were_true": "Тогда `.stream()` отсутствовал бы в MVC-проектах, но это метод `ChatClient`, не зависящий от веб-стека.",
+                "how_it_should_be": "Сам `.stream()` даёт `Flux`; способ доставки клиенту (SSE через WebFlux) — отдельный вопрос интеграции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Потоковую генерацию включают методом `.stream()` вместо `.call()`: `chatClient.prompt().user(q).stream().content()` возвращает `Flux<String>`, где элементы приходят по мере генерации; в WebFlux-контроллере его отдают как Server-Sent Events с `produces = TEXT_EVENT_STREAM_VALUE`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`.stream()` переключает клиент в реактивный режим: вместо одного блока ответ приходит частями через `Flux<String>`, что улучшает воспринимаемую скорость.",
+                "example": "Сервис: `return chatClient.prompt().user(q).stream().content();`. Контроллер: `@GetMapping(value=\"/stream\", produces=MediaType.TEXT_EVENT_STREAM_VALUE) Flux<String> stream(...)`.",
+                "when_to_apply": "Streaming применяют в чат-интерфейсах и длинных ответах, где важно показать прогресс и не заставлять пользователя ждать целиком.",
+                "edge_cases": "При streaming сложнее получить агрегированные метаданные (например, итоговый usage токенов) и обрабатывать ошибки — их надо ловить в реактивной цепочке.",
+                "related": "[[spring-ai-interview#Q2]] базовый ChatClient; [[spring-ai-interview#Q11]] тестирование; [[spring-ai-interview#Q14]] usage и токены."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Advisors` в `Spring AI` и зачем они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Advisors` — это middleware для `ChatClient`, перехватывающее запросы и ответы и добавляющее cross-cutting поведение (RAG, память диалога, логирование, модерация); регистрируются через `defaultAdvisors(...)`, а кастомные реализуют интерфейс вроде `CallAroundAdvisor` и встраиваются в цепочку обработки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Advisor оборачивает вызов модели: может изменить запрос до отправки, ответ после получения или вовсе короткозамкнуть запрос, вернув свой ответ — как фильтры/перехватчики в Spring.",
+                "example": "Встроенные: `QuestionAnswerAdvisor` (RAG), `MessageChatMemoryAdvisor` (история), `SimpleLoggerAdvisor` (логи). Кастомный `ModerationAdvisor implements CallAroundAdvisor` блокирует запрещённый ввод в `aroundCall`.",
+                "when_to_apply": "Применяют для сквозной логики вокруг каждого запроса: подмешать контекст RAG, добавить историю, залогировать, провести модерацию — без дублирования в каждом сервисе.",
+                "edge_cases": "Порядок advisor-ов важен: например, модерацию обычно ставят раньше RAG; неверный порядок может пропустить вредный ввод дальше по цепочке.",
+                "related": "[[spring-ai-interview#Q6]] RAG через QuestionAnswerAdvisor; [[spring-ai-interview#Q10]] память через MessageChatMemoryAdvisor; [[spring-ai-interview#Q7]] function calling."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Advisors` — это валидаторы DTO на стороне контроллера, проверяющие входные параметры запроса перед вызовом сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Advisors` в Spring AI перехватывают вызовы к модели через `ChatClient`, а не валидируют HTTP-DTO в контроллере.",
+                "source_of_confusion": "Слово «advisor» в Spring встречается и в AOP (`@Advisor`/advice), что наводит на мысль о валидации/перехвате запросов веба.",
+                "if_it_were_true": "Тогда они работали бы на уровне MVC с `@Valid`, но `Advisor` встроен в конвейер `ChatClient`.",
+                "how_it_should_be": "Advisor — это перехватчик именно AI-вызова: меняет prompt/response или добавляет контекст вокруг обращения к модели."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Кастомный advisor нельзя написать самому — доступны только встроенные `QuestionAnswerAdvisor` и `SimpleLoggerAdvisor`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомные advisor-ы пишут, реализуя интерфейс (например, `CallAroundAdvisor`) и метод `aroundCall(...)`.",
+                "source_of_confusion": "Встроенные advisor-ы покрывают частые задачи, поэтому кажется, что расширение невозможно.",
+                "if_it_were_true": "Тогда нельзя было бы добавить, например, модерацию контента, но это типовой кастомный advisor.",
+                "how_it_should_be": "Реализуют интерфейс advisor, добавляют свою логику в `aroundCall` и регистрируют его в билдере."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Advisor может только читать запрос для логирования и не способен изменить ответ или прервать вызов модели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Advisor может модифицировать запрос/ответ и даже короткозамкнуть цепочку, вернув собственный `ChatResponse` без вызова модели.",
+                "source_of_confusion": "Пример `SimpleLoggerAdvisor` только логирует, и это поведение обобщают на все advisor-ы.",
+                "if_it_were_true": "Тогда `ModerationAdvisor` не мог бы вернуть «I cannot help with that» без обращения к модели, но он именно это и делает.",
+                "how_it_should_be": "Advisor через `aroundCall` управляет цепочкой: вызывает `chain.nextAroundCall(...)` или возвращает свой ответ."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать многоходовой диалог (`Chat Memory`) в `Spring AI`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ChatMemory` хранит общую историю для всех пользователей сразу; изолировать диалоги разных пользователей нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Диалоги изолируют по `conversationId`, передаваемому в advisor; у каждого пользователя/сессии своя история.",
+                "source_of_confusion": "`InMemoryChatMemory` ассоциируется с одним глобальным состоянием на приложение.",
+                "if_it_were_true": "Тогда ответы разных пользователей смешивались бы, но `conversationId` как раз разделяет контексты.",
+                "how_it_should_be": "Каждому диалогу задают `CHAT_MEMORY_CONVERSATION_ID_KEY`, и память хранится отдельно по этому ключу."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нужен бин `ChatMemory` (`InMemoryChatMemory` для разработки, `JdbcChatMemory`/`CassandraChatMemory` для прода), а в запросе через advisor задают `CHAT_MEMORY_CONVERSATION_ID_KEY` для изоляции диалога и `CHAT_MEMORY_RETRIEVE_SIZE_KEY`, ограничивающий число сообщений в контексте.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ChatMemory` хранит историю, advisor подмешивает её в запрос; `conversationId` разделяет пользователей, а `RETRIEVE_SIZE` контролирует, сколько прошлых сообщений попадёт в промпт.",
+                "example": "`.advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId).param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))` подтянет последние 10 сообщений именно этого диалога.",
+                "when_to_apply": "Память нужна для чат-ботов и ассистентов, где модель должна помнить предыдущие реплики в рамках одной сессии пользователя.",
+                "edge_cases": "Большой `RETRIEVE_SIZE` раздувает контекст и стоимость токенов, а `InMemoryChatMemory` теряет историю при рестарте — для прода берут персистентную реализацию.",
+                "related": "[[spring-ai-interview#Q9]] Advisors как механизм памяти; [[spring-ai-interview#Q14]] контроль токенов; [[spring-ai-interview#Q8]] streaming ответов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для production-памяти подходит только `InMemoryChatMemory`; персистентных реализаций в `Spring AI` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для прода есть персистентные реализации, например `JdbcChatMemory` и `CassandraChatMemory`; `InMemoryChatMemory` — для разработки.",
+                "source_of_confusion": "`InMemoryChatMemory` — самый частый пример в туториалах, и его принимают за единственный.",
+                "if_it_were_true": "Тогда история терялась бы при каждом рестарте инстанса, что неприемлемо в проде.",
+                "how_it_should_be": "В проде используют персистентное хранилище памяти, переживающее перезапуски и работающее в нескольких инстансах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CHAT_MEMORY_RETRIEVE_SIZE_KEY` задаёт максимальную длину одного сообщения в символах, а не число сообщений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RETRIEVE_SIZE` ограничивает количество извлекаемых из истории сообщений, а не длину каждого из них.",
+                "source_of_confusion": "Слово «size» неоднозначно — его легко принять за размер сообщения в символах.",
+                "if_it_were_true": "Тогда он обрезал бы текст реплик, но он управляет глубиной истории, попадающей в контекст.",
+                "how_it_should_be": "Чем больше `RETRIEVE_SIZE`, тем больше прошлых сообщений модель учитывает — и тем дороже запрос."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать `Spring AI`-приложения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Юнит-тесты `Spring AI` обязаны делать реальные HTTP-вызовы к `OpenAI`; мокать `ChatModel` нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ChatModel` штатно мокается (`@MockBean` + Mockito), реальные вызовы провайдера в юнит-тестах не нужны.",
+                "source_of_confusion": "Кажется, что без обращения к настоящей модели ответ невозможно проверить.",
+                "if_it_were_true": "Тогда тесты были бы недетерминированными, платными и медленными, что противоречит сути юнит-тестов.",
+                "how_it_should_be": "`ChatModel` мокают и задают ожидаемый `ChatResponse`, проверяя логику сервиса без сети."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для теста достаточно проверить, что `ChatClient` не `null`; содержимое ответа модели проверять не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тестируют именно поведение сервиса на заданном ответе модели (что он вернёт нужную строку/объект), а не только наличие бина.",
+                "source_of_confusion": "Smoke-проверка контекста Spring создаёт иллюзию, что этого достаточно.",
+                "if_it_were_true": "Тогда регрессии в парсинге или формировании промпта оставались бы незамеченными.",
+                "how_it_should_be": "Мокают ответ модели и ассертят результат метода сервиса, покрывая его реальную логику."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ChatModel` мокают через `@MockBean` + Mockito (`when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse)`) и проверяют, что сервис вернул ожидаемый результат; либо подменяют его тестовым `TestChatModel` под профилем `test`, который возвращает предсказуемый ответ.",
+              "correct": true,
+              "sections": {
+                "explanation": "Подмена модели делает тесты детерминированными, быстрыми и бесплатными: проверяется логика сервиса (сборка промпта, парсинг ответа), а не сама нейросеть.",
+                "example": "`@MockBean ChatModel chatModel; when(chatModel.call(any())).thenReturn(ChatResponse.builder().withGenerations(List.of(new Generation(\"Mocked answer\"))).build());` затем `assertThat(service.ask(\"...\")).isEqualTo(\"Mocked answer\")`.",
+                "when_to_apply": "Применяют в юнит/интеграционных тестах сервисов, чтобы проверять бизнес-логику вокруг AI без обращений к провайдеру.",
+                "edge_cases": "Мок проверяет только заложенные сценарии: качество реальных ответов модели и совместимость с провайдером так не протестировать — для этого нужны отдельные e2e/контрактные проверки.",
+                "related": "[[spring-ai-interview#Q2]] настройка ChatClient; [[spring-ai-interview#Q3]] структурированный entity-ответ; [[spring-ai-interview#Q13]] лёгкость тестирования против ручного SDK."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TestChatModel` всегда возвращает фиксированную строку и не может зависеть от текста запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TestChatModel` принимает функцию-обработчик и может формировать ответ на основе входного запроса.",
+                "source_of_confusion": "Слово «test» намекает на тривиальную заглушку без логики.",
+                "if_it_were_true": "Тогда нельзя было бы вернуть «Test response for: <userMessage>», но это типовой пример.",
+                "how_it_should_be": "В `TestChatModel` передают лямбду `request -> ChatResponse`, которая может читать сообщения запроса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова структура `Document ETL`-пайплайна для индексирования в `Spring AI`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ETL-пайплайн в `Spring AI` индексирует документы целиком, без разбиения на чанки — `TextSplitter` не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Документы разбивают на чанки `TextSplitter` (например, `TokenTextSplitter(512, 50)`) перед индексацией для качественного retrieval.",
+                "source_of_confusion": "Кажется логичным хранить документ как единую запись, поэтому шаг чанкинга упускают.",
+                "if_it_were_true": "Тогда длинные документы давали бы «размытые» эмбеддинги и плохой поиск, но чанкинг как раз это решает.",
+                "how_it_should_be": "На этапе Transform текст режут на перекрывающиеся чанки, и уже их эмбеддят и кладут в `VectorStore`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring AI` читает только PDF; для Markdown и текстовых файлов нет готовых `DocumentReader`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть разные ридеры: `PagePdfDocumentReader`, `MarkdownDocumentReader` и другие под разные источники.",
+                "source_of_confusion": "PDF — частый пример, и его принимают за единственный поддерживаемый формат.",
+                "if_it_were_true": "Тогда нельзя было бы индексировать Markdown-базу знаний, но `MarkdownDocumentReader` существует.",
+                "how_it_should_be": "Под каждый формат свой `DocumentReader`; общий контракт — вернуть список `Document` для Transform/Load."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `TokenTextSplitter(512, 50)` второе число `50` задаёт количество чанков, а не overlap между ними.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Второй параметр — это overlap (перекрытие) между соседними чанками в токенах, а не их количество.",
+                "source_of_confusion": "Два числовых аргумента легко перепутать по смыслу без знания сигнатуры.",
+                "if_it_were_true": "Тогда сплиттер всегда давал бы ровно 50 чанков независимо от длины текста, что неверно.",
+                "how_it_should_be": "`512` — размер чанка в токенах, `50` — перекрытие, чтобы не терять контекст на границах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ETL-пайплайн строится из трёх этапов: Extract — чтение источника через `DocumentReader` (`PagePdfDocumentReader`, `MarkdownDocumentReader`); Transform — разбивка на чанки через `TextSplitter` (`TokenTextSplitter(512, 50)` — 512 токенов с overlap 50); Load — `vectorStore.add(chunks)`, где эмбеддинги считаются автоматически.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это аналог ETL для векторного поиска: извлекли текст, нарезали на перекрывающиеся чанки, загрузили в `VectorStore`, который сам построит эмбеддинги.",
+                "example": "`var docs = new PagePdfDocumentReader(pdf, ...).get(); var chunks = new TokenTextSplitter(512, 50).apply(docs); vectorStore.add(chunks);` — и документ проиндексирован для RAG.",
+                "when_to_apply": "Пайплайн нужен при наполнении базы знаний для RAG: загрузка PDF/Markdown/URL, нарезка и индексация в векторное хранилище.",
+                "edge_cases": "Слишком крупные чанки ухудшают точность retrieval, слишком мелкие теряют контекст; overlap помогает не разрывать смысл на границах чанков.",
+                "related": "[[spring-ai-interview#Q4]] эмбеддинги; [[spring-ai-interview#Q5]] VectorStore; [[spring-ai-interview#Q6]] RAG поверх проиндексированных документов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Spring AI` отличается от прямого использования `OpenAI SDK`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring AI` даёт портируемость между провайдерами (10+ вместо только `OpenAI`), автоконфигурацию и Spring-интеграцию, встроенные RAG/`VectorStore`, декларативный function calling через `@Description`, лёгкое тестирование (мок `ChatModel`), встроенные retry/resilience и chat memory; прямой `OpenAI SDK` всё это требует делать вручную и привязан к одному провайдеру.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring AI абстрагирует инфраструктуру (транспорт, retry, провайдер, RAG, память), оставляя разработчику бизнес-логику; прямой SDK — низкоуровневый клиент к одному API.",
+                "example": "Смена `OpenAI` на `Ollama` в Spring AI — замена стартера и `application.yml`; на прямом SDK пришлось бы переписывать клиент, ретраи и парсинг под другой провайдер.",
+                "when_to_apply": "Spring AI выбирают для Spring-приложений, где важны переносимость, RAG, тестируемость и единый стиль конфигурации; прямой SDK — когда нужен максимально тонкий контроль над одним API.",
+                "edge_cases": "Абстракция отстаёт от самых свежих фич провайдера: новейшую возможность OpenAI прямой SDK может поддержать раньше, чем выйдет соответствующая версия Spring AI.",
+                "related": "[[spring-ai-interview#Q1]] что такое Spring AI; [[spring-ai-interview#Q7]] декларативный function calling; [[spring-ai-interview#Q11]] лёгкость тестирования."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring AI` работает только с `OpenAI`, как и прямой SDK; единственное отличие — более короткий синтаксис вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключевое отличие — портируемость: Spring AI поддерживает 10+ провайдеров, а не только `OpenAI`.",
+                "source_of_confusion": "Старт обычно показывают на OpenAI, и это сужают до «только OpenAI».",
+                "if_it_were_true": "Тогда не существовало бы стартеров под `Anthropic`, `Ollama`, `Vertex AI`, но они есть.",
+                "how_it_should_be": "Spring AI скрывает провайдера за единым API, и смена модели не меняет код приложения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Spring AI`, как и в прямом SDK, RAG и `VectorStore` нужно реализовывать самостоятельно — встроенной поддержки нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RAG и `VectorStore` в Spring AI встроены (`QuestionAnswerAdvisor`, абстракция `VectorStore`), тогда как в прямом SDK их нет.",
+                "source_of_confusion": "RAG воспринимают как прикладной паттерн, который всегда пишут руками.",
+                "if_it_were_true": "Тогда не было бы `QuestionAnswerAdvisor` и единого `VectorStore`, но это штатные части Spring AI.",
+                "how_it_should_be": "Spring AI предоставляет retrieval и хранилище из коробки; прямой SDK оставляет это на разработчика."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Тестировать прямой `OpenAI SDK` проще, чем `Spring AI`, потому что у SDK есть готовый мок-сервер модели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тестируемость выше у Spring AI: `ChatModel` легко мокается через `@MockBean`/`TestChatModel`, а прямой SDK требует подмены HTTP-клиента.",
+                "source_of_confusion": "Кажется, что меньше абстракций = проще тест, но именно абстракция `ChatModel` упрощает мокинг.",
+                "if_it_were_true": "Тогда таблица сравнения не отмечала бы тестируемость как преимущество Spring AI, но она это делает.",
+                "how_it_should_be": "В Spring AI мокают бин модели; с прямым SDK приходится перехватывать сетевой слой, что сложнее."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как управлять стоимостью и токенами в `Spring AI`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Информацию об использованных токенах в `Spring AI` получить нельзя — провайдер её не возвращает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Usage доступен в метаданных ответа: `response.getMetadata().getUsage()` даёт prompt/generation/total токены.",
+                "source_of_confusion": "При вызове через `.content()` метаданные не видны, и кажется, что их нет вовсе.",
+                "if_it_were_true": "Тогда нельзя было бы считать стоимость запросов, но usage штатно приходит в `ChatResponse`.",
+                "how_it_should_be": "Берут полный `ChatResponse` через `.call().chatResponse()` и читают `getUsage()` для подсчёта токенов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Стоимость контролируют двумя путями: читают usage из метаданных ответа (`response.getMetadata().getUsage()` — `promptTokens`, `generationTokens`, `totalTokens`) и ограничивают генерацию опциями в `application.yml` (`max-tokens`, `temperature`, `top-p`, `presence-penalty`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Usage даёт фактический расход токенов для биллинга и мониторинга, а опции модели лимитируют длину ответа и поведение генерации, прямо влияя на стоимость.",
+                "example": "`Usage u = chatClient.prompt().user(q).call().chatResponse().getMetadata().getUsage();` логирует `u.getTotalTokens()`; в конфиге `spring.ai.openai.chat.options.max-tokens: 1000` обрезает генерацию.",
+                "when_to_apply": "Применяют для контроля бюджета: мониторят usage по запросам и ставят `max-tokens` там, где длинные ответы не нужны.",
+                "edge_cases": "`max-tokens` ограничивает только генерацию, не входной промпт: разросшийся контекст (RAG, история) всё равно увеличивает `promptTokens` и стоимость.",
+                "related": "[[spring-ai-interview#Q10]] RETRIEVE_SIZE и размер контекста; [[spring-ai-interview#Q6]] RAG раздувает входные токены; [[spring-ai-interview#Q8]] streaming и метаданные."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параметр `temperature` управляет стоимостью запроса: чем он выше, тем дешевле обходится генерация.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`temperature` влияет на случайность/креативность ответа, а не на цену; стоимость определяется числом токенов.",
+                "source_of_confusion": "`temperature` стоит рядом с `max-tokens` в конфиге, и его роль смешивают с контролем стоимости.",
+                "if_it_were_true": "Тогда снижение `temperature` экономило бы деньги напрямую, но цену задаёт количество токенов, а не их разброс.",
+                "how_it_should_be": "`temperature` (0 — детерминированно, 1 — креативно) регулирует стиль ответа; за стоимость отвечают `max-tokens` и объём контекста."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`max-tokens` ограничивает суммарно и входной промпт, и ответ: при превышении лимита запрос автоматически обрезает контекст.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`max-tokens` лимитирует только длину генерируемого ответа; входной промпт он не урезает.",
+                "source_of_confusion": "Название «max tokens» звучит как общий лимит на весь запрос целиком.",
+                "if_it_were_true": "Тогда большой RAG-контекст молча обрезался бы, но превышение контекстного окна вызывает ошибку, а не авто-обрезку.",
+                "how_it_should_be": "За размер ответа отвечает `max-tokens`, а слишком длинный вход нужно контролировать отдельно (чанки, история)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать AI-агента с `Spring AI`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Агент в `Spring AI` — это отдельный фреймворк-оркестратор; одним `ChatClient` с функциями его не построить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Простой агент строится на `ChatClient` с набором функций-инструментов и system-промптом, описывающим доступные действия.",
+                "source_of_confusion": "Слово «агент» ассоциируется с тяжёлыми фреймворками оркестрации.",
+                "if_it_were_true": "Тогда пример `AgentService` на `chatClient.prompt()...functions(...)` не работал бы, но это рабочий подход.",
+                "how_it_should_be": "Агента собирают из `ChatClient`, function calling и промпта с описанием инструментов и цели."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Агенту можно дать только один инструмент за раз; перечислить несколько функций в `.functions(...)` нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Агенту передают несколько функций сразу (`.functions(\"searchOrders\", \"getProductInfo\", \"createTicket\")`), и модель выбирает нужные.",
+                "source_of_confusion": "Базовые примеры function calling показывают одну функцию, и это обобщают на агентов.",
+                "if_it_were_true": "Тогда агент с набором инструментов был бы невозможен, но это его основа.",
+                "how_it_should_be": "В `.functions(...)` перечисляют все инструменты; модель решает, какие и в каком порядке вызвать."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "AI-агента строят на базе `ChatClient`: задают system-промпт с описанием доступных инструментов и цели, подключают набор функций через `.functions(\"searchOrders\", \"getProductInfo\", \"createTicket\")`, и модель сама выбирает, какие инструменты вызвать; модели `GPT-4`/`Claude` поддерживают параллельный вызов нескольких функций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Агент — это связка ChatClient + инструменты (функции) + промпт-инструкция: модель в цикле рассуждений (ReAct) решает, какие функции вызвать для достижения цели.",
+                "example": "`chatClient.prompt().system(\"You are an autonomous agent with tools: searchOrders...\").user(task).functions(\"searchOrders\", \"getProductInfo\", \"createTicket\").call().content()` — модель сама дернёт нужные функции.",
+                "when_to_apply": "Агентов применяют для задач, требующих нескольких шагов и данных извне: поиск заказов, получение деталей товара, создание тикета по одному запросу пользователя.",
+                "edge_cases": "Без явных ограничений агент может вызвать инструмент с неверными аргументами или зациклиться; важны чёткие `@Description`, валидация аргументов и лимиты на число шагов.",
+                "related": "[[spring-ai-interview#Q7]] function calling как основа агента; [[spring-ai-interview#Q9]] Advisors для контроля; [[spring-ai-interview#Q1]] обзор возможностей Spring AI."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Инструменты агента описывают прямо в `user`-сообщении; system-промпт для перечисления инструментов не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Доступные инструменты и роль агента задают в system-промпте, а конкретную задачу — в user-сообщении.",
+                "source_of_confusion": "Кажется проще свалить всё в один user-текст, не разделяя роль и задачу.",
+                "if_it_were_true": "Тогда пример с `system(\"You are an autonomous agent with tools...\")` был бы лишним, но это рекомендуемый приём.",
+                "how_it_should_be": "System-промпт описывает агента и инструменты, user-сообщение содержит конкретную цель/задачу."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

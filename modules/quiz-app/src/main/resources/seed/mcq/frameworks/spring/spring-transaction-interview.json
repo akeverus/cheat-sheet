@@ -1,0 +1,905 @@
+{
+  "topic_slug": "spring-transaction-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Spring реализует `@Transactional`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring оборачивает бин в `AOP`-прокси (`JDK Dynamic Proxy` для интерфейса или `CGLIB` для класса): при первом внешнем вызове `@Transactional`-метода прокси открывает транзакцию или присоединяется к существующей, вызывает реальный метод и затем коммитит при успехе или откатывает при исключении.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Transactional` под капотом — это `@Around`-advice вокруг метода. Прокси перехватывает вызов, оборачивает его в `BEGIN`/`COMMIT`/`ROLLBACK` и делегирует управление `TransactionManager`.",
+                "example": "Вызов `userService.save(u)` идёт не в сам бин, а в прокси: тот делает `BEGIN`, зовёт реальный `save`, при успехе `COMMIT`, при `RuntimeException` — `ROLLBACK`.",
+                "when_to_apply": "Понимать прокси-механизм нужно при любой отладке транзакций, особенно когда транзакция «не открывается» из-за обхода прокси.",
+                "edge_cases": "Если бин реализует интерфейс — берётся `JDK`-прокси и аннотация на классе может потеряться; для класса без интерфейса используется `CGLIB`-наследник.",
+                "related": "[[spring-transaction-interview#Q3]] требования для работы; [[spring-transaction-interview#Q11]] обход прокси при self-invocation; [[spring-transaction-interview#Q13]] аннотация на интерфейсе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring переписывает байткод `@Transactional`-метода во время компиляции, вставляя `BEGIN`/`COMMIT` прямо в тело метода, поэтому прокси не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring AOP работает в рантайме через прокси, а не правит байткод при компиляции; compile-time weaving — это `AspectJ`, а не штатный Spring.",
+                "source_of_confusion": "Существование `AspectJ` с bytecode weaving создаёт впечатление, что Spring тоже модифицирует байткод заранее.",
+                "if_it_were_true": "Тогда `self-invocation` работал бы нормально, ведь логика была бы внутри самого метода, но на деле он ломает транзакцию.",
+                "how_it_should_be": "Транзакционная логика живёт в прокси-обёртке и применяется в рантайме при внешнем вызове через прокси."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Transactional` обрабатывается самой СУБД: драйвер видит аннотацию в SQL-комментарии и сам открывает транзакцию на стороне базы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "СУБД ничего не знает про Java-аннотации; транзакцией управляет Spring через `TransactionManager` и JDBC `Connection`.",
+                "source_of_confusion": "Транзакции действительно живут в БД, поэтому кажется, что и управление ими целиком на стороне базы.",
+                "if_it_were_true": "Тогда `@Transactional` работал бы без Spring-контекста на любом `new MyService()`, но без прокси аннотация игнорируется.",
+                "how_it_should_be": "Spring через прокси и `TransactionManager` управляет границами транзакции и отдаёт БД готовые `BEGIN`/`COMMIT`/`ROLLBACK`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring запускает каждый `@Transactional`-метод в отдельном пуле потоков, и транзакция определяется именно выделенным потоком, а не прокси.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого отдельного пула нет: метод выполняется в потоке вызывающего, а транзакцию открывает прокси через `@Around`-advice.",
+                "source_of_confusion": "Транзакция действительно привязана к потоку через `ThreadLocal`, и это путают с запуском метода в другом потоке.",
+                "if_it_were_true": "Тогда вызов `@Transactional`-метода всегда был бы асинхронным, но он синхронный и идёт в текущем потоке.",
+                "how_it_should_be": "Метод идёт в том же потоке, а прокси лишь оборачивает вызов транзакционной логикой; привязка к потоку — это про хранение текущей TX."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда нужен `@EnableTransactionManagement`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@EnableTransactionManagement` нужен всегда и в Spring Boot тоже: без него Boot не активирует обработку `@Transactional` даже при наличии `spring-data`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Boot аннотация избыточна — `TransactionAutoConfiguration` уже включает управление транзакциями при наличии `spring-tx`/`spring-data` в classpath.",
+                "source_of_confusion": "В туториалах по чистому Spring она встречается постоянно, и это переносят на Boot как «обязательную».",
+                "if_it_were_true": "Тогда любой Boot-сервис без этой аннотации не коммитил бы транзакции, но на практике `@Transactional` работает из коробки.",
+                "how_it_should_be": "В Boot её можно опустить; добавлять стоит лишь в чистом Spring или при отключённой автоконфигурации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В чистом Spring (`@Configuration` без Boot) `@EnableTransactionManagement` обязателен, чтобы включить обработку `@Transactional`; в Spring Boot он не нужен — автоконфигурация включает управление транзакциями сама при наличии `spring-tx`/`spring-data-*` в classpath.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотация регистрирует инфраструктуру AOP для транзакций (advisor, прокси-постпроцессор). Boot делает это через `TransactionAutoConfiguration`, поэтому ручное включение не требуется.",
+                "example": "В Boot-приложении достаточно поставить `@Transactional` на метод; в чистом Spring без `@EnableTransactionManagement` на `@Configuration` аннотация просто не сработает.",
+                "when_to_apply": "Добавляйте её только в не-Boot конфигурациях или в редких случаях, когда автоконфигурация Boot отключена.",
+                "edge_cases": "Эквивалент в XML — `<tx:annotation-driven transaction-manager=\"txManager\"/>`; без любого из этих способов `@Transactional` в чистом Spring молча игнорируется.",
+                "related": "[[spring-transaction-interview#Q1]] как реализован прокси; [[spring-transaction-interview#Q3]] требования для работы `@Transactional`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@EnableTransactionManagement` задаёт уровень изоляции по умолчанию для всех транзакций приложения через свой атрибут `isolation`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У аннотации нет атрибута изоляции; она лишь включает инфраструктуру AOP, а изоляцию задаёт `@Transactional(isolation=...)` или дефолт СУБД.",
+                "source_of_confusion": "Слово «management» наводит на мысль, что она централизованно настраивает параметры транзакций.",
+                "if_it_were_true": "Тогда менять изоляцию можно было бы одним местом в конфиге, но изоляция задаётся на уровне отдельного метода.",
+                "how_it_should_be": "Аннотация только активирует обработку `@Transactional`; параметры вроде изоляции настраиваются на самих методах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@EnableTransactionManagement` сам создаёт и регистрирует бин `DataSource` и пул соединений, поэтому отдельная настройка источника данных не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотация не создаёт `DataSource`; источник данных настраивается отдельно (например, через Boot-проперти или `@Bean`), а аннотация лишь включает AOP для транзакций.",
+                "source_of_confusion": "И `DataSource`, и транзакции относятся к доступу к данным, поэтому их зоны ответственности смешивают.",
+                "if_it_were_true": "Тогда достаточно было бы одной аннотации, чтобы получить рабочий пул соединений, но `DataSource` всегда конфигурируют явно.",
+                "how_it_should_be": "`DataSource` и `TransactionManager` конфигурируются отдельно, а `@EnableTransactionManagement` лишь подключает обработку аннотации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие требования должны выполняться, чтобы `@Transactional` работал?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Transactional` работает на методах любой видимости, включая `private` и `package-private`, лишь бы класс был помечен `@Service` или `@Component`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только `public`-методы транзакционны при штатном Spring AOP на прокси; `private`/`protected`/`package-private` молча игнорируются.",
+                "source_of_confusion": "Аннотация компилируется на любом методе без ошибки, поэтому кажется, что и работает везде.",
+                "if_it_were_true": "Тогда `private`-метод тоже коммитил бы транзакцию, но изменения в нём фиксируются без транзакционных границ.",
+                "how_it_should_be": "Делайте транзакционные методы `public` и вызывайте их извне через прокси, иначе advice не сработает."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно поставить аннотацию на метод даже у объекта, созданного через `new`, — Spring перехватит вызов через глобальный агент в JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бин обязан управляться контейнером: на `new MyService()` прокси не создаётся и `@Transactional` не действует.",
+                "source_of_confusion": "Кажется, что аннотация — самодостаточная метка, которую Spring видит у любого объекта в JVM.",
+                "if_it_were_true": "Тогда транзакции работали бы и в обычных POJO вне контекста, но без бина прокси не существует.",
+                "how_it_should_be": "Получайте бин из контекста (`@Autowired`), чтобы вызов шёл через прокси с транзакционным advice."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Метод должен быть `public`, вызываться извне через прокси (не `this.method()`), а сам бин — управляться Spring-контейнером; `protected`/`private`/`package-private` методы и обращения в обход прокси транзакцию не открывают.",
+              "correct": true,
+              "sections": {
+                "explanation": "Транзакция применяется прокси-обёрткой, поэтому видимость метода и путь вызова критичны: прокси не может перехватить непубличный метод и не участвует во внутреннем вызове.",
+                "example": "`@Transactional` на `public save()` работает; на `private internalSave()` — молча игнорируется, и аннотация на `new UserService()` вне контекста тоже не сработает.",
+                "when_to_apply": "Проверяйте эти три условия первым делом, когда транзакция «не открывается» или изменения неожиданно не откатываются.",
+                "edge_cases": "Самое коварное — отсутствие любой ошибки: непубличный или self-invoked метод просто выполняется без транзакции, без предупреждения в логах.",
+                "related": "[[spring-transaction-interview#Q1]] прокси-механизм; [[spring-transaction-interview#Q11]] почему self-invocation ломает транзакцию; [[spring-transaction-interview#Q13]] аннотация на интерфейсе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главное требование — пометить класс аннотацией `@Transactional`; видимость методов и путь вызова значения не имеют, прокси перехватит любой вызов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже на транзакционном классе self-invocation и непубличные методы не перехватываются: важны видимость и внешний вызов через прокси.",
+                "source_of_confusion": "Аннотация на классе действительно распространяется на публичные методы, и это распространяют на все методы и пути вызова.",
+                "if_it_were_true": "Тогда `this.internalCall()` внутри бина открывал бы транзакцию, но он идёт мимо прокси.",
+                "how_it_should_be": "Помимо аннотации нужны `public`-видимость и вызов извне через прокси-ссылку на бин."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы `Propagation` существуют и как они себя ведут?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Типов propagation всего два — `REQUIRED` и `REQUIRES_NEW`; остальные режимы (`NESTED`, `MANDATORY`, `NEVER`) относятся к настройке изоляции, а не распространения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Propagation-типов семь, и `NESTED`/`MANDATORY`/`NEVER`/`SUPPORTS`/`NOT_SUPPORTED` — именно режимы распространения, не изоляции.",
+                "source_of_confusion": "`REQUIRED` и `REQUIRES_NEW` встречаются чаще всего, поэтому остальные кажутся чем-то из другой настройки.",
+                "if_it_were_true": "Тогда `Propagation.NESTED` нельзя было бы указать в `@Transactional(propagation=...)`, но он там валиден.",
+                "how_it_should_be": "Все семь значений принадлежат enum `Propagation` и задают именно поведение распространения транзакции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`REQUIRED` при наличии активной транзакции всегда создаёт новую независимую транзакцию, приостанавливая текущую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REQUIRED` присоединяется к существующей TX, а новую независимую с приостановкой текущей создаёт `REQUIRES_NEW`.",
+                "source_of_confusion": "Названия `REQUIRED` и `REQUIRES_NEW` похожи, и их поведение при активной TX легко перепутать.",
+                "if_it_were_true": "Тогда каждый вложенный `@Transactional` коммитился бы отдельно, но по умолчанию всё идёт в одной транзакции.",
+                "how_it_should_be": "`REQUIRED` использует уже открытую транзакцию; отдельную создаёт `REQUIRES_NEW`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SUPPORTS` при отсутствии активной транзакции всегда создаёт новую, гарантируя транзакционность метода в любом случае.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SUPPORTS` без активной TX выполняется вообще без транзакции; новую при отсутствии TX создаёт `REQUIRED`.",
+                "source_of_confusion": "Слово «supports» воспринимают как «поддерживает = обеспечивает транзакцию», хотя оно значит «использует, если есть».",
+                "if_it_were_true": "Тогда `SUPPORTS` ничем не отличался бы от `REQUIRED`, но различие именно в поведении без активной TX.",
+                "how_it_should_be": "`SUPPORTS` присоединяется к существующей TX, а без неё работает нетранзакционно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Есть семь типов: `REQUIRED` (дефолт) присоединяется к существующей TX или создаёт новую; `REQUIRES_NEW` приостанавливает текущую и создаёт независимую; `NESTED` делает savepoint внутри текущей; `SUPPORTS`, `NOT_SUPPORTED`, `MANDATORY` и `NEVER` по-разному реагируют на наличие/отсутствие активной транзакции.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Propagation` определяет поведение метода при вызове из уже транзакционного контекста: присоединиться, создать новую, приостановить, потребовать или запретить транзакцию.",
+                "example": "`@Transactional` (то есть `REQUIRED`) внутри другого транзакционного метода присоединится к той же TX; `REQUIRES_NEW` на `auditLog` закоммитит лог независимо от исхода внешней транзакции.",
+                "when_to_apply": "Выбирайте propagation осознанно, когда нужны независимые коммиты (`REQUIRES_NEW`), частичный откат (`NESTED`) или защита от неверного контекста (`MANDATORY`/`NEVER`).",
+                "edge_cases": "`MANDATORY` без активной TX и `NEVER` внутри TX бросают `IllegalTransactionStateException`; `NESTED` требует поддержки JDBC savepoints.",
+                "related": "[[spring-transaction-interview#Q5]] REQUIRES_NEW против NESTED; [[spring-transaction-interview#Q6]] MANDATORY и NEVER; [[spring-transaction-interview#Q1]] прокси-механизм транзакций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `REQUIRES_NEW` отличается от `NESTED`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`REQUIRES_NEW` создаёт полностью независимую транзакцию (приостанавливая текущую) с собственным коммитом, и откат родителя её не затрагивает; `NESTED` делает savepoint внутри текущей транзакции — её можно откатить до savepoint, но откат родителя откатывает и вложенную часть, а коммит происходит вместе с родительской.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевое различие — независимость: `REQUIRES_NEW` — отдельная физическая транзакция, `NESTED` — точка сохранения в той же транзакции, зависящая от судьбы родителя.",
+                "example": "`auditLog` с `REQUIRES_NEW` закоммитится, даже если внешняя TX откатится; `NESTED`-обновление инвентаря откатится вместе с родителем при его rollback.",
+                "when_to_apply": "Берите `REQUIRES_NEW`, когда нужен гарантированно независимый коммит (аудит, логи); `NESTED` — для частичного отката шага внутри одной общей транзакции.",
+                "edge_cases": "`REQUIRES_NEW` поддерживают все TX-менеджеры, а `NESTED` требует JDBC savepoints; неосторожный `REQUIRES_NEW` может вызвать дедлок, удерживая два соединения сразу.",
+                "related": "[[spring-transaction-interview#Q4]] все типы Propagation; [[spring-transaction-interview#Q11]] self-invocation и REQUIRES_NEW; [[spring-transaction-interview#Q14]] REQUIRES_NEW в многопоточном коде."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`REQUIRES_NEW` и `NESTED` идентичны: оба создают savepoint внутри текущей транзакции и коммитятся только вместе с родительской.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REQUIRES_NEW` — независимая транзакция с отдельным коммитом, а savepoint внутри родителя делает только `NESTED`.",
+                "source_of_confusion": "Оба режима про «вложенный» вызов внутри транзакции, и их часто считают взаимозаменяемыми.",
+                "if_it_were_true": "Тогда `REQUIRES_NEW`-аудит откатывался бы вместе с родителем, но он коммитится независимо.",
+                "how_it_should_be": "`REQUIRES_NEW` коммитится сам по себе, `NESTED` — только при коммите родительской транзакции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При откате родительской транзакции `REQUIRES_NEW` тоже откатывается, а вот `NESTED` остаётся закоммиченной независимо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `REQUIRES_NEW` независим от отката родителя, а `NESTED` откатывается вместе с родительской транзакцией.",
+                "source_of_confusion": "Направление зависимости между родителем и потомком легко перепутать местами.",
+                "if_it_were_true": "Тогда `NESTED` использовали бы для гарантированного аудита, но для этого как раз нужен `REQUIRES_NEW`.",
+                "how_it_should_be": "Откат родителя не трогает `REQUIRES_NEW`, но откатывает `NESTED` до состояния до savepoint."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`NESTED` поддерживается всеми транзакционными менеджерами, а `REQUIRES_NEW` работает только на JDBC через savepoints.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `REQUIRES_NEW` доступен всем TX-менеджерам, а `NESTED` требует поддержки JDBC savepoints.",
+                "source_of_confusion": "Слово «nested» ассоциируется с универсальностью, а механизм savepoints на самом деле специфичен для JDBC.",
+                "if_it_were_true": "Тогда `NESTED` свободно работал бы с JTA/JPA-менеджерами, но там он часто не поддерживается.",
+                "how_it_should_be": "`REQUIRES_NEW` — универсален, а `NESTED` ограничен менеджерами с поддержкой savepoints."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда использовать `MANDATORY` и `NEVER`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`MANDATORY` при отсутствии активной транзакции тихо создаёт новую, а `NEVER` внутри транзакции просто приостанавливает её и работает без TX.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MANDATORY` без TX и `NEVER` внутри TX бросают `IllegalTransactionStateException`, а не создают и не приостанавливают транзакцию.",
+                "source_of_confusion": "Поведение `MANDATORY`/`NEVER` путают с `REQUIRED`/`NOT_SUPPORTED`, которые как раз создают или приостанавливают TX.",
+                "if_it_were_true": "Тогда `MANDATORY` ничем не отличался бы от `REQUIRED`, но его смысл — именно требовать уже открытую транзакцию.",
+                "how_it_should_be": "`MANDATORY` требует существующую TX и иначе падает; `NEVER` запрещает TX и иначе тоже падает."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`MANDATORY` применяют, когда метод обязан вызываться только внутри уже открытой транзакции (защита от ошибок проектирования) — без активной TX он бросает `IllegalTransactionStateException`; `NEVER` — когда метод не должен выполняться в транзакции (долгая операция), и внутри активной TX он также бросает `IllegalTransactionStateException`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оба режима — это «контракты на контекст»: `MANDATORY` требует существующую транзакцию, `NEVER` запрещает любую; они защищают от неправильного использования метода.",
+                "example": "`updateBalance` с `MANDATORY` упадёт, если его вызвать вне транзакции; `exportToCsv` с `NEVER` упадёт, если его вызвать внутри транзакции.",
+                "when_to_apply": "`MANDATORY` — для шагов, которые имеют смысл лишь как часть большей TX; `NEVER` — для долгих/внешних операций, которые нельзя держать в транзакции.",
+                "edge_cases": "Оба не создают и не приостанавливают транзакцию, а лишь проверяют контекст; ошибочный вызов выявляется только в рантайме исключением.",
+                "related": "[[spring-transaction-interview#Q4]] все типы Propagation; [[spring-transaction-interview#Q5]] REQUIRES_NEW против NESTED."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`NEVER` используют для методов, которым нужна максимально строгая изоляция `SERIALIZABLE`, поэтому он всегда оборачивает вызов в самую жёсткую транзакцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NEVER` запрещает любую транзакцию вообще, а не задаёт уровень изоляции; он несовместим с активной TX.",
+                "source_of_confusion": "Слово «never» звучит «категорично», и его ошибочно связывают с самой строгой настройкой транзакции.",
+                "if_it_were_true": "Тогда `NEVER` нельзя было бы вызвать без транзакции, но именно вне TX он и работает.",
+                "how_it_should_be": "`NEVER` — про отсутствие транзакции; уровень изоляции задаётся отдельным атрибутом `isolation`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`MANDATORY` гарантирует, что метод всегда выполнится, при необходимости подождав, пока освободится активная транзакция другого потока.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MANDATORY` не ждёт и не блокирует; он просто проверяет наличие TX в текущем потоке и падает, если её нет.",
+                "source_of_confusion": "Слово «mandatory» наводит на мысль о гарантии выполнения через ожидание ресурса.",
+                "if_it_were_true": "Тогда метод блокировался бы до появления транзакции, но он немедленно бросает исключение.",
+                "how_it_should_be": "`MANDATORY` синхронно проверяет наличие транзакции в текущем потоке и при её отсутствии сразу падает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие уровни изоляции поддерживает Spring и что они дают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring определяет собственные уровни изоляции независимо от СУБД и эмулирует их в Java-коде, поэтому поведение одинаково на любой базе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring лишь передаёт стандартный JDBC-уровень драйверу, а реализует изоляцию сама СУБД; поведение зависит от базы.",
+                "source_of_confusion": "Enum `Isolation` лежит в Spring, и кажется, что и логика изоляции тоже его.",
+                "if_it_were_true": "Тогда `READ_UNCOMMITTED` работал бы одинаково в PostgreSQL и MySQL, но PostgreSQL его поднимает до `READ_COMMITTED`.",
+                "how_it_should_be": "Spring задаёт уровень, а конкретное поведение и поддержка зависят от СУБД."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`READ_COMMITTED` полностью исключает non-repeatable read и phantom read, поэтому это самый безопасный уровень для повторных чтений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`READ_COMMITTED` отсекает только dirty read; non-repeatable и phantom read при нём всё ещё возможны.",
+                "source_of_confusion": "Это популярный дефолт, и его считают «достаточно безопасным от всех аномалий».",
+                "if_it_were_true": "Тогда `REPEATABLE_READ` и `SERIALIZABLE` были бы не нужны, но они существуют именно для остальных аномалий.",
+                "how_it_should_be": "Для защиты от non-repeatable read нужен `REPEATABLE_READ`, от phantom read — `SERIALIZABLE`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring проксирует уровни JDBC: `READ_UNCOMMITTED` (допускает dirty/non-repeatable/phantom read), `READ_COMMITTED` (отсекает dirty read), `REPEATABLE_READ` (отсекает ещё и non-repeatable read), `SERIALIZABLE` (отсекает все три аномалии) и `DEFAULT` (берёт дефолт СУБД).",
+              "correct": true,
+              "sections": {
+                "explanation": "Чем выше уровень, тем меньше аномалий чтения, но тем больше блокировок и ниже параллелизм. Spring лишь передаёт уровень драйверу, реально его обеспечивает СУБД.",
+                "example": "`@Transactional(isolation = Isolation.READ_COMMITTED)` на методе чтения товаров; `DEFAULT` отдаст управление СУБД — в PostgreSQL это `READ_COMMITTED`, в MySQL `REPEATABLE_READ`.",
+                "when_to_apply": "Повышайте уровень, когда критична консистентность повторных чтений; оставляйте дефолт СУБД, когда хватает обычной защиты от грязного чтения.",
+                "edge_cases": "`READ_UNCOMMITTED` не поддерживается в PostgreSQL и Oracle (поднимается до `READ_COMMITTED`); более высокий уровень повышает риск блокировок и сериализационных ошибок.",
+                "related": "[[spring-transaction-interview#Q8]] dirty/non-repeatable/phantom read; [[spring-transaction-interview#Q1]] прокси и TransactionManager."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SERIALIZABLE` — это самый быстрый уровень изоляции, потому что СУБД выполняет транзакции строго последовательно без накладных расходов на блокировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SERIALIZABLE` — самый строгий и обычно самый медленный: он сильнее всего ограничивает параллелизм через блокировки или сериализационные проверки.",
+                "source_of_confusion": "«Последовательное» выполнение звучит как «простое и быстрое», хотя оно убивает конкурентность.",
+                "if_it_were_true": "Тогда его ставили бы везде по умолчанию ради скорости, но из-за блокировок его берут лишь при крайней нужде.",
+                "how_it_should_be": "`SERIALIZABLE` даёт максимум консистентности ценой пропускной способности и риска сериализационных ошибок."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое dirty read, non-repeatable read и phantom read?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Dirty read` — это когда повторный `SELECT` в одной транзакции возвращает разное число строк из-за чужого `INSERT`, а `phantom read` — чтение незакоммиченных данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Определения перепутаны: dirty read — чтение незакоммиченного, а разное число строк по диапазону — это phantom read.",
+                "source_of_confusion": "Все три аномалии про «нестабильное чтение», и их формулировки легко переставить местами.",
+                "if_it_were_true": "Тогда dirty read закрывал бы `SERIALIZABLE`, но его убирает уже `READ_COMMITTED`.",
+                "how_it_should_be": "Dirty read — чтение незакоммиченных данных; phantom read — изменение набора строк по условию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Non-repeatable read` возникает только при `READ_UNCOMMITTED` и полностью устраняется переходом на `READ_COMMITTED`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`READ_COMMITTED` не устраняет non-repeatable read; для этого нужен `REPEATABLE_READ`.",
+                "source_of_confusion": "Раз `READ_COMMITTED` строже `READ_UNCOMMITTED`, кажется, что он закрывает и эту аномалию.",
+                "if_it_were_true": "Тогда `REPEATABLE_READ` был бы избыточен, но он существует именно ради non-repeatable read.",
+                "how_it_should_be": "Non-repeatable read закрывается уровнем `REPEATABLE_READ`, а не `READ_COMMITTED`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Phantom read` — это чтение собственных незакоммиченных изменений внутри той же транзакции, поэтому он не связан с другими транзакциями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Phantom read вызывается чужими закоммиченными `INSERT`/`DELETE`, меняющими набор строк по условию, а не своими изменениями.",
+                "source_of_confusion": "Слово «phantom» наводит на мысль о «невидимых своих» данных внутри транзакции.",
+                "if_it_were_true": "Тогда phantom read был бы у всех транзакций всегда, но он проявляется лишь при чужих коммитах в диапазон.",
+                "how_it_should_be": "Phantom read — это появление/исчезновение строк по условию из-за чужих закоммиченных вставок или удалений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Dirty read` — чтение данных незакоммиченной (и потом откатанной) транзакции; `non-repeatable read` — один и тот же `SELECT` по строке возвращает разные значения из-за чужого `UPDATE`+`COMMIT`; `phantom read` — повторный `SELECT` по диапазону возвращает другое число строк из-за чужого `INSERT`/`DELETE`+`COMMIT`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это три аномалии параллельного доступа возрастающей «тонкости»: грязное чтение незакоммиченного, нестабильность значения строки и нестабильность набора строк по условию.",
+                "example": "Dirty: TX2 читает `1000`, потом TX1 делает `ROLLBACK`. Non-repeatable: цена меняется со `100` на `150` между двумя `SELECT`. Phantom: запрос `amount > 500` возвращает то 5, то 6 строк.",
+                "when_to_apply": "Знание аномалий нужно при выборе уровня изоляции: понимаешь, какую именно аномалию закрывает каждый уровень.",
+                "edge_cases": "`READ_COMMITTED` убирает только dirty read; non-repeatable закрывает `REPEATABLE_READ`, а phantom — только `SERIALIZABLE`.",
+                "related": "[[spring-transaction-interview#Q7]] уровни изоляции; [[spring-transaction-interview#Q1]] управление транзакциями через прокси."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "По каким исключениям Spring откатывает транзакцию по умолчанию?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "По умолчанию Spring откатывает транзакцию только при `RuntimeException` и его наследниках (unchecked), а также при `Error`; checked-исключения (`IOException`, `SQLException` и т.п.) транзакцию НЕ откатывают, и она коммитится.",
+              "correct": true,
+              "sections": {
+                "explanation": "Логика дефолта: checked-исключения считаются «ожидаемыми ситуациями», не обязательно означающими сбой транзакции, поэтому Spring их не откатывает без явной настройки.",
+                "example": "Метод, бросающий `IOException`, всё равно закоммитит сохранённые данные; метод, бросающий `RuntimeException`, откатит транзакцию.",
+                "when_to_apply": "Держите это в голове при работе с checked-исключениями: если бизнес-сбой — checked, без `rollbackFor` данные сохранятся вопреки ожиданиям.",
+                "edge_cases": "`Error` (например `OutOfMemoryError`) тоже вызывает rollback; чтобы откатывать на checked, нужен `rollbackFor`, а чтобы НЕ откатывать на unchecked — `noRollbackFor`.",
+                "related": "[[spring-transaction-interview#Q10]] rollback для checked exceptions; [[spring-transaction-interview#Q1]] прокси оборачивает вызов advice."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring по умолчанию откатывает транзакцию при любом `Exception`, включая checked, поэтому `IOException` тоже всегда откатывает изменения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию откатываются только unchecked (`RuntimeException`) и `Error`; checked-исключения транзакцию коммитят.",
+                "source_of_confusion": "Интуитивно «исключение = ошибка = откат», и разницу между checked и unchecked упускают.",
+                "if_it_were_true": "Тогда атрибут `rollbackFor = Exception.class` был бы бессмысленным, но он нужен именно для отката на checked.",
+                "how_it_should_be": "Для отката на checked-исключениях нужно явно указать `rollbackFor`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring никогда не откатывает транзакцию автоматически: откат всегда нужно делать вручную через `setRollbackOnly()` в catch-блоке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `RuntimeException`/`Error` Spring откатывает транзакцию автоматически; ручной `setRollbackOnly()` нужен лишь в особых случаях.",
+                "source_of_confusion": "Наличие программного API `setRollbackOnly()` создаёт впечатление, что откат всегда ручной.",
+                "if_it_were_true": "Тогда любой непойманный `RuntimeException` коммитил бы битые данные, но Spring их откатывает.",
+                "how_it_should_be": "Автоматический rollback срабатывает на unchecked-исключениях; ручной режим — дополнение, а не правило."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring откатывает транзакцию только при `Error`, а любые `RuntimeException` по умолчанию коммитятся как нормальное завершение метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RuntimeException` как раз вызывает rollback по умолчанию; `Error` тоже откатывает, но это не единственный случай.",
+                "source_of_confusion": "`Error` звучит «серьёзнее» `RuntimeException`, и кажется, что лишь он достоин отката.",
+                "if_it_were_true": "Тогда `NullPointerException` оставлял бы данные закоммиченными, но он откатывает транзакцию.",
+                "how_it_should_be": "И `RuntimeException`, и `Error` по умолчанию приводят к откату транзакции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить rollback для checked exceptions?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы откатывать на checked-исключениях, достаточно объявить их в `throws` метода — Spring автоматически включает rollback для всех перечисленных там типов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Объявление в `throws` ни на что не влияет: для отката на checked нужен атрибут `rollbackFor`.",
+                "source_of_confusion": "`throws` и `rollbackFor` оба перечисляют типы исключений, и роли путают.",
+                "if_it_were_true": "Тогда любой метод с `throws IOException` откатывал бы транзакцию, но без `rollbackFor` он коммитится.",
+                "how_it_should_be": "Откат на checked настраивается через `rollbackFor`, а `throws` лишь описывает сигнатуру метода."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Указать `@Transactional(rollbackFor = Exception.class)` (или список конкретных типов вроде `{IOException.class, SQLException.class}`), чтобы откатывать на checked-исключениях; симметрично `noRollbackFor` отключает откат для указанных unchecked-типов, а программно можно вызвать `TransactionAspectSupport.currentTransactionStatus().setRollbackOnly()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Атрибуты `rollbackFor`/`noRollbackFor` переопределяют дефолтное правило (rollback только на unchecked), а `setRollbackOnly()` помечает текущую транзакцию на откат вручную.",
+                "example": "`@Transactional(rollbackFor = Exception.class)` на `importFile()` откатит данные при `IOException`; `@Transactional(noRollbackFor = BusinessValidationException.class)` сохранит данные даже при этом RuntimeException.",
+                "when_to_apply": "Используйте `rollbackFor`, когда checked-исключение означает реальный сбой; `noRollbackFor` — когда unchecked используется как «ожидаемый» бизнес-сигнал.",
+                "edge_cases": "`setRollbackOnly()` не бросает исключение сам — после него обычно перебрасывают исходное; забытый re-throw приведёт к попытке коммита помеченной на откак транзакции.",
+                "related": "[[spring-transaction-interview#Q9]] дефолтные правила rollback; [[spring-transaction-interview#Q1]] как прокси управляет коммитом/откатом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для отката на checked-исключениях нужно обернуть тело метода в `try/catch` и сделать `connection.rollback()` напрямую на JDBC-соединении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямой `connection.rollback()` идёт мимо Spring-транзакции; правильно — `rollbackFor` или `setRollbackOnly()` через `TransactionAspectSupport`.",
+                "source_of_confusion": "JDBC действительно умеет `rollback()`, и кажется логичным управлять транзакцией на этом уровне.",
+                "if_it_were_true": "Тогда ручной rollback на соединении согласовывался бы со Spring-границами TX, но он их рассинхронизирует.",
+                "how_it_should_be": "Откат внутри Spring-транзакции делают через `rollbackFor` или программно `setRollbackOnly()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`noRollbackFor` нужен, чтобы включить откат для checked-исключений, которые иначе игнорируются Spring по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`noRollbackFor` наоборот отключает откат для указанных типов; откат на checked включает `rollbackFor`.",
+                "source_of_confusion": "Парные атрибуты `rollbackFor`/`noRollbackFor` легко перепутать по назначению.",
+                "if_it_were_true": "Тогда `noRollbackFor = IOException.class` откатывал бы транзакцию на `IOException`, но он её сохраняет.",
+                "how_it_should_be": "`rollbackFor` добавляет откат для типов, `noRollbackFor` — убирает откат для типов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему self-invocation ломает `@Transactional`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Self-invocation ломает `@Transactional`, потому что внутренний вызов запускается в новом потоке, где `ThreadLocal` транзакции ещё не инициализирован.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Новый поток здесь ни при чём: `this.method()` идёт в том же потоке, но в обход прокси, поэтому advice не срабатывает.",
+                "source_of_confusion": "Транзакция привязана к потоку через `ThreadLocal`, и это смешивают с проблемой обхода прокси.",
+                "if_it_were_true": "Тогда проблему решал бы возврат в исходный поток, но помогает только вызов через прокси-ссылку.",
+                "how_it_should_be": "Причина — обход прокси при внутреннем вызове в том же потоке, а не смена потока."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Self-invocation работает корректно: Spring перехватывает и внутренние вызовы `this.method()`, поэтому вложенный `REQUIRES_NEW` создаёт новую транзакцию как обычно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутренний `this.method()` идёт мимо прокси, и вложенный `@Transactional`-advice не применяется — новая TX не создаётся.",
+                "source_of_confusion": "Метод реально выполняется, и кажется, что аннотация на нём отработала.",
+                "if_it_were_true": "Тогда не существовало бы классической ловушки self-invocation, но она одна из самых частых на собеседованиях.",
+                "how_it_should_be": "Чтобы advice сработал, вызывайте метод через прокси: из другого бина или через self-inject `@Lazy`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring создаёт прокси вокруг бина, а транзакционный advice живёт именно в прокси; при вызове `this.method()` обращение идёт напрямую внутри объекта, минуя прокси, поэтому advice не срабатывает и новая транзакция (например `REQUIRES_NEW`) не открывается.",
+              "correct": true,
+              "sections": {
+                "explanation": "Прокси перехватывает только внешние вызовы. Внутренний вызов `this.method()` — это обычный вызов в обход обёртки, и Spring не может вклиниться в него.",
+                "example": "`processAll()` в цикле зовёт `this.processOne()` с `REQUIRES_NEW` — отдельные транзакции не создаются, всё идёт в одной TX внешнего метода.",
+                "when_to_apply": "Распознавайте проблему, когда вложенный `@Transactional`-метод «не открывает» свою транзакцию при вызове из того же класса.",
+                "edge_cases": "Решения: вынести метод в отдельный бин (рекомендуется) либо self-inject через `@Autowired @Lazy private OrderService self;` и звать `self.method()` через прокси.",
+                "related": "[[spring-transaction-interview#Q1]] прокси-механизм; [[spring-transaction-interview#Q3]] требование вызова через прокси; [[spring-transaction-interview#Q5]] REQUIRES_NEW и независимая TX."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Проблема решается тем, что метод нужно сделать `static`: статический транзакционный метод вызывается напрямую и не зависит от прокси.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`static`-методы вообще не перехватываются прокси и не могут быть транзакционными; решают проблему вынос в отдельный бин или self-inject.",
+                "source_of_confusion": "Кажется, что «обойти прокси» можно, убрав привязку к экземпляру через `static`.",
+                "if_it_were_true": "Тогда статический метод открывал бы транзакцию, но прокси работает только с инстанс-методами бина.",
+                "how_it_should_be": "Метод должен быть инстансным `public` и вызываться через прокси-ссылку на бин."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает `readOnly = true`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`readOnly = true` физически запрещает любые `INSERT`/`UPDATE`/`DELETE`: драйвер БД отклонит запись с ошибкой на уровне соединения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это hint, а не жёсткий запрет: Spring не блокирует запись на уровне драйвера, если read-only не настроен явно; основная гарантия — выключенный dirty checking Hibernate.",
+                "source_of_confusion": "Название «read-only» воспринимается буквально как «запись невозможна».",
+                "if_it_were_true": "Тогда случайный `save()` в read-only методе всегда падал бы с ошибкой драйвера, но часто он просто игнорируется Hibernate при flush.",
+                "how_it_should_be": "`readOnly` оптимизирует чтение и сигнализирует намерение; реальные запреты записи настраиваются отдельно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`readOnly = true` повышает уровень изоляции до `SERIALIZABLE`, чтобы гарантировать консистентность всех читаемых данных в транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`readOnly` не меняет уровень изоляции; изоляция задаётся отдельным атрибутом `isolation`, а `readOnly` лишь оптимизирует чтение.",
+                "source_of_confusion": "И изоляция, и `readOnly` влияют на чтение, поэтому их эффекты смешивают.",
+                "if_it_were_true": "Тогда read-only методы всегда были бы максимально изолированы и медленны, но `readOnly` наоборот снижает накладные расходы.",
+                "how_it_should_be": "Уровень изоляции задаётся через `isolation`, а `readOnly` — про оптимизацию и подсказку о намерении."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`readOnly = true` заставляет Hibernate выполнять дополнительный snapshot и усиленный dirty checking, чтобы гарантированно не потерять изменения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `readOnly` отключает dirty checking и не копит snapshot, экономя память и время на flush.",
+                "source_of_confusion": "«Защита данных» от read-only режима ошибочно ассоциируется с более тщательными проверками.",
+                "if_it_were_true": "Тогда read-only методы потребляли бы больше памяти и CPU, но смысл флага — ровно в обратном.",
+                "how_it_should_be": "`readOnly` снимает dirty checking и snapshot, делая чтение легче и быстрее."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Transactional(readOnly = true)` — это hint-оптимизация: Hibernate отключает dirty checking и не копит snapshot сущностей (меньше памяти), PostgreSQL/Oracle открывают read-only транзакцию с меньшим числом блокировок, а Spring при настроенном роутинге может направить запрос на read-реплику.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это подсказка для оптимизации чтения, а не жёсткий запрет записи: основная гарантия — отсутствие Hibernate dirty checking, а не блокировка `INSERT` на уровне драйвера.",
+                "example": "`@Transactional(readOnly = true)` на `findAll()` ускоряет чтение: Hibernate не сравнивает сущности с snapshot и не пытается их сохранять при flush.",
+                "when_to_apply": "Ставьте `readOnly = true` на все чисто читающие сервисные методы и query-репозитории — это и оптимизация, и явное декларирование намерения.",
+                "edge_cases": "Это hint, а не запрет: Spring не блокирует `INSERT` на уровне драйвера, если он не настроен явно; гарантия — лишь на уровне Hibernate dirty checking.",
+                "related": "[[spring-transaction-interview#Q7]] уровни изоляции; [[spring-transaction-interview#Q1]] как прокси управляет транзакцией."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Можно ли ставить `@Transactional` на интерфейс?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Технически да, но не рекомендуется: аннотация на интерфейсе работает только с `JDK`-прокси (не с `CGLIB`), не всегда видна через Spring AOP, и концептуально нарушает разделение — интерфейс это контракт, а транзакция деталь реализации; поэтому аннотацию ставят на класс-реализацию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring рекомендует размещать `@Transactional` на конкретных классах/методах: только так гарантированно работают оба типа прокси и аннотация надёжно подхватывается.",
+                "example": "Лучше пометить `@Transactional` метод `save()` в `UserServiceImpl`, чем в интерфейсе `UserService`, чтобы транзакция работала независимо от типа прокси.",
+                "when_to_apply": "Правило простое: ставьте `@Transactional` на реализацию; интерфейс оставляйте чистым контрактом без инфраструктурных аннотаций.",
+                "edge_cases": "Если бин проксируется через `CGLIB` (нет интерфейса или включён `proxyTargetClass`), аннотация с интерфейса может вообще не примениться.",
+                "related": "[[spring-transaction-interview#Q1]] JDK против CGLIB прокси; [[spring-transaction-interview#Q3]] требования для работы аннотации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Нет, поставить `@Transactional` на интерфейс невозможно: компилятор Java запрещает аннотировать методы интерфейса транзакционными аннотациями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Технически это разрешено и компилируется; проблема не в компиляторе, а в ненадёжности с `CGLIB` и в нарушении разделения контракта и реализации.",
+                "source_of_confusion": "Раз так делать не рекомендуют, делают вывод, что это вообще запрещено языком.",
+                "if_it_were_true": "Тогда не было бы дискуссии «можно, но не стоит», а был бы просто ошибка компиляции.",
+                "how_it_should_be": "Аннотация на интерфейсе компилируется, но её стоит избегать и ставить на реализацию."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Да, и это рекомендуемый подход: аннотация на интерфейсе работает с любым типом прокси и считается более чистым, чем на реализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуют наоборот — ставить на реализацию: на интерфейсе аннотация надёжна только с JDK-прокси и не работает с CGLIB.",
+                "source_of_confusion": "«Программирование на интерфейсы» как общий принцип переносят и на инфраструктурные аннотации.",
+                "if_it_were_true": "Тогда документация Spring советовала бы интерфейсы, но она прямо рекомендует конкретные классы.",
+                "how_it_should_be": "Ставьте `@Transactional` на класс-реализацию, оставляя интерфейс чистым контрактом."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Да, но только если интерфейс помечен `@FunctionalInterface`: лишь у функциональных интерфейсов Spring видит транзакционные аннотации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@FunctionalInterface` никак не связан с видимостью `@Transactional`; ограничение — это тип прокси (JDK против CGLIB), а не число методов интерфейса.",
+                "source_of_confusion": "`@FunctionalInterface` — заметная аннотация на интерфейсах, и ей приписывают влияние на проксирование.",
+                "if_it_were_true": "Тогда обычные многометодные интерфейсы не поддерживали бы `@Transactional`, но дело не в этом.",
+                "how_it_should_be": "Видимость аннотации зависит от типа прокси; рекомендуемый способ — аннотация на реализации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `@Transactional` в многопоточном коде?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Transactional` автоматически наследуется дочерними потоками: транзакция внешнего метода продолжается во всех `CompletableFuture.runAsync(...)`, запущенных внутри него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекст транзакции лежит в `ThreadLocal` и не наследуется: новый поток выполняется без транзакции.",
+                "source_of_confusion": "Кажется логичным, что «всё внутри метода» — одна транзакция, включая асинхронные ветки.",
+                "if_it_were_true": "Тогда `repository.save()` в `runAsync` коммитился бы вместе с внешней TX, но он идёт вне транзакции.",
+                "how_it_should_be": "В новом потоке нужно открывать свою транзакцию, например через бин с `REQUIRES_NEW`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Транзакция привязана к текущему потоку через `ThreadLocal` в `TransactionSynchronizationManager`: каждый поток имеет свою транзакцию, и она НЕ наследуется дочерними потоками; код в `CompletableFuture.runAsync(...)` выполнится в новом потоке без транзакции, и сохранения в нём пройдут вне TX.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку контекст транзакции лежит в `ThreadLocal`, он не пересекает границу потока. Передавать транзакцию в другой поток нельзя — каждый поток должен открывать свою.",
+                "example": "Внутри `@Transactional`-метода вызов `CompletableFuture.runAsync(() -> repository.save(...))` сохранит данные без транзакции, ведь новый поток её не видит.",
+                "when_to_apply": "Помните об этом при любой асинхронной обработке: не рассчитывайте, что внешняя транзакция «дотянется» до пула потоков.",
+                "edge_cases": "Решение — в новом потоке вызывать отдельный бин с `@Transactional(propagation = REQUIRES_NEW)`, чтобы он открыл собственную транзакцию в своём потоке.",
+                "related": "[[spring-transaction-interview#Q5]] REQUIRES_NEW как независимая TX; [[spring-transaction-interview#Q11]] прокси и границы транзакции; [[spring-transaction-interview#Q1]] управление транзакцией прокси."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Транзакция хранится в одном глобальном `static`-поле приложения, поэтому все потоки видят одну и ту же активную транзакцию одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Транзакция хранится в `ThreadLocal`, то есть отдельно для каждого потока, а не в общем `static`-поле.",
+                "source_of_confusion": "«Глобальный менеджер транзакций» воспринимают как единое разделяемое состояние на всё приложение.",
+                "if_it_were_true": "Тогда два параллельных запроса делили бы одну транзакцию и мешали друг другу, но у каждого она своя.",
+                "how_it_should_be": "Каждый поток имеет независимый транзакционный контекст через `ThreadLocal`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring сам копирует транзакционный контекст в пул потоков `@Async`, поэтому отдельная транзакция в асинхронном методе не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекст транзакции в `@Async`-метод не копируется: асинхронный поток стартует без транзакции и должен открыть свою.",
+                "source_of_confusion": "`@Async` и `@Transactional` часто стоят рядом, и кажется, что Spring увязывает их контексты.",
+                "if_it_were_true": "Тогда `@Async`-метод участвовал бы в транзакции вызывающего, но он работает в отдельном потоке без неё.",
+                "how_it_should_be": "В `@Async`-методе объявляйте собственный `@Transactional`, чтобы открыть транзакцию в его потоке."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать транзакционный код?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Transactional` на тест-классе делает данные постоянными: каждый тест коммитит свои изменения в БД, поэтому между тестами нужно вручную чистить таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тестовый `@Transactional` по умолчанию откатывает изменения после каждого теста; ручная очистка не нужна, а постоянство даёт лишь `@Commit`.",
+                "source_of_confusion": "В продакшене `@Transactional` коммитит, и это поведение переносят на тестовый контекст.",
+                "if_it_were_true": "Тогда тесты загрязняли бы общую БД и зависели бы от порядка запуска, но rollback держит их изолированными.",
+                "how_it_should_be": "В тестах `@Transactional` означает автоматический rollback; для фиксации применяют `@Commit`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Аннотация `@Commit` на тесте усиливает откат: после теста данные не только откатываются, но и дополнительно очищаются через `TRUNCATE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Commit` делает противоположное — фиксирует изменения теста в БД вместо отката; `TRUNCATE` она не выполняет.",
+                "source_of_confusion": "Слово «commit» рядом с тестами ошибочно связывают с финализацией очистки данных.",
+                "if_it_were_true": "Тогда `@Commit` был бы бессмысленным дублёром дефолтного rollback, но он именно меняет поведение на коммит.",
+                "how_it_should_be": "`@Commit` сохраняет данные теста в БД; дефолт без неё — откат после теста."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `@SpringBootTest` помечают тест-класс `@Transactional`, и тогда каждый тест после выполнения откатывается, оставляя БД чистой; для явной фиксации используют `@Commit`, а для проверки `REQUIRES_NEW` нужно избегать оборачивающего отката теста (например `@Transactional(propagation = NOT_SUPPORTED)`), иначе внешний rollback откатит и вложенную транзакцию.",
+              "correct": true,
+              "sections": {
+                "explanation": "По умолчанию `@Transactional` на тесте даёт автоматический rollback после каждого метода — это изолирует тесты без ручной очистки данных.",
+                "example": "Тест зовёт `orderService.placeOrder(...)`, проверяет `count()`, а после теста Spring делает rollback; `@Commit` на тесте оставляет данные в БД (нужно редко).",
+                "when_to_apply": "Применяйте тестовый `@Transactional` для изоляции данных между тестами; снимайте его, когда проверяете реальный коммит независимой транзакции.",
+                "edge_cases": "Ловушка `REQUIRES_NEW`: если тест `@Transactional`, внешний rollback откатит и вложенную TX, поэтому для такой проверки откат теста надо отключить (`NOT_SUPPORTED`/`@Commit`).",
+                "related": "[[spring-transaction-interview#Q5]] REQUIRES_NEW против NESTED; [[spring-transaction-interview#Q9]] правила rollback; [[spring-transaction-interview#Q4]] типы Propagation в тестах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы проверить `REQUIRES_NEW`, нужно просто пометить тест `@Transactional` — внешняя транзакция теста корректно сохранит вложенную независимую транзакцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тестовый `@Transactional` откатит внешнюю TX, и при стандартной настройке это помешает увидеть коммит `REQUIRES_NEW`; откат теста нужно отключать.",
+                "source_of_confusion": "Кажется, что раз `REQUIRES_NEW` независим, тестовый откат на него не повлияет.",
+                "if_it_were_true": "Тогда любой тест с `@Transactional` видел бы закоммиченный аудит, но rollback теста скрывает результат.",
+                "how_it_should_be": "Для проверки `REQUIRES_NEW` отключайте откат теста (например `NOT_SUPPORTED` или `@Commit`)."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

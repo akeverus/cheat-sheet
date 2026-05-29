@@ -1,0 +1,965 @@
+{
+  "topic_slug": "spring-scheduling-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `Spring Scheduling` в `Spring Boot`?",
+          "options": [
+            {
+              "text": "Повесить `@EnableScheduling` на `@Configuration` или главный класс приложения, а методы для запуска по расписанию пометить `@Scheduled` внутри Spring-бинов (`@Component`, `@Service`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`@EnableScheduling` включает сканирование бинов на наличие `@Scheduled`-методов и регистрирует постпроцессор, который связывает эти методы с планировщиком.",
+                "example": "`@SpringBootApplication @EnableScheduling class MyApp {}`, затем `@Component class ReportJob { @Scheduled(cron=\"0 0 8 * * MON-FRI\") void run() {} }`.",
+                "when_to_apply": "Применяют как только нужна любая периодическая задача: генерация отчётов, синхронизация данных, прогрев кэша по расписанию.",
+                "edge_cases": "Без `@EnableScheduling` аннотации `@Scheduled` молча игнорируются, а в plain Spring (без Boot) нужен `<task:annotation-driven/>` или ручная регистрация `TaskScheduler`.",
+                "related": "[[spring-scheduling-interview#Q2]] параметры `fixedDelay`/`fixedRate`/`cron`; [[spring-scheduling-interview#Q16]] почему задача не запускается; [[spring-scheduling-interview#Q6]] поток выполнения по умолчанию."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Достаточно повесить `@Scheduled` на метод — `Spring Boot` сам активирует планировщик через автоконфигурацию, без каких-либо включающих аннотаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без явного `@EnableScheduling` постпроцессор `@Scheduled` не регистрируется, и аннотированные методы просто не запускаются.",
+                "source_of_confusion": "Spring Boot автоконфигурирует пул `TaskScheduler`, поэтому кажется, что он включает и само сканирование `@Scheduled`.",
+                "if_it_were_true": "Если бы это было так, забытый `@EnableScheduling` никогда не ломал бы задачи, но на практике это частая причина «задача не работает».",
+                "how_it_should_be": "Нужно явно добавить `@EnableScheduling`, и только тогда `@Scheduled`-методы начнут выполняться по расписанию."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Нужно реализовать интерфейс `Runnable` в каждом бине-задаче и зарегистрировать его в `ApplicationContext` как `@Bean`, после чего Spring запустит его по таймеру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Декларативное планирование строится на `@Scheduled`-методах, а не на реализации `Runnable`; `Runnable` нужен лишь для программного `TaskScheduler.schedule()`.",
+                "source_of_confusion": "Программный API `TaskScheduler` действительно принимает `Runnable`, и это переносят на декларативный путь.",
+                "if_it_were_true": "Если бы реализация `Runnable` включала расписание, у любого бина-`Runnable` оно бралось бы из воздуха, но интервал задавать негде.",
+                "how_it_should_be": "Для расписания помечают метод `@Scheduled` с `cron`/`fixedRate`; `Runnable` применяют только в ручном `TaskScheduler`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Планирование включается свойством `spring.scheduling.enabled=true` в `application.yml`, а аннотации при этом не требуются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такого свойства нет: включение делается аннотацией `@EnableScheduling`, а `@Scheduled` обязательны для пометки методов.",
+                "source_of_confusion": "Многие фичи Spring Boot включаются `*.enabled`-флагами, поэтому ожидают аналогичный флаг и для scheduling.",
+                "if_it_were_true": "Если бы флаг существовал, можно было бы включить планировщик без кода, но запускать всё равно было бы нечего без `@Scheduled`.",
+                "how_it_should_be": "Используют `@EnableScheduling` + `@Scheduled`; через yml настраивают лишь пул (`spring.task.scheduling.pool.size`), а не сам факт включения."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются `fixedDelay`, `fixedRate` и `cron` в `@Scheduled`?",
+          "options": [
+            {
+              "text": "`fixedRate` отсчитывает паузу от конца предыдущего запуска до начала следующего, а `fixedDelay` — от начала до начала; `cron` задаёт абсолютное время суток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Определения `fixedRate` и `fixedDelay` перепутаны: `fixedDelay` считает от конца до начала, а `fixedRate` — от начала до начала.",
+                "source_of_confusion": "Оба параметра задают интервал в миллисекундах и звучат похоже, поэтому их роли легко поменять местами.",
+                "if_it_were_true": "Если бы это было так, при долгой задаче `fixedRate` всегда выдерживал бы паузу после завершения, но он считает от старта и может запускаться сразу.",
+                "how_it_should_be": "`fixedDelay` = пауза после завершения; `fixedRate` = период от начала запуска; `cron` = расписание по времени."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`fixedDelay` — задержка между концом предыдущего запуска и началом следующего; `fixedRate` — период между началами запусков; `cron` — выполнение по cron-расписанию (времени суток/недели).",
+              "correct": true,
+              "sections": {
+                "explanation": "`fixedDelay` гарантирует фиксированную паузу между запусками независимо от длительности, `fixedRate` держит фиксированный темп от старта к старту, `cron` привязан к календарному времени.",
+                "example": "`@Scheduled(fixedDelay=5000)` стартует через 5 c после завершения, `@Scheduled(fixedRate=5000)` — каждые 5 c от начала, `@Scheduled(cron=\"0 * * * * *\")` — в начале каждой минуты.",
+                "when_to_apply": "`fixedDelay` берут, когда важна пауза между запусками; `fixedRate` — для ровного темпа; `cron` — для привязки к часам/дням недели.",
+                "edge_cases": "При одном потоке `fixedRate`-задача не накапливает очередь: если предыдущий запуск ещё идёт, следующий стартует сразу после его завершения, а не параллельно.",
+                "related": "[[spring-scheduling-interview#Q3]] синтаксис cron-выражений; [[spring-scheduling-interview#Q4]] параметр `initialDelay`; [[spring-scheduling-interview#Q6]] поведение при одном потоке."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`fixedRate` и `fixedDelay` всегда дают одинаковое поведение, если задача выполняется быстрее интервала, и различаются только именами для читаемости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие принципиальное: `fixedDelay` отсчитывает паузу от конца, `fixedRate` — период от начала, поэтому при заметной длительности задачи интервалы расходятся.",
+                "source_of_confusion": "При очень короткой задаче моменты запусков действительно почти совпадают, и это обобщают на любой случай.",
+                "if_it_were_true": "Если бы они были эквивалентны, в API не существовало бы двух разных параметров с разной семантикой.",
+                "how_it_should_be": "Выбирают по смыслу: `fixedDelay` — гарантированная пауза, `fixedRate` — стабильный темп; различие проявляется при долгом выполнении."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`cron` запускает задачу параллельно в нескольких потоках, тогда как `fixedDelay` и `fixedRate` всегда последовательны в одном потоке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параллельность зависит не от типа триггера, а от пула планировщика: по умолчанию все три варианта выполняются в одном потоке последовательно.",
+                "source_of_confusion": "`cron`-задачи часто разные по времени, и кажется, что они идут «сами по себе» параллельно.",
+                "if_it_were_true": "Если бы `cron` подразумевал параллелизм, два cron-метода в одном пуле наезжали бы друг на друга при поясе времени, но planner один.",
+                "how_it_should_be": "Для параллельности увеличивают `pool size` или добавляют `@Async` — это не свойство `cron`."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает синтаксис cron-выражений в `Spring`?",
+          "options": [
+            {
+              "text": "Spring использует 5 полей как Unix cron (минуты, часы, день месяца, месяц, день недели), а секунды задаются отдельным атрибутом `@Scheduled`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring cron состоит из 6 полей: первое поле — это секунды, остальные пять совпадают с Unix cron.",
+                "source_of_confusion": "Классический Linux cron использует 5 полей, и это по привычке переносят на Spring.",
+                "if_it_were_true": "Если бы секунды были отдельным атрибутом, выражение `0 0 8 * * *` имело бы лишнее поле, но оно как раз валидно с секундами.",
+                "how_it_should_be": "Пишут 6 полей: `секунды минуты часы день_месяца месяц день_недели`, например `0 0 8 * * MON-FRI`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Cron-поля разделяются запятыми, а не пробелами, поэтому `0,0,8,*,*,MON-FRI` означает запуск каждый будний день в 8:00.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поля cron-выражения разделяются пробелами; запятая внутри одного поля задаёт список значений, например `MON,WED,FRI`.",
+                "source_of_confusion": "Запятая действительно встречается в cron как разделитель списка, и её ошибочно делают разделителем полей.",
+                "if_it_were_true": "Если бы запятая разделяла поля, выражение `0 0/15 * * * *` (с пробелами) было бы невалидным, но оно стандартно.",
+                "how_it_should_be": "Поля разделяют пробелами; запятая — только для перечисления значений внутри поля (`8,20` = в 8 и 20 часов)."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Spring использует 6 полей `секунды минуты часы день_месяца месяц день_недели`; первое поле — секунды (отличие от Linux cron), поддерживаются `*`, `?`, `-`, `,`, `/`, `L`, `W`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Дополнительное первое поле для секунд — ключевое отличие Spring от Unix cron; спецсимволы дают диапазоны, списки, шаги и особые дни.",
+                "example": "`0 0 8 * * MON-FRI` — каждый будний день в 8:00; `0 0/15 * * * *` — каждые 15 минут; `0 0 0 L * *` — последний день месяца в полночь.",
+                "when_to_apply": "Знание синтаксиса нужно при настройке любой `cron`-задачи и при чтении чужих `@Scheduled(cron=...)`.",
+                "edge_cases": "Особый случай — `@Scheduled(cron=\"-\")`: задача никогда не запускается, что удобно для отключения через конфигурацию.",
+                "related": "[[spring-scheduling-interview#Q2]] когда выбирать `cron` вместо интервалов; [[spring-scheduling-interview#Q5]] вынос cron в конфиг; [[spring-scheduling-interview#Q15]] отключение задачи через `cron=\"-\"`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "В Spring cron символ `?` означает «любое значение» и взаимозаменяем с `*` в любом поле выражения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`?` означает «значение не важно» и допускается только в полях дня месяца и дня недели, тогда как `*` — это «любое значение» в любом поле.",
+                "source_of_confusion": "И `*`, и `?` ослабляют ограничение поля, поэтому их считают полными синонимами.",
+                "if_it_were_true": "Если бы `?` был синонимом `*` везде, его не было бы смысла вводить отдельно от `*`.",
+                "how_it_should_be": "`*` ставят в большинстве полей, а `?` — только для разруливания конфликта между днём месяца и днём недели."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `initialDelay` и зачем он нужен?",
+          "options": [
+            {
+              "text": "`initialDelay` — это минимальная пауза между двумя соседними запусками задачи, аналог `fixedDelay`, но измеряется в секундах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`initialDelay` задаёт задержку только перед первым запуском; паузу между запусками определяют `fixedDelay`/`fixedRate`, и измеряется он в миллисекундах.",
+                "source_of_confusion": "Слова `initialDelay` и `fixedDelay` похожи, и обоим приписывают роль межзапускового интервала.",
+                "if_it_were_true": "Если бы `initialDelay` задавал период, не нужны были бы отдельные `fixedRate`/`fixedDelay` для того же самого.",
+                "how_it_should_be": "`initialDelay` — однократная задержка перед первым выполнением (в мс); периодичность задаётся другими атрибутами."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`initialDelay` отменяет первый запуск задачи и начинает отсчёт расписания только со второго срабатывания триггера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`initialDelay` не отменяет запуск, а лишь откладывает самый первый запуск на указанное число миллисекунд после старта приложения.",
+                "source_of_confusion": "Задержка перед первым запуском воспринимается как «пропуск» первого срабатывания.",
+                "if_it_were_true": "Если бы первый запуск пропускался, нельзя было бы гарантировать выполнение задачи ровно один раз вскоре после старта.",
+                "how_it_should_be": "Первый запуск происходит через `initialDelay` мс после старта контекста, далее по обычному интервалу."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`initialDelay` применяется исключительно к `cron`-задачам и сдвигает время первого срабатывания cron-выражения на заданное число минут.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`initialDelay` работает с `fixedRate`/`fixedDelay`, а не с `cron`: для cron время первого запуска определяется самим выражением.",
+                "source_of_confusion": "`initialDelay` и `cron` оба про «когда стартовать», и их область применения путают.",
+                "if_it_were_true": "Если бы `initialDelay` сдвигал cron, было бы два конкурирующих источника времени первого запуска для одной задачи.",
+                "how_it_should_be": "`initialDelay` комбинируют с `fixedRate`/`fixedDelay`; для отсрочки cron-задачи используют само cron-выражение."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`initialDelay` — задержка (в миллисекундах) перед самым первым запуском задачи; используется с `fixedRate`/`fixedDelay`, чтобы дать приложению инициализироваться и распределить нагрузку.",
+              "correct": true,
+              "sections": {
+                "explanation": "Первый запуск откладывается на `initialDelay` мс после старта контекста, затем задача идёт по заданному интервалу; это убирает всплеск нагрузки сразу после деплоя.",
+                "example": "`@Scheduled(fixedRate=60_000, initialDelay=30_000)` — первый запуск через 30 c после старта, далее каждую минуту; есть и строковый вариант `initialDelayString`.",
+                "when_to_apply": "Применяют, чтобы дать прогреться кэшу/пулу соединений, дождаться готовности внешних систем и развести одновременный старт нескольких задач.",
+                "edge_cases": "С `cron` параметр `initialDelay` несовместим: для cron-задач момент первого запуска определяет само выражение, а не отдельная задержка.",
+                "related": "[[spring-scheduling-interview#Q2]] отличия `fixedRate`/`fixedDelay`; [[spring-scheduling-interview#Q5]] `initialDelayString` из конфигурации; [[spring-scheduling-interview#Q16]] типичные ошибки настройки."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как вынести cron-выражение в конфигурацию?",
+          "options": [
+            {
+              "text": "Использовать SpEL-плейсхолдер в атрибуте: `@Scheduled(cron=\"${reporting.cron:0 0 8 * * *}\")`, а значение задавать в `application.yml`; для интервалов есть `fixedDelayString`/`fixedRateString`/`initialDelayString`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Атрибуты `cron`, `*String`-варианты интервалов и `initialDelayString` принимают плейсхолдеры `${...}`, поэтому расписание настраивается без перекомпиляции, в том числе по профилям.",
+                "example": "`@Scheduled(cron=\"${reporting.cron:0 0 8 * * *}\")` берёт `reporting.cron` из yml; `@Scheduled(fixedDelayString=\"${sync.delay.ms:60000}\")` — интервал из свойства.",
+                "when_to_apply": "Выносят расписание в конфиг, когда оно различается между средами (dev/prod) или должно меняться без релиза кода.",
+                "edge_cases": "Трюк `@Scheduled(cron=\"${job.cron:-}\")`: если свойство не задано, подставляется `-`, и задача не запустится никогда (значение по умолчанию = отключено).",
+                "related": "[[spring-scheduling-interview#Q3]] синтаксис cron; [[spring-scheduling-interview#Q4]] `initialDelayString`; [[spring-scheduling-interview#Q15]] отключение задачи через конфигурацию."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Числовые интервалы из конфигурации задаются обычными атрибутами `fixedDelay`/`fixedRate` со значением `${...}`, без отдельных строковых вариантов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Атрибуты `fixedDelay`/`fixedRate` имеют тип `long` и не принимают строковые плейсхолдеры; для значений из конфигурации существуют `fixedDelayString`/`fixedRateString`.",
+                "source_of_confusion": "Плейсхолдер `${...}` подставляется как строка, и кажется, что её можно положить и в `long`-атрибут.",
+                "if_it_were_true": "Если бы `long`-атрибут принимал `${...}`, не понадобились бы отдельные `*String`-варианты в API.",
+                "how_it_should_be": "Для значений из yml используют `fixedDelayString=\"${sync.delay.ms:60000}\"`, а `cron` — строковый и принимает плейсхолдер напрямую."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Cron-выражение нельзя параметризовать плейсхолдером; единственный путь — реализовать `SchedulingConfigurer` и читать строку из `Environment` вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Атрибут `cron` напрямую поддерживает плейсхолдер `${...}`, поэтому ручное чтение из `Environment` не требуется для простого выноса в конфиг.",
+                "source_of_confusion": "`SchedulingConfigurer` действительно нужен для динамики, и его считают единственным способом настройки извне.",
+                "if_it_were_true": "Если бы `cron` не принимал плейсхолдеры, в документации не было бы примеров `cron=\"${...}\"`.",
+                "how_it_should_be": "Достаточно `@Scheduled(cron=\"${reporting.cron:...}\")`; `SchedulingConfigurer` берут лишь для программного/динамического планирования."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Значение по умолчанию в плейсхолдере задаётся через знак равенства, например `${reporting.cron=0 0 8 * * *}`, а двоеточие в Spring не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолт в Spring-плейсхолдере отделяется двоеточием: `${reporting.cron:0 0 8 * * *}`; синтаксис со знаком равенства невалиден.",
+                "source_of_confusion": "В `.properties`-файлах ключ от значения отделяется `=`, и этот разделитель переносят в синтаксис плейсхолдера.",
+                "if_it_were_true": "Если бы дефолт задавался через `=`, выражения вида `${prop:default}` из документации не работали бы.",
+                "how_it_should_be": "Пишут `${key:default}` с двоеточием; знак `=` используют в самих файлах конфигурации, но не в плейсхолдере."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каком потоке выполняется `@Scheduled`?",
+          "options": [
+            {
+              "text": "Каждая `@Scheduled`-задача по умолчанию запускается в собственном новом потоке, поэтому разные задачи всегда выполняются параллельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию все `@Scheduled`-задачи делят один поток (`ThreadPoolTaskScheduler` с pool size = 1) и выполняются последовательно.",
+                "source_of_confusion": "Аннотация на разных методах создаёт впечатление независимых задач, а значит и независимых потоков.",
+                "if_it_were_true": "Если бы каждая задача имела свой поток, не возникало бы эффекта «голодания», когда долгая задача задерживает остальные.",
+                "how_it_should_be": "По умолчанию поток один; для параллельности увеличивают `pool size` или добавляют `@Async`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "По умолчанию Spring выполняет все `@Scheduled`-задачи в одном потоке (`ThreadPoolTaskScheduler`, pool size = 1) последовательно; долгая задача задерживает остальные.",
+              "correct": true,
+              "sections": {
+                "explanation": "Единственный поток-планировщик берёт задачи по очереди, поэтому одна затянувшаяся задача откладывает запуск других, включая собственные следующие срабатывания.",
+                "example": "Если `task-A` идёт долго, `task-B` и `task-C` ждут в очереди того же потока, а `fixedRate`-задача начинает «опаздывать».",
+                "when_to_apply": "Понимание этого важно при диагностике «задача не сработала вовремя» и при планировании нескольких периодических задач.",
+                "edge_cases": "`fixedRate`-задача при долгом выполнении не запускается параллельно сама с собой — следующий запуск стартует после завершения предыдущего.",
+                "related": "[[spring-scheduling-interview#Q7]] настройка пула потоков; [[spring-scheduling-interview#Q8]] параллельный запуск через `@Async`; [[spring-scheduling-interview#Q2]] поведение `fixedRate` при долгой задаче."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Spring выполняет `@Scheduled`-задачи в общем веб-пуле Tomcat (`http-nio-*`), поэтому они конкурируют за потоки с обработкой HTTP-запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Планировщик использует отдельный `ThreadPoolTaskScheduler`, а не потоки обработки HTTP-запросов Tomcat.",
+                "source_of_confusion": "И планировщик, и веб-сервер — части одного приложения, поэтому их пулы потоков смешивают.",
+                "if_it_were_true": "Если бы задачи шли в веб-пуле, долгая задача напрямую снижала бы пропускную способность HTTP, но пулы разделены.",
+                "how_it_should_be": "Scheduling работает в собственном пуле с префиксом вроде `scheduling-`, независимом от Tomcat."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "По умолчанию задачи выполняются в основном потоке приложения (`main`), который запускает Spring-контекст.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поток `main` завершает запуск контекста и не используется для периодических задач; их обслуживает отдельный поток планировщика.",
+                "source_of_confusion": "`main` стартует приложение, и его по инерции считают исполнителем всех фоновых работ.",
+                "if_it_were_true": "Если бы задачи шли в `main`, поток не мог бы завершиться, а приложение зависло бы на первой же задаче.",
+                "how_it_should_be": "Задачи выполняет поток из `ThreadPoolTaskScheduler` (по умолчанию один), а не `main`."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить пул потоков для `@Scheduled`?",
+          "options": [
+            {
+              "text": "Пул потоков для `@Scheduled` настроить нельзя — он жёстко фиксирован в одном потоке, и для параллельности остаётся только переходить на `Quartz`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пул легко настраивается: через `SchedulingConfigurer`/`ThreadPoolTaskScheduler` или свойством `spring.task.scheduling.pool.size`.",
+                "source_of_confusion": "Дефолтный размер пула равен 1, и это принимают за невозможность его изменить.",
+                "if_it_were_true": "Если бы пул был неизменяемым, не существовало бы свойства `spring.task.scheduling.pool.size`.",
+                "how_it_should_be": "Увеличивают `poolSize` в `ThreadPoolTaskScheduler` или задают `spring.task.scheduling.pool.size` в yml — Quartz для этого не нужен."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Размер пула задаётся свойством `server.tomcat.threads.max` в `application.yml`, так как планировщик берёт потоки из общего веб-пула.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Планировщик не использует веб-пул Tomcat; его размер задают через `spring.task.scheduling.pool.size`, а `server.tomcat.threads.max` управляет обработкой HTTP.",
+                "source_of_confusion": "Оба свойства про «количество потоков», поэтому их области применения смешивают.",
+                "if_it_were_true": "Если бы scheduling брал потоки Tomcat, увеличение `server.tomcat.threads.max` ускоряло бы задачи, но пулы независимы.",
+                "how_it_should_be": "Для планировщика используют `spring.task.scheduling.pool.size` или настраивают `ThreadPoolTaskScheduler` в коде."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Реализовать `SchedulingConfigurer`, создать `ThreadPoolTaskScheduler` с нужным `poolSize` и передать его в `registrar.setTaskScheduler(...)`; либо проще задать `spring.task.scheduling.pool.size` в `application.yml`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Через `SchedulingConfigurer` подменяют планировщик на `ThreadPoolTaskScheduler` с заданными `poolSize`, префиксом потоков и graceful-shutdown; в Boot тот же эффект даёт свойство yml.",
+                "example": "`scheduler.setPoolSize(10); scheduler.setThreadNamePrefix(\"sched-\"); registrar.setTaskScheduler(scheduler)` или в yml `spring.task.scheduling.pool.size: 10`.",
+                "when_to_apply": "Увеличивают пул, когда несколько задач должны идти параллельно и долгая задача не должна блокировать остальные.",
+                "edge_cases": "Даже большой пул не запускает один `fixedRate`-метод параллельно сам с собой — для этого нужен `@Async` или явный executor.",
+                "related": "[[spring-scheduling-interview#Q6]] почему по умолчанию один поток; [[spring-scheduling-interview#Q8]] параллельный запуск через `@Async`; [[spring-scheduling-interview#Q9]] программный `TaskScheduler`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Достаточно пометить класс-задачу аннотацией `@Async`, и Spring автоматически выделит планировщику пул из десяти потоков по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Async` переносит выполнение в executor `@Async`, а не увеличивает пул самого планировщика; и пул по умолчанию не равен десяти.",
+                "source_of_confusion": "`@Async` действительно даёт параллелизм, и его путают с настройкой размера пула планировщика.",
+                "if_it_were_true": "Если бы `@Async` сам задавал пул из 10 потоков, не нужны были бы `spring.task.scheduling.pool.size` и кастомные executor-ы.",
+                "how_it_should_be": "Размер пула планировщика задают явно (`poolSize`/yml-свойство), а `@Async` лишь уводит задачу в отдельный executor."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Могут ли задачи `@Scheduled` выполняться параллельно?",
+          "options": [
+            {
+              "text": "Да, по умолчанию каждое срабатывание `@Scheduled` создаёт новый поток, поэтому даже один `fixedRate`-метод может выполняться в нескольких экземплярах одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию пул содержит один поток, и задачи выполняются строго последовательно; один `fixedRate`-метод сам с собой параллельно не идёт.",
+                "source_of_confusion": "Регулярный запуск по `fixedRate` создаёт ощущение независимых параллельных выполнений.",
+                "if_it_were_true": "Если бы каждое срабатывание шло в новом потоке, не было бы смысла в `@Async` для параллельности.",
+                "how_it_should_be": "Для параллельности увеличивают пул или добавляют `@Async`; по умолчанию всё последовательно в одном потоке."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Нет, параллельность в Spring Scheduling невозможна в принципе: для одновременного выполнения задач придётся отказаться от `@Scheduled` и использовать только `Quartz`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параллельность достижима через увеличение пула или `@Async` поверх `@Scheduled`; Quartz для этого не обязателен.",
+                "source_of_confusion": "Дефолтное последовательное поведение принимают за фундаментальное ограничение фреймворка.",
+                "if_it_were_true": "Если бы параллельность была невозможна, не существовало бы связки `@Async` + `@Scheduled` и настройки `pool size`.",
+                "how_it_should_be": "Достаточно настроить пул или повесить `@Async` с `@EnableAsync` — `@Scheduled` остаётся."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Параллельность включается атрибутом `@Scheduled(concurrent=true)`, который разрешает запуск нового экземпляра задачи до завершения предыдущего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `@Scheduled` нет атрибута `concurrent`; параллельный запуск достигается через `@Async` или увеличение пула планировщика.",
+                "source_of_confusion": "В других планировщиках (например, в Quartz) встречаются флаги конкурентности, и их приписывают `@Scheduled`.",
+                "if_it_were_true": "Если бы атрибут `concurrent` существовал, не нужны были бы `@Async` и кастомные executor-ы для параллелизма.",
+                "how_it_should_be": "Параллельный запуск делают через `@Async(\"executor\")` + `@EnableAsync` или увеличивая `pool size`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "По умолчанию нет (один поток, последовательно), но параллельность включают через `@Async` (+`@EnableAsync`) или увеличение пула; тогда нужна защита идемпотентности/блокировка.",
+              "correct": true,
+              "sections": {
+                "explanation": "Дефолтно задачи идут последовательно в одном потоке; `@Async` уводит каждое срабатывание в отдельный поток executor-а, а больший пул позволяет идти параллельно разным задачам.",
+                "example": "`@Async(\"schedulingExecutor\") @Scheduled(fixedRate=1000) void parallelTask()` запускается каждую секунду в отдельном потоке, не блокируя другие задачи.",
+                "when_to_apply": "Параллельность нужна, когда задачи независимы и долгие, и одна не должна задерживать остальные.",
+                "edge_cases": "`@Async` + `@Scheduled` может породить несколько одновременных запусков одной задачи: для неидемпотентной логики нужен `ShedLock`/`@SchedulerLock`.",
+                "related": "[[spring-scheduling-interview#Q7]] настройка пула; [[spring-scheduling-interview#Q12]] блокировка через `ShedLock`; [[spring-scheduling-interview#Q6]] последовательное поведение по умолчанию."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `TaskScheduler` и когда его использовать?",
+          "options": [
+            {
+              "text": "`TaskScheduler` — программный (не аннотационный) Spring-интерфейс для планирования: задачи добавляют и отменяют в рантайме через `schedule(...)`, удобен для пользовательских и динамических расписаний.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от декларативного `@Scheduled`, `TaskScheduler` позволяет планировать `Runnable` из кода с `CronTrigger`/`Instant` и хранить `ScheduledFuture` для последующей отмены.",
+                "example": "`taskScheduler.schedule(task, new CronTrigger(cronExpr))` возвращает `ScheduledFuture`, который кладут в `Map` и при необходимости отменяют через `future.cancel(false)`.",
+                "when_to_apply": "Берут, когда расписание задаёт пользователь во время работы, нужно динамически добавлять/удалять задачи или выполнить задачу один раз в будущем.",
+                "edge_cases": "Если расписание фиксировано и известно на этапе разработки, проще `@Scheduled`; ручной `TaskScheduler` оправдан именно динамикой.",
+                "related": "[[spring-scheduling-interview#Q10]] динамическое планирование из кода; [[spring-scheduling-interview#Q1]] декларативная настройка через `@Scheduled`; [[spring-scheduling-interview#Q7]] `ThreadPoolTaskScheduler` как реализация."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`TaskScheduler` — это аннотация-маркер, которую вешают на класс вместо `@EnableScheduling`, чтобы активировать поддержку `@Scheduled`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TaskScheduler` — это интерфейс с методами `schedule(...)`, а не аннотация; включает scheduling по-прежнему `@EnableScheduling`.",
+                "source_of_confusion": "И `TaskScheduler`, и `@EnableScheduling` относятся к планированию, поэтому их роли смешивают.",
+                "if_it_were_true": "Если бы `TaskScheduler` был аннотацией активации, его нельзя было бы внедрять как бин и вызывать `schedule(...)`.",
+                "how_it_should_be": "Активацию делает `@EnableScheduling`; `TaskScheduler` внедряют как бин для программного планирования."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`TaskScheduler` нужен только для одноразового выполнения задачи и не умеет планировать периодические задачи по cron.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TaskScheduler` умеет и периодические задачи: `schedule(task, Trigger)` с `CronTrigger`/`PeriodicTrigger` запускает их по расписанию.",
+                "source_of_confusion": "Перегрузка `schedule(Runnable, Instant)` для разового запуска заслоняет варианты с `Trigger`.",
+                "if_it_were_true": "Если бы он умел только разовый запуск, не было бы методов `scheduleAtFixedRate`/`schedule(task, Trigger)`.",
+                "how_it_should_be": "Для периодики используют `schedule(task, new CronTrigger(...))` или `scheduleAtFixedRate(task, Duration)`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`TaskScheduler` автоматически обеспечивает распределённую блокировку, гарантируя выполнение задачи только на одном узле кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TaskScheduler` — локальный планировщик внутри одного JVM и не даёт никакой распределённой блокировки; для кластера нужен `ShedLock`/`Quartz`.",
+                "source_of_confusion": "Программный API кажется «продвинутым», и ему приписывают кластерные гарантии.",
+                "if_it_were_true": "Если бы он сам блокировал кластер, не понадобились бы `ShedLock` и `@SchedulerLock` для дедупликации.",
+                "how_it_should_be": "В кластере поверх любого планировщика добавляют distributed lock (`ShedLock`) или используют `Quartz Clustered`."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как запланировать задачу динамически из кода?",
+          "options": [
+            {
+              "text": "Динамически задачу запланировать нельзя: единственный способ — добавить ещё одну аннотацию `@Scheduled`, но только на этапе компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Динамическое планирование делается через внедрённый `TaskScheduler` и его метод `schedule(...)` в рантайме, без новых аннотаций.",
+                "source_of_confusion": "Аннотация `@Scheduled` — самый частый путь, и его принимают за единственный.",
+                "if_it_were_true": "Если бы динамика была невозможна, не существовало бы `TaskScheduler.schedule(Runnable, Instant)`.",
+                "how_it_should_be": "Внедряют `TaskScheduler` и вызывают `schedule(task, fireAt)` или `schedule(task, new CronTrigger(...))` во время работы приложения."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Внедрить `TaskScheduler` и вызвать `schedule(Runnable, Instant)` для разового запуска в момент времени или `schedule(Runnable, Trigger)` с `CronTrigger`/`PeriodicTrigger` для периодического.",
+              "correct": true,
+              "sections": {
+                "explanation": "`TaskScheduler.schedule` принимает либо `Instant` (один раз в момент времени), либо `Trigger` (по расписанию), и возвращает `ScheduledFuture` для контроля и отмены.",
+                "example": "`scheduler.schedule(() -> sendReminder(orderId), Instant.now().plusSeconds(delayMin*60L))` отправит напоминание через `delayMin` минут, а `schedule(task, new CronTrigger(expr))` — по cron.",
+                "when_to_apply": "Применяют для пользовательских напоминаний, отложенных действий по заказу и любых задач, чьё время известно только в рантайме.",
+                "edge_cases": "Чтобы задачу можно было отменить или перепланировать, возвращённый `ScheduledFuture` нужно сохранить — иначе ссылки на неё не останется.",
+                "related": "[[spring-scheduling-interview#Q9]] когда брать `TaskScheduler` вместо `@Scheduled`; [[spring-scheduling-interview#Q3]] cron-выражения для `CronTrigger`; [[spring-scheduling-interview#Q12]] блокировка динамических задач в кластере."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Достаточно создать новый поток `new Thread(task).start()` внутри сервиса — Spring подхватит его и будет перезапускать по расписанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Голый `new Thread(...).start()` выполняется один раз и не управляется Spring; для расписания нужен `TaskScheduler`/`ScheduledExecutorService`.",
+                "source_of_confusion": "Поток действительно «запускает работу», и это путают с планированием.",
+                "if_it_were_true": "Если бы Spring перезапускал произвольные потоки, не нужны были бы планировщики и триггеры вовсе.",
+                "how_it_should_be": "Используют `TaskScheduler.schedule(...)`, который сам ставит задачу на повтор по `Trigger` и даёт `ScheduledFuture`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Нужно в рантайме менять значения в `application.yml` через `Environment.getPropertySources()`, и Spring перечитает их и создаст новую `@Scheduled`-задачу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Изменение `PropertySource` в рантайме не создаёт новых `@Scheduled`-задач: они связываются при старте контекста; динамику дают `TaskScheduler`/`SchedulingConfigurer`.",
+                "source_of_confusion": "Вынос cron в конфиг создаёт иллюзию, что правка свойства на лету добавит задачу.",
+                "if_it_were_true": "Если бы правка yml порождала задачи, не нужен был бы программный API планирования.",
+                "how_it_should_be": "Для динамики планируют через `TaskScheduler.schedule(...)`; конфигурация лишь параметризует существующие задачи."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему `@Scheduled` проблематичен в кластере?",
+          "options": [
+            {
+              "text": "В кластере `@Scheduled` запускается только на узле-лидере, поэтому проблема в том, что при его падении задача вообще перестаёт выполняться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого встроенного выбора лидера у `@Scheduled` нет: каждый экземпляр приложения независимо запускает свою копию задачи.",
+                "source_of_confusion": "Кластерные системы часто имеют лидера, и это поведение приписывают и Spring Scheduling.",
+                "if_it_were_true": "Если бы задача шла только на лидере, не возникало бы дублирования — а именно дублирование и есть основная проблема.",
+                "how_it_should_be": "Без distributed lock задачу выполнят все реплики одновременно; защиту от дублей дают `ShedLock`/`Quartz`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "В кластере `@Scheduled` синхронизируется между узлами через общий контекст Spring, из-за чего задача выполняется слишком медленно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring-контексты разных экземпляров независимы и ничего между собой не синхронизируют; проблема не в скорости, а в дублировании запусков.",
+                "source_of_confusion": "Слово «кластер» наводит на мысль о координации через общее состояние.",
+                "if_it_were_true": "Если бы был общий контекст, реплики договаривались бы и запускали задачу один раз, но этого не происходит.",
+                "how_it_should_be": "Каждый экземпляр работает изолированно; для одного запуска на кластер нужен внешний distributed lock."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Каждый экземпляр приложения (реплика в Kubernetes/Docker) независимо запустит свою `@Scheduled`-задачу, что приводит к дублированию работы, гонкам и многократному выполнению неидемпотентных операций.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Scheduled` не знает о других репликах, поэтому при N экземплярах задача выполнится N раз: отчёты сгенерируются несколько раз, письма уйдут дублями, возможны race conditions.",
+                "example": "Три пода в 8:00 одновременно запускают `generateReport()` — отчёт формируется трижды, а конкурентный доступ к ресурсам может вызвать deadlock.",
+                "when_to_apply": "Учитывать это нужно при любом горизонтальном масштабировании приложения с периодическими задачами.",
+                "edge_cases": "Решения: `ShedLock` (distributed lock через БД/Redis), `Quartz Clustered`, `Spring Batch` для batch-задач или (антипаттерн) единственный scheduler-pod без репликации.",
+                "related": "[[spring-scheduling-interview#Q12]] решение через `ShedLock`; [[spring-scheduling-interview#Q13]] `Quartz` со встроенной кластеризацией; [[spring-scheduling-interview#Q8]] идемпотентность при параллельных запусках."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Проблема в том, что cron-выражения вычисляются в разных часовых поясах на разных узлах, поэтому задача срабатывает в разное время.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная проблема — дублирование запусков на всех репликах, а не разнобой часовых поясов; пояс настраивается атрибутом `zone` и одинаков для одинаковой конфигурации.",
+                "source_of_confusion": "Часовые пояса — реальный нюанс cron, и его выдвигают на первый план вместо дублирования.",
+                "if_it_were_true": "Если бы дело было только в поясах, выравнивание зоны полностью решало бы кластерную проблему, но дубли остались бы.",
+                "how_it_should_be": "Пояс задают одинаково (`@Scheduled(zone=...)`), а от дублей защищаются distributed lock-ом."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как решить проблему с `@Scheduled` в кластере с помощью `ShedLock`?",
+          "options": [
+            {
+              "text": "`ShedLock` запускает отдельный координирующий сервис, который опрашивает все узлы по сети и сам решает, какому экземпляру выполнить задачу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ShedLock` не требует отдельного сервиса: он берёт блокировку в общем хранилище (таблица БД или Redis) через `LockProvider`, а узлы не опрашивают друг друга.",
+                "source_of_confusion": "Распределённые системы часто имеют координатор, и его додумывают для `ShedLock`.",
+                "if_it_were_true": "Если бы нужен был отдельный сервис, простую настройку ShedLock нельзя было бы свести к одной зависимости и `LockProvider`.",
+                "how_it_should_be": "ShedLock использует общий стор (`shedlock`-таблица/Redis) как точку синхронизации; координатора-сервиса нет."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`ShedLock` отключает `@Scheduled` на всех узлах, кроме одного, читая количество реплик из Kubernetes API при старте приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ShedLock` не общается с Kubernetes API и не отключает задачи заранее: победителя определяет захват блокировки в общем хранилище в момент запуска.",
+                "source_of_confusion": "Дедупликация ассоциируется с «выбором одного пода», и его связывают с оркестратором.",
+                "if_it_were_true": "Если бы ShedLock читал число реплик из k8s, он не работал бы в Docker Swarm/bare-metal, но он работает везде, где есть общий стор.",
+                "how_it_should_be": "Координация идёт через `LockProvider` (JDBC/Redis): кто первым взял лок на имя задачи, тот её и выполнит."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`ShedLock` требует, чтобы все `@Scheduled`-методы были `synchronized`, и тогда JVM-блокировка не даст задаче выполниться дважды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`synchronized` — это блокировка внутри одной JVM и не защищает между процессами; `ShedLock` использует именно межпроцессную блокировку в общем сторе.",
+                "source_of_confusion": "Слово «lock» наводит на мысль о привычном `synchronized` из Java.",
+                "if_it_were_true": "Если бы хватало `synchronized`, кластерная проблема решалась бы без БД/Redis, но разные JVM не видят мониторы друг друга.",
+                "how_it_should_be": "Защиту даёт `@SchedulerLock` + общий `LockProvider`; `synchronized` тут бесполезен между узлами."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`ShedLock` хранит лок в общем сторе (таблица `shedlock` в БД или Redis): метод помечают `@SchedulerLock(name, lockAtLeastFor, lockAtMostFor)`, и задача выполняется максимум в одном экземпляре.",
+              "correct": true,
+              "sections": {
+                "explanation": "Перед запуском узел пытается взять именованный лок в общем хранилище; берёт ровно один экземпляр, а `lockAtMostFor` страхует от вечного лока при гибели пода.",
+                "example": "`@EnableSchedulerLock(defaultLockAtMostFor=\"PT10M\")` + `@SchedulerLock(name=\"ReportJob\", lockAtLeastFor=\"PT5M\", lockAtMostFor=\"PT30M\")` над `@Scheduled`-методом, плюс `LockProvider` (JDBC/Redis).",
+                "when_to_apply": "Используют, когда приложение масштабируется горизонтально, но периодическая задача должна выполниться один раз на весь кластер.",
+                "edge_cases": "`lockAtMostFor` обязателен как защита: если узел умрёт во время задачи, лок снимется по таймауту, иначе задача застрянет навсегда; `lockAtLeastFor` гасит дубли при быстром завершении.",
+                "related": "[[spring-scheduling-interview#Q11]] почему `@Scheduled` дублируется в кластере; [[spring-scheduling-interview#Q13]] альтернатива в виде `Quartz Clustered`; [[spring-scheduling-interview#Q8]] защита неидемпотентных задач."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Quartz` отличается от `Spring Scheduling`?",
+          "options": [
+            {
+              "text": "`Quartz` поддерживает персистентность задач (JDBC job store) и нативную кластеризацию, тогда как `Spring Scheduling` хранит задачи в памяти и требует внешнего lock-провайдера (`ShedLock`) для кластера.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Quartz` — более тяжёлое enterprise-решение: задачи переживают перезапуск через JDBC job store, кластеризация встроена, есть triggers/calendars; `Spring Scheduling` проще, но без персистентности и без нативного кластера.",
+                "example": "В `Quartz` отчётная задача останется в БД после рестарта и не задвоится между узлами без доп. библиотек; в `Spring Scheduling` для того же добавляют `ShedLock`.",
+                "when_to_apply": "`Quartz` берут, когда задачи нельзя терять при перезапуске, нужна нативная кластеризация без внешнего lock или сложные календарные расписания.",
+                "edge_cases": "Для большинства микросервисов связки `Spring Scheduling` + `ShedLock` достаточно, и она существенно проще в настройке, чем `Quartz`.",
+                "related": "[[spring-scheduling-interview#Q11]] кластерная проблема `@Scheduled`; [[spring-scheduling-interview#Q12]] `ShedLock` как лёгкая альтернатива; [[spring-scheduling-interview#Q9]] динамика через `TaskScheduler`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Quartz` и `Spring Scheduling` полностью эквивалентны: `Quartz` — это просто другое имя внутреннего планировщика Spring, поставляемого с Boot.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Quartz` — отдельная библиотека (`spring-boot-starter-quartz`) со своим API `Scheduler`/`JobStore`, а `Spring Scheduling` — встроенный механизм на `@Scheduled`/`TaskScheduler`.",
+                "source_of_confusion": "Оба про расписания и интегрируются со Spring Boot, отсюда вывод об эквивалентности.",
+                "if_it_were_true": "Если бы это было одно и то же, у Quartz не было бы отдельного job store, кластеризации и триггеров.",
+                "how_it_should_be": "Это разные технологии: Quartz даёт персистентность и кластер из коробки, Spring Scheduling — лёгкие аннотации."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Главное отличие в том, что `Quartz` использует cron из 5 полей, а `Spring Scheduling` — из 6, поэтому их выражения несовместимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключевые отличия — персистентность и кластеризация, а не число cron-полей; различие синтаксиса cron вторично и не определяет выбор.",
+                "source_of_confusion": "Cron-синтаксис заметен на глаза, и его выдвигают как главное различие.",
+                "if_it_were_true": "Если бы всё сводилось к полям cron, не было бы смысла в job store, кластере и triggers/calendars у Quartz.",
+                "how_it_should_be": "Сравнивают по персистентности, кластеризации, мониторингу и сложности setup, а не по cron-синтаксису."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Spring Scheduling` поддерживает персистентность задач в БД и кластеризацию из коробки, а `Quartz` работает только в памяти и для одного узла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё ровно наоборот: персистентность (JDBC job store) и кластеризацию даёт `Quartz`, а `Spring Scheduling` держит задачи в памяти и требует `ShedLock` для кластера.",
+                "source_of_confusion": "Имя «Spring» ассоциируется с богатой функциональностью, и сильные стороны Quartz приписывают ему.",
+                "if_it_were_true": "Если бы Spring Scheduling сам персистил и кластеризовал, не было бы нужды в ShedLock и в самом Quartz.",
+                "how_it_should_be": "Персистентность и нативный кластер — это Quartz; Spring Scheduling прост и in-memory."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать `@Scheduled`-задачи?",
+          "options": [
+            {
+              "text": "Корректно протестировать `@Scheduled` можно только подождав в тесте реальное cron-время через `Thread.sleep` на длительность интервала.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод задачи тестируют напрямую как обычный метод, а ожидание выполнения делают через `timeout`/`Awaitility`, а не глухой `Thread.sleep` на весь интервал.",
+                "source_of_confusion": "Раз задача «по расписанию», кажется, что и тест обязан ждать реального срабатывания.",
+                "if_it_were_true": "Если бы требовался `sleep` на интервал, тест cron-задачи на 8:00 был бы непроходим за разумное время.",
+                "how_it_should_be": "Unit-тест зовёт метод напрямую; интеграционно используют `verify(..., timeout(...))` или `Awaitility`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Чаще всего метод задачи вызывают напрямую как обычный (unit-тест), а при интеграционной проверке используют `@SpyBean` + `verify(..., timeout(...))` или `Awaitility`; реальную задачу можно отключить через `@MockBean`/конфиг.",
+              "correct": true,
+              "sections": {
+                "explanation": "Логика задачи — обычный метод, поэтому её удобнее проверять прямым вызовом и `verify` на зависимостях; для проверки самого факта планирования применяют `@SpyBean` и ожидание с таймаутом.",
+                "example": "Unit: `job.generateReport(); verify(reportService).generate();`. Интеграция: `verify(reportJob, timeout(5000).atLeastOnce()).generateReport();` либо `await().atMost(3, SECONDS)...`.",
+                "when_to_apply": "Прямой вызов — для бизнес-логики задачи; ожидание с таймаутом/`Awaitility` — когда нужно убедиться, что планировщик действительно запускает метод.",
+                "edge_cases": "В контекстных тестах реальную задачу часто глушат (`@MockBean(classes=ReportJob.class)` или `cron=\"-\"`), чтобы она не срабатывала и не мешала проверкам.",
+                "related": "[[spring-scheduling-interview#Q1]] что включает планирование; [[spring-scheduling-interview#Q15]] отключение задачи в тестах через профиль/конфиг; [[spring-scheduling-interview#Q5]] значение `cron=\"-\"`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Для теста `@Scheduled` обязательно поднимать реальный `Quartz Scheduler`, иначе Spring не зарегистрирует задачу в тестовом контексте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quartz для этого не нужен: достаточно `@SpringBootTest` с `@EnableScheduling` или прямого вызова метода; Quartz — отдельная технология.",
+                "source_of_confusion": "Quartz ассоциируется с «серьёзным» планированием, и его считают обязательным для тестов.",
+                "if_it_were_true": "Если бы тест требовал Quartz, нельзя было бы протестировать обычную `@Scheduled`-задачу прямым вызовом.",
+                "how_it_should_be": "Тестируют прямым вызовом метода или интеграционно через `@SpyBean`/`Awaitility`, без Quartz."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Единственный способ — выставить очень маленький `fixedRate` (например, 1 мс) в основном коде, чтобы задача успела сработать во время теста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Менять боевой `fixedRate` ради теста не нужно и вредно; ожидание выполнения обеспечивают `timeout`/`Awaitility`, а логику проверяют прямым вызовом.",
+                "source_of_confusion": "Маленький интервал ускоряет срабатывание, и это выдают за единственный приём.",
+                "if_it_were_true": "Если бы это был единственный способ, любая cron-задача оставалась бы непроверяемой без правки прод-кода.",
+                "how_it_should_be": "Используют `@SpyBean` + `verify(timeout(...))` или прямой вызов метода, не трогая боевые интервалы."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как условно включать/отключать `@Scheduled`?",
+          "options": [
+            {
+              "text": "Единственный способ отключить задачу — удалить аннотацию `@Scheduled` и пересобрать приложение под нужную среду.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отключать можно без правки кода: через `cron=\"${...:-}\"`, `@ConditionalOnProperty` или `@Profile`; пересборка не нужна.",
+                "source_of_confusion": "Удаление аннотации — самый «очевидный» способ, и его принимают за единственный.",
+                "if_it_were_true": "Если бы только удаление работало, не было бы трюка `cron=\"-\"` и условных аннотаций.",
+                "how_it_should_be": "Используют конфигурацию (`cron=\"-\"`), `@ConditionalOnProperty` или `@Profile` для включения/отключения без перекомпиляции."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Достаточно установить значение `fixedRate=0`, и Spring пропустит регистрацию такой задачи как отключённой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`fixedRate=0` не отключает задачу — это невалидное значение интервала; для отключения используют `cron=\"-\"`, `@ConditionalOnProperty` или `@Profile`.",
+                "source_of_confusion": "Ноль интуитивно читается как «не выполнять», отсюда ожидание отключения.",
+                "if_it_were_true": "Если бы `fixedRate=0` отключал задачу, не понадобился бы специальный трюк `cron=\"-\"`.",
+                "how_it_should_be": "Отключают через `cron=\"-\"` (никогда не запускается), условную регистрацию бина или профиль."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Гибко управлять можно так: `cron=\"${reporting.cron:-}\"` (значение `-` = никогда), либо `@ConditionalOnProperty` на бине-задаче, либо `@Profile(\"!test\")`, чтобы не запускать задачу в нужных средах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три подхода: значение cron из конфига с дефолтом `-` (задача не запускается), условная регистрация всего бина по свойству, или профиль — выбирают по гранулярности и удобству эксплуатации.",
+                "example": "`@Scheduled(cron=\"${reporting.cron:-}\")` отключается заданием `reporting.cron: \"-\"` в dev; `@ConditionalOnProperty(name=\"reporting.enabled\", havingValue=\"true\")`; `@Profile(\"!test\")` для класса-задачи.",
+                "when_to_apply": "Конфигурацию через `cron=\"-\"` удобно менять по средам без релиза; `@ConditionalOnProperty`/`@Profile` — когда нужно убрать сам бин в определённых окружениях.",
+                "edge_cases": "`matchIfMissing=false` в `@ConditionalOnProperty` означает «по умолчанию выключено»; а `cron=\"-\"` отключает конкретный метод, не убирая бин целиком.",
+                "related": "[[spring-scheduling-interview#Q5]] вынос cron в конфигурацию; [[spring-scheduling-interview#Q3]] смысл значения `cron=\"-\"`; [[spring-scheduling-interview#Q14]] отключение задачи в тестах."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Включение/отключение делается атрибутом `@Scheduled(enabled=false)`, который Spring читает при регистрации задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `@Scheduled` нет атрибута `enabled`; управляют через `cron=\"-\"`, `@ConditionalOnProperty` или `@Profile`.",
+                "source_of_confusion": "Многие аннотации Spring имеют флаг включения, и его по аналогии ждут у `@Scheduled`.",
+                "if_it_were_true": "Если бы атрибут `enabled` существовал, не понадобились бы трюк `cron=\"-\"` и условные аннотации.",
+                "how_it_should_be": "Отключают конфигурацией (`cron=\"-\"`) или условной регистрацией бина; флага `enabled` в `@Scheduled` нет."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типичные ошибки при работе с `@Scheduled`?",
+          "options": [
+            {
+              "text": "Основная ошибка — что Spring-cron состоит из 5 полей как в Linux, поэтому выражения с секундами всегда падают и их надо записывать без первого поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальная ошибка обратная: Spring-cron имеет 6 полей с секундами в начале, и падают как раз 5-польные выражения; типичных причин много больше одной.",
+                "source_of_confusion": "Привычка к Linux cron из 5 полей провоцирует именно эту путаницу.",
+                "if_it_were_true": "Если бы Spring ждал 5 полей, валидные примеры вроде `0 0 8 * * *` не работали бы.",
+                "how_it_should_be": "Пишут 6 полей (первое — секунды); а к типичным ошибкам относят и забытый `@EnableScheduling`, и не-`public` метод, и кластерные дубли."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Главная ошибка — что при долгом выполнении `fixedRate` накапливает очередь отложенных запусков и они лавинообразно выполняются после завершения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Очередь запусков не накапливается: при одном потоке Spring дожидается завершения и запускает следующий раз, без лавины; реальная проблема — задержка («голодание»), а не накопление.",
+                "source_of_confusion": "Слово `fixedRate` («фиксированный темп») наводит на мысль о компенсации пропущенных тиков.",
+                "if_it_were_true": "Если бы запуски копились, долгая задача порождала бы шквал параллельных выполнений, но поток один.",
+                "how_it_should_be": "При долгом выполнении следующий запуск просто откладывается; для параллельности нужен `@Async`/больший пул, а типичных ошибок — целый чек-лист."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Самая частая проблема — self-invocation: `@Scheduled`-метод не сработает, если его не вызвать из другого метода того же бина.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для `@Scheduled` self-invocation не проблема: задачу вызывает планировщик, а не другой метод бина, поэтому ручной вызов не нужен.",
+                "source_of_confusion": "Self-invocation реально ломает `@Transactional`/`@Async` через прокси, и это переносят на `@Scheduled`.",
+                "if_it_were_true": "Если бы `@Scheduled`-метод требовал вызова извне, он не был бы «задачей по расписанию».",
+                "how_it_should_be": "Планировщик сам вызывает `@Scheduled`-метод; типичные ошибки — забытый `@EnableScheduling`, не-`public` метод, отсутствие lock в кластере."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Типичные ошибки: забыт `@EnableScheduling` или `@Component`; метод не `public`; нет distributed lock в кластере (дубли); долгая задача «голодает» при одном потоке; неверный cron (6 полей, первое — секунды).",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство «задача не запускается» лечится наличием `@EnableScheduling`, стереотипа на классе и `public`-метода; долгое выполнение требует пула, а кластер — `ShedLock`; cron в Spring — 6 полей.",
+                "example": "Симптом «8:00, а отчёт не сформировался» часто означает забытый `@EnableScheduling`; «отчёт сформирован трижды» — отсутствие distributed lock на трёх подах.",
+                "when_to_apply": "Чек-лист применяют при диагностике любой неработающей или дублирующейся `@Scheduled`-задачи.",
+                "edge_cases": "Нюанс: `fixedRate` при долгой задаче не накапливает очередь (Spring ждёт завершения), а self-invocation для `@Scheduled` не проблема — задачу вызывает планировщик, а не другой метод бина.",
+                "related": "[[spring-scheduling-interview#Q1]] роль `@EnableScheduling`; [[spring-scheduling-interview#Q6]] голодание при одном потоке; [[spring-scheduling-interview#Q11]] кластерное дублирование."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
