@@ -509,6 +509,7 @@
     }
     initCollapsibleSidebar();
     initDangerousFormGuard();
+    initSubmitOnceGuard();
     initFlashcardShortcuts();
     initKeyboardHelp();
   });
@@ -1604,6 +1605,35 @@ function initDangerousFormGuard() {
         e.preventDefault();
       }
     });
+  });
+}
+
+// Защита от двойной отправки plain server-POST форм. AJAX-форма ответа
+// (#interview-form) НЕ входит — у неё собственный guard (disable во время
+// fetch). Главный кейс — /flashcard-grade: быстрый двойной клик/тап (или
+// два быстрых нажатия клавиш 1–4) иначе отправил бы оценку дважды и сдвинул
+// SM-2 фазу карточки на два шага. Делегированный слушатель ловит и
+// динамически добавленные формы.
+function initSubmitOnceGuard() {
+  const NAV_FORM_SELECTOR = '#session-form, form[action$="/flashcard-grade"], form[action$="/flashcard-reveal"]';
+  document.addEventListener('submit', (e) => {
+    const form = e.target;
+    if (!(form instanceof HTMLFormElement) || !form.matches(NAV_FORM_SELECTOR)) return;
+    if (form.dataset.submitted === '1') { e.preventDefault(); return; }
+    form.dataset.submitted = '1';
+    const controls = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+    // Отключаем на СЛЕДУЮЩЕМ тике: к этому моменту браузер уже сериализовал
+    // форму с name/value нажатой кнопки (grade=N). Синхронный disable выкинул
+    // бы grade из тела POST.
+    setTimeout(() => controls.forEach(c => { c.disabled = true; c.setAttribute('aria-busy', 'true'); }), 0);
+    // Подстраховка: если навигация не произошла (ошибка сервера, форма
+    // осталась на странице) — вернуть форму в рабочее состояние, чтобы
+    // пользователь не застрял с заблокированными кнопками.
+    setTimeout(() => {
+      if (!form.isConnected) return;
+      form.dataset.submitted = '';
+      controls.forEach(c => { c.disabled = false; c.removeAttribute('aria-busy'); });
+    }, 5000);
   });
 }
 
