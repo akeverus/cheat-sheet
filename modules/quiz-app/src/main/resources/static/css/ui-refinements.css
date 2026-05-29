@@ -100,3 +100,22 @@ html {
 .focus-question {
     text-wrap: balance;
 }
+
+/* --- Уважать prefers-reduced-motion ----------------------------------
+   В styles.css ~50 transition/animation, но настройка ОС «уменьшить
+   движение» не учитывалась. Для вестибулярно-чувствительных пользователей
+   анимации буквально «тяжелы для глаз» (укачивание, дезориентация). Гасим
+   движение ТОЛЬКО для тех, кто явно включил настройку — на остальных ноль
+   влияния. Длительность 0.01ms (а не 0), чтобы события transitionend/
+   animationend всё-таки срабатывали и JS, завязанный на них, не ломался.
+   Канонический a11y-reset (Andy Bell / a11y-project). */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
