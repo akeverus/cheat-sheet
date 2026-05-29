@@ -188,15 +188,25 @@ public class McqJsonLoader {
         for (McqSeedBlock block : question.blocks()) {
             for (McqSeedOption opt : block.options()) {
                 desired.add(new AnswerOptionCreate(
-                        opt.label() + ". " + opt.text(),
+                        stripNul(opt.label() + ". " + opt.text()),
                         opt.correct(),
                         opt.order(),
                         OptionSource.MARKDOWN.name(),
-                        renderExplanation(opt),
+                        stripNul(renderExplanation(opt)),
                         1, 2, block.blockIdx()));
             }
         }
         return desired;
+    }
+
+    /**
+     * Убирает NUL-байты (0x00) из текста. PostgreSQL не хранит 0x00 и молча
+     * обрезает строку на нём (теряя хвост explanation). Несовпадение
+     * desired(с NUL) vs stored(обрезанный) ломало идемпотентность — вариант
+     * переинсёртился на каждом старте. Нормализуем до сравнения и вставки.
+     */
+    private static String stripNul(String s) {
+        return s == null ? null : s.replace(" ", "");
     }
 
     /**

@@ -98,17 +98,24 @@ class McqJsonLoaderIntegrationTest {
         loader.loadForTopic("programming", "java-strings");
 
         long qId = questionRepository.findIdByTopicAndQuestionNumber(TOPIC, 1).orElseThrow();
-        // Портим текст одной опции в БД — теперь содержимое != seed.
+        List<Long> q1IdsBefore = answerOptionRepository.findByQuestionId(qId).stream()
+                .map(AnswerOption::id).toList();
+        // Портим текст одной опции q1 в БД — теперь содержимое q1 != seed.
         jdbcTemplate.update(
                 "UPDATE answer_options SET option_text = ? WHERE question_id = ? AND display_order = 0",
                 "СТАРЫЙ УСТАРЕВШИЙ ТЕКСТ", qId);
 
         McqLoadResult reload = loader.loadForTopic("programming", "java-strings");
 
-        // Изменение поймано → переинсёрт всех 12 опций.
-        assertThat(reload.optionsInserted()).isEqualTo(12);
+        // Контракт: изменённый вопрос ПЕРЕИНСЁРЧЕН. Проверяем q1 точечно (его id
+        // вариантов сменились = delete+insert), а не точный общий счётчик —
+        // @SpringBootTest-методы делят одну БД без TRUNCATE, и общий inserted
+        // зависит от порядка тестов. Само число — «переинсёрчено хотя бы q1».
+        assertThat(reload.optionsInserted()).isGreaterThanOrEqualTo(4);
         List<AnswerOption> options = answerOptionRepository.findByQuestionId(qId);
         assertThat(options).hasSize(4);
+        List<Long> q1IdsAfter = options.stream().map(AnswerOption::id).toList();
+        assertThat(q1IdsAfter).doesNotContainAnyElementsOf(q1IdsBefore); // q1 реально переинсёрчен
         assertThat(options.stream().map(AnswerOption::optionText))
                 .noneMatch(t -> t.contains("СТАРЫЙ УСТАРЕВШИЙ ТЕКСТ"));
         assertThat(options.get(0).optionText()).startsWith("A. ");
