@@ -1,10 +1,10 @@
 ---
 title: "ULTRATHINK v5 — exhaustive per-file audit plan (всё с нуля)"
 description: "Полный план аудита всех 304 interview-файлов. Прогресс сброшен в ноль. Детализированные критерии по 8 группам (A-H) с конкретными метриками."
-updated: "2026-05-28"
+updated: "2026-05-29"
 status: "active"
 audit_version: 5
-progress: "MCQ-сидеры: 103/304 .md имеют выровненный JSON; 201 NO-JSON в работе (Phase 2). Spring-кластер (28 тем) генерируется батчем."
+progress: "MCQ-сидеры: 136/306 .md имеют выровненный JSON; 170 NO-JSON в работе (Phase 2). Spring-кластер (28) готов. Security: 4/10 закоммичены (mtls, secrets-management, supply-chain-security, zero-trust), остальные 6 генерируются."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -598,13 +598,13 @@ Pass: `OK FILE.md`.
 | 260 | `security` | `application-security` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 261 | `security` | `authentication-authorization-patterns` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 262 | `security` | `jwt` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 263 | `security` | `mtls` | 20 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 263 | `security` | `mtls` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 264 | `security` | `oauth2` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 265 | `security` | `owasp-top10` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 266 | `security` | `secrets-management` | 22 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 267 | `security` | `supply-chain-security` | 24 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 266 | `security` | `secrets-management` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
+| 267 | `security` | `supply-chain-security` | 24 | 24 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 268 | `security` | `tls-ssl` | 45 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 269 | `security` | `zero-trust` | 19 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 269 | `security` | `zero-trust` | 19 | 19 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 270 | `system-design` | `design-chat-system` | 21 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 271 | `system-design` | `design-dropbox` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 272 | `system-design` | `design-elevator-oo` | 26 | 26 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
