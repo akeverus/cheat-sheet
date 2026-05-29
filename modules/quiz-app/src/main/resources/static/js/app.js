@@ -376,6 +376,7 @@
       if (btn.dataset.loaded === 'true') return;
       btn.disabled = true;
       btn.setAttribute('aria-busy', 'true');
+      btn.setAttribute('aria-expanded', 'true');
       btn.textContent = EXTRA_ANALYSIS_BUTTON_LOADING_TEXT;
       container.classList.remove('hidden');
       container.innerHTML = '';
@@ -1495,6 +1496,7 @@
         loaded = true;
         extraAnalysisBtn.disabled = true;
         extraAnalysisBtn.setAttribute('aria-busy', 'true');
+        extraAnalysisBtn.setAttribute('aria-expanded', 'true');
         extraAnalysisBtn.textContent = EXTRA_ANALYSIS_BUTTON_LOADING_TEXT;
         try {
           const requests = [];
