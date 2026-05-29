@@ -66,3 +66,37 @@
 html {
     scrollbar-gutter: stable both-edges;
 }
+
+/* --- Длинные неразрывные токены не выталкивают раскладку ---------------
+   Технические ответы содержат длинные идентификаторы, имена пакетов и URL
+   (напр. AbstractSingletonProxyFactoryBean, https://…/very/long/path).
+   Без переноса такой токен вылезает за вьюпорт на узком окне и вызывает
+   горизонтальный скролл всей страницы. Проверено в браузере: токен ~900px
+   в абзаце шириной 226px → overflow. `break-word` переносит ТОЛЬКО при
+   реальном переполнении и не трогает обычный текст. Применяем к прозе
+   разбора, тексту вариантов и формулировке вопроса; код (white-space:pre)
+   не затрагивается — он скроллится отдельно. */
+.markdown-content,
+.options label,
+.focus-question {
+    overflow-wrap: break-word;
+}
+
+/* --- text-wrap: pretty — меньше «висячих» слов на последней строке -----
+   Современный best-practice для длинной прозы: браузер балансирует разрывы,
+   убирая одинокое слово на последней строке (rivers/orphans). Не меняет
+   ширину блока, только распределение слов → текст ровнее и легче для глаз.
+   Деградирует gracefully (старые браузеры игнорируют). Заголовки внутри
+   разбора балансируем (`balance`), чтобы H2/H3 не ломались 1 словом вниз. */
+.answer.markdown-content > p,
+.option-explanation.markdown-content > p,
+.flashcard-answer .answer.markdown-content > p {
+    text-wrap: pretty;
+}
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.focus-question {
+    text-wrap: balance;
+}
