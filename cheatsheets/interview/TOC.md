@@ -17,7 +17,7 @@ updated: "2026-04-20"
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **301**.
+Всего файлов: **302**.
 
 ## Быстрые маршруты подготовки
 
@@ -413,6 +413,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `OO Design: Elevator System`](system-design/design-elevator-oo-interview.md) — `26` вопросов
 - [Вопросы на собеседовании: `OO Design: Vending Machine`](system-design/design-vending-machine-oo-interview.md) — `24` вопроса
 - [Вопросы на собеседовании: `Design Uber/Lyft`](system-design/design-uber-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `Доставка маркетплейса (Ozon / Яндекс Маркет / Wildberries)`](system-design/design-ecommerce-delivery-interview.md) — `36` вопросов
 
 ## testing
 
