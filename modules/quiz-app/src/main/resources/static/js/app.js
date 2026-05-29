@@ -216,11 +216,15 @@
           container.classList.remove('hidden');
           container.style.display = 'block';
 
+          // Уровень из ответа сервера: валидируем, иначе icons[level-1]===undefined
+          // отрендерил бы текст «undefined» вместо иконки.
+          const lvl = Number(data.level);
+          const safeLvl = Number.isInteger(lvl) && lvl >= 1 && lvl <= icons.length ? lvl : 1;
           const item = document.createElement('div');
-          item.className = 'hint-item level-' + data.level;
+          item.className = 'hint-item level-' + safeLvl;
           const iconSpan = document.createElement('span');
           iconSpan.className = 'hint-icon';
-          iconSpan.textContent = icons[data.level - 1];
+          iconSpan.textContent = icons[safeLvl - 1];
           const textSpan = document.createElement('span');
           textSpan.className = 'hint-text';
           textSpan.textContent = data.hint;
@@ -664,7 +668,9 @@
   }
 
   function escapeHtml(str) {
-    if (!str) return '';
+    // Только null/undefined → пусто. Иначе falsy-но-значимые 0/false
+    // (например, индекс шага трассировки 0) схлопывались в пустую строку.
+    if (str == null) return '';
     return String(str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -1257,7 +1263,7 @@
     feedbackDiv.after(confidenceDiv);
 
     let confidenceSubmitted = false;
-    const questionId = form.querySelector('input[name="questionId"]').value;
+    const questionId = (form.querySelector('input[name="questionId"]') || {}).value || '';
     confidenceDiv.querySelectorAll('.confidence-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         if (confidenceSubmitted) return;
@@ -1458,7 +1464,7 @@
 
   function showResult(data) {
     const isCorrect = data.correct;
-    const questionId = form.querySelector('input[name="questionId"]').value;
+    const questionId = (form.querySelector('input[name="questionId"]') || {}).value || '';
 
     applyOptionStyles(data);
     submitBtn.classList.add('hidden');
