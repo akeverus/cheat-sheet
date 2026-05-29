@@ -88,7 +88,12 @@ class AnswerApiServiceTest {
                 .thenReturn(context);
         when(facade.findRelated(questionId, "java"))
                 .thenReturn(List.of(new RelatedQuestion(900L, "Похожий вопрос", "java", 75.0)));
-        when(facade.renderMarkdown(question.answerMarkdown())).thenReturn("<p>Ответ</p>");
+        // Эхо-стаб: answerMarkdown ("Ответ") и explanation каждого варианта
+        // ("Верно"/"Неверно") теперь рендерятся через facade.renderMarkdown.
+        when(facade.renderMarkdown(any())).thenAnswer(inv -> {
+            Object md = inv.getArgument(0);
+            return md == null ? null : "<p>" + md + "</p>";
+        });
 
         AnswerResponse body = service.buildAnswerResponse(command, session);
 
@@ -141,7 +146,12 @@ class AnswerApiServiceTest {
         when(sessionSupport.processAnswer(any(InterviewSessionSupport.AnswerSubmission.class), eq(session)))
                 .thenReturn(context);
         when(facade.findRelated(questionId, "java")).thenReturn(List.of());
-        when(facade.renderMarkdown(question.answerMarkdown())).thenReturn("<p>Ответ</p>");
+        // Эхо-стаб: answerMarkdown ("Ответ") и explanation каждого варианта
+        // ("Верно"/"Неверно") теперь рендерятся через facade.renderMarkdown.
+        when(facade.renderMarkdown(any())).thenAnswer(inv -> {
+            Object md = inv.getArgument(0);
+            return md == null ? null : "<p>" + md + "</p>";
+        });
 
         AnswerResponse body = service.buildAnswerResponse(command, session);
 
@@ -177,7 +187,12 @@ class AnswerApiServiceTest {
         when(sessionSupport.processAnswer(any(InterviewSessionSupport.AnswerSubmission.class), eq(session)))
                 .thenReturn(context);
         when(facade.findRelated(questionId, "java")).thenReturn(List.of());
-        when(facade.renderMarkdown(question.answerMarkdown())).thenReturn("<p>Ответ</p>");
+        // Эхо-стаб: answerMarkdown ("Ответ") и explanation каждого варианта
+        // ("Верно"/"Неверно") теперь рендерятся через facade.renderMarkdown.
+        when(facade.renderMarkdown(any())).thenAnswer(inv -> {
+            Object md = inv.getArgument(0);
+            return md == null ? null : "<p>" + md + "</p>";
+        });
 
         ResponseEntity<AnswerResponse> response = service.toHttpResponse(command, session);
 
