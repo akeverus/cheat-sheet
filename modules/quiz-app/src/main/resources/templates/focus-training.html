@@ -39,14 +39,28 @@
             </div>
         </div>
 
-        <div th:if="${flashcardMode}" class="flashcard-phase">
+        <div th:if="${flashcardMode}" class="flashcard-phase"
+             th:with="sessionFlashcard=${interviewSession != null and interviewSession.mode != null and interviewSession.mode.name() == 'FLASHCARD'}">
             <div class="flashcard-badge">Флешкарта — вспомни ответ до раскрытия</div>
-            <div th:if="${!flashcardRevealed}">
+
+            <!-- Browse / вне FLASHCARD-сессии: серверный reveal невозможен (нет
+                 активной flashcard-сессии для SM-2), поэтому раскрываем ответ на
+                 клиенте — без POST и без потери темы/вопроса (см. browse-reveal в app.js). -->
+            <div th:if="${!sessionFlashcard}" class="flashcard-browse">
+                <button type="button" id="browse-reveal-btn" class="flashcard-reveal-btn"
+                        aria-expanded="false" aria-controls="browse-answer">Показать ответ</button>
+                <div id="browse-answer" class="flashcard-answer hidden">
+                    <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
+                </div>
+            </div>
+
+            <!-- Активная FLASHCARD-сессия: серверный reveal двигает SM-2 фазу. -->
+            <div th:if="${sessionFlashcard and !flashcardRevealed}">
                 <form method="post" th:action="@{/flashcard-reveal}">
                     <button type="submit" class="flashcard-reveal-btn">Показать ответ</button>
                 </form>
             </div>
-            <div th:if="${flashcardRevealed}" class="flashcard-answer">
+            <div th:if="${sessionFlashcard and flashcardRevealed}" class="flashcard-answer">
                 <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
                 <div class="flashcard-grade-buttons" role="group" aria-labelledby="flashcard-grade-label">
                     <span class="flashcard-grade-label" id="flashcard-grade-label">Насколько уверенно ты ответил?</span>
@@ -116,6 +130,6 @@
     </section>
 </main>
 
-<script th:src="@{/js/app.js(v=3)}"></script>
+<script th:src="@{/js/app.js(v=4)}"></script>
 </body>
 </html>

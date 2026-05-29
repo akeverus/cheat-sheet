@@ -488,6 +488,7 @@
     if (toggleCodeBtn) {
       toggleCodeBtn.addEventListener('click', () => window.toggleCode());
     }
+    initBrowseFlashcardReveal();
     initStreakBar();
     initHintButton();
     initShuffleTopic();
@@ -1558,6 +1559,23 @@
       btn.setAttribute('aria-expanded', String(!hidden));
     }
   };
+
+  // Client-side reveal флешкарты в browse-режиме (вне FLASHCARD-сессии).
+  // Серверный POST /flashcard-reveal здесь не работает (нет сессии) и терял бы
+  // тему через redirect:/. Ответ уже отрендерен сервером и лежит скрытым —
+  // просто показываем его и дорисовываем mermaid/код. Никакой навигации.
+  function initBrowseFlashcardReveal() {
+    const btn = document.getElementById('browse-reveal-btn');
+    const answer = document.getElementById('browse-answer');
+    if (!btn || !answer) return;
+    btn.addEventListener('click', () => {
+      answer.classList.remove('hidden');
+      btn.setAttribute('aria-expanded', 'true');
+      btn.disabled = true;
+      btn.textContent = 'Ответ показан';
+      renderDynamicContent(answer);
+    });
+  }
 
   window.submitAnswer = function submitAnswer() {
     const activeForm = document.getElementById('interview-form');

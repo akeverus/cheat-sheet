@@ -86,7 +86,12 @@ public class FocusTrainingPageService {
             if (question.question().diagramMermaid() != null && !question.question().diagramMermaid().isBlank()) {
                 diagram = question.question().diagramMermaid();
             }
-            if (studyLearnPhase || flashcardRevealed) {
+            // studyAnswerHtml нужен также для client-side reveal флешкарты вне
+            // FLASHCARD-сессии (browse по /?topic=X или вопрос без вариантов):
+            // там серверный POST /flashcard-reveal не сработает (нет сессии), и
+            // ответ раскрывается на клиенте — значит HTML должен быть в странице.
+            boolean clientReveal = flashcardMode && !sessionFlashcardMode;
+            if (studyLearnPhase || flashcardRevealed || clientReveal) {
                 studyAnswerHtml = facade.renderMarkdown(question.question().answerMarkdown());
             }
             difficulty = questionStatsRepository.getDifficulty(question.question().id());
