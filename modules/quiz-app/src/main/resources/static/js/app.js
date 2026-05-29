@@ -1634,10 +1634,39 @@ function initKeyboardHelp() {
     '<button type="button" class="kbd-help-close" aria-label="Закрыть">×</button>' +
     '</div>';
   document.body.appendChild(overlay);
-  const close = () => overlay.classList.add('hidden');
-  const open = () => overlay.classList.remove('hidden');
+  const closeBtn = overlay.querySelector('.kbd-help-close');
+  // Фокус-менеджмент модалки (role=dialog/aria-modal): при открытии уводим
+  // фокус внутрь и запоминаем откуда пришли; при закрытии возвращаем обратно;
+  // Tab зациклен внутри (focus-trap), чтобы фокус не уходил под оверлей.
+  let lastFocused = null;
+  const close = () => {
+    if (overlay.classList.contains('hidden')) return;
+    overlay.classList.add('hidden');
+    if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+    lastFocused = null;
+  };
+  const open = () => {
+    lastFocused = document.activeElement;
+    overlay.classList.remove('hidden');
+    closeBtn.focus();
+  };
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-  overlay.querySelector('.kbd-help-close').addEventListener('click', close);
+  closeBtn.addEventListener('click', close);
+  overlay.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const focusable = overlay.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
   document.addEventListener('keydown', (event) => {
     if (event.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) return;
     if (event.key === '?') {
