@@ -4,7 +4,7 @@ description: "Полный план аудита всех 304 interview-файл
 updated: "2026-05-29"
 status: "active"
 audit_version: 5
-progress: "MCQ-сидеры: 142/306 .md имеют выровненный JSON; 164 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10). Дальше: programming-languages (36), architecture (17), testing (14)."
+progress: "MCQ-сидеры: 149/306 .md имеют выровненный JSON; 157 NO-JSON в работе (Phase 2). Готовы: Spring (28), Security (10/10). Architecture в работе (7/17 wave A+ddd done, wave B генерится). Дальше: testing (14), databases (12), devops (12)."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -387,15 +387,15 @@ Pass: `OK FILE.md`.
 | 49 | `api` | `openapi-swagger` | 33 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 50 | `api` | `rest-maturity` | 17 | 17 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ THIN |
 | 51 | `api` | `websocket` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 52 | `architecture` | `api-gateway` | 38 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 53 | `architecture` | `bff-pattern` | 17 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 54 | `architecture` | `caching-strategies` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 55 | `architecture` | `cap-theorem` | 41 | — | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 52 | `architecture` | `api-gateway` | 38 | 38 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
+| 53 | `architecture` | `bff-pattern` | 17 | 17 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
+| 54 | `architecture` | `caching-strategies` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 55 | `architecture` | `cap-theorem` | 41 | 41 | ✅ | ❌ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 56 | `architecture` | `cdn` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 57 | `architecture` | `clean-architecture` | 41 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 58 | `architecture` | `consistency-patterns` | 31 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 57 | `architecture` | `clean-architecture` | 41 | 41 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 58 | `architecture` | `consistency-patterns` | 31 | 31 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 59 | `architecture` | `cqrs-event-sourcing` | 41 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 60 | `architecture` | `ddd` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 60 | `architecture` | `ddd` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 61 | `architecture` | `distributed-systems` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 62 | `architecture` | `dns` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 63 | `architecture` | `edge-computing` | 18 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
