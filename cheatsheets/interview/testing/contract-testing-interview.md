@@ -13,9 +13,9 @@ aliases:
   - "Contract Testing interview"
   - "Contract Testing собеседование"
 prerequisites:
-  - "[[contract-testing]]"
+  - "[contract-testing](contract-testing-interview.md)"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-27"
 ---
 # Вопросы на собеседовании: `Contract Testing`
 
@@ -134,13 +134,6 @@ updated: "2026-04-25"
 
 **На собеседовании** важно подчеркнуть: контрактное тестирование — это не про проверку бизнес-логики, а про проверку **совместимости формата** и предположений, которые делают consumer'ы о provider'е.
 
-
-> [!mcq]
-> - [ ] Contract testing — это полная замена E2E-тестов: можно отказаться от end-to-end | ❌ ПОСЛЕДСТВИЕ: contract test проверяет только формат API между парой сервисов, не user journey; полный отказ от E2E приведёт к пропуску багов в бизнес-сценариях
-> - [x] Техника тестирования интеграций, при которой проверяется соблюдение контракта (формат запроса/ответа, HTTP-статусы, обязательные поля) между consumer и provider в изоляции, без поднятия полной системы. Ловит integration hell — изменение поля `userId → user_id` упадёт на CI provider до деплоя, а не в production | ✓ ПРИМЕНЯТЬ: в микросервисной архитектуре между независимыми командами; для безопасных breaking changes; для независимого деплоя 📋 ПРАВИЛО: contract = совместимость формата, не бизнес-логика 🔗 См. Q2
-> - [ ] Это просто переименованные integration-тесты с использованием WireMock | ❌ ПОСЛЕДСТВИЕ: WireMock — реализация моков, contract testing — методология; путаница приведёт к ложному ощущению что любой mock = contract test (нет верификации со стороны provider)
-> - [ ] Contract testing проверяет бизнес-логику обоих сервисов одновременно | ❌ ПОСЛЕДСТВИЕ: contract проверяет ФОРМАТ, не бизнес-логику; перегрузка contract тестами бизнес-сценариями делает их хрупкими и медленными
-
 ## Q2. (!) Что такое Consumer-Driven Contract Testing (CDCT)?
 
 **Consumer-Driven Contract Testing** (`CDCT`) — подход, при котором **consumer** определяет свои ожидания к provider'у, а provider обязан соответствовать этим ожиданиям. Автор идеи — Ian Robinson, подход популяризировал Martin Fowler.
@@ -177,13 +170,6 @@ Contract задаёт **только то, что consumer реально исп
 - Если поле никто не использует, его можно удалить без риска сломать кого-то.
 - Формат согласован через взаимную верификацию, а не через одностороннюю документацию.
 
-
-> [!mcq]
-> - [x] Подход, при котором consumer определяет свои ожидания к provider, а provider верифицирует. Consumer пишет тест с mock provider, mock генерирует pact-файл (JSON), pact публикуется в Pact Broker, provider скачивает pact и replay'ит запросы против реального API, сверяя ответы. Контракт фиксирует ТОЛЬКО реально используемые поля — добавление новых полей не ломает consumer | ✓ ПРИМЕНЯТЬ: внутри организации с известным набором consumer'ов; для безопасного добавления полей; для независимого деплоя 📋 ПРАВИЛО: consumer задаёт, provider подтверждает; добавление новых полей safe by design 🔗 См. Q3
-> - [ ] Провайдер пишет контракт первым, а consumer'ы вынуждены к нему адаптироваться | ❌ ПОСЛЕДСТВИЕ: это producer-driven (OpenAPI, Spring Cloud Contract), не CDCT; путаница приведёт к неверному дизайну — забыть, что consumer задаёт ожидания
-> - [ ] Тестирование через E2E pipeline где поднимается весь стек | ❌ ПОСЛЕДСТВИЕ: путаница с E2E; CDCT — изолированное тестирование пары consumer-provider, без поднятия всего стека (что и даёт скорость и надёжность)
-> - [ ] CDCT требует синхронных релизов consumer и provider в одно время | ❌ ПОСЛЕДСТВИЕ: ровно наоборот — CDCT enables independent deployments через `can-i-deploy`; путаница приведёт к лишним deploy windows
-
 ## Q3. В чём разница между consumer-driven и provider-driven (schema-first) подходами?
 
 | Аспект | Consumer-Driven (Pact) | Provider-Driven / Schema-First (OpenAPI, Spring Cloud Contract по умолчанию) |
@@ -200,13 +186,6 @@ Contract задаёт **только то, что consumer реально исп
 - **Consumer-driven** хорош внутри одной организации, где известно, кто конкретно использует API, и важно минимизировать breaking changes для действующих клиентов.
 
 `Spring Cloud Contract` формально поддерживает оба подхода, но чаще используется как producer-driven.
-
-
-> [!mcq]
-> - [ ] Consumer-driven (Pact) фиксирует ВСЮ схему API, как и schema-first | ❌ ПОСЛЕДСТВИЕ: ровно противоположное — Pact фиксирует только реально используемые поля; путаница приведёт к хрупким contract'ам с лишними полями
-> - [ ] Они взаимоисключающие — выбор «или Pact, или OpenAPI» | ❌ ПОСЛЕДСТВИЕ: на практике они дополняют друг друга — OpenAPI для документации/публичности, Pact для безопасных интеграций внутри организации; выбор «или-или» лишит части преимуществ
-> - [x] Consumer-driven (Pact): consumer задаёт контракт, фиксируются только реально используемые поля, источник истины — pact-файлы от каждого consumer'а, добавление новых полей не ломает consumer'ов; provider-driven/schema-first (OpenAPI, Spring Cloud Contract по умолчанию): provider задаёт контракт, фиксируется вся схема, источник истины — единый spec-файл, добавление новых полей может потребовать обновления schema. CDC лучше внутри организации с известными consumer'ами; schema-first — для публичных API или unknown consumer'ов | ✓ ПРИМЕНЯТЬ: CDC для внутренних интеграций с независимым деплоем, schema-first для публичных API и документации 📋 ПРАВИЛО: внутри org с known consumers → CDC; публичный API → schema-first 🔗 См. Q4
-> - [ ] В schema-first нет понятия contract testing — это просто документация | ❌ ПОСЛЕДСТВИЕ: schema-first есть исполняемое testing (Schemathesis, Dredd, Prism); считая её «просто документацией» — пропускаешь валидацию реализации против schema
 
 ## Q4. Где контрактное тестирование находится в тестовой пирамиде?
 
@@ -231,13 +210,6 @@ graph TB
 
 **Цель** — резко сократить количество дорогих `E2E`-тестов, перенеся проверку интеграций на contract-уровень. Подробнее про пирамиду — в [стратегиях тестирования](test-strategies-interview.md).
 
-
-> [!mcq]
-> - [ ] На самой вершине, выше E2E — это самый дорогой тип тестов | ❌ ПОСЛЕДСТВИЕ: путаница с E2E; contract тесты быстрее E2E (секунды vs минуты) и десятки штук, не единицы; вершина — E2E
-> - [ ] В самом основании, заменяет unit-тесты | ❌ ПОСЛЕДСТВИЕ: contract не покрывает бизнес-логику; полная замена unit-тестов — пропустит логические баги; роль другая
-> - [x] Между unit и integration слоями (иногда рядом с integration): быстрее integration (нет реальной сети, на consumer-side всё работает с mock), но медленнее unit (поднимается mock-сервер, пишется файл). По количеству — десятки-сотни contract-тестов покрывают большинство интеграций. Цель — резко сократить количество дорогих E2E-тестов, перенося проверку интеграций на contract-уровень | ✓ ПРИМЕНЯТЬ: вместо части integration (с WireMock) и E2E когда тестируется именно межсервисный контракт; десятки на каждую пару consumer-provider 📋 ПРАВИЛО: unit (тысячи) > integration (сотни) > contract (десятки-сотни) > E2E (единицы) 🔗 См. Q5
-> - [ ] На том же уровне что и E2E — оба тестируют интеграции через всю систему | ❌ ПОСЛЕДСТВИЕ: contract не запускает всю систему (это в этом и есть его сила); путаница с E2E лишит преимущества по скорости
-
 ## Q5. Какие инструменты контрактного тестирования существуют?
 
 | Инструмент | Подход | Язык | Особенности |
@@ -250,13 +222,6 @@ graph TB
 | `PactFlow` | Managed Pact Broker | SaaS | Enterprise-версия Pact Broker с bi-directional testing |
 
 **Pact** — де-факто стандарт для consumer-driven. **Spring Cloud Contract** — первый выбор для чисто-Spring-экосистемы, особенно когда producer хочет контролировать контракт.
-
-
-> [!mcq]
-> - [x] Pact (consumer-driven, multi-language: JVM/JS/Go/Python/.NET/Ruby/Rust) — де-факто стандарт CDC, провайдер может быть на любом языке. Spring Cloud Contract (producer-driven, JVM-focused) — Groovy/YAML DSL, генерирует WireMock-стабы. Schemathesis (schema-first, Python) — property-based testing по OpenAPI. Dredd (schema-first, Node.js) — проверка API по OpenAPI/API Blueprint. Hoverfly — service virtualization (запись/replay). PactFlow — managed SaaS Pact Broker с bi-directional testing | ✓ ПРИМЕНЯТЬ: Pact для многоязычных команд, SCC для чисто-JVM, Schemathesis/Dredd для OpenAPI-first систем 📋 ПРАВИЛО: language fit + подход (CDC vs schema-first) → выбор инструмента 🔗 См. Q6
-> - [ ] Pact — единственный инструмент для contract testing | ❌ ПОСЛЕДСТВИЕ: ложное упрощение; Spring Cloud Contract, Schemathesis, Dredd — реальные альтернативы; выбор «только Pact» лишит SCC-нативных JVM-команд лучшего DX
-> - [ ] Spring Cloud Contract работает только consumer-driven | ❌ ПОСЛЕДСТВИЕ: SCC по умолчанию producer-driven (формально поддерживает оба); путаница приведёт к ожиданию pact-like workflow от SCC
-> - [ ] Hoverfly — это форк Pact с поддержкой gRPC | ❌ ПОСЛЕДСТВИЕ: Hoverfly — независимый инструмент service virtualization (запись/replay HTTP-трафика), не форк Pact; путаница приведёт к ошибочному выбору
 
 ## Q6. (!) Что такое Pact и как он работает?
 
@@ -296,13 +261,6 @@ testImplementation 'au.com.dius.pact.provider:junit5:4.6.11'
 ### Ключевое преимущество
 
 Contract написан **в коде теста consumer'а**, не отдельным DSL-файлом. Это снижает порог входа и приучает команду разрабатывать контракт по месту использования API.
-
-
-> [!mcq]
-> - [ ] Pact работает только на стороне provider — сравнивает реальные ответы с заранее заданной схемой | ❌ ПОСЛЕДСТВИЕ: схему задаёт consumer через тесты, а не provider; путаница с schema-first приведёт к обратному дизайну
-> - [ ] Pact требует чтобы оба сервиса были на JVM — другие языки не поддерживаются | ❌ ПОСЛЕДСТВИЕ: Pact исходно multi-language (JS, Go, Python, .NET, Ruby, Rust); ложное требование лишит возможности использовать в polyglot командах
-> - [x] Pact — фреймворк CDCT с двумя сторонами: (1) consumer-side подставляет mock-сервер, ловит запросы реального HTTP-клиента и записывает ответы в pact.json; (2) provider-side берёт pact.json, replay'ит запросы против реального API и сверяет ответы. Pact JVM — реализация для JVM (Java/Kotlin/Scala/Groovy), интегрируется с JUnit 4/5, ScalaTest, Spock; поддерживает HTTP- и message-контракты (Kafka, RabbitMQ); Gradle/Maven плагины для публикации в Pact Broker. Контракт пишется в коде consumer-теста, не отдельным DSL | ✓ ПРИМЕНЯТЬ: для CDC между сервисами с независимым релиз-циклом, для polyglot environments 📋 ПРАВИЛО: Pact = consumer test записывает + provider test verifies (двусторонний процесс) 🔗 См. Q7
-> - [ ] Pact-файл нужно ручную править, чтобы добавить новые endpoint'ы | ❌ ПОСЛЕДСТВИЕ: pact-файл — генерируемый артефакт из consumer-тестов; ручная правка разрушает связь с тестом и приводит к divergence
 
 ## Q7. Что такое pact-файл и как он устроен?
 
@@ -349,13 +307,6 @@ Contract написан **в коде теста consumer'а**, не отдел�
 
 Pact-файл — **источник истины** о контракте. Его не нужно править руками; он генерируется из consumer-тестов.
 
-
-> [!mcq]
-> - [ ] Pact-файл — это бинарный архив с тестами, не JSON | ❌ ПОСЛЕДСТВИЕ: ложное представление о формате; pact — JSON, читаемый человеком и инструментами; путаница приведёт к попыткам распаковать как архив
-> - [x] JSON-документ с полями: consumer.name (имя сервиса-потребителя), provider.name (имя провайдера), interactions (массив пар request+response+providerStates), metadata.pactSpecification.version (v2 = HTTP only, v3 = provider states + message pacts, v4 = HTTP+message в одном файле + plugins). Pact-файл — источник истины о контракте, генерируется из consumer-тестов, не правится руками | ✓ ПРИМЕНЯТЬ: при ревью contract'а — читать JSON напрямую; при разборе verification failures — смотреть на interactions[].response.matchingRules 📋 ПРАВИЛО: pact = JSON, generated, single source of truth для пары consumer-provider 🔗 См. Q8
-> - [ ] Pact v4 не поддерживает обратной совместимости с v2/v3 | ❌ ПОСЛЕДСТВИЕ: v4 расширяет v3, оба поддерживаются параллельно; ложное представление приведёт к лишним миграциям
-> - [ ] interactions — это объект с одной парой request/response, не массив | ❌ ПОСЛЕДСТВИЕ: interactions — массив (один pact может содержать много interactions для разных endpoint'ов); путаница приведёт к попытке создать отдельный pact для каждого endpoint
-
 ## Q8. Что такое interaction в Pact?
 
 **`Interaction`** — одна пара `запрос + ответ` в контексте определённого provider state. Это атомарная единица контракта.
@@ -386,13 +337,6 @@ builder
 ```
 
 **На собеседовании:** interaction — это не тест полной user journey; это одна HTTP-транзакция. Сложные сценарии разбиваются на несколько interactions.
-
-
-> [!mcq]
-> - [x] Одна пара request+response в контексте определённого provider state — атомарная единица контракта. Состоит из: description (человекочитаемое), providerStates (предусловия), request (method, path, query, headers, body), response (status, headers, body, matchingRules). Это НЕ полная user journey — это одна HTTP-транзакция; сложные сценарии разбиваются на несколько interactions | ✓ ПРИМЕНЯТЬ: одна interaction = одна HTTP-операция; для GET 200 + GET 404 — два разных interactions с разными provider states 📋 ПРАВИЛО: interaction атомарен, состояние через providerStates 🔗 См. Q9
-> - [ ] Это полная end-to-end user journey включая несколько HTTP-запросов | ❌ ПОСЛЕДСТВИЕ: путаница с E2E-test scenario; interaction — одна транзакция; пытаясь упаковать journey в одну interaction нарушите атомарность contract'а
-> - [ ] Interaction обязательно требует body в request — без body не работает | ❌ ПОСЛЕДСТВИЕ: ложное требование; GET request без body — нормальная interaction; путаница приведёт к ложным проблемам с GET endpoints
-> - [ ] providerStates не входит в состав interaction — это отдельная сущность | ❌ ПОСЛЕДСТВИЕ: providerStates — часть interaction, определяет под какими условиями она имеет смысл; разделение приведёт к ambiguous состояниям
 
 ## Q9. (!) Какие matchers поддерживает Pact и зачем они нужны?
 
@@ -429,13 +373,6 @@ new PactDslJsonBody()
 - **Провайдер свободнее**: может возвращать разные значения одного типа.
 
 **Типичная ошибка новичков** — использовать `stringValue` для полей, значение которых меняется (timestamp, ID). Pact-файл становится хрупким. Правильный подход — type matchers + regex для форматов.
-
-
-> [!mcq]
-> - [ ] Использовать `stringValue` везде — точное совпадение надёжнее | ❌ ПОСЛЕДСТВИЕ: pact падает на каждом новом ID/timestamp/UUID; contract становится хрупким, регулярно ломается без реального изменения API; правильный подход — type matchers
-> - [x] Matchers позволяют сравнивать не по точному значению, а по типу/формату/regex — устойчиво к динамическим данным. Типы: `stringType("name", "John")` — любая строка; `integerType("id", 42)` — любой integer; `stringMatcher(regex, sample)` — по regex; `date("yyyy-MM-dd")`, `uuid("traceId")` — форматы; `eachLike(template)` — массив однотипных; `minArrayLike(min, template)` — массив с минимальной длиной. Контракт фиксирует ФОРМУ, не конкретные значения; provider свободен возвращать разные значения одного типа | ✓ ПРИМЕНЯТЬ: type matchers для полей с динамическими значениями (id, timestamp, uuid); stringValue только для enum-like константных значений (status="ACTIVE") 📋 ПРАВИЛО: dynamic field → type matcher; constant value → stringValue 🔗 См. Q10
-> - [ ] Matchers нужны только для array-полей; для скаляров используется stringValue | ❌ ПОСЛЕДСТВИЕ: ложное ограничение; matchers критичны именно для динамических скаляров (id, timestamp); без них pact ломается на каждом запуске
-> - [ ] eachLike фиксирует точные значения каждого элемента массива | ❌ ПОСЛЕДСТВИЕ: eachLike — описывает ТЕМПЛАТ элементов, не точные значения; ожидание точных значений приведёт к падению при любом изменении содержимого
 
 ## Q10. (!) Как написать consumer-тест на Pact JVM + JUnit 5?
 
@@ -492,13 +429,6 @@ class OrderServiceConsumerPactTest {
 - Если какой-то описанный interaction **не был вызван**, тест тоже упадёт (по умолчанию).
 - Pact-файл **перезаписывается** на каждый прогон — не нужно коммитить его в Git.
 
-
-> [!mcq]
-> - [ ] Достаточно `@SpringBootTest` — Pact подключится автоматически | ❌ ПОСЛЕДСТВИЕ: Pact требует явных аннотаций `@ExtendWith(PactConsumerTestExt)` и `@PactTestFor`; без них Pact mock-сервер не поднимется и контракт не запишется
-> - [x] `@ExtendWith(PactConsumerTestExt.class)` + `@PactTestFor(providerName)` на классе, метод-фабрика `@Pact` возвращает `RequestResponsePact` с `builder.given().uponReceiving().path().method().willRespondWith().status().body(new PactDslJsonBody()...).toPact()`. Тестовый метод получает `MockServer` через DI; реальный HTTP-клиент бьёт по `mockServer.getUrl()`. По завершении pact-файл записывается в `target/pacts`/`build/pacts`. Если клиент не вызвал описанную interaction или сделал не описанный запрос — тест упадёт | ✓ ПРИМЕНЯТЬ: один pact-метод на feature/endpoint, один тестовый метод на пару `@PactTestFor(pactMethod = ...)` 📋 ПРАВИЛО: @Pact описывает контракт, @Test проверяет клиента 🔗 См. Q11
-> - [ ] Pact-файл нужно коммитить в Git, иначе провайдер его не получит | ❌ ПОСЛЕДСТВИЕ: pact-файл — генерируемый артефакт, публикуется в Pact Broker; коммит в Git создаёт merge-conflicts и нарушает single source of truth
-> - [ ] MockServer всегда поднимается на порту 8080, конфликтуя с приложением | ❌ ПОСЛЕДСТВИЕ: по умолчанию MockServer берёт random port (если `port` в `@PactTestFor` не задан); ложное представление приведёт к необоснованным проблемам с port collision
-
 ## Q11. Что делает `PactConsumerTestExt` и `@PactTestFor`?
 
 `PactConsumerTestExt` — JUnit 5 extension, заменяющий старый `PactRunner` из JUnit 4. Он:
@@ -532,13 +462,6 @@ void testGetUser(MockServer mockServer) { ... }
 - `pactVersion` — `V2`, `V3`, `V4`.
 
 Если порт не указан, берётся случайный — это важно для параллельного запуска тестов.
-
-
-> [!mcq]
-> - [x] `PactConsumerTestExt` — JUnit 5 extension (заменяет PactRunner из JUnit 4): сканирует методы `@Pact`, поднимает HTTP mock-сервер, инжектит `MockServer` в тест, проверяет что все interactions вызваны, записывает pact-файл. `@PactTestFor` — связывает тест с конкретным pact-методом и/или провайдером; параметры: `providerName` (обязателен), `pactMethod` (если несколько `@Pact`), `port` (по умолчанию random), `hostInterface` (default localhost), `pactVersion` (V2/V3/V4) | ✓ ПРИМЕНЯТЬ: `@PactTestFor` на классе для общего providerName, на методе для конкретного pactMethod; random port для параллельных тестов 📋 ПРАВИЛО: extension управляет lifecycle, аннотация — конфигурацией 🔗 См. Q12
-> - [ ] `PactConsumerTestExt` — это аннотация, не extension | ❌ ПОСЛЕДСТВИЕ: смешивание ролей; `PactConsumerTestExt` — класс, передаваемый в `@ExtendWith()`; пытаясь ставить как аннотацию — компиляционная ошибка
-> - [ ] `@PactTestFor` нужен только на методе, не на классе | ❌ ПОСЛЕДСТВИЕ: на классе он задаёт общие параметры (providerName, port) для всех тестов; перенос только на методы приведёт к дублированию providerName во всех тестах
-> - [ ] `port` в `@PactTestFor` по умолчанию 8080 | ❌ ПОСЛЕДСТВИЕ: по умолчанию random, что важно для parallel test execution; вера в 8080 приведёт к port conflicts при параллельном запуске
 
 ## Q12. Как собрать тело запроса/ответа через `PactDslJsonBody`?
 
@@ -596,13 +519,6 @@ new PactDslJsonBody()
 
 Для более сложных случаев (nested arrays, union types) в Pact JVM 4.x есть `LambdaDsl` с более лаконичным синтаксисом.
 
-
-> [!mcq]
-> - [ ] Передавать обычную JSON-строку через `.body(jsonString)` — это самый простой подход | ❌ ПОСЛЕДСТВИЕ: чистая строка не содержит matchers — pact будет проверять точные значения, что приведёт к падению на каждом новом ID/timestamp; нужен `PactDslJsonBody` для type matchers
-> - [x] Fluent-builder: простые поля через `integerType/stringType/booleanType/numberType` для type matchers, `stringMatcher(regex, sample)` для regex, специализированные `datetime(format)`, `uuid(field)` для форматов; вложенные объекты через `.object("address").stringType(...).closeObject()`; массивы однотипных элементов через `.eachLike("items", template)` или `.minArrayLike("items", min, template)`; в Pact JVM 4.x есть `LambdaDsl` для более лаконичного синтаксиса nested структур | ✓ ПРИМЕНЯТЬ: для всех JSON request/response тел в pact'ах; eachLike для массивов, object/closeObject для nested DTO 📋 ПРАВИЛО: builder обеспечивает matchers; не используй raw JSON для динамических полей 🔗 См. Q13
-> - [ ] `eachLike` всегда требует `min=1` явно | ❌ ПОСЛЕДСТВИЕ: `eachLike(template)` по умолчанию min=1, явный min нужен только для других значений; ложное требование приведёт к лишнему boilerplate
-> - [ ] `closeObject()` не нужен — Pact автоматически закрывает объекты | ❌ ПОСЛЕДСТВИЕ: closeObject() обязателен для возврата к родительскому контексту билдера; пропуск приведёт к неправильной структуре JSON
-
 ## Q13. Куда Pact сохраняет сгенерированные контракты?
 
 По умолчанию pact-файлы записываются в:
@@ -649,13 +565,6 @@ pact {
 
 **Best practice:** не коммитить pact-файлы в Git — только публиковать в брокер. Брокер становится центральным источником истины.
 
-
-> [!mcq]
-> - [ ] В корне проекта рядом с `pom.xml`/`build.gradle` | ❌ ПОСЛЕДСТВИЕ: ложное представление о расположении; реально — `target/pacts` (Maven) или `build/pacts` (Gradle), вне корня; путаница приведёт к поиску в неправильном месте
-> - [x] По умолчанию: Maven → `target/pacts`, Gradle → `build/pacts`. Имя файла `<consumer>-<provider>.json`. Переопределить через `-Dpact.rootDir=custom-pacts` или Gradle systemProperty. Best practice: НЕ коммитить pact-файлы в Git (они генерируются), а публиковать в Pact Broker через `./gradlew pactPublish` с конфигурацией pactBrokerUrl, pactBrokerToken, consumerVersion (обычно `$CI_COMMIT_SHA`), tags (`$GIT_BRANCH`) | ✓ ПРИМЕНЯТЬ: публиковать в Pact Broker в CI после прохождения consumer-тестов; tags для разных environments 📋 ПРАВИЛО: pacts → broker (single source of truth), не в Git 🔗 См. Q14
-> - [ ] Сразу в Pact Broker — локальная директория не используется | ❌ ПОСЛЕДСТВИЕ: pact сначала пишется локально, потом отдельным шагом публикуется в broker; ложное представление лишит понимания как работает локальная разработка
-> - [ ] Pact-файлы обязательно нужно коммитить в Git как source of truth | ❌ ПОСЛЕДСТВИЕ: коммит в Git создаёт merge-конфликты, нарушает single source of truth, теряет интеграцию с can-i-deploy; broker — правильное место
-
 ## Q14. (!) Что такое provider verification и как она работает?
 
 **Provider verification** — процесс, когда provider проигрывает pact-файл против своего реального API и проверяет, что ответы соответствуют ожиданиям consumer'а.
@@ -691,13 +600,6 @@ sequenceDiagram
 - Локально в dev-сборке.
 - В CI pipeline provider'а, с публикацией результата в брокер.
 - Обязательно до деплоя в прод — через `can-i-deploy`.
-
-
-> [!mcq]
-> - [x] Процесс когда provider проигрывает pact-файл против своего реального API: (1) fetch pacts из Pact Broker для конкретного provider; (2) для каждого interaction: setup provider state, replay request к реальному приложению, сравнить ответ с ожиданиями; (3) publish verification result в broker. Проверяется: status code, заголовки (упомянутые в контракте, лишние игнорируются), тело по matching rules (типы, regex, обязательные поля). Лишние поля в реальном ответе НЕ ломают верификацию (tolerant reader) | ✓ ПРИМЕНЯТЬ: в CI provider'а с публикацией результата в broker; обязательно до деплоя в production через can-i-deploy 📋 ПРАВИЛО: provider verifies, broker tracks — без этого CDCT не работает 🔗 См. Q15
-> - [ ] Provider verification — это просто запуск unit-тестов provider'а | ❌ ПОСЛЕДСТВИЕ: путаница с unit; verification использует pact-файлы от consumer'ов для replay реальных запросов, не unit-тесты; пропуск приведёт к проп. breaking changes
-> - [ ] Verification проверяет точное побайтное совпадение тел | ❌ ПОСЛЕДСТВИЕ: tolerant reader позволяет лишние поля; ожидание byte-exact приведёт к падению на любом добавлении нового поля провайдером
-> - [ ] Verification запускается только локально, не в CI | ❌ ПОСЛЕДСТВИЕ: ключевая точка интеграции — CI; без CI publish и can-i-deploy provider verification теряет смысл
 
 ## Q15. (!) Как написать provider-тест на Pact JVM + JUnit 5?
 
@@ -784,13 +686,6 @@ class UserServicePactTest {
 }
 ```
 
-
-> [!mcq]
-> - [ ] Provider-тест не требует поднятия реального приложения — достаточно мока | ❌ ПОСЛЕДСТВИЕ: смысл verification — replay против РЕАЛЬНОГО API; mock сводит на нет проверку, нужен `@SpringBootTest(webEnvironment = RANDOM_PORT)` или ручной запуск
-> - [x] `@Provider("ServiceName")` + `@PactFolder("pacts")` или `@PactBroker(host, scheme, authentication)`, `@LocalServerPort` для интеграции с Spring Boot, `@BeforeEach setUp(PactVerificationContext)` задаёт target через `new HttpTestTarget("localhost", port, "/")`. `@TestTemplate` + `@ExtendWith(PactVerificationInvocationContextProvider.class)` создаёт по тесту на каждый interaction; `context.verifyInteraction()` делает HTTP-запрос и сверяет ответ. Каждый `@State("user 42 exists")` метод выполняется ДО соответствующей interaction для подготовки данных | ✓ ПРИМЕНЯТЬ: для verification реальных endpoint'ов c подготовкой БД через @State; integration с Testcontainers для real DB 📋 ПРАВИЛО: @Provider + @PactFolder/@PactBroker + @State methods + verifyInteraction 🔗 См. Q16
-> - [ ] `@PactFolder` и `@PactBroker` можно использовать одновременно | ❌ ПОСЛЕДСТВИЕ: они альтернативы (либо локальная папка, либо broker); одновременное использование приведёт к конфликту источников pact-файлов
-> - [ ] `@State` методы запускаются один раз для всего класса в `@BeforeAll` | ❌ ПОСЛЕДСТВИЕ: каждый `@State` запускается ПЕРЕД соответствующей interaction; путаница приведёт к state pollution между interactions
-
 ## Q16. Как подключить провайдера к `Pact Broker`?
 
 Брокер передаётся через аннотацию `@PactBroker` или system properties.
@@ -842,13 +737,6 @@ class UserServicePactTest { ... }
 
 Без уникальной версии провайдера результат некуда записать — брокер не поймёт, к какой версии он относится.
 
-
-> [!mcq]
-> - [x] Через `@PactBroker(host, scheme, authentication = @PactBrokerAuth(token = "${PACT_BROKER_TOKEN}"))` на классе или через system properties для CI (`-Dpactbroker.url=...`, `-Dpactbroker.auth.token=$PACT_BROKER_TOKEN`, `-Dpact.provider.version=$GIT_SHA`, `-Dpact.provider.tag=$GIT_BRANCH`, `-Dpact.verifier.publishResults=true`). Consumer Version Selectors (`@VersionSelector(mainBranch=true)`, `deployedOrReleased=true`, `tag="feature-xyz"`) контролируют какие pact'ы скачивать. Без уникальной `pact.provider.version` (обычно `GIT_SHA`) брокер не запишет результат | ✓ ПРИМЕНЯТЬ: system properties для CI (env-зависимое), аннотация для local dev; обязательно `pact.provider.version` для publishResults 📋 ПРАВИЛО: providerVersion = unique identifier (GIT_SHA), без него результат не сохранится 🔗 См. Q17
-> - [ ] Достаточно указать только `host` — authentication опционален | ❌ ПОСЛЕДСТВИЕ: production Pact Brokers требуют authentication; пропуск приведёт к 401/403 errors; путаница приведёт к попыткам без token
-> - [ ] `pact.provider.version` опционален при `publishResults=true` | ❌ ПОСЛЕДСТВИЕ: без version брокер не поймёт к какой версии provider'а относится результат — НЕ опубликует (без warning в некоторых версиях); забывание ломает can-i-deploy
-> - [ ] Consumer Version Selectors — устаревшая фича, не используется | ❌ ПОСЛЕДСТВИЕ: selectors — современный способ управлять верификацией (mainBranch, deployedOrReleased); без них провайдер либо верифицирует слишком много, либо пропускает critical pacts
-
 ## Q17. Зачем публиковать результаты верификации обратно в брокер?
 
 Результаты верификации — ключевой вход для **`can-i-deploy`** и `Pact Matrix`. Без них брокер не знает, какие пары версий совместимы.
@@ -863,13 +751,6 @@ class UserServicePactTest { ... }
 ### Типичная ошибка
 
 Забыть передать `pact.provider.version`. Pact просто не опубликует результат (без warning в некоторых версиях). В CI всегда указываем `GIT_SHA` или `CI_BUILD_NUMBER`.
-
-
-> [!mcq]
-> - [ ] Это просто статистика — не критично для процесса | ❌ ПОСЛЕДСТВИЕ: без публикации результатов `can-i-deploy` не работает, Pact Matrix пустой — пропадает весь смысл broker как CI-инструмента; контрактное тестирование превращается в красивый theater
-> - [x] Результаты verification — ключевой вход для `can-i-deploy` и Pact Matrix: (1) CI/CD может проверить совместимость провайдера со всеми deployed-версиями консьюмеров перед деплоем; (2) Matrix видна в UI broker (где сломано); (3) Webhook-и на breaking change — автоуведомление consumer'ам когда их pact не прошёл; (4) Badge'ы «Pact verified» для README. Типичная ошибка — забыть передать `pact.provider.version` (CI: `GIT_SHA` или `CI_BUILD_NUMBER`) — без неё результат не публикуется (без warning в некоторых версиях) | ✓ ПРИМЕНЯТЬ: всегда передавать `pact.provider.version=$GIT_SHA` в CI; настроить webhook-и на provider build при changed pacts 📋 ПРАВИЛО: publishResults + providerVersion + can-i-deploy = working CDCT 🔗 См. Q18
-> - [ ] Достаточно публиковать pact-файлы — результаты verification не нужны | ❌ ПОСЛЕДСТВИЕ: pact'ы и результаты — разные артефакты; без результатов broker не знает прошла ли verification; can-i-deploy всегда вернёт false
-> - [ ] Webhook-и не работают с self-hosted Pact Broker | ❌ ПОСЛЕДСТВИЕ: webhooks — стандартная фича Pact Broker (как OSS, так и PactFlow); ложное ограничение лишит автоматизации feedback loop
 
 ## Q18. (!) Что такое provider states и зачем они нужны?
 
@@ -934,13 +815,6 @@ void userExists(Map<String, Object> params) {
 
 Параметризованные states — мощный инструмент: один state-метод обрабатывает много interactions.
 
-
-> [!mcq]
-> - [x] Описание предусловия для конкретного interaction (примеры: «user 42 exists», «cart has 3 items», «no orders yet»). Один и тот же `GET /users/42` может вернуть 200 (если user есть) или 404 (если нет) — это два interactions с разными provider states. На provider-side реализуется через `@State("name")` методы, которые ДО каждого interaction приводят систему в нужное состояние (save в БД, мок внешних сервисов). Pact v3+ поддерживает параметризованные states: `builder.given("user exists", Map.of("userId", 42, "name", "John"))` + `@State("user exists") void userExists(Map<String, Object> params)` — один state-метод обрабатывает много interactions | ✓ ПРИМЕНЯТЬ: для тестирования разных response-сценариев одного endpoint (200/404/403); для подготовки данных перед verification 📋 ПРАВИЛО: один state = одна детерминированная подготовка данных; параметризованные states для шаблонных сценариев 🔗 См. Q19
-> - [ ] Provider state — это HTTP заголовок, передаваемый с запросом | ❌ ПОСЛЕДСТВИЕ: state — concept на уровне pact, не HTTP-механизм; ложное представление приведёт к попыткам передать через headers, что не сработает
-> - [ ] States не нужны если consumer всегда ожидает 200 OK | ❌ ПОСЛЕДСТВИЕ: даже для 200 нужна подготовка данных — user 42 должен существовать в БД; без state БД пуста и контроллер вернёт 404
-> - [ ] States задаются только в pact-файле, в provider-тесте методы не нужны | ❌ ПОСЛЕДСТВИЕ: без @State методов на provider'е тест не сможет подготовить данные; verification будет падать на отсутствующих сущностях
-
 ## Q19. Как реализовать `@State` в Pact JVM?
 
 Аннотация `@State` объявляется на методе в provider-тесте и выполняется **до** каждого interaction с таким state'ом.
@@ -1000,13 +874,6 @@ class UserServicePactTest {
 4. Teardown-`@State` метод (если определён).
 5. Следующий interaction.
 
-
-> [!mcq]
-> - [ ] `@State` методы должны быть статическими | ❌ ПОСЛЕДСТВИЕ: ложное требование; `@State` — instance methods (нужен доступ к `@Autowired` репозиториям, services); попытка static приведёт к NPE на репозитории
-> - [x] Аннотация `@State("name")` на instance-методе, выполняется ДО каждого interaction с таким state'ом. Для cleanup — `@State(value = "name", action = StateChangeAction.TEARDOWN)`. Несколько states в одном методе — массив имён `@State({"cart is empty", "user has no orders"})`. С параметрами (v3+) — `@State("user exists") void userExists(Map<String, Object> params)`. Порядок: setup-state → HTTP request → response comparison → teardown-state → next interaction | ✓ ПРИМЕНЯТЬ: setup/teardown для каждой interaction, instance methods с @Autowired, параметризация для уменьшения количества state-методов 📋 ПРАВИЛО: @State setup + опциональный TEARDOWN; instance methods для DI 🔗 См. Q20
-> - [ ] Setup и teardown нужно объединять в один метод | ❌ ПОСЛЕДСТВИЕ: семантически setup — подготовка, teardown — cleanup; объединение приведёт к выполнению cleanup до сравнения ответов; правильно — два метода с разными `action`
-> - [ ] `@State` не работает со Spring контекстом | ❌ ПОСЛЕДСТВИЕ: ровно наоборот — `@SpringBootTest` + `@Provider` + `@State` отлично интегрируются; ложное представление лишит DI-преимуществ
-
 ## Q20. Какие есть антипаттерны в использовании provider states?
 
 | Антипаттерн | Почему плохо | Как правильно |
@@ -1020,12 +887,7 @@ class UserServicePactTest {
 
 **Rule of thumb:** state — это SQL INSERT или мок внешнего сервиса, а не бизнес-операция.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. (!) Что такое Pact Broker и зачем он нужен? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q21. (!) Что такое Pact Broker и зачем он нужен?
 
 **Pact Broker** — центральное хранилище pact-файлов и результатов верификации. Это не просто файловый репозиторий, а сервис, который:
 
@@ -1064,12 +926,7 @@ services:
 
 Часто спрашивают: «в чём ценность брокера?». Ответ: **интеграция CDCT в CI/CD**. Без брокера контрактное тестирование превращается в ручной процесс обмена JSON'ами.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. Как работает Pact Matrix? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q22. Как работает Pact Matrix?
 
 **Pact Matrix** — двумерная таблица:
 - По строкам: версии consumer'а и его pact'ы.
@@ -1094,12 +951,7 @@ Consumer v3    —              —             ✅
 
 Брокер умеет помечать версии, которые **развёрнуты** в конкретном окружении. Тогда матрица знает: «в production сейчас Consumer v2 и Provider v1.1 — они совместимы».
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. (!) Как работает `can-i-deploy` и зачем он нужен? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q23. (!) Как работает `can-i-deploy` и зачем он нужен?
 
 **`can-i-deploy`** — CLI-команда `pact-broker-client`, которая отвечает на вопрос: «безопасно ли задеплоить эту версию сервиса в это окружение?».
 
@@ -1154,12 +1006,7 @@ pact-broker record-deployment \
 
 Это **ключевой** элемент CDCT-процесса. Без него контрактные тесты — просто «ещё один вид unit-тестов», они не предотвращают падения в проде.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. Что такое теги и environments в Pact Broker? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q24. Что такое теги и environments в Pact Broker?
 
 Теги и environments — два механизма маркировки версий.
 
@@ -1210,12 +1057,7 @@ Selectors — способ провайдеру сказать «верифиц�
 })
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. Что такое `record-deployment` и WIP (work-in-progress) pacts? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q25. Что такое `record-deployment` и WIP (work-in-progress) pacts?
 
 ### record-deployment
 
@@ -1250,12 +1092,7 @@ WIP pacts — pact'ы от **новых** consumer-веток, которые е
 
 `enablePendingPacts=true` — провайдер не падает, если неверифицированный pact не прошёл. Этот механизм позволяет провайдеру выкатывать свой код, не блокируясь новыми pact'ами.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. Как интегрировать Pact JVM со Spring Boot? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q26. Как интегрировать Pact JVM со Spring Boot?
 
 ### Consumer side
 
@@ -1319,12 +1156,7 @@ class UserServicePactTest {
 - **Transactional tests**: `@Transactional` на `@State`-методе откатит данные до HTTP-запроса. Нужно `@Transactional(propagation = NOT_SUPPORTED)` или явный cleanup в `TEARDOWN`.
 - **Реальная БД**: используйте `Testcontainers` ([подробнее](testcontainers-interview.md)), а не H2 — иначе тест будет проверять не тот код, что в проде.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. Как тестировать асинхронный обмен через Pact (Kafka, RabbitMQ)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q27. Как тестировать асинхронный обмен через Pact (Kafka, RabbitMQ)?
 
 Pact поддерживает **message pacts** — контракты для асинхронных сообщений. Ключевая идея: Pact не тестирует саму Kafka/Rabbit, а проверяет **формат сообщения**, которое producer шлёт в топик, и что consumer его может разобрать.
 
@@ -1394,12 +1226,7 @@ class OrderEventProducerPactTest {
 - **Не проверяется**: что сообщение реально попало в Kafka, что consumer его реально прочитал, headers топика, retries.
 - Для проверки реальной доставки нужны `Testcontainers` + Kafka ([подробнее](testcontainers-interview.md)).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. (!) Что такое Spring Cloud Contract и чем он отличается от Pact? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q28. (!) Что такое Spring Cloud Contract и чем он отличается от Pact?
 
 **Spring Cloud Contract** (`SCC`) — Spring-ориентированный фреймворк контрактного тестирования. По умолчанию работает **producer-driven**: провайдер описывает контракт, из него генерируются тесты для провайдера и stubs для консьюмера.
 
@@ -1439,12 +1266,7 @@ graph LR
 - **Pact** — когда нужна language-agnosticism (есть .NET/Python клиенты), строгий consumer-driven подход, богатая CI-интеграция через брокер.
 - **Spring Cloud Contract** — когда весь стек JVM/Spring, хочется декларативных Groovy-контрактов, важна producer-driven модель.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. (!) Как описать контракт на Groovy DSL в Spring Cloud Contract? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q29. (!) Как описать контракт на Groovy DSL в Spring Cloud Contract?
 
 Контракт описывается в файле `src/test/resources/contracts/<producer>/shouldDoX.groovy`.
 
@@ -1539,12 +1361,7 @@ Contract.make {
 }
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. Как устроен producer side в Spring Cloud Contract? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q30. Как устроен producer side в Spring Cloud Contract?
 
 ### 1. Maven-плагин
 
@@ -1612,14 +1429,9 @@ src/test/resources/contracts/
 ./mvnw deploy -DskipTests=false         # в Nexus
 ```
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. Как consumer использует stubs через `@AutoConfigureStubRunner`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-
 Consumer подтягивает `stubs.jar` и поднимает локальный `WireMock`-сервер, имитирующий провайдера.
+
+## Q31. Как consumer использует stubs через `@AutoConfigureStubRunner`?
 
 ### Зависимость
 
@@ -1668,12 +1480,7 @@ class UserClientIntegrationTest {
 
 Consumer делает реальный HTTP-запрос, который попадает в WireMock, работающий по правилам из stubs.jar — возвращает именно то, что описано в контракте.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. Можно ли интегрировать Spring Cloud Contract с Pact Broker? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q32. Можно ли интегрировать Spring Cloud Contract с Pact Broker?
 
 Да, SCC поддерживает Pact Broker как бэкенд. Но семантика остаётся producer-driven — SCC загружает/скачивает контракты, но сам процесс договорённости не меняется.
 
@@ -1705,14 +1512,9 @@ contracts {
 
 Редко — команды обычно выбирают что-то одно. Если выбран Pact Broker, чаще используется нативный Pact. Если SCC — чаще Maven/Artifactory.
 
+## Q33. (!) Как выглядит CI/CD pipeline с контрактным тестированием?
+
 **Bi-directional contract testing** (в PactFlow) — более современный вариант: провайдер публикует OpenAPI, консьюмер — pact, PactFlow сравнивает их. Это гибрид, закрывающий слабые места обоих подходов.
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. (!) Как выглядит CI/CD pipeline с контрактным тестированием? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 ### Consumer pipeline
 
@@ -1792,12 +1594,7 @@ can-i-deploy:
 
 Это замыкает feedback loop: consumer добавил поле → webhook → provider пересобрался → верификация прошла или упала → consumer знает о готовности.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. Как обрабатывать breaking changes в контрактах? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q34. Как обрабатывать breaking changes в контрактах?
 
 **Breaking change** — изменение, ломающее существующих консьюмеров (удалённое поле, изменённый тип, новое обязательное поле в запросе).
 
@@ -1841,12 +1638,7 @@ new PactDslJsonBody()
 
 Если Consumer v1 больше не верифицируется с Provider v2.0 — матрица подсветит, и `can-i-deploy --to production` скажет «нет, старый consumer не совместим». Провайдер знает, кого нужно обновить.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. Что такое bi-directional contract testing? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q35. Что такое bi-directional contract testing?
 
 **Bi-directional contract testing** (`BDCT`) — подход, при котором провайдер и консьюмер независимо публикуют свои артефакты, а сервис сравнивает их на совместимость:
 
@@ -1872,12 +1664,7 @@ new PactDslJsonBody()
 - Важна скорость onboarding'а новых консьюмеров.
 - Уже есть OpenAPI ([подробнее](../api/openapi-swagger-interview.md)).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. (!) Когда контрактное тестирование не нужно? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q36. (!) Когда контрактное тестирование не нужно?
 
 Контрактное тестирование — **не silver bullet**. Случаи, когда его добавление не окупится:
 
@@ -1900,12 +1687,7 @@ new PactDslJsonBody()
 
 **Rule of thumb:** контрактное тестирование окупается, когда есть 3+ независимых команд, деплоящих независимо, и боль от регрессий в интеграциях. Если этого нет — возможно, хватит OpenAPI + интеграционных тестов на `WireMock` ([подробнее](integration-testing-interview.md)).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. (!) Чем контрактное тестирование отличается от integration и E2E-тестов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q37. (!) Чем контрактное тестирование отличается от integration и E2E-тестов?
 
 | Аспект | Contract Test | Integration Test | E2E Test |
 |--------|---------------|------------------|----------|
@@ -1935,12 +1717,7 @@ new PactDslJsonBody()
 
 Переизбыток любого слоя — дорого. Подробнее про распределение — в [стратегиях тестирования](test-strategies-interview.md).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. Может ли контрактное тестирование заменить OpenAPI/Schema validation? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q38. Может ли контрактное тестирование заменить OpenAPI/Schema validation?
 
 Короткий ответ: **нет, они дополняют друг друга**.
 
@@ -1965,12 +1742,7 @@ new PactDslJsonBody()
 - Считать, что OpenAPI == тест. OpenAPI не исполняется сам по себе — нужны инструменты (`Schemathesis`, `Dredd`, `Prism`) или contract tests.
 - Считать, что Pact заменяет документацию. Pact покрывает только «горячие» пути, отличные поля остаются недокументированы.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q39. Какие типичные ошибки в использовании Pact встречаются на практике? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q39. Какие типичные ошибки в использовании Pact встречаются на практике?
 
 ### 1. Использование `stringValue` вместо `stringType`
 
@@ -2029,12 +1801,7 @@ void user42Active() { userRepo.save(new User(42L, "ACTIVE", ...)); }
 
 Включение **всех** полей ответа провайдера в pact — делает контракт хрупким. Фиксируйте только то, что консьюмер реально читает.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q40. Как внедрить контрактное тестирование в команду с нуля? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q40. Как внедрить контрактное тестирование в команду с нуля?
 
 ### Этап 1: Pilot (1-2 недели)
 
@@ -2069,12 +1836,7 @@ void user42Active() { userRepo.save(new User(42L, "ACTIVE", ...)); }
 - Pact файлы ошибочно руками правят. Решение — code review + lint.
 - Брокер падает → вся CI стоит. Решение — HA-deployment брокера или fallback (skip if unreachable).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q41. (!) Какие best practices для контрактного тестирования? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q41. (!) Какие best practices для контрактного тестирования?
 
 1. **Pact описывает контракт, а не тест**. Не используйте pact-тесты как полноценную функциональную проверку — это дешёвая проверка формата. Бизнес-логику тестируйте обычными тестами.
 2. **Matchers по типу, не по значению**. Никогда не фиксируйте случайные значения (ID, timestamp, UUID) exactly.
@@ -2092,12 +1854,7 @@ void user42Active() { userRepo.save(new User(42L, "ACTIVE", ...)); }
 14. **Документируйте процесс в README каждого сервиса**. Команды должны знать, как запустить локально.
 15. **Каждая команда владеет своим pact'ом**. Не консолидируйте в одну «pact-команду» — это убивает ownership.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q42. Как тестировать версионирование API через контракты? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q42. Как тестировать версионирование API через контракты?
 
 ### URL-versioning
 
@@ -2161,12 +1918,6 @@ Matcher для заголовка гарантирует, что провайд�
 - [Микросервисы](../architecture/microservices-interview.md) — контекст, в котором контрактное тестирование критично
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — интеграция `@SpringBootTest` c Pact JVM и Spring Cloud Contract
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Chaos Engineering](chaos-engineering-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Integration Testing](integration-testing-interview.md)
 - [Load Testing](load-testing-interview.md)
 - [Mockito](mockito-interview.md)
