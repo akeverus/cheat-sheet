@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "neo4j-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое graph database (графовая база данных)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Graph database` — БД для хранения и запросов **графов**: данные представлены как `nodes` (узлы-сущности) и `relationships` (связи между ними), где связи — first-class-объекты, а не вычисляемые на лету `JOIN`-ы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная идея: relationships хранятся физически как часть данных, поэтому traversal по связям дёшев. Это подходит для social networks, recommendation engines, fraud detection, knowledge graphs и network topology.",
+                "example": "Граф `Alice -FRIEND-> Bob`, `Bob -FOLLOWS-> Charlie`, `Alice -LIKES-> Pizza` хранится напрямую; чтобы найти друзей друзей, БД просто идёт по указателям связей, а не делает многоуровневые джойны.",
+                "when_to_apply": "Выбирают graph DB, когда домен естественно описывается связями: рекомендации, антифрод, графы знаний, IAM, топология сети — там, где обходы важнее табличных агрегатов.",
+                "edge_cases": "Если данные по сути табличные и связи редки, graph-модель не даёт выигрыша и усложняет жизнь; тогда реляционная БД (`PostgreSQL`) уместнее.",
+                "related": "[[neo4j-interview#Q2]] когда graph лучше реляционной; [[neo4j-interview#Q3]] property graph model; [[neo4j-interview#Q4]] native graph storage."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Graph database` — это реляционная БД, где для каждой таблицы автоматически строятся диаграммы (графики) распределения данных для аналитики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Графовая БД хранит узлы и связи как граф, а «графики/диаграммы» к этому отношения не имеют — это слово-омоним.",
+                "source_of_confusion": "Слово «graph» по-русски ассоциируется с диаграммой-графиком, а не с математическим графом из узлов и рёбер.",
+                "if_it_were_true": "Тогда `Neo4j` был бы инструментом визуализации поверх `SQL`, но он хранит сами данные как сеть узлов и связей.",
+                "how_it_should_be": "`Graph database` — это хранилище графа (nodes + relationships), а построение диаграмм — задача BI-инструментов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Graph database` — это исключительно in-memory кэш поверх реляционной БД, ускоряющий обычные `SQL`-запросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это самостоятельное хранилище с native graph storage, а не кэш-слой над `SQL`; данные живут в нём, а не дублируются из реляционной БД.",
+                "source_of_confusion": "Графовые обходы быстры, поэтому graph DB ошибочно воспринимают как разновидность кэша.",
+                "if_it_were_true": "Тогда без реляционной БД graph DB не работал бы, но `Neo4j` — первичный источник данных и существует самостоятельно.",
+                "how_it_should_be": "Graph DB — это primary store для графовых данных; кэширование запросов — отдельная задача (`Redis`)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Graph database` — это формат хранения, где связи между сущностями всегда вычисляются на лету через `JOIN`-ы, как в реляционной модели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: связи хранятся материализованно как first-class-объекты, а не пересчитываются `JOIN`-ами при каждом запросе.",
+                "source_of_confusion": "Привычка к реляционной модели заставляет думать, что связи всегда выводятся через джойны по ключам.",
+                "if_it_were_true": "Тогда graph DB не давал бы преимущества на глубоких обходах, но именно отсутствие джойнов делает их быстрыми.",
+                "how_it_should_be": "Связи в graph DB — это хранимые рёбра с указателями, что и обеспечивает дешёвый traversal без джойнов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда graph database лучше реляционной БД?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Graph всегда быстрее реляционной БД на любых запросах, включая простые агрегаты вроде `COUNT` и `SUM` по одной таблице.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На простых агрегатах по плоским данным реляционная БД обычно не уступает или выигрывает; преимущество graph именно в глубоких обходах связей.",
+                "source_of_confusion": "Громкие бенчмарки traversal'ов создают впечатление тотального превосходства graph DB.",
+                "if_it_were_true": "Тогда никто не использовал бы `PostgreSQL` для аналитики, но он остаётся стандартом для табличных агрегатов.",
+                "how_it_should_be": "Graph лучше на многоуровневых связях и паттернах; на табличных агрегатах разумнее реляционная БД."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Graph выигрывает, когда запросы идут вглубь по связям: **много уровней связей (3+)**, **переменная глубина**, поиск паттернов (треугольники, циклы) и частые traversal'ы — там, где реляционной БД пришлось бы делать много дорогих `JOIN`-ов.",
+              "correct": true,
+              "sections": {
+                "explanation": "В реляционной БД friends-of-friends-of-friends — это 3–4 `JOIN`-а, и стоимость растёт с глубиной; в `Cypher` запрос `(:User)-[:FRIEND*3]->(friend)` имеет почти постоянную сложность на каждый hop.",
+                "example": "`MATCH (alice:User {name:'Alice'})-[:FRIEND*3]->(friend) RETURN friend.name` находит друзей третьего уровня одним обходом, тогда как `SQL` потребует трёх джойнов таблицы `friendships`.",
+                "when_to_apply": "Берут graph при глубоких/переменной длины обходах, pattern matching и частых traversal'ах; реляционную — для табличных данных, простых агрегатов, строгого `ACID` и существующей `SQL`-экосистемы.",
+                "edge_cases": "Если глубина обхода всегда 1 и данные плоские, преимущество graph исчезает; а строгие транзакции и отчётность пока сильнее в зрелых `RDBMS`.",
+                "related": "[[neo4j-interview#Q1]] что такое graph database; [[neo4j-interview#Q12]] variable-length paths; [[neo4j-interview#Q18]] index-free adjacency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Graph лучше реляционной только потому, что не поддерживает транзакции и за счёт этого работает быстрее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Neo4j` поддерживает `ACID`-транзакции; преимущество идёт от native graph storage и index-free adjacency, а не от отказа от транзакций.",
+                "source_of_confusion": "Многие NoSQL жертвуют consistency ради скорости, и это переносят на graph DB по умолчанию.",
+                "if_it_were_true": "Тогда graph DB нельзя было бы применять в антифроде и банках, но именно там они активно используются.",
+                "how_it_should_be": "Скорость graph даёт хранение связей и обход по указателям, при этом `ACID` сохраняется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Graph лучше реляционной исключительно потому, что хранит данные в `JSON`-документах и не требует схемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание документной БД (`MongoDB`); graph хранит узлы и связи, а не вложенные `JSON`-документы, и его сила — в traversal по связям.",
+                "source_of_confusion": "Обе технологии относят к NoSQL, поэтому свойства документных БД приписывают графовым.",
+                "if_it_were_true": "Тогда `Cypher`-паттерны `(a)-[r]->(b)` были бы не нужны, но именно они — ядро графовых запросов.",
+                "how_it_should_be": "Преимущество graph — в связях и обходах, а schemaless `JSON` — это про документные хранилища."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое property graph model?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Property graph` — это модель, где связи не имеют типа и направления, а вся информация хранится только в свойствах узлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В property graph связи обязательно типизированы и направлены и сами могут нести свойства; информация не сводится только к узлам.",
+                "source_of_confusion": "В некоторых упрощённых диаграммах рёбра рисуют без подписей, что создаёт впечатление бестиповых связей.",
+                "if_it_were_true": "Тогда нельзя было бы написать `[:KNOWS {since:2020}]`, но такие типизированные связи со свойствами — основа модели.",
+                "how_it_should_be": "Связи в property graph типизированы, направлены и могут иметь свойства — это её ключевая черта."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Property graph` — это исключительно RDF-модель из триплетов subject-predicate-object без возможности добавлять свойства на связи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RDF-триплеты — это другая модель; в property graph как раз можно вешать свойства прямо на связи, чего стандартный RDF не позволяет без реификации.",
+                "source_of_confusion": "И RDF, и property graph описывают графы, поэтому их модели путают между собой.",
+                "if_it_were_true": "Тогда `Neo4j` использовал бы `SPARQL` и триплеты, но он работает с `Cypher` и свойствами на рёбрах.",
+                "how_it_should_be": "Property graph и RDF — разные модели; property graph поддерживает properties на связях, RDF опирается на триплеты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Property graph` — модель, где граф состоит из **nodes** (сущности со свойствами), **relationships** (типизированные направленные связи со свойствами), **labels** (категории узлов) и properties (пары ключ-значение) на узлах и связях.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от RDF-триплетов (subject-predicate-object), property graph позволяет вешать произвольные свойства прямо на связи, что делает модель удобной для практических доменов; именно она mainstream в 2025.",
+                "example": "`(:Person {name:'Alice', age:30}) -[:KNOWS {since:2020}]-> (:Person {name:'Bob'})` — у узлов есть label `Person` и свойства, а у связи `KNOWS` своё свойство `since`.",
+                "when_to_apply": "Property graph выбирают для прикладных графов (соцсети, рекомендации, антифрод); RDF/`SPARQL` — когда нужен W3C-стандарт и semantic web (`DBpedia`, `Wikidata`).",
+                "edge_cases": "Если требуется строгая онтология и interoperability по стандартам W3C, RDF уместнее, несмотря на удобство property graph в повседневной разработке.",
+                "related": "[[neo4j-interview#Q5]] nodes, relationships, properties; [[neo4j-interview#Q6]] labels; [[neo4j-interview#Q27]] knowledge graphs и RDF."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Property graph` — это модель, где каждый узел обязан иметь ровно один label и ровно одно свойство, иначе он невалиден.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Узел может иметь 0+ labels и 0+ properties; жёстких ограничений «ровно один» нет — модель гибкая.",
+                "source_of_confusion": "Аналогия с реляционной строкой (фиксированные колонки) заставляет думать о жёсткой обязательной схеме.",
+                "if_it_were_true": "Тогда нельзя было бы создать `(:Person:Customer {name:'Alice'})` с двумя labels, но это валидно.",
+                "how_it_should_be": "Узлы в property graph имеют произвольное число labels и properties, схема не навязывает «ровно один»."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое native graph storage?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Native graph storage` означает, что граф полностью хранится в одной большой таблице смежности в реляционной СУБД и обходится через `SQL JOIN`-ы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это как раз non-native подход (graph-слой поверх `RDBMS`); native storage хранит прямые указатели между узлами, а не таблицу, обходимую джойнами.",
+                "source_of_confusion": "Таблица смежности — знакомая структура из теории графов, поэтому её принимают за native-хранение.",
+                "if_it_were_true": "Тогда глубокие обходы деградировали бы экспоненциально из-за джойнов, но native storage именно этого избегает.",
+                "how_it_should_be": "Native storage — это физические указатели между узлами (index-free adjacency), а не таблица в `RDBMS`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Native graph storage` означает, что для каждого перехода к соседу выполняется поиск по глобальному B-tree индексу по `id` узла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл index-free adjacency в том, что глобальный индекс для перехода не нужен — переход идёт по прямому указателю, что и даёт O(1).",
+                "source_of_confusion": "Слово «storage» ассоциируется с индексами, поэтому кажется, что каждый hop — это индексный seek.",
+                "if_it_were_true": "Тогда стоимость hop росла бы как `O(log n)` с размером графа, но native adjacency держит её константной.",
+                "how_it_should_be": "Переход к соседу в native storage — следование по указателю без обращения к глобальному индексу."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Native graph storage` — это режим, в котором `Neo4j` хранит весь граф только в оперативной памяти и теряет данные при перезапуске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native storage — про layout на диске с указателями, а не про in-memory-only; данные персистентны и переживают рестарт.",
+                "source_of_confusion": "Высокая скорость обходов наводит на мысль, что граф целиком держится в памяти как у in-memory БД.",
+                "if_it_were_true": "Тогда `Neo4j` нельзя было бы использовать как durable primary store, но он именно durable.",
+                "how_it_should_be": "Native storage — это персистентный дисковый формат с указателями; in-memory-only — это про `Memgraph`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Native graph storage` — это специальный физический layout для графов, где каждый узел хранит **прямые указатели** на соседние узлы (index-free adjacency), что даёт O(1) переход к соседям независимо от размера графа.",
+              "correct": true,
+              "sections": {
+                "explanation": "В native-подходе обход связи — это просто следование по указателю; performance не деградирует с ростом графа. Non-native (graph-слой поверх реляционной БД) на каждый hop делает `JOIN`, и стоимость растёт экспоненциально на глубоких обходах.",
+                "example": "Узел `Alice` хранит список указателей на `[Bob, Charlie, ...]`; чтобы пройти к друзьям, БД идёт по этим указателям, а не ищет строки в таблице связей по индексу.",
+                "when_to_apply": "Native storage важен для глубоких traversal'ов в реальном времени — рекомендации, антифрод, обход соцграфа; именно он — ключевое преимущество `Neo4j`.",
+                "edge_cases": "`AWS Neptune` и `JanusGraph` тоже native, но с другой архитектурой; «graph-слой» поверх реляционной БД формально graph, но без native-преимуществ на глубине.",
+                "related": "[[neo4j-interview#Q18]] index-free adjacency детально; [[neo4j-interview#Q2]] когда graph лучше реляционной; [[neo4j-interview#Q30]] альтернативы Neo4j."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое nodes, relationships и properties в Neo4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "**Node** — сущность (Person, Movie) с 0+ labels и 0+ properties; **relationship** — типизированная всегда направленная связь между двумя узлами с 0+ properties; **property** — пара ключ-значение (String, Integer, Float, Boolean, Array) на узле или связи.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это три кирпичика property graph: узлы хранят данные сущностей, связи соединяют их по типу (`FRIEND_OF`, `OWNS`) с двумя концами (start node, end node), а properties добавляют атрибуты и тем, и другим.",
+                "example": "`CREATE (alice:Person {name:'Alice', age:30})`, `CREATE (bob:Person {name:'Bob'})`, затем `CREATE (alice)-[:FRIEND_OF {since:2020}]->(bob)` — узлы с label `Person`, связь `FRIEND_OF` со свойством `since`.",
+                "when_to_apply": "Этими понятиями оперируют при моделировании любого графа: сущности → nodes, их атрибуты → properties, взаимодействия → relationships с типом и свойствами.",
+                "edge_cases": "Связь всегда направлена (start → end), но при запросе направление можно игнорировать через `-[:TYPE]-`; узел может вообще не иметь labels и properties.",
+                "related": "[[neo4j-interview#Q3]] property graph model; [[neo4j-interview#Q6]] labels на nodes; [[neo4j-interview#Q7]] direction relationships."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Relationship в `Neo4j` ненаправленный по своей природе, и направление существует только в визуализации, но не в хранении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Связь хранится направленной (есть start node и end node); ненаправленным может быть только сам запрос через `-[:TYPE]-`.",
+                "source_of_confusion": "Запросы часто пишут direction-agnostic, поэтому кажется, что и хранение без направления.",
+                "if_it_were_true": "Тогда нельзя было бы отличить `(a)-[:KNOWS]->(b)` от `(b)-[:KNOWS]->(a)`, но в хранилище это разные связи.",
+                "how_it_should_be": "В хранении связь всегда направлена; игнорировать направление можно лишь на уровне `MATCH`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Property в `Neo4j` может быть только строкой; числа, булевы значения и массивы хранить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Properties поддерживают String, Integer, Float, Boolean и Array; ограничения «только строка» нет.",
+                "source_of_confusion": "В key-value хранилищах значения часто строковые, и это переносят на свойства графа.",
+                "if_it_were_true": "Тогда нельзя было бы хранить `age:30` как число, но `Neo4j` хранит его как Integer.",
+                "how_it_should_be": "Property — это типизированное значение из набора скалярных и массивных типов, не только строка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Node обязан иметь ровно один label и хотя бы одно property, иначе `Neo4j` его не создаст.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Узел может иметь 0+ labels и 0+ properties; можно создать пустой узел без label и без свойств.",
+                "source_of_confusion": "Аналогия с обязательными колонками реляционной таблицы наводит на мысль об обязательных полях.",
+                "if_it_were_true": "Тогда `CREATE (n)` без label и свойств упал бы с ошибкой, но это валидный запрос.",
+                "how_it_should_be": "Labels и properties у узла опциональны и их может быть несколько или ноль."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое labels на nodes в Neo4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Label — это уникальный идентификатор узла, аналог первичного ключа: у каждого узла он строго один и не повторяется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Label — это категория, а не уникальный ключ; у узла может быть несколько labels, и они общие для множества узлов.",
+                "source_of_confusion": "Слово «label» звучит как метка-идентификатор, отсюда аналогия с первичным ключом.",
+                "if_it_were_true": "Тогда `CREATE (alice:Person:Customer ...)` был бы невозможен, но множественные labels — норма.",
+                "how_it_should_be": "Уникальность задаётся `CONSTRAINT ... IS UNIQUE` по свойству, а label — это разделяемая категория."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**Labels** — это категории (≈теги) для узлов, по которым их группируют и фильтруют; один узел может иметь **несколько labels** одновременно (например `Person` + `Customer` + `VIP`), и индексы строятся per-label.",
+              "correct": true,
+              "sections": {
+                "explanation": "Labels задают «тип» узла и используются в `MATCH (n:Person)` для выборки всех узлов категории; благодаря множественным labels один узел участвует сразу в нескольких категориях без дублирования.",
+                "example": "`CREATE (alice:Person:Customer {name:'Alice'})` создаёт узел с двумя labels; `MATCH (n:Person) RETURN n` вернёт всех Person, а `MATCH (n:Customer) RETURN n` — всех Customer, включая Alice.",
+                "when_to_apply": "Labels применяют для категоризации узлов и как точку для индексов: `CREATE INDEX FOR (p:Person) ON (p.name)` ускоряет поиск anchor-узлов нужной категории.",
+                "edge_cases": "У узла может не быть ни одного label; множественные labels удобны, но избыточное навешивание категорий усложняет модель и индексацию.",
+                "related": "[[neo4j-interview#Q5]] nodes и properties; [[neo4j-interview#Q14]] индексы per-label; [[neo4j-interview#Q19]] anchor patterns."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Label применяется только к связям (relationships) и категоризирует именно их, а не узлы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Labels вешаются на узлы; у связей есть свой type (`KNOWS`, `OWNS`), а не label.",
+                "source_of_confusion": "И label, и relationship type — способы типизации, поэтому их легко перепутать.",
+                "if_it_were_true": "Тогда `MATCH (n:Person)` не имел бы смысла, но это базовый способ выбрать узлы по категории.",
+                "how_it_should_be": "Узлы категоризируются labels, связи — relationship type; это разные механизмы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "У одного узла может быть максимум один label, и попытка добавить второй перезапишет первый.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Узел поддерживает несколько labels одновременно; добавление второго label не удаляет первый.",
+                "source_of_confusion": "Аналогия с единственным «типом» объекта в ООП заставляет думать о ровно одном label.",
+                "if_it_were_true": "Тогда `(:Person:Customer)` хранил бы только `Customer`, но узел сохраняет оба label.",
+                "how_it_should_be": "Множественные labels сосуществуют на узле; новый label добавляется к существующим."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроено направление relationships (direction) в Neo4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `Neo4j` связи изначально двунаправленные: `(a)-[:KNOWS]->(b)` автоматически создаёт и обратную связь `(b)-[:KNOWS]->(a)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Создаётся ровно одна направленная связь; обратной связи автоматически не появляется, её надо создавать отдельно при необходимости.",
+                "source_of_confusion": "Многие отношения в жизни взаимны (дружба), отсюда ожидание автоматической обратной связи.",
+                "if_it_were_true": "Тогда `(a)-[:FOLLOWS]->(b)` означал бы и обратный follow, но follow несимметричен и хранится в одну сторону.",
+                "how_it_should_be": "Создаётся одна направленная связь; для взаимности её читают direction-agnostic или создают вторую явно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Указать direction-agnostic обход нельзя: в `MATCH` всегда обязательно писать стрелку `->` или `<-`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запись `-[:TYPE]-` без стрелки валидна и матчит связь независимо от направления.",
+                "source_of_confusion": "Примеры чаще пишут со стрелками, поэтому кажется, что направление обязательно.",
+                "if_it_were_true": "Тогда симметричные запросы было бы не выразить, но `(a)-[:KNOWS]-(b)` ровно для этого и существует.",
+                "how_it_should_be": "В `MATCH` направление можно опустить через `-[:TYPE]-`, получив обход в любую сторону."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все relationships в `Neo4j` **направленные** (от start node к end node), но в запросе направление можно учитывать или игнорировать: `->` исходящая, `<-` входящая, а `-[:TYPE]-` — direction-agnostic (обе стороны).",
+              "correct": true,
+              "sections": {
+                "explanation": "Связь `(a)-[:KNOWS]->(b)` означает «a знает b», но не обязательно «b знает a»; хранится она направленной, а в `MATCH` направление выбирают под семантику и performance запроса.",
+                "example": "`MATCH (a)-[:KNOWS]->(b)` — только исходящие; `MATCH (a)<-[:KNOWS]-(b)` — только входящие; `MATCH (a)-[:KNOWS]-(b)` — игнорирует направление и матчит связь в любую сторону.",
+                "when_to_apply": "Направление выбирают исходя из смысла домена (followers vs following) и производительности: обход без указания направления дороже, чем по конкретной стороне.",
+                "edge_cases": "Для симметричных отношений (`MARRIED_TO`) хранят одну направленную связь и читают её direction-agnostic, чтобы не дублировать рёбра в обе стороны.",
+                "related": "[[neo4j-interview#Q5]] relationships и их концы; [[neo4j-interview#Q10]] pattern matching syntax; [[neo4j-interview#Q24]] обход соцграфа."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Направление связи влияет только на визуализацию в `Neo4j Browser` и полностью игнорируется при выполнении запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Направление учитывается при выполнении: `->` и `<-` дают разные результаты, и оно важно для семантики и performance.",
+                "source_of_confusion": "Стрелки заметны прежде всего в визуализации, поэтому их роль в запросах недооценивают.",
+                "if_it_were_true": "Тогда исходящие и входящие связи возвращали бы одно и то же, но это разные множества.",
+                "how_it_should_be": "Направление реально влияет на результат `MATCH` и на стоимость обхода, а не только на картинку."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Cypher?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Cypher` — это императивный язык, в котором вы пошагово описываете алгоритм обхода графа: с какого узла начать, по какому указателю идти дальше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cypher` декларативен: вы описываете искомый паттерн, а планировщик сам выбирает порядок обхода и операторы.",
+                "source_of_confusion": "Графовый обход интуитивно ощущается как пошаговый алгоритм, отсюда вывод об императивности.",
+                "if_it_were_true": "Тогда `EXPLAIN`/`PROFILE` с выбором плана были бы не нужны, но планировщик существует именно потому, что язык декларативный.",
+                "how_it_should_be": "Вы пишете желаемый паттерн декларативно, а оптимизатор `Neo4j` строит план выполнения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Cypher` — это диалект `SQL`, который выполняется реляционным движком `Neo4j` поверх обычных таблиц с джойнами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cypher` — самостоятельный graph-язык с ASCII-паттернами, исполняемый на native graph storage, а не `SQL`-диалект над таблицами.",
+                "source_of_confusion": "Сходство ключевых слов (`WHERE`, `ORDER BY`, `LIMIT`) с `SQL` создаёт впечатление диалекта.",
+                "if_it_were_true": "Тогда обход `[:FRIEND*3]` превращался бы в три `JOIN`-а, но `Cypher` идёт по указателям связей.",
+                "how_it_should_be": "`Cypher` лишь синтаксически близок к `SQL`, но это отдельный язык для графов поверх index-free adjacency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Cypher` — проприетарный язык, доступный только в `Neo4j`, и никакая другая СУБД его не понимает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cypher` открыт как `openCypher` (2015) и поддерживается рядом других движков, а не только `Neo4j`.",
+                "source_of_confusion": "Язык создан `Neo4j`, поэтому его считают навсегда привязанным к этому вендору.",
+                "if_it_were_true": "Тогда не существовало бы спецификации `openCypher`, но она опубликована и реализуется другими.",
+                "how_it_should_be": "`Cypher` стандартизирован как `openCypher` и доступен в нескольких графовых системах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**Cypher** — декларативный язык запросов для графов, созданный `Neo4j` (2011) и ставший стандартом **openCypher** (2015); его уникальная черта — **ASCII-art паттерны** `(a)-[r]->(b)` для матчинга графовых структур.",
+              "correct": true,
+              "sections": {
+                "explanation": "По структуре `Cypher` похож на `SQL`: `MATCH` ≈ `FROM`/`JOIN`, `WHERE` ≈ `WHERE`, `RETURN` ≈ `SELECT`, плюс знакомые `ORDER BY`/`LIMIT`. Главное отличие — визуальные паттерны для описания связей в графе.",
+                "example": "`MATCH (alice:Person {name:'Alice'})-[:FRIEND_OF]->(friend) WHERE friend.age > 25 RETURN friend.name, friend.age ORDER BY friend.age DESC LIMIT 10` читается почти как `SQL`, но с graph-паттерном.",
+                "when_to_apply": "`Cypher` используют для всех графовых операций в `Neo4j` (и других openCypher-совместимых БД): выборка, создание, обновление и обход паттернов.",
+                "edge_cases": "`Cypher` декларативен — вы описываете «что» найти, а планировщик решает «как»; для совсем других экосистем существуют `Gremlin` (TinkerPop) и развивающийся ISO-стандарт `GQL`.",
+                "related": "[[neo4j-interview#Q9]] MATCH, WHERE, RETURN; [[neo4j-interview#Q10]] pattern matching syntax; [[neo4j-interview#Q30]] другие языки запросов (Gremlin, GQL)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "За что отвечают MATCH, WHERE и RETURN в Cypher?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "**MATCH** ищет паттерн в графе (≈`FROM`/`JOIN`), **WHERE** задаёт условия фильтрации, **RETURN** определяет, что вернуть (≈`SELECT`); а `OPTIONAL MATCH` работает как `LEFT JOIN` — возвращает `NULL`, если совпадения нет.",
+              "correct": true,
+              "sections": {
+                "explanation": "`MATCH (a:Person)-[:KNOWS]->(b:Person) WHERE a.age > 30 RETURN a.name, b.name` — находит пары знакомых, фильтрует по возрасту и возвращает имена. `OPTIONAL MATCH` сохраняет основной ряд даже без совпадения.",
+                "example": "`MATCH (a:Person {name:'Alice'}) OPTIONAL MATCH (a)-[:KNOWS]->(friend) RETURN a.name, friend.name` вернёт Alice и `NULL` в `friend.name`, если у неё нет друзей.",
+                "when_to_apply": "Эту тройку используют почти в каждом запросе чтения; `OPTIONAL MATCH` берут, когда нужно вернуть узел даже при отсутствии связанных данных.",
+                "edge_cases": "Обычный `MATCH` при отсутствии совпадения отбрасывает весь ряд; чтобы сохранить «левую» часть с `NULL`, нужен именно `OPTIONAL MATCH`.",
+                "related": "[[neo4j-interview#Q8]] что такое Cypher; [[neo4j-interview#Q10]] pattern matching syntax; [[neo4j-interview#Q13]] WITH clause."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`WHERE` в `Cypher` нужен для создания узлов: он добавляет новые узлы и связи, если они отсутствуют в графе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WHERE` только фильтрует уже найденные `MATCH` данные; создание узлов — это `CREATE`/`MERGE`.",
+                "source_of_confusion": "В разговорной речи «where» можно спутать с «куда добавить», отсюда ассоциация с созданием.",
+                "if_it_were_true": "Тогда `MERGE` и `CREATE` были бы не нужны, но именно они отвечают за запись.",
+                "how_it_should_be": "`WHERE` фильтрует результаты `MATCH`, а узлы создаются через `CREATE`/`MERGE`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`OPTIONAL MATCH` работает как `INNER JOIN`: если связанного узла нет, весь ряд отбрасывается из результата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OPTIONAL MATCH` — это аналог `LEFT JOIN`: ряд сохраняется, а недостающие значения становятся `NULL`.",
+                "source_of_confusion": "Слово «match» ассоциируется с обязательным совпадением, как у `INNER JOIN`.",
+                "if_it_were_true": "Тогда Alice без друзей выпала бы из результата, но `OPTIONAL MATCH` оставит её с `friend.name = NULL`.",
+                "how_it_should_be": "`OPTIONAL MATCH` ведёт себя как `LEFT JOIN`, подставляя `NULL` при отсутствии совпадения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`RETURN` обязателен только в запросах на запись (`CREATE`, `DELETE`), а в запросах на чтение его можно опустить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: запрос на чтение без `RETURN` (или `WITH` в конце) ничего не вернёт; именно `RETURN` задаёт результат.",
+                "source_of_confusion": "В `SQL` `DELETE` без `SELECT` привычен, и это переносят на семантику `Cypher`.",
+                "if_it_were_true": "Тогда `MATCH (n:Person)` без `RETURN` выдавал бы строки, но он не вернёт ничего полезного.",
+                "how_it_should_be": "Для получения данных нужен `RETURN`; именно он определяет выводимые поля."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен синтаксис pattern matching `(a)-[r]->(b)` в Cypher?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Properties в паттерне задаются в круглых скобках после узла: `(a:Person)(name:'Alice')`, а фигурные скобки в `Cypher` не используются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Properties в паттерне пишут в фигурных скобках внутри узла: `(a:Person {name:'Alice'})`; отдельных круглых скобок для свойств нет.",
+                "source_of_confusion": "Скобочный синтаксис паттернов разнообразен, и легко перепутать круглые с фигурными.",
+                "if_it_were_true": "Тогда `(a:Person {name:'Alice'})` был бы невалиден, но это канонический способ задать свойство.",
+                "how_it_should_be": "Inline-свойства узла заключают в `{...}` внутри его круглых скобок."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В паттерне `(a)` — узел с переменной `a`, `(a:Person)` — с label, `(a:Person {name:'Alice'})` — с label и properties; `[r:KNOWS]` — связь с переменной и типом; `->` исходящая, `<-` входящая, `-` любое направление — это и есть ASCII-art для графовых паттернов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Из этих элементов собирают цепочки: friends-of-friends `(alice)-[:KNOWS]->(friend)-[:KNOWS]->(fof)` или треугольники `(a)-[:KNOWS]->(b)-[:KNOWS]->(c)-[:KNOWS]->(a)` — мощный способ описывать структурные паттерны.",
+                "example": "`MATCH (alice:Person {name:'Alice'})-[:KNOWS]->(friend)-[:KNOWS]->(fof) WHERE alice <> fof RETURN DISTINCT fof.name` — находит друзей друзей, исключая саму Alice.",
+                "when_to_apply": "Этот синтаксис применяют для описания любых структурных запросов: пути, циклы, треугольники, многоуровневые обходы — основа выразительности `Cypher`.",
+                "edge_cases": "Чтобы не получить саму стартовую вершину или дубли в friends-of-friends, добавляют `WHERE a <> fof` и `DISTINCT`; иначе паттерн вернёт лишние совпадения.",
+                "related": "[[neo4j-interview#Q9]] MATCH, WHERE, RETURN; [[neo4j-interview#Q7]] direction relationships; [[neo4j-interview#Q12]] variable-length paths."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Символ `->` в паттерне означает агрегацию (как `GROUP BY`), а не направление связи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`->` задаёт направление связи (исходящая), а агрегация в `Cypher` делается функциями `count()`, `sum()` в `RETURN`/`WITH`.",
+                "source_of_confusion": "Стрелки в разных языках иногда означают преобразование/маппинг, отсюда ложная ассоциация.",
+                "if_it_were_true": "Тогда `(a)-[:KNOWS]->(b)` группировал бы узлы, но он просто матчит исходящую связь.",
+                "how_it_should_be": "`->` — это направление ребра; агрегаты считаются отдельными функциями."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В паттерне нельзя указать тип связи: `[r]` всегда матчит любую связь, а фильтрация по типу делается только в `WHERE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип указывают прямо в паттерне: `[r:KNOWS]` матчит только связи `KNOWS`; `WHERE` для этого не обязателен.",
+                "source_of_confusion": "Фильтры привычно выносят в `WHERE`, поэтому кажется, что и тип связи только там.",
+                "if_it_were_true": "Тогда `[:FRIEND]` в паттерне не сужал бы выборку, но он матчит ровно связи `FRIEND`.",
+                "how_it_should_be": "Тип связи задаётся inline как `[r:TYPE]`, что эффективнее фильтрации в `WHERE`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем различаются CREATE, MERGE, SET и DELETE в Cypher?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CREATE` ведёт себя как upsert: если узел с такими свойствами уже есть, он не создаёт дубликат, а возвращает существующий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Upsert-семантику даёт `MERGE`; `CREATE` всегда вставляет новый узел, даже если такой уже существует.",
+                "source_of_confusion": "В других системах `CREATE`/`INSERT` иногда идемпотентны, и это ожидание переносят на `Cypher`.",
+                "if_it_were_true": "Тогда `MERGE` был бы избыточен, но он существует именно ради match-or-create.",
+                "how_it_should_be": "Идемпотентное создание — это `MERGE`; `CREATE` плодит дубликаты без проверки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SET` удаляет узел и его свойства, а для обновления значений свойств используется `DELETE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `SET` обновляет/добавляет свойства, а `DELETE` удаляет узлы и связи.",
+                "source_of_confusion": "Ключевые слова короткие и похожи по «силе», поэтому их роли путают местами.",
+                "if_it_were_true": "Тогда `SET n.age = 31` стирал бы узел, но он лишь меняет свойство `age`.",
+                "how_it_should_be": "`SET` — это обновление свойств; удаление сущностей — задача `DELETE`/`DETACH DELETE`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**CREATE** всегда создаёт новое (даже дубликат); **MERGE** — match-or-create (найти существующее или создать); **SET** обновляет properties; **DELETE** удаляет узлы/связи, а `DETACH DELETE` удаляет узел вместе со всеми его связями.",
+              "correct": true,
+              "sections": {
+                "explanation": "`CREATE` слепо вставляет; `MERGE` гарантирует идемпотентность по паттерну; `SET` меняет атрибуты найденных узлов; обычный `DELETE` упадёт, если у узла есть связи — поэтому используют `DETACH DELETE`.",
+                "example": "`MERGE (n:Person {name:'Alice'})` найдёт Alice или создаст её; `SET n.age = 31` обновит возраст; `MATCH (n:Person {name:'Alice'}) DETACH DELETE n` снесёт узел и все его рёбра.",
+                "when_to_apply": "`CREATE` — для гарантированно новых данных; `MERGE` — для upsert и дедупликации; `SET` — для обновлений; `DETACH DELETE` — для безопасного удаления связанных узлов.",
+                "edge_cases": "`DELETE` без `DETACH` на узле со связями вернёт ошибку; а `MERGE` по неполному паттерну может неожиданно создать дубль, если свойства не уникальны.",
+                "related": "[[neo4j-interview#Q5]] nodes и properties; [[neo4j-interview#Q15]] constraints для уникальности при MERGE; [[neo4j-interview#Q9]] MATCH перед SET/DELETE."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обычный `DELETE` без `DETACH` спокойно удаляет узел вместе со всеми его связями за один вызов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DELETE` на узле со связями выдаёт ошибку; чтобы удалить узел с рёбрами, нужен `DETACH DELETE`.",
+                "source_of_confusion": "Интуитивно кажется, что удаление узла должно автоматически убирать и его связи.",
+                "if_it_were_true": "Тогда `DETACH DELETE` не понадобился бы, но он создан именно для этого случая.",
+                "how_it_should_be": "Узел со связями удаляют через `DETACH DELETE`; голый `DELETE` требует, чтобы связей не было."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое variable-length paths в Cypher?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`[:KNOWS*1..3]` задаёт, что у связи `KNOWS` должно быть от 1 до 3 свойств, а не длину пути.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`*1..3` ограничивает число hops (длину пути), а не количество свойств у связи.",
+                "source_of_confusion": "Числа в фигурно-звёздочном синтаксисе можно ошибочно принять за счётчик свойств.",
+                "if_it_were_true": "Тогда нельзя было бы выразить обход на 3 уровня, но именно для этого нужен `*1..3`.",
+                "how_it_should_be": "`*N..M` — это диапазон длины пути в hops; свойства связи здесь ни при чём."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запись `[:KNOWS*]` безопасна на любом графе, потому что `Neo4j` автоматически ограничивает глубину обхода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Авто-ограничения нет: unbounded `*` может комбинаторно взорваться, поэтому глубину задают вручную через `..M`.",
+                "source_of_confusion": "Ожидание «умного» планировщика создаёт ложное чувство безопасности безграничного обхода.",
+                "if_it_were_true": "Тогда предупреждение «use carefully» в документации было бы лишним, но оно там не случайно.",
+                "how_it_should_be": "Безграничный `*` опасен; для предсказуемости явно ставят максимальную глубину."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`shortestPath()` возвращает все возможные пути между двумя узлами, а не кратчайший.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`shortestPath()` возвращает один кратчайший путь; все кратчайшие даёт `allShortestPaths()`, а все пути — обычный variable-length match.",
+                "source_of_confusion": "Похожие имена `shortestPath`/`allShortestPaths` легко перепутать по семантике.",
+                "if_it_were_true": "Тогда `allShortestPaths()` дублировал бы `shortestPath()`, но они решают разные задачи.",
+                "how_it_should_be": "`shortestPath()` — один кратчайший путь; для нескольких равных используют `allShortestPaths()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**Variable-length path** — обход переменной длины через `*N..M`: `[:KNOWS*1..3]` матчит пути от 1 до 3 hops, `[:KNOWS*4]` — ровно 4, `[:KNOWS*]` — от 1 до бесконечности (осторожно!), а `shortestPath()` находит кратчайший путь.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это ключевая фича графовых обходов: одной конструкцией описывают пути разной глубины. Подвох — unbounded `*` может «взорваться» на больших графах, поэтому всегда задают максимальную глубину.",
+                "example": "`MATCH (alice:Person {name:'Alice'})-[:KNOWS*1..3]->(person) RETURN DISTINCT person` находит знакомых до 3-го уровня; `shortestPath((a)-[:KNOWS*]-(b))` — кратчайшую цепочку между двумя людьми.",
+                "when_to_apply": "Variable-length paths используют для friends-of-friends, поиска путей, проверки достижимости и кратчайших маршрутов, ограничивая глубину для предсказуемой производительности.",
+                "edge_cases": "Безграничный `[:KNOWS*]` без верхней границы на плотном графе может комбинаторно взорваться по времени и памяти; всегда ставят разумный `..M`.",
+                "related": "[[neo4j-interview#Q10]] pattern matching syntax; [[neo4j-interview#Q21]] shortest path algorithms; [[neo4j-interview#Q24]] friends-of-friends."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает WITH clause (chaining queries) в Cypher?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "**WITH** передаёт (пайпит) результаты в следующую стадию запроса — аналог подзапросов в `SQL`; используется для фильтрации агрегатов, ограничения промежуточных результатов перед следующим `MATCH` и цепочек трансформаций.",
+              "correct": true,
+              "sections": {
+                "explanation": "`WITH` создаёт «горизонт»: после него видны только перечисленные переменные. Это позволяет посчитать агрегат, отфильтровать его и продолжить обход, что нельзя сделать одним `WHERE` после `MATCH`.",
+                "example": "`MATCH (alice:Person {name:'Alice'})-[:KNOWS]->(friend) WITH alice, count(friend) AS friendCount WHERE friendCount > 5 MATCH (alice)-[:KNOWS]->(close) RETURN close` — фильтрует по числу друзей, затем продолжает обход.",
+                "when_to_apply": "`WITH` применяют, когда нужно отфильтровать по агрегату, ограничить (`LIMIT`) промежуточный набор до следующего шага или поэтапно трансформировать данные.",
+                "edge_cases": "После `WITH` доступны только явно перечисленные переменные — забыв пробросить нужную, получишь ошибку «variable not defined» на следующем шаге.",
+                "related": "[[neo4j-interview#Q9]] MATCH, WHERE, RETURN; [[neo4j-interview#Q22]] агрегаты и центральность; [[neo4j-interview#Q25]] recommendations с подсчётами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`WITH` создаёт новый узел в графе и сохраняет в нём промежуточные результаты запроса для повторного использования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WITH` ничего не пишет в граф; он лишь пробрасывает промежуточные значения дальше по запросу в памяти.",
+                "source_of_confusion": "Слово «with» ассоциируется с «создать с такими-то данными», отсюда мысль о записи узла.",
+                "if_it_were_true": "Тогда каждый `WITH` мусорил бы граф служебными узлами, но он только пайпит данные.",
+                "how_it_should_be": "`WITH` — это конвейер промежуточных результатов, аналог подзапроса, без записи в граф."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`WITH` полностью эквивалентен `RETURN` и так же завершает запрос, возвращая результат клиенту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WITH` передаёт результаты следующей стадии того же запроса, а `RETURN` завершает запрос и отдаёт данные клиенту.",
+                "source_of_confusion": "Оба перечисляют переменные через запятую, поэтому выглядят взаимозаменяемыми.",
+                "if_it_were_true": "Тогда нельзя было бы продолжить `MATCH` после `WITH`, но именно это его назначение.",
+                "how_it_should_be": "`WITH` — промежуточный шаг внутри запроса; финальный вывод даёт `RETURN`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После `WITH` в последующих частях запроса автоматически доступны все переменные, объявленные ранее, даже не перечисленные в `WITH`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После `WITH` видны только переменные, явно перечисленные в нём; остальные становятся недоступны.",
+                "source_of_confusion": "В обычном линейном запросе переменные «копятся», и это ожидание переносят на `WITH`.",
+                "if_it_were_true": "Тогда не возникало бы ошибки «variable not defined» после `WITH`, но она типична при забытой переменной.",
+                "how_it_should_be": "`WITH` задаёт область видимости: дальше доступно только то, что в нём перечислено."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроены индексы в Neo4j и когда они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Индексы в `Neo4j` нужны на каждом узле пути обхода, иначе traversal по указателям связей работать не будет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сам обход по связям работает через index-free adjacency без индексов; индекс нужен только для быстрого поиска anchor-узла (точки входа).",
+                "source_of_confusion": "Из реляционного опыта кажется, что без индекса по каждому шагу запрос будет медленным.",
+                "if_it_were_true": "Тогда исчезло бы преимущество native graph storage, но как раз обход индексов не требует.",
+                "how_it_should_be": "Индекс ускоряет вход в граф (anchor), а дальнейший обход идёт по указателям без индексов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Индексы в `Neo4j` (B-tree по умолчанию, RANGE для числовых диапазонов, composite по нескольким свойствам) нужны на **anchor-узлах** запроса — точках входа в обход; без индекса поиск по свойству делает полный `SCAN` всех узлов label, с индексом — быстрый `INDEX SEEK`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Лучшая практика — индексировать свойства, по которым стартует traversal (search criteria). `CREATE INDEX FOR (p:Person) ON (p.email)` превращает scan всех Person в точечный seek по `email`.",
+                "example": "`MATCH (p:Person {email:'alice@example.com'})` без индекса сканирует всех Person; после `CREATE INDEX FOR (p:Person) ON (p.email)` тот же запрос идёт через INDEX SEEK; управляют через `SHOW INDEXES` и `DROP INDEX`.",
+                "when_to_apply": "Индекс ставят на entry-point свойства (email, id, name), по которым находят стартовые узлы графа; на промежуточные узлы обхода он обычно не нужен.",
+                "edge_cases": "Лишние индексы замедляют запись и едят память; индекс на низкоселективном свойстве (`is_active`) почти бесполезен — выгода только на селективных колонках.",
+                "related": "[[neo4j-interview#Q15]] constraints создают индекс; [[neo4j-interview#Q17]] EXPLAIN/PROFILE и SCAN; [[neo4j-interview#Q19]] anchor patterns."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Neo4j` автоматически создаёт индекс на каждое свойство каждого узла при его записи, поэтому `CREATE INDEX` никогда не нужен вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоиндексации всех свойств нет (кроме индексов под constraints); индексы на search-свойства создают явно через `CREATE INDEX`.",
+                "source_of_confusion": "Некоторые БД индексируют поля автоматически, и это ожидание переносят на `Neo4j`.",
+                "if_it_were_true": "Тогда `SHOW INDEXES` показывал бы индекс по каждому свойству, но это не так.",
+                "how_it_should_be": "Индексы на anchor-свойства задают вручную; автоматически индекс появляется лишь от constraint."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Neo4j` существует только один тип индекса — full-text на базе `Lucene`, других индексов нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть B-tree (default), RANGE, composite и отдельно full-text на `Lucene`; full-text — лишь один из видов.",
+                "source_of_confusion": "Full-text индекс заметен и часто упоминается, отсюда вывод, что он единственный.",
+                "if_it_were_true": "Тогда `CREATE RANGE INDEX ... ON (p.age)` был бы невозможен, но это валидный тип индекса.",
+                "how_it_should_be": "Дефолтный индекс — B-tree; full-text — отдельный специализированный тип для текстового поиска."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие constraints есть в Neo4j (UNIQUE, NOT NULL) и как они работают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Constraints в `Neo4j` не создают индекс: чтобы ускорить поиск по уникальному свойству, индекс нужно создавать отдельно вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Constraint автоматически создаёт поддерживающий индекс; отдельный `CREATE INDEX` для того же свойства не требуется.",
+                "source_of_confusion": "Constraint и index в `SQL` иногда воспринимают как независимые объекты, и это переносят сюда.",
+                "if_it_were_true": "Тогда после `REQUIRE ... IS UNIQUE` поиск по свойству был бы медленным, но индекс уже есть.",
+                "how_it_should_be": "Uniqueness-constraint сразу даёт и проверку, и индекс — дублировать индекс не нужно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`NOT NULL` constraint в `Neo4j` гарантирует уникальность свойства, а не его обязательное наличие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NOT NULL` (existence) требует, чтобы свойство присутствовало; уникальность задаёт отдельный `IS UNIQUE`.",
+                "source_of_confusion": "В одних системах `NOT NULL` соседствует с `UNIQUE`, отсюда смешение их смыслов.",
+                "if_it_were_true": "Тогда два узла с одинаковым `name` нарушали бы `NOT NULL`, но он лишь требует непустого `name`.",
+                "how_it_should_be": "`NOT NULL` гарантирует наличие свойства; уникальность — это `IS UNIQUE`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Neo4j` поддерживает constraints: **UNIQUE** (уникальность свойства), **NOT NULL** (existence — свойство обязано присутствовать), **type** (свойство нужного типа) и **composite uniqueness** (Enterprise); при этом constraint автоматически создаёт поддерживающий индекс.",
+              "correct": true,
+              "sections": {
+                "explanation": "Constraints обеспечивают целостность данных на уровне БД: `REQUIRE p.email IS UNIQUE` запретит дубликаты email, а сопутствующий индекс ещё и ускорит поиск по этому свойству — два эффекта сразу.",
+                "example": "`CREATE CONSTRAINT FOR (p:Person) REQUIRE p.email IS UNIQUE` гарантирует уникальность email и создаёт индекс; `REQUIRE p.name IS NOT NULL` запрещает узлы Person без имени.",
+                "when_to_apply": "Constraints ставят на бизнес-ключи (email, user_id) для целостности и идемпотентного `MERGE`; composite uniqueness — когда уникальна комбинация свойств (Enterprise).",
+                "edge_cases": "Composite uniqueness доступна только в Enterprise; попытка создать constraint на данных, где уже есть нарушения, упадёт — сначала чистят данные.",
+                "related": "[[neo4j-interview#Q14]] индексы; [[neo4j-interview#Q11]] MERGE опирается на уникальность; [[neo4j-interview#Q28]] Enterprise-фичи."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Composite uniqueness (уникальность по комбинации свойств) доступна в Community Edition без ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Composite uniqueness — это Enterprise-фича; в Community её нет, доступна обычная одно-свойственная уникальность.",
+                "source_of_confusion": "Базовые UNIQUE-constraints работают в Community, и это распространяют на composite-вариант.",
+                "if_it_were_true": "Тогда Enterprise не выделял бы её как платную возможность, но composite uniqueness именно там.",
+                "how_it_should_be": "Composite uniqueness требует Enterprise Edition; в Community — только одно-свойственные constraints."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое full-text search index в Neo4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Full-text index в `Neo4j` написан на собственном движке без сторонних библиотек и не использует `Lucene`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Full-text индекс работает поверх `Lucene` — той же библиотеки, что лежит в основе `Elasticsearch`.",
+                "source_of_confusion": "Кажется, что вендор реализует всё сам, без зависимости от чужих движков.",
+                "if_it_were_true": "Тогда у full-text не было бы Lucene-семантики анализаторов и ранжирования, но она там есть.",
+                "how_it_should_be": "Под капотом full-text — это `Lucene`, отсюда и привычное текстовое ранжирование."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Full-text index можно построить только по одному свойству одного узла; индексировать несколько полей сразу нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Синтаксис `ON EACH [n.title, n.content]` позволяет индексировать сразу несколько свойств (и несколько labels).",
+                "source_of_confusion": "Обычный B-tree чаще ставят на одно свойство, и это ограничение переносят на full-text.",
+                "if_it_were_true": "Тогда нельзя было бы искать одновременно по `title` и `content`, но full-text это умеет.",
+                "how_it_should_be": "Full-text индексирует список свойств `ON EACH [...]`, покрывая несколько полей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Full-text index запрашивается обычным `MATCH (n:Article {title:'...'})`, как и любой B-tree индекс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Full-text запрашивается процедурой `CALL db.index.fulltext.queryNodes(...)`, а не паттерном с точным совпадением свойства.",
+                "source_of_confusion": "Привычка обращаться к индексу через `MATCH` создаёт ожидание того же для full-text.",
+                "if_it_were_true": "Тогда не было бы отдельной процедуры `queryNodes` с `YIELD node, score`, но она необходима.",
+                "how_it_should_be": "Full-text вызывают процедурой `db.index.fulltext.queryNodes`, получая `node` и `score`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**Full-text index** в `Neo4j` — индекс для полнотекстового поиска по нескольким свойствам узлов, построенный на **Lucene**; создаётся через `CREATE FULLTEXT INDEX ... FOR (n:Article) ON EACH [n.title, n.content]` и запрашивается процедурой `db.index.fulltext.queryNodes`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от B-tree индекса (точное совпадение), full-text даёт релевантный поиск с ранжированием (`score`) по тексту в нескольких полях сразу — на движке `Lucene` под капотом.",
+                "example": "`CALL db.index.fulltext.queryNodes('article_search', 'neo4j cypher') YIELD node, score RETURN node.title, score ORDER BY score DESC` ищет статьи по словам и сортирует по релевантности.",
+                "when_to_apply": "Full-text используют для текстового поиска по узлам внутри графа; для серьёзных поисковых нагрузок берут `OpenSearch`/`Elasticsearch` как специализированное решение.",
+                "edge_cases": "Full-text не заменяет полноценный поисковый движок: при больших объёмах и сложном ранжировании `Elasticsearch` мощнее; в `Neo4j` он удобен, когда поиск тесно связан с обходом графа.",
+                "related": "[[neo4j-interview#Q14]] обычные B-tree индексы; [[neo4j-interview#Q17]] PROFILE для анализа; [[neo4j-interview#Q27]] поиск по knowledge graph."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что показывают query plan, EXPLAIN и PROFILE в Neo4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "**EXPLAIN** показывает план запроса **без выполнения** (предполагаемые операторы и оценки); **PROFILE** выполняет запрос и даёт **реальную статистику** — DB hits и rows по каждому оператору; цель — минимизировать DB hits и устранить `NodeByLabelScan`.",
+              "correct": true,
+              "sections": {
+                "explanation": "План — это дерево операторов (`NodeIndexSeek`, `Expand`, `ProduceResults`). `NodeByLabelScan` означает полный скан label — обычно сигнал, что нужен индекс на anchor-свойстве. PROFILE точнее EXPLAIN, потому что показывает фактические цифры.",
+                "example": "`PROFILE MATCH (n:Person {name:'Alice'})-[:KNOWS]->(friend) RETURN friend` покажет, например, `NodeIndexSeek` с 2 DB hits вместо дорогого скана — так находят узкие места.",
+                "when_to_apply": "EXPLAIN берут для быстрой оценки плана без нагрузки на проде; PROFILE — для реальной диагностики медленных запросов с фактическими DB hits.",
+                "edge_cases": "PROFILE реально выполняет запрос (включая запись!), поэтому `PROFILE CREATE/DELETE` изменит данные; для безопасной оценки таких запросов используют EXPLAIN.",
+                "related": "[[neo4j-interview#Q14]] индексы против сканов; [[neo4j-interview#Q18]] index-free adjacency; [[neo4j-interview#Q19]] anchor patterns."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "И `EXPLAIN`, и `PROFILE` выполняют запрос на самом деле; разница лишь в том, что `EXPLAIN` дополнительно меняет данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EXPLAIN` не выполняет запрос и не трогает данные — он только строит план; реально выполняет (и может менять данные) именно `PROFILE`.",
+                "source_of_confusion": "Оба возвращают дерево плана, поэтому кажется, что и работают одинаково.",
+                "if_it_were_true": "Тогда `EXPLAIN CREATE ...` создавал бы узлы, но он лишь показывает предполагаемый план.",
+                "how_it_should_be": "`EXPLAIN` — без выполнения; `PROFILE` выполняет запрос и собирает реальную статистику."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`NodeByLabelScan` в плане — признак оптимального запроса, и его наличие означает, что индекс используется правильно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NodeByLabelScan` — это полный скан всех узлов label (медленно); обычно он сигнализирует об отсутствии нужного индекса.",
+                "source_of_confusion": "Слово «Scan» звучит технически нейтрально, и его не воспринимают как проблему.",
+                "if_it_were_true": "Тогда не было бы смысла добавлять индексы, но именно `NodeIndexSeek` вместо скана — цель оптимизации.",
+                "how_it_should_be": "`NodeByLabelScan` — красный флаг; цель — заменить его на `NodeIndexSeek` через индекс."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главная метрика в `PROFILE` — это число строк (rows), а DB hits не имеет значения для производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключевая метрика — DB hits (обращения к хранилищу); именно её минимизируют, rows — вторичный показатель объёма.",
+                "source_of_confusion": "Rows нагляднее и привычнее, поэтому на них смотрят в первую очередь.",
+                "if_it_were_true": "Тогда два плана с равными rows были бы одинаково быстры, но при разных DB hits это не так.",
+                "how_it_should_be": "Оптимизируют прежде всего DB hits; rows лишь дополняют картину стоимости."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое index-free adjacency?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Index-free adjacency означает, что `Neo4j` вообще не использует индексы ни для чего, включая поиск стартовых узлов запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Индексы всё равно нужны — для быстрого входа в граф (anchor-узлы); «index-free» относится только к самому обходу между соседями.",
+                "source_of_confusion": "Буквальное прочтение «index-free» наводит на мысль о полном отказе от индексов.",
+                "if_it_were_true": "Тогда `CREATE INDEX` был бы бессмысленным, но он критичен для поиска anchor-узлов.",
+                "how_it_should_be": "Без индекса обходятся только соседи по указателям; вход в граф по-прежнему ускоряют индексом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**Index-free adjacency** — способ хранения, при котором каждый узел держит **прямые указатели** на связанные с ним узлы, поэтому переход к соседу (один hop) стоит **O(1)** — это просто следование по указателю, а не поиск по индексу.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это главное performance-преимущество `Neo4j`: traversal не зависит от размера графа. В реляционной БД каждый hop — это `JOIN` (hash/merge, log/linear), и на глубоких обходах стоимость растёт экспоненциально.",
+                "example": "Узел `Alice` хранит список указателей на `[Bob, Charlie, ...]`; чтобы найти её друзей, БД идёт по указателям за O(1) на hop, а реляционная БД сделала бы lookup по индексу таблицы связей.",
+                "when_to_apply": "На index-free adjacency опираются при проектировании глубоких обходов в реальном времени: рекомендации, антифрод, соцграф — там, где число hops велико.",
+                "edge_cases": "Преимущество проявляется именно на глубине: на запросе в 1 hop разница с индексированной реляционной БД мала; выигрыш растёт с числом уровней обхода.",
+                "related": "[[neo4j-interview#Q4]] native graph storage; [[neo4j-interview#Q2]] когда graph лучше реляционной; [[neo4j-interview#Q17]] DB hits в PROFILE."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Index-free adjacency означает, что переход к соседу выполняется поиском по глобальному B-tree индексу за `O(log n)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл именно в отсутствии такого поиска: переход идёт по прямому указателю за O(1), без обращения к индексу.",
+                "source_of_confusion": "Опыт реляционных БД, где связи находят через индексы, заставляет предполагать `O(log n)`.",
+                "if_it_were_true": "Тогда стоимость hop росла бы с размером графа, но index-free adjacency держит её константной.",
+                "how_it_should_be": "Hop — это следование по указателю за O(1); глобальный индекс для перехода не используется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Index-free adjacency — это про то, что `Neo4j` не строит индексы при загрузке данных, чтобы ускорить запись.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Термин описывает дешёвый обход по указателям при чтении, а не отказ от индексов ради скорости записи.",
+                "source_of_confusion": "Связка «без индекса = быстрее писать» переносит понятие в плоскость загрузки данных.",
+                "if_it_were_true": "Тогда index-free adjacency обсуждали бы в контексте bulk-import, но речь о traversal-производительности.",
+                "how_it_should_be": "Index-free adjacency — это про O(1)-обход соседей при чтении, а не про скорость записи."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое anchor patterns в Cypher и зачем они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Anchor pattern означает, что обход всегда должен начинаться с самого большого по числу совпадений узла, чтобы охватить весь граф.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: стартуют с самого селективного (наименьшего) множества, чтобы сократить число дальнейших обходов.",
+                "source_of_confusion": "Кажется, что «начать с большого» даёт более полный охват, но это раздувает стоимость.",
+                "if_it_were_true": "Тогда anchor по `{name:'Alice'}` (один узел) был бы плохим выбором, но он как раз оптимален.",
+                "how_it_should_be": "Anchor выбирают как наиболее селективный узел, минимизируя ветвление обхода."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Вынос фильтра в `WHERE` (`MATCH (a:Person) ... WHERE a.name='Alice'`) всегда работает так же быстро, как inline-anchor `{name:'Alice'}`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inline-anchor позволяет планировщику начать с `NodeIndexSeek`, а `WHERE` после `MATCH (a:Person)` нередко приводит к скану всех Person с последующей фильтрацией.",
+                "source_of_confusion": "Семантически оба варианта дают тот же результат, поэтому их считают равнопроизводительными.",
+                "if_it_were_true": "Тогда не было бы разницы в плане между ними, но `PROFILE` показывает scan против seek.",
+                "how_it_should_be": "Inline-свойство в anchor помогает использовать индекс; поздний `WHERE` чаще даёт скан."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**Anchor** — стартовая точка запроса (обычно индексированный узел), от которой эффективно идёт обход; правильный anchor использует индекс (`{name:'Alice'}` прямо в паттерне), а плохой заставляет сканировать всех узлов label и фильтровать потом в `WHERE`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Anchor должен начинать обход с **самого селективного** узла (наименьшего множества совпадений), чтобы дальше traversal шёл по немногим связям; иначе планировщик стартует со скана и теряет преимущество графа.",
+                "example": "Плохо: `MATCH (a:Person)-[:KNOWS]->(b) WHERE a.name='Alice' RETURN b` (скан всех Person). Хорошо: `MATCH (a:Person {name:'Alice'})-[:KNOWS]->(b) RETURN b` — anchor по индексированному `name`.",
+                "when_to_apply": "Anchor-паттерны учитывают при написании любого обхода: ставят индекс на свойство входа и начинают `MATCH` с самого узкого узла.",
+                "edge_cases": "Если стартовый узел не селективен (например label с миллионами записей и неиндексированным фильтром), даже формально «правильный» anchor останется медленным сканом.",
+                "related": "[[neo4j-interview#Q14]] индексы на anchor; [[neo4j-interview#Q17]] PROFILE и сканы; [[neo4j-interview#Q10]] pattern matching syntax."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Anchor pattern — это специальная директива `ANCHOR` в начале запроса, которую обязательно писать перед `MATCH`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого ключевого слова `ANCHOR` нет; anchor — это просто селективный стартовый узел паттерна, а не директива.",
+                "source_of_confusion": "Слово «anchor» звучит как имя оператора, отсюда ожидание явного ключевого слова.",
+                "if_it_were_true": "Тогда запросы без `ANCHOR` не компилировались бы, но обычный `MATCH (a:Person {name:'Alice'})` валиден.",
+                "how_it_should_be": "Anchor задаётся выбором селективного узла в `MATCH`, а не отдельной директивой."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Graph Data Science (GDS) library в Neo4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "GDS — это отдельная СУБД, не связанная с `Neo4j`, со своим хранилищем и языком запросов вместо `Cypher`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GDS — это библиотека (плагин) внутри `Neo4j`, вызываемая процедурами `gds.*` из `Cypher`, а не самостоятельная СУБД.",
+                "source_of_confusion": "Громкое название «Graph Data Science» звучит как отдельный продукт, а не библиотека.",
+                "if_it_were_true": "Тогда нельзя было бы вызвать `CALL gds.pageRank.stream(...)` из `Cypher`, но это штатный способ.",
+                "how_it_should_be": "GDS — расширение `Neo4j`; алгоритмы вызывают процедурами `gds.*` прямо в `Cypher`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GDS-алгоритмы работают напрямую по дисковому хранилищу `Neo4j` без какой-либо проекции графа в память.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Типичный workflow GDS требует сначала спроецировать граф в in-memory представление, и уже над ним запускать алгоритм.",
+                "source_of_confusion": "Хочется думать, что алгоритм просто читает данные «как есть», без подготовительного шага.",
+                "if_it_were_true": "Тогда параметр имени проекции (`'myGraph'`) в вызовах был бы лишним, но он обязателен.",
+                "how_it_should_be": "Граф проецируют в память (`gds.graph.project`), затем запускают алгоритм над проекцией."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В GDS есть только алгоритмы поиска кратчайшего пути; centrality, community detection и embeddings в неё не входят.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GDS покрывает centrality, community detection, similarity, link prediction и embeddings помимо path finding — это 50+ алгоритмов.",
+                "source_of_confusion": "Path finding — самый узнаваемый класс, и им ошибочно ограничивают всю библиотеку.",
+                "if_it_were_true": "Тогда `gds.pageRank` и `gds.louvain` не существовали бы, но они входят в GDS.",
+                "how_it_should_be": "GDS — это широкий набор категорий алгоритмов, а не только кратчайшие пути."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**Neo4j GDS** — библиотека из 50+ графовых алгоритмов: centrality (`PageRank`, Betweenness, Closeness), community detection (`Louvain`, `Leiden`, Label Propagation), path finding (`Dijkstra`, `A*`, Yen's), similarity (Jaccard, Cosine), link prediction и embeddings (`Node2Vec`, `FastRP`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Workflow GDS: сначала **проецируют граф** (подграф) в память, затем **запускают алгоритм** в режиме `stream`/`mutate`/`write`, затем получают результаты. Проекция нужна, чтобы алгоритм работал над оптимизированным in-memory представлением.",
+                "example": "`CALL gds.pageRank.stream('myGraph') YIELD nodeId, score RETURN gds.util.asNode(nodeId).name AS name, score ORDER BY score DESC LIMIT 10` считает PageRank по спроецированному графу `myGraph`.",
+                "when_to_apply": "GDS берут для аналитики на графе: важность узлов, поиск сообществ, кратчайшие пути, схожесть, эмбеддинги для ML — поверх данных `Neo4j`.",
+                "edge_cases": "Проекция графа держится в памяти и потребляет RAM пропорционально размеру; огромные графы нужно проецировать подмножествами, иначе памяти не хватит.",
+                "related": "[[neo4j-interview#Q21]] shortest path algorithms; [[neo4j-interview#Q22]] PageRank и centrality; [[neo4j-interview#Q23]] community detection."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие алгоритмы кратчайшего пути (shortest path) есть в Neo4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `Cypher` есть `shortestPath()` (один кратчайший путь) и `allShortestPaths()` (все равно-кратчайшие), а в GDS — взвешенные алгоритмы: `Dijkstra` (по `relationshipWeightProperty`), `A*` и Yen's k-shortest для нескольких лучших путей.",
+              "correct": true,
+              "sections": {
+                "explanation": "Невзвешенные пути ищут прямо в `Cypher` через `shortestPath`/`allShortestPaths`; когда у связей есть вес (расстояние, стоимость), нужен GDS-`Dijkstra` или `A*`, учитывающий `relationshipWeightProperty`.",
+                "example": "`MATCH path = shortestPath((a)-[*]-(b)) RETURN path` — невзвешенный путь; `CALL gds.shortestPath.dijkstra.stream('cities', {sourceNode:id(a), targetNode:id(b), relationshipWeightProperty:'distance'}) YIELD totalCost, nodeIds` — взвешенный.",
+                "when_to_apply": "Невзвешенный `shortestPath` берут для социальных дистанций (число hops); взвешенный `Dijkstra`/`A*` — для маршрутов с реальной стоимостью (километры, цена, время).",
+                "edge_cases": "`shortestPath` с unbounded `[*]` на огромном графе может быть дорогим; для взвешенных задач `shortestPath` непригоден — он считает hops, а не сумму весов.",
+                "related": "[[neo4j-interview#Q12]] variable-length paths; [[neo4j-interview#Q20]] GDS library; [[neo4j-interview#Q22]] другие GDS-алгоритмы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`shortestPath()` в `Cypher` учитывает веса связей через свойство и сразу считает взвешенный кратчайший путь без GDS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`shortestPath()` считает путь по числу hops без учёта весов; взвешенный кратчайший путь даёт GDS-`Dijkstra` с `relationshipWeightProperty`.",
+                "source_of_confusion": "«Кратчайший» интуитивно ассоциируется с минимальной суммой весов, а не с числом рёбер.",
+                "if_it_were_true": "Тогда `gds.shortestPath.dijkstra` был бы не нужен, но он существует именно для весов.",
+                "how_it_should_be": "Для весов используют `Dijkstra`/`A*` из GDS; `shortestPath` минимизирует число hops."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Dijkstra` доступен прямо в чистом `Cypher` без подключения GDS, как и `shortestPath`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Dijkstra` (взвешенный) живёт в GDS и вызывается через `gds.shortestPath.dijkstra`; в чистом `Cypher` есть только `shortestPath`/`allShortestPaths`.",
+                "source_of_confusion": "И то, и другое про кратчайшие пути, поэтому границу между `Cypher` и GDS стирают.",
+                "if_it_were_true": "Тогда не требовалась бы проекция графа (`'cities'`) для `Dijkstra`, но она нужна.",
+                "how_it_should_be": "Взвешенный `Dijkstra` — это GDS-процедура; нативный `Cypher` даёт только невзвешенные пути."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`allShortestPaths()` возвращает один произвольный кратчайший путь, точно как `shortestPath()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`allShortestPaths()` возвращает все пути минимальной длины, а `shortestPath()` — лишь один из них.",
+                "source_of_confusion": "Похожие имена и одинаковая «кратчайшесть» создают впечатление эквивалентности.",
+                "if_it_were_true": "Тогда две функции дублировали бы друг друга, но они решают разные задачи.",
+                "how_it_should_be": "`allShortestPaths()` отдаёт все равно-кратчайшие пути; `shortestPath()` — единственный."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое PageRank и centrality в Neo4j GDS?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "PageRank измеряет кратчайшее расстояние от узла до всех остальных и совпадает с closeness centrality.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PageRank оценивает важность через важность соседей (вариант eigenvector), а расстояния до всех узлов измеряет closeness — это разные меры.",
+                "source_of_confusion": "Все centrality дают «оценку узла числом», поэтому их семантику смешивают.",
+                "if_it_were_true": "Тогда PageRank и closeness давали бы одинаковый рейтинг, но они ранжируют узлы по-разному.",
+                "how_it_should_be": "PageRank — это престиж через важных соседей; closeness — про среднюю дистанцию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**PageRank** — оценка важности узла (исходный алгоритм Google, вариант eigenvector centrality); centrality — семейство мер влиятельности: **Degree** (число связей), **Betweenness** (как часто узел лежит на кратчайших путях — мосты), **Closeness** (средняя дистанция до всех) и **Eigenvector** (связи с важными узлами).",
+              "correct": true,
+              "sections": {
+                "explanation": "Разные centrality отвечают на разные вопросы: PageRank/Eigenvector — «насколько узел важен через важных соседей», Betweenness — «насколько узел мост между частями графа», Degree — «насколько узел популярен напрямую».",
+                "example": "`CALL gds.pageRank.stream('myGraph') YIELD nodeId, score RETURN gds.util.asNode(nodeId).name, score ORDER BY score DESC LIMIT 10` находит самые «важные» узлы — influencer'ов или критичную инфраструктуру.",
+                "when_to_apply": "Centrality применяют для influencer detection, поиска критичной инфраструктуры и оценки важности узлов в knowledge graph; выбор меры зависит от вопроса (мост vs популярность vs престиж).",
+                "edge_cases": "Высокий Degree не равен высокому Betweenness: узел с многими связями внутри одного кластера может вообще не быть мостом между сообществами — меры центральности не взаимозаменяемы.",
+                "related": "[[neo4j-interview#Q20]] GDS library; [[neo4j-interview#Q23]] community detection; [[neo4j-interview#Q24]] applications в соцсетях."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все меры centrality эквивалентны и дают один и тот же рейтинг узлов, поэтому достаточно посчитать любую из них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Меры отвечают на разные вопросы (мост, популярность, престиж) и часто дают разные топ-узлы; они не взаимозаменяемы.",
+                "source_of_confusion": "Общее слово «centrality» создаёт иллюзию, что это одна и та же величина.",
+                "if_it_were_true": "Тогда Degree и Betweenness всегда совпадали бы, но узел-хаб внутри кластера может не быть мостом.",
+                "how_it_should_be": "Под задачу выбирают конкретную centrality: Betweenness для мостов, Degree для популярности и т.д."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Betweenness centrality считает просто количество прямых связей узла, как и degree centrality.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Число прямых связей — это degree; betweenness считает, как часто узел лежит на кратчайших путях между другими (мосты).",
+                "source_of_confusion": "Обе меры о «связности», поэтому betweenness упрощают до подсчёта рёбер.",
+                "if_it_were_true": "Тогда betweenness и degree всегда совпадали бы, но узел может иметь мало связей и быть ключевым мостом.",
+                "how_it_should_be": "Degree — число связей; betweenness — частота нахождения на кратчайших путях."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое community detection (Louvain, Leiden) в Neo4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Community detection находит кратчайшие пути между узлами, а не группы плотно связанных узлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поиск кратчайших путей — это отдельный класс (path finding); community detection разбивает граф на плотно связанные группы.",
+                "source_of_confusion": "Оба относятся к графовой аналитике GDS, поэтому их задачи путают.",
+                "if_it_were_true": "Тогда `gds.louvain` возвращал бы пути, но он отдаёт `communityId` для каждого узла.",
+                "how_it_should_be": "Community detection выделяет сообщества; кратчайшие пути ищут `Dijkstra`/`shortestPath`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Leiden — это полностью другой по принципу алгоритм, не связанный с Louvain и работающий значительно хуже него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Leiden — улучшенная версия Louvain: тот же принцип modularity, но он исправляет дефекты и даёт качество выше, а не хуже.",
+                "source_of_confusion": "Разные названия создают впечатление двух несвязанных и конкурирующих подходов.",
+                "if_it_were_true": "Тогда Leiden не рекомендовали бы вместо Louvain, но именно его берут ради качества.",
+                "how_it_should_be": "Leiden развивает идею Louvain и улучшает разбиение, устраняя несвязные сообщества."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**Community detection** — поиск групп узлов, плотно связанных внутри: **Louvain** (оптимизация modularity, быстрый), **Leiden** (улучшенный Louvain, лучше качество), **Label Propagation** (быстрый, менее точный) и **Connected Components** (сильно/слабо связанные компоненты).",
+              "correct": true,
+              "sections": {
+                "explanation": "Алгоритмы делят граф на сообщества по плотности внутренних связей. Louvain популярен скоростью, но Leiden исправляет его дефекты (несвязные сообщества), давая более качественное разбиение.",
+                "example": "`CALL gds.louvain.stream('myGraph') YIELD nodeId, communityId RETURN gds.util.asNode(nodeId).name, communityId` присваивает каждому узлу `communityId`, выявляя кластеры в соцсети или сегменты клиентов.",
+                "when_to_apply": "Community detection применяют для выделения сообществ в соцсетях, сегментации клиентов и группировки тем в knowledge graph; Louvain — быстрый дефолт, Leiden — когда важно качество.",
+                "edge_cases": "Louvain может выдавать внутренне несвязные сообщества (известный дефект); Leiden это устраняет, поэтому для аккуратного разбиения предпочитают именно его.",
+                "related": "[[neo4j-interview#Q20]] GDS library; [[neo4j-interview#Q22]] centrality; [[neo4j-interview#Q24]] сообщества в соцсетях."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Label Propagation — самый точный и медленный алгоритм community detection, превосходящий Louvain по качеству.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Label Propagation, наоборот, быстрый, но менее точный; по качеству Louvain/Leiden обычно лучше него.",
+                "source_of_confusion": "Слово «propagation» звучит как тщательный итеративный процесс, отсюда переоценка точности.",
+                "if_it_were_true": "Тогда Leiden не понадобился бы ради качества, но именно он, а не Label Propagation, даёт лучшее разбиение.",
+                "how_it_should_be": "Label Propagation быстрый и грубый; за качеством идут к Louvain и особенно Leiden."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Neo4j применяют для social networks (friends-of-friends)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Friends-of-friends в `Neo4j` обязательно считают через GDS-`PageRank`, обычным `Cypher`-обходом это сделать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Friends-of-friends прекрасно выражается обычным `Cypher`-паттерном `(a)-[:FRIEND]->()-[:FRIEND]->(fof)`; PageRank для этого не требуется.",
+                "source_of_confusion": "GDS ассоциируется с любой «умной» графовой аналитикой, отсюда вывод о его необходимости.",
+                "if_it_were_true": "Тогда нельзя было бы написать рекомендацию одним `MATCH`, но это базовый паттерн `Cypher`.",
+                "how_it_should_be": "Friends-of-friends — это простой двухшаговый `MATCH`; GDS здесь избыточен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы порекомендовать друзей, в запрос не нужно добавлять условие `NOT (alice)-[:FRIEND]->(fof)` — дубликаты и так не появятся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без этого условия в рекомендации попадут люди, уже являющиеся друзьями Alice; фильтр `NOT ...` как раз исключает их.",
+                "source_of_confusion": "Кажется, что `DISTINCT` достаточно, и про исключение существующих друзей забывают.",
+                "if_it_were_true": "Тогда продукт рекомендовал бы уже добавленных друзей, но условие `NOT` для того и нужно.",
+                "how_it_should_be": "Существующих друзей и саму персону исключают явными условиями, иначе рекомендации бессмысленны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Neo4j` дружбу всегда хранят как две отдельные связи в обе стороны, поэтому friends-of-friends ищут только по входящим рёбрам `<-[:FRIEND]-`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дружбу обычно хранят одной связью и обходят direction-agnostic при необходимости; жёсткого требования двух рёбер и только входящего обхода нет.",
+                "source_of_confusion": "Взаимность дружбы наводит на мысль об обязательном дублировании рёбер в обе стороны.",
+                "if_it_were_true": "Тогда исходящий обход `-[:FRIEND]->` не находил бы друзей, но в примерах он работает.",
+                "how_it_should_be": "Симметрию дружбы выражают одной связью + обходом без направления, без обязательного дубля рёбер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Соцсети моделируют как граф людей и связей `FRIEND`; рекомендации «People You May Know» строят через **общих друзей** — обходят friends-of-friends, исключая уже существующих друзей и саму персону, и ранжируют по числу общих знакомых.",
+              "correct": true,
+              "sections": {
+                "explanation": "Паттерн `(alice)-[:FRIEND]->(friend)-[:FRIEND]->(fof)` с условием `NOT (alice)-[:FRIEND]->(fof)` находит «друзей друзей», которые ещё не друзья Alice; `count(*)` по общим друзьям даёт силу рекомендации.",
+                "example": "`MATCH (alice:Person {name:'Alice'})-[:FRIEND]->(f)-[:FRIEND]->(fof) WHERE NOT (alice)-[:FRIEND]->(fof) AND alice<>fof RETURN DISTINCT fof.name, count(*) AS mutualFriends ORDER BY mutualFriends DESC LIMIT 10`.",
+                "when_to_apply": "Такой обход применяют для friend recommendation в `Facebook`/`LinkedIn`-подобных продуктах, где сила связи определяется числом общих друзей.",
+                "edge_cases": "Без `NOT (alice)-[:FRIEND]->(fof)` и `alice<>fof` в результат попадут уже существующие друзья и сама Alice; без `DISTINCT` — дубли по разным путям общих друзей.",
+                "related": "[[neo4j-interview#Q10]] pattern matching syntax; [[neo4j-interview#Q12]] variable-length paths; [[neo4j-interview#Q25]] recommendations engine."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как построить recommendations engine на Neo4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Рекомендации строят через **collaborative filtering** на графе: «пользователи, купившие X, купили и Y» — обходят `(u)-[:BOUGHT]->(p)<-[:BOUGHT]-(other)-[:BOUGHT]->(rec)`, исключают уже купленное и ранжируют `rec` по частоте (`count(*)`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея в том, что общие действия (покупки, высокие оценки) связывают пользователей; рекомендуют то, что популярно среди «похожих» пользователей, но ещё не приобретено/не оценено целевым.",
+                "example": "`MATCH (u:User {id:'user1'})-[:BOUGHT]->(p)<-[:BOUGHT]-(other)-[:BOUGHT]->(rec) WHERE NOT (u)-[:BOUGHT]->(rec) RETURN rec.name, count(*) AS frequency ORDER BY frequency DESC LIMIT 10`.",
+                "when_to_apply": "Такой подход применяют для product/movie recommendations, где сигнал — совпадение покупок или одинаково высоких оценок (`RATED {rating:5}`) между пользователями.",
+                "edge_cases": "Без `WHERE NOT (u)-[:BOUGHT]->(rec)` система порекомендует уже купленное; на холодном старте (мало связей у нового пользователя) collaborative filtering почти не работает.",
+                "related": "[[neo4j-interview#Q24]] friends-of-friends; [[neo4j-interview#Q22]] similarity и важность; [[neo4j-interview#Q20]] GDS similarity-алгоритмы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Collaborative filtering на графе требует, чтобы рекомендации возвращали товары, которые целевой пользователь уже купил, для подтверждения вкуса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: уже купленное исключают через `WHERE NOT (u)-[:BOUGHT]->(rec)` — рекомендуют новое, а не повтор.",
+                "source_of_confusion": "Кажется логичным «показывать любимое», но рекомендации нужны для нового, а не уже приобретённого.",
+                "if_it_were_true": "Тогда движок предлагал бы уже купленные товары, но условие `NOT` именно их отсекает.",
+                "how_it_should_be": "Рекомендуют товары, которых у пользователя ещё нет; купленное исключают фильтром."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Рекомендации на графе невозможны без машинного обучения: collaborative filtering нельзя выразить чистым `Cypher`-обходом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Базовый collaborative filtering выражается обычным `Cypher`-паттерном по связям `BOUGHT`/`RATED`; ML не обязателен.",
+                "source_of_confusion": "Рекомендательные системы ассоциируются со сложными ML-моделями по умолчанию.",
+                "if_it_were_true": "Тогда нельзя было бы написать рекомендацию одним `MATCH ... RETURN ... ORDER BY count(*)`, но это работает.",
+                "how_it_should_be": "Простой collaborative filtering — это graph-обход на `Cypher`; ML — опциональное усложнение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для movie recommendations через оценки в графе нельзя учитывать величину рейтинга (например `rating:5`), доступен только факт связи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Свойства связи доступны в паттерне: `-[:RATED {rating:5}]->` фильтрует именно высокие оценки, и это штатно используют.",
+                "source_of_confusion": "Кажется, что связь — это только факт, а её свойства в матчинге недоступны.",
+                "if_it_were_true": "Тогда нельзя было бы отличить оценку 5 от оценки 1, но `{rating:5}` в паттерне это делает.",
+                "how_it_should_be": "Свойства связи (`rating`) участвуют в паттерне и фильтруют рекомендации по силе сигнала."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как используют Neo4j для fraud detection?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Fraud detection в `Neo4j` сводится к проверке одного свойства транзакции (например `amount > 10000`) без анализа структуры связей между счетами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сила graph-антифрода именно в структурных паттернах (циклы, звёзды, хабы); порог по сумме — лишь дополнительный фильтр, а не суть.",
+                "source_of_confusion": "Пороговые правила привычны по классическим системам, и их принимают за весь антифрод.",
+                "if_it_were_true": "Тогда graph DB не давал бы преимущества над `SQL`, но он нужен именно для поиска паттернов-циклов.",
+                "how_it_should_be": "Graph-антифрод ищет структуры связей (циклы/звёзды/хабы), а пороги по сумме лишь уточняют их."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Антифрод на графе ищет подозрительные **структурные паттерны**: **циклы** `A→B→C→A` (round-tripping/отмывание), **звёзды** (много→1→много, посредник) и **хабы** (аккаунт с аномальной связностью); цикл переводов находят через `(:Account)-[:TRANSFER*1..5]->(a)` с фильтром по сумме.",
+              "correct": true,
+              "sections": {
+                "explanation": "Мошеннические схемы естественно выражаются как графовые паттерны, которые в реляционной БД тяжело искать. Циклы переводов, кольца аккаунтов и необычные хабы — типичные сигналы; банки (`Capital One`, `HSBC`) применяют graph DB для этого.",
+                "example": "`MATCH path = (a:Account)-[:TRANSFER*1..5]->(a) WHERE all(r IN relationships(path) WHERE r.amount > 10000) RETURN path` находит замкнутые цепочки крупных переводов, возвращающихся к исходному счёту.",
+                "when_to_apply": "Graph-антифрод применяют там, где важна структура связей: отмывание (циклы), фиктивные посредники (звёзды), подозрительная связность (хабы) — в банках, платёжных системах, страховании.",
+                "edge_cases": "Безграничный `[:TRANSFER*]` без верхней границы на больших графах транзакций может взорваться; глубину ограничивают (`*1..5`) и добавляют фильтры по сумме/времени.",
+                "related": "[[neo4j-interview#Q12]] variable-length paths и циклы; [[neo4j-interview#Q22]] хабы через centrality; [[neo4j-interview#Q23]] кольца через community detection."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Цикл переводов в графе ищут запросом `MATCH (a)-[:TRANSFER]->(b) RETURN a, b`, проверяя только пары соседних счетов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пара соседей не выявляет цикл; нужен путь, возвращающийся к исходному узлу: `(a)-[:TRANSFER*1..5]->(a)` обнаруживает замкнутую цепочку.",
+                "source_of_confusion": "Кажется, что достаточно посмотреть прямые переводы, но отмывание идёт через цепочку посредников.",
+                "if_it_were_true": "Тогда не нужны были бы variable-length paths, но именно `*1..5` ловит round-tripping.",
+                "how_it_should_be": "Цикл выявляют обходом переменной длины, замыкающимся на тот же счёт (`->(a)`)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Графовый антифрод применим только к соцсетям и не используется банками для поиска отмывания денег.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Банки и платёжные системы (`Capital One`, `HSBC`) активно используют graph DB для fraud detection, включая поиск циклов отмывания.",
+                "source_of_confusion": "Графы прочно ассоциируются с соцсетями, поэтому их роль в финансах недооценивают.",
+                "if_it_were_true": "Тогда финансовые кейсы не упоминались бы как флагман graph-антифрода, но они ключевые.",
+                "how_it_should_be": "Финансовый антифрод — одно из главных применений graph DB наряду с соцсетями."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое knowledge graphs и как их строят в Neo4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Knowledge graph — это таблица фактов в реляционной БД, где каждая строка хранит одну тройку subject-predicate-object без связей-указателей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Knowledge graph — это сеть сущностей и связей (граф); храня его в graph DB, факты выражают рёбрами с прямыми связями, а не строками одной таблицы.",
+                "source_of_confusion": "RDF-тройки табличны по форме, отсюда вывод о реляционном хранении без графа.",
+                "if_it_were_true": "Тогда обход `(Einstein)-[:BORN_IN]->(Germany)` сводился бы к джойнам, но в graph DB это переход по ребру.",
+                "how_it_should_be": "Knowledge graph — это граф сущностей/связей; в `Neo4j` факты — это рёбра, а не строки таблицы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Knowledge graphs можно строить только на RDF/`SPARQL`; property graph (`Neo4j`) для этого непригоден.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Property graph в `Neo4j` прекрасно подходит для knowledge graphs; RDF — лишь альтернативный, более формальный способ.",
+                "source_of_confusion": "Термин «knowledge graph» исторически связан с semantic web и RDF, отсюда исключительность.",
+                "if_it_were_true": "Тогда `Neo4j` не использовали бы для баз знаний, но это одно из его ключевых применений.",
+                "how_it_should_be": "Knowledge graph реализуют и на property graph, и на RDF; выбор зависит от потребности в формальной онтологии."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**Knowledge graph** — граф сущностей и связей в предметной области: `(Einstein)-[:BORN_IN]->(Germany)`, `(Einstein)-[:WORKED_ON]->(Relativity)`; применяется в поиске (`Google Knowledge Graph`), открытых данных (`Wikidata`, `DBpedia`), внутренних базах знаний и healthcare (лекарства, болезни, взаимодействия).",
+              "correct": true,
+              "sections": {
+                "explanation": "Knowledge graph связывает разрозненные факты в единую сеть, по которой можно делать выводы и навигацию; property graph (`Neo4j`) и RDF/`SPARQL` — два способа их реализации, где RDF — формальная альтернатива со стандартами W3C.",
+                "example": "`(Einstein)-[:BORN_IN]->(Germany)`, `(Einstein)-[:WON]->(NobelPrize)` — факты как связи; запрос по такому графу отвечает «где родился человек, получивший X», обходя рёбра вместо джойнов.",
+                "when_to_apply": "Knowledge graphs строят для семантического поиска, рекомендаций контента, внутренних баз (сотрудники-проекты-экспертиза), медицины и как контекст для AI-агентов и GraphRAG.",
+                "edge_cases": "Для формальной онтологии и interoperability по стандартам (`OWL`, `SPARQL`) уместнее RDF; property graph удобнее в разработке, но не даёт строгой семантики semantic web.",
+                "related": "[[neo4j-interview#Q3]] property graph vs RDF; [[neo4j-interview#Q16]] full-text поиск по узлам; [[neo4j-interview#Q22]] важность узлов через centrality."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В knowledge graph связи не имеют типа: важны только сами сущности, а характер связи между ними не хранится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип связи критичен: `BORN_IN`, `WORKED_ON`, `WON` несут смысл факта; без типов граф знаний бесполезен для выводов.",
+                "source_of_confusion": "Внимание к «узлам-сущностям» затмевает важность семантики рёбер.",
+                "if_it_were_true": "Тогда нельзя было бы различить «родился в» и «работал над», но именно типы связей кодируют факты.",
+                "how_it_should_be": "Типизированные связи — носители смысла knowledge graph; без них теряется суть фактов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем различаются Neo4j editions (Community vs Enterprise vs Aura)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Community Edition включает Causal Cluster и репликацию, поэтому на ней можно построить отказоустойчивый кластер бесплатно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Community — это single-node без кластеризации; Causal Cluster и репликация доступны только в Enterprise.",
+                "source_of_confusion": "Бесплатность Community создаёт ожидание, что и HA-фичи входят без оплаты.",
+                "if_it_were_true": "Тогда Enterprise не продавал бы кластеризацию как платную возможность, но именно она там.",
+                "how_it_should_be": "HA-кластер (Causal Cluster) требует Enterprise; Community ограничена одним узлом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Aura — это коробочный дистрибутив для self-hosted установки, который вы сами разворачиваете и обслуживаете на своих серверах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Aura — это fully managed облачный сервис от `Neo4j`; инфраструктуру обслуживает вендор, а не вы.",
+                "source_of_confusion": "Названия редакций путают, и Aura ошибочно принимают за устанавливаемый дистрибутив.",
+                "if_it_were_true": "Тогда не было бы смысла в free tier «50K nodes» и pay-as-you-grow, но это признаки SaaS.",
+                "how_it_should_be": "Aura — managed cloud; self-hosted установка — это Community или Enterprise."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Enterprise Edition распространяется как open source под GPL v3, ровно как и Community, без коммерческой лицензии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Под GPL v3 идёт Community; Enterprise — коммерческая лицензия с платными фичами (кластер, RBAC, hot backups).",
+                "source_of_confusion": "Раз `Neo4j` известен как open source, кажется, что и Enterprise бесплатен под той же лицензией.",
+                "if_it_were_true": "Тогда между редакциями не было бы лицензионной разницы, но Enterprise именно коммерческий.",
+                "how_it_should_be": "GPL v3 — это Community; Enterprise требует коммерческой лицензии за расширенные возможности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**Community** — бесплатная open source (GPL v3), только single-node, базовые фичи; **Enterprise** — коммерческая: Causal Cluster, multi-database, RBAC, hot backups, продвинутый GDS; **Aura** — полностью управляемое облако с free tier (50K nodes), pay-as-you-grow и multi-region.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор зависит от задачи: для хобби/open-source — Community, для self-hosted прода с HA и безопасностью — Enterprise, а Aura избавляет от операционной нагрузки (управляемый сервис) ценой облачной модели оплаты.",
+                "example": "Команда без DevOps возьмёт Aura (управляемый кластер «из коробки»); банку с требованиями к репликации и RBAC нужен Enterprise; пет-проект обойдётся single-node Community.",
+                "when_to_apply": "Community — обучение и одиночные инстансы; Enterprise — production self-hosted с кластером и ролями; Aura — когда не хотят заниматься эксплуатацией.",
+                "edge_cases": "Кластеризация (Causal Cluster), composite constraints и RBAC недоступны в Community — на single-node нельзя получить HA; это частая причина миграции на Enterprise/Aura.",
+                "related": "[[neo4j-interview#Q15]] composite constraints (Enterprise); [[neo4j-interview#Q29]] Causal Cluster; [[neo4j-interview#Q30]] альтернативы Neo4j."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Causal Cluster (replication) в Neo4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "**Causal Cluster** (Enterprise) — архитектура HA с репликацией: **Core servers (3+)** держат `Raft`-консенсус и принимают записи, **Read replicas** асинхронно реплицируют данные для масштабирования чтения; **causal consistency** гарантируется через bookmarks, отслеживающие ваши записи.",
+              "correct": true,
+              "sections": {
+                "explanation": "Core-серверы образуют кворум на `Raft` (лидер принимает writes, фолловеры подтверждают), а read replicas разгружают чтение. Bookmarks решают проблему read-your-writes: последующие чтения гарантированно видят ваши предыдущие записи.",
+                "example": "3 Core (1 leader + 2 followers) на `Raft` обрабатывают writes; несколько Read Replica обслуживают тяжёлые read-нагрузки; клиент с bookmark после записи читает с реплики и точно видит свой коммит.",
+                "when_to_apply": "Causal Cluster применяют для production с требованиями к доступности и масштабированию чтения; bookmarks — когда критичен read-your-writes в распределённой топологии.",
+                "edge_cases": "Для `Raft`-кворума нужно нечётное число Core (минимум 3); потеря большинства Core останавливает запись; read replicas асинхронны и могут отдавать слегка устаревшие данные без bookmark.",
+                "related": "[[neo4j-interview#Q28]] Enterprise editions; [[neo4j-interview#Q30]] распределённые альтернативы; [[neo4j-interview#Q5]] consistency на уровне данных."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Causal Cluster доступен в любой редакции `Neo4j`, включая бесплатную Community, и не требует Enterprise-лицензии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Causal Cluster — это Enterprise-фича; Community ограничена single-node и кластеризацию не поддерживает.",
+                "source_of_confusion": "Бесплатность Community создаёт ложное ожидание доступности кластерных возможностей.",
+                "if_it_were_true": "Тогда single-node-ограничение Community не имело бы смысла, но оно существует.",
+                "how_it_should_be": "Кластеризация требует Enterprise; в Community Causal Cluster недоступен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В Causal Cluster все Core servers одновременно принимают записи без какого-либо консенсуса, что даёт максимальную пропускную способность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Core-серверы используют `Raft`-консенсус: записи принимает лидер, фолловеры подтверждают; параллельный приём writes всеми без консенсуса нарушил бы целостность.",
+                "source_of_confusion": "Кажется, что «больше серверов = больше параллельных записей» без оглядки на консистентность.",
+                "if_it_were_true": "Тогда не было бы единого порядка коммитов, но `Raft` именно его и обеспечивает.",
+                "how_it_should_be": "Записи координирует лидер через `Raft`; согласованность важнее голого параллелизма writes."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Read replicas в Causal Cluster участвуют в `Raft`-кворуме и могут принимать записи наравне с Core servers.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Read replicas только асинхронно реплицируют данные для чтения; в кворум они не входят и записи не принимают — это делают Core servers.",
+                "source_of_confusion": "Слово «replica» наводит на мысль о полноценном узле, способном и читать, и писать.",
+                "if_it_were_true": "Тогда добавление реплик влияло бы на кворум записи, но они масштабируют только чтение.",
+                "how_it_should_be": "Writes идут через Core (Raft); read replicas обслуживают чтение и в кворуме не участвуют."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие есть альтернативы Neo4j и языки графовых запросов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Единственный язык графовых запросов — это `Cypher`; `Gremlin`, `GQL` и `SPARQL` не существуют или не применяются для графов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо `Cypher` есть `Gremlin` (TinkerPop), развивающийся ISO-стандарт `GQL` и `SPARQL` для RDF — все они активно используются.",
+                "source_of_confusion": "В контексте `Neo4j` слышен только `Cypher`, отсюда вывод о его единственности.",
+                "if_it_were_true": "Тогда `Neptune` не поддерживал бы `Gremlin`+`SPARQL`, но он работает именно с ними.",
+                "how_it_should_be": "Графовых языков несколько: `Cypher`, `Gremlin`, `GQL`, `SPARQL` — под разные экосистемы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Альтернативы: `Amazon Neptune` (managed, Property Graph + RDF), `ArangoDB` (multi-model), `JanusGraph` (distributed на `HBase`/`Cassandra`), `TigerGraph` и `NebulaGraph` (very large scale), `Memgraph` (in-memory), `Dgraph` (GraphQL-native); языки запросов — `Cypher`/openCypher, `Gremlin` (TinkerPop), `GQL` (ISO), `SPARQL` (RDF).",
+              "correct": true,
+              "sections": {
+                "explanation": "Разные движки оптимизированы под разное: `Neo4j` — лидер по зрелости и `Cypher`, но `TigerGraph`/`NebulaGraph` растут для очень больших распределённых графов, а `Neptune` удобен в AWS-экосистеме с поддержкой и Property Graph, и RDF.",
+                "example": "Для AWS-стека берут `Neptune` (`Gremlin`+`SPARQL`); для очень больших распределённых графов — `NebulaGraph`/`TigerGraph`; для real-time in-memory — `Memgraph`; для GraphQL-first API — `Dgraph`.",
+                "when_to_apply": "Альтернативы рассматривают при специфичных требованиях: managed-в-AWS (`Neptune`), multi-model (`ArangoDB`), масштаб (`Nebula`/`TigerGraph`), in-memory скорость (`Memgraph`).",
+                "edge_cases": "`Gremlin` (TinkerPop) портируется между вендорами, но менее читаем, чем `Cypher`; `GQL` как ISO-стандарт ещё дозревает, поэтому переносимость запросов между движками пока ограничена.",
+                "related": "[[neo4j-interview#Q8]] что такое Cypher; [[neo4j-interview#Q4]] native graph storage у альтернатив; [[neo4j-interview#Q28]] editions Neo4j."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все графовые СУБД — это `Neo4j` под разными именами; `Neptune`, `ArangoDB` и `JanusGraph` лишь форки одного движка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это независимые продукты с разной архитектурой: `Neptune` — managed AWS, `ArangoDB` — multi-model, `JanusGraph` — distributed на `HBase`/`Cassandra`; форками `Neo4j` они не являются.",
+                "source_of_confusion": "Доминирование `Neo4j` создаёт впечатление, что весь рынок — это его варианты.",
+                "if_it_were_true": "Тогда у всех был бы один и тот же движок и язык, но они принципиально различаются.",
+                "how_it_should_be": "Графовый рынок — это независимые движки с разными архитектурами и языками запросов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Amazon Neptune` поддерживает исключительно property graph и `Cypher`, а RDF/`SPARQL` он не умеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Neptune` поддерживает и Property Graph (через `Gremlin`/openCypher), и RDF (через `SPARQL`) — это одна из его особенностей.",
+                "source_of_confusion": "По аналогии с `Neo4j` (property graph + Cypher) на `Neptune` переносят те же ограничения.",
+                "if_it_were_true": "Тогда `Neptune` не позиционировался бы как Property Graph + RDF, но именно это его фишка.",
+                "how_it_should_be": "`Neptune` двухмодельный: и Property Graph (`Gremlin`/openCypher), и RDF (`SPARQL`)."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

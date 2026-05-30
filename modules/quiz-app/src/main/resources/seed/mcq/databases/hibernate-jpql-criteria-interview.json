@@ -1,0 +1,905 @@
+{
+  "topic_slug": "hibernate-jpql-criteria-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие способы выполнения запросов существуют в JPA/Hibernate?",
+          "options": [
+            {
+              "text": "JPA/Hibernate дают несколько вариантов: `JPQL` (строковый объектно-ориентированный язык), `Criteria API` (type-safe программное построение), `Native SQL` (сырой SQL для БД-специфики), `HQL` (Hibernate-расширения над JPQL) и `Spring Data JPA` (`@Query` и derived-методы поверх репозиториев).",
+              "correct": true,
+              "sections": {
+                "explanation": "Способы различаются по type-safety и динамичности: `JPQL` — строка без проверки на компиляции, `Criteria API` — типобезопасное построение для динамики, `Native SQL` — для PIVOT/CTE и прочих фич конкретной БД, а `Spring Data` оборачивает всё это под удобные репозитории.",
+                "example": "Один и тот же поиск по email: `em.createQuery(\"SELECT u FROM User u WHERE u.email = :email\", User.class)` на JPQL, либо `cb.equal(user.get(\"email\"), email)` на Criteria, либо `findByEmail(String email)` как derived-метод Spring Data.",
+                "when_to_apply": "Статичные запросы пишут на `JPQL`, динамические фильтры — на `Criteria`/`Specifications`, а к `Native SQL` спускаются только когда JPQL не покрывает нужную возможность БД.",
+                "edge_cases": "`HQL` — это надмножество `JPQL` со специфичными для Hibernate расширениями, поэтому HQL-запрос может не запуститься на другом JPA-провайдере вроде `EclipseLink`.",
+                "related": "[[hibernate-jpql-criteria-interview#Q2]] JPQL против SQL; [[hibernate-jpql-criteria-interview#Q5]] когда брать Criteria API; [[hibernate-jpql-criteria-interview#Q10]] native SQL."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Единственный поддерживаемый способ запросов в JPA — это `Native SQL`, потому что в итоге всё всё равно транслируется в SQL базы данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кроме `Native SQL` есть `JPQL`, `Criteria API`, `HQL` и обёртки `Spring Data` — они работают с entity, а не с таблицами, и транслируются в SQL уже самим провайдером.",
+                "source_of_confusion": "Любой запрос действительно превращается в SQL на уровне драйвера, и отсюда вывод, будто разработчик обязан писать только SQL руками.",
+                "if_it_were_true": "Тогда не было бы смысла в `TypedQuery<User>` и навигации `u.orders`, но именно ради ухода от сырого SQL и придуман JPQL.",
+                "how_it_should_be": "`Native SQL` — лишь один из способов; основным для портируемых запросов остаётся `JPQL`, а для динамики — `Criteria API`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "JPA поддерживает только `Criteria API`, а `JPQL` — это устаревший язык, удалённый из спецификации в Jakarta EE.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JPQL` — действующая часть спецификации Jakarta Persistence и самый частый способ статичных запросов; `Criteria API` существует параллельно, а не вместо него.",
+                "source_of_confusion": "Criteria даёт type-safety, и кажется, будто типобезопасный API должен был полностью вытеснить строковый JPQL.",
+                "if_it_were_true": "Тогда `em.createQuery(\"SELECT u FROM User u\", User.class)` перестал бы компилироваться, но этот вызов остаётся базовым в любой версии JPA.",
+                "how_it_should_be": "`JPQL` и `Criteria API` сосуществуют: первый удобнее для статики, второй — для динамических и типобезопасных запросов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В JPA есть ровно два способа: `JPQL` и `HQL`, и это полностью независимые языки с разным синтаксисом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Способов больше (плюс `Criteria`, `Native SQL`, `Spring Data`), а `HQL` — не отдельный язык, а Hibernate-расширение над `JPQL` с почти идентичным синтаксисом.",
+                "source_of_confusion": "Hibernate исторически называл свой язык `HQL`, и его легко принять за нечто принципиально отличное от стандартного JPQL.",
+                "if_it_were_true": "Тогда JPQL-запрос пришлось бы переписывать под HQL при смене API, но валидный JPQL почти всегда является валидным HQL.",
+                "how_it_should_be": "`HQL` — это надмножество `JPQL`; кроме них есть ещё `Criteria API`, `Native SQL` и репозитории `Spring Data`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое JPQL и чем он отличается от SQL?",
+          "options": [
+            {
+              "text": "`JPQL` — это просто другое название для нативного SQL: он оперирует именами таблиц и колонок базы данных напрямую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPQL оперирует именами entity и их полей (`User`, `u.orders`), а не таблицами `users` и колонками `user_id`; маппинг на схему делает провайдер.",
+                "source_of_confusion": "Синтаксис JPQL внешне похож на SQL (`SELECT ... FROM ... WHERE`), отсюда впечатление, что это тот же язык над таблицами.",
+                "if_it_were_true": "Тогда переименование колонки в БД ломало бы JPQL-запрос, но он ссылается на поле entity и переживает переименование колонки через `@Column`.",
+                "how_it_should_be": "JPQL — объектный язык над entity; имена таблиц/колонок используются только в `Native SQL`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`JPQL` (Java Persistence Query Language) — объектно-ориентированный язык запросов: он работает с entity и их полями, а не с таблицами и колонками. `FROM User` ссылается на entity, `u.orders` — это навигация по связи `@OneToMany`, параметры именованные (`:status`), а `LIMIT/OFFSET` задаётся через `setFirstResult/setMaxResults`.",
+              "correct": true,
+              "sections": {
+                "explanation": "JPQL абстрагирует схему БД: вместо `JOIN orders o ON o.user_id = u.id` пишется навигация `JOIN u.orders o`, а провайдер сам разворачивает её в SQL с нужными колонками и условиями соединения.",
+                "example": "SQL `SELECT u.id, u.first_name FROM users u JOIN orders o ON o.user_id = u.id WHERE o.status = 'CONFIRMED'` на JPQL короче: `SELECT u FROM User u JOIN u.orders o WHERE o.status = :status`.",
+                "when_to_apply": "JPQL берут, когда нужен портируемый между БД запрос поверх entity-модели; он читается похоже на SQL, но не привязан к конкретному диалекту.",
+                "edge_cases": "В JPQL нет `SELECT *` и нет database-specific синтаксиса (`LIMIT`, оконные функции), поэтому для таких возможностей переходят на `Native SQL`.",
+                "related": "[[hibernate-jpql-criteria-interview#Q1]] обзор способов запросов; [[hibernate-jpql-criteria-interview#Q3]] параметры в JPQL; [[hibernate-jpql-criteria-interview#Q10]] native SQL для БД-специфики."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Главное отличие `JPQL` от SQL в том, что JPQL поддерживает `SELECT *`, а в SQL такой конструкции нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `SELECT *` есть именно в SQL, а в JPQL его нет — там выбирают entity целиком (`SELECT u`) или явные поля.",
+                "source_of_confusion": "Звёздочка `*` ассоциируется с «выбрать всё», и кажется логичным, что объектный язык поддержит её для загрузки всего entity.",
+                "if_it_were_true": "Тогда `SELECT * FROM User` был бы валидным JPQL, но такой запрос упадёт с ошибкой парсинга — нужно `SELECT u FROM User u`.",
+                "how_it_should_be": "В JPQL вместо `SELECT *` пишут `SELECT u` (entity) или перечисляют поля; `SELECT *` — это синтаксис SQL."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`JPQL` отличается от SQL только тем, что в нём обязательно использовать positional-параметры вида `?1`, а named-параметры запрещены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPQL поддерживает и named- (`:email`), и positional- (`?1`) параметры, причём именованные считаются предпочтительными за читаемость.",
+                "source_of_confusion": "В обычном JDBC/SQL чаще встречаются позиционные `?`, и это переносят на JPQL как мнимое ограничение.",
+                "if_it_were_true": "Тогда `WHERE u.email = :email` был бы невалиден, но именно named-параметры рекомендуются в документации JPA.",
+                "how_it_should_be": "В JPQL доступны оба вида параметров; ключевое отличие от SQL — работа с entity и навигация по связям, а не вид плейсхолдера."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как передавать параметры в JPQL и почему нельзя конкатенировать строки?",
+          "options": [
+            {
+              "text": "Конкатенация пользовательского ввода в текст JPQL безопасна, потому что Hibernate автоматически экранирует все строки внутри запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hibernate не экранирует встроенные в текст значения — он парсит уже собранную строку как код, поэтому конкатенация остаётся прямой дырой для injection.",
+                "source_of_confusion": "ORM воспринимают как «умную защищающую прослойку», и кажется, что он подчистит любой опасный ввод сам.",
+                "if_it_were_true": "Тогда `\"... = '\" + userInput + \"'\"` был бы безопасен, но ввод `' OR '1'='1` тут изменит логику запроса и вернёт лишние строки.",
+                "how_it_should_be": "Значения всегда передают через `:param`/`?1`, а не вклеивают в текст — биндинг отделяет данные от кода."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Named-параметры в JPQL обозначаются знаком `?` перед именем, например `?email`, а двоеточие используется только в native SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Named-параметры в JPQL обозначаются двоеточием — `:email`; синтаксиса `?email` не существует, а `?` используется только для positional-параметров (`?1`).",
+                "source_of_confusion": "В разных технологиях встречаются и `?`, и `:`, и легко перепутать, какой символ к какому виду параметра относится.",
+                "if_it_were_true": "Тогда `WHERE u.email = ?email` был бы валиден, но такой запрос не распарсится — нужно `:email` либо `?1`.",
+                "how_it_should_be": "Named — через `:имя`, positional — через `?номер`; именно так задаётся биндинг в JPQL."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Параметры передают через плейсхолдеры: named — `:email` с `setParameter(\"email\", value)` (рекомендуется за читаемость), либо positional — `?1`/`?2` с `setParameter(1, value)`. Конкатенировать пользовательский ввод в текст запроса нельзя — это открывает SQL/JPQL injection.",
+              "correct": true,
+              "sections": {
+                "explanation": "Плейсхолдер передаётся отдельно от текста запроса, и провайдер биндит его как значение, а не как фрагмент кода — поэтому ввод вроде `' OR '1'='1` трактуется как обычная строка-литерал, а не как условие.",
+                "example": "Безопасно: `em.createQuery(\"SELECT u FROM User u WHERE u.email = :email\").setParameter(\"email\", userInput)`. Опасно: `\"... WHERE u.email = '\" + userInput + \"'\"` — классическая инъекция.",
+                "when_to_apply": "Параметры используют всегда, когда в запрос попадает любое значение извне (форма, REST-параметр, заголовок), независимо от того, кажется ли ввод «доверенным».",
+                "edge_cases": "Для `IN`-условия named-параметр принимает коллекцию: `WHERE u.email IN :emails` с `setParameter(\"emails\", List.of(...))`, тогда как с positional-параметром это работает не всегда.",
+                "related": "[[hibernate-jpql-criteria-interview#Q2]] основы JPQL; [[hibernate-jpql-criteria-interview#Q12]] типичные ошибки с IN; [[hibernate-jpql-criteria-interview#Q9]] @NamedQuery как безопасное хранилище запросов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чтобы передать в JPQL разные значения, нужно собирать строку запроса конкатенацией; параметров-плейсхолдеров в JPQL нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В JPQL есть плейсхолдеры обоих видов (`:name` и `?1`), и именно через них передают значения; конкатенация не нужна и небезопасна.",
+                "source_of_confusion": "Привычка строить динамические строки руками переносится на JPQL, будто иного механизма подстановки нет.",
+                "if_it_were_true": "Тогда `setParameter(...)` был бы бесполезен, но это центральный метод `Query`/`TypedQuery` для биндинга значений.",
+                "how_it_should_be": "Значения подставляют через `setParameter`, а текст запроса остаётся неизменным и без вклеенного ввода."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие виды JOIN есть в JPQL и чем JOIN FETCH отличается от обычного JOIN?",
+          "options": [
+            {
+              "text": "Обычный `JOIN` и `JOIN FETCH` полностью эквивалентны: оба загружают связанную коллекцию одним запросом и одинаково предотвращают N+1.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только `JOIN FETCH` инициализирует коллекцию в той же выборке; обычный `JOIN` соединяет таблицы для фильтрации, но оставляет коллекцию lazy, и N+1 сохраняется.",
+                "source_of_confusion": "Оба синтаксиса начинаются со слова `JOIN`, и разница в одном ключевом слове `FETCH` кажется чисто косметической.",
+                "if_it_were_true": "Тогда любой `JOIN u.orders` уже убивал бы N+1, но без `FETCH` обращение к `user.getOrders()` всё равно порождает новые SELECT-ы.",
+                "how_it_should_be": "`JOIN` — для фильтрации (коллекция остаётся lazy), `JOIN FETCH` — для жадной загрузки коллекции одним запросом."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В JPQL нельзя делать `LEFT JOIN`: поддерживается только `INNER JOIN`, поэтому записи без связанных строк получить невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPQL прекрасно поддерживает `LEFT JOIN` (`LEFT JOIN u.orders o`), который и нужен, чтобы вернуть пользователей даже без заказов.",
+                "source_of_confusion": "По умолчанию `JOIN` действительно означает `INNER`, и отсюда ошибочный вывод, что других видов соединения нет.",
+                "if_it_were_true": "Тогда запрос `LEFT JOIN u.orders o WHERE o IS NULL` был бы невалиден, но он штатно находит пользователей без заказов.",
+                "how_it_should_be": "В JPQL есть и `INNER`, и `LEFT JOIN`; `INNER` — лишь поведение по умолчанию для голого `JOIN`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Неявный join через навигацию вроде `u.profile.country` в JPQL невозможен — любое обращение к связанному полю требует явного `JOIN`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Навигация по single-valued связи (`u.profile.country`) разрешена и сама разворачивается провайдером в `JOIN u.profile p WHERE p.country = ...`.",
+                "source_of_confusion": "Привычка к явному SQL JOIN наводит на мысль, что без него к колонке связанной таблицы не добраться.",
+                "if_it_were_true": "Тогда `WHERE u.profile.country = 'USA'` падал бы с ошибкой, но это валидный implicit join в JPQL.",
+                "how_it_should_be": "Для single-valued связей допустим неявный join через точечную навигацию; явный `JOIN` нужен в основном для коллекций и контроля типа соединения."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В JPQL есть `INNER JOIN` (по умолчанию), `LEFT JOIN`, `JOIN ... ON` (Hibernate 5+) и неявный join через навигацию (`u.profile.country`). Отдельно стоит `JOIN FETCH`: обычный `JOIN` нужен для фильтрации и оставляет коллекции lazy, а `JOIN FETCH` грузит связанную коллекцию одним запросом и борется с N+1.",
+              "correct": true,
+              "sections": {
+                "explanation": "`JOIN u.orders o` соединяет по уже описанной в маппинге связи и используется в `WHERE` для фильтрации, но не инициализирует коллекцию; `JOIN FETCH u.orders` дополнительно вытягивает заказы в той же выборке, чтобы не было отдельных SELECT-ов на каждый `User`.",
+                "example": "`SELECT u FROM User u JOIN u.orders o WHERE o.total > 100` фильтрует пользователей с крупными заказами, а `SELECT u FROM User u JOIN FETCH u.orders` грузит пользователей вместе с их заказами одним SQL.",
+                "when_to_apply": "Обычный `JOIN` берут для условий выборки, `LEFT JOIN` — когда нужны и записи без связанных строк, а `JOIN FETCH` — когда коллекция точно понадобится и важно избежать N+1.",
+                "edge_cases": "`JOIN FETCH` коллекции плохо сочетается с пагинацией: Hibernate выдаёт предупреждение и выполняет постраничность в памяти, что опасно на больших выборках.",
+                "related": "[[hibernate-jpql-criteria-interview#Q11]] @EntityGraph как альтернатива JOIN FETCH; [[hibernate-jpql-criteria-interview#Q12]] ошибки с FETCH и pagination; [[hibernate-jpql-criteria-interview#Q14]] pagination в JPA."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Criteria API и когда его стоит применять?",
+          "options": [
+            {
+              "text": "`Criteria API` — type-safe программный способ построения запросов: через `CriteriaBuilder`, `CriteriaQuery` и `Root` запрос собирается из объектов (`cb.equal`, `cb.greaterThan`), а не пишется строкой. Его берут для динамических запросов (фильтры по optional-параметрам), где важна type-safety и переиспользование частей; для статичных и сложных запросов читаемее обычный JPQL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместо текстовой строки запрос описывается деревом объектов, которые компилятор и IDE понимают: `cb.equal(user.get(\"email\"), value)` можно собирать по условиям в рантайме, добавляя предикаты только для заполненных фильтров.",
+                "example": "В REST-поиске с optional `email`, `minAge`, `country` на Criteria добавляют предикат лишь для непустых параметров: `predicates.add(cb.equal(root.get(\"email\"), email))` только если email задан — без конкатенации JPQL-строк.",
+                "when_to_apply": "Criteria уместен, когда набор условий заранее неизвестен (динамические фильтры), нужна типобезопасность или планируется переиспользование кусков запроса между методами.",
+                "edge_cases": "Для сложных запросов с множеством join и подзапросов Criteria становится крайне verbose и хуже читается, чем эквивалентный JPQL — тогда выбирают строковый вариант.",
+                "related": "[[hibernate-jpql-criteria-interview#Q6]] Metamodel для type-safe Criteria; [[hibernate-jpql-criteria-interview#Q8]] Specifications поверх Criteria; [[hibernate-jpql-criteria-interview#Q7]] subqueries в Criteria."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Criteria API` — это способ выполнять сырой SQL без маппинга на entity, полностью минуя JPQL и Hibernate-диалекты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сырой SQL — это `Native SQL` через `createNativeQuery`; Criteria же строит типобезопасный объектный запрос над entity, который провайдер сам переводит в SQL диалекта.",
+                "source_of_confusion": "И Criteria, и native SQL воспринимаются как «продвинутые» альтернативы JPQL, и их функции смешивают.",
+                "if_it_were_true": "Тогда в Criteria писали бы имена таблиц и колонок, но там работают с `Root<User>` и полями entity (`user.get(\"email\")`).",
+                "how_it_should_be": "Criteria — type-safe построение запроса над entity-моделью; сырой SQL выполняется отдельным механизмом `Native SQL`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Criteria API` стоит применять прежде всего для статичных, заранее известных запросов, потому что он короче и читаемее JPQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для статичных запросов как раз читаемее JPQL; сила Criteria — в динамике, а на простых статичных запросах он многословнее.",
+                "source_of_confusion": "Type-safety звучит как универсальное преимущество, и кажется, что Criteria должен побеждать JPQL во всех случаях.",
+                "if_it_were_true": "Тогда простой `SELECT u FROM User u WHERE u.email = :email` выгоднее писать на Criteria, но там это 5+ строк против одной строки JPQL.",
+                "how_it_should_be": "Criteria выбирают для динамических/типобезопасных запросов; статичные удобнее и короче на JPQL."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Criteria API` не поддерживает динамические запросы: набор условий нужно зафиксировать на этапе компиляции, как и в JPQL-строке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Динамика — основное назначение Criteria: предикаты собираются в `List<Predicate>` в рантайме и добавляются по условию (заполнен фильтр или нет).",
+                "source_of_confusion": "Слово «type-safe» (проверка на компиляции) путают с «фиксировано на компиляции», будто структура запроса не может меняться в рантайме.",
+                "if_it_were_true": "Тогда не было бы смысла предпочитать Criteria для REST-фильтров, но именно ради динамики его и берут вместо JPQL.",
+                "how_it_should_be": "Criteria позволяет собирать запрос в рантайме из произвольного набора предикатов — это его ключевое преимущество."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое JPA Metamodel и как он помогает в Criteria API?",
+          "options": [
+            {
+              "text": "`Metamodel` — это runtime-кэш результатов запросов, который ускоряет повторное выполнение одного и того же Criteria-запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Metamodel — это сгенерированные на компиляции классы для типобезопасного доступа к полям; кэширование результатов — отдельная тема (query cache), не имеющая к нему отношения.",
+                "source_of_confusion": "Слово «model» и ассоциация с производительностью наводят на мысль о кэше, хотя речь о статической типизации полей.",
+                "if_it_were_true": "Тогда отключение Metamodel замедляло бы запросы, но без него Criteria просто пишется строками (`get(\"email\")`) с той же скоростью.",
+                "how_it_should_be": "Metamodel — это compile-time классы (`User_`) для type-safe ссылок на поля, а не runtime-кэш."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Metamodel` — это сгенерированные классы (`User_`) со статическими атрибутами (`SingularAttribute`, `ListAttribute`) для type-safe доступа к полям entity в Criteria. Генератор (`hibernate-jpamodelgen`) создаёт `User_.java` при компиляции, и в Criteria пишут `user.get(User_.email)` вместо строкового `user.get(\"email\")` — переименование поля даёт ошибку компиляции, а не runtime-сбой.",
+              "correct": true,
+              "sections": {
+                "explanation": "Metamodel заменяет строковые имена полей на типизированные ссылки: компилятор знает тип `User_.age` (`SingularAttribute<User, Integer>`), поэтому опечатка или несовместимое сравнение ловятся ещё на сборке, а не в проде.",
+                "example": "`cb.equal(user.get(User_.email), \"alice@example.com\")` вместо `user.get(\"email\")`: если поле `email` переименуют, ссылка `User_.email` перестанет компилироваться и укажет точное место правки.",
+                "when_to_apply": "Metamodel включают, когда активно используют Criteria/Specifications и хотят защититься от опечаток в именах полей и от рассинхрона запросов с моделью при рефакторинге.",
+                "edge_cases": "Классы `*_.java` генерируются процессором аннотаций при компиляции, поэтому при правке entity нужно пересобрать модуль — иначе metamodel будет ссылаться на старую структуру полей.",
+                "related": "[[hibernate-jpql-criteria-interview#Q5]] основы Criteria API; [[hibernate-jpql-criteria-interview#Q8]] Specifications, где удобен Metamodel; [[hibernate-jpql-criteria-interview#Q15]] best practices с type-safety."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Metamodel`-классы (`User_.java`) нужно писать вручную для каждой entity, иначе Criteria не сможет к ним обращаться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти классы генерируются автоматически процессором аннотаций `hibernate-jpamodelgen` при компиляции; вручную их писать не требуется и не рекомендуется.",
+                "source_of_confusion": "Раз классы видны в исходниках/таргете и имеют предсказуемую структуру, кажется, что их положено создавать руками.",
+                "if_it_were_true": "Тогда при добавлении поля приходилось бы вручную править `User_`, но генератор пересоздаёт его сам при пересборке.",
+                "how_it_should_be": "Достаточно подключить `hibernate-jpamodelgen` — компилятор сгенерирует `*_.java`; ручное редактирование не нужно."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Использование `Metamodel` (`user.get(User_.email)`) ничем не отличается от строкового доступа (`user.get(\"email\")`) — обе ошибки имени всплывают только в рантайме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разница принципиальна: `User_.email` проверяется компилятором, поэтому опечатка/переименование ломают сборку, а строковый `\"email\"` падает лишь в рантайме при выполнении запроса.",
+                "source_of_confusion": "Внешне оба варианта возвращают `Path` и выглядят взаимозаменяемо, отчего теряется смысл type-safety.",
+                "if_it_were_true": "Тогда Metamodel не давал бы выгоды, но его главная ценность — именно перенос ошибок имени полей с runtime на compile-time.",
+                "how_it_should_be": "Строковый доступ ловит ошибку имени только в рантайме, а Metamodel — на компиляции; в этом и смысл его применения."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как делать подзапросы (subqueries) в JPQL и Criteria API?",
+          "options": [
+            {
+              "text": "Подзапросы в JPQL запрещены: вложенный `SELECT` внутри `WHERE` не поддерживается, поэтому такие условия приходится считать в Java после загрузки данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPQL поддерживает подзапросы в `WHERE`/`HAVING` через `IN`, `EXISTS`, `ALL`/`ANY`/`SOME` и коррелированные формы; считать всё в Java не требуется.",
+                "source_of_confusion": "JPQL ограничивает подзапросы в `FROM` (в стандарте их нет), и это обобщают до мнимого полного запрета подзапросов.",
+                "if_it_were_true": "Тогда `WHERE u.id IN (SELECT ...)` был бы невалиден, но это штатная и частая конструкция JPQL.",
+                "how_it_should_be": "Подзапросы в `WHERE`/`HAVING` валидны; ограничение касается в основном подзапросов в части `FROM`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В Criteria API подзапросы строят тем же `cq.from(...)`, что и основной запрос; отдельного объекта `Subquery` не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для подзапросов в Criteria есть специальный объект `Subquery`, создаваемый через `query.subquery(Type.class)`; у него свои `from`, `select` и `where`.",
+                "source_of_confusion": "И основной запрос, и подзапрос имеют `Root` и `where`, отчего кажется, что подзапрос — это просто ещё один `from` главного запроса.",
+                "if_it_were_true": "Тогда `cq.subquery(Long.class)` был бы не нужен, но именно он создаёт корректно скоупленный вложенный запрос для `in`/`exists`.",
+                "how_it_should_be": "Подзапрос в Criteria — это отдельный `Subquery` со своим `Root`, подставляемый через `path.in(subquery)` или `cb.exists(subquery)`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В JPQL подзапрос пишут внутри `WHERE`: через `IN (SELECT ...)`, `EXISTS (SELECT ...)`, коррелированный подзапрос (ссылается на внешний alias), а также `ALL`/`ANY`/`SOME`. В Criteria для этого есть `cq.subquery(Type.class)`: создают `Subquery`, задают ему `select`/`where` и подставляют через `path.in(subquery)` или `cb.exists(subquery)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Подзапрос — это вложенный `SELECT`, который возвращает множество значений или признак существования; коррелированный подзапрос дополнительно использует alias внешнего запроса (`u`) в своём условии, выполняясь логически для каждой внешней строки.",
+                "example": "JPQL: `SELECT u FROM User u WHERE u.id IN (SELECT o.user.id FROM Order o WHERE o.total > 1000)`. Criteria: `Subquery<Long> sq = cq.subquery(Long.class); sq.select(order.get(\"user\").get(\"id\")).where(cb.gt(order.get(\"total\"), 1000)); cq.where(user.get(\"id\").in(sq))`.",
+                "when_to_apply": "Подзапросы берут, когда фильтр зависит от агрегата или существования связанных строк: «пользователи с заказами дороже 1000», «товары дороже всех легаси-позиций» (`> ALL (...)`).",
+                "edge_cases": "`EXISTS` с коррелированным подзапросом часто эффективнее `IN`-подзапроса на больших данных, так как СУБД может остановиться на первой найденной строке вместо материализации всего множества.",
+                "related": "[[hibernate-jpql-criteria-interview#Q5]] построение запросов на Criteria; [[hibernate-jpql-criteria-interview#Q2]] синтаксис JPQL; [[hibernate-jpql-criteria-interview#Q13]] проекции вместо подзапросов-агрегатов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Коррелированный подзапрос в JPQL — это подзапрос, который обязан возвращать ровно одну строку и не может ссылаться на alias внешнего запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: коррелированный подзапрос как раз ссылается на alias внешнего запроса (`u`) в своём `WHERE`, и его кардинальность зависит от формы (`EXISTS`, `>`, `IN`).",
+                "source_of_confusion": "Скалярный подзапрос (одна строка) и коррелированный — разные характеристики, и их легко перепутать в одном определении.",
+                "if_it_were_true": "Тогда `(SELECT AVG(u2.age) FROM User u2 WHERE u2.country = u.country)` был бы невалиден из-за ссылки на `u`, но это типичный коррелированный подзапрос.",
+                "how_it_should_be": "Коррелированность означает именно использование внешнего alias; число строк определяется контекстом, а не правилом «ровно одна»."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Spring Data Specifications и зачем они нужны?",
+          "options": [
+            {
+              "text": "`Specifications` — это статичные именованные JPQL-запросы, привязанные к entity аннотацией, валидируемые при старте приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описанное — это `@NamedQuery`; Specifications же строят динамические Criteria-предикаты в рантайме, а не хранят статичный JPQL на entity.",
+                "source_of_confusion": "И `@NamedQuery`, и Specifications дают «переиспользуемые запросы», и эти два механизма путают.",
+                "if_it_were_true": "Тогда Specification нельзя было бы собирать по условию в рантайме, но именно динамическая композиция `.and()` — её суть.",
+                "how_it_should_be": "Specifications — это динамические лямбды над Criteria; статичный именованный JPQL — это `@NamedQuery`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Чтобы пользоваться Specifications, репозиторий должен расширять `CrudRepository`, а метода `findAll(Specification)` в Spring Data нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Репозиторий должен расширять `JpaSpecificationExecutor<T>`, который и добавляет перегрузки `findAll(Specification)`, `findOne`, `count(Specification)`.",
+                "source_of_confusion": "`CrudRepository`/`JpaRepository` дают базовый `findAll()`, и кажется, что версия со Specification тоже идёт «из коробки» без отдельного интерфейса.",
+                "if_it_were_true": "Тогда `repository.findAll(spec)` компилировался бы на голом `JpaRepository`, но без `JpaSpecificationExecutor` такого метода нет.",
+                "how_it_should_be": "Нужно подмешать `JpaSpecificationExecutor<T>` — именно он предоставляет `findAll(Specification)`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Главное преимущество Specifications — выполнение native SQL: они позволяют писать БД-специфичные конструкции, недоступные в Criteria.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Specifications работают поверх Criteria API и не дают native-SQL возможностей; их ценность — чистая динамическая композиция фильтров, а не доступ к диалекту БД.",
+                "source_of_confusion": "Specifications считают «продвинутым» инструментом и приписывают им функции native-запросов.",
+                "if_it_were_true": "Тогда внутри `(root, query, cb) -> ...` можно было бы писать сырой SQL, но там доступны только методы `CriteriaBuilder`.",
+                "how_it_should_be": "Specifications — это удобная динамическая надстройка над Criteria; для БД-специфики используют `Native SQL`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Specifications` — обёртка Spring Data над Criteria API для составления переиспользуемых динамических фильтров. Репозиторий расширяет `JpaSpecificationExecutor<User>`, а каждая `Specification<User>` — это лямбда `(root, query, cb) -> cb.equal(...)`. Их комбинируют через `.and()`/`.or()` и передают в `repository.findAll(spec)`, добавляя условия только для заполненных параметров без лестниц `if-else` внутри Criteria.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая Specification инкапсулирует один предикат поверх `CriteriaBuilder`, поэтому фильтры становятся именованными переиспользуемыми блоками (`hasEmail`, `olderThan`), которые собираются в итоговый запрос композицией.",
+                "example": "`Specification<User> spec = Specification.where(null); if (filter.email() != null) spec = spec.and(hasEmail(filter.email())); ... return repository.findAll(spec);` — условия добавляются динамически по наличию параметров.",
+                "when_to_apply": "Specifications берут для REST-поиска с множеством optional-фильтров, когда хочется чистый код и переиспользование предикатов вместо ручной сборки `Predicate[]` в одном большом методе.",
+                "edge_cases": "`Specification.where(null)` (или `Specification.allOf()`) даёт нейтральный стартовый фильтр, к которому безопасно применять `.and()`; начинать с `null`-переменной без обёртки нельзя — будет NPE при первом `.and()`.",
+                "related": "[[hibernate-jpql-criteria-interview#Q5]] Criteria API под капотом Specifications; [[hibernate-jpql-criteria-interview#Q6]] Metamodel для type-safe предикатов; [[hibernate-jpql-criteria-interview#Q15]] best practices выбора способа запроса."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое @NamedQuery и когда его использовать?",
+          "options": [
+            {
+              "text": "`@NamedQuery` — именованный JPQL-запрос, объявленный аннотацией на entity (`name` + `query`). Его вызывают через `em.createNamedQuery(\"User.findByEmail\", User.class)`. Плюсы: запрос валидируется при старте (парсится при инициализации `EntityManagerFactory`), хранится централизованно и парсится один раз. Минус: оторван от места использования, в Spring Data чаще берут `@Query` над методом репозитория.",
+              "correct": true,
+              "sections": {
+                "explanation": "JPQL-текст фиксируется заранее и проверяется при поднятии контекста, поэтому синтаксическая ошибка в запросе ломает старт приложения, а не падает позже в рантайме на первом обращении пользователя.",
+                "example": "`@NamedQuery(name = \"User.findByEmail\", query = \"SELECT u FROM User u WHERE u.email = :email\")` на entity, затем `em.createNamedQuery(\"User.findByEmail\", User.class).setParameter(\"email\", x).getSingleResult()`.",
+                "when_to_apply": "`@NamedQuery` уместен, когда нужны заранее известные, многократно используемые запросы с ранней валидацией; в Spring Data его роль обычно играет `@Query` на методе репозитория.",
+                "edge_cases": "Имена `@NamedQuery` глобальны в рамках persistence unit, поэтому их принято префиксовать именем entity (`User.findByEmail`), иначе возможен конфликт имён между сущностями.",
+                "related": "[[hibernate-jpql-criteria-interview#Q2]] JPQL, который кладут в NamedQuery; [[hibernate-jpql-criteria-interview#Q10]] @NamedNativeQuery для SQL; [[hibernate-jpql-criteria-interview#Q15]] best practices и @Query."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@NamedQuery` валидируется не при старте, а лениво — только в момент первого вызова `createNamedQuery`, поэтому ошибки в нём всплывают в рантайме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная ценность `@NamedQuery` в том, что он парсится при инициализации `EntityManagerFactory`, и синтаксическая ошибка обнаруживается на старте, а не при первом вызове.",
+                "source_of_confusion": "Обычные `createQuery(...)` парсятся при вызове, и это поведение ошибочно переносят на именованные запросы.",
+                "if_it_were_true": "Тогда `@NamedQuery` ничем не отличался бы от inline-запроса по моменту проверки, но именно ранняя валидация — его ключевое преимущество.",
+                "how_it_should_be": "`@NamedQuery` проверяется при старте контекста; битый JPQL в нём ломает запуск приложения."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@NamedQuery` может содержать только native SQL и не поддерживает JPQL; для JPQL существует отдельная аннотация без имени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@NamedQuery` содержит именно JPQL; для именованных native-запросов есть отдельная `@NamedNativeQuery` с `resultClass`.",
+                "source_of_confusion": "Названия `@NamedQuery` и `@NamedNativeQuery` похожи, и их назначение легко перепутать местами.",
+                "if_it_were_true": "Тогда `query = \"SELECT u FROM User u ...\"` (JPQL) в `@NamedQuery` был бы невалиден, но это его штатное содержимое.",
+                "how_it_should_be": "`@NamedQuery` — для JPQL, `@NamedNativeQuery` — для native SQL; это две разные аннотации."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@NamedQuery` объявляется внутри метода репозитория и не может быть размещён на entity-классе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@NamedQuery` объявляется именно на entity-классе (или в `orm.xml`); на методах репозитория в Spring Data используют `@Query`, а не `@NamedQuery`.",
+                "source_of_confusion": "В Spring Data привычно видеть запросы над методами репозитория (`@Query`), и это место ошибочно приписывают `@NamedQuery`.",
+                "if_it_were_true": "Тогда `@NamedQuery` на entity был бы невалиден, но именно так его и объявляют по спецификации JPA.",
+                "how_it_should_be": "`@NamedQuery` живёт на entity и вызывается по имени; запрос над методом репозитория — это `@Query`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать native SQL-запросы в JPA и когда они оправданы?",
+          "options": [
+            {
+              "text": "Native-запросы в JPA нельзя замаппить на entity: они возвращают только массивы `Object[]`, а собирать из них объекты приходится вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native-запрос можно отдать с `resultClass`/`@SqlResultSetMapping` и получить готовые entity (`createNativeQuery(sql, User.class)`); `Object[]` — лишь один из режимов, не единственный.",
+                "source_of_confusion": "Сырой SQL возвращает строки таблицы, и кажется, что ORM не способен сам собрать из них entity без ручного маппинга.",
+                "if_it_were_true": "Тогда `createNativeQuery(\"SELECT * FROM users\", User.class)` был бы бесполезен, но он как раз возвращает список `User`.",
+                "how_it_should_be": "Native-результат можно маппить на entity через `resultClass` или на сложные структуры через `@SqlResultSetMapping`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Native-запросы создают через `em.createNativeQuery(sql, User.class)` (с маппингом на entity) либо именованным `@NamedNativeQuery`; для сложных результатов используют `@SqlResultSetMapping`. В Spring Data — `@Query(value = \"...\", nativeQuery = true)`. Оправданы они для database-specific фич (PostgreSQL PIVOT, рекурсивные CTE), которых нет в JPQL, и для performance-критичных запросов, где ORM-слой добавляет накладные.",
+              "correct": true,
+              "sections": {
+                "explanation": "Native SQL отдаёт сырой запрос прямо в БД, минуя разбор JPQL, поэтому позволяет использовать любые конструкции диалекта; результат можно отобразить обратно на entity (`resultClass`) или на скаляры через `@SqlResultSetMapping`.",
+                "example": "`@Query(value = \"SELECT * FROM users WHERE created_at > :since\", nativeQuery = true) List<User> findRecentUsers(@Param(\"since\") LocalDateTime since)` — рабочий способ задействовать SQL-специфику в Spring Data.",
+                "when_to_apply": "К native SQL спускаются, когда JPQL не покрывает возможность (CTE с рекурсией, оконные функции, PIVOT) или нужно выжать максимум производительности на тяжёлом запросе.",
+                "edge_cases": "Native-запрос привязан к диалекту конкретной БД, поэтому ломает портируемость: SQL под PostgreSQL может не запуститься на Oracle/SQL Server без переписывания.",
+                "related": "[[hibernate-jpql-criteria-interview#Q1]] обзор способов запросов; [[hibernate-jpql-criteria-interview#Q9]] @NamedNativeQuery; [[hibernate-jpql-criteria-interview#Q2]] чего не хватает в JPQL."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Native SQL стоит использовать всегда по умолчанию, потому что он быстрее JPQL и не имеет недостатков по сравнению с ним.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native SQL берут только когда JPQL недостаточен: он жертвует портируемостью между БД и type-safety, поэтому не годится как способ по умолчанию.",
+                "source_of_confusion": "Native выглядит «ближе к железу» и потому кажется всегда более производительным и предпочтительным.",
+                "if_it_were_true": "Тогда не было бы причин писать JPQL, но именно портируемость и работа с entity делают JPQL способом по умолчанию.",
+                "how_it_should_be": "Native SQL применяют точечно для БД-специфики и горячих запросов, а основным остаётся JPQL."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В Spring Data native-запрос включается атрибутом `jpql = false` у аннотации `@Query`, тогда как `nativeQuery` не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `@Query` за это отвечает атрибут `nativeQuery = true`; параметра `jpql` у аннотации нет.",
+                "source_of_confusion": "Логично предположить симметричный флаг «отключить JPQL», и придумывается несуществующий `jpql = false`.",
+                "if_it_were_true": "Тогда `@Query(value = \"...\", nativeQuery = true)` был бы невалиден, но это и есть рабочий способ включить native в Spring Data.",
+                "how_it_should_be": "Native в Spring Data включается через `nativeQuery = true`; по умолчанию запрос трактуется как JPQL."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое @EntityGraph и как он предотвращает N+1?",
+          "options": [
+            {
+              "text": "`@EntityGraph` не влияет на загрузку связей — это лишь подсказка для кэша второго уровня, ускоряющая повторное чтение тех же entity.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EntityGraph управляет именно стратегией загрузки ассоциаций в запросе (что грузить жадно), а не работой L2-кэша; его цель — убрать N+1, а не кэшировать.",
+                "source_of_confusion": "Любую оптимизацию чтения легко списать на «кэш», хотя здесь речь о fetch-плане конкретного запроса.",
+                "if_it_were_true": "Тогда без второго уровня кэша EntityGraph был бы бесполезен, но он работает и без кэша, просто меняя SQL выборки.",
+                "how_it_should_be": "EntityGraph задаёт, какие связи грузить жадно одним запросом; кэширование — отдельный механизм."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@EntityGraph` можно объявить только глобально через `@NamedEntityGraph` на entity; ad-hoc указание `attributePaths` на методе репозитория не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Data поддерживает и `@NamedEntityGraph`, и ad-hoc форму `@EntityGraph(attributePaths = {...})` прямо над методом репозитория без объявления именованного графа.",
+                "source_of_confusion": "Именованные графы более «формальны» и заметны, отчего ad-hoc-вариант кажется несуществующим.",
+                "if_it_were_true": "Тогда `@EntityGraph(attributePaths = {\"orders\"})` над методом не компилировался бы, но это распространённый рабочий приём.",
+                "how_it_should_be": "Доступны оба способа: именованный `@NamedEntityGraph` и ad-hoc `attributePaths` на методе репозитория."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@EntityGraph` — декларативный способ задать, какие связи загрузить жадно одним запросом. Граф объявляют через `@NamedEntityGraph` на entity или ad-hoc через `attributePaths = {\"orders.items\", \"profile\"}` на методе репозитория; в чистом JPA — `em.createEntityGraph(User.class)` с hint `jakarta.persistence.fetchgraph`. Он переиспользуем и заменяет повторяющийся `JOIN FETCH`, устраняя N+1.",
+              "correct": true,
+              "sections": {
+                "explanation": "EntityGraph говорит провайдеру инициализировать перечисленные ассоциации в той же выборке, поэтому при обходе `user.getOrders()` не возникает отдельных SELECT-ов на каждую сущность — это и есть устранение проблемы N+1.",
+                "example": "`@EntityGraph(attributePaths = {\"orders.items\", \"profile\"}) List<User> findByCountry(String country)` — за один запрос подгружает заказы с позициями и профиль для всех найденных пользователей.",
+                "when_to_apply": "EntityGraph удобен, когда один и тот же набор связей нужно жадно грузить в нескольких запросах и хочется задать fetch-план декларативно, а не дублировать `JOIN FETCH` в каждом JPQL.",
+                "edge_cases": "Различают `fetchgraph` (грузит только перечисленные атрибуты, остальные lazy) и `loadgraph` (перечисленные плюс штатные EAGER-поля) — выбор hint меняет, что именно попадёт в выборку.",
+                "related": "[[hibernate-jpql-criteria-interview#Q4]] JOIN FETCH как альтернатива; [[hibernate-jpql-criteria-interview#Q12]] N+1 и ошибки fetch; [[hibernate-jpql-criteria-interview#Q15]] best practices fetch-планов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@EntityGraph` усугубляет проблему N+1, так как заставляет провайдер делать отдельный SELECT на каждую связанную сущность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EntityGraph делает ровно обратное — инициализирует связи в общей выборке, чтобы избежать отдельных SELECT-ов на каждую сущность и тем самым устранить N+1.",
+                "source_of_confusion": "Раз граф «добавляет» связи к загрузке, кажется, будто это и порождает множество дополнительных запросов.",
+                "if_it_were_true": "Тогда его не рекомендовали бы как средство против N+1, но именно для этого `@EntityGraph` и предназначен.",
+                "how_it_should_be": "EntityGraph грузит связи жадно одним запросом и предотвращает N+1, а не создаёт лишние SELECT-ы."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типичные ошибки допускают при работе с JPQL?",
+          "options": [
+            {
+              "text": "`SELECT * FROM User` — корректный и рекомендуемый способ выбрать все поля entity в JPQL, аналогичный SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SELECT *` в JPQL невалиден; чтобы получить entity целиком, пишут `SELECT u FROM User u` (или короткую форму `FROM User`).",
+                "source_of_confusion": "Привычка к `SELECT *` из SQL переносится на JPQL, ведь оба внешне выглядят как `SELECT ... FROM ...`.",
+                "if_it_were_true": "Тогда `em.createQuery(\"SELECT * FROM User\")` работал бы, но он падает с ошибкой парсинга.",
+                "how_it_should_be": "Вместо `SELECT *` в JPQL используют `SELECT u` или `FROM User`; звёздочка — синтаксис SQL."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Модифицирующий `@Query` (`UPDATE`/`DELETE`) в Spring Data работает и без аннотации `@Modifying` — она нужна только для логирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@Modifying` Spring Data считает метод селектом и не выполнит модификацию корректно (бросит ошибку про ожидаемый результат-выборку); аннотация обязательна, а не косметична.",
+                "source_of_confusion": "Метод выглядит как обычный репозиторный, и кажется, что Spring сам распознает `UPDATE` по тексту запроса.",
+                "if_it_were_true": "Тогда `@Query(\"UPDATE User u SET ...\")` без `@Modifying` спокойно обновлял бы строки, но на деле это приводит к ошибке выполнения.",
+                "how_it_should_be": "Для `UPDATE`/`DELETE` обязательны `@Modifying` и активная транзакция; иначе метод не отработает как модифицирующий."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`JOIN FETCH` коллекции прекрасно сочетается с `setMaxResults`: Hibernate эффективно ограничивает выборку на стороне БД через `LIMIT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `JOIN FETCH` коллекции с пагинацией Hibernate не может применить `LIMIT` на уровне SQL и тянет все строки, выполняя постраничность в памяти с предупреждением.",
+                "source_of_confusion": "`setMaxResults` обычно надёжно превращается в `LIMIT`, и это ожидание ошибочно распространяют на случай с `JOIN FETCH` коллекции.",
+                "if_it_were_true": "Тогда не было бы предупреждения `firstResult/maxResults specified with collection fetch`, но Hibernate его как раз выдаёт.",
+                "how_it_should_be": "Коллекционный `JOIN FETCH` с пагинацией опасен — данные грузятся в память; пагинацию делают без FETCH либо через отдельный запрос id."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Частые ошибки: использовать `SELECT *` (его в JPQL нет — нужно `SELECT u`); неудачно сочетать `IN` с коллекцией через positional-параметр (надёжнее named `IN :emails`); забывать `@Modifying` для `UPDATE`/`DELETE` в Spring Data; смешивать `JOIN FETCH` с пагинацией (Hibernate делает её в памяти); и не ставить `DISTINCT` при `JOIN FETCH` коллекции, получая дубли строк.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти ошибки объединяет рассинхрон ожиданий «как в SQL/JDBC» с правилами JPQL: язык работает с entity, требует явных пометок для модифицирующих запросов и по-особому ведёт себя при жадной загрузке коллекций.",
+                "example": "Без `DISTINCT` запрос `FROM User u JOIN FETCH u.orders` вернёт пользователя столько раз, сколько у него заказов; `SELECT DISTINCT u FROM User u JOIN FETCH u.orders` схлопывает дубли в уникальных пользователей.",
+                "when_to_apply": "Эти грабли держат в голове при ревью JPQL и при отладке странного поведения: дубли в выборке, молчаливое отсутствие изменений после `UPDATE`, предупреждения Hibernate про пагинацию в памяти.",
+                "edge_cases": "Модифицирующий `@Query` требует не только `@Modifying`, но и активной транзакции (`@Transactional`), иначе на чтение-ориентированном контексте `UPDATE`/`DELETE` упадёт или не применится.",
+                "related": "[[hibernate-jpql-criteria-interview#Q4]] JOIN FETCH и его подводные камни; [[hibernate-jpql-criteria-interview#Q14]] pagination и конфликт с FETCH; [[hibernate-jpql-criteria-interview#Q3]] параметры и IN."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Projection в JPQL/Criteria и зачем она нужна?",
+          "options": [
+            {
+              "text": "`Projection` — выбор подмножества полей вместо полного entity. В JPQL это tuple (`SELECT u.id, u.email` → `Object[]`) или DTO через конструктор (`SELECT new com.example.UserDto(u.id, u.email)`). В Criteria — `Tuple` через `cq.multiselect(...)`. В Spring Data — interface-проекция (`interface UserSummary { Long getId(); String getEmail(); }`). Нужна, когда требуется меньше данных, чем в entity.",
+              "correct": true,
+              "sections": {
+                "explanation": "Проекция возвращает только запрошенные колонки, поэтому БД и сеть не таскают лишние поля, а Hibernate не управляет состоянием возвращённых объектов как managed-entity — это легче для read-only сценариев и отчётов.",
+                "example": "`SELECT new com.example.UserDto(u.id, u.email) FROM User u` сразу отдаёт `List<UserDto>` с двумя полями; альтернатива через `Object[]` потребует ручного приведения `(Long) row[0]`, `(String) row[1]`.",
+                "when_to_apply": "Проекции применяют для отчётов, списков и API-ответов, где нужны 2-3 поля вместо тяжёлого entity со всеми связями — это сокращает объём данных и снижает нагрузку.",
+                "edge_cases": "DTO-конструктор в JPQL требует полного имени класса (`new com.example.UserDto(...)`) и совпадения порядка/типов аргументов с конструктором — иначе запрос упадёт с ошибкой разрешения конструктора.",
+                "related": "[[hibernate-jpql-criteria-interview#Q5]] Criteria и multiselect; [[hibernate-jpql-criteria-interview#Q2]] синтаксис JPQL; [[hibernate-jpql-criteria-interview#Q15]] best practices: проекции для отчётов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Projection` означает загрузку entity целиком вместе со всеми его связями — это другое название для жадной (EAGER) загрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Проекция — это наоборот выбор подмножества полей (меньше данных, чем в entity); жадная загрузка связей — отдельное понятие, не имеющее отношения к projection.",
+                "source_of_confusion": "Оба термина касаются «того, что вернёт запрос», и их легко спутать по смыслу «что загружается».",
+                "if_it_were_true": "Тогда `SELECT u.id, u.email FROM User u` тянул бы весь граф связей, но он возвращает лишь два скаляра.",
+                "how_it_should_be": "Projection сокращает набор возвращаемых полей; EAGER-загрузка, напротив, добавляет связанные данные."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "DTO-проекция в JPQL записывается как `SELECT UserDto(u.id, u.email)` без ключевого слова `new` и без полного имени класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конструкторная проекция требует `new` и полностью квалифицированного имени: `SELECT new com.example.UserDto(u.id, u.email) FROM User u`.",
+                "source_of_confusion": "В Java объект иногда создаётся фабричными методами без `new`, и кажется, что JPQL допускает похожий короткий синтаксис.",
+                "if_it_were_true": "Тогда `SELECT UserDto(...)` парсился бы, но без `new` и FQN запрос не разрешит конструктор и упадёт.",
+                "how_it_should_be": "Нужно `SELECT new <полное.имя.DTO>(...)`; иначе провайдер не найдёт нужный конструктор."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Interface-проекции (`UserSummary`) существуют только в чистом JPA через `EntityManager` и недоступны в Spring Data репозиториях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Interface-проекции — это как раз фича Spring Data: метод репозитория, возвращающий интерфейс с геттерами (`List<UserSummary> findByActive(...)`), а не возможность чистого JPA.",
+                "source_of_confusion": "Проекции в целом ассоциируются с JPQL/JPA, и происхождение interface-проекций приписывают спецификации, а не Spring Data.",
+                "if_it_were_true": "Тогда объявление `List<UserSummary> findByActive(boolean active)` в репозитории не работало бы, но Spring Data сам реализует такой метод.",
+                "how_it_should_be": "Interface-проекции реализует Spring Data на основе геттеров интерфейса; в чистом JPA для этого используют DTO/Tuple."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать pagination в JPA?",
+          "options": [
+            {
+              "text": "В чистом JPA пагинацию задают вызовом `setLimit(20)` и `setOffset(0)` прямо на объекте запроса — методы называются именно так.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Query`/`TypedQuery` нет методов `setLimit`/`setOffset`; смещение и размер страницы задают через `setFirstResult(offset)` и `setMaxResults(limit)`.",
+                "source_of_confusion": "Термины `LIMIT`/`OFFSET` из SQL наводят на мысль об одноимённых методах API, хотя JPA назвал их иначе.",
+                "if_it_were_true": "Тогда `query.setLimit(20)` компилировался бы, но такого метода в JPA нет — нужен `setMaxResults(20)`.",
+                "how_it_should_be": "Limit задаётся `setMaxResults`, offset — `setFirstResult`; имена `setLimit/setOffset` ошибочны."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В чистом JPA постраничность задают через `query.setFirstResult(offset)` и `query.setMaxResults(limit)`, а общий count берут отдельным запросом `SELECT COUNT(u) FROM User u`. В Spring Data это автоматизировано: метод принимает `Pageable` и возвращает `Page<User>` (`PageRequest.of(0, 20, Sort.by(\"createdAt\").descending())`), откуда доступны `getTotalElements`, `getTotalPages` и `getContent`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`setFirstResult` задаёт смещение (offset), `setMaxResults` — размер страницы (limit), и провайдер транслирует их в БД-специфичный `LIMIT/OFFSET`; в Spring Data `Page` дополнительно сам выполняет count-запрос для подсчёта общего числа страниц.",
+                "example": "`Page<User> page = userRepository.findByActive(true, PageRequest.of(0, 20, Sort.by(\"createdAt\").descending()))`, далее `page.getTotalElements()`, `page.getTotalPages()`, `page.getContent()`.",
+                "when_to_apply": "Pageable-подход берут в репозиториях по умолчанию ради готового count и сортировки; ручной `setFirstResult/setMaxResults` — когда работают напрямую с `EntityManager` без Spring Data.",
+                "edge_cases": "Пагинация конфликтует с `JOIN FETCH` коллекции: Hibernate не может применить `LIMIT` на уровне SQL и выполняет постраничность в памяти, поэтому такие fetch и пагинацию не сочетают.",
+                "related": "[[hibernate-jpql-criteria-interview#Q12]] ошибки JOIN FETCH с pagination; [[hibernate-jpql-criteria-interview#Q4]] почему FETCH мешает LIMIT; [[hibernate-jpql-criteria-interview#Q13]] проекции для лёгких страниц."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Page<User>` из Spring Data при пагинации не считает общее число записей, поэтому `getTotalElements()` всегда возвращает размер текущей страницы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Page` для подсчёта `getTotalElements()` выполняет дополнительный count-запрос и возвращает общее число записей по фильтру, а не размер страницы; за размер отвечает `getNumberOfElements()`.",
+                "source_of_confusion": "Кажется, что одна выборка не может знать суммарный размер, и `total` принимают за количество элементов на странице.",
+                "if_it_were_true": "Тогда `page.getTotalPages()` нельзя было бы вычислить, но Spring Data считает страницы именно из total/size.",
+                "how_it_should_be": "`Page` делает отдельный count и отдаёт реальное общее число; для облегчения этого count есть `Slice`, который его не выполняет."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Spring Data поддерживает пагинацию только без сортировки: передать порядок строк вместе с `PageRequest` невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PageRequest.of(page, size, Sort.by(...))` объединяет пагинацию и сортировку в одном объекте `Pageable`, и сортировка применяется на уровне SQL запроса.",
+                "source_of_confusion": "Пагинацию и сортировку воспринимают как независимые шаги, и кажется, что `Pageable` отвечает только за страницы.",
+                "if_it_were_true": "Тогда `PageRequest.of(0, 20, Sort.by(\"createdAt\").descending())` был бы невалиден, но это штатная перегрузка фабрики.",
+                "how_it_should_be": "`Pageable` несёт и страницу, и сортировку; порядок задаётся через `Sort` внутри `PageRequest`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие best practices существуют при работе с JPA-запросами?",
+          "options": [
+            {
+              "text": "Лучшая практика — писать все запросы на native SQL, потому что так разработчик полностью контролирует производительность и не зависит от ORM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендация обратная: native SQL применяют только когда JPQL недостаточен, иначе теряются портируемость, type-safety и работа с entity-моделью.",
+                "source_of_confusion": "Полный контроль над SQL кажется безусловным благом, поэтому native ошибочно выдвигают как практику по умолчанию.",
+                "if_it_were_true": "Тогда derived-методы и `@Query` были бы антипаттерном, но именно с них рекомендуют начинать для простых запросов.",
+                "how_it_should_be": "Начинают с derived-методов/JPQL, а native SQL держат для БД-специфики и горячих точек."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Для `UPDATE`/`DELETE` достаточно одной аннотации `@Query` — ни `@Modifying`, ни транзакция при этом не требуются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модифицирующий запрос требует `@Modifying` (иначе Spring примет его за select) и активной транзакции (`@Transactional`), иначе изменение не применится.",
+                "source_of_confusion": "Для select-запросов `@Query` действительно самодостаточен, и это переносят на модифицирующие запросы.",
+                "if_it_were_true": "Тогда `@Query(\"UPDATE User u SET ...\")` без `@Modifying` спокойно обновлял бы строки, но на деле это бросает ошибку выполнения.",
+                "how_it_should_be": "`UPDATE`/`DELETE` обязательно сопровождают `@Modifying` и транзакцией — это одна из ключевых практик."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Базовые практики: для простых случаев — derived-методы Spring Data (`findByEmail`); для средних — `@Query` с named-параметрами; для динамических фильтров — `Specifications`; для type-safety в Criteria — `Metamodel`; native SQL — только когда JPQL недостаточен; `JOIN FETCH`/`@EntityGraph` против N+1 (но не с пагинацией); проекции для отчётов; и обязательно `@Modifying` + `@Transactional` для `UPDATE`/`DELETE`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея в том, чтобы выбирать минимально достаточный инструмент по сложности запроса: derived-методы и `@Query` для статики, `Specifications`/`Criteria` для динамики, native — как крайняя мера, а fetch-стратегии и проекции применять осознанно под N+1 и объём данных.",
+                "example": "Простой поиск — `Optional<User> findByEmail(String email)`; средний — `@Query(\"FROM User u WHERE u.email = :email AND u.active = true\")`; модификация — `@Modifying @Query(\"UPDATE User u SET u.active = false WHERE ...\")` под `@Transactional`.",
+                "when_to_apply": "Эти ориентиры используют при проектировании слоя доступа к данным и на ревью: они помогают не тянуть native SQL там, где хватит derived-метода, и не забыть про N+1 и `@Modifying`.",
+                "edge_cases": "Для мониторинга числа реально выполненных SQL включают `Hibernate Statistics` — это выявляет скрытый N+1, который незаметен в коде, но виден по всплеску количества запросов на одну операцию.",
+                "related": "[[hibernate-jpql-criteria-interview#Q8]] Specifications для динамики; [[hibernate-jpql-criteria-interview#Q11]] @EntityGraph против N+1; [[hibernate-jpql-criteria-interview#Q12]] @Modifying и типичные ошибки."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`JOIN FETCH` и `@EntityGraph` стоит применять всегда вместе с пагинацией, чтобы одновременно бороться с N+1 и ограничивать выборку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Жадную загрузку коллекций и пагинацию как раз не сочетают: при `JOIN FETCH` коллекции Hibernate не применяет `LIMIT` в SQL и выполняет постраничность в памяти.",
+                "source_of_confusion": "И борьба с N+1, и пагинация — полезные практики, и кажется логичным включать их совместно в одном запросе.",
+                "if_it_were_true": "Тогда `FROM User u JOIN FETCH u.orders` с `setMaxResults(10)` работал бы эффективно через `LIMIT`, но Hibernate выдаёт предупреждение и грузит всё в память.",
+                "how_it_should_be": "Против N+1 берут `JOIN FETCH`/`@EntityGraph`, но при пагинации коллекций их избегают, разделяя загрузку и постраничность."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

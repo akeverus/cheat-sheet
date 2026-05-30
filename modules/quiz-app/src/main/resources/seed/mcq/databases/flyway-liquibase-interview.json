@@ -1,0 +1,2525 @@
+{
+  "topic_slug": "flyway-liquibase-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое миграции базы данных и зачем они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Миграция БД — это версионируемое, воспроизводимое изменение схемы или данных, оформленное скриптом и применяемое автоматически. Они дают версионирование схемы вместе с кодом, воспроизводимость (поднять базу с нуля), консистентность окружений и аудит изменений.",
+              "correct": true,
+              "sections": {
+                "explanation": "Схема БД эволюционирует вместе с кодом: каждое изменение лежит в VCS, применяется детерминированно и отслеживается. Это убирает рассинхрон между dev, staging и production.",
+                "example": "Любой разработчик клонирует репозиторий и, запустив `V1__create_users.sql`, `V2__add_index.sql` и т.д. по порядку, получает идентичную схему БД без ручных дампов.",
+                "when_to_apply": "Применяют, когда схема БД меняется хотя бы изредка и есть больше одного окружения: команда фиксирует каждое изменение как миграцию вместо ручного SQL на сервере.",
+                "edge_cases": "Без инструмента команды шлют дампы и устные договорённости, окружения расходятся; миграции данных (а не только DDL) требуют отдельной осторожности из-за объёма.",
+                "related": "[[flyway-liquibase-interview#Q2]] какие проблемы решает инструмент; [[flyway-liquibase-interview#Q3]] как работает `Flyway`; [[flyway-liquibase-interview#Q13]] чем отличается `Liquibase`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Миграция БД — это разовый импорт production-дампа на ноутбук разработчика, чтобы у всех была одинаковая база данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Миграция — это версионируемый скрипт изменения схемы/данных, а импорт дампа — копирование снимка, которое не отслеживает историю изменений и быстро устаревает.",
+                "source_of_confusion": "И дамп, и миграции преследуют «одинаковую базу у всех», поэтому их путают как взаимозаменяемые способы синхронизации.",
+                "if_it_were_true": "Если бы это был дамп, история изменений и аудит «кто что внёс» были бы недоступны, а воспроизвести схему с нуля по шагам было бы нельзя.",
+                "how_it_should_be": "Это последовательность версионируемых скриптов в VCS; дамп — отдельный механизм бэкапа, не заменяющий контроль версий схемы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Миграция БД — это автоматическая репликация данных между primary и replica узлами для отказоустойчивости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Миграция меняет структуру и данные схемы по версиям; репликация копирует уже существующие данные между узлами в реальном времени — это разные подсистемы.",
+                "source_of_confusion": "Оба термина связаны с «движением данных», поэтому schema migration смешивают с физической репликацией.",
+                "if_it_were_true": "Если бы миграция была репликацией, она бы не описывала `ALTER TABLE` и `CREATE INDEX`, а лишь синхронизировала байты между серверами.",
+                "how_it_should_be": "Миграция — это эволюция схемы через версионируемые скрипты; репликация — отдельный механизм высокой доступности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Миграция БД нужна только для перехода с одной СУБД на другую (например, `MySQL` → `PostgreSQL`) и в обычной разработке не применяется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это и есть основной повседневный инструмент разработки: каждое изменение схемы — миграция, а смена СУБД — лишь один редкий частный случай.",
+                "source_of_confusion": "Слово «миграция» в быту ассоциируется с переездом между системами, отсюда сужение смысла до смены СУБД.",
+                "if_it_were_true": "Если бы это было только про смену СУБД, `Flyway` и `Liquibase` не запускались бы при каждом старте приложения с тем же `PostgreSQL`.",
+                "how_it_should_be": "Миграции применяют постоянно для эволюции схемы внутри одной СУБД; межбазовый переход — отдельная и нечастая задача."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие проблемы решает инструмент миграций (Flyway/Liquibase)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Инструмент миграций заменяет систему контроля версий (`Git`) для исходного кода приложения и хранит сам код в БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он решает проблемы синхронизации схемы БД между окружениями и автоматизации применения SQL, а код приложения по-прежнему живёт в `Git`.",
+                "source_of_confusion": "И VCS, и миграции «версионируют изменения», поэтому их роли иногда смешивают.",
+                "if_it_were_true": "Если бы он заменял `Git`, в `flyway_schema_history` лежали бы Java-классы, а не записи о применённых SQL-скриптах.",
+                "how_it_should_be": "Миграции версионируют схему БД и работают вместе с `Git`, который версионирует код, а не вместо него."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Инструмент миграций решает: рассинхрон окружений («работает на моей машине»), ручное применение SQL на production, неизвестность версии схемы, конфликты при параллельной разработке, невозможность отката и тестирование схемы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Единый набор миграций для всех окружений + таблица истории в самой БД дают консистентность, автоматизацию и аудит; блокировки решают параллельный запуск.",
+                "example": "Вместо ручного `psql -f patch.sql` на production применяется `flyway migrate`, а таблица `flyway_schema_history` показывает, какая версия схемы развёрнута.",
+                "when_to_apply": "Применяют всегда, когда схема меняется и есть несколько сред: инструмент закрывает разрыв между «на staging не так, как на проде».",
+                "edge_cases": "Откат лучше всего реализован в `Liquibase`; в `Flyway` Community отката нет, и его делают forward-only миграцией.",
+                "related": "[[flyway-liquibase-interview#Q1]] что такое миграции; [[flyway-liquibase-interview#Q6]] таблица истории `Flyway`; [[flyway-liquibase-interview#Q16]] как `Liquibase` отслеживает миграции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Инструмент миграций гарантирует, что запросы `SELECT` будут выполняться быстрее за счёт автоматического построения индексов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он применяет те DDL, что вы написали (включая `CREATE INDEX`, если вы его добавили), но сам не оптимизирует запросы и не создаёт индексы автоматически.",
+                "source_of_confusion": "Раз миграции часто содержат создание индексов, кажется, что ускорение запросов — их встроенная функция.",
+                "if_it_were_true": "Если бы инструмент сам строил индексы, он анализировал бы план запросов — но это задача оптимизатора СУБД, а не миграций.",
+                "how_it_should_be": "Миграции лишь детерминированно применяют написанный вами SQL; решение, какие индексы нужны, остаётся за разработчиком."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Инструмент миграций автоматически создаёт резервные копии БД перед каждым изменением и хранит их в облаке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бэкапы — отдельная ответственность (например, `pg_dump`, snapshot СУБД); `Flyway`/`Liquibase` не делают резервных копий перед миграцией.",
+                "source_of_confusion": "Поскольку миграции рискованны, ожидаемо, что инструмент «подстрахует» бэкапом — но эту страховку обеспечивает не он.",
+                "if_it_were_true": "Если бы инструмент делал бэкапы, у него были бы команды restore и хранилище снимков, чего в его модели нет.",
+                "how_it_should_be": "Бэкап перед деплоем настраивают отдельно (snapshot/дамп); миграция же применяет скрипты и пишет историю, но не сохраняет данные."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Flyway и как он работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Flyway` — это ORM-фреймворк, который генерирует схему БД из аннотированных Java-сущностей, аналогично `hibernate.ddl-auto=update`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flyway` применяет написанные вами SQL-скрипты по версиям; он не выводит схему из сущностей и не является ORM.",
+                "source_of_confusion": "И `Flyway`, и Hibernate умеют создавать таблицы, поэтому их роли путают.",
+                "if_it_were_true": "Если бы `Flyway` строил схему из сущностей, не нужны были бы файлы `V1__...sql` — достаточно было бы `@Entity`.",
+                "how_it_should_be": "`Flyway` — версионные SQL-миграции; генерация DDL из сущностей — это `hibernate.ddl-auto`, и его держат в `none`/`validate` при использовании `Flyway`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Flyway` хранит миграции в формате XML change types и автоматически генерирует rollback для каждого изменения в Community-версии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "XML change types и встроенный rollback — это `Liquibase`; `Flyway` работает с SQL-скриптами и в Community отката не имеет.",
+                "source_of_confusion": "Оба инструмента — про миграции, поэтому ключевые фичи `Liquibase` ошибочно приписывают `Flyway`.",
+                "if_it_were_true": "Если бы у `Flyway` Community был авто-rollback, не существовало бы платных Undo-миграций (`U__`) в Teams.",
+                "how_it_should_be": "`Flyway` — SQL-first без авто-отката; абстрактный XML и rollback из коробки — характеристики `Liquibase`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Flyway` — инструмент миграций на основе версионных SQL-скриптов: при запуске он сканирует `db/migration`, сверяется с таблицей `flyway_schema_history`, сортирует непримененные миграции по версии и применяет каждую в отдельной транзакции, записывая результат и checksum.",
+              "correct": true,
+              "sections": {
+                "explanation": "Философия `Flyway` — простота: пишешь привычный SQL, без отдельного DSL. Порядок и идемпотентность гарантирует таблица истории и сравнение checksum.",
+                "example": "На старте `Spring Boot` `Flyway` видит в истории применённые `V1`, `V2`, находит файлы `V1..V4`, и применяет только `V3` и `V4`, записав их в `flyway_schema_history`.",
+                "when_to_apply": "Подходит проектам, где команда пишет database-specific SQL и хочет минимальный порог входа без изучения XML/DSL.",
+                "edge_cases": "На СУБД без транзакционного DDL (`MySQL`, `Oracle`) упавшая миграция может оставить запись `success=false` и частично применённый DDL.",
+                "related": "[[flyway-liquibase-interview#Q4]] типы миграций `Flyway`; [[flyway-liquibase-interview#Q5]] соглашение об именовании; [[flyway-liquibase-interview#Q6]] таблица `flyway_schema_history`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Flyway` — это сервис мониторинга, который собирает метрики производительности SQL-запросов и строит дашборды по медленным запросам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flyway` применяет миграции схемы; сбор метрик запросов и дашборды — задача APM/мониторинга (`pg_stat_statements`, Grafana), а не его.",
+                "source_of_confusion": "И мониторинг, и `Flyway` «работают с БД», отсюда подмена назначения.",
+                "if_it_were_true": "Если бы `Flyway` мониторил запросы, у него были бы агенты и метрики latency, а не таблица `flyway_schema_history`.",
+                "how_it_should_be": "`Flyway` версионирует и применяет изменения схемы; наблюдаемость за запросами обеспечивают отдельные инструменты."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы миграций поддерживает Flyway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только версионные миграции (`V__`); повторяемых и undo-миграций в `Flyway` не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flyway` поддерживает три типа: versioned (`V__`), repeatable (`R__`) и undo (`U__`, платно); повторяемые и undo существуют.",
+                "source_of_confusion": "Versioned-миграции самые частые, поэтому кажется, что других типов нет.",
+                "if_it_were_true": "Если бы был только `V__`, нельзя было бы переопределять `VIEW`/функции при изменении тела — а для этого и есть `R__`.",
+                "how_it_should_be": "Типов три: `V__` (один раз по версии), `R__` (при смене checksum) и `U__` (откат, только в Teams)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Версионные и undo-миграции, причём undo доступны бесплатно в Community Edition и применяются автоматически при ошибке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Undo-миграции (`U__`) доступны только в платной Flyway Teams и вызываются командой `undo` вручную, а не автоматически.",
+                "source_of_confusion": "Логично ожидать бесплатный откат, поэтому undo ошибочно относят к Community.",
+                "if_it_were_true": "Если бы undo был бесплатным и авто, не было бы смысла в forward-only стратегии отката в OSS-проектах.",
+                "how_it_should_be": "В Community доступны `V__` и `R__`; `U__` — это Teams, и они запускаются явной командой `flyway undo`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Repeatable (`R__`) и undo (`U__`) миграции, а версионных (`V__`) `Flyway` не использует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Версионные `V__` — основной тип `Flyway`, применяемый ровно один раз по возрастанию версии; без них нет эволюции схемы.",
+                "source_of_confusion": "Повторяемые и undo звучат «продвинуто», отсюда ошибочный вывод, что они вытеснили версионные.",
+                "if_it_were_true": "Если бы `V__` не было, таблица `flyway_schema_history` не хранила бы колонку `version`, а она хранит.",
+                "how_it_should_be": "Базовый тип — версионные `V__`; `R__` дополняет их для view/функций, `U__` — для отката в Teams."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Три типа: versioned (`V__`, применяются ровно один раз по возрастанию версии), repeatable (`R__`, выполняются каждый раз при изменении checksum, без версии, после всех версионных) и undo (`U__`, откат конкретной версии, только в платной версии).",
+              "correct": true,
+              "sections": {
+                "explanation": "Versioned меняют схему по порядку; repeatable идеальны для `CREATE OR REPLACE VIEW`/функций (перевыполняются при правке тела); undo откатывают версию, но доступны только в Teams.",
+                "example": "`V2__add_user_roles.sql` создаёт колонку один раз; `R__create_active_users_view.sql` пересоздаёт view при каждом изменении; `U2__add_user_roles.sql` дропает колонку при откате.",
+                "when_to_apply": "Repeatable выбирают для объектов, переопределяемых целиком (views, stored procedures); versioned — для инкрементальных `ALTER`; undo — когда нужен платный откат.",
+                "edge_cases": "В Community отката нет — его делают новой версионной миграцией; изменение placeholder тоже перевыполняет `R__`, так как меняется итоговый checksum.",
+                "related": "[[flyway-liquibase-interview#Q3]] как работает `Flyway`; [[flyway-liquibase-interview#Q5]] именование файлов; [[flyway-liquibase-interview#Q9]] placeholders и их влияние на checksum."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое соглашение об именовании файлов миграций в Flyway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Формат `<Prefix><Version>__<Description>.sql`: префикс (`V`/`R`/`U`), числовая версия, два подчёркивания как обязательный разделитель, описание (подчёркивания = пробелы) и суффикс `.sql`. Например `V1.1__add_email_index.sql`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Flyway` строго парсит имя: по префиксу определяет тип, по версии — порядок, по двум `__` отделяет описание. Repeatable (`R__`) версии не имеет.",
+                "example": "Корректно: `V1__create_users_table.sql`, `V2__add_orders_table.sql`, `R__refresh_materialized_views.sql`. Версия может быть `1.2`, `1_2` или timestamp `202604121530`.",
+                "when_to_apply": "Применяют всегда при создании файла миграции; для команд рекомендуют timestamp-версии (`V20260412153000__...`), чтобы избежать конфликтов номеров.",
+                "edge_cases": "Некорректны: `V1_create_users.sql` (одно `__`), `create_users_V1.sql` (нет префикса в начале), `V1__Create Users.sql` (пробелы в имени).",
+                "related": "[[flyway-liquibase-interview#Q4]] типы миграций и префиксы; [[flyway-liquibase-interview#Q6]] что хранит `flyway_schema_history`; [[flyway-liquibase-interview#Q33]] лучшие практики именования."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Формат `<Version>-<Description>.sql` с одним дефисом, без префикса; тип миграции `Flyway` определяет по содержимому файла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обязателен префикс (`V`/`R`/`U`) в начале и ровно два подчёркивания `__` как разделитель; тип определяется по префиксу, а не по содержимому.",
+                "source_of_confusion": "Дефис и «угадывание по содержимому» выглядят дружелюбнее, поэтому соглашение упрощают в памяти.",
+                "if_it_were_true": "Если бы тип брался из содержимого, `Flyway` не смог бы отличить `V__` от `R__` для одинакового `CREATE VIEW`.",
+                "how_it_should_be": "Префикс задаёт тип, версия — порядок, `__` — разделитель; имя без префикса `Flyway` просто проигнорирует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Имя файла произвольное; порядок применения `Flyway` берёт из времени создания файла на диске (`mtime`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок определяется версией в имени файла, а не временем модификации; имя строго регламентировано.",
+                "source_of_confusion": "В `Liquibase` порядок задаётся `include`, и по аналогии кажется, что у `Flyway` он тоже «внешний».",
+                "if_it_were_true": "Если бы порядок брался из `mtime`, копирование файлов между машинами меняло бы порядок миграций и ломало бы повторяемость.",
+                "how_it_should_be": "`Flyway` сортирует по числовой версии из имени; `mtime` он не использует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Описание в имени обязано совпадать с именем создаваемой таблицы, иначе `Flyway` откажется применять миграцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описание — свободный человекочитаемый текст (подчёркивания = пробелы); оно не обязано совпадать с именами объектов и не валидируется по ним.",
+                "source_of_confusion": "Описательные имена вроде `V1__create_users_table` создают иллюзию обязательной привязки к таблице.",
+                "if_it_were_true": "Если бы описание сверялось с объектами, миграция `V6__migrate_user_data.sql`, меняющая данные без новой таблицы, была бы невозможна.",
+                "how_it_should_be": "Описание влияет лишь на читаемость и колонку `description` в истории; на применение оно не влияет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое таблица flyway_schema_history?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это таблица, в которой `Flyway` хранит сами тексты SQL-миграций, чтобы можно было заново применить их без файлов на диске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Таблица хранит метаданные о применённых миграциях (версия, описание, checksum, время, успех), но не сами SQL-тексты; скрипты остаются в файлах.",
+                "source_of_confusion": "Раз `Flyway` «помнит» миграции, кажется, что он хранит и их полный текст в БД.",
+                "if_it_were_true": "Если бы тексты лежали в таблице, удаление файла `V3__...sql` не ломало бы `validate`, но оно ломает.",
+                "how_it_should_be": "В истории — только checksum и метаданные; источник правды для SQL — файлы миграций в репозитории."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это служебная таблица, которую `Flyway` создаёт автоматически для отслеживания применённых миграций: содержит `installed_rank`, `version`, `description`, `type`, `script`, `checksum` (CRC32), `installed_by`, `installed_on`, `execution_time`, `success`.",
+              "correct": true,
+              "sections": {
+                "explanation": "По этой таблице `Flyway` понимает, какие миграции уже применены, и через CRC32-`checksum` обнаруживает изменение уже применённого файла (тогда `validate` падает).",
+                "example": "`SELECT version, description, checksum, success FROM flyway_schema_history ORDER BY installed_rank;` показывает всю историю и статусы.",
+                "when_to_apply": "Читают её при отладке миграций, при `info`/`validate`, а также чтобы понять, какая версия схемы развёрнута на сервере.",
+                "edge_cases": "Для repeatable-миграций `version` = `NULL`; запись с `success=false` (на не-транзакционной СУБД) блокирует следующий `migrate` до `repair`.",
+                "related": "[[flyway-liquibase-interview#Q3]] как `Flyway` использует историю; [[flyway-liquibase-interview#Q11]] когда нужен `repair`; [[flyway-liquibase-interview#Q16]] как историю ведёт `Liquibase`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это таблица блокировок, которая предотвращает одновременный запуск `Flyway` с нескольких инстансов приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`flyway_schema_history` — это история миграций, а не блокировка; для конкурентного запуска `Flyway` берёт отдельный advisory lock на БД.",
+                "source_of_confusion": "У `Liquibase` есть отдельная таблица `DATABASECHANGELOGLOCK`, и по аналогии её роль приписывают истории `Flyway`.",
+                "if_it_were_true": "Если бы history была таблицей блокировок, в ней не было бы колонок `version`, `checksum`, `execution_time`.",
+                "how_it_should_be": "История фиксирует применённые миграции; защита от параллельного запуска у `Flyway` реализована advisory-локом, а не отдельной таблицей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это таблица, куда `Flyway` пишет логи приложения и stack trace ошибок для последующего анализа в Kibana.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Таблица содержит метаданные миграций, а не логи приложения; stack trace и логи пишутся в logging-фреймворк, а не в `flyway_schema_history`.",
+                "source_of_confusion": "Колонка `success` создаёт впечатление, что туда же попадают подробные логи ошибок.",
+                "if_it_were_true": "Если бы это был журнал логов, его структура была бы свободной, а не фиксированными колонками про версию и checksum.",
+                "how_it_should_be": "История миграций — это структурированные метаданные применения; логи и ошибки уходят в стандартный logging-стек."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные команды Flyway существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "У `Flyway` есть только одна команда `migrate`; всё остальное (`info`, `validate`, `repair`) делается ручными SQL-запросами к истории.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flyway` предоставляет набор команд: `migrate`, `clean`, `info`, `validate`, `baseline`, `repair`, `undo`; они не сводятся к одному `migrate`.",
+                "source_of_confusion": "В рантайме чаще всего вызывается именно `migrate`, отсюда иллюзия единственной команды.",
+                "if_it_were_true": "Если бы была только `migrate`, не существовало бы Gradle-задач `flywayInfo` и `flywayValidate`.",
+                "how_it_should_be": "Команд несколько; `validate` сверяет файлы с историей, `info` показывает статус, `repair` чинит историю — без ручного SQL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Команды `commit` и `rollback`, как в управлении транзакциями SQL; `migrate` среди команд `Flyway` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключевая команда — `migrate` (применяет непримененные миграции); `commit`/`rollback` — это операторы транзакций, а не команды `Flyway`.",
+                "source_of_confusion": "Миграции применяются в транзакциях, поэтому транзакционные термины путают с командами инструмента.",
+                "if_it_were_true": "Если бы у `Flyway` была команда `rollback`, не требовался бы платный `undo` или forward-only откат.",
+                "how_it_should_be": "Базовая команда — `migrate`; транзакциями управляет сама СУБД внутри каждой миграции, а не отдельные команды `Flyway`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Семь основных команд: `migrate` (применить непримененные), `clean` (удалить все объекты схемы — опасно), `info` (статус миграций), `validate` (сверить применённые с файлами), `baseline` (пометить существующую БД), `repair` (починить таблицу истории), `undo` (откат, платно).",
+              "correct": true,
+              "sections": {
+                "explanation": "`migrate` — рабочая лошадка; `validate` ловит расхождение checksum; `baseline` внедряет `Flyway` в существующую БД; `repair` чистит неудачные записи и обновляет checksum.",
+                "example": "Через Gradle-плагин: `./gradlew flywayMigrate`, `./gradlew flywayInfo`, `./gradlew flywayValidate` запускают соответствующие команды на сконфигурированном `url`/`user`.",
+                "when_to_apply": "`info`/`validate` гоняют в CI для проверки консистентности; `clean`+`migrate` — для пересоздания схемы с нуля в dev/test.",
+                "edge_cases": "`clean` по умолчанию запрещён с `Flyway 9+` (`cleanDisabled=true`); `undo` доступен только в платной Teams.",
+                "related": "[[flyway-liquibase-interview#Q11]] команда `repair`; [[flyway-liquibase-interview#Q12]] чем опасна `clean`; [[flyway-liquibase-interview#Q10]] что делает `baseline`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Команды `push` и `pull`, по аналогии с `Git`: `flyway push` отправляет миграции на сервер, `flyway pull` забирает их обратно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flyway` применяет локальные файлы миграций к БД командой `migrate`; команд `push`/`pull` в духе `Git` у него нет.",
+                "source_of_confusion": "Так как миграции версионируются и связаны с `Git`, по инерции ждут git-подобных команд синхронизации.",
+                "if_it_were_true": "Если бы были `push`/`pull`, миграции хранились бы на удалённом сервере `Flyway`, а они лежат в репозитории кода.",
+                "how_it_should_be": "Синхронизацию файлов делает `Git`; `Flyway` лишь применяет их к БД через `migrate` и проверяет через `validate`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Flyway Callbacks и для чего они используются?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Callbacks — это версионные миграции с приоритетом, которые `Flyway` записывает в `flyway_schema_history` и применяет ровно один раз, как `V__`-файлы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Callbacks — это хуки жизненного цикла (`beforeMigrate`, `afterMigrate` и др.); они не версионируются, не попадают в историю и выполняются при каждом запуске команды.",
+                "source_of_confusion": "И callbacks, и миграции — это SQL-файлы в той же директории, поэтому их статус путают.",
+                "if_it_were_true": "Если бы callbacks писались в историю и применялись один раз, `afterMigrate.sql` не запускался бы при каждом `migrate`.",
+                "how_it_should_be": "Callbacks — повторяемые хуки этапов миграции; они вне `flyway_schema_history` и срабатывают каждый раз."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Callbacks — это исключительно Java-классы; SQL-файлы в роли callback `Flyway` не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Callback можно задать и SQL-файлом с именем события (`beforeMigrate.sql`), и Java-классом, реализующим `Callback`.",
+                "source_of_confusion": "Java-реализация выглядит «основной», поэтому SQL-вариант забывают.",
+                "if_it_were_true": "Если бы поддерживался только Java, нельзя было бы положить `beforeMigrate.sql` рядом с миграциями — а это типовой приём.",
+                "how_it_should_be": "Поддерживаются оба способа: SQL-файл по имени события и Java-класс `Callback` с методами `supports`/`handle`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Callbacks — это механизм отката (rollback): `Flyway` вызывает их, чтобы отменить применённую миграцию в Community Edition.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Callbacks — это хуки до/после этапов миграции для побочной логики, а не механизм отката; в Community отката у `Flyway` нет.",
+                "source_of_confusion": "Раз callbacks «вмешиваются» в процесс, кажется, что они умеют откатывать.",
+                "if_it_were_true": "Если бы callbacks делали rollback, не требовались бы платные `U__`-миграции для отката.",
+                "how_it_should_be": "Откат — это `U__`/forward-only; callbacks же выполняют логирование, prerequisites, загрузку справочных данных вокруг миграции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Callbacks — это хуки, которые `Flyway` вызывает на этапах жизненного цикла миграции (`beforeMigrate`, `afterMigrate`, `afterMigrateError`, `beforeEachMigrate`, `beforeValidate`, `beforeClean` и др.) для дополнительной логики до/после миграций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Они дают точки расширения: можно подготовить окружение перед миграцией или выполнить пост-обработку после, не вмешиваясь в сами скрипты.",
+                "example": "`beforeMigrate.sql` с `CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";` гарантирует расширение до миграций; Java-`Callback` на `AFTER_MIGRATE` логирует версию схемы.",
+                "when_to_apply": "Применяют для логирования, проверки prerequisites, загрузки справочных данных, установки прав доступа и аудита вокруг миграций.",
+                "edge_cases": "Callbacks не версионируются и срабатывают при каждом вызове команды; `canHandleInTransaction` определяет, выполнять ли хук в транзакции.",
+                "related": "[[flyway-liquibase-interview#Q38]] подробно о хуках `beforeMigrate`/`afterMigrate`; [[flyway-liquibase-interview#Q7]] команды `Flyway`; [[flyway-liquibase-interview#Q9]] placeholders."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое placeholders в Flyway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Placeholders — это переменные, которые `Flyway` подставляет в SQL-скрипты на этапе выполнения; по умолчанию синтаксис `${name}`. Значения задаются в конфигурации, есть и встроенные плейсхолдеры.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это позволяет параметризовать миграции (имя схемы, окружение) без хардкода: `${schema_name}` и `${environment}` подставляются перед выполнением SQL.",
+                "example": "В `application.yml`: `spring.flyway.placeholders.schema_name: app`; в скрипте `CREATE SCHEMA IF NOT EXISTS ${schema_name};` развернётся в `app`.",
+                "when_to_apply": "Применяют, когда один и тот же скрипт нужно гонять с разными значениями по окружениям или схемам, оставляя файл миграции единым.",
+                "edge_cases": "Изменение значения placeholder меняет итоговый текст и checksum, поэтому повторяемые (`R__`) миграции перевыполнятся при смене значения.",
+                "related": "[[flyway-liquibase-interview#Q4]] почему меняется checksum у `R__`; [[flyway-liquibase-interview#Q8]] callbacks; [[flyway-liquibase-interview#Q6]] checksum в истории."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Placeholders — это секреты (пароли, токены), которые `Flyway` автоматически шифрует и хранит в `flyway_schema_history`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Placeholders — это обычные текстовые подстановки в SQL, без шифрования; секреты держат в Vault/секретах, а не в истории миграций.",
+                "source_of_confusion": "Слово «placeholder» в DevOps часто связывают с подстановкой секретов, отсюда путаница.",
+                "if_it_were_true": "Если бы плейсхолдеры шифровались и хранились в истории, их значения утекали бы в `flyway_schema_history`.",
+                "how_it_should_be": "Это просто переменные `${name}` для параметризации текста; секреты подаются через защищённую конфигурацию, не через placeholders."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Placeholders задают порядок применения миграций: `${order:1}` в имени файла указывает `Flyway`, какую миграцию выполнить первой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок определяется числовой версией в имени файла, а не плейсхолдерами; placeholders подставляются внутри тела SQL.",
+                "source_of_confusion": "И версии, и плейсхолдеры — «настраиваемые числа», поэтому их роли смешивают.",
+                "if_it_were_true": "Если бы порядок задавался плейсхолдером, имя `V1__...` теряло бы смысл как носитель версии.",
+                "how_it_should_be": "Порядок — это версия в имени файла; placeholders — лишь подстановка значений в SQL-текст на этапе выполнения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Placeholders доступны только в платной Flyway Teams и в Community Edition не работают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Placeholders — стандартная возможность Community Edition; платность здесь ни при чём.",
+                "source_of_confusion": "Часть фич (Undo, dry-run) действительно платные, и placeholders ошибочно зачисляют в тот же список.",
+                "if_it_were_true": "Если бы они были платными, `spring.flyway.placeholders` не работал бы в обычном `Spring Boot`-проекте, а он работает.",
+                "how_it_should_be": "Подстановка `${name}` доступна бесплатно; платны Undo, dry-run и cherry-pick, но не placeholders."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое baseline в Flyway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Baseline — это команда, которая удаляет все существующие таблицы и пересоздаёт схему с нуля по миграциям, как `clean` + `migrate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Baseline ничего не удаляет: он лишь помечает текущее состояние БД как стартовую версию и создаёт `flyway_schema_history`.",
+                "source_of_confusion": "И `clean`, и `baseline` связаны с «началом», поэтому baseline ошибочно считают разрушительным сбросом.",
+                "if_it_were_true": "Если бы baseline удалял таблицы, его нельзя было бы безопасно применять к живой production-БД, а именно для неё он и нужен.",
+                "how_it_should_be": "Удаление и пересоздание — это `clean`+`migrate`; baseline же фиксирует имеющуюся схему как точку отсчёта без потери данных."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Baseline используется для внедрения `Flyway` в проект с уже существующей БД без `flyway_schema_history`: он создаёт таблицу истории, добавляет запись типа `BASELINE` с указанной версией, и все миграции до `baselineVersion` включительно пропускаются.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без baseline `migrate` на существующей БД попытался бы создать уже имеющиеся таблицы и упал бы; baseline объявляет текущее состояние стартовым.",
+                "example": "`flyway -baselineVersion=1 baseline` помечает БД как версию 1; новые `V2`, `V3` затем применяются как обычно.",
+                "when_to_apply": "Применяют при миграции legacy-проекта на `Flyway`, когда production-схема уже существует и управлялась вручную.",
+                "edge_cases": "В `Spring Boot` можно включить `baseline-on-migrate: true` с `baseline-version: 1` для автоматического baseline при первом запуске.",
+                "related": "[[flyway-liquibase-interview#Q3]] как `Flyway` сверяется с историей; [[flyway-liquibase-interview#Q6]] запись типа `BASELINE` в истории; [[flyway-liquibase-interview#Q7]] команда `baseline`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Baseline — это создание резервной копии (snapshot) БД перед применением миграций для возможности отката.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Baseline не делает бэкап; он создаёт `flyway_schema_history` и помечает стартовую версию. Снимок БД — отдельная операция СУБД.",
+                "source_of_confusion": "Слово «baseline» ассоциируется с «опорной копией», отсюда смешение с бэкапом.",
+                "if_it_were_true": "Если бы baseline снимал snapshot, у `Flyway` была бы команда restore из него — но её нет.",
+                "how_it_should_be": "Резервную копию делают `pg_dump`/snapshot; baseline лишь задаёт точку отсчёта для истории миграций."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Baseline — это автоматическое определение последней версии схемы по именам существующих таблиц без участия разработчика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Версию baseline задаёт разработчик (`-baselineVersion=1` или `baseline-version`); `Flyway` не выводит её из имён таблиц.",
+                "source_of_confusion": "Кажется удобным, чтобы инструмент «сам понял» версию по схеме, отсюда домысел.",
+                "if_it_were_true": "Если бы версия выводилась автоматически, не нужен был бы параметр `baselineVersion`, но он обязателен.",
+                "how_it_should_be": "Версию указывают явно при вызове baseline; `Flyway` анализом структуры таблиц её не определяет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда и как используется команда repair в Flyway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`repair` откатывает SQL последней неудачной миграции, возвращая БД в состояние до её запуска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`repair` чинит только таблицу `flyway_schema_history` (удаляет неудачные записи, обновляет checksum); он НЕ откатывает уже выполнившийся SQL.",
+                "source_of_confusion": "Слово «repair» звучит как «всё починить, включая данные», отсюда ожидание отката DDL.",
+                "if_it_were_true": "Если бы `repair` откатывал SQL, на не-транзакционной СУБД не приходилось бы вручную приводить БД в консистентное состояние.",
+                "how_it_should_be": "`repair` исправляет историю; если часть DDL применилась на `MySQL`/`Oracle`, её откатывают руками через CLI."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`repair` пересоздаёт checksum для всех миграций, делая `validate` всегда успешным, поэтому его запускают перед каждым `migrate` в production для надёжности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`repair` обновляет checksum только у изменённых записей, а массовое «глушение» `validate` в production опасно — оно скроет реальный дрейф файлов миграций.",
+                "source_of_confusion": "Раз `repair` чинит checksum, кажется логичным гонять его всегда «на всякий случай».",
+                "if_it_were_true": "Если бы его место было перед каждым `migrate`, расхождение checksum (признак правки применённого файла) никогда бы не замечалось.",
+                "how_it_should_be": "`repair` — точечный инструмент для конкретных ситуаций; в production его используют осознанно, а не рутинно перед каждым `migrate`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`repair` исправляет `flyway_schema_history` в двух ситуациях: (1) удаляет записи о неудачных миграциях (`success=false`) на БД без транзакционного DDL, чтобы `migrate` снова прошёл; (2) обновляет checksum, если файл миграции был отредактирован после применения и `validate` падает.",
+              "correct": true,
+              "sections": {
+                "explanation": "На `MySQL`/`Oracle` упавшая миграция оставляет `success=false`, блокируя `migrate`, — `repair` чистит запись; при правке применённого файла он синхронизирует checksum.",
+                "example": "Сценарий: `flyway repair` убирает запись о неудачной миграции, затем исправляете SQL и запускаете `flyway migrate`; либо после правки комментария обновляете checksum.",
+                "when_to_apply": "Применяют после сбоя на не-транзакционной СУБД или когда осознанно изменили уже применённый файл и нужно согласовать checksum.",
+                "edge_cases": "`repair` не откатывает выполненный SQL: частично применённый DDL на не-транзакционной БД приводят в порядок вручную перед повтором.",
+                "related": "[[flyway-liquibase-interview#Q6]] checksum и `success` в истории; [[flyway-liquibase-interview#Q30]] восстановление после сбоя; [[flyway-liquibase-interview#Q7]] команды `Flyway`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`repair` синхронизирует миграции между несколькими инстансами приложения, рассылая недостающие файлы по сети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`repair` работает только с таблицей истории в одной БД; он не рассылает файлы и не общается между инстансами.",
+                "source_of_confusion": "Слово «repair» наводит на мысль о «починке кластера», отсюда сетевая трактовка.",
+                "if_it_were_true": "Если бы он синхронизировал инстансы, ему был бы нужен сетевой транспорт, а он лишь правит строки в `flyway_schema_history`.",
+                "how_it_should_be": "Согласованность файлов обеспечивает VCS; `repair` чинит локальную историю миграций конкретной БД."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает команда clean в Flyway и почему она опасна?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`clean` удаляет только таблицу `flyway_schema_history`, оставляя все данные и объекты схемы нетронутыми.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`clean` удаляет ВСЕ объекты схемы (таблицы, view, процедуры, функции, триггеры, типы) ВКЛЮЧАЯ `flyway_schema_history`, а не только историю.",
+                "source_of_confusion": "Кажется, что «очистить» — значит сбросить лишь служебную таблицу, отсюда недооценка опасности.",
+                "if_it_were_true": "Если бы удалялась только история, `clean` не приводил бы к полной потере данных на production.",
+                "how_it_should_be": "`clean` сносит всю схему целиком; для сброса одной истории используют `repair`/ручное удаление записей, но не `clean`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`clean` безопасно архивирует все таблицы перед удалением и позволяет восстановить их командой `unclean`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`clean` удаляет объекты безвозвратно; ни архивации, ни команды `unclean` у `Flyway` нет.",
+                "source_of_confusion": "Хочется верить, что разрушительная команда обратима, отсюда выдуманный `unclean`.",
+                "if_it_were_true": "Если бы был `unclean`, `clean` не считался бы опасным и его не запрещали бы по умолчанию.",
+                "how_it_should_be": "Восстановление возможно только из заранее снятого бэкапа; `Flyway` отмены `clean` не предоставляет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`clean` опасна только на `MySQL`, потому что там нет транзакционного DDL; на `PostgreSQL` она полностью обратима в рамках транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`clean` одинаково разрушительна на любой СУБД, включая `PostgreSQL`: транзакционность отдельных операций не возвращает удалённую целиком схему.",
+                "source_of_confusion": "Раз `PostgreSQL` имеет транзакционный DDL, кажется, что и `clean` там «откатываем».",
+                "if_it_were_true": "Если бы на `PostgreSQL` `clean` был обратим, его не запрещали бы по умолчанию с `Flyway 9+`.",
+                "how_it_should_be": "Опасность `clean` от СУБД не зависит; защита — `clean-disabled: true`, ставший дефолтом, а не транзакционность."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`clean` полностью удаляет все объекты схемы (таблицы, представления, процедуры, функции, триггеры, типы), включая саму `flyway_schema_history`. Опасна тем, что на production вызывает полную потерю данных; защищаются через `clean-disabled: true` (дефолт с `Flyway 9+`).",
+              "correct": true,
+              "sections": {
+                "explanation": "После `clean` схема пуста, и `migrate` пересоздаёт всё с нуля — это удобно в dev/CI, но катастрофично в production.",
+                "example": "`flyway clean` затем `flyway migrate` пересоздаёт схему с нуля; в CI это проверяет, что миграции корректно строят базу из пустого состояния.",
+                "when_to_apply": "Полезна в dev/test для быстрого сброса БД и в CI для проверки чистого создания схемы; в production её держат отключённой.",
+                "edge_cases": "Исторически `Flyway` разрешал `clean` на любой БД; с `Flyway 9+` `cleanDisabled=true` стало дефолтом, что резко снизило риск случайного удаления.",
+                "related": "[[flyway-liquibase-interview#Q7]] список команд `Flyway`; [[flyway-liquibase-interview#Q27]] `clean`+`migrate` в CI; [[flyway-liquibase-interview#Q23]] автоконфигурация и `clean-disabled`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Liquibase и чем он отличается от Flyway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Liquibase` — инструмент миграций на основе абстрактного описания изменений (change types): миграции описываются в XML, YAML, JSON или SQL, единица изменения — changeset внутри changelog. В отличие от `Flyway` (SQL-first), он даёт rollback в Community, preconditions, contexts/labels и database diff.",
+              "correct": true,
+              "sections": {
+                "explanation": "Абстракция change types делает миграции database-agnostic: один XML применяется к разным СУБД, тогда как SQL `Flyway` привязан к конкретной СУБД.",
+                "example": "`<createTable tableName=\"users\">` в XML `Liquibase` транслируется в DDL под текущую СУБД; в `Flyway` тот же эффект пишется как сырой `CREATE TABLE`.",
+                "when_to_apply": "Выбирают `Liquibase`, когда нужны мультиплатформенность, встроенный rollback, preconditions и контексты для разных окружений.",
+                "edge_cases": "Цена абстракции — более высокая кривая обучения и DSL; философия `Flyway` — простота и привычный SQL без отдельного языка.",
+                "related": "[[flyway-liquibase-interview#Q14]] changelog и changeset; [[flyway-liquibase-interview#Q17]] rollback в `Liquibase`; [[flyway-liquibase-interview#Q21]] полное сравнение с `Flyway`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Liquibase` — это плагин `Flyway`, который добавляет ему поддержку XML; самостоятельным инструментом он не является.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Liquibase` — независимый инструмент миграций со своим ядром, форматами и таблицами `DATABASECHANGELOG`; он не плагин к `Flyway`.",
+                "source_of_confusion": "Оба решают одну задачу, и из-за этого один ошибочно считают расширением другого.",
+                "if_it_were_true": "Если бы это был плагин, `Liquibase` нельзя было бы использовать без `Flyway`, но он работает полностью автономно.",
+                "how_it_should_be": "Это два конкурирующих инструмента с разной философией; `Liquibase` ничего не «достраивает» к `Flyway`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Liquibase` отличается тем, что поддерживает только формат SQL, а XML и YAML, в отличие от `Flyway`, не умеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Liquibase` как раз поддерживает XML, YAML, JSON и SQL; именно SQL у него — лишь один из форматов, а не единственный.",
+                "source_of_confusion": "Путают направление: SQL-only — это про `Flyway`, а не про `Liquibase`.",
+                "if_it_were_true": "Если бы `Liquibase` понимал только SQL, у него не было бы абстрактных change types вроде `<addColumn>`.",
+                "how_it_should_be": "`Liquibase` мультиформатен (XML/YAML/JSON/SQL); SQL-first и привязка к СУБД — характеристика `Flyway`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Liquibase` и `Flyway` идентичны по возможностям; разница только в названии и компании-разработчике.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возможности существенно различаются: rollback в Community, preconditions, contexts/labels и diff есть у `Liquibase`, но не у `Flyway` Community.",
+                "source_of_confusion": "Оба — Java-инструменты миграций с автоконфигом в `Spring Boot`, отсюда впечатление взаимозаменяемости.",
+                "if_it_were_true": "Если бы они были идентичны, на собеседовании не спрашивали бы про trade-offs и обоснование выбора.",
+                "how_it_should_be": "Различия реальны: SQL-first простота против абстракции и гибкости; выбор зависит от требований проекта."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Changelog и Changeset в Liquibase?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Changelog — это одна строка в таблице `DATABASECHANGELOG`, а changeset — это имя файла миграции на диске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Changelog — это файл (реестр изменений), а changeset — атомарная единица внутри него; строки в `DATABASECHANGELOG` лишь фиксируют выполненные changeset-ы.",
+                "source_of_confusion": "Раз обе сущности «про изменения и историю», их роли путают с записями таблицы.",
+                "if_it_were_true": "Если бы changeset был именем файла, его нельзя было бы идентифицировать тройкой `id`+`author`+`filename`.",
+                "how_it_should_be": "Changelog — файл-реестр, changeset — атомарная единица в нём; таблица истории — это уже след их выполнения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Changelog — основной файл (или набор файлов) с упорядоченным списком изменений БД, своего рода реестр миграций. Changeset — атомарная единица изменения, идентифицируемая комбинацией `id` + `author` + путь к файлу; содержит одно/несколько изменений, опциональные rollback, preconditions и атрибуты `context`/`labels`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Changelog задаёт порядок через `include`/`includeAll`, а changeset — минимальная транзакционная единица применения и идентификации.",
+                "example": "В `db.changelog-master.xml` подключают `<include file=\".../001-create-users.xml\"/>`; внутри лежит `<changeSet id=\"001\" author=\"sergey\">` с `<createTable>` и блоком `<rollback>`.",
+                "when_to_apply": "Эту модель используют, организуя миграции иерархией changelog-файлов и атомарными changeset-ами с явными id/author.",
+                "edge_cases": "Уникальность changeset — это тройка `id`+`author`+`filename`; изменение содержимого уже выполненного changeset поломает проверку MD5, если не задан `runOnChange`.",
+                "related": "[[flyway-liquibase-interview#Q13]] что такое `Liquibase`; [[flyway-liquibase-interview#Q16]] как отслеживаются changeset-ы; [[flyway-liquibase-interview#Q17]] rollback внутри changeset."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Changelog и changeset — это синонимы одного понятия: оба обозначают единый файл со всеми миграциями проекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные уровни: changelog — контейнер-реестр, changeset — атомарная единица внутри него; синонимами они не являются.",
+                "source_of_confusion": "Похожие по звучанию термины из одной экосистемы легко слить в одно понятие.",
+                "if_it_were_true": "Если бы это было одно и то же, не имело бы смысла говорить «несколько changeset-ов в одном changelog».",
+                "how_it_should_be": "Changelog содержит много changeset-ов; это отношение «целое — часть», а не синонимы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Changeset идентифицируется только по `id`, поэтому два changeset-а с одинаковым `id` в разных файлах считаются одним и тем же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Идентификатор changeset — тройка `id`+`author`+`filename`, поэтому одинаковый `id` в разных файлах — это разные changeset-ы.",
+                "source_of_confusion": "Колонка `ID` в `DATABASECHANGELOG` создаёт иллюзию, что `id` уникален сам по себе.",
+                "if_it_were_true": "Если бы хватало `id`, нельзя было бы переиспользовать `id=001` в разных модулях без коллизий, а это допустимо.",
+                "how_it_should_be": "Уникальность даёт комбинация трёх полей; `author` и `filename` обязательны для различения changeset-ов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каких форматах можно описывать миграции в Liquibase?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только в XML; YAML, JSON и SQL `Liquibase` не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Liquibase` поддерживает четыре формата: XML, YAML, JSON и formatted SQL; ограничения одним XML нет.",
+                "source_of_confusion": "XML исторически самый популярный формат, поэтому остальные забывают.",
+                "if_it_were_true": "Если бы поддерживался только XML, не существовало бы директивы `--liquibase formatted sql` для SQL-changelog.",
+                "how_it_should_be": "Доступны XML, YAML, JSON и SQL; выбор формата — вопрос предпочтений команды, а не ограничение инструмента."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только в проприетарном бинарном формате `Liquibase`, который нельзя редактировать вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все форматы `Liquibase` — текстовые и человекочитаемые (XML/YAML/JSON/SQL), их кладут в VCS и правят руками.",
+                "source_of_confusion": "Слово «change types» наводит на мысль о закрытом внутреннем представлении.",
+                "if_it_were_true": "Если бы формат был бинарным, его нельзя было бы ревьюить в pull request и хранить в `Git` как текст.",
+                "how_it_should_be": "Миграции описываются текстом в одном из четырёх форматов; никакого бинарного представления нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Liquibase` поддерживает 4 формата: XML (самый популярный), YAML, JSON и formatted SQL (с директивой `--liquibase formatted sql` и `--changeset author:id`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Структурные форматы (XML/YAML/JSON) дают абстрактные change types и database-agnostic миграции; formatted SQL позволяет писать привычный SQL с разметкой changeset-ов.",
+                "example": "В YAML: `changeSet: { id: 001, author: sergey, changes: [{ addColumn: ... }] }`; то же в SQL: `--changeset sergey:001` + `ALTER TABLE users ADD COLUMN phone VARCHAR(20);`.",
+                "when_to_apply": "XML/YAML/JSON выбирают ради мультиплатформенности и автоматического rollback; formatted SQL — когда команда хочет писать чистый SQL под одну СУБД.",
+                "edge_cases": "В formatted SQL rollback задаётся комментарием `--rollback ...`; абстрактные форматы выводят простые rollback автоматически, а structured-форматы переносимы между СУБД.",
+                "related": "[[flyway-liquibase-interview#Q14]] структура changeset; [[flyway-liquibase-interview#Q13]] абстракция change types; [[flyway-liquibase-interview#Q17]] rollback в разных форматах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только в формате SQL — как и `Flyway`, `Liquibase` не имеет собственного DSL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `Liquibase` есть DSL абстрактных change types в XML/YAML/JSON; SQL — лишь один из поддерживаемых форматов.",
+                "source_of_confusion": "Раз `Flyway` SQL-only, по аналогии это переносят на `Liquibase`.",
+                "if_it_were_true": "Если бы был только SQL, исчезла бы переносимость между СУБД, ради которой `Liquibase` и создавался.",
+                "how_it_should_be": "`Liquibase` мультиформатен и имеет DSL; SQL-only — это про `Flyway`, а не про него."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Liquibase отслеживает выполненные миграции?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Liquibase` хранит историю в той же таблице `flyway_schema_history`, что и `Flyway`, для совместимости инструментов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Liquibase` использует собственные таблицы `DATABASECHANGELOG` и `DATABASECHANGELOGLOCK`, а не `flyway_schema_history` от `Flyway`.",
+                "source_of_confusion": "Оба инструмента ведут историю в БД, поэтому таблицы путают.",
+                "if_it_were_true": "Если бы они делили таблицу, нельзя было бы одновременно использовать оба инструмента на одной БД без конфликтов.",
+                "how_it_should_be": "У каждого инструмента свои служебные таблицы; `Liquibase` пишет в `DATABASECHANGELOG`, `Flyway` — в `flyway_schema_history`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Liquibase` не хранит историю в БД, а полагается на git-историю changelog-файлов для определения применённых changeset-ов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Применённые changeset-ы фиксируются в таблице `DATABASECHANGELOG` внутри самой БД, а не выводятся из истории `Git`.",
+                "source_of_confusion": "Раз миграции версионируются в `Git`, кажется, что и состояние БД берётся оттуда.",
+                "if_it_were_true": "Если бы `Liquibase` опирался на `Git`, он не смог бы понять состояние БД, к которой нет доступа к репозиторию.",
+                "how_it_should_be": "Состояние применения хранится в `DATABASECHANGELOG` в БД; `Git` версионирует файлы, но не отражает, что развёрнуто."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Liquibase` создаёт по одной таблице на каждый changeset, где хранит его статус выполнения и контрольную сумму.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Liquibase` создаёт всего две служебные таблицы: `DATABASECHANGELOG` (история всех changeset-ов) и `DATABASECHANGELOGLOCK` (блокировка); не по таблице на changeset.",
+                "source_of_confusion": "Атомарность changeset наводит на мысль об отдельной таблице под каждый из них.",
+                "if_it_were_true": "Если бы на каждый changeset была таблица, их число росло бы бесконтрольно с каждым релизом.",
+                "how_it_should_be": "Все changeset-ы лежат строками в единой `DATABASECHANGELOG`; блокировку держит отдельная `DATABASECHANGELOGLOCK`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Liquibase` создаёт две таблицы: `DATABASECHANGELOG` (история применённых changeset-ов с `ID`, `AUTHOR`, `FILENAME`, `EXECTYPE`, `MD5SUM`, `TAG` и др.) и `DATABASECHANGELOGLOCK` (блокировка от одновременного запуска с нескольких инстансов).",
+              "correct": true,
+              "sections": {
+                "explanation": "`DATABASECHANGELOG` фиксирует каждый выполненный changeset с MD5-суммой и тегом; `DATABASECHANGELOGLOCK` предотвращает гонку при параллельном старте.",
+                "example": "`EXECTYPE` принимает значения `EXECUTED`, `FAILED`, `SKIPPED`, `RERAN`, `MARK_RAN`; в `DATABASECHANGELOGLOCK` поле `LOCKEDBY` хранит hostname+IP захватившего инстанса.",
+                "when_to_apply": "Эти таблицы читают при отладке миграций, разборе зависшей блокировки и проверке, какие changeset-ы уже применены.",
+                "edge_cases": "Если приложение упало во время миграции, блокировка может остаться: нужен `liquibase releaseLocks` или ручной `UPDATE DATABASECHANGELOGLOCK SET LOCKED=false`.",
+                "related": "[[flyway-liquibase-interview#Q14]] идентификация changeset; [[flyway-liquibase-interview#Q30]] зависшая блокировка и восстановление; [[flyway-liquibase-interview#Q32]] тег и rollback по тегу."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает rollback в Liquibase?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Liquibase` даёт полноценный rollback в Community Edition: для многих change types откат генерируется автоматически (`createTable`→`dropTable`, `addColumn`→`dropColumn`), а для сложных изменений задаётся вручную блоком `<rollback>`. Откатывать можно по количеству, тегу или дате.",
+              "correct": true,
+              "sections": {
+                "explanation": "Авто-rollback покрывает обратимые change types; для произвольного SQL нужен явный `<rollback>`. Это ключевое преимущество перед `Flyway` Community, где отката нет.",
+                "example": "`liquibase rollbackCount 3` откатит 3 changeset-а, `liquibase rollback release-1.0` — до тега, `liquibase rollbackToDate 2026-04-01` — до даты; `rollbackCountSQL 3` лишь покажет SQL для ревью.",
+                "when_to_apply": "Применяют, когда релиз нужно безопасно откатить без forward-only миграции; особенно ценно в enterprise с жёсткими требованиями к откату.",
+                "edge_cases": "Для `<sql>`-изменений автоматический rollback не выводится — его пишут руками; теги ставят `<tagDatabase tag=\"release-1.0\"/>` или CLI `liquibase tag`.",
+                "related": "[[flyway-liquibase-interview#Q14]] блок rollback внутри changeset; [[flyway-liquibase-interview#Q32]] rollback по тегу; [[flyway-liquibase-interview#Q40]] сравнение стратегий отката с `Flyway`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Rollback в `Liquibase` доступен только в платной версии Pro, как и Undo-миграции в `Flyway` Teams.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rollback — это ключевая бесплатная возможность `Liquibase` Community; именно отсутствие отката в `Flyway` Community её выгодно отличает.",
+                "source_of_confusion": "Раз у `Flyway` откат платный, по симметрии его считают платным и у `Liquibase`.",
+                "if_it_were_true": "Если бы rollback был платным, не было бы смысла называть его главным преимуществом `Liquibase` перед `Flyway`.",
+                "how_it_should_be": "Откат в `Liquibase` бесплатен в Community; Pro лишь расширяет авто-rollback и проверки, но базовый rollback доступен всем."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Liquibase` автоматически откатывает любой changeset, включая произвольный `<sql>`, анализируя выполненные команды и инвертируя их.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Авто-rollback работает только для обратимых change types; для произвольного `<sql>` `Liquibase` не знает обратную операцию и требует явный `<rollback>`.",
+                "source_of_confusion": "Успешный авто-rollback простых изменений создаёт впечатление всемогущества.",
+                "if_it_were_true": "Если бы инвертировался любой SQL, блок `<rollback>` был бы не нужен — а для `<sql>` он обязателен.",
+                "how_it_should_be": "Инвертируются только декларативные change types; кастомный SQL откатывают через явно заданный `<rollback>`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Rollback в `Liquibase` всегда откатывает абсолютно все changeset-ы до пустой схемы; откатить только последние N или до тега нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Liquibase` поддерживает гранулярный откат: `rollbackCount N`, `rollback <tag>`, `rollbackToDate`; откат до пустой схемы — не единственный режим.",
+                "source_of_confusion": "Слово «rollback» воспринимается как «полный сброс», отсюда домысел о всё-или-ничего.",
+                "if_it_were_true": "Если бы откат был только полным, команды `rollbackCount` и `rollback <tag>` не существовали бы.",
+                "how_it_should_be": "Откат точечный: до тега, до даты или N последних changeset-ов; полный сброс — лишь крайний случай."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое preconditions в Liquibase?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Preconditions — это аналог `Flyway` placeholders: переменные, подставляемые в значения колонок changeset перед выполнением.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Preconditions — это условия (проверки состояния БД) перед выполнением changeset, а не подстановка переменных; параметризацию делают `<property>`.",
+                "source_of_confusion": "Оба механизма влияют на выполнение changeset, поэтому их функции смешивают.",
+                "if_it_were_true": "Если бы preconditions подставляли значения, у них не было бы атрибута `onFail` с вариантами `HALT`/`MARK_RAN`.",
+                "how_it_should_be": "Preconditions проверяют условия (`tableExists`, `dbms`, `sqlCheck`); подстановка значений — это свойства/properties, а не они."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Preconditions — условия, проверяемые перед выполнением changeset, позволяющие адаптировать миграцию к текущему состоянию БД. Поведение при невыполнении задаёт `onFail`: `HALT` (стоп, дефолт), `CONTINUE`, `MARK_RAN`, `WARN`. Доступны `tableExists`, `columnExists`, `dbms`, `sqlCheck` и др.",
+              "correct": true,
+              "sections": {
+                "explanation": "Preconditions делают changeset условным и идемпотентным: можно пропустить уже выполненное или ограничить миграцию конкретной СУБД.",
+                "example": "`<preConditions onFail=\"MARK_RAN\"><not><tableExists tableName=\"audit_log\"/></not></preConditions>` создаст таблицу только если её ещё нет, иначе пометит как выполненную.",
+                "when_to_apply": "Применяют для идемпотентности (создавать объект, только если его нет), для ограничения по `dbms` и для проверки данных через `sqlCheck`.",
+                "edge_cases": "`MARK_RAN` записывает changeset как выполненный без выполнения; `CONTINUE` пропускает без записи; `<dbms type=\"postgresql\"/>` ограничивает применение конкретной СУБД.",
+                "related": "[[flyway-liquibase-interview#Q14]] preconditions внутри changeset; [[flyway-liquibase-interview#Q34]] идемпотентность через precondition; [[flyway-liquibase-interview#Q19]] contexts/labels как другой фильтр."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Preconditions — это исключительно проверка версии `Liquibase`: changeset выполняется, только если установлена нужная версия инструмента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Preconditions проверяют состояние БД и окружения (таблицы, колонки, СУБД, данные), а не только версию инструмента.",
+                "source_of_confusion": "Среди проверок действительно есть версионные, поэтому их ошибочно считают единственными.",
+                "if_it_were_true": "Если бы проверялась только версия, не было бы `tableExists`, `columnExists` и `sqlCheck`.",
+                "how_it_should_be": "Версия — лишь один из видов проверок; основное назначение — адаптация к состоянию БД через `tableExists`/`dbms`/`sqlCheck`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Preconditions при невыполнении всегда молча пропускают changeset и удаляют его из истории.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поведение настраивается через `onFail`: по умолчанию `HALT` останавливает выполнение, а не пропускает молча; вариантов несколько.",
+                "source_of_confusion": "`CONTINUE` действительно пропускает без записи, и его обобщают на все случаи.",
+                "if_it_were_true": "Если бы поведение всегда было «молча пропустить», атрибут `onFail` с `HALT`/`WARN`/`MARK_RAN` был бы бессмысленным.",
+                "how_it_should_be": "Реакция зависит от `onFail`; дефолт — `HALT` (остановка), и есть `CONTINUE`/`MARK_RAN`/`WARN` для других сценариев."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое contexts и labels в Liquibase?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Contexts и labels — это два названия одного и того же механизма; разницы между ними нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные механизмы: contexts задают логику на changeset (`dev or staging`), а фильтр labels — выражение указывают при запуске (`--labelFilter`).",
+                "source_of_confusion": "Оба фильтруют, какие changeset-ы применятся, поэтому их считают синонимами.",
+                "if_it_were_true": "Если бы они были идентичны, не было бы двух отдельных атрибутов `context` и `labels` и двух флагов запуска.",
+                "how_it_should_be": "Contexts чаще про окружения с логикой на changeset; labels — про фичи/спринты с логикой в фильтре запуска."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Contexts применяются только в `Flyway`, а labels — только в `Liquibase`; в одном инструменте они не сосуществуют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "И contexts, и labels — возможности `Liquibase`; у `Flyway` встроенных contexts/labels нет (там profiles/placeholders).",
+                "source_of_confusion": "Раз механизмов два, кажется, что они «поделены» между двумя инструментами.",
+                "if_it_were_true": "Если бы contexts были у `Flyway`, в таблице сравнения он не имел бы прочерк в строке Contexts/Labels.",
+                "how_it_should_be": "Оба механизма принадлежат `Liquibase` и используются вместе; `Flyway` решает фильтрацию иначе."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Contexts управляют тем, какие changeset-ы выполняются в конкретном окружении (логическое выражение задаётся на changeset, например `context=\"dev or staging\"`, фильтр — флагом `--contexts`). Labels — альтернативный фильтр: задаётся на changeset (`labels=\"feature-123\"`), а логическое выражение указывается при запуске (`--labelFilter`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевое различие — где живёт логика: у contexts выражение на changeset, у labels — в фильтре запуска. Contexts типичны для окружений, labels — для фич/спринтов/релизов.",
+                "example": "`<changeSet context=\"test\">` с тестовыми данными применится только при `--contexts=test`; `<changeSet labels=\"feature-123\">` применится при `--labelFilter=\"feature-123\"`.",
+                "when_to_apply": "Contexts выбирают для разделения dev/staging/prod, labels — чтобы выкатывать changeset-ы конкретной фичи или спринта по фильтру.",
+                "edge_cases": "В `application.yml` контекст задаётся через `spring.liquibase.contexts: production`; логические выражения у contexts пишут на changeset, у labels — в `--labelFilter`.",
+                "related": "[[flyway-liquibase-interview#Q18]] preconditions как другой способ условности; [[flyway-liquibase-interview#Q28]] contexts в multi-tenant; [[flyway-liquibase-interview#Q23]] contexts в `Spring Boot`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Contexts и labels хранят пароли подключения к БД для разных окружений и подставляются вместо `url`/`user`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Contexts/labels фильтруют набор применяемых changeset-ов, а не хранят credentials; подключение задаётся отдельно (`url`, `username`, `password`).",
+                "source_of_confusion": "Раз contexts связаны с «окружениями», их путают с конфигурацией подключения к этим окружениям.",
+                "if_it_were_true": "Если бы они хранили пароли, их нельзя было бы безопасно держать в changelog в `Git`.",
+                "how_it_should_be": "Это механизм выбора changeset-ов по окружению/фиче; настройки подключения к БД к ним отношения не имеют."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает команда diff в Liquibase?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`diff` применяет changelog к БД и фиксирует выполненные changeset-ы в `DATABASECHANGELOG`, как `update`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`diff` ничего не применяет: он сравнивает две БД (или БД со снимком) и выводит отчёт о различиях; применение — это `update`.",
+                "source_of_confusion": "Обе команды работают со схемой, поэтому `diff` ошибочно считают применяющей.",
+                "if_it_were_true": "Если бы `diff` применял изменения, он бы менял `DATABASECHANGELOG`, но он только читает структуру для сравнения.",
+                "how_it_should_be": "Применение — это `update`; `diff` лишь сравнивает структуры и не модифицирует целевую БД."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`diff` создаёт резервную копию reference-БД и восстанавливает её в target-БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`diff` сравнивает структуры двух БД и выдаёт отчёт; копирования данных и восстановления он не выполняет.",
+                "source_of_confusion": "Слово «reference/target» наводит на мысль о копировании из одной в другую.",
+                "if_it_were_true": "Если бы `diff` копировал данные, он переносил бы строки таблиц, а он работает только со структурой.",
+                "how_it_should_be": "Перенос данных — это дамп/restore; `diff` лишь показывает структурные различия между БД."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`diff` сравнивает только данные (строки таблиц) двух БД и не замечает различий в структуре (таблицы, колонки, индексы).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`diff` сравнивает именно структуру: таблицы, колонки, индексы, FK, view, процедуры, типы, constraints и default-значения, а не строки данных.",
+                "source_of_confusion": "Слово «различия» обобщают до строк данных, упуская структурный фокус.",
+                "if_it_were_true": "Если бы `diff` сравнивал данные, он был бы непрактичен на больших таблицах с миллионами строк.",
+                "how_it_should_be": "`diff` — про схему/структуру; сравнение строк данных в его задачи не входит."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`diff` сравнивает две базы данных (или БД с офлайн-снимком) и генерирует отчёт о структурных различиях (отсутствующие/лишние таблицы, колонки, индексы, FK, view, процедуры; различия типов, constraints, default-значений). Вариант `diffChangeLog` генерирует changelog для приведения target к reference.",
+              "correct": true,
+              "sections": {
+                "explanation": "`diff` полезен для обнаружения «дрифта» — ручных изменений на production, разошедшихся с changelog; `diffChangeLog` помогает зафиксировать различия в виде changeset-ов.",
+                "example": "`liquibase diff --referenceUrl=jdbc:postgresql://localhost/reference_db --url=jdbc:postgresql://localhost/target_db` покажет, чего не хватает в target относительно reference.",
+                "when_to_apply": "Применяют для аудита дрейфа схемы и сверки окружений; `diffChangeLog --changeLogFile=diff-changelog.xml` генерирует выравнивающий changelog.",
+                "edge_cases": "`diff` не рекомендуют для генерации production-миграций: автогенерируемые changeset-ы часто требуют ручной доработки порядка, данных и rollback.",
+                "related": "[[flyway-liquibase-interview#Q13]] почему diff есть у `Liquibase`, а не у `Flyway`; [[flyway-liquibase-interview#Q16]] таблицы истории; [[flyway-liquibase-interview#Q21]] сравнение возможностей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Flyway vs Liquibase: ключевые различия",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Flyway` — SQL+Java, философия «пиши SQL, который знаешь», без бесплатного rollback, без preconditions и diff, привязка к СУБД, очень низкий порог входа, checksum по CRC32. `Liquibase` — XML/YAML/JSON/SQL, абстракция, rollback (auto+manual) бесплатно, preconditions, contexts/labels, diff, database-agnostic, checksum по MD5.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная ось различий: SQL-first простота `Flyway` против абстракции и переносимости `Liquibase`. Оба имеют автоконфиг в `Spring Boot` и применяют миграции по порядку.",
+                "example": "Сильный ответ на интервью: «выбрали `Flyway`, потому что команда пишет database-specific SQL, rollback не нужен (используем expand-contract), а низкий порог входа важен для онбординга».",
+                "when_to_apply": "Это сравнение приводят, обосновывая выбор инструмента под проект: одна СУБД и простота → `Flyway`; мультиплатформенность, rollback, аудит → `Liquibase`.",
+                "edge_cases": "Лицензии разные: `Flyway` Community — Apache 2.0, `Liquibase` Community — FSL; порядок у `Flyway` по версии файла, у `Liquibase` — по `include` в changelog.",
+                "related": "[[flyway-liquibase-interview#Q13]] что такое `Liquibase`; [[flyway-liquibase-interview#Q22]] когда что выбирать; [[flyway-liquibase-interview#Q17]] rollback как преимущество `Liquibase`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оба инструмента используют MD5 для контрольных сумм и одинаково привязаны к конкретной СУБД через сырой SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flyway` использует CRC32 по содержимому файла, `Liquibase` — MD5 по changeset; и `Liquibase` через XML change types database-agnostic, а не привязан к СУБД.",
+                "source_of_confusion": "Обе системы считают контрольные суммы, поэтому алгоритмы и переносимость обобщают как одинаковые.",
+                "if_it_were_true": "Если бы оба были привязаны к СУБД, у `Liquibase` не было бы абстрактных change types и мультиплатформенности.",
+                "how_it_should_be": "Алгоритмы checksum разные (CRC32 vs MD5), и `Liquibase` переносим между СУБД, в отличие от SQL-first `Flyway`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Flyway` даёт бесплатный auto+manual rollback, а `Liquibase` отката не имеет вовсе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: бесплатный rollback (auto+manual) — у `Liquibase`; в `Flyway` Community отката нет, а Undo — платная Teams.",
+                "source_of_confusion": "Путают направление преимущества из-за симметрии «у одного есть, у другого нет».",
+                "if_it_were_true": "Если бы у `Flyway` Community был rollback, не существовало бы forward-only стратегии отката как нормы для него.",
+                "how_it_should_be": "Откат бесплатно — это про `Liquibase`; `Flyway` Community откатывают forward-only миграцией."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Liquibase` поддерживает только один формат миграций, тогда как `Flyway` — четыре (XML, YAML, JSON, SQL).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Мультиформатность (XML/YAML/JSON/SQL) — у `Liquibase`; `Flyway` использует SQL (+Java), а не четыре структурных формата.",
+                "source_of_confusion": "Перепутаны стороны: четыре формата — характеристика `Liquibase`, а не `Flyway`.",
+                "if_it_were_true": "Если бы `Flyway` понимал XML/YAML, у него были бы абстрактные change types, которых у него нет.",
+                "how_it_should_be": "Четыре формата — у `Liquibase`; `Flyway` остаётся SQL-first с возможностью Java-миграций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбрать Flyway, а когда Liquibase?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Выбор всегда диктуется размером компании: стартапы обязаны использовать `Liquibase`, а крупные корпорации — `Flyway`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбор определяется техническими требованиями (мультиплатформенность, rollback, простота), а не размером компании; жёсткой привязки нет.",
+                "source_of_confusion": "Кажется, что enterprise = сложный инструмент, а стартап = что-то другое, отсюда выдуманное правило.",
+                "if_it_were_true": "Если бы правило было таким, `Flyway` не доминировал бы в массе небольших `Spring Boot`-проектов.",
+                "how_it_should_be": "Решает контекст проекта: одна СУБД и простота → `Flyway`; мультиплатформенность, rollback и аудит → `Liquibase`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Flyway` выбирают при database-specific SQL и одной СУБД, важности простоты, forward-only откате и небольшом-среднем проекте. `Liquibase` — при поддержке нескольких СУБД одними миграциями, нужде во встроенном rollback, preconditions, сложной среде с множеством окружений (contexts+labels), enterprise-аудите и потребности в database diff.",
+              "correct": true,
+              "sections": {
+                "explanation": "Критерий выбора — требования: SQL-first простота и одна СУБД склоняют к `Flyway`; переносимость, бесплатный откат и условность — к `Liquibase`.",
+                "example": "Команда на `Spring Boot` + `PostgreSQL` с expand-contract обычно берёт `Flyway`; мультиплатформенный enterprise с откатом по тегу — `Liquibase`.",
+                "when_to_apply": "Эти критерии применяют при старте проекта, выбирая инструмент миграций под стек, СУБД и требования к откату/аудиту.",
+                "edge_cases": "На практике в Java-экосистеме `Flyway` встречается чаще из-за простоты; `Liquibase` берут под мультиплатформенные enterprise-требования.",
+                "related": "[[flyway-liquibase-interview#Q21]] детальное сравнение возможностей; [[flyway-liquibase-interview#Q25]] expand-contract как причина не нуждаться в rollback; [[flyway-liquibase-interview#Q17]] rollback `Liquibase`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Liquibase` выбирают только когда нужен максимально низкий порог входа и минимум обучения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Минимальный порог входа — это аргумент за `Flyway`; у `Liquibase` кривая обучения средняя из-за DSL и change types.",
+                "source_of_confusion": "Богатый функционал `Liquibase` ошибочно ассоциируют с «простотой освоения».",
+                "if_it_were_true": "Если бы `Liquibase` был самым простым, на собеседовании не отмечали бы его среднюю кривую обучения.",
+                "how_it_should_be": "За простоту и онбординг отвечает `Flyway`; `Liquibase` берут ради переносимости, rollback и preconditions, а не ради низкого порога."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Flyway` выбирают исключительно когда нужен database diff и обнаружение дрейфа схемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Database diff — возможность `Liquibase`, а не `Flyway`; у `Flyway` встроенного diff нет.",
+                "source_of_confusion": "Полезная фича diff ошибочно приписывается более популярному `Flyway`.",
+                "if_it_were_true": "Если бы у `Flyway` был diff, он не значился бы прочерком в строке Database diff таблицы сравнения.",
+                "how_it_should_be": "Diff и обнаружение дрейфа — аргумент за `Liquibase`; `Flyway` выбирают за SQL-first простоту."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Spring Boot автоконфигурирует Flyway и Liquibase?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Boot` запускает миграции только если явно вызвать `flyway.migrate()` из кода; автоматического запуска при старте нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При наличии зависимости в classpath `Spring Boot` автоконфигурирует и запускает миграции автоматически на старте, без ручного вызова.",
+                "source_of_confusion": "Возможность кастомного `FlywayMigrationStrategy` создаёт впечатление, что без него ничего не запускается.",
+                "if_it_were_true": "Если бы автозапуска не было, добавление `flyway-core` в зависимости не приводило бы к применению миграций при старте.",
+                "how_it_should_be": "Миграции применяются автоматически при наличии стартера; кастомная стратегия лишь переопределяет поведение, но не включает его."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Boot` запускает миграции `Flyway`/`Liquibase` ПОСЛЕ инициализации `Hibernate`/JPA, поэтому `ddl-auto=update` безопасно сочетается с миграциями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Миграции запускаются ДО инициализации `Hibernate`/JPA; а `ddl-auto` должен быть `none`/`validate`, иначе `update`/`create` конфликтует с миграциями.",
+                "source_of_confusion": "Раз и то и другое создаёт схему, кажется неважным, что выполнится раньше.",
+                "if_it_were_true": "Если бы миграции шли после Hibernate, `ddl-auto=update` уже изменил бы схему до их применения, ломая контроль версий.",
+                "how_it_should_be": "Порядок обратный: сначала миграции, потом JPA; `ddl-auto` держат в `none`/`validate`, чтобы не конфликтовать с инструментом миграций."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Boot` автоконфигурирует миграции при наличии зависимости в classpath: `Flyway` ищет скрипты в `classpath:db/migration`, `Liquibase` — changelog по `spring.liquibase.change-log`, используется основной `DataSource`, и миграции запускаются ДО инициализации `Hibernate`/JPA.",
+              "correct": true,
+              "sections": {
+                "explanation": "Добавление `flyway-core` (или `liquibase-core`) включает соответствующую автоконфигурацию; `FlywayAutoConfiguration`/`LiquibaseAutoConfiguration` запускают миграции на старте до создания JPA.",
+                "example": "В `application.yml`: `spring.flyway.locations: classpath:db/migration`, `clean-disabled: true`; для `Liquibase` — `change-log: classpath:db/changelog/db.changelog-master.xml`.",
+                "when_to_apply": "Применяют по умолчанию в `Spring Boot`-проектах; кастомизацию делают через `FlywayMigrationStrategy` или `SpringLiquibase`-бин.",
+                "edge_cases": "`spring.jpa.hibernate.ddl-auto` держат в `none`/`validate`: `update`/`create` конфликтует с миграциями; при двух инструментах в classpath приоритет требует ручного разруливания.",
+                "related": "[[flyway-liquibase-interview#Q24]] несколько `DataSource`; [[flyway-liquibase-interview#Q12]] `clean-disabled` в конфиге; [[flyway-liquibase-interview#Q10]] `baseline-on-migrate`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Boot` поддерживает автоконфигурацию только для `Flyway`; `Liquibase` нужно настраивать полностью вручную через `SpringLiquibase`-бин.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Boot` автоконфигурирует и `Flyway`, и `Liquibase` из коробки при наличии соответствующей зависимости; ручная настройка `Liquibase` не обязательна.",
+                "source_of_confusion": "`Flyway` популярнее, отсюда ошибочный вывод об отсутствии автоконфига для `Liquibase`.",
+                "if_it_were_true": "Если бы `Liquibase` не автоконфигурировался, `spring.liquibase.change-log` в `application.yml` не работал бы, а он работает.",
+                "how_it_should_be": "Оба инструмента автоконфигурируются; ручной `SpringLiquibase`-бин нужен лишь для нестандартных сценариев вроде нескольких `DataSource`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить миграции для нескольких DataSource?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Автоконфигурация `Spring Boot` сама поднимает отдельный `Flyway` для каждого `DataSource` без какого-либо кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При нескольких `DataSource` автоконфигурация не справляется: нужно вручную создать по бину `Flyway`/`SpringLiquibase` на каждый источник.",
+                "source_of_confusion": "Раз для одного `DataSource` всё работает само, ждут того же и для нескольких.",
+                "if_it_were_true": "Если бы автоконфиг справлялся, не требовались бы ручные бины `primaryFlyway`/`secondaryFlyway` и инициализаторы.",
+                "how_it_should_be": "Для нескольких `DataSource` конфигурацию пишут руками: отдельный `Flyway.configure()` с нужным `dataSource` и `locations` на каждый."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для нескольких баз нужно объединить все миграции в один `location`, и `Flyway` сам разнесёт их по нужным `DataSource` по содержимому SQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждому `DataSource` задают свой набор миграций через отдельные `locations` (`db/migration/primary`, `db/migration/secondary`); `Flyway` не разбирает SQL, чтобы выбрать целевую БД.",
+                "source_of_confusion": "Глобальная сортировка миграций в одном `location` наводит на мысль об автоматическом распределении.",
+                "if_it_were_true": "Если бы `Flyway` разносил SQL по базам по содержимому, не нужны были бы отдельные бины на каждый `DataSource`.",
+                "how_it_should_be": "Разделение делают явно — отдельные `locations` и отдельные бины `Flyway` на каждый `DataSource`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Несколько `DataSource` с миграциями невозможны: `Flyway` и `Liquibase` принципиально работают только с одной базой данных на приложение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба инструмента поддерживают несколько баз через ручную конфигурацию нескольких бинов; ограничения «одна БД на приложение» нет.",
+                "source_of_confusion": "Автоконфиг рассчитан на один `DataSource`, отсюда ошибочный вывод о принципиальной невозможности.",
+                "if_it_were_true": "Если бы это было невозможно, не существовало бы паттерна с `primaryFlyway`/`secondaryFlyway` и `FlywayMigrationInitializer`.",
+                "how_it_should_be": "Multi-datasource поддержан явной настройкой нескольких бинов миграций на разные `DataSource`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При нескольких базах автоконфигурация `Spring Boot` не справляется — нужна ручная настройка: по бину `Flyway` на каждый `DataSource` (с `@Qualifier`, своими `locations` и `FlywayMigrationInitializer`) или несколько `SpringLiquibase`-бинов с разными changelog.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждому источнику данных задают свой `Flyway.configure().dataSource(ds).locations(...)` и инициализатор; структуру миграций раскладывают по подпапкам на каждую БД.",
+                "example": "Бины `primaryFlyway(@Qualifier(\"primaryDataSource\"))` и `secondaryFlyway(...)` указывают на `db/migration/primary` и `db/migration/secondary`; для `Liquibase` — `SpringLiquibase` с `setChangeLog(\"classpath:db/changelog/primary/master.xml\")`.",
+                "when_to_apply": "Применяют в приложениях с несколькими БД (например, основная и аналитическая), где одной автоконфигурации недостаточно.",
+                "edge_cases": "Важно не перепутать `locations`/changelog между источниками и при необходимости задать разные имена таблиц истории во избежание коллизий.",
+                "related": "[[flyway-liquibase-interview#Q23]] автоконфигурация для одного `DataSource`; [[flyway-liquibase-interview#Q28]] миграции в multi-tenant; [[flyway-liquibase-interview#Q29]] multi-module миграции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое expand-contract pattern для zero-downtime миграций?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Expand-contract — паттерн безопасного изменения схемы без остановки приложения: каждое деструктивное изменение разбивается на несколько обратно-совместимых шагов (расширение → перенос данных → деплой кода → сжатие).",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместо одного разрушительного `ALTER` делают цепочку backward-compatible шагов, чтобы и старый, и новый код работали в любой момент времени.",
+                "example": "Переименование `name`→`full_name` в 4 шага: `ADD full_name` (expand) → `UPDATE full_name = name` (migrate) → деплой кода, пишущего в оба поля → `DROP name` (contract) через несколько дней.",
+                "when_to_apply": "Применяют при rolling deployment, когда нельзя останавливать сервис: переименование/удаление колонок, смена типа, добавление NOT NULL на существующую колонку.",
+                "edge_cases": "Нельзя делать `RENAME COLUMN` одной миграцией с деплоем кода; новые колонки добавляют как NULLABLE/с DEFAULT, а contract-шаг откладывают до выкатки нового кода.",
+                "related": "[[flyway-liquibase-interview#Q26]] правила backward-compatible миграций; [[flyway-liquibase-interview#Q39]] детальная реализация expand-contract; [[flyway-liquibase-interview#Q22]] expand-contract вместо rollback в `Flyway`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Expand-contract — это сжатие (compression) данных в таблице перед миграцией для ускорения `ALTER TABLE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это паттерн поэтапного backward-compatible изменения схемы, а не сжатие данных; слова «expand/contract» здесь про шаги, а не про объём.",
+                "source_of_confusion": "Термин «contract» буквально переводится как «сжатие», отсюда ассоциация с компрессией.",
+                "if_it_were_true": "Если бы речь шла о сжатии данных, паттерн не упоминался бы в контексте zero-downtime деплоя кода.",
+                "how_it_should_be": "Expand — добавить новое, contract — убрать старое после переключения кода; к компрессии данных это отношения не имеет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Expand-contract означает временное расширение пула соединений к БД на время миграции и его сжатие после.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Паттерн про поэтапное изменение схемы (add new → migrate → drop old), а не про размер connection pool во время миграции.",
+                "source_of_confusion": "Слово «expand» в контексте инфраструктуры наводит на мысль о масштабировании ресурсов.",
+                "if_it_were_true": "Если бы речь шла о пуле соединений, паттерн не требовал бы add/drop колонок и разнесения деплоя кода во времени.",
+                "how_it_should_be": "Expand-contract управляет схемой и совместимостью кода; пул соединений — отдельная настройка, к нему не относящаяся."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Expand-contract — это стратегия, при которой все деструктивные изменения (`DROP COLUMN`, `RENAME`) выполняются разом в одной миграции вместе с деплоем нового кода для скорости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это прямо противоположно паттерну: деструктивные изменения разносят на отдельные шаги и НЕ совмещают с деплоем кода, иначе будет downtime.",
+                "source_of_confusion": "Хочется сделать всё за один деплой, и это выдают за «оптимизацию».",
+                "if_it_were_true": "Если бы всё делалось разом, работающее приложение ломалось бы на `RENAME COLUMN` — ровно то, что паттерн предотвращает.",
+                "how_it_should_be": "Деструктивный шаг (contract) отделяют во времени от expand и от деплоя кода; единый разрушительный `ALTER` — антипаттерн."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие правила backward-compatible миграций надо соблюдать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Любая операция backward-compatible, если обернуть её в транзакцию; транзакция гарантирует, что старый код продолжит работать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Транзакция обеспечивает атомарность, но не совместимость: `DROP COLUMN` в транзакции всё равно сломает старый код после коммита.",
+                "source_of_confusion": "Атомарность и совместимость оба про «безопасность», поэтому их смешивают.",
+                "if_it_were_true": "Если бы транзакция давала совместимость, `RENAME COLUMN` в транзакции не требовал бы expand-contract.",
+                "how_it_should_be": "Совместимость определяется характером операции (add nullable vs drop), а не оборачиванием в транзакцию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Безопасны (всегда backward-compatible): `ADD COLUMN ... NULL`, `ADD COLUMN ... DEFAULT`, `CREATE TABLE`, `CREATE INDEX CONCURRENTLY`, `ADD CONSTRAINT ... NOT VALID`. Опасны (требуют expand-contract): `DROP COLUMN`, `RENAME COLUMN`, `ALTER COLUMN ... NOT NULL`, `ALTER COLUMN TYPE`, `DROP TABLE`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Безопасные операции невидимы старому коду или не блокируют его; опасные ломают старый код (несуществующая колонка, NULL-вставки, несовместимый тип) и требуют поэтапности.",
+                "example": "`ADD COLUMN phone NULL` старый код просто не замечает; `DROP COLUMN` уронит его на `SELECT *`/маппинге — поэтому drop делают только после выкатки нового кода.",
+                "when_to_apply": "Эти правила применяют при ревью каждой production-миграции, проверяя её по чек-листу: идемпотентна? совместима? без блокирующего DDL? есть план отката?",
+                "edge_cases": "`ADD CONSTRAINT ... NOT VALID` проверяет только новые строки (валидацию старых делают отдельным `VALIDATE CONSTRAINT`); `CREATE INDEX CONCURRENTLY` не блокирует таблицу в `PostgreSQL`.",
+                "related": "[[flyway-liquibase-interview#Q25]] expand-contract для опасных операций; [[flyway-liquibase-interview#Q42]] безопасные изменения больших таблиц; [[flyway-liquibase-interview#Q34]] идемпотентность миграций."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`RENAME COLUMN` безопасен, потому что данные в колонке сохраняются — теряется только её имя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RENAME COLUMN` опасен: старый код ссылается на прежнее имя и упадёт, хотя данные физически сохранены.",
+                "source_of_confusion": "Раз данные не теряются, переименование кажется безобидным.",
+                "if_it_were_true": "Если бы `RENAME` был безопасен, его не относили бы к операциям, требующим expand-contract.",
+                "how_it_should_be": "Совместимость ломается из-за смены имени, а не потери данных; поэтому переименование делают поэтапно через новую колонку."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`DROP TABLE` backward-compatible, если предварительно создать пустую таблицу-заглушку с тем же именем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DROP TABLE` относится к опасным операциям (полная потеря данных); пустая заглушка не вернёт данные и не спасёт старый код, ожидающий реальные строки.",
+                "source_of_confusion": "Сохранение имени таблицы создаёт иллюзию совместимости.",
+                "if_it_were_true": "Если бы заглушка решала проблему, `DROP TABLE` не значился бы в списке опасных операций.",
+                "how_it_should_be": "Удаление таблицы делают только после того, как ни один код её не использует; заглушка проблему совместимости не решает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать миграции?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно прогнать миграции на встроенной in-memory `H2`: если они применились на `H2`, на `PostgreSQL` они тоже точно сработают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`H2` не воспроизводит специфику целевой СУБД (типы, `CONCURRENTLY`, диалекты), поэтому golden standard — реальная БД через `Testcontainers`, а не `H2`.",
+                "source_of_confusion": "`H2` быстра и не требует Docker, отсюда соблазн считать её достаточной.",
+                "if_it_were_true": "Если бы `H2` гарантировала корректность, не подчёркивали бы ценность реального `PostgreSQL` в контейнере.",
+                "how_it_should_be": "Тестируют на реальной СУБД в `Testcontainers`; `H2` может пропустить диалект-специфичные ошибки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Миграции вообще не нужно тестировать — инструмент сам гарантирует их корректность через checksum.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Checksum лишь ловит изменение файла после применения; он не проверяет, что SQL корректен и создаёт ожидаемую схему — для этого нужны тесты.",
+                "source_of_confusion": "Раз инструмент «следит» за миграциями, кажется, что тесты избыточны.",
+                "if_it_were_true": "Если бы checksum гарантировал корректность, ошибочный `ALTER` с опечаткой проходил бы валидацию, но он упадёт на применении.",
+                "how_it_should_be": "Тестируют миграции через `Testcontainers`, `validate` в CI и проверки обратной совместимости; checksum их не заменяет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Тестируют несколькими способами: `Testcontainers` (golden standard) — поднять реальную БД в Docker и прогнать все миграции; `flyway validate`/`liquibase validate`+`updateSQL` в CI; тест на обратную совместимость (старый код против новой схемы); полный цикл `clean`→`migrate`→тесты для проверки создания схемы с нуля.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реальная СУБД в контейнере ловит диалект-специфичные ошибки; `validate` проверяет консистентность; обратная совместимость подтверждает, что старый код переживёт миграцию.",
+                "example": "`@Testcontainers` с `PostgreSQLContainer<>(\"postgres:16\")` поднимает базу, `Spring Boot` применяет миграции, а `JdbcTemplate` проверяет, что таблица `users` создана.",
+                "when_to_apply": "Применяют в CI на каждый PR: полный цикл `clean`→`migrate`→тесты гарантирует, что миграции собирают схему из пустого состояния.",
+                "edge_cases": "Дополнительно гоняют `migrate` поверх дампа production-схемы, чтобы поймать проблемы обратной совместимости на реальной структуре данных.",
+                "related": "[[flyway-liquibase-interview#Q41]] подробнее про `Testcontainers`; [[flyway-liquibase-interview#Q12]] `clean`+`migrate` в CI; [[flyway-liquibase-interview#Q26]] правила обратной совместимости."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно один раз вручную применить миграции на production и убедиться, что приложение запустилось.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ручная проверка на production рискованна и не повторяема; миграции тестируют автоматически в CI на реальной БД через `Testcontainers` до выкатки.",
+                "source_of_confusion": "Раз цель — работающий production, проверку «вживую» считают достаточной.",
+                "if_it_were_true": "Если бы хватало ручного применения, не существовало бы практики `clean`→`migrate`→тесты в CI.",
+                "how_it_should_be": "Проверку автоматизируют (`Testcontainers`, `validate`, тесты совместимости); production — последний этап, а не способ тестирования."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать миграции в multi-tenant приложении?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В multi-tenant достаточно одной общей миграции на одну общую схему; разделение по тенантам инструменту миграций не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При schema-per-tenant/database-per-tenant миграцию прогоняют по каждой схеме/БД тенанта отдельно; одной общей миграции недостаточно.",
+                "source_of_confusion": "Shared-schema-подход создаёт иллюзию, что во всех случаях хватает одной схемы.",
+                "if_it_were_true": "Если бы хватало одной схемы, не существовало бы паттернов `flyway.schemas(tenantSchema)` в цикле по тенантам.",
+                "how_it_should_be": "Для изолированных тенантов миграции применяют по каждому schema/DataSource; общая схема — лишь один из вариантов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Миграцию каждого тенанта обязательно запускать в одной общей транзакции, чтобы при сбое одного откатились все остальные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: при частичном сбое нужно изолировать тенантов и иметь retry/мониторинг, а не валить всех из-за одного; общая транзакция на тысячи схем непрактична.",
+                "source_of_confusion": "Атомарность звучит «безопасно», отсюда идея единой транзакции на всех.",
+                "if_it_were_true": "Если бы все мигрировали в одной транзакции, сбой одного тенанта блокировал бы обновление всех остальных.",
+                "how_it_should_be": "Тенантов мигрируют независимо с обработкой частичного сбоя; единая транзакция на всех — антипаттерн по скорости и устойчивости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Multi-tenant миграции работают только в `Liquibase`; `Flyway` несколько схем/тенантов не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flyway` отлично поддерживает schema-per-tenant через `Flyway.configure().schemas(tenantSchema)` в цикле и database-per-tenant через разные `DataSource`.",
+                "source_of_confusion": "Contexts `Liquibase` для общей схемы наводят на мысль, что только он умеет multi-tenant.",
+                "if_it_were_true": "Если бы `Flyway` не умел multi-tenant, не было бы паттерна `TenantMigrationRunner` с циклом по схемам.",
+                "how_it_should_be": "Оба инструмента подходят: `Flyway` — через `schemas`/несколько `DataSource`, `Liquibase` — дополнительно через contexts."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подходы: schema-per-tenant (в цикле по схемам `Flyway.configure().schemas(tenantSchema).migrate()`), database-per-tenant (отдельный `DataSource` на тенанта) и `Liquibase` contexts для данных конкретного тенанта в общей схеме. Ключевые проблемы — скорость (тысячи схем), частичный сбой, разные версии у тенантов и тестирование на пустой и «живой» базе.",
+              "correct": true,
+              "sections": {
+                "explanation": "Изоляция тенантов по схеме/БД даёт независимость, но требует прогонять миграции на каждом; contexts помогают разнести общие и тенант-специфичные данные.",
+                "example": "`TenantMigrationRunner` на `ApplicationReadyEvent` идёт по `tenantRegistry.getAllSchemas()` и для каждой делает `Flyway.configure().schemas(schema).migrate()`.",
+                "when_to_apply": "Применяют в SaaS с изоляцией данных арендаторов; выбор между schema-per-tenant и database-per-tenant зависит от требований к изоляции и масштабу.",
+                "edge_cases": "Миграция 1000 схем может идти часами — нужен параллелизм; частичный сбой требует retry и мониторинга, а разные версии у тенантов усложняют код приложения.",
+                "related": "[[flyway-liquibase-interview#Q24]] несколько `DataSource`; [[flyway-liquibase-interview#Q19]] contexts в `Liquibase`; [[flyway-liquibase-interview#Q29]] multi-module миграции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Flyway и Liquibase работают в multi-module приложениях?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Flyway` указывает несколько `locations` (по модулю на каждую папку), сортирует все найденные файлы по версии и применяет глобально — поэтому важно избегать конфликтов версий между модулями (диапазоны или timestamp). `Liquibase` строит иерархию changelog-файлов: master подключает per-module master через `include`, и порядок определяется порядком `include`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `Flyway` версия глобальна для всех locations, поэтому модули делят диапазоны (`core` V1–V99, `billing` V100–V199); в `Liquibase` порядок явный — по `include`, а не по сортировке имён.",
+                "example": "`spring.flyway.locations` со списком `db/migration/core`, `db/migration/billing`; в `Liquibase` master.xml делает `<include file=\".../core/master.xml\"/>` затем `.../billing/master.xml`.",
+                "when_to_apply": "Применяют в крупных проектах с модулями `core`/`billing`/`notifications`, где каждый владеет своими миграциями, но БД одна.",
+                "edge_cases": "Конфликт версий между модулями в `Flyway` ломает порядок — спасают диапазоны или timestamp-версии; в `Liquibase` уникальность даёт тройка `id`+`author`+`filename`.",
+                "related": "[[flyway-liquibase-interview#Q5]] именование и версии файлов; [[flyway-liquibase-interview#Q14]] идентификация changeset; [[flyway-liquibase-interview#Q24]] несколько `DataSource`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В multi-module каждый модуль обязан иметь собственную отдельную БД; в одну базу миграции разных модулей применять нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модули обычно делят одну БД, применяя миграции глобально (несколько `locations` или иерархия changelog); отдельная БД на модуль не требуется.",
+                "source_of_confusion": "Изоляция модулей в коде наводит на мысль об обязательной изоляции БД.",
+                "if_it_were_true": "Если бы требовалась БД на модуль, не было бы рекомендаций про диапазоны версий внутри одной базы.",
+                "how_it_should_be": "Несколько модулей мигрируют одну общую БД; отдельные БД — это уже multi-datasource, отдельный сценарий."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Flyway` в multi-module применяет миграции каждого модуля в случайном порядке, поэтому конфликты версий не имеют значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Flyway` сортирует все файлы из всех `locations` строго по версии (не случайно), поэтому конфликты версий между модулями критичны.",
+                "source_of_confusion": "Раз locations несколько, кажется, что порядок между ними не определён.",
+                "if_it_were_true": "Если бы порядок был случайным, `V2`, зависящая от `V1`, могла бы выполниться первой и сломать миграцию.",
+                "how_it_should_be": "Порядок детерминирован по версии; именно поэтому модулям выделяют непересекающиеся диапазоны или timestamp-версии."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Liquibase` порядок применения в multi-module определяется алфавитной сортировкой имён changelog-файлов, а не порядком `include`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Liquibase` порядок задаёт именно последовательность `include` в master-changelog, а не алфавит имён файлов — это даёт явный контроль.",
+                "source_of_confusion": "По аналогии с `Flyway` (сортировка по версии) ждут сортировки и у `Liquibase`.",
+                "if_it_were_true": "Если бы порядок был алфавитным, переименование файла меняло бы порядок миграций — но он фиксирован `include`.",
+                "how_it_should_be": "Порядок в `Liquibase` явный (по `include`); алфавитная сортировка имён — это ближе к модели `Flyway`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать failed migrations и восстанавливаться после сбоя?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "После любой упавшей миграции единственный способ восстановления — полностью пересоздать БД через `flyway clean` и `migrate` заново.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Восстановление зависит от СУБД: на транзакционных (`PostgreSQL`) достаточно исправить SQL и повторить; на не-транзакционных — `repair` + ручная правка, без `clean`.",
+                "source_of_confusion": "`clean`+`migrate` действительно «всё чинит» в dev, отсюда обобщение на production.",
+                "if_it_were_true": "Если бы `clean` был единственным путём, любой сбой миграции означал бы потерю production-данных.",
+                "how_it_should_be": "Сначала разбираются с историей (`repair`/`releaseLocks`) и SQL; `clean` на production недопустим."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поведение зависит от СУБД: на транзакционном DDL (`PostgreSQL`, `SQL Server`) ошибка откатывает всю транзакцию — запись `success=false` не остаётся, можно исправить SQL и повторить `migrate`. На не-транзакционном (`MySQL`, `Oracle`) часть SQL применяется, остаётся `success=false`, и нужно: вручную откатить применённое → `flyway repair` → исправить файл → `migrate`. В `Liquibase` при зависшей блокировке — `releaseLocks`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Транзакционный DDL делает восстановление простым (откат целиком); без него возможно частичное применение, требующее ручной чистки и `repair`.",
+                "example": "На `MySQL` упавшая миграция оставляет `success=false` и `migrate` выдаёт `Found resolved migration not applied to database` — снимают это `flyway repair` после ручного отката DDL.",
+                "when_to_apply": "Применяют при инцидентах с миграциями: сначала смотрят тип DDL целевой СУБД, затем выбирают сценарий восстановления.",
+                "edge_cases": "В `Liquibase` упавшее приложение может оставить блокировку — её снимают `liquibase releaseLocks` или `UPDATE DATABASECHANGELOGLOCK SET LOCKED=false`; профилактика — `IF EXISTS`/`IF NOT EXISTS` и alerting на `success=false`.",
+                "related": "[[flyway-liquibase-interview#Q11]] команда `repair`; [[flyway-liquibase-interview#Q16]] зависшая `DATABASECHANGELOGLOCK`; [[flyway-liquibase-interview#Q34]] идемпотентность для устойчивости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "На `PostgreSQL` после упавшей миграции в `flyway_schema_history` всегда остаётся запись `success=false`, и её обязательно нужно удалить через `repair` перед повтором.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На `PostgreSQL` (транзакционный DDL) при ошибке откатывается вся транзакция, и запись `success=false` НЕ остаётся — `repair` обычно не нужен.",
+                "source_of_confusion": "Поведение `MySQL`/`Oracle` (где запись остаётся) ошибочно переносят на `PostgreSQL`.",
+                "if_it_were_true": "Если бы `success=false` всегда оставался на `PostgreSQL`, преимущество транзакционного DDL терялось бы.",
+                "how_it_should_be": "На транзакционных СУБД исправляют SQL и повторяют `migrate`; `repair` для удаления неудачной записи нужен в основном на не-транзакционных."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Восстановление после сбоя в `Liquibase` делается только удалением таблиц `DATABASECHANGELOG` и `DATABASECHANGELOGLOCK` вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычно достаточно `liquibase releaseLocks` (или точечного `UPDATE ... SET LOCKED=false`) и повторного `update`; удалять таблицы истории не требуется и опасно.",
+                "source_of_confusion": "Раз блокировка мешает, кажется проще «снести всё» целиком.",
+                "if_it_were_true": "Если бы нужно было удалять `DATABASECHANGELOG`, терялась бы вся история применённых changeset-ов.",
+                "how_it_should_be": "Снимают именно блокировку и повторяют `update`; служебные таблицы сохраняют, чтобы не потерять историю миграций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Flyway Teams (Enterprise) и его ключевые возможности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Flyway Teams — это бесплатная редакция для команд до 5 человек, идентичная Community по возможностям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Flyway Teams — платная редакция от Redgate, расширяющая Community: Undo-миграции, dry runs, schema model, batching, cherry-pick; это не бесплатная версия.",
+                "source_of_confusion": "Слово «Teams» звучит как «командный бесплатный тариф», отсюда путаница.",
+                "if_it_were_true": "Если бы Teams была бесплатной, не имело бы смысла отдельно перечислять её платные возможности против Community.",
+                "how_it_should_be": "Teams — коммерческая редакция с Undo/dry-run/cherry-pick; бесплатная редакция — это именно Community."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Flyway Teams отличается от Community только наличием технической поддержки; функциональных отличий между ними нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отличия именно функциональные: Undo-миграции (`U__`), dry runs, schema model, batching, cherry-pick недоступны в Community.",
+                "source_of_confusion": "Платные тарифы часто отличаются «только поддержкой», и это обобщают на Flyway.",
+                "if_it_were_true": "Если бы отличий по фичам не было, Undo-миграции работали бы и в Community, но они платные.",
+                "how_it_should_be": "Teams добавляет конкретные возможности (Undo, dry-run, cherry-pick, batching), а не только SLA-поддержку."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Flyway Teams — платная версия от Redgate, расширяющая Community: Undo migrations (`U__`), dry runs (генерация SQL pending-миграций без выполнения), schema model, batching, cherry-pick (применить выбранные версии, пропустив другие), расширенная поддержка Oracle.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти возможности нужны enterprise: dry-run даёт SQL-превью для аудита, cherry-pick — выборочное применение, Undo — откат версии, batching — производительность.",
+                "example": "`Flyway.configure().dryRunOutput(\"/tmp/migration-preview.sql\")` пишет весь SQL pending-миграций в файл, ничего не выполняя; `cherryPick(\"2.0\",\"2.1\",\"2.3\")` пропустит `2.2`.",
+                "when_to_apply": "Teams выбирают, когда нужны dry-run для ревью, undo-откат, cherry-pick или batching на enterprise-СУБД (`Oracle`).",
+                "edge_cases": "Undo (`U__`) — пара к `V__` (например `U2__add_user_roles.sql` дропает колонку из `V2__`); большинство проектов на Community делают откат forward-only.",
+                "related": "[[flyway-liquibase-interview#Q4]] Undo как тип миграций; [[flyway-liquibase-interview#Q40]] undo-скрипты против rollback `Liquibase`; [[flyway-liquibase-interview#Q21]] лицензии Community."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Flyway Teams добавляет к Community поддержку формата XML change types, как в `Liquibase`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Teams остаётся SQL-first: она добавляет Undo, dry-run, cherry-pick и batching, но не XML change types — это особенность `Liquibase`.",
+                "source_of_confusion": "Раз Teams «продвинутее», ей приписывают фичи конкурента.",
+                "if_it_were_true": "Если бы Teams понимала XML change types, исчезло бы фундаментальное различие философий `Flyway` и `Liquibase`.",
+                "how_it_should_be": "Teams расширяет SQL-подход (Undo/dry-run/cherry-pick); абстрактный XML — это `Liquibase`, а не платный `Flyway`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как в Liquibase работает tagDatabase и rollback по тегу?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Тег в `Liquibase` — это метка версии в имени changelog-файла, по которой `Liquibase` определяет порядок применения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тег — это запись в `DATABASECHANGELOG.TAG`, фиксирующая точку в истории для отката, а не часть имени файла, влияющая на порядок.",
+                "source_of_confusion": "Версии в именах файлов наводят на мысль, что тег тоже про порядок.",
+                "if_it_were_true": "Если бы тег был в имени файла, нельзя было бы поставить его через CLI `liquibase tag` на уже применённый changeset.",
+                "how_it_should_be": "Тег помечает точку в истории для rollback; порядок применения определяется `include`, а не тегом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Rollback по тегу в `Liquibase` доступен только в Pro-версии; в OSS откатиться к тегу нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rollback по тегу (`liquibase rollback <tag>`) работает в OSS Community; тегирование и откат к тегу — бесплатные возможности.",
+                "source_of_confusion": "Раз rollback ассоциируют с платностью (как у `Flyway`), его и здесь считают Pro.",
+                "if_it_were_true": "Если бы откат к тегу был платным, типичный релизный workflow с `tag`/`rollback` не описывался бы для OSS.",
+                "how_it_should_be": "Тегирование и `rollback <tag>` бесплатны в Community; Pro лишь расширяет авто-rollback и проверки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`tagDatabase` физически создаёт резервную копию (snapshot) БД, к которой потом возвращает `rollback`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`tagDatabase` лишь записывает метку в `DATABASECHANGELOG.TAG`; rollback к тегу выполняет обратные операции changeset-ов, а не восстанавливает snapshot.",
+                "source_of_confusion": "«Откат к точке» наводит на мысль о восстановлении из копии.",
+                "if_it_were_true": "Если бы тег делал snapshot, rollback не требовал бы корректных `<rollback>`-блоков в changeset-ах, а он их требует.",
+                "how_it_should_be": "Тег — это маркер позиции в истории; откат идёт через инвертирование/`<rollback>` changeset-ов, а не через snapshot."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Теги фиксируют точку в истории миграций, чтобы откатиться к ней позже. Тег ставят через changeset (`<tagDatabase tag=\"v2.0.0\"/>`) или CLI (`liquibase tag v2.0.0`, помечает последний changeset в `DATABASECHANGELOG.TAG`). Откат: `liquibase rollback v2.0.0` (до тега, не включая его), `rollbackSQL v2.0.0` (превью), `rollbackCount N`, `rollbackToDate`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Теги удобны в релизном процессе: помечаешь состояние перед деплоем и при проблеме откатываешься ровно к нему, не считая changeset-ы вручную.",
+                "example": "Типичный workflow: `liquibase tag before-v3.0.0` → `liquibase update` → при проблеме `liquibase rollback before-v3.0.0` возвращает БД к помеченному состоянию.",
+                "when_to_apply": "Применяют при релизах с риском: тег ставят до миграций, а rollback к нему используют как аварийный откат всего релиза.",
+                "edge_cases": "`rollback <tag>` откатывает changeset-ы до тега, не включая сам тег; `rollbackSQL` даёт превью без выполнения для ревью отката.",
+                "related": "[[flyway-liquibase-interview#Q17]] общий механизм rollback; [[flyway-liquibase-interview#Q16]] поле `TAG` в `DATABASECHANGELOG`; [[flyway-liquibase-interview#Q40]] стратегии отката в `Flyway` и `Liquibase`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Лучшие практики именования и структуры миграций",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Используйте timestamp-based имена для команд (`V20260413_100000__create_users_table.sql`) против sequential (риск конфликтов при параллельной разработке); раскладывайте миграции по структуре директорий (`db/migration`, `db/repeatable`, `db/changelog`); соблюдайте принципы: одна цель на миграцию, маленький размер, описательное имя, без данных приложения в schema-миграциях, обязательный code review.",
+              "correct": true,
+              "sections": {
+                "explanation": "Timestamp-версии устраняют конфликты номеров при параллельной работе; маленькие однонаправленные миграции легче ревьюить и безопаснее откатывать.",
+                "example": "`V5__add_index_on_users_email.sql` понятнее, чем `V5__fix.sql`; для опоздавших миграций включают `out-of-order: true`, чтобы `V1.3` применилась после `V1.5`.",
+                "when_to_apply": "Эти правила применяют при организации db-папок и код-ревью миграций, особенно перед production-выкаткой.",
+                "edge_cases": "Seed-данные держат отдельно (Liquibase `context=dev` или отдельный Flyway location), а не в schema-миграциях; комментарии объясняют «почему», а не «что».",
+                "related": "[[flyway-liquibase-interview#Q5]] соглашение об именовании `Flyway`; [[flyway-liquibase-interview#Q29]] структура в multi-module; [[flyway-liquibase-interview#Q34]] идемпотентность и атомарность."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Лучшая практика — складывать все миграции проекта в один большой файл, чтобы видеть всю историю схемы сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуется обратное: маленькие миграции с одной целью каждая — их легче ревьюить и откатывать, чем один монолитный файл.",
+                "source_of_confusion": "Один файл кажется удобным для обзора всей схемы.",
+                "if_it_were_true": "Если бы монолит был лучшей практикой, не советовали бы «одна цель на миграцию» и «маленький размер».",
+                "how_it_should_be": "Каждое логическое изменение — отдельная миграция с описательным именем; единый файл затрудняет ревью и откат."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sequential-нумерация (`V001`, `V002`) всегда предпочтительнее timestamp, так как полностью исключает конфликты в команде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sequential как раз создаёт риск конфликтов при параллельной разработке (два разработчика берут один номер); для команд рекомендуют timestamp-версии.",
+                "source_of_confusion": "Последовательные номера выглядят аккуратнее и «упорядоченнее».",
+                "if_it_were_true": "Если бы sequential исключал конфликты, не советовали бы timestamp и `out-of-order` именно для командной работы.",
+                "how_it_should_be": "Конфликты номеров решают timestamp-версии или `out-of-order: true`; чистый sequential к ним более уязвим."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Seed-данные приложения нужно класть прямо в schema-миграции (`V__`), чтобы они применялись вместе со структурой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Данные приложения держат отдельно от schema-миграций (Liquibase `context=dev` или отдельный Flyway location), чтобы не смешивать структуру и наполнение.",
+                "source_of_confusion": "Удобно «всё в одном месте», отсюда соблазн положить seed в `V__`.",
+                "if_it_were_true": "Если бы seed был частью schema-миграций, тестовые данные попадали бы в production вместе со структурой.",
+                "how_it_should_be": "Структуру и данные разделяют; для seed используют отдельный механизм/контекст, а не основные `V__`-миграции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить идемпотентность и атомарность миграций?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Идемпотентность гарантируется автоматически: `Flyway` и `Liquibase` сами пропускают уже применённые операции внутри миграции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инструмент пропускает уже применённые миграции целиком (по истории), но не делает идемпотентными отдельные DDL внутри файла — это забота автора (`IF NOT EXISTS`/precondition).",
+                "source_of_confusion": "Раз инструмент «не применяет дважды», кажется, что и внутренние операции идемпотентны.",
+                "if_it_were_true": "Если бы DDL были идемпотентны автоматически, `CREATE TABLE` без `IF NOT EXISTS` не падал бы при повторном запуске, но он падает.",
+                "how_it_should_be": "Идемпотентность операций обеспечивает разработчик через `IF EXISTS`/`IF NOT EXISTS` или Liquibase preconditions, а не сам инструмент."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Идемпотентность — миграция применяется повторно без побочных эффектов: используют `CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, `DROP ... IF EXISTS` или Liquibase precondition (`onFail=MARK_RAN` + `<not><columnExists.../></not>`). Атомарность — группировать логически связанные DDL в одну транзакцию (`PostgreSQL` поддерживает), а независимые операции разделять на версии.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идемпотентность важна для repair-сценариев и CI (повторный прогон); атомарность — чтобы миграция применялась целиком или не применялась вовсе.",
+                "example": "`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20);` безопасно повторяем; в Liquibase precondition `<not><columnExists tableName=\"users\" columnName=\"phone\"/></not>` делает changeset идемпотентным.",
+                "when_to_apply": "Применяют при написании каждой миграции, особенно когда возможен повторный запуск (CI, repair) или нужна транзакционная целостность нескольких DDL.",
+                "edge_cases": "Для больших таблиц с блокировками атомарную группу разбивают на несколько версий: `ADD COLUMN` (быстро) → `UPDATE` (медленно) → `SET NOT NULL`, чтобы не держать долгий lock.",
+                "related": "[[flyway-liquibase-interview#Q18]] preconditions для идемпотентности; [[flyway-liquibase-interview#Q42]] разбиение DDL на больших таблицах; [[flyway-liquibase-interview#Q35]] безопасная миграция данных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Атомарность означает, что каждую миграцию нужно делать максимально большой — объединять все DDL и DML проекта в один файл и одну транзакцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Атомарность — это «всё или ничего» для логически связанных операций, а не «всё в одном файле»; независимые DDL/DML наоборот разделяют на версии.",
+                "source_of_confusion": "Слово «атомарность» обобщают до «один большой неделимый блок».",
+                "if_it_were_true": "Если бы атомарность требовала монолита, не советовали бы разбивать `ADD COLUMN`/`UPDATE`/`SET NOT NULL` на отдельные миграции.",
+                "how_it_should_be": "В одной миграции держат только то, что должно быть атомарным вместе; логически независимое разносят по версиям."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для идемпотентности достаточно обернуть миграцию в `BEGIN`/`COMMIT`; транзакция делает повторный запуск безопасным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Транзакция даёт атомарность, но не идемпотентность: повторный `CREATE TABLE users` в транзакции всё равно упадёт, так как таблица уже существует.",
+                "source_of_confusion": "Атомарность и идемпотентность оба про «безопасный повтор», поэтому их смешивают.",
+                "if_it_were_true": "Если бы транзакция давала идемпотентность, `IF NOT EXISTS` и preconditions были бы не нужны.",
+                "how_it_should_be": "Идемпотентность достигается `IF EXISTS`/`IF NOT EXISTS`/preconditions; транзакция отвечает за атомарность, а не за повторяемость."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как мигрировать данные (data migration) безопасно?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Самый безопасный способ data-миграции — вызвать service-методы приложения прямо из миграции, чтобы переиспользовать бизнес-логику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это антипаттерн: миграции должны быть самодостаточными SQL/JDBC-операциями, не зависящими от состояния `Spring Context` и бизнес-логики.",
+                "source_of_confusion": "Переиспользование кода звучит как DRY-преимущество, отсюда соблазн дёргать сервисы.",
+                "if_it_were_true": "Если бы вызов сервисов был безопасен, изменение бизнес-логики позже ломало бы воспроизводимость старых миграций.",
+                "how_it_should_be": "Data-миграции пишут на чистом SQL/JDBC; зависимость от service-методов делает их хрупкими и невоспроизводимыми."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Большие data-миграции безопаснее всего делать одним `UPDATE` на всю таблицу в одной транзакции — это быстрее и атомарно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один `UPDATE` на миллионы строк надолго блокирует таблицу и раздувает транзакцию; безопаснее пакетное (batched) обновление с паузами.",
+                "source_of_confusion": "Атомарность одного `UPDATE` кажется надёжной и простой.",
+                "if_it_were_true": "Если бы единый `UPDATE` был безопасен, не рекомендовали бы батчирование и `pg_sleep` между батчами.",
+                "how_it_should_be": "Большие объёмы обновляют батчами по N строк с `WHERE ... IS NULL` для идемпотентности, а не одной транзакцией на всю таблицу."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Стратегия: schema отдельно от данных (`V10__add_full_name_column.sql` — быстро; `V11__populate_full_name.sql` — может быть долгим). Большие объёмы — пакетное обновление (batch с `WHERE full_name IS NULL`, `pg_sleep` между батчами или Java-миграция через `BaseJavaMigration`). Принципы: батчирование, идемпотентность, тест на копии production, мониторинг прогресса, разделение деплоя.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение schema/data позволяет быстро применить структуру без блокировок, а долгое наполнение вынести в отдельную миграцию с батчами.",
+                "example": "Батч-цикл в `DO $$ ... LOOP UPDATE ... LIMIT batch_size ... PERFORM pg_sleep(0.1); END LOOP $$;` обновляет порциями; сложную логику выносят в `V12__MigrateUserData extends BaseJavaMigration`.",
+                "when_to_apply": "Применяют при заполнении новых колонок, трансформации и очистке данных, особенно на больших таблицах, где важно не блокировать запись.",
+                "edge_cases": "Условие `WHERE full_name IS NULL` делает миграцию идемпотентной (можно перезапустить); сначала катят schema+код, затем data-миграцию.",
+                "related": "[[flyway-liquibase-interview#Q34]] идемпотентность и батчирование; [[flyway-liquibase-interview#Q42]] backfill больших таблиц; [[flyway-liquibase-interview#Q25]] разделение schema и данных в expand-contract."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Data-миграции не требуют тестирования на копии production — достаточно прогнать их на пустой тестовой базе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пустая база не покажет реального времени и блокировок; data-миграции обязательно прогоняют на dump production-данных, измеряя длительность.",
+                "source_of_confusion": "Раз schema-тесты идут на чистой базе, это переносят и на data-миграции.",
+                "if_it_were_true": "Если бы пустой базы хватало, нельзя было бы заранее оценить время обновления миллионов строк.",
+                "how_it_should_be": "Тестируют на копии production: измеряют время, проверяют блокировки и корректность трансформации перед выкаткой."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как запускать Flyway в Kubernetes — init containers и Job?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Kubernetes миграции запускают как sidecar-контейнер рядом с приложением, чтобы они работали параллельно весь жизненный цикл Pod.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Миграции запускают ДО приложения — как init container или отдельный Job, а не как постоянный sidecar, работающий параллельно.",
+                "source_of_confusion": "Sidecar — частый k8s-паттерн, его по инерции применяют и к миграциям.",
+                "if_it_were_true": "Если бы это был sidecar, миграции конкурировали бы со стартом приложения, и схема могла быть не готова к моменту его запуска.",
+                "how_it_should_be": "Миграции — разовая задача перед стартом: init container или Job, а не долгоживущий sidecar."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Лучший способ — запускать миграции из самого приложения при старте каждого Pod, и при `replicas > 1` это полностью безопасно без всяких блокировок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `replicas > 1` несколько Pod стартуют параллельно и гонятся за миграцией; безопасность обеспечивает advisory lock `Flyway`, а не «само собой».",
+                "source_of_confusion": "Раз `Flyway` встроен в приложение, кажется, что параллельный старт безвреден.",
+                "if_it_were_true": "Если бы это было безопасно без блокировок, не упоминали бы про race condition и advisory lock при масштабировании.",
+                "how_it_should_be": "Параллельный старт реплик создаёт гонку; её гасит лок на БД, а в production предпочитают вынести миграцию в отдельный Job."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Kubernetes Job для миграций запускается после старта приложения, как post-deployment hook, чтобы мигрировать уже работающую БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Job с миграциями запускают ДО приложения (например, Helm hook `pre-upgrade`/`pre-install`), а не после; деплой приложения ждёт успешного завершения Job.",
+                "source_of_confusion": "Слово «hook» наводит на мысль о пост-обработке после деплоя.",
+                "if_it_were_true": "Если бы Job шёл после приложения, новый код стартовал бы против старой схемы и падал.",
+                "how_it_should_be": "Миграции выполняют первыми через `pre-upgrade`-hook или Sync Waves; приложение деплоят только после успеха Job."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Два подхода: init container (просто, миграция всегда перед приложением, но при `replicas > 1` запускается в каждом Pod параллельно → race condition, который `Flyway` гасит advisory-локом на БД) и Kubernetes Job (рекомендуется для production: запускается один раз, деплой приложения начинается только после успеха — через ArgoCD Sync Waves или Helm hooks `pre-upgrade`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Init container прост, но дублируется по репликам; Job выполняет миграцию ровно один раз и блокирует выкатку приложения до своего успеха.",
+                "example": "Helm-аннотации `\"helm.sh/hook\": pre-upgrade,pre-install` с `hook-weight: \"-5\"` запускают Job до апгрейда; init container задаётся в `initContainers` Deployment-а.",
+                "when_to_apply": "Init container подходит для простых случаев и dev; Job выбирают в production с горизонтальным масштабированием, чтобы избежать гонки реплик.",
+                "edge_cases": "При `replicas > 1` init container стартует в каждом Pod — `Flyway` защищает advisory-локом, но нагрузка на БД растёт; Job этой проблемы лишён.",
+                "related": "[[flyway-liquibase-interview#Q30]] сбои и блокировки при миграции; [[flyway-liquibase-interview#Q23]] автоконфигурация и порядок запуска; [[flyway-liquibase-interview#Q6]] advisory-лок и история."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Liquibase Hub и Liquibase Pro — чем они расширяют OSS-версию?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Liquibase Hub (устаревшее) / Liquibase Pro — коммерческие расширения OSS-ядра: автоматический rollback, полная поддержка stored procedures/triggers, расширенный `diff`/`generateChangeLog`, drift detection (`status --verbose`), Flow files (скриптование команд в YAML), Checks Framework (политики качества SQL), расширенная поддержка `Oracle`/`MongoDB` и enterprise SLA.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pro нацелен на enterprise: декларативные политики качества, drift detection и оркестрация команд через Flow files поверх бесплатного ядра.",
+                "example": "Checks Framework задаёт политики в `liquibase.checks-settings.conf` (например `TableCommentCheck` severity `MAJOR`); Flow files в YAML описывают стадии `status`→`update`→`tag`.",
+                "when_to_apply": "Pro выбирают при работе с enterprise-СУБД (`Oracle`, `DB2`), нужде в автоматическом rollback и соответствии корпоративным политикам.",
+                "edge_cases": "Для большинства задач достаточно OSS Liquibase; Pro оправдан строгими требованиями к качеству SQL, drift detection и поддержке.",
+                "related": "[[flyway-liquibase-interview#Q17]] базовый rollback в OSS; [[flyway-liquibase-interview#Q20]] `diff` в OSS против расширенного в Pro; [[flyway-liquibase-interview#Q31]] аналог платной редакции `Flyway` Teams."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Liquibase Pro — это бесплатная редакция, а OSS Liquibase, наоборот, платная и требует лицензии Redgate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: ядро Liquibase — open-source и бесплатное, а Pro/Hub — коммерческое расширение; и разрабатывает Liquibase не Redgate (это вендор `Flyway`).",
+                "source_of_confusion": "Платность путают местами, а вендоров `Flyway`/`Liquibase` смешивают.",
+                "if_it_were_true": "Если бы OSS была платной, не существовало бы массового бесплатного использования Liquibase Community.",
+                "how_it_should_be": "Бесплатно именно OSS-ядро; Pro добавляет платные enterprise-возможности поверх него."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Liquibase Pro отличается от OSS только графическим интерфейсом; все функции (drift detection, Checks, Flow files) доступны и в бесплатной версии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Drift detection, Checks Framework и Flow files — именно Pro-возможности; в OSS их нет, отличие не сводится к GUI.",
+                "source_of_confusion": "Платные тарифы часто ассоциируют «только с красивым UI».",
+                "if_it_were_true": "Если бы Checks были в OSS, не выделяли бы их как Pro-функцию политик качества SQL.",
+                "how_it_should_be": "Pro даёт конкретные функции (drift, Checks, Flow), а не просто интерфейс поверх бесплатного ядра."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Liquibase Pro нужен, потому что в OSS-версии полностью отсутствует rollback и команда `update`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Базовый rollback и `update` доступны в OSS Community; Pro лишь добавляет автоматический rollback и расширенные возможности.",
+                "source_of_confusion": "Раз Pro «про откат», кажется, что в OSS отката нет вовсе.",
+                "if_it_were_true": "Если бы rollback отсутствовал в OSS, не описывался бы бесплатный `liquibase rollbackCount`/`rollback <tag>`.",
+                "how_it_should_be": "OSS включает rollback и `update`; Pro добавляет авто-rollback, drift detection и политики, но не вводит базовые команды."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают Flyway Callbacks — beforeMigrate, afterMigrate и другие хуки?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Callback-файлы записываются в `flyway_schema_history` и выполняются ровно один раз, как версионные миграции с фиксированным checksum.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Callbacks НЕ версионируются (не попадают в `flyway_schema_history`) и выполняются каждый раз при вызове соответствующей команды, а не один раз.",
+                "source_of_confusion": "Раз callback-файлы лежат рядом с миграциями, их статус путают с `V__`.",
+                "if_it_were_true": "Если бы callbacks писались в историю и шли один раз, `afterMigrate.sql` не запускался бы при каждом `migrate`.",
+                "how_it_should_be": "Callbacks — повторяемые хуки вне истории; они срабатывают на каждом вызове команды соответствующего события."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Callbacks выполняют SQL или Java-код на этапах жизненного цикла миграции (cross-cutting concerns). Файлы именуются по событию: `beforeMigrate.sql`, `afterMigrate.sql`, `afterMigrateError.sql`, `beforeEachMigrate.sql`, `beforeValidate.sql`, `beforeClean.sql`, `afterRepair.sql` и др. Java-callback реализует `Callback` (`supports`/`handle`) и регистрируется через `FlywayConfigurationCustomizer`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Хуки дают точки для аудита, управления соединением и seed-данных без вмешательства в сами миграции; событие выбирает, когда именно сработает код.",
+                "example": "`beforeMigrate.sql` с `SET session_replication_role = 'replica';` отключает FK-триггеры, а `afterMigrate.sql` восстанавливает и пишет в `migration_audit`.",
+                "when_to_apply": "Применяют для логирования, метрик, уведомлений, подготовки окружения и пост-обработки вокруг миграций.",
+                "edge_cases": "Callbacks не версионируются и выполняются при каждом вызове команды; Java-вариант регистрируют бином `FlywayConfigurationCustomizer` через `config.callbacks(...)`.",
+                "related": "[[flyway-liquibase-interview#Q8]] базовое понятие callbacks; [[flyway-liquibase-interview#Q9]] placeholders как другая фича; [[flyway-liquibase-interview#Q7]] команды, к которым привязаны хуки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Единственный поддерживаемый callback — `afterMigrate`; остальных событий (`beforeMigrate`, `beforeClean`, `afterRepair`) в `Flyway` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Событий много: `beforeMigrate`, `afterMigrate`, `afterMigrateError`, `beforeEachMigrate`, `beforeValidate`, `beforeClean`, `afterRepair` и др., а не только `afterMigrate`.",
+                "source_of_confusion": "`afterMigrate` чаще всего на слуху, отсюда сужение до него.",
+                "if_it_were_true": "Если бы был только `afterMigrate`, нельзя было бы подготовить окружение через `beforeMigrate.sql` перед миграцией.",
+                "how_it_should_be": "`Flyway` предоставляет полный набор событий до/после migrate, validate, clean, repair и каждого отдельного скрипта."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Callbacks предназначены исключительно для отката миграций: `afterMigrateError` автоматически откатывает все применённые изменения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`afterMigrateError` лишь запускает ваш код после ошибки (логирование, уведомление); он не откатывает изменения автоматически — отката в `Flyway` Community нет.",
+                "source_of_confusion": "Название «afterMigrateError» наводит на мысль об автоматической компенсации сбоя.",
+                "if_it_were_true": "Если бы callback откатывал изменения, не требовались бы платные `U__` или forward-only откат.",
+                "how_it_should_be": "Callbacks — это хуки для побочной логики на этапах; откат реализуют отдельно, а не через `afterMigrateError`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Expand-contract pattern для zero-downtime миграций — как реализовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Реализация expand-contract: выполнить `RENAME COLUMN` одной миграцией одновременно с деплоем нового кода, чтобы минимизировать число шагов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это нарушает паттерн: переименование одной миграцией с деплоем кода вызовет downtime; expand-contract как раз разносит шаги во времени.",
+                "source_of_confusion": "Меньше шагов кажется «эффективнее», поэтому соблазн схлопнуть всё в одну миграцию.",
+                "if_it_were_true": "Если бы так было правильно, паттерн не вводил бы фазы Expand/Migrate/Contract отдельными деплоями.",
+                "how_it_should_be": "Изменение разбивают на три фазы с отдельными деплоями; единый `RENAME` с кодом — антипаттерн."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Expand-contract можно реализовать только в `Liquibase` через встроенный rollback; в `Flyway` zero-downtime переименование невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Паттерн инструмент-независим: его реализуют обычными версионными миграциями и в `Flyway`, и в `Liquibase`; rollback здесь не требуется.",
+                "source_of_confusion": "Раз `Liquibase` умеет rollback, его ошибочно считают обязательным для zero-downtime.",
+                "if_it_were_true": "Если бы нужен был именно `Liquibase`, expand-contract не приводили бы как типовую практику для `Flyway`-проектов.",
+                "how_it_should_be": "Expand-contract — это последовательность совместимых `ALTER`-ов, доступная в любом инструменте миграций."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Три фазы (parallel change): Expand — `ALTER TABLE users ADD COLUMN username` + код v1.1 пишет в обе колонки; Migrate — `UPDATE users SET username = user_name WHERE username IS NULL` + `SET NOT NULL`, код v1.2 читает из новой, пишет в обе; Contract — `ALTER TABLE users DROP COLUMN user_name`, код v1.3 работает только с новой. Правило: никогда не удаляй/переименовывай в том же деплое, что добавляешь новое.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая фаза backward-compatible: в любой момент и старая, и новая версия кода работают, что и обеспечивает zero-downtime при rolling deployment.",
+                "example": "Переименование `user_name`→`username`: `V3__expand_add_username.sql` (add), `V4__migrate_username_data.sql` (backfill+NOT NULL), `V5__contract_drop_user_name.sql` (drop) — по одному деплою на фазу.",
+                "when_to_apply": "Применяют при переименовании/удалении колонок и таблиц, смене типа (VARCHAR→TEXT), добавлении NOT NULL и разбиении/слиянии таблиц.",
+                "edge_cases": "Contract-фазу откладывают, пока в проде не останется ни одного экземпляра старого кода; иначе `DROP COLUMN` уронит ещё живые реплики.",
+                "related": "[[flyway-liquibase-interview#Q25]] базовое определение expand-contract; [[flyway-liquibase-interview#Q26]] backward-compatible операции; [[flyway-liquibase-interview#Q42]] безопасные изменения больших таблиц."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Expand-contract означает добавить колонку и сразу же в той же миграции удалить старую — расширение и сжатие в одном шаге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Add и drop разносят на отдельные фазы и деплои; одновременные add+drop ломают совместимость и вызывают downtime — это противоречит паттерну.",
+                "source_of_confusion": "Название «expand-contract» наводит на мысль о единой операции «расширил-сжал».",
+                "if_it_were_true": "Если бы add и drop шли вместе, старый код падал бы на удалённой колонке сразу после миграции.",
+                "how_it_should_be": "Expand (add) и contract (drop) — это разные фазы во времени; между ними деплоят код и переносят данные."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Стратегии rollback в Flyway и Liquibase — undo-скрипты и команда rollback",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `Flyway` Community доступна автоматическая команда `undo`, которая откатывает любую миграцию без написания `U__`-скриптов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`undo` доступна только в `Flyway` Teams/Enterprise и требует написанных вручную `U__`-скриптов; в Community её нет.",
+                "source_of_confusion": "Наличие `U__` как типа миграций наводит на мысль о бесплатном авто-undo.",
+                "if_it_were_true": "Если бы `undo` была в Community и без скриптов, не существовало бы forward-only как стандартной стратегии отката.",
+                "how_it_should_be": "В Community отката нет; `undo` в Teams выполняет именно ваши `U__`-скрипты в обратном порядке."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Liquibase` rollback доступен только при наличии Pro-лицензии и не работает в OSS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rollback (`rollbackCount`, `rollback <tag>`, `rollbackToDate`) доступен в OSS Liquibase; Pro лишь расширяет авто-rollback.",
+                "source_of_confusion": "Платность отката у `Flyway` ошибочно переносят на `Liquibase`.",
+                "if_it_were_true": "Если бы rollback был только в Pro, его не приводили бы как ключевое бесплатное преимущество `Liquibase`.",
+                "how_it_should_be": "Базовый rollback бесплатен в OSS; для кастомного SQL нужен явный `<rollback>`-блок в changeset."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В OSS `Flyway` есть встроенный авто-rollback через snapshot БД, поэтому undo-скрипты и forward-only миграции не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OSS `Flyway` не делает snapshot и не имеет авто-rollback; откат реализуют forward-only миграцией, snapshot-бэкапом или blue-green вручную.",
+                "source_of_confusion": "Хочется, чтобы инструмент сам страховал откат снимком, отсюда домысел.",
+                "if_it_were_true": "Если бы был встроенный snapshot-rollback, не перечисляли бы forward-only/snapshot/blue-green как отдельные стратегии.",
+                "how_it_should_be": "Откат в OSS `Flyway` — это ручные стратегии (новая миграция, бэкап, blue-green), а не встроенный snapshot."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Flyway` Teams команда `undo` выполняет `U__`-скрипты в обратном порядке (`U3__add_index.sql` отменяет `V3__add_index.sql`); в OSS откат — forward-only, snapshot backup или blue-green. В `Liquibase` (OSS) есть `rollbackCount N`, `rollback <tag>`, `rollbackToDate`, `rollbackCountSQL`, но для кастомного SQL нужен явный `<rollback>`-блок.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Flyway` отделяет откат в платную Teams (`U__`-скрипты), тогда как `Liquibase` даёт rollback в OSS, но требует rollback-логики для непроизводных изменений.",
+                "example": "`U3__add_index.sql` с `DROP INDEX IF EXISTS idx_users_email;` отменяет `V3__add_index.sql`; в `Liquibase` `<rollback><dropColumn .../></rollback>` задаёт откат `addColumn`.",
+                "when_to_apply": "Стратегию выбирают по инструменту и лицензии: Teams `undo`, либо forward-only/blue-green в OSS `Flyway`, либо `rollback` в `Liquibase`.",
+                "edge_cases": "Для `addColumn` `Liquibase` выводит rollback автоматически, для кастомного `<sql>` — нет; в OSS `Flyway` чаще полагаются на forward-only и бэкапы.",
+                "related": "[[flyway-liquibase-interview#Q31]] `Flyway` Teams и Undo; [[flyway-liquibase-interview#Q17]] rollback в `Liquibase`; [[flyway-liquibase-interview#Q32]] rollback по тегу."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать Testcontainers для интеграционного тестирования миграций?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Testcontainers` поднимает реальную СУБД в Docker-контейнере во время тестов, давая уверенность, что миграции работают на целевой БД (а не только на `H2`). Подключают зависимости `testcontainers:postgresql`/`junit-jupiter`, в тесте задают `@Container PostgreSQLContainer<>(\"postgres:16-alpine\")` и через `@DynamicPropertySource` прокидывают `jdbcUrl`/`username`/`password` в `Spring`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реальный `PostgreSQL` в контейнере ловит диалект-специфичные ошибки (типы, `CONCURRENTLY`), которые `H2` пропускает; `Spring Boot` применяет миграции на старте контекста.",
+                "example": "Тест `allMigrationsApplySuccessfully()` берёт `flyway.info().applied()` и проверяет, что ни одна миграция не в состоянии `failed`; `schemaContainsExpectedTables()` сверяет наличие таблицы `users` через `getMetaData().getTables(...)`.",
+                "when_to_apply": "Применяют в CI на каждый PR, чтобы убедиться: все скрипты валидны для целевой СУБД, нет конфликтов changeset-ов и схема соответствует ожидаемой.",
+                "edge_cases": "Тест идемпотентности: `flyway.repair()` + повторный `migrate()` не должны добавлять новых записей (`second.length == first.length`); `CONCURRENTLY` нельзя в транзакции, что тоже всплывёт на реальной БД.",
+                "related": "[[flyway-liquibase-interview#Q27]] `Testcontainers` как golden standard тестирования; [[flyway-liquibase-interview#Q34]] проверка идемпотентности; [[flyway-liquibase-interview#Q42]] `CONCURRENTLY` вне транзакции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Testcontainers` тестирует миграции на встроенной `H2`, эмулируя `PostgreSQL` в памяти без необходимости в Docker.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Testcontainers` поднимает настоящую СУБД в Docker-контейнере, а не `H2` в памяти; именно отказ от `H2` и есть его смысл.",
+                "source_of_confusion": "Обе технологии используют в тестах БД, поэтому их роли путают.",
+                "if_it_were_true": "Если бы `Testcontainers` гонял `H2`, он не давал бы уверенности в диалект-специфичном поведении целевой СУБД.",
+                "how_it_should_be": "`Testcontainers` запускает реальный `postgres:16-alpine` в Docker; `H2` — это отдельная in-memory БД, которую он как раз заменяет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Testcontainers` требует заранее установленного и постоянно работающего `PostgreSQL` на CI-агенте; контейнер он не создаёт сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Testcontainers` сам поднимает и останавливает контейнер БД через Docker; внешний постоянно работающий `PostgreSQL` ему не нужен.",
+                "source_of_confusion": "Раз тест ходит в `PostgreSQL`, кажется, что база должна существовать заранее.",
+                "if_it_were_true": "Если бы нужна была внешняя БД, не было бы аннотации `@Container` и автоматического управления жизненным циклом контейнера.",
+                "how_it_should_be": "Контейнер создаётся на лету из образа; требуется лишь доступный Docker daemon, а не предустановленная БД."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Testcontainers` проверяет только синтаксис SQL-файлов и не применяет миграции к настоящей БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Testcontainers` именно применяет миграции к реальной БД в контейнере и позволяет проверить итоговую схему через `getMetaData()`/`flyway.info()`.",
+                "source_of_confusion": "Статический анализ SQL кажется достаточным, отсюда занижение возможностей.",
+                "if_it_were_true": "Если бы он лишь проверял синтаксис, нельзя было бы убедиться, что таблица `users` реально создана.",
+                "how_it_should_be": "Миграции реально выполняются на поднятой СУБД; проверяется и применение, и итоговая структура схемы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как безопасно мигрировать большие таблицы — pg_repack, CONCURRENTLY, batching?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "На больших таблицах безопаснее всего сразу выполнить `ALTER TABLE orders ADD COLUMN status VARCHAR(20) DEFAULT 'pending' NOT NULL` — `PostgreSQL` сделает это мгновенно и без блокировок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ADD COLUMN ... DEFAULT ... NOT NULL` на большой таблице берёт `AccessExclusiveLock` и блокирует чтение/запись; безопаснее add nullable → backfill батчами → NOT NULL.",
+                "source_of_confusion": "В современном `PostgreSQL` add column с константным default быстр, что обобщают на любой случай с NOT NULL и backfill.",
+                "if_it_were_true": "Если бы это было мгновенно и без блокировок, не рекомендовали бы разбивать операцию на три шага.",
+                "how_it_should_be": "Колонку добавляют без `DEFAULT`/`NOT NULL`, заполняют батчами, и только потом ставят `SET NOT NULL`/`SET DEFAULT`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Изменения схемы больших таблиц (>10M строк) могут заблокировать всю таблицу. Решения: (1) `ADD COLUMN` без DEFAULT + backfill батчами с `pg_sleep`, затем `SET NOT NULL`; (2) `CREATE INDEX CONCURRENTLY` (не блокирует DML, но нельзя в транзакции — в `Flyway` нужен `canExecuteInTransaction()=false`); (3) `pg_repack` для онлайн-перестройки таблицы/индексов без длительной блокировки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый приём снижает блокировку: батчи берут `RowExclusiveLock` по порции, `CONCURRENTLY` — `ShareUpdateExclusiveLock`, `pg_repack` — кратковременную блокировку вместо `VACUUM FULL`.",
+                "example": "Backfill: `WHILE last_id < max_id LOOP UPDATE ... WHERE id > last_id AND id <= last_id + batch_size ... PERFORM pg_sleep(0.05); END LOOP`; индекс: `CREATE INDEX CONCURRENTLY idx_orders_status ON orders(status)`.",
+                "when_to_apply": "Применяют на горячих production-таблицах, где обычный `ALTER`/`CREATE INDEX` вызвал бы простой; выбор приёма зависит от типа изменения.",
+                "edge_cases": "`CONCURRENTLY` нельзя внутри транзакции — в `Flyway` миграцию помечают `canExecuteInTransaction() { return false; }`; `ADD COLUMN` без default мгновенен в `PostgreSQL 11+`.",
+                "related": "[[flyway-liquibase-interview#Q35]] батчевый backfill данных; [[flyway-liquibase-interview#Q34]] разбиение DDL на версии; [[flyway-liquibase-interview#Q26]] `CREATE INDEX CONCURRENTLY` как backward-compatible операция."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CREATE INDEX CONCURRENTLY` можно и нужно выполнять внутри транзакции миграции — это делает создание индекса атомарным и безопасным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CONCURRENTLY` нельзя выполнять внутри транзакции — в `Flyway` для такой миграции отключают транзакцию через `canExecuteInTransaction() { return false; }`.",
+                "source_of_confusion": "Привычка оборачивать DDL в транзакцию переносится и на `CONCURRENTLY`.",
+                "if_it_were_true": "Если бы `CONCURRENTLY` работал в транзакции, не было бы исключения и требования отключать транзакцию в `Flyway`.",
+                "how_it_should_be": "`CONCURRENTLY` выполняют вне транзакции; обычный `CREATE INDEX` блокирует таблицу, а `CONCURRENTLY` — нет, но требует отдельного режима."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`pg_repack` блокирует таблицу так же надолго, как `VACUUM FULL`, поэтому его применяют только в окно технического обслуживания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`pg_repack` — это онлайн-аналог `VACUUM FULL` с минимальной кратковременной блокировкой, его специально применяют без длительного простоя.",
+                "source_of_confusion": "Раз `pg_repack` сравнивают с `VACUUM FULL`, ему приписывают и его длительную блокировку.",
+                "if_it_were_true": "Если бы он блокировал надолго как `VACUUM FULL`, не было бы смысла использовать его вместо последнего.",
+                "how_it_should_be": "`pg_repack` перестраивает таблицу/индексы онлайн с кратковременной блокировкой; долгий эксклюзивный lock — это `VACUUM FULL`, которого он избегает."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
