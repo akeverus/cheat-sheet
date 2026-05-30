@@ -4,7 +4,7 @@ description: "Полный план аудита всех 304 interview-файл
 updated: "2026-05-29"
 status: "active"
 audit_version: 5
-progress: "MCQ-сидеры: 159/306 .md имеют выровненный JSON; 147 NO-JSON в работе (Phase 2). Готовы: Spring (28), Security (10/10). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17). Дальше: testing (14), databases (12), devops (12), api (6), monitoring (9), cloud (6), programming-languages (36)."
+progress: "MCQ-сидеры: 166/306 .md имеют выровненный JSON; 140 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17), testing 7/14 (wave 1). Дальше: testing wave 2 (7), databases (12), devops (12), api (6), monitoring (9), cloud (6), programming-languages (36)."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -626,13 +626,13 @@ Pass: `OK FILE.md`.
 | 288 | `system-design` | `design-web-crawler` | 26 | 26 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 289 | `system-design` | `design-youtube` | 28 | 28 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 290 | `system-design` | `system-design` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 291 | `testing` | `chaos-engineering` | 44 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 292 | `testing` | `contract-testing` | 20 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 293 | `testing` | `integration-testing` | 39 | — | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 294 | `testing` | `junit` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 295 | `testing` | `load-testing` | 22 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 296 | `testing` | `mockito` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 297 | `testing` | `mutation-testing` | 20 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 291 | `testing` | `chaos-engineering` | 44 | 44 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 292 | `testing` | `contract-testing` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 293 | `testing` | `integration-testing` | 39 | 39 | ✅ | ❌ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 294 | `testing` | `junit` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
+| 295 | `testing` | `load-testing` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
+| 296 | `testing` | `mockito` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 297 | `testing` | `mutation-testing` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 298 | `testing` | `property-based-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 299 | `testing` | `rest-assured` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 300 | `testing` | `selenium` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
