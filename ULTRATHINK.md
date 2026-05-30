@@ -4,7 +4,7 @@ description: "Полный план аудита всех 304 interview-файл
 updated: "2026-05-29"
 status: "active"
 audit_version: 5
-progress: "MCQ-сидеры: 177/306 .md имеют выровненный JSON; 129 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17), testing 12/14 (только property-based+test-automation DEFER-md), databases 6/12. Дальше: databases wave B (6), databases (12), devops (12), api (6), monitoring (9), cloud (6), programming-languages (36)."
+progress: "MCQ-сидеры: 183/306 .md имеют выровненный JSON; 123 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17), testing 12/14 (только property-based+test-automation DEFER-md), databases 12/12 ✓. Дальше: devops (12), databases (12), devops (12), api (6), monitoring (9), cloud (6), programming-languages (36)."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -449,16 +449,16 @@ Pass: `OK FILE.md`.
 | 111 | `databases` | `database-transactions` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 112 | `databases` | `dynamodb` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 113 | `databases` | `elasticsearch` | 44 | 44 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 114 | `databases` | `flyway-liquibase` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 115 | `databases` | `hibernate-caching` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 114 | `databases` | `flyway-liquibase` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 115 | `databases` | `hibernate-caching` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 116 | `databases` | `hibernate` | 48 | 48 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 117 | `databases` | `hibernate-jpql-criteria` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 118 | `databases` | `hibernate-relationships` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 117 | `databases` | `hibernate-jpql-criteria` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
+| 118 | `databases` | `hibernate-relationships` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 119 | `databases` | `mongodb` | 46 | 46 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 120 | `databases` | `neo4j` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 120 | `databases` | `neo4j` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 121 | `databases` | `postgresql` | 55 | 55 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 122 | `databases` | `redis` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 123 | `databases` | `scylladb` | 23 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 123 | `databases` | `scylladb` | 23 | 23 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 124 | `databases` | `sql` | 53 | 0 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 125 | `design-patterns` | `design-patterns` | 48 | 48 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 126 | `devops` | `ansible` | 25 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
