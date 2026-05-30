@@ -4,7 +4,7 @@ description: "Полный план аудита всех 304 interview-файл
 updated: "2026-05-29"
 status: "active"
 audit_version: 5
-progress: "MCQ-сидеры: 170/306 .md имеют выровненный JSON; 136 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17), testing 11/14 (wave1+2; test-strategies pending session-limit; property-based+test-automation DEFER-md). Дальше: test-strategies (retry post-14:00 MSK), databases (12), devops (12), api (6), monitoring (9), cloud (6), programming-languages (36)."
+progress: "MCQ-сидеры: 177/306 .md имеют выровненный JSON; 129 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17), testing 12/14 (только property-based+test-automation DEFER-md), databases 6/12. Дальше: databases wave B (6), databases (12), devops (12), api (6), monitoring (9), cloud (6), programming-languages (36)."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -441,14 +441,14 @@ Pass: `OK FILE.md`.
 | 103 | `data-engineering` | `kafka-streams` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 104 | `data-engineering` | `stream-processing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 105 | `databases` | `cassandra` | 44 | 44 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 106 | `databases` | `clickhouse` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 107 | `databases` | `cockroachdb` | 24 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 108 | `databases` | `database-architecture` | 41 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 106 | `databases` | `clickhouse` | 28 | 28 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
+| 107 | `databases` | `cockroachdb` | 24 | 24 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
+| 108 | `databases` | `database-architecture` | 41 | 41 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 109 | `databases` | `database-replication` | 31 | 31 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 110 | `databases` | `database-sharding` | 34 | 34 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 111 | `databases` | `database-transactions` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 112 | `databases` | `dynamodb` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 113 | `databases` | `elasticsearch` | 44 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 111 | `databases` | `database-transactions` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 112 | `databases` | `dynamodb` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
+| 113 | `databases` | `elasticsearch` | 44 | 44 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 114 | `databases` | `flyway-liquibase` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 115 | `databases` | `hibernate-caching` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 116 | `databases` | `hibernate` | 48 | 48 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
@@ -637,7 +637,7 @@ Pass: `OK FILE.md`.
 | 299 | `testing` | `rest-assured` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 300 | `testing` | `selenium` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 301 | `testing` | `test-automation` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER (неполный: реальны Q1-Q7, TOC обещает Q1-30 (Q8-30 отсутствуют)) |
-| 302 | `testing` | `test-strategies` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 302 | `testing` | `test-strategies` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 303 | `testing` | `testcontainers` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 304 | `testing` | `unit-testing` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 
