@@ -1,0 +1,2285 @@
+{
+  "topic_slug": "api-gateway-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое API Gateway и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`API Gateway` — единая точка входа для всех клиентских запросов в микросервисной системе: принимает входящий трафик, маршрутизирует его к нужным backend-сервисам, агрегирует результаты и возвращает клиенту, инкапсулируя cross-cutting concerns вроде аутентификации и rate limiting.",
+              "correct": true,
+              "sections": {
+                "explanation": "Gateway скрывает внутреннюю структуру: клиент знает один URL, а не десятки адресов сервисов, и не занимается обнаружением сервисов или агрегацией данных сам.",
+                "example": "Веб, мобильный и партнёрский клиенты бьют в один `https://api.shop.com`, а Gateway разводит запросы по `User Service`, `Order Service`, `Product Service`.",
+                "when_to_apply": "Протокольная трансляция — частый сценарий: снаружи REST, внутри `gRPC`. Без Gateway каждый клиент дублировал бы логику аутентификации, ретраев и обработки ошибок.",
+                "edge_cases": "Граница ответственности тонкая: бизнес-логику в Gateway класть нельзя — иначе он превращается в `God Gateway` и становится узким местом всей системы.",
+                "related": "[[api-gateway-interview#Q2]] обязанности Gateway; [[api-gateway-interview#Q3]] отличие от reverse proxy; [[api-gateway-interview#Q5]] паттерн BFF."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`API Gateway` — это база данных, которая хранит схемы всех API и автоматически генерирует документацию из них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway — это runtime-компонент на пути трафика (routing, auth, rate limiting), а не хранилище схем. Документацию генерируют отдельные инструменты вроде `Swagger/OpenAPI`.",
+                "source_of_confusion": "Gateway действительно часто связан с API-документацией и Developer Portal, поэтому его путают с реестром схем.",
+                "if_it_were_true": "Будь это так, Gateway не влиял бы на сам трафик и не мог бы делать аутентификацию или маршрутизацию запросов в реальном времени.",
+                "how_it_should_be": "Это сетевой посредник на пути запроса; хранение и генерация схем — задача отдельного API-каталога или OpenAPI-тулинга."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`API Gateway` — это клиентская библиотека, которую встраивают в каждое мобильное и веб-приложение для вызова микросервисов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway — это серверный компонент между клиентами и сервисами, а не встраиваемый в клиент SDK. Клиент обращается к Gateway по сети.",
+                "source_of_confusion": "Существуют клиентские SDK для вызова API, поэтому Gateway ошибочно представляют как часть приложения.",
+                "if_it_were_true": "Если бы Gateway жил в клиенте, он не мог бы централизованно скрывать топологию сервисов и применять политики безопасности для всех.",
+                "how_it_should_be": "Это самостоятельный серверный узел (единая точка входа), а клиент лишь шлёт ему HTTP-запросы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`API Gateway` нужен исключительно для шифрования трафика (`TLS`) и не выполняет маршрутизацию или агрегацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TLS termination` — лишь одна из многих обязанностей Gateway; основное — маршрутизация, аутентификация, агрегация и rate limiting.",
+                "source_of_confusion": "Gateway действительно часто терминирует TLS, и эту функцию ошибочно принимают за единственную.",
+                "if_it_were_true": "Если бы Gateway только шифровал, он был бы обычным TLS-прокси и не давал бы единой точки входа с богатой логикой управления API.",
+                "how_it_should_be": "Шифрование — одна из функций; ключевая роль Gateway — это маршрутизация и инкапсуляция cross-cutting concerns."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные обязанности у API Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главная обязанность `API Gateway` — выполнять бизнес-логику приложения: расчёт скидок, проведение платежей, валидацию заказов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бизнес-логика в Gateway — это anti-паттерн. Gateway отвечает за инфраструктурные concerns (routing, auth, rate limiting), а бизнес-правила живут в сервисах.",
+                "source_of_confusion": "Соблазн положить «общую» логику в одну точку велик, поэтому бизнес-правила ошибочно тянут в Gateway.",
+                "if_it_were_true": "Будь это так, Gateway превратился бы в «толстый» God Gateway, и любое изменение бизнес-правил требовало бы его передеплоя.",
+                "how_it_should_be": "Gateway должен содержать только инфраструктурную логику; расчёт скидок и платежи — ответственность доменных сервисов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`API Gateway` берёт на себя cross-cutting concerns: маршрутизацию, аутентификацию/авторизацию (`JWT`, `OAuth 2.0`), rate limiting, трансформацию запросов, агрегацию ответов, кэширование, балансировку, circuit breaker, логирование/мониторинг, `CORS` и `SSL termination`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти задачи общие для всех сервисов, поэтому их выгодно реализовать один раз в Gateway по принципу DRY, а не дублировать в каждом сервисе.",
+                "example": "Проверка `JWT` и отбивка `429 Too Many Requests` происходят в Gateway до того, как запрос вообще дойдёт до `Order Service`.",
+                "when_to_apply": "Важно различать, что класть в Gateway, а что — в сервисы: бизнес-логика никогда не должна быть в Gateway, это anti-паттерн.",
+                "edge_cases": "Спорный момент — кэширование и `SSL termination`: их кладут в Gateway не всегда, иногда termination делают раньше, на edge-балансировщике или `Ingress`.",
+                "related": "[[api-gateway-interview#Q1]] зачем нужен Gateway; [[api-gateway-interview#Q18]] rate limiting; [[api-gateway-interview#Q27]] anti-паттерны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`API Gateway` отвечает только за маршрутизацию по URL и больше ни за что — аутентификация и rate limiting всегда делаются в самих сервисах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Маршрутизация — лишь одна из обязанностей; именно вынос аутентификации и rate limiting в Gateway избавляет сервисы от дублирования.",
+                "source_of_confusion": "Reverse proxy действительно ограничен маршрутизацией, и эту узость переносят на полноценный API Gateway.",
+                "if_it_were_true": "Если бы Gateway только маршрутизировал, каждый сервис заново реализовывал бы проверку токенов и лимиты — ровно та проблема, которую Gateway решает.",
+                "how_it_should_be": "Gateway централизует множество concerns; auth и rate limiting — типичные его обязанности, а не только сервисов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`API Gateway` обязан хранить пользовательские сессии и состояние корзины, выступая stateful-кэшем для всех клиентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway должен быть stateless для горизонтального масштабирования; состояние (сессии, лимиты) выносят во внешний `Redis`.",
+                "source_of_confusion": "Gateway часто работает с `Redis` для rate limiting, поэтому его ошибочно считают хранилищем состояния.",
+                "if_it_were_true": "Будь Gateway stateful, его нельзя было бы свободно масштабировать горизонтально — соединение клиента застряло бы на конкретном инстансе.",
+                "how_it_should_be": "Gateway держит логику без состояния, а сессии и лимиты хранит во внешних системах вроде `Redis`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем API Gateway отличается от Reverse Proxy?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`API Gateway` и `Reverse Proxy` — это полные синонимы: `Nginx` и `Kong` делают абсолютно одно и то же без каких-либо различий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные понятия: reverse proxy — инфраструктурный компонент для проксирования/балансировки, а API Gateway — паттерн управления API lifecycle с богатой логикой.",
+                "source_of_confusion": "`Nginx` (proxy) и `Kong` (gateway) внешне похожи и оба стоят на входе, поэтому их отождествляют.",
+                "if_it_were_true": "Будь они синонимами, не существовало бы отдельных продуктов вроде `Kong`, расширяющих proxy функциями API management.",
+                "how_it_should_be": "Reverse proxy проксирует трафик; API Gateway добавляет auth, агрегацию, версионирование и аналитику поверх."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Reverse Proxy` работает на уровне L7 и делает агрегацию ответов, а `API Gateway` — это простой L4-балансировщик по IP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: агрегация и сложная L7-логика — у API Gateway, а reverse proxy чаще ограничен простым проксированием на L4/L7.",
+                "source_of_confusion": "Оба компонента работают с HTTP, поэтому их роли по уровням и возможностям легко перепутать местами.",
+                "if_it_were_true": "Будь reverse proxy способен агрегировать ответы нескольких сервисов, он по сути уже был бы API Gateway.",
+                "how_it_should_be": "Агрегация ответов и продвинутая аутентификация — признаки API Gateway, а reverse proxy выполняет проксирование и базовую балансировку."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Reverse Proxy` — инфраструктурный компонент для проксирования и балансировки (L4/L7, простая маршрутизация по URL/IP, базовый rate limiting по IP), а `API Gateway` — архитектурный паттерн управления API: OAuth/JWT, агрегация, трансформация, версионирование и аналитика.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевое различие в назначении: proxy перенаправляет трафик, а Gateway управляет полным жизненным циклом API. На практике `Nginx`/`Kong` показывают, как proxy эволюционирует в Gateway через плагины.",
+                "example": "`Nginx` и `HAProxy` — примеры reverse proxy; `Kong`, `Spring Cloud Gateway`, `AWS API Gateway` — примеры API Gateway с rich-функциональностью.",
+                "when_to_apply": "Граница размыта: `Kong` построен на `Nginx`/OpenResty, то есть один и тот же движок может быть и proxy, и Gateway в зависимости от набора плагинов.",
+                "edge_cases": "Граница размыта: один и тот же `Nginx` может быть «просто proxy» или, с модулями `OpenResty`/`Kong`, дорасти до полноценного API Gateway.",
+                "related": "[[api-gateway-interview#Q1]] что такое Gateway; [[api-gateway-interview#Q2]] обязанности Gateway; [[api-gateway-interview#Q25]] сравнение Kong/Nginx/SCG."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Разница только в производительности: `API Gateway` всегда быстрее `Reverse Proxy`, потому что написан на Java.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие концептуальное (управление API против проксирования), а не в скорости; нативные proxy вроде `Nginx` на C обычно быстрее Java-Gateway.",
+                "source_of_confusion": "Производительность — заметная характеристика, поэтому её ошибочно считают главным критерием различия.",
+                "if_it_were_true": "Будь дело только в скорости, `Nginx` на C считался бы «Gateway», а `Spring Cloud Gateway` на JVM — «proxy», что неверно.",
+                "how_it_should_be": "Отличие в функциональности и роли; по чистой производительности нативные reverse proxy часто опережают Java-Gateway."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие преимущества и недостатки у паттерна API Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главный недостаток `API Gateway` — он замедляет разработку, потому что заставляет дублировать аутентификацию в каждом сервисе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: Gateway устраняет дублирование, централизуя аутентификацию и логирование. Его реальные минусы — SPOF, лишний hop и операционная сложность.",
+                "source_of_confusion": "Gateway добавляет инфраструктурный слой, и это путают с ростом дублирования вместо его снижения.",
+                "if_it_were_true": "Будь так, Gateway противоречил бы своей цели — DRY для cross-cutting concerns, ради которого его и вводят.",
+                "how_it_should_be": "Gateway убирает дублирование; его минусы — единая точка отказа, дополнительная задержка и усложнение эксплуатации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "У `API Gateway` нет недостатков: он бесплатно добавляет производительность и убирает любую задержку из системы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый запрос проходит через дополнительный hop, добавляя latency; Gateway — это всегда trade-off, а не чистый выигрыш.",
+                "source_of_confusion": "Преимущества Gateway очевидны, поэтому минусы (latency, SPOF, bottleneck) иногда замалчивают.",
+                "if_it_were_true": "Будь так, не было бы нужды делать Gateway stateless и горизонтально масштабируемым, чтобы снижать его риски.",
+                "how_it_should_be": "Gateway даёт упрощение клиента и централизацию, но платит за это задержкой, риском SPOF и эксплуатационной сложностью."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Преимущество `API Gateway` в том, что он может быть stateful и хранить бизнес-состояние, упрощая масштабирование.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stateful Gateway, наоборот, мешает горизонтальному масштабированию; преимущество — именно stateless-дизайн с состоянием во внешнем хранилище.",
+                "source_of_confusion": "Хранение лимитов в `Redis` рядом с Gateway создаёт иллюзию, что состояние должно жить в самом Gateway.",
+                "if_it_were_true": "Будь Gateway stateful по дизайну, нельзя было бы свободно добавлять инстансы за балансировщиком без потери состояния.",
+                "how_it_should_be": "Ключ к масштабированию — stateless Gateway; состояние (сессии, лимиты) выносится в `Redis`/`Memcached`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Преимущества: упрощение клиента (один endpoint), инкапсуляция внутренней структуры, централизация cross-cutting concerns (DRY), адаптация под клиентов (BFF), протокольная изоляция. Недостатки: SPOF, дополнительная задержка, рост операционной сложности, риск «толстого» Gateway и bottleneck.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чтобы минимизировать риски, Gateway делают stateless, горизонтально масштабируемым и держат в нём только инфраструктурную логику.",
+                "example": "Изменение внутренней топологии (разбили `Order Service` на два) не затрагивает клиентов — они видят прежний endpoint Gateway.",
+                "when_to_apply": "Соблазн положить бизнес-логику в Gateway превращает его в God Gateway, а единственный инстанс становится точкой отказа всей системы.",
+                "edge_cases": "Часть минусов смягчается дизайном: SPOF убирается несколькими инстансами за балансировщиком, а latency — близостью Gateway к сервисам и keep-alive.",
+                "related": "[[api-gateway-interview#Q5]] BFF как развитие паттерна; [[api-gateway-interview#Q27]] anti-паттерны Gateway; [[api-gateway-interview#Q1]] зачем нужен Gateway."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое паттерн BFF (Backend for Frontend)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`BFF (Backend for Frontend)` — вариация паттерна `API Gateway`, где для каждого типа клиента (web, mobile, IoT, партнёр) создаётся отдельный Gateway, заточенный под его потребности: формат данных, паттерны агрегации, требования безопасности и независимый релизный цикл.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разным клиентам нужно разное: мобильному — компактные ответы, веб — полные; команда мобильной разработки сама владеет своим BFF и релизит его независимо.",
+                "example": "Одна страница мобильного приложения может требовать данных от 5 сервисов — BFF агрегирует их в один заточенный под экран ответ.",
+                "when_to_apply": "Безопасность тоже разная: `OAuth 2.0` для web, `API key` для IoT — каждый BFF задаёт свою политику.",
+                "edge_cases": "Минус BFF — дублирование: общую логику (auth, логирование) легко размножить по нескольким BFF, поэтому её выносят в shared-библиотеку или sidecar.",
+                "related": "[[api-gateway-interview#Q1]] базовый паттерн Gateway; [[api-gateway-interview#Q24]] API composition/aggregation; [[api-gateway-interview#Q27]] один Gateway на всех как anti-паттерн."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`BFF` — это библиотека на фронтенде, которая кэширует ответы API в браузере, чтобы не ходить на backend.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BFF — это серверный Gateway на стороне backend, специфичный под тип клиента, а не клиентский кэш в браузере.",
+                "source_of_confusion": "Слово «Frontend» в названии создаёт впечатление, что код живёт во фронтенде.",
+                "if_it_were_true": "Будь BFF браузерным кэшем, он не мог бы агрегировать данные нескольких сервисов и применять серверную безопасность.",
+                "how_it_should_be": "BFF — backend-компонент «для фронтенда»; он стоит на сервере и заточен под нужды конкретного клиента."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`BFF` означает, что все клиенты обязательно используют один общий Gateway, оптимизированный под среднего пользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Идея BFF ровно обратная: для каждого типа клиента — свой Gateway, а не один универсальный «средний».",
+                "source_of_confusion": "Базовый паттерн Gateway действительно про единую точку входа, и это смешивают с BFF.",
+                "if_it_were_true": "Будь у всех один Gateway, терялся бы смысл BFF — адаптация под разные форматы и требования клиентов.",
+                "how_it_should_be": "BFF создаёт отдельный backend под каждый frontend; «один на всех» — это, наоборот, anti-паттерн при разнородных клиентах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`BFF` — это протокол передачи бинарных данных между фронтендом и Gateway вместо JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BFF — архитектурный паттерн (клиент-специфичный Gateway), а не формат или протокол сериализации данных.",
+                "source_of_confusion": "Аббревиатура звучит технически, и её принимают за название протокола вроде `Protobuf`.",
+                "if_it_were_true": "Будь BFF протоколом, он не описывал бы организацию backend-слоёв под разные клиенты.",
+                "how_it_should_be": "BFF — это паттерн архитектуры; формат данных (JSON, бинарный) выбирается внутри каждого BFF независимо."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Spring Cloud Gateway и на чём он основан?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Gateway` построен на `Spring MVC` и `Tomcat` с блокирующей сервлет-моделью, как обычное Spring Boot веб-приложение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он построен на `Spring WebFlux` и `Reactor Netty` с неблокирующим I/O, а не на сервлет-стеке `Tomcat`.",
+                "source_of_confusion": "Большинство Spring-приложений действительно на MVC/Tomcat, поэтому Gateway по аналогии относят туда же.",
+                "if_it_were_true": "Будь он на сервлетах, он не давал бы реактивную неблокирующую обработку и конфликтовал бы сам с собой.",
+                "how_it_should_be": "Gateway реактивен: `WebFlux` + `Reactor Netty`; `spring-boot-starter-web` (Tomcat/MVC) с ним как раз несовместим."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud Gateway` — реактивный API Gateway из экосистемы `Spring Cloud`, построенный на `Spring WebFlux` и `Project Reactor`, работающий на `Reactor Netty` вместо `Tomcat`, что даёт неблокирующую обработку запросов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Он нативно интегрируется со `Spring Cloud` (`Eureka`, `Consul`, `Resilience4j`, `Spring Security`), конфигурируется через YAML или Java DSL и расширяется кастомными фильтрами и предикатами.",
+                "example": "В `pom.xml` подключают `spring-cloud-starter-gateway`, но `spring-boot-starter-web` добавлять нельзя — будет конфликт сервлет- и реактивного стеков.",
+                "when_to_apply": "`Spring Cloud Gateway` несовместим со `Spring MVC`: смешивание `spring-boot-starter-web` и стартера Gateway приводит к конфликту контейнеров.",
+                "edge_cases": "Тонкость стека: реактивный код в фильтрах нельзя блокировать (`.block()`), иначе исчерпывается event-loop `Netty` под нагрузкой.",
+                "related": "[[api-gateway-interview#Q7]] Route/Predicate/Filter; [[api-gateway-interview#Q10]] типы фильтров; [[api-gateway-interview#Q25]] сравнение с Kong и Nginx."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud Gateway` — это форк `Nginx`, написанный на Lua, и не зависит от JVM или экосистемы Spring.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это Java/JVM-проект на `WebFlux` и `Reactor Netty`, а `Nginx`+Lua — это `Kong`, совсем другой продукт.",
+                "source_of_confusion": "`Kong` действительно на `Nginx`/OpenResty, и эту деталь ошибочно переносят на `Spring Cloud Gateway`.",
+                "if_it_were_true": "Будь Gateway форком `Nginx`, он не имел бы нативной интеграции со `Spring Security` и `Eureka`.",
+                "how_it_should_be": "`Spring Cloud Gateway` написан на Java для JVM; на `Nginx`+Lua построен `Kong`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Cloud Gateway` можно и нужно запускать вместе с `spring-boot-starter-web`, чтобы получить и сервлеты, и реактивность одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Совмещать `spring-boot-starter-web` и стартер Gateway нельзя — это вызывает конфликт сервлет-контейнера и реактивного стека.",
+                "source_of_confusion": "Оба стартера от Spring Boot, поэтому кажется, что они должны мирно сосуществовать.",
+                "if_it_were_true": "Будь это допустимо, в документации не было бы явного предупреждения «НЕ добавлять spring-boot-starter-web».",
+                "how_it_should_be": "Нужен только `spring-cloud-starter-gateway`; добавление web-стартера ломает приложение конфликтом стеков."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Route, Predicate и Filter в Spring Cloud Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Route` — это фильтр запроса, `Predicate` — целевой URI backend, а `Filter` — условие сопоставления запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: `Route` — единица конфигурации с id/uri/predicates/filters, `Predicate` — условие сопоставления, `Filter` — модификация запроса/ответа.",
+                "source_of_confusion": "Три термина звучат абстрактно и похоже, поэтому их определения легко переставить местами.",
+                "if_it_were_true": "Будь `Predicate` целевым URI, он не мог бы реализовывать `Predicate<ServerWebExchange>` и решать, применять ли маршрут.",
+                "how_it_should_be": "`Route` содержит uri/predicates/filters; `Predicate` — это условие матчинга; `Filter` меняет запрос/ответ."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Spring Cloud Gateway` нет понятия `Predicate`: маршрут выбирается только по совпадению `Route.id` со значением заголовка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Predicate` — центральный механизм: именно он (`Path`, `Method`, `Header` и др.) решает, подходит ли запрос под маршрут.",
+                "source_of_confusion": "Идентификатор маршрута (`id`) существует, и его ошибочно принимают за единственный критерий выбора.",
+                "if_it_were_true": "Будь так, нельзя было бы маршрутизировать по пути, методу или query — а это базовая возможность Gateway.",
+                "how_it_should_be": "Выбор маршрута делает `Predicate` по условиям запроса; `id` — лишь имя маршрута, не критерий матчинга."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Route` — основная единица конфигурации (id, uri, predicates, filters), определяющая, куда направить запрос; `Predicate` — условие (`Predicate<ServerWebExchange>`), которому должен соответствовать запрос для применения маршрута; `Filter` — компонент модификации запроса (pre) или ответа (post).",
+              "correct": true,
+              "sections": {
+                "explanation": "Запрос проходит проверку предикатов: если все совпали — применяются pre-фильтры, запрос идёт в backend, затем post-фильтры обрабатывают ответ.",
+                "example": "Маршрут `Path=/api/users/**` с фильтром `RewritePath` направляет `/api/users/5` на `user-service`, переписав путь в `/users/5`.",
+                "when_to_apply": "Предикаты в маршруте комбинируются по логическому И — запрос должен удовлетворять всем условиям сразу.",
+                "edge_cases": "Один маршрут может иметь несколько предикатов и фильтров сразу; при пересечении путей выигрывает маршрут с более высоким `order` или более специфичным предикатом.",
+                "related": "[[api-gateway-interview#Q6]] что такое Spring Cloud Gateway; [[api-gateway-interview#Q9]] встроенные предикаты; [[api-gateway-interview#Q10]] типы фильтров."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Filter` в `Spring Cloud Gateway` может только читать запрос для логирования, но не способен менять заголовки, путь или тело.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фильтры как раз модифицируют запрос/ответ: `AddRequestHeader`, `RewritePath`, `ModifyResponseBody` меняют заголовки, путь и тело.",
+                "source_of_confusion": "Логирование — частый пример фильтра, и из него делают вывод, что фильтры только читают.",
+                "if_it_were_true": "Будь фильтры read-only, не существовало бы фабрик трансформации вроде `RewritePath` и `StripPrefix`.",
+                "how_it_should_be": "Фильтры активно изменяют запрос и ответ; чтение для логов — лишь один из множества сценариев."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить маршрутизацию через YAML и Java DSL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Маршруты в `Spring Cloud Gateway` можно описывать только через YAML; программного Java DSL не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть оба способа: декларативный YAML и программный Java DSL через `RouteLocatorBuilder` и `builder.routes()`.",
+                "source_of_confusion": "YAML — самый частый пример в туториалах, поэтому Java DSL упускают из виду.",
+                "if_it_were_true": "Будь так, нельзя было бы строить маршруты с условной логикой и динамическими значениями в коде.",
+                "how_it_should_be": "Доступны и YAML, и Java DSL; DSL предпочтителен для динамической логики маршрутизации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В YAML предикаты задаются ключом `uri`, а целевой адрес backend — ключом `predicates`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `uri` — это целевой адрес backend, а `predicates` — список условий (`Path`, `Method`, `Header`).",
+                "source_of_confusion": "Оба ключа лежат рядом в YAML-маршруте, поэтому их назначение путают.",
+                "if_it_were_true": "Будь `uri` предикатом, нельзя было бы указать, куда именно проксировать совпавший запрос.",
+                "how_it_should_be": "`uri` задаёт назначение (`lb://order-service` или `http://localhost:8081`), а `predicates` — условия матчинга."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Java DSL не поддерживает фильтры и Service Discovery — для `lb://` и `CircuitBreaker` обязателен только YAML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java DSL полностью поддерживает фильтры (`.filters(...)`), `lb://` и `.circuitBreaker(...)` так же, как YAML.",
+                "source_of_confusion": "DSL выглядит лаконичнее YAML, и из этого делают вывод о его урезанности.",
+                "if_it_were_true": "Будь так, пример с `.circuitBreaker(c -> c.setFallbackUri(...))` и `.uri(\"lb://order-service\")` не компилировался бы.",
+                "how_it_should_be": "DSL равноценен YAML по возможностям: фильтры, circuit breaker и `lb://` доступны в обоих."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Маршрутизацию настраивают двумя способами: декларативно через YAML (`spring.cloud.gateway.routes` с `id`, `uri`, `predicates`, `filters`) и программно через Java DSL (`RouteLocatorBuilder.routes().route(...)`). YAML удобен для простых маршрутов и DevOps-конфигурации, Java DSL — когда нужны условия, динамические значения или кастомные фильтры.",
+              "correct": true,
+              "sections": {
+                "explanation": "В обоих подходах `uri` может быть прямым (`http://localhost:8081`) или через Service Discovery (`lb://order-service`), а фильтры вроде `RewritePath` и `CircuitBreaker` доступны одинаково.",
+                "example": "YAML-маршрут `Path=/api/users/**` + `RewritePath=/api/users/(?<segment>.*), /users/${segment}` эквивалентен `r.path(...).filters(f -> f.rewritePath(...))` в DSL.",
+                "when_to_apply": "Выбор зависит от задачи: статичные маршруты проще в YAML, а логика с ветвлениями и вычислениями читабельнее в Java DSL.",
+                "edge_cases": "Динамическая перезагрузка различается: YAML через `Spring Cloud Config` обновляется без рестарта, а Java DSL требует пересборки приложения.",
+                "related": "[[api-gateway-interview#Q7]] Route/Predicate/Filter; [[api-gateway-interview#Q9]] встроенные предикаты; [[api-gateway-interview#Q20]] lb:// и Service Discovery."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие встроенные предикаты (Route Predicates) существуют в Spring Cloud Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Gateway` предоставляет набор `RoutePredicateFactory`: `Path`, `Method`, `Header`, `Query`, `Host`, `Cookie`, `After`/`Before`/`Between` (по времени), `RemoteAddr` (по IP/CIDR), `Weight` (распределение трафика по весу) и `CloudFoundryRouteService`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Предикаты в одном маршруте комбинируются по логическому И — запрос должен удовлетворять всем сразу, например `Path=/api/v2/**` И `Method=GET` И `Header=Accept, application/json`.",
+                "example": "`Weight=group1, 80` направляет 80% трафика на маршрут, а `RemoteAddr=192.168.1.0/24` ограничивает по подсети — удобно для canary и whitelisting.",
+                "when_to_apply": "Временные предикаты используют ISO-8601 с зоной: `After=2026-01-01T00:00:00+03:00` срабатывает только для запросов после указанного момента.",
+                "edge_cases": "Предикаты `After`/`Before`/`Between` чувствительны к таймзоне и рассинхрону часов — для canary по времени их синхронизируют через NTP.",
+                "related": "[[api-gateway-interview#Q7]] что такое Predicate; [[api-gateway-interview#Q8]] настройка маршрутов; [[api-gateway-interview#Q23]] версионирование через Header и Weight."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Единственный доступный предикат — `Path`; маршрутизировать по методу, заголовку или времени `Spring Cloud Gateway` не умеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо `Path` есть `Method`, `Header`, `Query`, `Host`, `Cookie`, `After`/`Before`/`Between`, `RemoteAddr`, `Weight` и другие фабрики.",
+                "source_of_confusion": "`Path` — самый частый предикат в примерах, и его принимают за единственный.",
+                "if_it_were_true": "Будь так, нельзя было бы делать header-версионирование или canary через `Weight`, что широко применяется.",
+                "how_it_should_be": "Предикатов много: `Method`, `Header`, `Weight`, временные и др.; `Path` — лишь один из них."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Предикаты в маршруте объединяются по логическому ИЛИ: запрос подходит, если выполнено хотя бы одно условие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Предикаты комбинируются по логическому И — должны выполняться все условия маршрута одновременно.",
+                "source_of_confusion": "В других системах правил встречается ИЛИ-семантика, и её переносят на Gateway по инерции.",
+                "if_it_were_true": "Будь это ИЛИ, маршрут `Path=/api/**` + `Method=GET` ловил бы и POST-запросы, чего не происходит.",
+                "how_it_should_be": "Все предикаты маршрута соединяются через И; для альтернатив создают отдельные маршруты."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Weight` — это предикат для ограничения размера тела запроса в байтах, а не для распределения трафика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Weight` распределяет трафик по весам между маршрутами (canary); ограничение размера тела делает фильтр `RequestSize`.",
+                "source_of_confusion": "Слово «weight» ассоциируется с «весом/размером», поэтому его путают с лимитом тела.",
+                "if_it_were_true": "Будь так, `Weight=group1, 80` задавал бы 80 байт, а не 80% трафика, что бессмысленно для canary.",
+                "how_it_should_be": "`Weight` управляет долей трафика; за размер запроса отвечает фильтр `RequestSize`, а не предикат."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы фильтров существуют в Spring Cloud Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все фильтры в `Spring Cloud Gateway` — это исключительно pre-фильтры; обработать ответ после backend нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фильтры бывают и pre (до backend), и post (после ответа); один фильтр может работать в обеих фазах.",
+                "source_of_confusion": "Аутентификация (pre) — самый известный сценарий, поэтому post-фазу упускают.",
+                "if_it_were_true": "Будь только pre-фаза, нельзя было бы модифицировать ответ через `ModifyResponseBody` или логировать статус.",
+                "how_it_should_be": "Есть pre- и post-фазы; код до `chain.filter()` — pre, код в `then()` — post."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Фильтры классифицируются по области (`GatewayFilter` — на конкретный маршрут, `GlobalFilter` — на все маршруты) и по фазе (pre — до отправки в backend, post — после получения ответа). Встроенные фабрики: заголовки (`AddRequestHeader`, `SetResponseHeader`), пути (`RewritePath`, `StripPrefix`, `PrefixPath`), параметры, отказоустойчивость (`CircuitBreaker`, `Retry`, `RequestRateLimiter`), `RequestSize`, `RedirectTo`, `ModifyRequestBody`/`ModifyResponseBody`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pre-фильтры делают аутентификацию, добавление заголовков и rate limiting; post-фильтры — модификацию ответа и логирование.",
+                "example": "`AddRequestHeader=X-Tenant-Id, default` (pre) добавляет заголовок к запросу, а `AddResponseHeader` (post) — к ответу клиенту.",
+                "when_to_apply": "Один фильтр способен работать в обеих фазах: код до `chain.filter()` исполняется как pre, в `then()`/`doFinally()` — как post.",
+                "edge_cases": "Один фильтр способен совмещать pre- и post-фазы, но `ModifyResponseBody` буферизует ответ целиком, что опасно для больших или стриминговых тел.",
+                "related": "[[api-gateway-interview#Q11]] кастомный GatewayFilter; [[api-gateway-interview#Q12]] GlobalFilter; [[api-gateway-interview#Q14]] фильтры трансформации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`GatewayFilter` применяется ко всем маршрутам автоматически, а `GlobalFilter` — только к одному явно указанному маршруту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `GlobalFilter` действует на все маршруты, а `GatewayFilter` привязывается к конкретному маршруту.",
+                "source_of_confusion": "Названия похожи, и их области применения легко перепутать местами.",
+                "if_it_were_true": "Будь так, незачем было бы регистрировать `GatewayFilter` в каждом маршруте отдельно.",
+                "how_it_should_be": "`GlobalFilter` — глобально на все маршруты; `GatewayFilter` — локально на конкретный маршрут."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Встроенных фабрик трансформации нет: чтобы добавить заголовок или переписать путь, всегда нужен кастомный Java-фильтр.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть множество встроенных фабрик: `AddRequestHeader`, `RewritePath`, `StripPrefix`, `CircuitBreaker`, `Retry` и десятки других из коробки.",
+                "source_of_confusion": "Кастомные фильтры действительно пишут часто, и из этого делают вывод об отсутствии встроенных.",
+                "if_it_were_true": "Будь так, YAML-примеры с `AddRequestHeader` и `RewritePath` не работали бы без кода.",
+                "how_it_should_be": "Большинство типовых трансформаций покрыты встроенными фабриками; кастом нужен лишь для специфичной логики."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как написать кастомный GatewayFilter?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Кастомный `GatewayFilter` создаётся реализацией интерфейса `GlobalFilter` и автоматически применяется ко всем маршрутам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомный `GatewayFilter` пишут через наследование от `AbstractGatewayFilterFactory<Config>` и подключают к конкретным маршрутам, а `GlobalFilter` — это другой механизм.",
+                "source_of_confusion": "Оба способа создают фильтры, поэтому их механизмы путают между собой.",
+                "if_it_were_true": "Будь так, фильтр нельзя было бы параметризовать через `Config` и подключать к выбранным маршрутам в YAML.",
+                "how_it_should_be": "`GatewayFilter` делают через `AbstractGatewayFilterFactory`; реализация `GlobalFilter` даёт глобальный фильтр на все маршруты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Фабрика фильтра обязана возвращать только pre-логику; выполнить код после получения ответа от backend невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод `apply()` возвращает лямбду `(exchange, chain)`, где код до `chain.filter()` — pre, а `chain.filter(exchange).then(Mono.fromRunnable(...))` — post-логика.",
+                "source_of_confusion": "Pre-часть нагляднее, поэтому post-фазу через `then()` упускают.",
+                "if_it_were_true": "Будь так, нельзя было бы измерить длительность запроса, как в примере с `RequestTiming`, где duration считается после ответа.",
+                "how_it_should_be": "Фабрика поддерживает обе фазы: `then(Mono.fromRunnable(...))` выполняется уже после ответа backend."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Кастомный фильтр создаётся через наследование от `AbstractGatewayFilterFactory<Config>`: в конструкторе вызывают `super(Config.class)`, а метод `apply(Config)` возвращает лямбду `(exchange, chain) -> ...`. Вложенный класс `Config` хранит параметры (например `thresholdMs`), задаваемые в YAML через `name` + `args`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Код до `chain.filter(exchange)` — это pre-фаза, а `chain.filter(exchange).then(Mono.fromRunnable(...))` — post-фаза, поэтому один фильтр может быть и pre-, и post-фильтром.",
+                "example": "Фильтр `RequestTiming` замеряет `System.currentTimeMillis()` до запроса и логирует duration в `then()` после ответа, предупреждая о медленных вызовах.",
+                "when_to_apply": "Имя фабрики выводится из имени класса: `RequestTimingGatewayFilterFactory` подключается в YAML как `name: RequestTiming` с `args`.",
+                "edge_cases": "Имя фабрики выводится из имени класса по соглашению (суффикс `GatewayFilterFactory` отбрасывается), и рассогласование имени ломает резолвинг фильтра в YAML.",
+                "related": "[[api-gateway-interview#Q10]] типы фильтров; [[api-gateway-interview#Q12]] GlobalFilter vs GatewayFilter; [[api-gateway-interview#Q13]] порядок выполнения фильтров."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Параметры кастомного фильтра нельзя задавать в YAML — все значения жёстко зашиваются в код фильтра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметры выносятся в класс `Config` и задаются в YAML через `args` (`logEnabled`, `thresholdMs`), что делает фильтр переиспользуемым.",
+                "source_of_confusion": "Простые фильтры иногда пишут с хардкодом, и это обобщают на все кастомные фильтры.",
+                "if_it_were_true": "Будь так, незачем было бы объявлять `Config` с полями и передавать его в `apply(Config)`.",
+                "how_it_should_be": "Через `Config` + `args` фильтр конфигурируется в YAML без перекомпиляции кода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое GlobalFilter и чем он отличается от GatewayFilter?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`GlobalFilter` нужно явно перечислять в каждом маршруте в YAML, иначе он не сработает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GlobalFilter` применяется ко всем маршрутам автоматически — достаточно объявить его как `@Component`, без перечисления в маршрутах.",
+                "source_of_confusion": "`GatewayFilter` действительно указывают в маршруте, и это правило ошибочно переносят на `GlobalFilter`.",
+                "if_it_were_true": "Будь так, терялось бы главное преимущество `GlobalFilter` — единое применение ко всему трафику без дублирования.",
+                "how_it_should_be": "`GlobalFilter` подхватывается автоматически через `@Component`; в маршрутах указывают только `GatewayFilter`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`GlobalFilter` не может управлять порядком выполнения — он всегда срабатывает последним в цепочке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GlobalFilter` реализует `Ordered` и задаёт `getOrder()`; чем ниже число, тем раньше он выполняется в цепочке.",
+                "source_of_confusion": "Кажется, что глобальные фильтры неуправляемы, раз применяются автоматически.",
+                "if_it_were_true": "Будь так, аутентификационный `GlobalFilter` нельзя было бы поставить одним из первых через `getOrder() = -100`.",
+                "how_it_should_be": "Порядок управляется через `Ordered.getOrder()`; глобальные и маршрутные фильтры сортируются в общей цепочке."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`GlobalFilter` создаётся через `AbstractGatewayFilterFactory`, а `GatewayFilter` — через реализацию интерфейса `GlobalFilter`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `GlobalFilter` — это реализация интерфейса `GlobalFilter`, а кастомный `GatewayFilter` — наследник `AbstractGatewayFilterFactory`.",
+                "source_of_confusion": "Два механизма создания фильтров легко перепутать местами по названиям.",
+                "if_it_were_true": "Будь так, пример `class RequestLoggingGlobalFilter implements GlobalFilter, Ordered` не компилировался бы.",
+                "how_it_should_be": "`GlobalFilter` реализуют как интерфейс; `GatewayFilter`-фабрику наследуют от `AbstractGatewayFilterFactory`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`GlobalFilter` автоматически применяется ко всем маршрутам без явного указания (достаточно `@Component`), в отличие от `GatewayFilter`, привязанного к конкретному маршруту. `GlobalFilter` реализуют как интерфейс (`implements GlobalFilter, Ordered`), а кастомный `GatewayFilter` создают через `AbstractGatewayFilterFactory`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Типичное применение `GlobalFilter` — логирование, аутентификация, трейсинг (то, что нужно для всего трафика), а `GatewayFilter` — трансформация и retry для отдельных маршрутов.",
+                "example": "`RequestLoggingGlobalFilter` добавляет `X-Request-Id` ко всем запросам и логирует метод/путь/источник без правки каждого маршрута.",
+                "when_to_apply": "Порядок задаётся через `getOrder()`: `return -1` ставит фильтр раньше; глобальные и маршрутные фильтры объединяются в единую отсортированную цепочку.",
+                "edge_cases": "Несколько `GlobalFilter` с одинаковым `order` выполняются в недетерминированном порядке — при зависимостях между ними order задают явно и различным.",
+                "related": "[[api-gateway-interview#Q10]] типы фильтров; [[api-gateway-interview#Q11]] кастомный GatewayFilter; [[api-gateway-interview#Q13]] порядок выполнения фильтров."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает цепочка фильтров и порядок их выполнения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Порядок контролируется интерфейсом `Ordered`: pre-фильтры выполняются по возрастанию `order` (от меньшего к большему), post-фильтры — в обратном порядке (от большего к меньшему). `GlobalFilter` и `GatewayFilter` объединяются в единую цепочку и сортируются вместе; без явного `order` фильтры идут в порядке объявления.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это даёт симметричную «матрёшку»: фильтр с самым низким order оборачивает остальные — первым входит в pre-фазе и последним выходит в post-фазе.",
+                "example": "Global pre-filter с `order=-2` отработает раньше route pre-filter с `order=1`, а в post-фазе их порядок развернётся.",
+                "when_to_apply": "Чем ниже число `order`, тем выше приоритет; `Ordered.LOWEST_PRECEDENCE` ставит фильтр в самый конец цепочки.",
+                "edge_cases": "Краевой случай — фильтры, не вызвавшие `chain.filter()` (например, ранний `401`): их post-часть и последующие фильтры не выполняются вовсе.",
+                "related": "[[api-gateway-interview#Q11]] pre/post в кастомном фильтре; [[api-gateway-interview#Q12]] getOrder в GlobalFilter; [[api-gateway-interview#Q10]] фазы фильтров."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Post-фильтры выполняются в том же порядке, что и pre-фильтры — оба прохода идут по возрастанию `order`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Post-фильтры идут в обратном порядке (по убыванию order): фильтр, отработавший в pre первым, в post отработает последним.",
+                "source_of_confusion": "Кажется логичным, что порядок одинаков в обе стороны, но цепочка работает как стек.",
+                "if_it_were_true": "Будь так, обёрточная семантика «матрёшки» сломалась бы и нельзя было бы корректно закрывать ресурсы в обратном порядке.",
+                "how_it_should_be": "Pre — по возрастанию order, post — по убыванию; это зеркальный, а не одинаковый порядок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`GlobalFilter` и `GatewayFilter` живут в двух раздельных цепочках: сначала отрабатывают все глобальные, потом все маршрутные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба типа объединяются в единую цепочку и сортируются вместе по `order`, а не выполняются раздельными группами.",
+                "source_of_confusion": "Разные названия наводят на мысль о двух независимых конвейерах.",
+                "if_it_were_true": "Будь так, нельзя было бы вставить route-фильтр между двумя global-фильтрами по значению order.",
+                "how_it_should_be": "Все фильтры сливаются в одну отсортированную цепочку; разделения на «сначала global, потом gateway» нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Порядок фильтров задать невозможно — `Spring Cloud Gateway` всегда выполняет их в случайном порядке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок детерминирован и управляется через `Ordered`/`getOrder()`, а без явного order — порядком объявления.",
+                "source_of_confusion": "При нескольких фильтрах порядок неочевиден, и его принимают за случайный.",
+                "if_it_were_true": "Будь порядок случайным, аутентификацию нельзя было бы гарантированно ставить перед бизнес-фильтрами.",
+                "how_it_should_be": "Порядок строго определяется значением `order`; случайности нет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие встроенные фильтры для трансформации запросов и ответов существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для трансформации запроса есть только `AddRequestHeader`; удалить заголовок, переписать путь или добавить query-параметр встроенными фильтрами нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть набор фильтров: `RemoveRequestHeader`, `RewritePath`, `StripPrefix`, `AddRequestParameter`, `RequestSize` и др. — не только добавление заголовка.",
+                "source_of_confusion": "`AddRequestHeader` — частый пример, и его принимают за единственную трансформацию.",
+                "if_it_were_true": "Будь так, нельзя было бы переписать путь `RewritePath` или срезать префикс `StripPrefix` декларативно.",
+                "how_it_should_be": "Доступно много фильтров трансформации запроса; `AddRequestHeader` — лишь один из них."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для запросов есть фильтры `AddRequestHeader`, `RemoveRequestHeader`, `RewritePath` (regex-перезапись), `StripPrefix` (срезать N сегментов), `AddRequestParameter`, `RequestSize` (лимит тела). Для ответов программно используют `modifyResponseBody(String.class, String.class, (exchange, body) -> ...)`, оборачивая тело, например в envelope.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это позволяет адаптировать внешний контракт под внутренний без правки backend: срезать `/api`, добавить тенант, обернуть ответ.",
+                "example": "`RewritePath=/api/(?<segment>.*), /internal/${segment}` плюс `StripPrefix=1` превращает внешний `/api/data` во внутренний путь сервиса.",
+                "when_to_apply": "`modifyResponseBody` оборачивает ответ: `Mono.just(\"{\\\"status\\\":\\\"ok\\\",\\\"data\\\":\" + body + \"}\")` добавляет общий envelope.",
+                "edge_cases": "`ModifyResponseBody` материализует всё тело в память, поэтому для крупных ответов или стриминга он неприменим — там оставляют трансформацию backend.",
+                "related": "[[api-gateway-interview#Q10]] типы фильтров; [[api-gateway-interview#Q28]] request/response трансформация; [[api-gateway-interview#Q16]] DedupeResponseHeader."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`StripPrefix=1` добавляет один сегмент в начало пути, а `PrefixPath` — наоборот, удаляет сегмент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `StripPrefix=1` срезает один сегмент пути, а `PrefixPath` добавляет префикс к пути.",
+                "source_of_confusion": "Названия близки по смыслу «префикс пути», поэтому их действия путают местами.",
+                "if_it_were_true": "Будь так, `StripPrefix=1` для `/api/users` не давал бы внутренний `/users`, а удлинял бы путь.",
+                "how_it_should_be": "`StripPrefix` убирает сегменты, `PrefixPath` добавляет их — это противоположные операции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Трансформировать тело ответа в `Spring Cloud Gateway` нельзя — модифицируются только заголовки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тело ответа меняется программно через `modifyResponseBody(...)`, например для обёртки в envelope или скрытия внутренних полей.",
+                "source_of_confusion": "Декларативные фильтры действительно в основном про заголовки, и это распространяют на тело.",
+                "if_it_were_true": "Будь так, не существовало бы `modifyResponseBody` и `ResponseSanitizationFilter` для очистки внутренних полей.",
+                "how_it_should_be": "Тело ответа трансформируется через `modifyResponseBody`/декоратор ответа, не только заголовки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать аутентификацию и авторизацию через API Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Аутентификацию нужно делать в каждом backend-сервисе отдельно; Gateway не должен проверять токены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуемый подход — Gateway как точка аутентификации: он проверяет токен один раз и передаёт инфо о пользователе downstream через заголовки.",
+                "source_of_confusion": "Defense-in-depth подразумевает проверки и в сервисах, что доводят до «только в сервисах».",
+                "if_it_were_true": "Будь так, каждый сервис дублировал бы валидацию `JWT`, что противоречит идее централизации в Gateway.",
+                "how_it_should_be": "Gateway централизованно валидирует токен и прокидывает `X-User-Id`/`X-User-Roles`; сервисы доверяют этим заголовкам."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Единственный способ — кастомный `GlobalFilter` с ручным разбором `JWT`; `Spring Security` для Gateway не подходит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть два подхода: кастомный `GlobalFilter` ИЛИ `Spring Security` с `oauth2ResourceServer().jwt()` через `@EnableWebFluxSecurity`.",
+                "source_of_confusion": "Кастомный фильтр нагляднее в примерах, поэтому второй путь через Security упускают.",
+                "if_it_were_true": "Будь так, не существовало бы реактивного `SecurityWebFilterChain` с `authorizeExchange` и `pathMatchers`.",
+                "how_it_should_be": "`Spring Security` отлично работает с Gateway как OAuth2 Resource Server; кастомный фильтр — лишь альтернатива."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Есть два подхода. Подход 1 (рекомендуемый): Gateway как точка аутентификации — `GlobalFilter` проверяет `Bearer`-токен через `JwtDecoder`, при провале отдаёт `401`, а при успехе прокидывает `X-User-Id`/`X-User-Roles` downstream. Подход 2: `Spring Security` с `@EnableWebFluxSecurity` и `oauth2ResourceServer().jwt()`, где `authorizeExchange` задаёт правила (`permitAll`, `hasRole`, `authenticated`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Централизованная проверка токена в Gateway избавляет сервисы от дублирования: они доверяют заголовкам, проставленным Gateway после валидации.",
+                "example": "Фильтр читает `Authorization`, проверяет префикс `Bearer `, декодирует `jwt.getSubject()` и добавляет роли из `getClaimAsStringList(\"roles\")` в заголовки запроса.",
+                "when_to_apply": "В реактивном Security важно отключить CSRF (`csrf(...::disable)`) для stateless-API и аккуратно задать `pathMatchers` для public/admin путей.",
+                "edge_cases": "Если downstream доверяет заголовкам `X-User-Id`, их нужно зачищать на входе Gateway — иначе клиент сам подделает identity, минуя проверку токена.",
+                "related": "[[api-gateway-interview#Q17]] OAuth 2.0 Token Relay; [[api-gateway-interview#Q2]] auth как обязанность Gateway; [[api-gateway-interview#Q16]] CORS на Gateway."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При проверке `JWT` в `GlobalFilter` нельзя передать данные пользователя downstream — заголовки запроса в Gateway неизменяемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запрос мутируется через `exchange.getRequest().mutate().header(...).build()`, и Gateway прокидывает `X-User-Id`/`X-User-Roles` в backend.",
+                "source_of_confusion": "Реактивные объекты часто иммутабельны, и это обобщают на невозможность мутации запроса.",
+                "if_it_were_true": "Будь так, downstream-сервисы не знали бы, кто аутентифицирован, и проверка теряла бы смысл.",
+                "how_it_should_be": "Заголовки добавляют через `mutate()`; именно так Gateway сообщает сервисам identity пользователя."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить CORS в Spring Cloud Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CORS` в `Spring Cloud Gateway` настраивается только в коде через `CorsWebFilter`; декларативного YAML-способа нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть оба способа: глобально через `spring.cloud.gateway.globalcors.cors-configurations` в YAML и программно через `CorsWebFilter`.",
+                "source_of_confusion": "Программная конфигурация нагляднее в примерах, поэтому YAML-вариант упускают.",
+                "if_it_were_true": "Будь так, не было бы секции `globalcors` с `allowedOrigins`/`allowedMethods` в документации.",
+                "how_it_should_be": "CORS задают и в YAML (`globalcors`), и программно (`CorsWebFilter`) — оба способа поддержаны."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`allowCredentials: true` можно безопасно сочетать с `allowedOrigins: \"*\"` — это стандартная рекомендуемая конфигурация.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Спецификация CORS запрещает `allowCredentials: true` вместе с wildcard origin; нужно перечислять конкретные origins.",
+                "source_of_confusion": "Wildcard кажется удобным, и его ошибочно совмещают с credentials.",
+                "if_it_were_true": "Будь так, браузер не блокировал бы такие ответы, но он как раз отклоняет `*` при `allowCredentials`.",
+                "how_it_should_be": "При `allowCredentials: true` указывают явные origins (`https://frontend.example.com`), а не `*`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Если CORS настроен и на Gateway, и на backend, заголовки `Access-Control-*` просто перезапишут друг друга без проблем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они дублируются, и браузер отвергает ответ с несколькими значениями; решает фильтр `DedupeResponseHeader`.",
+                "source_of_confusion": "Кажется, что один заголовок всегда переопределяет другой, но они складываются.",
+                "if_it_were_true": "Будь так, не понадобился бы `DedupeResponseHeader=... RETAIN_UNIQUE` для устранения дублей.",
+                "how_it_should_be": "Дублирование CORS-заголовков ломает ответ; `DedupeResponseHeader` с `RETAIN_UNIQUE` оставляет одно значение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CORS настраивают глобально через YAML (`spring.cloud.gateway.globalcors.cors-configurations` с `allowedOrigins`, `allowedMethods`, `allowedHeaders`, `exposedHeaders`, `allowCredentials`, `maxAge`) или программно через bean `CorsWebFilter` с `UrlBasedCorsConfigurationSource`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Важный нюанс: если CORS включён и на Gateway, и на backend, заголовки `Access-Control-*` дублируются — это лечит фильтр `DedupeResponseHeader=... RETAIN_UNIQUE`.",
+                "example": "В YAML под ключом `'[/**]'` задают список доверенных origins, набор методов и `maxAge: 3600` для кэширования preflight-ответов.",
+                "when_to_apply": "При `allowCredentials: true` нельзя использовать wildcard origin — браузер отвергнет такой ответ, нужны явные домены.",
+                "edge_cases": "При `allowCredentials: true` wildcard origin запрещён спецификацией; а дубли CORS-заголовков от Gateway и backend лечит `DedupeResponseHeader ... RETAIN_UNIQUE`.",
+                "related": "[[api-gateway-interview#Q15]] аутентификация на Gateway; [[api-gateway-interview#Q14]] трансформация заголовков; [[api-gateway-interview#Q17]] OAuth Token Relay."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать OAuth 2.0 Token Relay через Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Token Relay` — паттерн, при котором `API Gateway` выступает `OAuth 2.0 Client`: он получает access token от Authorization Server (например `Keycloak`) и передаёт (relay) его downstream-сервисам. Фильтр `TokenRelay=` автоматически подставляет `Authorization: Bearer <token>` в запросы к backend.",
+              "correct": true,
+              "sections": {
+                "explanation": "Gateway проводит пользователя через authorization code flow, обменивает код на токен и переиспользует этот токен при проксировании к защищённым сервисам.",
+                "example": "В YAML настраивают `spring.security.oauth2.client` (provider `keycloak`, `client-id`, `client-secret`) и добавляют к маршруту фильтр `TokenRelay=`.",
+                "when_to_apply": "Без `TokenRelay` downstream-сервис (resource server) не получил бы токен и отверг бы запрос как неаутентифицированный.",
+                "edge_cases": "Истечение и refresh токена — отдельная забота: Gateway должен обновлять access token по refresh token, иначе downstream начнёт получать просроченные токены.",
+                "related": "[[api-gateway-interview#Q15]] аутентификация/авторизация на Gateway; [[api-gateway-interview#Q16]] CORS; [[api-gateway-interview#Q2]] auth как обязанность Gateway."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Token Relay` означает, что Gateway генерирует собственные `JWT`-токены для каждого пользователя без участия Authorization Server.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway не выпускает токены сам — он получает их от Authorization Server (`Keycloak`) и лишь ретранслирует downstream.",
+                "source_of_confusion": "Раз Gateway работает с токенами, кажется, что он их и создаёт.",
+                "if_it_were_true": "Будь так, не нужен был бы `issuer-uri` и обмен authorization code на токен у внешнего AS.",
+                "how_it_should_be": "Токены выпускает Authorization Server; Gateway как OAuth2 Client получает и передаёт их дальше."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для `Token Relay` Gateway должен хранить пароли пользователей и сам проверять их при каждом запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway не работает с паролями: в OAuth2 он оперирует токенами, а проверку credentials делает Authorization Server.",
+                "source_of_confusion": "Аутентификация ассоциируется с паролями, и это переносят на токен-флоу.",
+                "if_it_were_true": "Будь так, нарушался бы сам смысл OAuth 2.0 — делегирование аутентификации внешнему провайдеру.",
+                "how_it_should_be": "Gateway хранит/ретранслирует токены, а не пароли; пароли проверяет `Keycloak` или другой AS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Фильтр `TokenRelay` нужно реализовывать вручную как кастомный `GlobalFilter` — встроенного фильтра не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TokenRelay` — встроенный фильтр `Spring Cloud Gateway`; достаточно добавить `TokenRelay=` к маршруту в YAML.",
+                "source_of_confusion": "Многие фильтры пишут вручную, и это обобщают на `TokenRelay`.",
+                "if_it_were_true": "Будь так, в YAML-примере не было бы декларативного `filters: - TokenRelay=`.",
+                "how_it_should_be": "`TokenRelay` поставляется из коробки и подключается декларативно, без написания кода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать Rate Limiting в API Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`RequestRateLimiter` в `Spring Cloud Gateway` хранит счётчики в памяти инстанса и не требует внешнего хранилища.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенный `RequestRateLimiter` работает на `Redis` с алгоритмом `Token Bucket`, чтобы лимиты были общими для всех инстансов Gateway.",
+                "source_of_confusion": "In-memory лимитеры существуют в других библиотеках, и это переносят на Gateway.",
+                "if_it_were_true": "Будь лимиты в памяти, при горизонтальном масштабировании каждый инстанс считал бы свой лимит, и общий порог не соблюдался бы.",
+                "how_it_should_be": "Состояние ведра хранится в `Redis` (атомарный Lua-скрипт), чтобы лимит был единым для кластера."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud Gateway` даёт встроенный `RequestRateLimiter` на `Redis` с алгоритмом `Token Bucket`: настраивают `replenishRate` (запросов/сек), `burstCapacity` (всплеск) и `requestedTokens`. `KeyResolver` определяет ключ лимита — по пользователю (`X-User-Id`), по IP или по `X-Api-Key`. При превышении возвращается `429 Too Many Requests`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Состояние ведра хранится в `Redis` через атомарный Lua-скрипт, поэтому лимит общий для всех инстансов Gateway за балансировщиком.",
+                "example": "`userKeyResolver` берёт `X-User-Id` из заголовка (проставленного auth-фильтром) с дефолтом `anonymous`, разделяя лимиты по пользователям.",
+                "when_to_apply": "В ответе `429` приходят заголовки `X-RateLimit-Remaining`, `X-RateLimit-Replenish-Rate`, `X-RateLimit-Burst-Capacity`, по которым клиент видит остаток и параметры лимита.",
+                "edge_cases": "Лимит общий для кластера только при хранении в `Redis`; падение `Redis` требует политики fail-open или fail-closed — иначе лимитер либо пропустит всё, либо заблокирует всех.",
+                "related": "[[api-gateway-interview#Q31]] алгоритмы Token Bucket/Sliding Window; [[api-gateway-interview#Q19]] circuit breaker; [[api-gateway-interview#Q2]] rate limiting как обязанность Gateway."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ключ лимита `Spring Cloud Gateway` определяет автоматически по IP; задать лимит по пользователю или API key невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключ задаёт `KeyResolver`: можно считать лимиты по `X-User-Id`, по IP или по `X-Api-Key` — что угодно из exchange.",
+                "source_of_confusion": "Лимит по IP — частый дефолт, и его принимают за единственный вариант.",
+                "if_it_were_true": "Будь так, нельзя было бы реализовать разные тарифные планы для разных пользователей или API-ключей.",
+                "how_it_should_be": "`KeyResolver` гибко выбирает ключ; по пользователю и API key лимиты вполне настраиваются."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При превышении лимита Gateway возвращает `503 Service Unavailable`, как при недоступности backend.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При превышении rate limit возвращается именно `429 Too Many Requests`, а не `503`.",
+                "source_of_confusion": "Оба кода сигнализируют о проблемах нагрузки, поэтому их путают.",
+                "if_it_were_true": "Будь это `503`, клиент не отличал бы превышение лимита от реального падения сервиса.",
+                "how_it_should_be": "Превышение лимита — это `429 Too Many Requests`; `503` означает недоступность backend."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как интегрировать Circuit Breaker с API Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Gateway` имеет собственную встроенную реализацию Circuit Breaker и не использует сторонние библиотеки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway интегрируется с `Resilience4j` через фильтр `CircuitBreaker`; собственной реализации CB у него нет.",
+                "source_of_confusion": "Фильтр называется просто `CircuitBreaker`, и это создаёт впечатление встроенного движка.",
+                "if_it_were_true": "Будь так, не нужна была бы секция `resilience4j.circuitbreaker.instances` в конфигурации.",
+                "how_it_should_be": "CB реализует `Resilience4j`; Gateway лишь предоставляет фильтр-обёртку `CircuitBreaker`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Фильтр `CircuitBreaker` не поддерживает fallback — при размыкании цепи запрос просто завершается ошибкой `500`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фильтр задаёт `fallbackUri: forward:/fallback/orders`, и при OPEN-состоянии запрос перенаправляется на fallback-контроллер.",
+                "source_of_confusion": "CB ассоциируется с отказом, поэтому fallback-механизм упускают.",
+                "if_it_were_true": "Будь так, не было бы `FallbackController` с `@GetMapping(\"/orders\")`, возвращающего деградированный ответ.",
+                "how_it_should_be": "`fallbackUri` форвардит на локальный контроллер, отдающий graceful-ответ вместо ошибки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud Gateway` интегрируется с `Resilience4j` через фильтр `CircuitBreaker` с `name` и `fallbackUri: forward:/fallback/orders`. Параметры CB задают в `resilience4j.circuitbreaker.instances` (`slidingWindowSize`, `failureRateThreshold`, `waitDurationInOpenState`, `permittedNumberOfCallsInHalfOpenState`), а таймаут — в `timelimiter`. Часто комбинируют с фильтром `Retry`.",
+              "correct": true,
+              "sections": {
+                "explanation": "При размыкании цепи (OPEN) запросы не идут в нездоровый backend, а форвардятся на `FallbackController`, отдающий деградированный ответ.",
+                "example": "`failureRateThreshold: 50` + `slidingWindowSize: 10` размыкают цепь при 50% ошибок из 10 вызовов; через `waitDurationInOpenState: 10s` CB переходит в HALF_OPEN.",
+                "when_to_apply": "Fallback `ordersFallback()` возвращает `Map.of(\"status\", \"SERVICE_UNAVAILABLE\", ...)` вместо проброса ошибки клиенту.",
+                "edge_cases": "Тонкость — взаимодействие с `Retry`: Resilience4j не даёт ретраить поверх открытого CB, а `timelimiter` должен быть согласован с `response-timeout` Gateway.",
+                "related": "[[api-gateway-interview#Q38]] retry + circuit breaker детально; [[api-gateway-interview#Q18]] rate limiting; [[api-gateway-interview#Q2]] circuit breaker как обязанность Gateway."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Состояния Circuit Breaker — только CLOSED и OPEN; промежуточного HALF_OPEN для проверки восстановления нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У CB три состояния: CLOSED → OPEN → HALF_OPEN, где `permittedNumberOfCallsInHalfOpenState` проверяет, восстановился ли сервис.",
+                "source_of_confusion": "Бинарная аналогия «вкл/выкл» заставляет забыть про пробное состояние.",
+                "if_it_were_true": "Будь только два состояния, CB не мог бы аккуратно проверять backend пробными запросами перед полным закрытием.",
+                "how_it_should_be": "Состояний три; HALF_OPEN пропускает ограниченное число пробных вызовов перед возвратом в CLOSED."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как API Gateway интегрируется с Service Discovery?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для интеграции с `Eureka` адреса всех инстансов сервисов прописывают в Gateway вручную в YAML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway использует префикс `lb://service-name`, а реальные адреса инстансов берёт из реестра (`Eureka`/`Consul`) динамически.",
+                "source_of_confusion": "Прямые `http://host:port` встречаются в примерах, и их обобщают на Service Discovery.",
+                "if_it_were_true": "Будь адреса захардкожены, терялся бы смысл реестра — динамическое появление/исчезновение инстансов.",
+                "how_it_should_be": "`uri: lb://user-service` резолвится через реестр; ручной список адресов не нужен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Опция `discovery.locator.enabled=true` рекомендуется в production, так как безопасно экспонирует все сервисы наружу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автогенерация маршрутов удобна для разработки, но в production предпочтительны явные маршруты — чтобы контролировать, какие сервисы видны снаружи.",
+                "source_of_confusion": "Удобство автолокатора заставляет считать его production-практикой.",
+                "if_it_were_true": "Будь это безопасно, не было бы рекомендации явно объявлять маршруты в prod для контроля экспозиции.",
+                "how_it_should_be": "В prod маршруты объявляют явно; `discovery.locator` уместен в основном для dev."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Префикс `lb://` отключает балансировку: запрос всегда уходит на первый инстанс сервиса из реестра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`lb://` как раз включает клиентскую балансировку (`Spring Cloud LoadBalancer`), распределяя запросы между инстансами (round-robin).",
+                "source_of_confusion": "Буквы «lb» иногда трактуют наоборот — как «прямой адрес», а не «load-balanced».",
+                "if_it_were_true": "Будь так, три инстанса `user-service` не получали бы трафик по round-robin, как на схеме.",
+                "how_it_should_be": "`lb://` означает load-balanced: запросы распределяются между всеми инстансами сервиса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Cloud Gateway` автоматически интегрируется с `Eureka`/`Consul`/`Kubernetes Service Discovery` через префикс `lb://service-name`: `Spring Cloud LoadBalancer` резолвит имя в живые инстансы из реестра и балансирует трафик. Опция `discovery.locator.enabled=true` автоматически генерирует маршруты `/SERVICE-NAME/**→ lb://SERVICE-NAME` для всех сервисов реестра.",
+              "correct": true,
+              "sections": {
+                "explanation": "Автогенерация маршрутов удобна для разработки, но в production лучше объявлять маршруты явно, чтобы контролировать, какие сервисы экспонируются наружу.",
+                "example": "`uri: lb://user-service` направляет запрос на один из инстансов `user-service:8081/8082/8083` по round-robin, а Gateway периодически обновляет список из `Eureka`.",
+                "when_to_apply": "При `lower-case-service-id: true` имена сервисов приводятся к нижнему регистру; без явных маршрутов автолокатор может случайно открыть наружу внутренний сервис.",
+                "edge_cases": "Автолокатор (`discovery.locator.enabled=true`) удобен в dev, но в prod может случайно экспонировать внутренний сервис наружу — там маршруты объявляют явно.",
+                "related": "[[api-gateway-interview#Q21]] стратегии балансировки; [[api-gateway-interview#Q8]] lb:// в маршрутах; [[api-gateway-interview#Q22]] lb:ws:// для WebSocket."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать балансировку нагрузки через Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Gateway` использует `Spring Cloud LoadBalancer` (заменил `Ribbon`) для клиентской балансировки. По умолчанию работает `RoundRobinLoadBalancer` (циклическое распределение); доступен `RandomLoadBalancer` (случайный инстанс) и кастомная стратегия через реализацию `ReactorServiceInstanceLoadBalancer`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стратегию настраивают на конкретный сервис через `@LoadBalancerClient(name = \"...\", configuration = ...)`, оставляя остальным дефолтный round-robin.",
+                "example": "Bean `RandomLoadBalancer` для `heavy-service` распределяет запросы случайно, тогда как прочие сервисы используют round-robin.",
+                "when_to_apply": "Балансировка работает в паре с реестром: список инстансов берётся из `Eureka`/`Consul`, а LoadBalancer выбирает один из них на каждый запрос.",
+                "edge_cases": "Клиентская балансировка зависит от свежести реестра: при лаге обновления список инстансов от `Eureka` Gateway может слать трафик на уже умерший под.",
+                "related": "[[api-gateway-interview#Q20]] интеграция с Service Discovery; [[api-gateway-interview#Q8]] lb:// в маршрутах; [[api-gateway-interview#Q34]] sticky sessions для WebSocket."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cloud Gateway` использует серверную балансировку через отдельный `Ribbon`-сервер, стоящий между Gateway и сервисами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Балансировка клиентская: `Spring Cloud LoadBalancer` встроен в Gateway и сам выбирает инстанс, без отдельного балансирующего сервера.",
+                "source_of_confusion": "`Ribbon` на слуху, и его принимают за внешний серверный балансировщик.",
+                "if_it_were_true": "Будь балансировка серверной, не нужно было бы конфигурировать `ReactorLoadBalancer` внутри самого Gateway.",
+                "how_it_should_be": "Это client-side LB внутри Gateway; `Ribbon` устарел и заменён на `Spring Cloud LoadBalancer`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Доступна только стратегия round-robin; ни случайный выбор, ни кастомная балансировка не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кроме round-robin есть `RandomLoadBalancer` и возможность кастома через `ReactorServiceInstanceLoadBalancer`.",
+                "source_of_confusion": "Round-robin — дефолт, поэтому остальные стратегии упускают.",
+                "if_it_were_true": "Будь так, нельзя было бы зарегистрировать `RandomLoadBalancer` для отдельного сервиса.",
+                "how_it_should_be": "Стратегий несколько: round-robin (дефолт), random и кастомные реализации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Cloud LoadBalancer` — это просто новое имя `Ribbon`, и под капотом работает тот же блокирующий код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Cloud LoadBalancer` — реактивная замена `Ribbon` (`ReactorLoadBalancer`), а не переименование того же кода.",
+                "source_of_confusion": "Преемственность по роли наводит на мысль о простом ренейминге.",
+                "if_it_were_true": "Будь это тот же код, не было бы реактивных типов `ReactorServiceInstanceLoadBalancer` для неблокирующего Gateway.",
+                "how_it_should_be": "Это самостоятельная реактивная реализация; `Ribbon` устарел и не используется в Gateway."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Поддерживает ли Spring Cloud Gateway WebSocket?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Нет, `Spring Cloud Gateway` не умеет проксировать `WebSocket` — для этого нужен отдельный прокси вроде `Nginx`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway поддерживает `WebSocket` нативно через схемы `ws://`/`wss://` и выполняет `HTTP Upgrade` для переключения протокола.",
+                "source_of_confusion": "WebSocket требует особой обработки, и из этого делают вывод о неподдержке.",
+                "if_it_were_true": "Будь так, не было бы маршрута `uri: ws://localhost:8081` с предикатом `Path=/ws/**`.",
+                "how_it_should_be": "WebSocket поддержан из коробки на `Reactor Netty`; внешний прокси не обязателен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Да, `Spring Cloud Gateway` нативно проксирует `WebSocket`-соединения через схемы `ws://` и `wss://` (с TLS), а также через Service Discovery (`lb:ws://notification-service`). Gateway выполняет `HTTP Upgrade` для переключения на WebSocket-протокол.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pre/post-фильтры применяются только к начальному Upgrade-запросу, а не к каждому WebSocket-фрейму — это важно учитывать при проектировании логики.",
+                "example": "Маршрут `uri: ws://localhost:8081` + `Path=/ws/**` проксирует WebSocket; `wss://` добавляет TLS поверх соединения.",
+                "when_to_apply": "Таймауты и размер фрейма настраиваются отдельно от HTTP: `spring.cloud.gateway.httpclient.websocket.max-frame-payload-length: 65536`.",
+                "edge_cases": "Фильтры применяются только к Upgrade-handshake, не к фреймам; а idle-таймауты балансировщика рвут простаивающие соединения без `ping/pong` heartbeat.",
+                "related": "[[api-gateway-interview#Q34]] sticky sessions и масштабирование WebSocket; [[api-gateway-interview#Q20]] lb:// через Service Discovery; [[api-gateway-interview#Q13]] цепочка фильтров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Фильтры pre/post в `Spring Cloud Gateway` применяются к каждому отдельному WebSocket-фрейму на протяжении всего соединения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фильтры применяются только к начальному `HTTP Upgrade`-запросу, а не к каждому фрейму внутри установленного соединения.",
+                "source_of_confusion": "Для обычного HTTP фильтр срабатывает на каждый запрос, и это переносят на фреймы WebSocket.",
+                "if_it_were_true": "Будь так, на каждый чат-фрейм заново выполнялась бы аутентификация, что разрушило бы производительность.",
+                "how_it_should_be": "Фильтры отрабатывают на Upgrade-handshake; внутренние фреймы проксируются без их повторного применения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "WebSocket-таймауты и размер фрейма наследуются из HTTP-настроек Gateway и не конфигурируются отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для WebSocket есть отдельные настройки, например `httpclient.websocket.max-frame-payload-length`, не зависящие от HTTP-таймаутов.",
+                "source_of_confusion": "Общий HTTP-клиент Gateway наводит на мысль о едином наборе таймаутов.",
+                "if_it_were_true": "Будь так, нельзя было бы задать `max-frame-payload-length: 65536` именно для WebSocket.",
+                "how_it_should_be": "WebSocket конфигурируется отдельной секцией `websocket`, помимо общих HTTP-параметров."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать версионирование API через Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Версионировать API на уровне Gateway можно только через URL-путь; маршрутизация по заголовку версии невозможна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Версионирование делают через URL-путь, через заголовок (`Header=X-Api-Version, v2`) и через canary с предикатом `Weight`.",
+                "source_of_confusion": "URL-версионирование самое наглядное, и его принимают за единственный способ.",
+                "if_it_were_true": "Будь так, не было бы предиката `Header` для маршрутизации по `X-Api-Version`.",
+                "how_it_should_be": "Поддержаны несколько стратегий: путь, заголовок и canary через `Weight`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Предикат `Weight` направляет 100% трафика на маршрут с большим весом, а остальные маршруты простаивают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Weight` распределяет трафик пропорционально весам: `Weight=group, 90` и `Weight=group, 10` дают 90% и 10% — это canary.",
+                "source_of_confusion": "Слово «вес» наводит на мысль «победитель забирает всё».",
+                "if_it_were_true": "Будь так, нельзя было бы постепенно перекладывать трафик на v2, что и есть смысл canary.",
+                "how_it_should_be": "`Weight` делит трафик в пропорции весов, обеспечивая плавный canary-роллаут."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Несколько стратегий на уровне Gateway: (1) через URL-путь — отдельные маршруты `Path=/api/v1/users/**` и `Path=/api/v2/users/**` с `StripPrefix=2`; (2) через заголовок — один путь плюс предикат `Header=X-Api-Version, v1|v2`; (3) canary через предикат `Weight` — например 90% на стабильную версию, 10% на новую.",
+              "correct": true,
+              "sections": {
+                "explanation": "URL-версионирование явно и просто кэшируется, header-версионирование сохраняет чистые URI, а `Weight` позволяет постепенно переключать трафик на новую версию.",
+                "example": "`Weight=user-group, 90` на `user-service-v1` и `Weight=user-group, 10` на `user-service-v2` плавно переводят пользователей на v2.",
+                "when_to_apply": "`StripPrefix=2` срезает `/api/v1` перед проксированием, так что сервис v1 получает чистый `/users/...` без версии в пути.",
+                "edge_cases": "При header- и weight-версионировании важно сохранять `Vary`/корректные ключи кэша, иначе CDN отдаст ответ v2 клиенту, запросившему v1.",
+                "related": "[[api-gateway-interview#Q37]] стратегии версионирования детально; [[api-gateway-interview#Q9]] предикаты Header и Weight; [[api-gateway-interview#Q14]] StripPrefix."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При URL-версионировании `StripPrefix=2` не нужен — backend-сервис v1 сам ожидает путь с префиксом `/api/v1`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`StripPrefix=2` как раз убирает `/api/v1`, чтобы сервис получил чистый внутренний путь `/users/...` без версии.",
+                "source_of_confusion": "Кажется логичным, что сервис знает о своей версии в пути.",
+                "if_it_were_true": "Будь так, внутренний сервис должен был бы парсить версию из URL, дублируя логику Gateway.",
+                "how_it_should_be": "Версию убирают на Gateway через `StripPrefix`; сервис работает с путём без префикса версии."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое API Composition/Aggregation и как реализовать через Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`API Composition` — это когда Gateway последовательно вызывает сервисы один за другим, дожидаясь каждого, потому что параллельные вызовы в реактивном стеке невозможны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Композицию делают параллельно через `Mono.zip(...)`, что сокращает суммарную latency; последовательность не требуется.",
+                "source_of_confusion": "Императивное мышление подсказывает «вызвал — дождался — следующий».",
+                "if_it_were_true": "Будь вызовы только последовательными, агрегация дашборда из 5 сервисов была бы недопустимо медленной.",
+                "how_it_should_be": "Сервисы вызывают параллельно (`Mono.zip`), а результаты сливают по готовности всех."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сложную агрегацию данных всегда стоит делать именно в Gateway — это уменьшает связанность системы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сложная агрегация в Gateway, наоборот, увеличивает его сложность и coupling; для тяжёлых сценариев берут отдельный BFF или CQRS.",
+                "source_of_confusion": "Один агрегирующий узел кажется упрощением, но он связывает Gateway со множеством сервисов.",
+                "if_it_were_true": "Будь так, не было бы предостережения выносить сложную агрегацию в BFF-сервис.",
+                "how_it_should_be": "Лёгкая агрегация в Gateway допустима; сложную выносят в BFF или предвычисленные представления CQRS."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для агрегации в кастомном фильтре нужно блокировать поток (`.block()`) на каждом вызове сервиса, иначе ответы не соберутся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В реактивном Gateway блокировать нельзя: вызовы компонуют неблокирующе через `WebClient` и `Mono.zip`, а ответ пишут в `writeWith`.",
+                "source_of_confusion": "Привычка к синхронному коду подсказывает `.block()`.",
+                "if_it_were_true": "Будь блокировка нужна, рушилась бы вся модель неблокирующего `Reactor Netty` под высокой нагрузкой.",
+                "how_it_should_be": "Композицию строят без блокировки: `Mono.zip(userInfo, recentOrders).flatMap(...)` и запись результата в ответ."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`API Composition` — паттерн, где `API Gateway` вызывает несколько backend-сервисов, собирает их ответы и возвращает клиенту единый агрегированный результат. В реактивном Gateway это реализуют кастомным `GlobalFilter` с `WebClient`: запросы запускают параллельно и сливают через `Mono.zip(...).flatMap(...)`, записывая результат в `exchange.getResponse().writeWith(...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Параллельный вызов через `Mono.zip` снижает суммарную latency: для дашборда из user/order/recommendation-сервисов время ≈ самому медленному, а не сумме.",
+                "example": "`Mono.zip(userInfo, recentOrders).flatMap(tuple -> { ... result.set(\"user\", tuple.getT1()); ... })` собирает `ObjectNode` и пишет его в ответ как JSON.",
+                "when_to_apply": "Предостережение: агрегация повышает сложность Gateway; для сложных сценариев лучше отдельный BFF-сервис или CQRS с предвычисленными представлениями.",
+                "edge_cases": "Агрегация повышает coupling Gateway: для сложных сценариев берут отдельный BFF или CQRS-представления, иначе latency растёт до суммы самых медленных вызовов.",
+                "related": "[[api-gateway-interview#Q5]] BFF как место для агрегации; [[api-gateway-interview#Q27]] чрезмерная агрегация как anti-паттерн; [[api-gateway-interview#Q2]] агрегация как обязанность Gateway."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сравните Spring Cloud Gateway, Kong и Nginx как API Gateway.",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Gateway` — Java/WebFlux на `Netty`, нативная интеграция с экосистемой Spring, конфиг YAML/Java DSL, расширение Java-фильтрами. `Kong` — Lua/OpenResty поверх `Nginx`, богатая экосистема плагинов, Admin API/GUI, language-agnostic. `Nginx` — C, событийная модель, максимальная производительность, расширение C-модулями или Lua (OpenResty).",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор по контексту: `Spring Cloud Gateway` для Java-команд с глубокой интеграцией в Spring Security/Eureka/Resilience4j; `Kong` для polyglot с плагинами и GUI; `Nginx` для максимальной производительности и SSL termination.",
+                "example": "На практике встречается связка `Nginx`/`Envoy` (L4/L7-балансировка) перед `Kong`/`Spring Cloud Gateway` (API management).",
+                "when_to_apply": "У `Spring Cloud Gateway` и `Nginx` нет встроенного GUI, а у `Kong` есть `Kong Manager`/`Konga`; по сырой производительности `Nginx` на C обычно впереди Java-Gateway.",
+                "edge_cases": "Граница условна: `Kong` построен на `Nginx`/OpenResty, то есть тот же движок выступает и reverse proxy, и Gateway — различие в наборе плагинов.",
+                "related": "[[api-gateway-interview#Q3]] Gateway vs reverse proxy; [[api-gateway-interview#Q29]] настройка Kong; [[api-gateway-interview#Q6]] что такое Spring Cloud Gateway."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Kong` написан на чистой Java, как и `Spring Cloud Gateway`, и работает на той же JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kong` построен на Lua/OpenResty поверх `Nginx` (C), а не на Java/JVM; на Java написан `Spring Cloud Gateway`.",
+                "source_of_confusion": "Оба — популярные Gateway, поэтому их стек ошибочно отождествляют.",
+                "if_it_were_true": "Будь `Kong` на JVM, он не давал бы преимущества по производительности за счёт `Nginx`-движка.",
+                "how_it_should_be": "`Kong` — Lua/OpenResty/C; только `Spring Cloud Gateway` из этой тройки на Java."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cloud Gateway` поставляется с богатым встроенным GUI, а `Kong` управляется исключительно через текстовые конфиги без интерфейса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: у `Spring Cloud Gateway` GUI нет (только код/YAML), а у `Kong` есть `Kong Manager`/`Konga`.",
+                "source_of_confusion": "Spring-экосистема ассоциируется с админками вроде Spring Boot Admin, и это переносят на Gateway.",
+                "if_it_were_true": "Будь так, в сравнении не значилось бы «GUI: нет» у `Spring Cloud Gateway`.",
+                "how_it_should_be": "GUI есть у `Kong`; `Spring Cloud Gateway` конфигурируют кодом и YAML без интерфейса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Nginx` имеет нативную интеграцию со `Spring Security` и `Eureka`, поэтому идеален для Spring-команд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нативная интеграция со `Spring Security`/`Eureka` — у `Spring Cloud Gateway`; `Nginx` (C) к экосистеме Spring отношения не имеет.",
+                "source_of_confusion": "`Nginx` часто стоит перед Spring-приложениями, и близость путают с интеграцией.",
+                "if_it_were_true": "Будь так, не было бы смысла в отдельном `Spring Cloud Gateway` для Java-стека.",
+                "how_it_should_be": "Для Spring-команд берут `Spring Cloud Gateway`; `Nginx` — нейтральный к стеку reverse proxy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать мониторинг и логирование API Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cloud Gateway` не отдаёт метрики — для мониторинга нужно писать собственный экспортёр с нуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway экспонирует метрики через `Micrometer` + `Prometheus` (`spring.cloud.gateway.requests` и др.), достаточно включить actuator-эндпоинты.",
+                "source_of_confusion": "Кастомные access-логи в примерах создают впечатление отсутствия готовых метрик.",
+                "if_it_were_true": "Будь так, не было бы готовой метрики `spring.cloud.gateway.requests` с тегами по маршруту и статусу.",
+                "how_it_should_be": "Метрики идут из коробки через `Micrometer`; свой экспортёр писать не нужно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Мониторинг строят на `Micrometer` + `Prometheus`: включают actuator-эндпоинты (`metrics`, `prometheus`, `gateway`) и гистограммы для `spring.cloud.gateway.requests`. Ключевые метрики — число запросов по маршруту/статусу, длительность, состояние circuit breaker, число активных маршрутов. Distributed tracing — через `Micrometer Tracing`/Sleuth с экспортом в `Zipkin`; логирование — через `GlobalFilter` access-log.",
+              "correct": true,
+              "sections": {
+                "explanation": "Gateway автоматически добавляет `traceId`/`spanId` в заголовки, обеспечивая сквозную трассировку запроса через все downstream-сервисы.",
+                "example": "В prod `sampling.probability` ставят 10-20% (в dev — 1.0), чтобы трейсинг не перегружал систему; access-log пишут отдельным логгером `ACCESS_LOG`.",
+                "when_to_apply": "Метрика `resilience4j.circuitbreaker.state` показывает состояние CB, а `spring.cloud.gateway.requests` с `percentiles-histogram` даёт перцентили latency.",
+                "edge_cases": "Сэмплинг трейсов — компромисс: 100% в prod перегружает систему, поэтому ставят 10-20%, рискуя не поймать редкий медленный запрос.",
+                "related": "[[api-gateway-interview#Q30]] observability детально; [[api-gateway-interview#Q19]] circuit breaker метрики; [[api-gateway-interview#Q12]] GlobalFilter для access-логов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Distributed tracing в Gateway надо реализовывать вручную, генерируя `traceId` в каждом фильтре — автоматической трассировки нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Micrometer Tracing`/Sleuth автоматически проставляет `traceId`/`spanId` в заголовки, обеспечивая сквозную трассировку без ручной генерации.",
+                "source_of_confusion": "Ручная генерация `requestId` в примерах логирования наводит на мысль об отсутствии авто-трейсинга.",
+                "if_it_were_true": "Будь так, не было бы конфигурации `management.tracing` и `zipkin.tracing.endpoint`.",
+                "how_it_should_be": "Трейсинг проставляется автоматически tracing-библиотекой; вручную генерировать `traceId` не нужно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сэмплинг трейсов в production стоит держать на 100% (`probability: 1.0`), чтобы не потерять ни одного запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В prod обычно сэмплируют 10-20%, иначе трейсинг создаёт чрезмерную нагрузку; 100% оставляют для dev.",
+                "source_of_confusion": "Желание видеть всё подталкивает к 100% сэмплингу.",
+                "if_it_were_true": "Будь 100% нормой для prod, рекомендация «10-20% в prod» в конфигурации отсутствовала бы.",
+                "how_it_should_be": "В prod сэмплируют часть (10-20%); полный трейсинг — для dev/диагностики."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие anti-паттерны связаны с API Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главный anti-паттерн — делать Gateway stateless; правильнее хранить сессии и лимиты в его памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stateless-дизайн — это правильная практика, а не anti-паттерн; хранение состояния в памяти Gateway как раз anti-паттерн.",
+                "source_of_confusion": "Кажется, что локальное состояние быстрее, и его принимают за плюс.",
+                "if_it_were_true": "Будь stateless ошибкой, нельзя было бы горизонтально масштабировать Gateway за балансировщиком.",
+                "how_it_should_be": "Gateway должен быть stateless (состояние — в `Redis`); stateful Gateway — это и есть anti-паттерн."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чрезмерная агрегация данных в Gateway — это хорошая практика, снижающая latency и связанность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чрезмерная агрегация — anti-паттерн: она увеличивает latency и coupling; сложные сценарии выносят в BFF.",
+                "source_of_confusion": "Один агрегирующий узел кажется удобным, и его принимают за оптимизацию.",
+                "if_it_were_true": "Будь так, не рекомендовали бы выносить сложную агрегацию в отдельный BFF-сервис.",
+                "how_it_should_be": "Лёгкая агрегация допустима, но чрезмерная — anti-паттерн, повышающий сложность и связанность."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ключевые anti-паттерны: «толстый» Gateway с бизнес-логикой (God Gateway); единая точка отказа без резервирования и горизонтального масштабирования; отсутствие таймаутов и circuit breakers; чрезмерная агрегация; один Gateway на все типы клиентов (вместо BFF); хранение состояния в Gateway (вместо stateless); игнорирование мониторинга.",
+              "correct": true,
+              "sections": {
+                "explanation": "Умение назвать эти anti-паттерны на собеседовании демонстрирует реальный production-опыт и зрелость архитектурного мышления.",
+                "example": "Без таймаутов медленный backend «подвешивает» весь Gateway, исчерпав пул соединений; без нескольких инстансов за балансировщиком Gateway становится SPOF.",
+                "when_to_apply": "Бизнес-правила в Gateway превращают его в God Gateway, а отсутствие метрик и алертов оставляет проблемы маршрутизации незамеченными до жалоб пользователей.",
+                "edge_cases": "Anti-паттерны часто сочетаются: «толстый» stateful Gateway без резервирования одновременно нарушает и stateless-правило, и требование отсутствия SPOF.",
+                "related": "[[api-gateway-interview#Q4]] преимущества/недостатки и SPOF; [[api-gateway-interview#Q5]] BFF вместо одного Gateway; [[api-gateway-interview#Q24]] чрезмерная агрегация."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Размещение бизнес-логики в Gateway — рекомендуемый подход, так как централизует правила в одной точке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бизнес-логика в Gateway — это anti-паттерн «толстого» Gateway; в нём держат только инфраструктурную логику.",
+                "source_of_confusion": "Централизация cross-cutting concerns ошибочно расширяется до централизации бизнес-правил.",
+                "if_it_were_true": "Будь так, любое изменение бизнес-правила требовало бы передеплоя критичного Gateway.",
+                "how_it_should_be": "В Gateway — только routing/auth/rate limiting; бизнес-правила живут в доменных сервисах."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать request/response трансформацию на уровне Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Трансформацию запросов и ответов можно делать только переписав backend-сервисы; на уровне Gateway это невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway трансформирует запрос/ответ без правки backend: встроенными фильтрами (`StripPrefix`, `AddRequestHeader`, `RewritePath`) и кастомными фильтрами для тела.",
+                "source_of_confusion": "Кажется, что менять контракт должен сам сервис.",
+                "if_it_were_true": "Будь так, не было бы фильтров `ModifyRequestBody`/`ModifyResponseBody` и декораторов ответа.",
+                "how_it_should_be": "Трансформация — задача Gateway; backend остаётся неизменным, а контракт адаптируется на входе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Тело запроса в `Spring Cloud Gateway` неизменяемо — добавить поле вроде `tenantId` из `JWT` в payload нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тело модифицируют кастомным фильтром через `ServerRequest.bodyToMono`, `BodyInserters` и `CachedBodyOutputMessage`, добавляя поля.",
+                "source_of_confusion": "Реактивные потоки кажутся read-only, и это переносят на тело запроса.",
+                "if_it_were_true": "Будь так, не существовало бы `RequestBodyTransformFilter`, дописывающего `tenantId` в JSON.",
+                "how_it_should_be": "Тело меняется через буферизацию и `BodyInserter`; добавление полей вполне возможно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Скрыть внутренние поля из ответа backend на уровне Gateway невозможно — ответ проксируется как есть, байт в байт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ответ санитизируют через `ServerHttpResponseDecorator`, переопределяя `writeWith` и удаляя внутренние поля из тела.",
+                "source_of_confusion": "Проксирование «как есть» — частый дефолт, и его абсолютизируют.",
+                "if_it_were_true": "Будь так, не было бы `ResponseSanitizationFilter` с `removeInternalFields(json)`.",
+                "how_it_should_be": "Ответ модифицируется декоратором; внутренние поля удаляются перед отдачей клиенту."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Трансформация — изменение входящих запросов (заголовки, путь, тело) и исходящих ответов (фильтрация полей, формат) на уровне Gateway без правки backend. Встроенные фильтры: `StripPrefix`, `AddRequestHeader`, `RemoveResponseHeader`, `AddRequestParameter`, `RewritePath`. Тело трансформируют кастомным фильтром через `ServerRequest.bodyToMono` + `BodyInserters` + `CachedBodyOutputMessage`, а ответ — через `ServerHttpResponseDecorator`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это позволяет адаптировать внешний контракт под внутренний и скрывать чувствительные данные, не меняя сами сервисы.",
+                "example": "`RequestBodyTransformFilter` дописывает `tenantId` из `JWT` в JSON-тело, а `ResponseSanitizationFilter` через `removeInternalFields` вычищает внутренние поля из ответа.",
+                "when_to_apply": "`AddRequestHeader=X-Request-Id, #{T(java.util.UUID).randomUUID()}` добавляет уникальный id, а `StripPrefix=2` срезает `/api/v2` перед проксированием.",
+                "edge_cases": "Трансформация тела буферизует payload в память: для крупных или стриминговых запросов/ответов это даёт всплеск памяти, поэтому её ограничивают по размеру.",
+                "related": "[[api-gateway-interview#Q14]] встроенные фильтры трансформации; [[api-gateway-interview#Q11]] кастомный фильтр; [[api-gateway-interview#Q15]] прокидывание identity заголовками."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить Kong API Gateway для rate limiting и аутентификации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Kong` — высокопроизводительный Gateway на `Nginx`+OpenResty, управляемый декларативным конфигом (`kong.yml`/deck) или Admin API. В конфиге описывают `services` с `routes` и подключают плагины: `jwt` (аутентификация с `claims_to_verify`), `rate-limiting` (лимиты `minute`/`hour`, `policy: redis` для кластера), `http-log` (логирование в `Logstash`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Плагинная модель делает `Kong` language-agnostic: одни и те же политики (auth, лимиты, логи) применяются к любым backend независимо от их языка.",
+                "example": "Плагин `rate-limiting` с `policy: redis` хранит счётчики в `Redis`, что делает лимит общим для всех нод кластера Kong.",
+                "when_to_apply": "По сравнению со `Spring Cloud Gateway` `Kong` даёт выше производительность и 50+ готовых плагинов, но добавляет операционную сложность (отдельный Kong + хранилище).",
+                "edge_cases": "Декларативный (`kong.yml`) и императивный (Admin API) конфиги могут разойтись: смешивание двух источников приводит к дрейфу состояния между нодами кластера.",
+                "related": "[[api-gateway-interview#Q25]] сравнение Kong/Nginx/SCG; [[api-gateway-interview#Q18]] rate limiting в Spring Cloud Gateway; [[api-gateway-interview#Q15]] JWT-аутентификация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Kong` написан на Java и является частью экосистемы Spring, как `Spring Cloud Gateway`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kong` построен на `Nginx`+OpenResty (Lua/C) и независим от Spring; плагины пишут на Lua/Go, а не на Java.",
+                "source_of_confusion": "Оба — Gateway, поэтому их стек ошибочно объединяют.",
+                "if_it_were_true": "Будь `Kong` на Spring, он не давал бы выигрыша производительности от `Nginx`-движка.",
+                "how_it_should_be": "`Kong` — Lua/OpenResty поверх `Nginx`; со Spring он не связан."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для кластера `Kong` rate limiting обязательно использует локальные in-memory счётчики на каждой ноде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В кластере применяют `policy: redis`, чтобы счётчики были общими; локальная политика не годится для нескольких нод.",
+                "source_of_confusion": "In-memory быстрее, и его принимают за дефолт для кластера.",
+                "if_it_were_true": "Будь счётчики локальными, общий лимит размывался бы пропорционально числу нод Kong.",
+                "how_it_should_be": "Для кластера лимиты хранят в `Redis` (`policy: redis`); локальный счётчик — только для одной ноды."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Аутентификацию и rate limiting в `Kong` нельзя настроить декларативно — только императивно через Admin API на каждый запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kong` поддерживает декларативный конфиг (`kong.yml`/deck) с плагинами `jwt` и `rate-limiting`, помимо Admin API.",
+                "source_of_confusion": "Admin API на слуху, и его принимают за единственный способ конфигурации.",
+                "if_it_were_true": "Будь так, не было бы примеров `_format_version: \"3.0\"` с секцией `plugins`.",
+                "how_it_should_be": "Конфигурация бывает и декларативной (`kong.yml`), и через Admin API; плагины описываются заранее."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать observability (метрики, трейсинг, логи) для API Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Observability для Gateway сводится только к метрикам; трейсинг и структурированные логи для него избыточны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Observability стоит на трёх столпах: метрики (`Prometheus`/`Grafana`), трейсинг (`OpenTelemetry`/`Jaeger`) и логи (`ELK`/`Loki`) — все три важны.",
+                "source_of_confusion": "Метрики — самый привычный сигнал, поэтому два других столпа недооценивают.",
+                "if_it_were_true": "Будь достаточно метрик, нельзя было бы по `traceId` проследить медленный запрос через все сервисы.",
+                "how_it_should_be": "Нужны все три столпа; Gateway — единая точка входа, и проблемы здесь затрагивают весь трафик."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Observability Gateway стоит на трёх столпах: метрики (`Micrometer` → `Prometheus`/`Grafana`), трейсинг (`OpenTelemetry` → `Jaeger`) и логи (`ELK`/`Loki`). Настраивают гистограммы и SLO для `spring.cloud.gateway.requests`, сэмплинг трейсов (10% в prod, 100% в dev), экспорт в `otel-collector` и структурированный access-log через `GlobalFilter`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Gateway — единая точка входа, поэтому любые проблемы здесь бьют по всему трафику; полная observability критична для быстрой диагностики.",
+                "example": "PromQL `histogram_quantile(0.99, sum(rate(spring_cloud_gateway_requests_seconds_bucket[5m])) by (le, routeId))` даёт p99 latency по маршрутам.",
+                "when_to_apply": "Рекомендуемые SLO: availability 99.9%, оверхед Gateway p50 < 10мс и p99 < 50мс, доля 5xx-ошибок самого Gateway < 0.1%.",
+                "edge_cases": "SLO Gateway отделяют от SLO backend: 5xx, вызванные самим Gateway, считают отдельно от ошибок сервисов, иначе алерты вводят в заблуждение.",
+                "related": "[[api-gateway-interview#Q26]] базовый мониторинг и логирование; [[api-gateway-interview#Q19]] метрики circuit breaker; [[api-gateway-interview#Q31]] алгоритмы rate limiting."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В production трейсы сэмплируют на 100%, а в dev — на 10%, чтобы беречь ресурсы разработчиков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: в prod сэмплируют ~10% (нагрузка), а в dev — 100% (полная диагностика).",
+                "source_of_confusion": "Логика «беречь ресурсы» ошибочно прикладывается к dev вместо prod.",
+                "if_it_were_true": "Будь так, под prod-нагрузкой трейсинг на 100% перегрузил бы систему.",
+                "how_it_should_be": "Prod — ~10% сэмплинга, dev — 100%; это, а не наоборот."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Рекомендуемый SLO по доступности Gateway — 99% (около 3.6 суток даунтайма в год), чего достаточно для входной точки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для критичной входной точки целятся в 99.9% (< 8.7 ч даунтайма/год), а не в 99%.",
+                "source_of_confusion": "99% звучит «достаточно высоко», и это принимают за норму для Gateway.",
+                "if_it_were_true": "Будь 99% нормой, единая точка входа была бы недоступна почти 4 дня в год.",
+                "how_it_should_be": "SLO Gateway — около 99.9%; 99% слишком низко для компонента, через который идёт весь трафик."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Алгоритмы Rate Limiting: Token Bucket, Leaky Bucket, Fixed Window, Sliding Window.",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Fixed Window` — самый точный алгоритм без всплесков, поэтому его рекомендуют для строгих лимитов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Fixed Window` как раз страдает «граничным всплеском» (100 запросов в конце окна + 100 в начале следующего = 200 за 2 сек); точность у него низкая.",
+                "source_of_confusion": "Простота `Fixed Window` (O(1) память, `INCR`+`EXPIRE`) создаёт ложное впечатление точности.",
+                "if_it_were_true": "Будь он точным, не понадобились бы Sliding Window-алгоритмы, устраняющие граничный всплеск.",
+                "how_it_should_be": "`Fixed Window` прост, но неточен из-за граничного всплеска; для точности берут Sliding Window."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Token Bucket` не допускает всплесков и сглаживает трафик в равномерный поток, как `Leaky Bucket`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Token Bucket` как раз допускает burst до размера ведра; равномерный поток обеспечивает `Leaky Bucket`.",
+                "source_of_confusion": "Оба используют метафору «ведра», поэтому их поведение путают.",
+                "if_it_were_true": "Будь так, не было бы параметра `burstCapacity`, разрешающего всплеск в `Token Bucket`.",
+                "how_it_should_be": "`Token Bucket` разрешает burst; выравнивает поток `Leaky Bucket` (обработка с фиксированной скоростью)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Четыре алгоритма с разными свойствами: `Token Bucket` — ведро токенов, пополняется с фиксированной скоростью, допускает burst до размера ведра (O(1) память); `Leaky Bucket` — очередь, обрабатываемая с постоянной скоростью, выравнивает поток ценой задержки; `Fixed Window` — счётчик на окно (прост, но даёт граничный всплеск); `Sliding Window` (Log или Counter) — точное ограничение без всплеска.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Spring Cloud Gateway` использует `Token Bucket` на `Redis` через атомарный Lua-скрипт (ключи `{key}.tokens` и `{key}.timestamp`), а `Cloudflare` применяет `Sliding Window Counter`.",
+                "example": "`Sliding Window Log` хранит timestamp каждого запроса в `Redis` ZSET (`ZADD`/`ZREMRANGEBYSCORE`/`ZCARD`) — максимально точно, но память O(N) на запросы в окне.",
+                "when_to_apply": "`Sliding Window Counter` интерполирует два соседних окна (`prev × (1 - elapsed/window) + curr`) — O(1) память при хорошей точности, компромисс между точностью и стоимостью.",
+                "edge_cases": "`Fixed Window` даёт граничный всплеск (до 2× лимита на стыке окон), а `Sliding Window Log` точен, но дорог по памяти — выбор зависит от величины лимита.",
+                "related": "[[api-gateway-interview#Q18]] rate limiting в Spring Cloud Gateway; [[api-gateway-interview#Q2]] rate limiting как обязанность Gateway; [[api-gateway-interview#Q38]] backoff и thundering herd."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Sliding Window Log` потребляет O(1) памяти, поэтому дёшев даже при очень высоких лимитах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Sliding Window Log` хранит timestamp каждого запроса, поэтому память O(N) — дорого при высоких лимитах.",
+                "source_of_confusion": "Слово «sliding» ассоциируется с эффективностью, и память недооценивают.",
+                "if_it_were_true": "Будь память O(1), не было бы более дешёвого `Sliding Window Counter` как компромисса.",
+                "how_it_should_be": "У `Sliding Window Log` память O(requests_per_window); O(1) даёт `Sliding Window Counter`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "API Gateway vs Service Mesh: когда что выбирать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`API Gateway` управляет East-West трафиком (сервис ↔ сервис внутри кластера), а `Service Mesh` — North-South (клиент → кластер).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: Gateway — это North-South (внешний вход), а Service Mesh — East-West (трафик между сервисами внутри кластера).",
+                "source_of_confusion": "Оба про сетевой трафик, и направления легко перепутать местами.",
+                "if_it_were_true": "Будь так, Gateway терминировал бы mTLS между сервисами, а это задача sidecar-прокси mesh.",
+                "how_it_should_be": "Gateway — North-South (граница кластера); Service Mesh — East-West (внутри кластера)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Service Mesh` реализуется как единый централизованный прокси на входе в кластер, а не через sidecar у каждого пода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Service Mesh использует sidecar-прокси (`Envoy`) рядом с каждым подом; централизованный вход — это, наоборот, API Gateway.",
+                "source_of_confusion": "Один прокси на входе проще представить, поэтому sidecar-модель забывают.",
+                "if_it_were_true": "Будь mesh централизованным, он не давал бы mTLS на уровне каждой пары сервисов.",
+                "how_it_should_be": "Mesh — это распределённые sidecar у каждого пода; единый вход — паттерн API Gateway."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`API Gateway` и `Service Mesh` взаимоисключающи: использовать их вместе нельзя, нужно выбрать что-то одно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они дополняют друг друга: частый production-сценарий — Gateway на входе (auth, rate limit, SSL) плюс mesh внутри (mTLS, retry между сервисами).",
+                "source_of_confusion": "Обе технологии про управление трафиком, и их ошибочно считают конкурентами.",
+                "if_it_were_true": "Будь они взаимоисключающими, не было бы рекомендации «оба вместе» как самого частого сценария.",
+                "how_it_should_be": "Gateway и mesh комбинируют: North-South на Gateway, East-West в mesh; они не заменяют друг друга."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`API Gateway` работает на North-South трафике (клиент → кластер): auth внешних клиентов, rate limiting, SSL termination, маршрутизация, версионирование (примеры — `Kong`, `AWS API Gateway`, `Spring Cloud Gateway`). `Service Mesh` — на East-West трафике (сервис ↔ сервис) через sidecar `Envoy`: mTLS, observability, retry/circuit breaker, traffic splitting (примеры — `Istio`, `Linkerd`, `Consul Connect`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор по контексту: только Gateway — для стартапа без mesh-инфраструктуры; только mesh — когда нужен mTLS между сервисами без кода; оба вместе — самый частый production-сценарий.",
+                "example": "Связка: `Internet → API Gateway (auth, rate limit, SSL) → Service Mesh (mTLS, retry между сервисами) → Service A/B/C`.",
+                "when_to_apply": "У них разная операционная сложность: Gateway проще ввести, а `Istio` требует команды DevOps для эксплуатации; они дополняют, а не заменяют друг друга.",
+                "edge_cases": "Границы пересекаются: оба умеют retry и circuit breaker, и при использовании вместе политики не должны дублироваться, иначе повторы и таймауты складываются неожиданно.",
+                "related": "[[api-gateway-interview#Q19]] circuit breaker на Gateway; [[api-gateway-interview#Q2]] обязанности Gateway; [[api-gateway-interview#Q38]] retry и circuit breaker."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает gRPC-Web через API Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Браузеры не поддерживают `gRPC` напрямую (ограничения `fetch` API, нет HTTP trailers), поэтому `gRPC-Web` — облегчённый протокол-обёртка поверх HTTP/1.1 или HTTP/2. Gateway (`Envoy`, `Istio` нативно; `Kong` плагином `grpc-web`) транскодирует `gRPC-Web` ↔ `gRPC`: браузер шлёт POST с `Content-Type: application/grpc-web+proto`, Gateway переводит в HTTP/2 gRPC к backend.",
+              "correct": true,
+              "sections": {
+                "explanation": "Trailers инкапсулируются в тело ответа (`grpc-status`, `grpc-message`), так как браузеры не читают HTTP trailers; CORS должен явно разрешить эти заголовки.",
+                "example": "`Envoy` подключают фильтрами `envoy.filters.http.grpc_web` + `router`; альтернатива — HTTP/JSON↔gRPC транскодинг по аннотациям `google.api.http` в `.proto`.",
+                "when_to_apply": "`gRPC-Web` поддерживает server streaming, но не client/bidi streaming (полная поддержка — только через WebSocket-транспорт).",
+                "edge_cases": "`gRPC-Web` не поддерживает client/bidi streaming поверх обычного HTTP; trailers едут в теле ответа, поэтому CORS обязан разрешить `grpc-status`/`grpc-message`.",
+                "related": "[[api-gateway-interview#Q34]] WebSocket через Gateway; [[api-gateway-interview#Q25]] Envoy/Kong/Nginx; [[api-gateway-interview#Q16]] CORS-заголовки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Браузеры поддерживают `gRPC` нативно, поэтому `gRPC-Web` и транскодинг на Gateway не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Браузеры `gRPC` напрямую не умеют (нет доступа к HTTP/2 trailers через `fetch`), поэтому и существует `gRPC-Web` как обёртка.",
+                "source_of_confusion": "`gRPC` работает поверх HTTP/2, который браузеры поддерживают, и это обобщают на сам gRPC.",
+                "if_it_were_true": "Будь поддержка нативной, не понадобился бы отдельный протокол `gRPC-Web` и его транскодинг.",
+                "how_it_should_be": "Браузеру нужен `gRPC-Web`; Gateway транскодирует его в обычный `gRPC` для backend."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`gRPC-Web` передаёт trailers в стандартных HTTP trailers, так же как нативный `gRPC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`gRPC-Web` инкапсулирует trailers в тело ответа, потому что браузеры не читают HTTP trailers.",
+                "source_of_confusion": "Нативный gRPC использует HTTP trailers, и это переносят на gRPC-Web.",
+                "if_it_were_true": "Будь trailers в HTTP-слое, браузерный клиент не смог бы прочитать `grpc-status`/`grpc-message`.",
+                "how_it_should_be": "Trailers идут в теле ответа gRPC-Web; в HTTP trailers их кладёт только нативный gRPC."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`gRPC-Web` полностью поддерживает client-side и bidirectional streaming поверх обычного HTTP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`gRPC-Web` поддерживает server streaming, но не client/bidi streaming через обычный HTTP-транспорт.",
+                "source_of_confusion": "Нативный gRPC умеет bidi streaming, и это ожидание переносят на gRPC-Web.",
+                "if_it_were_true": "Будь так, не было бы оговорки про необходимость WebSocket-транспорта для полного стриминга.",
+                "how_it_should_be": "Доступен server streaming; client/bidi требует WebSocket-транспорта в gRPC-Web."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "WebSocket через API Gateway: sticky sessions и масштабирование.",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`WebSocket` — это stateless-протокол поверх обычных HTTP-запросов, поэтому при масштабировании Gateway sticky sessions не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WebSocket` — persistent-соединение (после `HTTP Upgrade`), привязанное к инстансу, который держит его состояние; поэтому нужны sticky sessions.",
+                "source_of_confusion": "WebSocket стартует как HTTP-запрос, и из этого делают вывод о его stateless-природе.",
+                "if_it_were_true": "Будь он stateless, соединение можно было бы свободно перекидывать между инстансами без потерь.",
+                "how_it_should_be": "WebSocket stateful; при масштабировании одно соединение должно стабильно попадать к своему инстансу (sticky)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`WebSocket` — persistent-соединение (`HTTP Upgrade`), поэтому при горизонтальном масштабировании Gateway нужны sticky sessions: соединение всегда должно попадать к инстансу, держащему его состояние. Реализуют через IP Hash/cookie-affinity (`ip_hash` в `Nginx`, `sessionAffinity: ClientIP` или Ingress cookie-аннотации в Kubernetes). `Spring Cloud Gateway` проксирует WebSocket нативно через `Reactor Netty`.",
+              "correct": true,
+              "sections": {
+                "explanation": "При масштабировании важно externalize state: список соединений — в `Redis`, broadcast — через `Redis Pub/Sub`, иначе рестарт инстанса рвёт соединения, а новые поды не перераспределяют существующие.",
+                "example": "`redisTemplate.convertAndSend(\"ws-channel\", message)` рассылает сообщение всем инстансам, держащим соединения, через `Redis Pub/Sub`.",
+                "when_to_apply": "Idle timeout балансировщика (AWS ALB — 60 сек по умолчанию) требует `ping/pong` heartbeat или увеличения таймаута; при остановке пода нужен graceful `session.close(CloseStatus.SERVICE_RESTARTED)`.",
+                "edge_cases": "При автоскейлинге существующие соединения не перебалансируются — они «прилипают» к старым подам до разрыва, поэтому нужен graceful close при остановке.",
+                "related": "[[api-gateway-interview#Q22]] поддержка WebSocket в Spring Cloud Gateway; [[api-gateway-interview#Q21]] балансировка нагрузки; [[api-gateway-interview#Q4]] stateless и масштабирование."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все load balancer'ы держат WebSocket-соединения вечно, поэтому idle timeout настраивать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Балансировщики имеют idle timeout (AWS ALB — 60 сек), и без heartbeat/увеличения таймаута простаивающее соединение разорвётся.",
+                "source_of_confusion": "Persistent-соединение кажется «бесконечным», и про idle timeout забывают.",
+                "if_it_were_true": "Будь соединения вечными, не требовался бы `ping/pong` heartbeat или `aws_lb.idle_timeout = 3600`.",
+                "how_it_should_be": "Idle timeout существует и обрывает простаивающие соединения; его настраивают или шлют heartbeat."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При горизонтальном масштабировании Gateway существующие WebSocket-соединения автоматически перераспределяются на новые поды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Существующие соединения остаются на старых подах — новые поды их не подхватывают; нужен graceful shutdown с close-фреймом.",
+                "source_of_confusion": "Автоскейлинг stateless-сервисов перераспределяет нагрузку, и это переносят на persistent-соединения.",
+                "if_it_were_true": "Будь так, не нужен был бы `session.close(CloseStatus.SERVICE_RESTARTED)` для корректного завершения.",
+                "how_it_should_be": "Соединения «прилипают» к старым подам; перебалансировка требует разрыва и переподключения клиентов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "API Gateway в serverless архитектуре (AWS API Gateway).",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AWS API Gateway` бывает только одного типа — REST API; вариантов HTTP API и WebSocket API не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть три варианта: REST API (полнофункциональный), HTTP API (легковесный, ~70% дешевле) и WebSocket API (хранит connection ID в `DynamoDB`).",
+                "source_of_confusion": "REST API — самый известный, и его принимают за единственный.",
+                "if_it_were_true": "Будь так, не было бы выбора между REST API и более дешёвым HTTP API.",
+                "how_it_should_be": "Вариантов три: REST API, HTTP API и WebSocket API — под разные сценарии и бюджеты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`AWS API Gateway` не имеет лимита на время выполнения интеграции — синхронный запрос может ждать Lambda сколько угодно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть жёсткий timeout 29 секунд на интеграцию: синхронный запрос не может ждать Lambda дольше.",
+                "source_of_confusion": "Lambda сама может работать до 15 минут, и это переносят на синхронный путь через Gateway.",
+                "if_it_were_true": "Будь лимита нет, долгие синхронные операции через Gateway не упирались бы в 29 секунд.",
+                "how_it_should_be": "Лимит интеграции — 29 секунд; для долгих задач используют асинхронные паттерны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`AWS API Gateway` даёт три варианта: REST API (модели, валидация, Lambda Authorizer), HTTP API (легковесный, ~70% дешевле, нативная JWT-авторизация) и WebSocket API (connection ID в `DynamoDB`). Интегрируется с Lambda через Proxy Integration (весь запрос/ответ как JSON) и Lambda Authorizer (кастомная auth, возвращает IAM Policy). Rate limiting — через Usage Plans (`throttlingBurstLimit` + `throttlingRateLimit`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Уместен для событийной архитектуры с Lambda, прототипов/MVP, нерегулярного трафика (экономия при idle) и быстрого старта без операционного overhead.",
+                "example": "Lambda Authorizer возвращает IAM Policy (`Effect: Allow`, `Action: execute-api:Invoke`), а Proxy Integration отдаёт `{statusCode, headers, body}` как JSON.",
+                "when_to_apply": "Особенности serverless: cold start (100-500мс, лечится Provisioned Concurrency), жёсткий timeout 29 сек на интеграцию, оплата за вызов (~$3.5/млн для HTTP API).",
+                "edge_cases": "Жёсткий лимит интеграции 29 секунд и cold start (100-500мс) ограничивают синхронные сценарии; долгие задачи переводят в асинхронные паттерны или Provisioned Concurrency.",
+                "related": "[[api-gateway-interview#Q15]] аутентификация на Gateway; [[api-gateway-interview#Q18]] rate limiting; [[api-gateway-interview#Q25]] сравнение управляемых Gateway."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HTTP API в `AWS API Gateway` дороже REST API и не поддерживает JWT-авторизацию нативно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP API, наоборот, дешевле REST API (~70%) и поддерживает JWT-авторизацию нативно, жертвуя возможностями трансформации.",
+                "source_of_confusion": "«Полнее значит лучше» наводит на мысль, что REST API выгоднее по цене.",
+                "if_it_were_true": "Будь HTTP API дороже, не было бы смысла в его существовании как экономичной опции.",
+                "how_it_should_be": "HTTP API дешевле и имеет нативный JWT; REST API богаче по функциям, но дороже."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "GraphQL через API Gateway: federation и schema stitching.",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для GraphQL через Gateway достаточно обычного rate limiting по RPS — сложность отдельных запросов значения не имеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RPS-лимит не подходит: один GraphQL-запрос может быть крайне сложным (глубокая вложенность), поэтому считают Query Complexity и Depth.",
+                "source_of_confusion": "Для REST RPS-лимит работает, и это механически переносят на GraphQL.",
+                "if_it_were_true": "Будь RPS достаточно, не было бы `MaxQueryComplexityInstrumentation`/`MaxQueryDepthInstrumentation`.",
+                "how_it_should_be": "GraphQL ограничивают по сложности/глубине запроса, а не только по числу запросов в секунду."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Schema Stitching` — современный рекомендуемый подход, вытеснивший `Apollo Federation`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Schema Stitching` — устаревший подход (хрупкий, Gateway знает внутренние схемы), а современный — `Apollo Federation`.",
+                "source_of_confusion": "«Stitching» звучит как продвинутое объединение, и его принимают за актуальный метод.",
+                "if_it_were_true": "Будь так, `Apollo Federation` не описывали бы как современную замену stitching.",
+                "how_it_should_be": "Современный подход — `Apollo Federation` с `@key`; `Schema Stitching` считается устаревшим."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Apollo Federation` Gateway хранит единую монолитную схему, а сервисы не владеют своими частями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Federation каждый сервис владеет своей частью схемы; `@key`-директива позволяет ссылаться на типы из других сервисов.",
+                "source_of_confusion": "Единый GraphQL-endpoint наводит на мысль о монолитной схеме в Gateway.",
+                "if_it_were_true": "Будь схема монолитной в Gateway, это был бы `Schema Stitching`, а не Federation.",
+                "how_it_should_be": "В Federation схема распределена по сервисам; Apollo Router строит план выполнения по `@key`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "GraphQL-endpoint единый (`POST /graphql`), но логика размазана по сервисам; Gateway решает маршрутизацию, auth и rate limiting по сложности. `Schema Stitching` (устаревший) объединяет схемы в Gateway — хрупко. `Apollo Federation` (современный): каждый сервис владеет своей частью схемы, `@key(fields: \"id\")` позволяет ссылаться на типы из других сервисов, а `Apollo Router` строит план выполнения запроса.",
+              "correct": true,
+              "sections": {
+                "explanation": "Rate limiting через Query Complexity (вес на поле) и Persisted Queries (клиент шлёт hash вместо полного query) защищают от произвольно тяжёлых запросов.",
+                "example": "`MaxQueryComplexityInstrumentation(100)` + `MaxQueryDepthInstrumentation(10)` отклоняют слишком сложные/глубокие запросы вроде `{ users { orders { items { product { reviews }}}}}`.",
+                "when_to_apply": "В Federation тип `Order` ссылается на `User @key(fields: \"id\")` из `UserService`, и Router дотягивает `user.name` отдельным запросом по representation.",
+                "edge_cases": "RPS-лимит для GraphQL бесполезен — один запрос бывает крайне тяжёлым, поэтому ограничивают по Query Complexity/Depth и применяют Persisted Queries.",
+                "related": "[[api-gateway-interview#Q24]] API composition/aggregation; [[api-gateway-interview#Q18]] rate limiting; [[api-gateway-interview#Q31]] алгоритмы ограничения частоты."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Стратегии версионирования API через Gateway.",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Основные стратегии: (1) URI Versioning (`/api/v1/users` vs `/api/v2/users`) — явно, легко кэшировать и тестировать, но нарушает чистый REST; (2) Header Versioning (`Accept-Version: v2` / `X-API-Version`); (3) Content Negotiation (`Accept: application/vnd.company.api+json;version=2`) — чистый REST, но сложнее; (4) Query Parameter (`?version=2`) — просто, но загрязняет URL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Рекомендация: URI versioning — де-факто стандарт для публичных API, header — для внутренних/partner; поддерживать не более 2 версий и ставить deadline депрекации.",
+                "example": "Gateway сообщает об устаревании через заголовки `Sunset: Sat, 31 Dec 2026 ...` и `Deprecation: true`, а canary по версиям делает через `Weight`/`SetPath`.",
+                "when_to_apply": "Для URI-версий поднимают отдельные маршруты `Path=/api/v1/users/**` и `Path=/api/v2/users/**` на разные сервисы.",
+                "edge_cases": "Поддержка многих версий дорога: держат не более ~2 одновременно и сообщают об устаревании через `Sunset`/`Deprecation`, ставя дедлайн миграции.",
+                "related": "[[api-gateway-interview#Q23]] версионирование через Gateway базово; [[api-gateway-interview#Q9]] предикаты Header/Weight; [[api-gateway-interview#Q14]] StripPrefix."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Query Parameter Versioning (`?version=2`) — рекомендуемый стандарт для публичных API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Query-параметр загрязняет URL и не рекомендуется; стандартом для публичных API считается URI versioning.",
+                "source_of_confusion": "Простота query-параметра создаёт впечатление удобства как стандарта.",
+                "if_it_were_true": "Будь так, рекомендация не указывала бы на URI versioning как де-факто стандарт.",
+                "how_it_should_be": "Для публичных API берут URI versioning; `?version=2` не рекомендуется из-за «грязного» URL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Хорошей практикой считается поддерживать как можно больше версий API одновременно — 5-10 и более.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуют поддерживать не более 2 версий одновременно и устанавливать deadline для депрекации старых.",
+                "source_of_confusion": "Желание не ломать клиентов подталкивает держать много версий.",
+                "if_it_were_true": "Будь так, не было бы рекомендации ограничивать число одновременных версий и депрекатить старые.",
+                "how_it_should_be": "Держат максимум ~2 версии; старые депрекатят с дедлайном и заголовками `Sunset`/`Deprecation`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Content Negotiation через `Accept`-заголовок нарушает REST и считается худшей из стратегий версионирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Content Negotiation — как раз самый «чистый» REST-подход (версия в media type), хотя сложнее в реализации и тестировании.",
+                "source_of_confusion": "Сложность реализации ошибочно приравнивают к нарушению REST.",
+                "if_it_were_true": "Будь это нарушением REST, его не называли бы чистым REST-подходом в материале.",
+                "how_it_should_be": "Content Negotiation чист по REST; его минус — сложность, а не нарушение принципов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Retry и Circuit Breaker на уровне API Gateway.",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Retry на Gateway можно безопасно применять к любым HTTP-методам, включая POST и PUT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retry безопасен только для идемпотентных методов (GET, HEAD, OPTIONS); POST/PUT без идемпотентности могут создать дубли записей.",
+                "source_of_confusion": "Желание «повторить любой сбойный запрос» игнорирует семантику методов.",
+                "if_it_were_true": "Будь так, не было бы ограничения `methods: GET,HEAD` в конфиге Retry-фильтра.",
+                "how_it_should_be": "Retry — только для идемпотентных методов; для POST/PUT он рискует продублировать операцию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Retry помогает при временных сбоях: задают `retries`, `statuses` (502/503), `methods` (только идемпотентные GET/HEAD!) и экспоненциальный `backoff` с jitter, предотвращающим thundering herd. Circuit Breaker (`Resilience4j`) защищает от каскадных сбоев тремя состояниями CLOSED → OPEN → HALF_OPEN с `fallbackUri`. Resilience4j автоматически не даёт делать retry поверх открытого CB (CB перехватывает до retry).",
+              "correct": true,
+              "sections": {
+                "explanation": "Всегда ставят таймауты Gateway (`connect-timeout`, `response-timeout`) — иначе retry «зависнет», ожидая ответа от мёртвого backend.",
+                "example": "`backoff` `firstBackoff: 50ms`, `factor: 2` даёт задержки 50→100→200мс, а `random(0-Nмс)` jitter разводит одновременные повторы тысяч клиентов.",
+                "when_to_apply": "CB-конфиг `slidingWindowSize(10)` + `failureRateThreshold(50)` размыкает цепь при 50% ошибок; в OPEN запросы сразу идут на fallback (fail fast).",
+                "edge_cases": "Retry безопасен лишь для идемпотентных методов; без таймаутов Gateway повтор «зависает» на мёртвом backend, а поверх открытого CB ретраить нельзя.",
+                "related": "[[api-gateway-interview#Q19]] интеграция circuit breaker; [[api-gateway-interview#Q31]] алгоритмы и backoff; [[api-gateway-interview#Q32]] Gateway vs Service Mesh retry."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Делать retry поверх открытого Circuit Breaker — рекомендуемая практика для повышения надёжности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retry поверх открытого CB — anti-паттерн; `Resilience4j` автоматически предотвращает это, перехватывая запрос CB до retry.",
+                "source_of_confusion": "Кажется, что больше повторов = выше надёжность, даже при открытой цепи.",
+                "if_it_were_true": "Будь так, открытый CB не давал бы fail fast, а добивал бы нездоровый backend повторами.",
+                "how_it_should_be": "При OPEN-состоянии CB запрос сразу идёт на fallback; retry поверх него — anti-паттерн."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Таймауты на уровне Gateway при использовании Retry не нужны — повтор сам прервёт зависший запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без таймаутов (`connect-timeout`, `response-timeout`) retry «зависнет», ожидая ответа от мёртвого backend бесконечно.",
+                "source_of_confusion": "Retry ассоциируется с активным контролем, и про таймаут забывают.",
+                "if_it_were_true": "Будь так, не было бы рекомендации всегда задавать `connect-timeout: 1000` и `response-timeout: 5s`.",
+                "how_it_should_be": "Таймауты обязательны вместе с retry; иначе повтор не спасёт от зависания на ответе."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

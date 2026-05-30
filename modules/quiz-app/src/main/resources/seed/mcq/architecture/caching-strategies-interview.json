@@ -1,0 +1,2525 @@
+{
+  "topic_slug": "caching-strategies-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое локальный кэш и распределённый кэш и в чём их компромисс?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Локальный кэш живёт в памяти процесса (`Caffeine`, `Guava`, `Ehcache`): латентность наносекундная, но кэш не разделяется между инстансами. Распределённый кэш (`Redis`, `Memcached`, `Hazelcast`) — отдельные узлы: общий для всех инстансов, но добавляет сетевую задержку 1-5 мс и требует сериализации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Локальный держит данные внутри JVM, поэтому нет сетевого hop'а; распределённый вынесен на отдельный сервер и доступен всем инстансам сервиса сразу, но за это платят сетью и сериализацией.",
+                "example": "Топ-100 товаров с тысячами чтений в секунду кладут в `Caffeine` ради наносекундного доступа, а общий справочник для всех инстансов — в `Redis`, чтобы инвалидация была централизованной.",
+                "when_to_apply": "Выбор делают по trade-off латентность/консистентность: локальный быстрее, но при нескольких инстансах каждый имеет свою копию, и инвалидацию на остальных узлах надо организовывать отдельно (например, через `Redis Pub/Sub`).",
+                "edge_cases": "На практике часто берут не одно, а гибрид: `L1 Caffeine` + `L2 Redis` — он совмещает скорость локального и общий слой распределённого.",
+                "related": "[[caching-strategies-interview#Q2]] многоуровневый L1/L2; [[caching-strategies-interview#Q28]] coherence распределённого кэша; [[caching-strategies-interview#Q30]] выбор между Caffeine/Redis/Hazelcast."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Локальный и распределённый кэш отличаются только размером: локальный всегда маленький (до 100 ключей), распределённый — большой, но по латентности они одинаковы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главное различие — где живут данные и кто их видит: локальный в памяти процесса (наносекунды, не разделяется), распределённый на отдельных узлах (1-5 мс по сети, общий). Размер вторичен.",
+                "source_of_confusion": "Кажется, что раз `Redis` тянет гигабайты, а `Caffeine` ограничивают сотнями записей, то всё дело в объёме.",
+                "if_it_were_true": "Если бы латентность совпадала, то незачем было бы держать `L1 Caffeine` поверх `Redis` — но именно ради наносекунд против миллисекунд это и делают.",
+                "how_it_should_be": "Различать надо по расположению и видимости: in-process против сетевого узла; объём настраивается и там, и там."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Локальный кэш — это кэш на диске рядом с приложением, а распределённый — кэш в оперативной памяти на нескольких машинах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Локальный кэш (`Caffeine`) — в heap процесса, а не на диске; распределённый — на отдельных узлах в памяти. Дисковый слой — это уже персистентность (`Redis RDB/AOF`), а не определение локального кэша.",
+                "source_of_confusion": "Слово «локальный» наводит на мысль о локальном диске, а «распределённый» — о памяти кластера.",
+                "if_it_were_true": "Если бы локальный был дисковым, его латентность была бы миллисекундной, а не наносекундной, и весь смысл `L1` (скорость) пропал бы.",
+                "how_it_should_be": "Локальный — это in-memory внутри процесса; распределённый — in-memory на сетевых узлах; диск тут не определяющий признак."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Распределённый кэш всегда консистентнее и быстрее локального, поэтому локальный кэш в production не используют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Локальный кэш быстрее (наносекунды против 1-5 мс по сети); его активно используют как `L1`. Распределённый выигрывает в общем доступе и централизованной инвалидации, а не в скорости.",
+                "source_of_confusion": "Кажется, что «общий» автоматически значит «лучше во всём», поэтому локальный объявляют ненужным.",
+                "if_it_were_true": "Если бы распределённый был быстрее, никто не строил бы `Near Cache` и `L1 Caffeine` поверх `Redis` ради горячих ключей.",
+                "how_it_should_be": "Локальный нужен для скорости, распределённый — для общего состояния; в production обычно сочетают оба слоя."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое многоуровневый кэш (L1/L2) и как идёт запрос через уровни?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Многоуровневый кэш — это когда один и тот же `Redis` опрашивают дважды подряд: первый запрос как L1, второй как L2, чтобы перестраховаться от сетевого сбоя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "L1/L2 — это разные технологии на разных уровнях: L1 локальный (`Caffeine`), L2 распределённый (`Redis`). Двойной опрос одного `Redis` не даёт ни наносекундного L1, ни смысла уровней.",
+                "source_of_confusion": "Идея «два уровня» воспринимается как «две попытки к одному хранилищу», а не как два разных слоя.",
+                "if_it_were_true": "Если бы это был дважды опрошенный `Redis`, то латентность L1 осталась бы сетевой (1-5 мс), а весь выигрыш многоуровневости в наносекундном L1.",
+                "how_it_should_be": "L1 — это локальная память процесса, L2 — отдельный распределённый узел; уровни различаются технологией и латентностью, а не числом обращений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Многоуровневый кэш — комбинация уровней: `L1` локальный (`Caffeine`), `L2` распределённый (`Redis`). Запрос сначала проверяет `L1`; при промахе идёт в `L2`; при промахе в `L2` — в источник (БД), а результат записывается в оба уровня. `TTL` в `L1` обычно короче, чем в `L2`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каскад L1→L2→БД совмещает наносекундный доступ локального слоя с общим распределённым: большинство чтений гасит `Caffeine`, остальное — `Redis`, и только редкий хвост доходит до БД.",
+                "example": "`getUser(id)` сначала зовёт `localCache.getIfPresent(key)`; если null — `redis.opsForValue().get(key)` и кладёт в `L1`; если и там null — `userRepository`, после чего пишет и в `Redis`, и в `Caffeine`.",
+                "when_to_apply": "Подходит read-heavy нагрузке с горячим набором ключей; короткий `TTL` в `L1` (1-5 минут) против длинного в `L2` (10-60) даёт быстрее подхватывать инвалидацию.",
+                "edge_cases": "При инвалидации нужно очищать `L1` во всех инстансах (через `Redis Pub/Sub`), иначе один узел будет отдавать устаревшее значение из своей локальной копии.",
+                "related": "[[caching-strategies-interview#Q1]] локальный vs распределённый; [[caching-strategies-interview#Q26]] Near Cache как частный случай; [[caching-strategies-interview#Q42]] инвалидация L1 через Redis pub/sub."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Многоуровневый кэш — это уровни по важности данных: L1 для критичных платёжных данных, L2 для второстепенных, и запрос идёт только в нужный уровень по типу данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "L1/L2 — это уровни по близости к процессу (локальный/распределённый) и каскад промахов, а не классификация по бизнес-важности данных.",
+                "source_of_confusion": "Слово «уровень» путают с «приоритетом данных», будто L1 — это premium-полка.",
+                "if_it_were_true": "Если бы уровни делили по важности, не было бы записи результата в оба слоя при промахе — а именно так наполняется и L1, и L2.",
+                "how_it_should_be": "Уровни различаются расположением и порядком обхода (L1→L2→БД), а критичность данных влияет на стратегию инвалидации, а не на номер уровня."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В многоуровневом кэше `TTL` в `L1` всегда длиннее, чем в `L2`, потому что локальная память надёжнее сети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычно наоборот: `TTL` в `L1` короче (1-5 минут), чем в `L2` (10-60 минут), чтобы быстрее подхватывать инвалидацию на каждом инстансе.",
+                "source_of_confusion": "Кажется логичным «надёжнее — значит дольше храним», но цель короткого L1 — свежесть, а не надёжность.",
+                "if_it_were_true": "Если бы L1 жил дольше L2, локальные копии расходились бы с общим `Redis` надолго и инвалидация почти не работала бы.",
+                "how_it_should_be": "`TTL` в L1 делают короче L2, чтобы локальные копии чаще пересверялись с распределённым слоем."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое HTTP-кэш (браузерный и прокси) и через какие заголовки он работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "HTTP-кэш работает только на стороне сервера приложения: `Spring` хранит ответы в `Caffeine` и отдаёт их по URL, а браузер и `CDN` тут ни при чём.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP-кэш — это кэширование ответов браузером и прокси (`CDN`, `Nginx`) по заголовкам `Cache-Control`, `ETag`, `Last-Modified`, а не серверный `Caffeine`.",
+                "source_of_confusion": "Серверное кэширование методов (`@Cacheable`) и HTTP-кэш — разные вещи, их легко спутать словом «кэш».",
+                "if_it_were_true": "Если бы всё было на сервере, заголовок `Cache-Control: max-age` не имел бы смысла — но именно он управляет хранением на клиенте и прокси.",
+                "how_it_should_be": "HTTP-кэш живёт в браузере и прокси-слое и управляется HTTP-заголовками; серверный кэш методов — отдельная история."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "HTTP-кэш определяется только заголовком `Content-Length`: если он совпадает с прошлым ответом, браузер берёт данные из кэша.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Управляют HTTP-кэшем `Cache-Control`, `ETag`, `Last-Modified`; `ETag` (хеш тела) сверяется через `If-None-Match`. `Content-Length` к решению о кэшировании отношения не имеет.",
+                "source_of_confusion": "`Content-Length` тоже про тело ответа, поэтому кажется логичным валидатором.",
+                "if_it_were_true": "Если бы сверяли длину, два разных ответа одинакового размера считались бы идентичными — поэтому используют хеш (`ETag`), а не длину.",
+                "how_it_should_be": "Валидация идёт по `ETag`/`Last-Modified` и условным заголовкам, а `Cache-Control` задаёт срок и приватность."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "HTTP-кэш — кэширование ответов браузером и прокси (`CDN`, `Nginx`) по заголовкам `Cache-Control`, `ETag`, `Last-Modified`. Сервер отдаёт `ETag` (хеш тела); клиент при повторе шлёт `If-None-Match`; при неизменных данных приходит `304 Not Modified` без тела — экономия трафика. Для персональных данных используют `private` или `no-store`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Заголовки управляют тем, что клиент/прокси хранят ответ и не дёргают сервер повторно; условный запрос с `If-None-Match` позволяет сервису ответить пустым `304` вместо полного тела.",
+                "example": "В `Spring`: `ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS).cachePublic()).eTag(String.valueOf(product.getVersion())).body(product)`.",
+                "when_to_apply": "Для статики (`JS/CSS`) ставят `public, max-age=31536000` с версией в имени файла; для `API` — `ETag` по хешу тела; для персональных данных — `private, no-store`.",
+                "edge_cases": "`ETag` по версии сущности удобен, но если версия не меняется при изменении тела, клиент получит устаревший `304`; поэтому валидатор должен реально зависеть от содержимого.",
+                "related": "[[caching-strategies-interview#Q20]] stale-while-revalidate в HTTP; [[caching-strategies-interview#Q23]] сериализация и хеш тела; [[caching-strategies-interview#Q29]] выбор TTL/max-age."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HTTP-кэш всегда возвращает закэшированный ответ целиком, даже при `If-None-Match`, потому что `304` не используется современными браузерами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При совпадении `ETag` сервер отвечает `304 Not Modified` без тела, а браузер берёт тело из своего кэша — это и есть экономия трафика, и `304` активно используется.",
+                "source_of_confusion": "Кажется, что раз данные не изменились, проще снова прислать тело, поэтому роль `304` недооценивают.",
+                "if_it_were_true": "Если бы `304` не работал, не было бы смысла в `ETag`/`If-None-Match` — а они существуют именно ради ответа без тела.",
+                "how_it_should_be": "При неизменных данных сервер шлёт `304` без тела, клиент берёт его из кэша; полное тело передаётся только при реальном изменении."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое hit ratio и miss ratio, какие целевые значения и как их снимать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hit ratio — это доля запросов, которые попали в БД мимо кэша, то есть `hit_ratio = misses / total`; чем он выше, тем лучше работает кэш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hit ratio — доля запросов, обслуженных из кэша: `hits / (hits + misses)`. То, что описано (доля промахов), — это как раз miss ratio, и его рост означает ухудшение.",
+                "source_of_confusion": "Слова «hit» и «miss» легко перепутать местами при выводе формулы.",
+                "if_it_were_true": "Если бы высокий hit ratio означал больше промахов, алерт ставили бы на его рост, а не на падение ниже 70%.",
+                "how_it_should_be": "Hit ratio = hits/(hits+misses) и его хотят высоким; miss ratio = 1 - hit_ratio и его хотят низким."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Целевой hit ratio всегда 100%: если он ниже, кэш настроен неправильно и его надо перенастраивать до полного покрытия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реалистичная цель — 80-95% для горячих справочников; для персональных данных с высокой кардинальностью ключей hit ratio закономерно ниже, и это нормально.",
+                "source_of_confusion": "Хочется идеала, поэтому 100% кажется правильной целью.",
+                "if_it_were_true": "Если бы 100% было обязательным, любые данные с уникальными ключами (профиль, корзина) считались бы «сломанным кэшем», что неверно.",
+                "how_it_should_be": "Целятся в 80-95% для горячих данных; для высококардинальных ключей более низкий hit ratio ожидаем и не означает поломки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hit ratio снимают только нагрузочным тестом перед релизом; в production его измерить нельзя, поэтому алертов на него не ставят.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метрики снимают в проде в реальном времени: `Redis INFO stats` (`keyspace_hits`, `keyspace_misses`) или `Micrometer CacheMetrics`, и на hit ratio ставят алерты.",
+                "source_of_confusion": "Кажется, что hit ratio — лабораторная метрика, а не runtime-показатель.",
+                "if_it_were_true": "Если бы его нельзя было снять в проде, не существовало бы алерта «hit ratio < 70% за 15 минут».",
+                "how_it_should_be": "Hit ratio постоянно экспортируется в проде (`Redis INFO`, `Micrometer`) и используется для алертов и дашбордов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hit ratio — доля запросов, обслуженных из кэша: `hit_ratio = hits / (hits + misses)`; miss ratio = 1 - hit_ratio. Целятся в 80-95% для горячих справочников; для персональных данных он может быть ниже из-за высокой кардинальности ключей. Снимают через `Redis INFO stats` или `Micrometer CacheMetrics`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти две метрики показывают эффективность кэша: высокий hit ratio = большинство чтений не доходят до БД, что и есть цель кэширования.",
+                "example": "Алерт ставят при hit ratio < 70% в течение 15 минут и держат дашборд с трендом по кэшам; `Redis` отдаёт `keyspace_hits`/`keyspace_misses`.",
+                "when_to_apply": "Метрику используют для контроля здоровья кэша и дизайна ключей; при падении сразу после деплоя это ожидаемо (холодный кэш) — нужно дать время на прогрев.",
+                "edge_cases": "Падение hit ratio не всегда баг: после деплоя кэш холодный, а смена формата ключей обнуляет старые попадания — интерпретировать надо в контексте релиза.",
+                "related": "[[caching-strategies-interview#Q31]] мониторинг кэша в проде; [[caching-strategies-interview#Q38]] интерпретация метрик; [[caching-strategies-interview#Q21]] дизайн ключей и кардинальность."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое eviction policy и какие бывают политики вытеснения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Eviction policy — политика вытеснения записей при переполнении кэша. Основные: `LRU` (вытесняет наименее недавно использованные), `LFU` (наименее часто используемые), `TTL` (по истечении времени), `FIFO` (первым пришёл — первым вытеснен), `Window TinyLFU` (комбинация LRU+LFU). `Caffeine` по умолчанию использует `Window TinyLFU`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда места не хватает, кэш должен решить, что выкинуть; разные политики оптимизируют под разные паттерны доступа — недавность (`LRU`), частоту (`LFU`) или их сочетание.",
+                "example": "В `Redis` по умолчанию `noeviction`; политику задают `maxmemory-policy`, например `maxmemory 256mb` + `maxmemory-policy allkeys-lru`. Варианты: `allkeys-lru`, `volatile-lru`, `allkeys-lfu`, `volatile-ttl`.",
+                "when_to_apply": "`LRU` берут для большинства сценариев; `LFU` — когда важна частота обращений; `Window TinyLFU` (`Caffeine`) даёт лучший hit ratio за счёт учёта и недавности, и частоты.",
+                "edge_cases": "В `Redis` `volatile-*` политики вытесняют только ключи с заданным `TTL`; если `TTL` не выставлен ни у кого, при `volatile-lru` сервер может вернуть OOM вместо вытеснения.",
+                "related": "[[caching-strategies-interview#Q4]] hit ratio как метрика эффективности; [[caching-strategies-interview#Q29]] выбор TTL; [[caching-strategies-interview#Q30]] Caffeine vs Redis."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Eviction policy — это политика того, как кэш сериализует значения перед записью: `LRU` означает JSON, `LFU` — бинарный формат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eviction policy решает, какие записи удалить при нехватке места (`LRU`, `LFU`, `TTL`, `FIFO`), и не имеет отношения к формату сериализации.",
+                "source_of_confusion": "И сериализация, и вытеснение — низкоуровневые детали кэша, поэтому их смешивают.",
+                "if_it_were_true": "Если бы `LRU` задавал формат, нельзя было бы комбинировать `allkeys-lru` с любым сериализатором — а в `Redis` они независимы.",
+                "how_it_should_be": "Eviction — про выбор жертвы при переполнении; формат хранения задаётся отдельным сериализатором."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Redis` по умолчанию включён `allkeys-lru`, поэтому при переполнении старые ключи удаляются автоматически без настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию в `Redis` стоит `noeviction` — при достижении `maxmemory` запись вернёт ошибку; `allkeys-lru` надо включать явно через `maxmemory-policy`.",
+                "source_of_confusion": "Кажется, что разумный дефолт — это автоудаление, поэтому `allkeys-lru` приписывают по умолчанию.",
+                "if_it_were_true": "Если бы дефолтом был `allkeys-lru`, новички не ловили бы OOM-ошибки записи в `Redis` без `maxmemory-policy` — а это частая проблема.",
+                "how_it_should_be": "Дефолт — `noeviction`; политику вытеснения (`allkeys-lru`, `allkeys-lfu` и т.д.) задают руками вместе с `maxmemory`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Window TinyLFU` — это политика только для `Redis`, а `Caffeine` поддерживает исключительно `FIFO`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Window TinyLFU` — алгоритм `Caffeine` (по умолчанию), дающий лучший hit ratio; `Redis` оперирует `lru`/`lfu`/`ttl`-политиками через `maxmemory-policy`.",
+                "source_of_confusion": "Названия алгоритмов и продуктов легко перепутать, приписав `TinyLFU` не той системе.",
+                "if_it_were_true": "Если бы `Caffeine` умел только `FIFO`, он не славился бы высоким hit ratio — а именно `Window TinyLFU` это обеспечивает.",
+                "how_it_should_be": "`Window TinyLFU` — дефолт `Caffeine`; `Redis` использует `lru`/`lfu`/`volatile-ttl` через `maxmemory-policy`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Spring Cache Abstraction и какие у него нюансы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Spring Cache Abstraction` сам по себе хранит данные в собственном встроенном кэше и не зависит от провайдеров вроде `Caffeine` или `Redis`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это уровень абстракции над провайдерами (`Caffeine`, `Redis`, `EhCache`); собственного хранилища у него нет — `Spring Boot` подбирает `CacheManager` по зависимостям в classpath.",
+                "source_of_confusion": "Слово «abstraction» создаёт впечатление самодостаточного движка.",
+                "if_it_were_true": "Если бы у него был свой кэш, не нужно было бы подключать `caffeine` или `spring-boot-starter-data-redis` в зависимости — но без провайдера кэш не заработает.",
+                "how_it_should_be": "Абстракция лишь делегирует выбранному провайдеру через единый API (`@Cacheable` и т.д.); хранилище предоставляет провайдер."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Cache Abstraction` — уровень абстракции над кэш-провайдерами (`Caffeine`, `Redis`, `EhCache`). Включается аннотацией `@EnableCaching` и работает через AOP-прокси: при вызове метода с `@Cacheable` прокси перехватывает вызов и проверяет кэш до выполнения тела метода. `Spring Boot` сам подберёт `CacheManager` по зависимостям classpath.",
+              "correct": true,
+              "sections": {
+                "explanation": "AOP-прокси оборачивает бин: при cache hit метод вообще не выполняется и значение возвращается из `CacheManager`, при miss выполняется тело и результат кладётся в кэш.",
+                "example": "Достаточно `@Configuration @EnableCaching` — `Spring Boot` автоматически создаст `CacheManager` на основе того, какой провайдер есть в classpath.",
+                "when_to_apply": "Подходит, когда нужен декларативный кэш без ручного кода get/put; провайдер выбирается зависимостью, а поведение настраивается аннотациями.",
+                "edge_cases": "Прокси работает только при вызове через бин: `this.method()` не проходит через прокси (self-invocation), поэтому кэш не сработает; `@Cacheable` на `private` методах тоже не работает, а `null` по умолчанию кэшируется — нужен `unless = \"#result == null\"`.",
+                "related": "[[caching-strategies-interview#Q7]] аннотации @Cacheable/@CacheEvict/@CachePut; [[caching-strategies-interview#Q8]] настройка Caffeine; [[caching-strategies-interview#Q11]] это cache-aside, а не read-through."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Cache Abstraction` кэширует вызовы даже внутри одного класса: если метод A вызывает `this.cachedMethod()`, кэш сработает благодаря байткод-инструментации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из-за AOP-прокси self-invocation (`this.method()`) кэш НЕ срабатывает — вызов идёт мимо прокси; нужно звать метод через другой бин.",
+                "source_of_confusion": "Кажется, что аннотация работает «магически» в любом месте, независимо от того, кто вызвал метод.",
+                "if_it_were_true": "Если бы self-invocation проходил через прокси, не было бы классической ошибки «почему мой @Cacheable не кэширует при внутреннем вызове».",
+                "how_it_should_be": "Стандартный Spring AOP перехватывает только внешние вызовы через бин; внутренний `this.method()` обходит прокси и кэш."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Cacheable` корректно работает на `private` методах и никогда не кэширует `null`, поэтому `unless` указывать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Cacheable` на `private` методах не работает (Spring AOP проксирует только public-вызовы через бин), а `null` по умолчанию кэшируется — для исключения нужен `unless = \"#result == null\"`.",
+                "source_of_confusion": "Хочется верить, что аннотация работает везде и «умно» сама отсекает пустые результаты.",
+                "if_it_were_true": "Если бы `null` не кэшировался, не пришлось бы добавлять `cache-null-values: false` и `unless` — но без них пустые ответы оседают в кэше.",
+                "how_it_should_be": "Аннотируют public-методы; `null` кэшируется по умолчанию, и его исключают через `unless` или `disableCachingNullValues`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать @Cacheable, @CacheEvict и @CachePut и чем они различаются?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@Cacheable`, `@CacheEvict` и `@CachePut` делают одно и то же — все три кладут результат метода в кэш при каждом вызове.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У них разные роли: `@Cacheable` кэширует и при попадании НЕ выполняет метод; `@CachePut` всегда выполняет метод и обновляет кэш; `@CacheEvict` удаляет запись(и) из кэша.",
+                "source_of_confusion": "Все три про кэш и навешиваются на методы, поэтому кажутся взаимозаменяемыми.",
+                "if_it_were_true": "Если бы они были эквивалентны, незачем было бы три аннотации — но при обновлении нужен именно `@CachePut`, а при удалении `@CacheEvict`.",
+                "how_it_should_be": "`@Cacheable` — read-through-подобное кэширование с пропуском метода при hit; `@CachePut` — обновление; `@CacheEvict` — инвалидация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@CachePut` при попадании в кэш не выполняет метод, точно как `@Cacheable`, а отличается лишь именем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@CachePut` ВСЕГДА выполняет метод и записывает результат в кэш — это его суть для гарантированного обновления; пропускает выполнение при hit как раз `@Cacheable`.",
+                "source_of_confusion": "Обе аннотации связаны с записью в кэш, поэтому их поведение смешивают.",
+                "if_it_were_true": "Если бы `@CachePut` пропускал выполнение, его нельзя было бы использовать для обновления после `save()` — а это его главный сценарий.",
+                "how_it_should_be": "`@CachePut` нужен, чтобы выполнить метод и обновить кэш свежим значением; пропуск выполнения — это про `@Cacheable`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Cacheable(value=\"products\", key=\"#id\", unless=\"#result == null\")` кэширует результат и при повторе с тем же ключом метод не выполняет. `@CachePut(value=\"products\", key=\"#product.id\")` всегда выполняет метод и обновляет кэш — для обновлений. `@CacheEvict(value=\"products\", key=\"#id\")` удаляет запись; с `allEntries=true` чистит весь кэш. `@Caching` комбинирует несколько аннотаций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Триада покрывает чтение (`@Cacheable`), обновление (`@CachePut`) и удаление (`@CacheEvict`): `key` задаётся SpEL, `condition`/`unless` управляют тем, кэшировать ли вызов и результат.",
+                "example": "Связку часто пишут так: `@Caching(put = @CachePut(value=\"products\", key=\"#product.id\"), evict = @CacheEvict(value=\"productSearch\", allEntries=true))` — обновить сущность и сбросить кэш поиска.",
+                "when_to_apply": "`@Cacheable` для чтений по ключу; `@CachePut` после `save()` для синхронного обновления; `@CacheEvict` при `delete()` или по расписанию (`allEntries=true` + `@Scheduled`).",
+                "edge_cases": "`sync = true` на `@Cacheable` сериализует одновременные miss'ы и предотвращает stampede, но работает не во всех провайдерах и только для одного значения; для распределённого stampede его недостаточно.",
+                "related": "[[caching-strategies-interview#Q6]] как работает абстракция и прокси; [[caching-strategies-interview#Q11]] @Cacheable как cache-aside; [[caching-strategies-interview#Q17]] sync=true против stampede."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@CacheEvict(allEntries = true)` удаляет только одну запись по ключу `#id`, а не весь кэш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`allEntries = true` чистит ВЕСЬ указанный кэш целиком, игнорируя `key`; для удаления одной записи указывают `key` без `allEntries`.",
+                "source_of_confusion": "Параметр `allEntries` звучит безобидно, и его роль «очистить всё» недооценивают.",
+                "if_it_were_true": "Если бы `allEntries` удалял одну запись, не было бы смысла в отдельном `key` — но именно `allEntries=true` сбрасывает кэш полностью, например по `@Scheduled`.",
+                "how_it_should_be": "Для одной записи — `@CacheEvict(key=\"#id\")`; для полной очистки — `@CacheEvict(allEntries=true)`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить Caffeine Cache в Spring Boot и какие есть варианты конфигурации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для `Caffeine` в `Spring Boot` достаточно добавить `spring-boot-starter-data-redis` — `Caffeine` идёт внутри Redis-стартера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужны `spring-boot-starter-cache` и `com.github.ben-manes.caffeine:caffeine`; Redis-стартер к `Caffeine` отношения не имеет — это разные провайдеры.",
+                "source_of_confusion": "Оба про кэш, поэтому зависимости легко перепутать.",
+                "if_it_were_true": "Если бы `Caffeine` шёл с Redis-стартером, не пришлось бы отдельно объявлять `caffeine` в build-файле — а без него `type: caffeine` не заработает.",
+                "how_it_should_be": "Подключают `spring-boot-starter-cache` + `caffeine`; для `Redis` — отдельный `spring-boot-starter-data-redis`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Caffeine` нельзя настроить через `application.yml` — единственный способ задать `maximumSize` и `expireAfterWrite` — это писать `@Bean CacheManager` в Java.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Caffeine` настраивается и через `application.yml` (`spring.cache.caffeine.spec=maximumSize=500,expireAfterWrite=10m`), и программно; YAML удобен для общих настроек.",
+                "source_of_confusion": "Кажется, что тонкая настройка возможна только в коде.",
+                "if_it_were_true": "Если бы YAML не поддерживался, в `Spring Boot` не было бы свойства `spring.cache.caffeine.spec` — но оно существует и работает.",
+                "how_it_should_be": "Для единых настроек хватает `spec` в `application.yml`; программный `@Bean` нужен лишь когда у кэшей разные `TTL`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы у разных кэшей были разные `TTL`, в `Caffeine` достаточно одного `CaffeineCacheManager` — он автоматически назначает индивидуальный `TTL` каждому кэшу по имени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один `CaffeineCacheManager` применяет общий `Caffeine`-builder ко всем кэшам; для разных `TTL` строят `SimpleCacheManager` с отдельными `CaffeineCache` на каждый кэш.",
+                "source_of_confusion": "Хочется, чтобы менеджер «сам понял» нужные сроки по имени кэша.",
+                "if_it_were_true": "Если бы один менеджер давал разные `TTL`, не появлялся бы паттерн `buildCache(name, maxSize, ttl)` со `SimpleCacheManager` — а он нужен именно для этого.",
+                "how_it_should_be": "Разные `TTL` задают через `SimpleCacheManager` + по одному `CaffeineCache` с собственным `expireAfterWrite` на каждый кэш."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Есть три варианта: (1) через `application.yml` — `spring.cache.type: caffeine` + `caffeine.spec=maximumSize=500,expireAfterWrite=10m`; (2) программно — один `CaffeineCacheManager` с общим builder'ом и `recordStats()` для метрик; (3) разные настройки на кэш — `SimpleCacheManager` с отдельными `CaffeineCache` (`buildCache(\"products\", 500, 30m)`, `buildCache(\"users\", 200, 5m)`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Варианты отличаются гранулярностью: YAML — для единых параметров, один `CacheManager` — для общего builder'а, `SimpleCacheManager` — когда каждому кэшу нужен свой размер и `TTL`.",
+                "example": "Программно: `manager.setCaffeine(Caffeine.newBuilder().maximumSize(1000).expireAfterWrite(Duration.ofMinutes(10)).recordStats())` — последний вызов включает экспорт метрик в `Micrometer`.",
+                "when_to_apply": "YAML берут для простых случаев; `SimpleCacheManager` с `buildCache(...)` — когда `products`, `users`, `config` требуют разных размеров и сроков жизни.",
+                "edge_cases": "Без `recordStats()` `Micrometer` не увидит cache-метрики; при этом сам `recordStats()` чуть увеличивает накладные расходы, поэтому его иногда не включают на холодных кэшах.",
+                "related": "[[caching-strategies-interview#Q9]] аналогичная настройка Redis Cache; [[caching-strategies-interview#Q10]] несколько CacheManager; [[caching-strategies-interview#Q31]] recordStats и мониторинг."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить Redis Cache в Spring Boot и какие подводные камни сериализации?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подключают `spring-boot-starter-data-redis` + `spring-boot-starter-cache`, в `application.yml` задают `spring.cache.type: redis`, хост/порт/пароль и `time-to-live`. Программно строят `RedisCacheManager` с `RedisCacheConfiguration`: `entryTtl`, `disableCachingNullValues`, ключи через `StringRedisSerializer`, значения через `GenericJackson2JsonRedisSerializer`, и разные `TTL` для разных кэшей через `withInitialCacheConfigurations`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Программная конфигурация даёт контроль над `TTL` на каждый кэш и форматом сериализации, чего YAML в общем случае не покрывает.",
+                "example": "`Map.of(\"users\", default.entryTtl(5m), \"products\", default.entryTtl(30m), \"config\", default.entryTtl(1h))` передают в `RedisCacheManager.builder(factory).cacheDefaults(default).withInitialCacheConfigurations(configs).transactionAware().build()`.",
+                "when_to_apply": "Подходит, когда нужен общий распределённый кэш для всех инстансов с человекочитаемыми (JSON) значениями и разными сроками жизни по типам данных.",
+                "edge_cases": "`GenericJackson2JsonRedisSerializer` добавляет поле `@class`; при переименовании пакета старые записи не десериализуются — спасает версия в ключе (`user:v2:123`) или короткий `TTL` на время миграции.",
+                "related": "[[caching-strategies-interview#Q8]] аналогичная настройка Caffeine; [[caching-strategies-interview#Q23]] форматы сериализации; [[caching-strategies-interview#Q21]] версия в ключе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RedisCacheManager` по умолчанию кэширует `null`-значения, и отключить это нельзя — приходится фильтровать `null` в самом коде сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`null`-кэширование отключается явно: `disableCachingNullValues()` в `RedisCacheConfiguration` или `cache-null-values: false` в YAML.",
+                "source_of_confusion": "Кажется, что поведение `null` зашито в провайдер и неуправляемо.",
+                "if_it_were_true": "Если бы отключить было нельзя, в `RedisCacheConfiguration` не существовало бы метода `disableCachingNullValues()` — а он есть.",
+                "how_it_should_be": "Кэширование `null` управляется конфигурацией кэша; обычно его выключают, чтобы не засорять `Redis` пустыми ответами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При смене структуры класса `GenericJackson2JsonRedisSerializer` сам мигрирует старые записи в новый формат, поэтому версия в ключе не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автомиграции нет: при изменении полей/пакета старые JSON-записи могут не десериализоваться (поле `@class` указывает на старый класс) — нужна версия в ключе или короткий `TTL`.",
+                "source_of_confusion": "Хочется верить, что JSON «гибкий» и переживёт любые изменения схемы.",
+                "if_it_were_true": "Если бы сериализатор мигрировал данные, не возникало бы ошибок десериализации после рефакторинга пакетов — а они возникают регулярно.",
+                "how_it_should_be": "Совместимость обеспечивают вручную: версионируют ключ (`user:v2:123`) или дают старым записям вымереть по `TTL`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для `Redis Cache` обязателен `StringRedisSerializer` и для ключей, и для значений, иначе данные не сохранятся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключи действительно удобно сериализовать `StringRedisSerializer`, но значения — объекты, и для них берут `GenericJackson2JsonRedisSerializer` (JSON) или бинарный сериализатор; строкой объект не сохранить нормально.",
+                "source_of_confusion": "Раз ключи строковые, кажется логичным применить ту же строковую сериализацию и к значениям.",
+                "if_it_were_true": "Если бы значения тоже были строками, нельзя было бы хранить структурированные объекты `User`/`Product` — а именно их и кэшируют.",
+                "how_it_should_be": "Ключи — `StringRedisSerializer`, значения — JSON/бинарный сериализатор под структуру объекта."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать несколько CacheManager в одном приложении?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Несколько `CacheManager` в одном приложении невозможны: `Spring` допускает строго один бин `CacheManager`, иначе контекст не стартует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Можно иметь несколько `CacheManager` (например `Caffeine` для горячих данных + `Redis` для общего); один помечают `@Primary`, остальные адресуют по имени бина.",
+                "source_of_confusion": "Обычно автоконфигурация создаёт один менеджер, отсюда вывод, что больше нельзя.",
+                "if_it_were_true": "Если бы был запрет, не существовало бы атрибута `cacheManager` у `@Cacheable` для явного выбора — но он есть.",
+                "how_it_should_be": "Несколько менеджеров сосуществуют: `@Primary` для дефолтного и `cacheManager = \"...\"` для остальных."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Типичный сценарий — `Caffeine` для горячих данных + `Redis` для общего кэша. Объявляют два бина: один `@Primary` (`caffeineCacheManager`), другой именованный (`@Bean(\"redisCacheManager\")`). В сервисе `@Cacheable(\"hotData\")` идёт в `Primary` (`Caffeine`), а `@Cacheable(value=\"allProducts\", cacheManager=\"redisCacheManager\")` — явно в `Redis`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Атрибут `cacheManager` у `@Cacheable` позволяет на каждом методе выбрать, какой менеджер использовать, а `@Primary` задаёт дефолт для остальных.",
+                "example": "`@Bean @Primary CaffeineCacheManager` для `hotData` (короткий `TTL` 1 мин) и `@Bean(\"redisCacheManager\") RedisCacheManager` для `allProducts` (`TTL` 30 мин) — два независимых слоя в одном контексте.",
+                "when_to_apply": "Применяют, когда часть кэшей должна быть локальной и сверхбыстрой, а часть — общей между инстансами; разделение делают на уровне аннотаций.",
+                "edge_cases": "Без `@Primary` (или явного `cacheManager`) `Spring` не знает, какой менеджер выбрать, и падает с `NoUniqueBeanDefinitionException`; именованный кэш под одинаковым именем в двух менеджерах тоже легко перепутать.",
+                "related": "[[caching-strategies-interview#Q2]] L1/L2 как мотивация двух менеджеров; [[caching-strategies-interview#Q8]] CaffeineCacheManager; [[caching-strategies-interview#Q9]] RedisCacheManager."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Если объявить два `CacheManager` без `@Primary`, `Spring` сам выберет первый по алфавиту имени бина и будет использовать его по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@Primary` или явного `cacheManager` в аннотации `Spring` не выбирает автоматически, а бросает `NoUniqueBeanDefinitionException` — нужен явный приоритет.",
+                "source_of_confusion": "Кажется, что фреймворк применит какое-то детерминированное правило вместо ошибки.",
+                "if_it_were_true": "Если бы выбирался первый по алфавиту, не требовалось бы `@Primary` — но без него контекст не поднимется.",
+                "how_it_should_be": "Дефолтный менеджер задают `@Primary`, а адресные кэши — атрибутом `cacheManager` у `@Cacheable`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Атрибут `cacheManager` у `@Cacheable` указывает имя кэша (cache name), а не бин менеджера кэша.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя кэша задаёт атрибут `value`/`cacheNames`; `cacheManager` указывает именно бин `CacheManager`, через который пойдёт операция.",
+                "source_of_confusion": "Оба атрибута строковые и связаны с кэшем, поэтому их назначение путают.",
+                "if_it_were_true": "Если бы `cacheManager` означал имя кэша, нельзя было бы направить метод в конкретный `Redis`-менеджер — а это и есть его задача.",
+                "how_it_should_be": "`value`/`cacheNames` — имя кэша; `cacheManager` — выбор бина-менеджера среди нескольких."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Cache-Aside (Lazy Loading) и каков порядок операций при чтении и записи?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cache-Aside — это когда кэш сам загружает данные из БД при промахе, а приложение лишь вызывает `cache.get(key)` и ни о чём больше не думает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описанное — это `Read-Through`, где логику загрузки инкапсулирует кэш. В `Cache-Aside` приложение само управляет кэшем: проверяет, грузит из БД и кладёт обратно.",
+                "source_of_confusion": "Оба паттерна про чтение через кэш, поэтому их легко перепутать.",
+                "if_it_were_true": "Если бы кэш грузил сам, не нужен был бы код `if miss: load from DB; cache.put(...)` в сервисе — а в `Cache-Aside` он именно там.",
+                "how_it_should_be": "Cache-Aside = приложение управляет; Read-Through = кэш с `CacheLoader` грузит сам."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В Cache-Aside при записи нужно сначала удалить ключ из кэша, а потом обновлять БД — так свежие данные точно попадут в кэш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуемый порядок обратный: сначала `UPDATE` в БД, потом удалить ключ из кэша; иначе между удалением и записью в БД другой поток зальёт в кэш устаревшее значение.",
+                "source_of_confusion": "Интуитивно «сначала почистить кэш» кажется безопаснее, но это создаёт окно гонки.",
+                "if_it_were_true": "Если бы порядок «кэш, потом БД» был верным, не существовало бы классического антипаттерна с stale-данными после такой последовательности.",
+                "how_it_should_be": "Правильно: обновить БД, затем инвалидировать (удалить) ключ; запись в кэш произойдёт лениво при следующем чтении."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Cache-Aside` — приложение само управляет кэшем: при чтении проверяет кэш, при промахе грузит из БД и кладёт в кэш; при записи обновляет БД и инвалидирует кэш (удаляет ключ). Порядок при записи: сначала БД, затем удаление ключа. В `Spring`: `@Cacheable` на чтении + `@CacheEvict` на обновлении.",
+              "correct": true,
+              "sections": {
+                "explanation": "Кэш наполняется лениво (lazy loading) — туда попадают только реально запрошенные данные, а запись лишь сбрасывает ключ, не пересчитывая значение заранее.",
+                "example": "`@Cacheable(value=\"users\", key=\"#id\")` на `findById`, а на `update` — `@CacheEvict(value=\"users\", key=\"#user.id\")`, причём `save()` идёт до возврата, то есть БД обновляется первой.",
+                "when_to_apply": "Берут как дефолт для read-heavy данных, где приемлема ленивая загрузка; это поведение `@Cacheable` в `Spring`.",
+                "edge_cases": "Возможна гонка при одновременных чтении и записи: читатель может закэшировать значение, которое писатель тут же инвалидирует; смягчают коротким `TTL` или double-delete.",
+                "related": "[[caching-strategies-interview#Q12]] Write-Through как альтернатива; [[caching-strategies-interview#Q14]] отличие от Read-Through; [[caching-strategies-interview#Q19]] порядок БД→кэш и консистентность."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Cache-Aside кэш всегда содержит полную копию таблицы из БД, загруженную целиком при старте приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cache-Aside наполняется лениво и хранит только запрашиваемые данные, а не полную копию таблицы; полная предзагрузка — это уже cache warming, отдельный приём.",
+                "source_of_confusion": "Слово «aside» воспринимают как «полная зеркальная копия рядом с БД».",
+                "if_it_were_true": "Если бы кэш всегда был полной копией, не было бы промахов и ленивой загрузки при первом обращении — а они ключевые для паттерна.",
+                "how_it_should_be": "Cache-Aside кэширует по запросу (только горячее подмножество); полное наполнение делает отдельный warming."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Write-Through, в каком порядке идут записи и когда его выбирать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Write-Through пишет только в кэш, а в БД данные попадают позже асинхронно фоновым воркером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описанное — это `Write-Behind` (Write-Back). `Write-Through` пишет и в БД, и в кэш синхронно в рамках одной операции.",
+                "source_of_confusion": "Оба паттерна про запись через кэш, и их часто путают по названию.",
+                "if_it_were_true": "Если бы запись в БД была асинхронной, был бы риск потери данных при падении — но именно `Write-Through` его исключает синхронностью.",
+                "how_it_should_be": "Write-Through = синхронно БД + кэш; асинхронная отложенная запись в БД — это Write-Behind."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В Write-Through сначала пишут в кэш, а потом в БД, потому что кэш быстрее и подтверждает запись раньше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуемый порядок — сначала БД, затем кэш: при сбое между шагами данные не разойдутся (в кэше не окажется того, чего нет в БД).",
+                "source_of_confusion": "Кажется логичным писать в быстрый слой первым ради низкой латентности.",
+                "if_it_were_true": "Если бы кэш шёл первым и БД-запись падала, кэш содержал бы несуществующие в БД данные — а порядок «БД, потом кэш» это предотвращает.",
+                "how_it_should_be": "Порядок: сначала `UPDATE` в БД, затем `put` в кэш свежим значением."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Write-Through снижает латентность записи, потому что один синхронный вызов заменяет два.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот — `Write-Through` повышает латентность записи: это два синхронных вызова (БД + кэш) вместо одного. Выигрыш в консистентности, а не в скорости.",
+                "source_of_confusion": "Слово «through» («насквозь») создаёт впечатление одного быстрого прохода.",
+                "if_it_were_true": "Если бы латентность падала, `Write-Behind` не предлагали бы как способ её снизить — но именно он жертвует консистентностью ради скорости.",
+                "how_it_should_be": "Write-Through добавляет латентность ради согласованности; для низкой латентности записи берут Write-Behind или Write-Around."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Write-Through — при записи приложение синхронно пишет и в БД, и в кэш. Порядок: сначала БД, потом кэш — при сбое данные не расходятся. Плюс: кэш и БД согласованы, читатели всегда видят актуальное. Минус: повышенная латентность записи (два синхронных вызова). В `Spring` это `@CachePut` после `save()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Кэш обновляется в момент записи, поэтому последующие чтения сразу получают свежее значение без промаха — ценой более медленной записи.",
+                "example": "`@CachePut(value=\"users\", key=\"#user.id\") @Transactional public User update(User user){ return userRepository.save(user); }` — `save()` пишет в БД, а результат кладётся в кэш.",
+                "when_to_apply": "Выбирают, когда консистентность важнее скорости записи и данные часто перечитываются сразу после изменения (профиль, баланс при немедленном отображении).",
+                "edge_cases": "Если запись в кэш падает после успешного коммита в БД, кэш окажется устаревшим до `TTL`; поэтому `@CachePut` обычно держат внутри транзакции и полагаются на страховочный `TTL`.",
+                "related": "[[caching-strategies-interview#Q11]] Cache-Aside как альтернатива чтению; [[caching-strategies-interview#Q13]] Write-Behind для низкой латентности; [[caching-strategies-interview#Q19]] консистентность кэша и БД."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Write-Behind (Write-Back) и каковы его компромиссы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Write-Behind — при записи приложение пишет в кэш и сразу возвращает успех, а запись в БД выполняется асинхронно (батчами или по расписанию через очередь и воркер). Плюсы: низкая латентность записи, разгрузка БД. Минусы: риск потери данных при падении до сброса в БД и сложность консистентности.",
+              "correct": true,
+              "sections": {
+                "explanation": "Запись подтверждается мгновенно из кэша, а реальное сохранение в БД откладывается и группируется, что снижает нагрузку на хранилище при большом потоке записей.",
+                "example": "Подходит для логов, метрик, счётчиков; для платежей берут `Write-Through`. Требует надёжной очереди и идемпотентности записи в БД.",
+                "when_to_apply": "Выбирают при высоком потоке записей, где допустима небольшая задержка durability и потеря единичных записей при сбое не критична.",
+                "edge_cases": "Главный риск — потеря ещё не сброшенных данных при падении инстанса; поэтому очередь должна быть надёжной (`Kafka`), а запись в БД — идемпотентной, чтобы повтор батча не дублировал строки.",
+                "related": "[[caching-strategies-interview#Q12]] Write-Through для durability; [[caching-strategies-interview#Q15]] Write-Around; [[caching-strategies-interview#Q19]] консистентность при отложенной записи."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Write-Behind гарантирует, что данные никогда не теряются, потому что они сначала надёжно сохраняются в БД, а потом в кэш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: данные сначала в кэше, а в БД попадают асинхронно, поэтому при падении до сброса есть риск их потери — durability не гарантирована.",
+                "source_of_confusion": "Слово «behind» путают с «надёжно позади в БД», хотя за БД отстаёт именно запись.",
+                "if_it_were_true": "Если бы потери были невозможны, `Write-Behind` не считался бы рискованным для платежей — но именно поэтому для них берут `Write-Through`.",
+                "how_it_should_be": "Write-Behind жертвует durability ради скорости; запись в БД отложена и может потеряться при сбое."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Write-Behind подходит лучше всего для платежей и финансовых операций, где важна максимальная скорость записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для платежей берут `Write-Through` (синхронная durability). `Write-Behind` хорош для логов, метрик, счётчиков, где допустима потеря единичных записей.",
+                "source_of_confusion": "Высокая скорость записи кажется привлекательной для финансов, но там критична надёжность.",
+                "if_it_were_true": "Если бы он подходил для платежей, не подчёркивали бы риск потери данных до сброса — а для денег это недопустимо.",
+                "how_it_should_be": "Write-Behind — для некритичных к потере данных потоков; платежи требуют синхронного Write-Through."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Write-Behind не требует очереди и идемпотентности — воркер просто перезаписывает строки в БД как есть.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Надёжная очередь (`Kafka`) и идемпотентность записи обязательны: иначе при повторной обработке батча после сбоя возникнут дубликаты или рассогласование.",
+                "source_of_confusion": "Кажется, что отложенная запись — это просто «потом сохраним», без инфраструктурных требований.",
+                "if_it_were_true": "Если бы идемпотентность была не нужна, повтор недоставленного батча ломал бы данные — поэтому её и требуют.",
+                "how_it_should_be": "Write-Behind строят на надёжной очереди с идемпотентными записями в БД, чтобы повтор батча был безопасен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Read-Through Cache и чем он отличается от Cache-Aside?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Read-Through и Cache-Aside — это одно и то же; в `Spring` `@Cacheable` реализует именно read-through.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные паттерны: в `Cache-Aside` логику загрузки пишет приложение, в `Read-Through` её инкапсулирует кэш через `CacheLoader`. `@Cacheable` в `Spring` — это cache-aside, а не read-through.",
+                "source_of_confusion": "Поведение «при промахе сходить в БД» внешне похоже, поэтому паттерны отождествляют.",
+                "if_it_were_true": "Если бы это было одно и то же, не было бы отдельного `LoadingCache` с `CacheLoader` в `Caffeine` — а он существует именно для read-through.",
+                "how_it_should_be": "Cache-Aside — загрузка в коде приложения; Read-Through — загрузка внутри кэша; `@Cacheable` относится к cache-aside."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Read-Through — кэш сам загружает данные из источника при промахе (прозрачно для приложения): сервис вызывает только `cache.get(key)`, а кэш при miss зовёт `CacheLoader`. В `Caffeine` это `LoadingCache` с `.build(id -> userRepository.findById(id).orElse(null))`. Отличие от Cache-Aside: там логику загрузки пишет приложение, здесь она инкапсулирована в кэше.",
+              "correct": true,
+              "sections": {
+                "explanation": "Загрузка инкапсулирована в кэше, поэтому код вызова не содержит ветки «if miss: load» — это упрощает использование и централизует логику получения данных.",
+                "example": "`LoadingCache<Long,User> cache = Caffeine.newBuilder().maximumSize(1000).expireAfterWrite(Duration.ofMinutes(10)).build(id -> userRepository.findById(id).orElse(null)); User u = cache.get(42L);` — `get` сам вызовет loader при промахе.",
+                "when_to_apply": "Применяют, когда хочется убрать дублирование load-логики по кодовой базе; для настоящего read-through нужен `CacheLoader` (`Caffeine`) или `MapLoader` (`Hazelcast`).",
+                "edge_cases": "`@Cacheable` в `Spring` не делает read-through (это cache-aside); если ожидать от него loader-поведение и единый источник загрузки, можно ошибиться в дизайне инвалидации.",
+                "related": "[[caching-strategies-interview#Q11]] Cache-Aside и ручное управление; [[caching-strategies-interview#Q17]] LoadingCache против stampede; [[caching-strategies-interview#Q30]] CacheLoader/MapLoader у провайдеров."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Read-Through означает, что кэш читает данные напрямую из реплики БД, минуя primary, для снижения нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Read-Through — про то, что КЭШ сам инкапсулирует загрузку через `CacheLoader` при промахе; откуда грузит loader (primary или реплика) — деталь реализации, а не суть паттерна.",
+                "source_of_confusion": "Слово «read» наводит на мысль о read-репликах БД.",
+                "if_it_were_true": "Если бы паттерн был про реплики, его нельзя было бы реализовать на `Caffeine` поверх любого репозитория — а он реализуется именно так.",
+                "how_it_should_be": "Read-Through — это инкапсуляция загрузки в кэше; выбор источника (реплика/primary) задаёт сам loader."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Read-Through приложение обязано само проверять кэш, грузить из БД при промахе и класть результат обратно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание `Cache-Aside`. В `Read-Through` приложение вызывает только `cache.get(key)`, а проверку и загрузку выполняет сам кэш через `CacheLoader`.",
+                "source_of_confusion": "Ручная схема Cache-Aside настолько привычна, что её приписывают и read-through.",
+                "if_it_were_true": "Если бы приложение само грузило данные, не было бы смысла в `LoadingCache`/`CacheLoader` — а они нужны именно чтобы снять это с приложения.",
+                "how_it_should_be": "В Read-Through загрузку делает кэш; ручная проверка и put — признак Cache-Aside."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Write-Around и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Write-Around — при записи приложение синхронно обновляет и БД, и кэш, чтобы кэш сразу содержал свежее значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание `Write-Through`. В `Write-Around` при записи пишут ТОЛЬКО в БД; кэш не обновляют и не инвалидируют — он наполнится лениво при следующем чтении.",
+                "source_of_confusion": "Оба паттерна про запись, и их роли в отношении кэша путают.",
+                "if_it_were_true": "Если бы кэш обновлялся при записи, не было бы промаха на следующем чтении — а в `Write-Around` он закономерен.",
+                "how_it_should_be": "Write-Around обходит кэш при записи; синхронное обновление кэша — это Write-Through."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Write-Around подходит для данных, которые сразу после записи интенсивно перечитываются, например профиль пользователя при отображении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот — `Write-Around` хорош, когда после записи данные перечитывают РЕДКО (логи, аудит): первое чтение даст промах и пойдёт в БД, что для часто читаемых данных плохо.",
+                "source_of_confusion": "Кажется, что «не трогаем кэш при записи» удобно для любых данных.",
+                "if_it_were_true": "Если бы он подходил для горячих перечитываемых данных, первый промах после каждой записи бил бы по БД — что неприемлемо.",
+                "how_it_should_be": "Write-Around — для редко перечитываемых после записи данных; для сразу читаемых лучше Write-Through или инвалидация."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Write-Around — при записи приложение пишет ТОЛЬКО в БД; кэш не обновляется и не инвалидируется. При чтении на промахе данные грузятся из источника и кладутся в кэш. Плюсы: запись не нагружает кэш; подходит для редко перечитываемых после записи данных. Минусы: после записи следующее чтение даёт промах в БД; возможны устаревшие данные в кэше.",
+              "correct": true,
+              "sections": {
+                "explanation": "Запись минует кэш целиком, поэтому он не засоряется значениями, которые, скорее всего, не будут прочитаны вскоре — это экономит память и операции кэша.",
+                "example": "Используют, когда записей много, а повторные чтения тех же данных редки (логи, аудит), или когда допустима задержка консистентности до `TTL`.",
+                "when_to_apply": "Выбирают для write-heavy потоков с низкой долей повторных чтений сразу после записи; для часто читаемых данных он не подходит.",
+                "edge_cases": "Опасность — устаревшее значение в кэше: если запись прошла мимо кэша, а старый ключ ещё жив, чтение вернёт stale до истечения `TTL`; поэтому либо короткий `TTL`, либо точечная инвалидация.",
+                "related": "[[caching-strategies-interview#Q12]] Write-Through для сразу читаемых данных; [[caching-strategies-interview#Q13]] Write-Behind; [[caching-strategies-interview#Q16]] TTL против инвалидации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Write-Around гарантирует, что в кэше никогда не будет устаревших данных, потому что кэш обходится при записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Как раз наоборот: раз кэш не инвалидируется при записи, старое значение может жить там до `TTL` — риск stale-данных есть.",
+                "source_of_confusion": "Логика «не трогаем кэш — значит он чист» кажется верной, но старая запись остаётся.",
+                "if_it_were_true": "Если бы stale был невозможен, не нужен был бы короткий `TTL` как смягчение — а его рекомендуют именно из-за этого риска.",
+                "how_it_should_be": "Write-Around может оставлять устаревшие данные в кэше; защищаются коротким `TTL` или точечной инвалидацией."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда использовать TTL, а когда инвалидацию по событию, и зачем их комбинировать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Инвалидацию по событию используют для редко меняющихся справочников, а `TTL` — для часто меняющихся данных вроде баланса и корзины.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычно наоборот: `TTL` — для редко меняющихся данных, где допустима задержка (справочники, конфигурация); инвалидация по событию — для часто меняющихся, где нужна актуальность сразу (профиль, корзина, баланс).",
+                "source_of_confusion": "Критерии «частота изменений» и «требования к актуальности» легко перепутать местами.",
+                "if_it_were_true": "Если бы для баланса хватало `TTL`, пользователь видел бы устаревшую сумму до истечения срока — а это неприемлемо, потому там инвалидация.",
+                "how_it_should_be": "TTL — редкие изменения и допустимая задержка; инвалидация по событию — частые изменения и мгновенная актуальность."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Инвалидация по событию проще в реализации, чем `TTL`, потому что не нужно настраивать сроки и думать о jitter.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инвалидация по событию СЛОЖНЕЕ: нужны события, подписчики, доставка. `TTL` проще — задал срок, и кэш сам протухает.",
+                "source_of_confusion": "Кажется, что «событие = автоматизм», а значит проще, но за этим стоит целая событийная инфраструктура.",
+                "if_it_were_true": "Если бы события были проще `TTL`, их не противопоставляли бы по критерию сложности реализации в пользу `TTL`.",
+                "how_it_should_be": "TTL — простая стратегия; инвалидация по событию требует событий, подписчиков и надёжной доставки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Комбинировать `TTL` и инвалидацию по событию нельзя — нужно выбрать ровно одну стратегию, иначе они конфликтуют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Их как раз рекомендуют комбинировать: `TTL` как страховка + инвалидация при обновлении; если событие потеряется, кэш всё равно обновится по `TTL`.",
+                "source_of_confusion": "Кажется, что две стратегии на один кэш противоречат друг другу.",
+                "if_it_were_true": "Если бы комбинация была вредна, не существовало бы паттерна `@CacheEvict` при обновлении поверх настроенного `TTL` — а это стандарт.",
+                "how_it_should_be": "TTL и событийную инвалидацию совмещают: событие даёт свежесть, `TTL` страхует от потерянных событий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TTL` берут для редко меняющихся данных с допустимой задержкой (справочники, конфигурация); инвалидацию по событию — для часто меняющихся, где нужна актуальность сразу (профиль, корзина, баланс). Рекомендуемый комбинированный подход: `TTL` как страховка + явная инвалидация при обновлении (`@CacheEvict`), так при потере события кэш всё равно обновится по `TTL`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Две стратегии закрывают разные риски: событие даёт мгновенную свежесть, а `TTL` гарантирует, что даже пропущенное событие не оставит данные устаревшими навсегда.",
+                "example": "`@CacheEvict(value=\"users\", key=\"#user.id\") @Transactional public User update(User user){ return userRepository.save(user); }` плюс `TTL` (например 1 час), заданный в конфигурации кэша.",
+                "when_to_apply": "Комбинацию применяют почти везде в проде; чистый `TTL` — для справочников (с jitter), чистая событийная инвалидация — для строго персональных данных.",
+                "edge_cases": "`TTL` с jitter (базовый + случайное отклонение) для справочников снижает риск avalanche; без jitter массовое одновременное истечение ударит по БД.",
+                "related": "[[caching-strategies-interview#Q18]] avalanche и jitter; [[caching-strategies-interview#Q19]] консистентность кэша и БД; [[caching-strategies-interview#Q29]] выбор TTL по типу данных."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cache stampede (thundering herd) и как его избежать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cache stampede — при истечении популярного ключа множество потоков одновременно обнаруживают промах и все идут в БД, создавая всплеск нагрузки. Решения: `Caffeine LoadingCache` (один поток грузит, остальные ждут), `@Cacheable(sync=true)`, distributed lock в `Redis` (`setIfAbsent` как singleflight) и jitter на `TTL`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Проблема в синхронном истечении горячего ключа: все читатели промахиваются в один момент и дублируют тяжёлый запрос; решения сводятся к тому, чтобы пересчитал только один поток.",
+                "example": "`@Cacheable(value=\"products\", key=\"#id\", sync=true)` сериализует одновременные miss'ы; либо `LoadingCache` с `.build(key -> productRepository.findByKey(key))`, где loader вызывается один раз.",
+                "when_to_apply": "Применяют к горячим ключам с тяжёлым пересчётом; для одного инстанса хватает `sync=true`/`LoadingCache`, для нескольких инстансов нужен распределённый lock в `Redis`.",
+                "edge_cases": "`sync=true` и `LoadingCache` защищают только в пределах одной JVM; при множестве инстансов каждый всё равно пересчитает значение — тогда берут `SETNX`-lock или probabilistic early expiration.",
+                "related": "[[caching-strategies-interview#Q18]] avalanche и penetration; [[caching-strategies-interview#Q39]] distributed lock детально; [[caching-strategies-interview#Q40]] probabilistic early expiration."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cache stampede возникает, когда в кэш записывают слишком много ключей одновременно и он переполняется, вытесняя нужные данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stampede — это про одновременные ПРОМАХИ по одному истёкшему популярному ключу и наплыв на БД, а не про переполнение кэша записями.",
+                "source_of_confusion": "Переполнение и наплыс запросов оба звучат как «слишком много всего», поэтому смешиваются.",
+                "if_it_were_true": "Если бы дело было в переполнении, лечилось бы увеличением памяти — а stampede лечится singleflight/lock на пересчёт.",
+                "how_it_should_be": "Stampede — наплыв на БД при истёкшем горячем ключе; переполнение решается eviction-политикой и памятью."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Cacheable(sync=true)` полностью устраняет stampede в распределённой системе из десяти инстансов, синхронизируя их между собой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sync=true` синхронизирует потоки только в пределах ОДНОЙ JVM; десять инстансов всё равно сделают до десяти параллельных запросов в БД — для них нужен distributed lock.",
+                "source_of_confusion": "Кажется, что раз есть «sync», он координирует весь кластер.",
+                "if_it_were_true": "Если бы `sync=true` работал между инстансами, не понадобился бы `Redis SETNX` как distributed lock против stampede — а он нужен.",
+                "how_it_should_be": "`sync=true` — внутрипроцессная защита; межинстансный stampede требует distributed lock или PER."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Лучшее решение stampede — увеличить `TTL` горячего ключа до бесконечности, чтобы он никогда не истекал.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бесконечный `TTL` означает вечно устаревшие данные и проблемы с обновлением; stampede решают singleflight (`LoadingCache`/`sync`), distributed lock и jitter, а не отказом от истечения.",
+                "source_of_confusion": "Раз проблема возникает при истечении, кажется логичным просто его отменить.",
+                "if_it_were_true": "Если бы вечный `TTL` был решением, не было бы инвалидации и обновления данных — кэш навсегда застрял бы на старом значении.",
+                "how_it_should_be": "TTL оставляют конечным, но добавляют jitter и защищают пересчёт одним потоком через lock/sync."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cache penetration и cache avalanche и как с ними бороться?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cache penetration — это массовое одновременное истечение `TTL` многих ключей, а cache avalanche — запросы по несуществующим ключам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Определения перепутаны: penetration — запросы по НЕсуществующим ключам, проходящие сквозь кэш в БД; avalanche — массовое одновременное истечение `TTL` многих ключей.",
+                "source_of_confusion": "Оба термина про всплеск нагрузки на БД, поэтому их названия путают местами.",
+                "if_it_were_true": "Если бы avalanche был про несуществующие ключи, его не лечили бы jitter'ом `TTL` — а именно jitter решает avalanche.",
+                "how_it_should_be": "Penetration — несуществующие ключи; avalanche — одновременное истечение многих ключей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cache penetration — запросы по несуществующим ключам проходят сквозь кэш в БД каждый раз (решения: кэшировать `null` с коротким `TTL`, Bloom-фильтр, лимит запросов по ключу). Cache avalanche — массовое одновременное истечение `TTL` многих ключей и всплеск к БД (решения: разброс `TTL` через jitter, высокая доступность кэша через `Redis Cluster`/`Sentinel`, постепенный прогрев).",
+              "correct": true,
+              "sections": {
+                "explanation": "Penetration бьёт по БД отсутствующими ключами, avalanche — синхронным протуханием множества ключей; обе проблемы про защиту БД от лавины промахов, но причины и лечение разные.",
+                "example": "Jitter: `base.plusSeconds(ThreadLocalRandom.current().nextLong(base.toSeconds()/10))` даёт ±10% разброс, чтобы ключи не истекали одновременно.",
+                "when_to_apply": "Penetration защищают от перебора несуществующих id (Bloom-фильтр, кэш `null`); avalanche — при больших наборах ключей с близкими сроками жизни (jitter, отказоустойчивый кэш).",
+                "edge_cases": "Кэширование `null` от penetration само создаёт риск засорения памяти при переборе уникальных несуществующих ключей — поэтому `TTL` для `null` делают коротким, а лучше дополняют Bloom-фильтром.",
+                "related": "[[caching-strategies-interview#Q17]] stampede как смежная проблема; [[caching-strategies-interview#Q16]] TTL с jitter; [[caching-strategies-interview#Q32]] доступность кэша при сбоях."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cache avalanche лечится исключительно увеличением памяти `Redis`, чтобы ключи не вытеснялись.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Avalanche про синхронное истечение `TTL`, а не про вытеснение по памяти; лечится jitter'ом `TTL`, отказоустойчивостью кэша и постепенным прогревом.",
+                "source_of_confusion": "Любую проблему кэша хочется решить «добавить памяти», но здесь причина во времени истечения.",
+                "if_it_were_true": "Если бы память решала avalanche, ключи с одинаковым `TTL` всё равно истекали бы одновременно даже при избытке памяти.",
+                "how_it_should_be": "Avalanche решают разбросом `TTL` (jitter) и HA-кэшем, а не объёмом памяти."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "От cache penetration спасает только увеличение `TTL` существующих ключей, чтобы кэш дольше оставался заполненным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Penetration — про НЕсуществующие ключи, которых в кэше нет вообще; их `TTL` ни при чём. Помогают кэш `null`, Bloom-фильтр и лимиты по ключу.",
+                "source_of_confusion": "Кажется, что «дольше держим данные» решает любые промахи, но отсутствующих ключей это не касается.",
+                "if_it_were_true": "Если бы длинный `TTL` помогал, перебор несуществующих id всё равно бил бы по БД, ведь для них нет записей в кэше.",
+                "how_it_should_be": "Penetration отсекают на входе (Bloom-фильтр, кэш `null`, лимиты), а не сроком жизни существующих ключей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить консистентность кэша и БД и почему важен порядок операций?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "При Cache-Aside правильный порядок записи — сначала удалить ключ из кэша, затем обновить БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуется обратное: сначала `UPDATE` в БД, затем удалить ключ из кэша. При порядке «кэш, потом БД» другой поток может прочитать БД и закэшировать старое значение между шагами.",
+                "source_of_confusion": "Интуитивно «почистить кэш первым» кажется безопаснее, но это открывает окно гонки.",
+                "if_it_were_true": "Если бы «кэш, потом БД» было верным, не возникал бы антипаттерн со stale-данными при чтении в промежутке — а он классический.",
+                "how_it_should_be": "Порядок: обновить БД, затем инвалидировать кэш; иначе stale-значение попадёт в кэш."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Единственный надёжный способ консистентности кэша и БД — двухфазный коммит (2PC) между `Redis` и БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На практике обходятся правильным порядком (БД→инвалидация), `Write-Through`, коротким `TTL` или событиями; `Redis` не участвует в XA-транзакциях, и 2PC здесь не применяют.",
+                "source_of_confusion": "Раз речь о согласованности двух хранилищ, на ум приходит распределённая транзакция.",
+                "if_it_were_true": "Если бы требовался 2PC, его упоминали бы как стандарт — но рекомендуют именно порядок операций и `TTL` как страховку.",
+                "how_it_should_be": "Консистентность достигают порядком БД→кэш, Write-Through, коротким `TTL` и событиями, а не 2PC с `Redis`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Порядок при `Cache-Aside`: сначала обновить БД, затем инвалидировать кэш. При обратном порядке возможна гонка — чтение после инвалидации, но до записи в БД закэширует устаревшие данные. Подходы: `Cache-Aside` с инвалидацией, `Write-Through`, короткий `TTL` и события (при изменении публиковать событие, подписчики инвалидируют кэш).",
+              "correct": true,
+              "sections": {
+                "explanation": "Правильный порядок закрывает окно, в котором конкурентный читатель мог бы зафиксировать в кэше старое значение БД; при неверном порядке это окно открыто.",
+                "example": "Антипаттерн: `DELETE из кэша` → другой поток читает (miss) и кэширует старые данные из БД → `UPDATE в БД` → кэш содержит устаревшее. Правильно: `UPDATE` → `DELETE из кэша`.",
+                "when_to_apply": "Применяют при любом распределённом кэше с несколькими писателями; там нужна единая стратегия, иначе один сервис инвалидирует ключ, а другой перезапишет устаревшим значением.",
+                "edge_cases": "Даже правильный порядок не устраняет гонку полностью (читатель мог загрузить старое до коммита и записать после инвалидации); поэтому добавляют короткий `TTL` или double-delete с задержкой.",
+                "related": "[[caching-strategies-interview#Q11]] Cache-Aside порядок записи; [[caching-strategies-interview#Q12]] Write-Through как альтернатива; [[caching-strategies-interview#Q28]] coherence в распределённом кэше."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Короткий `TTL` полностью гарантирует консистентность кэша и БД, поэтому порядок операций при записи не важен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Короткий `TTL` лишь ограничивает ОКНО рассогласования, но не устраняет гонку; порядок (БД→инвалидация) всё равно важен, иначе stale-данные осядут до истечения `TTL`.",
+                "source_of_confusion": "Кажется, что раз данные скоро протухнут, любой порядок допустим.",
+                "if_it_were_true": "Если бы `TTL` снимал проблему, не подчёркивали бы антипаттерн обратного порядка — но он приводит к устаревшим данным даже при `TTL`.",
+                "how_it_should_be": "`TTL` — лишь страховка, уменьшающая окно; правильный порядок операций обязателен в любом случае."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое stale-while-revalidate (SWR) и когда его применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Stale-while-revalidate блокирует запрос до завершения обновления кэша, гарантируя клиенту всегда свежие данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот — SWR сразу отдаёт закэшированное (возможно устаревшее) значение, а обновление идёт В ФОНЕ; клиент не ждёт пересчёта.",
+                "source_of_confusion": "Слово «revalidate» наводит на мысль о синхронной проверке свежести перед ответом.",
+                "if_it_were_true": "Если бы запрос блокировался, не было бы выигрыша в латентности — а именно низкая латентность главное преимущество SWR.",
+                "how_it_should_be": "SWR отдаёт stale немедленно и обновляет в фоне; синхронная проверка свежести — это не SWR."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SWR применим только в серверном кэше и не имеет отношения к HTTP-заголовкам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SWR работает и в HTTP (заголовок `Cache-Control: stale-while-revalidate=<seconds>`), и в серверном кэше — это общий паттерн на обоих уровнях.",
+                "source_of_confusion": "Кажется, что фоновое обновление — чисто серверная механика.",
+                "if_it_were_true": "Если бы HTTP не поддерживал SWR, не существовало бы директивы `stale-while-revalidate` в `Cache-Control` — а она стандартизирована.",
+                "how_it_should_be": "SWR доступен и на уровне HTTP-заголовков, и в коде серверного кэша."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В SWR все запросы во время обновления получают свежие данные, потому что фоновый поток успевает обновить кэш мгновенно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пока фоновое обновление не завершилось, запросы получают именно STALE-значение — это компромисс SWR: один или несколько запросов видят устаревшие данные.",
+                "source_of_confusion": "Хочется верить, что фон обновляет «незаметно и сразу», но обновление занимает время.",
+                "if_it_were_true": "Если бы все сразу видели свежее, не было бы слова «stale» в названии паттерна.",
+                "how_it_should_be": "Во время фонового обновления отдаётся stale; свежие данные получат лишь запросы после завершения revalidate."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Stale-while-revalidate (SWR) — клиенту сразу возвращают закэшированное (возможно устаревшее) значение, а в фоне обновляют кэш для следующего запроса. Применяют в HTTP (`Cache-Control: stale-while-revalidate=<seconds>`) и в серверном кэше. Плюс: низкая латентность для пользователя. Минус: один запрос может получить устаревшие данные. Уместно для каталогов, лент, статики.",
+              "correct": true,
+              "sections": {
+                "explanation": "Паттерн отдаёт приоритет скорости ответа над абсолютной свежестью: пользователь не ждёт пересчёта, а кэш «догоняет» в фоне к следующему обращению.",
+                "example": "Серверно: при `entry.isExpired()` вернуть старое значение и `executor.submit(() -> { Product fresh = loadFromDb(id); cache.put(id, new CacheEntry(fresh, Instant.now())); })`.",
+                "when_to_apply": "Подходит для данных, где небольшая устарелость терпима ради скорости: каталоги товаров, ленты, статика; не подходит для баланса или цены в момент оплаты.",
+                "edge_cases": "Первый запрос при пустом кэше всё равно синхронный (грузить нечего); и если фоновое обновление падает, stale-значение может задержаться дольше ожидаемого — нужен лимит на возраст stale.",
+                "related": "[[caching-strategies-interview#Q3]] HTTP-кэш и Cache-Control; [[caching-strategies-interview#Q16]] TTL против инвалидации; [[caching-strategies-interview#Q40]] PER как родственный приём фонового обновления."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cache key design и какие ошибки в проектировании ключей избегать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Хороший дизайн ключей: осмысленный префикс (`product:v2:42`, `user:profile:123`), версия в ключе при смене формата сериализации, ограничение кардинальности (избегать неконтролируемого набора уникальных id), короткие стабильные ключи. Ошибки: высокая кардинальность без контроля (миллионы ключей, низкий hit ratio), отсутствие версии (старые записи ломают десериализацию), неоднозначные ключи (разные данные под одним ключом).",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключ определяет и попадаемость в кэш, и совместимость при изменении схемы: продуманный префикс плюс версия дают высокий hit ratio и безопасные миграции формата.",
+                "example": "`@Cacheable(value=\"products\", key=\"'v2:' + #id\")` — версионированный осмысленный ключ; плохо: `@Cacheable(\"search\")` по `(q, cat, sort, page, size)` — огромная кардинальность и низкий hit ratio.",
+                "when_to_apply": "Правила применяют при проектировании любого кэша, особенно для поиска и списков, где число комбинаций параметров взрывает кардинальность.",
+                "edge_cases": "Чрезмерно длинные ключи тратят память `Redis` (лимит ключа 512 МБ, но длинные строки дороги); при этом версию в ключе нельзя забывать менять при смене формата, иначе старые записи сломают десериализацию.",
+                "related": "[[caching-strategies-interview#Q22]] кэширование списков и пагинации; [[caching-strategies-interview#Q23]] версия в ключе при сериализации; [[caching-strategies-interview#Q4]] кардинальность и hit ratio."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Лучший ключ — это все аргументы метода без ограничений, потому что так кэш максимально точен и не путает данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Класть все аргументы без контроля (особенно `q, cat, sort, page, size`) ведёт к огромной кардинальности и низкому hit ratio — это как раз ошибка дизайна ключей.",
+                "source_of_confusion": "Точность ключа кажется безусловным благом, но она оборачивается миллионами уникальных ключей.",
+                "if_it_were_true": "Если бы «все аргументы» были оптимальны, не предупреждали бы про взрыв кардинальности у `@Cacheable(\"search\")` по пяти параметрам.",
+                "how_it_should_be": "Ключ должен ограничивать кардинальность (кэшировать популярные комбинации, а не каждую), иначе hit ratio падает."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Версию в ключ добавлять не нужно: при изменении полей объекта `Redis` сам распознаёт новый формат и переиндексирует старые записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоматической переиндексации нет: без версии в ключе старые записи могут не десериализоваться после смены формата — версия (`product:v2:42`) или короткий `TTL` обязательны.",
+                "source_of_confusion": "Хочется верить, что хранилище «умное» и само разберётся со сменой схемы.",
+                "if_it_were_true": "Если бы `Redis` переиндексировал записи, не было бы рекомендации версионировать ключ при смене сериализации — а она ключевая.",
+                "how_it_should_be": "Совместимость при смене формата обеспечивает версия в ключе или вымирание старых записей по `TTL`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Длина ключа в `Redis` не имеет значения, поэтому можно смело класть в ключ весь сериализованный объект целиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Длинные ключи тратят память и снижают эффективность, а класть весь объект в ключ — антипаттерн; ключи делают короткими и стабильными, а объект хранят в значении.",
+                "source_of_confusion": "Раз `Redis` допускает большие ключи (до 512 МБ), кажется, что длина бесплатна.",
+                "if_it_were_true": "Если бы длина была безразлична, не рекомендовали бы короткие стабильные ключи ради экономии памяти.",
+                "how_it_should_be": "Ключ — короткий идентификатор (префикс + id + версия); сам объект сериализуют в значение, а не в ключ."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как кэшировать списки и пагинированные результаты?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Лучший способ кэшировать списки — положить весь результат поиска по каждой комбинации фильтров и страницы в отдельный ключ с длинным `TTL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждая комбинация фильтров/страниц даёт высокую кардинальность и низкий hit ratio; вместо этого кэшируют сущности по id, только популярные комбинации и используют короткий `TTL` для списков.",
+                "source_of_confusion": "Прямолинейное «один запрос — один ключ» кажется простым и точным.",
+                "if_it_were_true": "Если бы это работало, не было бы проблемы высокой кардинальности списков — но именно она делает такой кэш почти бесполезным.",
+                "how_it_should_be": "Списки кэшируют по id-сущностям + популярным комбинациям с коротким `TTL`, а не по каждой комбинации с длинным."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Списки по комбинации параметров дают высокую кардинальность, поэтому: (1) кэшируют сущности по id и собирают список из кэша; (2) кэшируют только популярные комбинации (первая страница, топ-фильтры); (3) короткий `TTL` для списков; (4) инвалидация по тегу при изменении сущности.",
+              "correct": true,
+              "sections": {
+                "explanation": "Дробление на сущности по id плюс кэш только горячих списков держит кардинальность под контролем и сохраняет приемлемый hit ratio.",
+                "example": "`@Cacheable(value=\"productIds\", key=\"'page:' + #page\")` кэширует список id с коротким `TTL`, а `@Cacheable(value=\"products\", key=\"#id\")` — сами сущности; при обновлении сбрасывают и сущность, и `productIds` (`allEntries=true`).",
+                "when_to_apply": "Применяют для каталогов и лент с пагинацией: первую страницу и топ-фильтры кэшировать выгодно, длинный хвост комбинаций — нет.",
+                "edge_cases": "Сборка списка из кэша сущностей экономит память, но при частичных промахах требует дозагрузки недостающих id из БД; и инвалидация всего списка id (`allEntries`) при каждом изменении может бить по hit ratio.",
+                "related": "[[caching-strategies-interview#Q21]] дизайн ключей и кардинальность; [[caching-strategies-interview#Q24]] инвалидация по тегу; [[caching-strategies-interview#Q29]] короткий TTL для списков."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Пагинированные результаты нельзя инвалидировать точечно, поэтому при любом изменении сущности нужно вызывать `FLUSHALL` для всего `Redis`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FLUSHALL` снёс бы весь кэш приложения — это недопустимо; списки инвалидируют точечно: сбрасывают конкретную сущность и кэш списков id (`@CacheEvict allEntries` по кэшу `productIds`) или используют теги.",
+                "source_of_confusion": "Раз список зависит от многих сущностей, кажется проще «снести всё».",
+                "if_it_were_true": "Если бы требовался `FLUSHALL`, любой апдейт обнулял бы все кэши и hit ratio падал бы до нуля — что абсурдно.",
+                "how_it_should_be": "Инвалидируют адресно: сущность по id + кэш списков, либо по тегу; глобальный сброс не применяют."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы кэшировать списки, достаточно одного длинного `TTL` для всех страниц — короткий `TTL` для списков не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для списков как раз рекомендуют КОРОТКИЙ `TTL`: данные меняются чаще и высокая кардинальность делает длинное хранение бессмысленным и рискованным по свежести.",
+                "source_of_confusion": "Длинный `TTL` кажется выгодным для hit ratio, но для волатильных списков он даёт устаревшие данные.",
+                "if_it_were_true": "Если бы длинный `TTL` подходил спискам, его не противопоставляли бы короткому в рекомендациях по пагинации.",
+                "how_it_should_be": "Списки кэшируют с коротким `TTL`; длинный оставляют стабильным сущностям по id."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cache serialization и какие форматы предпочтительны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Java Serialization — рекомендуемый формат для распределённого кэша, потому что он встроен в JDK и самый быстрый.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java Serialization медленна, небезопасна (риск десериализации недоверенных данных) и НЕ рекомендуется; предпочитают `JSON` (Jackson) для читаемости или `Protobuf`/`MessagePack` для компактности.",
+                "source_of_confusion": "«Встроено в JDK» создаёт впечатление надёжного дефолта.",
+                "if_it_were_true": "Если бы она была лучшей, её не помечали бы как «медленно, небезопасно, не рекомендуется» в сравнении форматов.",
+                "how_it_should_be": "Для кэша берут `JSON` или бинарные схемы (`Protobuf`/`MessagePack`); нативную Java-сериализацию избегают."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JSON` (Jackson) компактнее и быстрее бинарных форматов вроде `Protobuf`, поэтому его выбирают ради экономии памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JSON` как раз ЗАНИМАЕТ больше места и медленнее бинарных; его выбирают за читаемость и межъязыковость, а `Protobuf`/`MessagePack` — за компактность и скорость.",
+                "source_of_confusion": "Популярность `JSON` создаёт иллюзию, что он и самый эффективный.",
+                "if_it_were_true": "Если бы `JSON` был компактнее `Protobuf`, бинарные форматы не имели бы преимущества «компактность, скорость» в таблице.",
+                "how_it_should_be": "`JSON` — читаемость и совместимость; для компактности и скорости берут бинарные форматы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сериализация кэша — преобразование объектов в байты для распределённого кэша (`Redis`, `Memcached`). `JSON` (Jackson): читаемость и межъязыковость, но больше места и медленнее. `MessagePack`/`Protobuf`: компактность и скорость, но нечитаемы и требуют схему. Java Serialization: встроена, но медленна, небезопасна, не рекомендуется. `Kryo`/`FST`: очень быстро и компактно, но только JVM и версионирование.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор формата — компромисс между читаемостью, размером, скоростью и переносимостью между языками; для большинства Spring-сервисов `JSON` через Jackson — разумный дефолт.",
+                "example": "В `Redis` настраивают `serializeValuesWith(SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(mapper)))`, где `mapper` с `JavaTimeModule` и активированным default typing.",
+                "when_to_apply": "`JSON` берут, когда важны отладка и межъязыковость; `Protobuf`/`Kryo` — когда критичны размер и скорость в чисто JVM-окружении.",
+                "edge_cases": "При изменении полей объекта старые записи могут не десериализоваться — спасает версия в ключе (`user:v2:123`) или короткий `TTL` на время миграции; `Kryo`/`FST` особенно чувствительны к версионированию.",
+                "related": "[[caching-strategies-interview#Q9]] GenericJackson2JsonRedisSerializer; [[caching-strategies-interview#Q21]] версия в ключе при смене формата; [[caching-strategies-interview#Q35]] сериализация и латентность."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При смене полей объекта `JSON`-сериализатор всегда корректно десериализует старые записи, поэтому версионировать ключ не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Старые записи могут не десериализоваться после изменения структуры (особенно с полем `@class`); поэтому используют версию в ключе или короткий `TTL` при миграции.",
+                "source_of_confusion": "`JSON` считают «гибким» и устойчивым к изменениям схемы.",
+                "if_it_were_true": "Если бы совместимость была гарантирована, не было бы предупреждения про ломающиеся записи и рекомендации версионировать ключ.",
+                "how_it_should_be": "Совместимость при смене схемы обеспечивают версией ключа или вымиранием старых записей по `TTL`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cache invalidation по тегу и как её реализовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Инвалидация по тегу — это просто установка одинакового `TTL` на группу ключей, чтобы они истекали вместе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инвалидация по тегу — это группировка ключей по тегу и явное удаление ВСЕХ ключей тега при изменении сущности, а не синхронное истечение по `TTL`.",
+                "source_of_confusion": "И тег, и общий `TTL` группируют ключи, поэтому механизмы смешивают.",
+                "if_it_were_true": "Если бы это был общий `TTL`, нельзя было бы инвалидировать группу мгновенно по событию — а тег именно это и позволяет.",
+                "how_it_should_be": "По тегу ключи удаляют явно через структуру связей (например `Redis Set`), а не ждут истечения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Реализовать инвалидацию по тегу в `Redis` невозможно без сканирования всех ключей через `KEYS *` при каждом изменении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`KEYS *` блокирует `Redis` и не нужен: связь тег→ключи хранят в `Redis Set` (`tag:<tag>`), и при инвалидации читают членов сета и удаляют их адресно.",
+                "source_of_confusion": "Кажется, что найти все ключи тега можно только полным перебором пространства ключей.",
+                "if_it_were_true": "Если бы требовался `KEYS *`, инвалидация по тегу была бы запрещена в проде из-за блокировки — но её реализуют через `Set`.",
+                "how_it_should_be": "Связь хранят в `Set` (`opsForSet().add(\"tag:\"+tag, key)`) и инвалидируют по членам сета без сканирования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Альтернатива тегам — хранить версию в ключе, но при инкременте версии старые ключи нужно немедленно удалять вручную по одному.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При версионировании ключа старые записи НЕ удаляют вручную — они просто перестают запрашиваться и вымирают по `TTL`; это и есть преимущество версии как альтернативы тегам.",
+                "source_of_confusion": "Кажется, что старые версии надо обязательно подчищать сразу.",
+                "if_it_were_true": "Если бы их удаляли вручную, версия не была бы более простой альтернативой тегам, а добавляла бы работу.",
+                "how_it_should_be": "Версия в ключе делает старые записи недостижимыми, и они вымирают по `TTL` без ручного удаления."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Инвалидация по тегу — группировка ключей по тегу: при изменении сущности инвалидируют все ключи с этим тегом. Реализация через `Redis Set`: при записи регистрируют ключ в теге (`opsForSet().add(\"tag:\"+tag, key)`), при инвалидации читают `members(\"tag:\"+tag)` и удаляют все ключи разом. Альтернатива — версия в ключе: при изменении увеличивают версию, старые ключи вымирают по `TTL`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Тег связывает разрозненные ключи (например все списки, зависящие от товара) в группу, чтобы одно изменение сбросило их все одной операцией.",
+                "example": "`putWithTag`: `redis.opsForValue().set(key, value, ttl); redis.opsForSet().add(\"tag:\"+tag, key)`; `evictByTag`: получить `members`, `redis.delete(keys)`, затем `redis.delete(\"tag:\"+tag)`.",
+                "when_to_apply": "Применяют, когда одна сущность влияет на множество кэш-записей (товар → его карточка, списки, поиск); тег избавляет от ручного перечисления всех ключей.",
+                "edge_cases": "Сет тегов сам занимает память и требует очистки (`delete(\"tag:\"+tag)`) после инвалидации; при сбое между записью значения и добавлением в сет ключ может «потеряться» для тега и не инвалидироваться — нужна аккуратность операций.",
+                "related": "[[caching-strategies-interview#Q22]] инвалидация списков при изменении сущности; [[caching-strategies-interview#Q21]] версия в ключе; [[caching-strategies-interview#Q16]] событийная инвалидация."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как кэшировать в микросервисной архитектуре?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Принципы: локальный кэш в каждом сервисе быстр, но инвалидация при изменении в другом сервисе сложна; распределённый кэш (`Redis`) общий для инстансов одного сервиса; не кэшировать чужие данные без контракта на инвалидацию. Часто комбинируют `L1` (локальный, короткий `TTL`) и `L2` (`Redis`), а при изменении публикуют событие (`Kafka`), и подписчики инвалидируют свой `L1` и ключи в `L2`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В микросервисах данные принадлежат разным сервисам, поэтому ключевой риск — кэширование чужого состояния без согласованного механизма его обновления.",
+                "example": "Сервис A зовёт B по API; B при изменении публикует событие инвалидации в `Kafka`, а подписчики инвалидируют `AL1` (`Caffeine`) и `AR` (`Redis`) — так A не держит протухшие данные B.",
+                "when_to_apply": "Применяют, когда сервисы обмениваются данными и нужно кэшировать кросс-сервисные ответы; обязательно с контрактом на инвалидацию через события.",
+                "edge_cases": "Кэширование чужих данных без контракта на инвалидацию — главная ловушка: владелец данных меняет их, а потребитель отдаёт устаревшее; событийная инвалидация через `Kafka` решает это, но добавляет связность.",
+                "related": "[[caching-strategies-interview#Q2]] L1/L2 каскад; [[caching-strategies-interview#Q28]] coherence распределённого кэша; [[caching-strategies-interview#Q42]] инвалидация через pub/sub."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В микросервисах правильно кэшировать чужие данные локально без согласования с владельцем — так снижается число межсервисных вызовов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэшировать чужие данные БЕЗ контракта на инвалидацию — антипаттерн: владелец изменит данные, а потребитель будет отдавать устаревшее без шанса узнать об этом.",
+                "source_of_confusion": "Снижение числа вызовов выглядит как чистая выгода, маскируя риск рассогласования.",
+                "if_it_were_true": "Если бы это было правильно, не подчёркивали бы «не кэшировать чужие данные без контракта на инвалидацию» как явный принцип.",
+                "how_it_should_be": "Чужие данные кэшируют только с контрактом на инвалидацию (события от владельца), иначе — отдают устаревшее."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Распределённый `Redis` в микросервисах должен быть один общий для ВСЕХ сервисов сразу, чтобы данные были консистентны между ними.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычно `Redis` общий для инстансов ОДНОГО сервиса, а не для всех; общий кэш на все сервисы создаёт связность и нарушает границы владения данными.",
+                "source_of_confusion": "«Общий кэш = консистентность» звучит привлекательно, но ломает изоляцию сервисов.",
+                "if_it_were_true": "Если бы один кэш на всех был нормой, не было бы принципа «не кэшировать чужие данные» и схемы с событийной инвалидацией между сервисами.",
+                "how_it_should_be": "Каждый сервис владеет своим кэшем (`Redis` на сервис); кросс-сервисная свежесть достигается событиями, а не общим хранилищем."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Локальный кэш в микросервисах не нужен вообще: достаточно одного распределённого `Redis`, и проблема инвалидации между сервисами исчезает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Локальный `L1` нужен для скорости (наносекунды против сетевых мс), а проблема кросс-сервисной инвалидации не исчезает с `Redis` — её решают событиями.",
+                "source_of_confusion": "Кажется, что распределённый слой снимает все вопросы согласованности.",
+                "if_it_were_true": "Если бы `L1` был не нужен, не описывали бы гибрид `L1 + L2` с событийной инвалидацией `Caffeine` как рекомендацию.",
+                "how_it_should_be": "Гибрид `L1` (скорость) + `L2 Redis` (общий) с событийной инвалидацией — типовое решение; один `Redis` инвалидацию между сервисами не отменяет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Near Cache и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Near Cache — это реплика всего распределённого кэша, целиком скопированная на каждый клиент для отказоустойчивости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Near Cache держит локально только ГОРЯЧИЕ ключи рядом с клиентом распределённого кэша, а не полную копию; цель — снизить сетевые обращения, а не полная репликация.",
+                "source_of_confusion": "«Рядом» и «локально» воспринимают как «полная копия под рукой».",
+                "if_it_were_true": "Если бы это была полная реплика, она не годилась бы для кэшей с высокой кардинальностью — а Near Cache применяют именно для горячего подмножества.",
+                "how_it_should_be": "Near Cache — локальный кэш горячих ключей поверх распределённого, а не полная реплика."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Near Cache — локальный кэш рядом с клиентом распределённого кэша (`Hazelcast Near Cache`, клиент `Redis` с локальным `Caffeine`). Горячие ключи обслуживаются из локальной памяти, снижая нагрузку на сеть. Подходит для read-heavy с повторяющимся набором ключей (топ товаров, конфигурация). Не подходит: высокая кардинальность, частые обновления, строгая консистентность.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это вариант L1 поверх распределённого L2: повторно запрашиваемые горячие ключи отдаются из локальной памяти, минуя сеть к `Redis`/`Hazelcast`.",
+                "example": "В `Hazelcast` включают Near Cache для map с `invalidate-on-change: true`, задают `max-size` и `TTL`; в клиенте `Redis` (`Lettuce`/`Jedis`) держат локальный `Caffeine` поверх `Redis` для горячих ключей.",
+                "when_to_apply": "Применяют при read-heavy нагрузке с устойчивым набором горячих ключей (топ товаров, конфиг); избегают при высокой кардинальности и частых изменениях.",
+                "edge_cases": "Near Cache усложняет coherence: при обновлении значения нужно инвалидировать локальные копии у всех клиентов (`invalidate-on-change`), иначе клиент будет отдавать устаревшее из своей памяти.",
+                "related": "[[caching-strategies-interview#Q2]] L1/L2 как общая идея; [[caching-strategies-interview#Q28]] coherence и инвалидация клиентов; [[caching-strategies-interview#Q30]] Hazelcast против Redis."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Near Cache идеально подходит для данных с высокой кардинальностью ключей и частыми обновлениями, так как разгружает сеть.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот — Near Cache НЕ подходит при высокой кардинальности (локальная память не вместит) и частых обновлениях (постоянная инвалидация копий); он для горячего стабильного набора.",
+                "source_of_confusion": "Разгрузка сети кажется универсальной выгодой для любых данных.",
+                "if_it_were_true": "Если бы он подходил высококардинальным данным, не указывали бы их прямо в списке «не подходит».",
+                "how_it_should_be": "Near Cache — для повторяющегося набора горячих ключей; высокая кардинальность и частые апдейты — противопоказания."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Near Cache не требует инвалидации при изменении данных, потому что он автоматически синхронизируется с распределённым кэшем в реальном времени без настроек.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Синхронизация не бесплатна: в `Hazelcast` для этого ставят `invalidate-on-change: true`, а клиентский Near Cache на `Caffeine` надо инвалидировать явно — иначе локальные копии устаревают.",
+                "source_of_confusion": "Хочется верить, что «near» сам всё держит в актуальном состоянии.",
+                "if_it_were_true": "Если бы инвалидация была не нужна, Near Cache не усложнял бы coherence — а он усложняет именно из-за локальных копий.",
+                "how_it_should_be": "Near Cache требует механизма инвалидации копий (`invalidate-on-change` или явный evict), иначе отдаёт устаревшие данные."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cache warming и когда его применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cache warming — это автоматическое увеличение `TTL` популярных ключей по мере роста числа обращений к ним.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cache warming — это ПРЕДЗАПОЛНЕНИЕ кэша популярными ключами при старте или по расписанию ДО первых запросов, а не динамическое продление `TTL`.",
+                "source_of_confusion": "И то, и другое про «горячие данные», поэтому механизмы путают.",
+                "if_it_were_true": "Если бы warming менял `TTL`, он не помогал бы избежать всплеска промахов сразу после деплоя — а это его главная задача.",
+                "how_it_should_be": "Warming заранее грузит горячие ключи в кэш; продление `TTL` — отдельная и иная механика."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cache warming обязательно блокирует старт приложения до полной загрузки всех данных, иначе он бессмысленен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот — warming НЕ должен блокировать старт долгой загрузкой; ключи грузят асинхронно и приоритизируют самые горячие, чтобы не задерживать готовность приложения.",
+                "source_of_confusion": "Кажется, что «прогреть до конца перед стартом» — единственно правильно.",
+                "if_it_were_true": "Если бы блокировка была обязательна, не предупреждали бы «не блокировать старт долгим warming».",
+                "how_it_should_be": "Warming делают асинхронным и приоритизированным; полная блокирующая загрузка — антипаттерн."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cache warming — предзаполнение кэша при старте приложения или по расписанию (популярные ключи загружаются до первых запросов). Применяют, чтобы избежать всплеска промахов после деплоя или перезапуска. Реализуют через `ApplicationRunner`, загружая, например, топ-100 товаров. Важно: не блокировать старт долгим warming, грузить асинхронно, приоритизировать горячие ключи.",
+              "correct": true,
+              "sections": {
+                "explanation": "Прогрев устраняет «холодный старт» кэша: без него первые запросы после деплоя массово промахиваются и бьют по БД, проседая по латентности.",
+                "example": "`CacheWarmer implements ApplicationRunner`: `productService.getTopProductIds(100).forEach(productService::findById)` — топ-100 окажутся в кэше до прихода трафика.",
+                "when_to_apply": "Применяют после деплоя/рестарта и перед ожидаемым ростом нагрузки; особенно полезно при дорогом пересчёте значений.",
+                "edge_cases": "Прогрев всего подряд опасен: долгая блокирующая загрузка задержит готовность, а в Kubernetes `readinessProbe` должна вернуть `200` только после прогрева, иначе трафик придёт раньше готовности кэша.",
+                "related": "[[caching-strategies-interview#Q41]] детальные стратегии warming при старте; [[caching-strategies-interview#Q18]] avalanche при холодном старте; [[caching-strategies-interview#Q4]] падение hit ratio после деплоя."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cache warming нужен только при первом в истории запуске приложения; при обычных перезапусках и деплоях он бесполезен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Warming особенно полезен именно при каждом деплое и перезапуске — тогда кэш холодный, и без прогрева первые запросы массово промахиваются в БД.",
+                "source_of_confusion": "Кажется, что «однажды прогрели — и навсегда».",
+                "if_it_were_true": "Если бы он был нужен лишь однажды, его не привязывали бы к деплоям и перезапускам как к типичным триггерам.",
+                "how_it_should_be": "Warming запускают при каждом старте/деплое, чтобы избежать всплеска промахов на холодном кэше."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cache coherence в распределённом кэше и как её обеспечивают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cache coherence означает, что в `Redis Cluster` каждая реплика мгновенно и синхронно получает копию записи, поэтому чтение с реплики всегда возвращает свежие данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реплики в `Redis Cluster` получают копию АСИНХРОННО, поэтому чтение с реплики может вернуть устаревшие данные — это и есть проблема coherence, а не её отсутствие.",
+                "source_of_confusion": "Слово «coherence» воспринимают как гарантию мгновенной синхронности.",
+                "if_it_were_true": "Если бы репликация была синхронной, не было бы рекомендации «читать с primary для критичных данных» — а она существует.",
+                "how_it_should_be": "Репликация асинхронна, реплики могут отставать; coherence обеспечивают событиями, коротким `TTL` и чтением с primary."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Coherence в распределённом кэше обеспечивается исключительно длинным `TTL`, чтобы данные реже менялись и не успевали рассогласоваться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Длинный `TTL` УВЕЛИЧИВАЕТ окно рассогласования; для coherence наоборот используют КОРОТКИЙ `TTL`, событийную инвалидацию (`Pub/Sub`, `Kafka`) и чтение с primary.",
+                "source_of_confusion": "Кажется, что «реже меняем — меньше рассогласований», но устаревшие данные живут дольше.",
+                "if_it_were_true": "Если бы длинный `TTL` помогал coherence, его не противопоставляли бы короткому в стратегиях согласованности.",
+                "how_it_should_be": "Coherence улучшают коротким `TTL` и инвалидацией по событию, а не удлинением срока жизни."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Near Cache упрощает coherence, потому что локальные копии автоматически совпадают с распределённым кэшем без дополнительных действий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Near Cache УСЛОЖНЯЕТ coherence: при обновлении нужно инвалидировать локальные копии у ВСЕХ клиентов, иначе они отдают устаревшее.",
+                "source_of_confusion": "«Локальная копия рядом» создаёт ложное ощущение автоматической согласованности.",
+                "if_it_were_true": "Если бы Near Cache упрощал coherence, его не упоминали бы как фактор, требующий инвалидации всех клиентов.",
+                "how_it_should_be": "Near Cache добавляет копии, которые надо инвалидировать у всех клиентов; это усложняет, а не упрощает coherence."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cache coherence — согласованность кэша между узлами. В `Redis Cluster` каждый ключ принадлежит одному шарду по хешу слота, а реплики получают копию асинхронно, поэтому чтение с реплики может вернуть устаревшие данные. Стратегии: инвалидация по событию (`Redis Pub/Sub`, `Kafka`), короткий `TTL`, чтение только с primary для критичных данных, осторожность с Near Cache (нужно инвалидировать все клиенты).",
+              "correct": true,
+              "sections": {
+                "explanation": "Несколько узлов с копиями данных неизбежно расходятся при асинхронной репликации; coherence — это набор приёмов, удерживающих расхождение в допустимых рамках.",
+                "example": "Инвалидация через `Redis Pub/Sub`: `RedisMessageListenerContainer` слушает `ChannelTopic(\"cache:invalidate\")` и на каждое сообщение делает `localCache.invalidate(key)` во всех инстансах.",
+                "when_to_apply": "Стратегию выбирают по критичности: для денег — чтение с primary, для каталога — короткий `TTL` или событийная инвалидация; Near Cache применяют осторожно.",
+                "edge_cases": "Pub/Sub fire-and-forget не гарантирует доставку: при падении инстанса событие инвалидации теряется и его `L1` остаётся устаревшим — для критичных систем берут `Redis Streams` с consumer groups.",
+                "related": "[[caching-strategies-interview#Q19]] консистентность кэша и БД; [[caching-strategies-interview#Q37]] coherence между датацентрами; [[caching-strategies-interview#Q42]] инвалидация через pub/sub и её ограничения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать TTL для кэша в зависимости от типа данных?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`TTL` зависит от требований к консистентности: конфигурация — часы-дни (длинный `TTL` + инвалидация по событию); справочники — 10-60 минут (`TTL` с jitter); пользовательские данные — 1-10 минут (короткий `TTL` или событие); сессии — `TTL` = timeout сессии; часто обновляемые — секунды (инвалидация по событию). Jitter (`base + random`) предотвращает avalanche.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чем волатильнее данные и строже требование к свежести, тем короче `TTL`; стабильные справочники живут долго, динамика — секунды или вовсе по событию.",
+                "example": "Для `Caffeine`: `expireAfterWrite(Duration.ofMinutes(10))`; для `Redis` с jitter: `redis.opsForValue().set(key, value, baseTtl.plusSeconds(ThreadLocalRandom.current().nextLong(0, baseTtl.toSeconds()/5)))`.",
+                "when_to_apply": "Выбор делают по таблице тип-данных→`TTL`: конфиг и справочники — длинно, профиль и баланс — коротко или по событию, сессии — по таймауту.",
+                "edge_cases": "Без jitter справочники с одинаковым `TTL` истекают одновременно → avalanche; слишком короткий `TTL` для горячих данных снижает hit ratio и провоцирует stampede.",
+                "related": "[[caching-strategies-interview#Q16]] TTL против событийной инвалидации; [[caching-strategies-interview#Q18]] avalanche и jitter; [[caching-strategies-interview#Q17]] короткий TTL и stampede."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для всех типов данных `TTL` должен быть одинаковым (например 1 час), чтобы поведение кэша было предсказуемым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TTL` подбирают под тип данных: конфиг — часы-дни, профиль — минуты, часто меняющееся — секунды; единый `TTL` либо устареет для динамики, либо избыточно короток для статики.",
+                "source_of_confusion": "Единое значение кажется проще в эксплуатации и предсказуемее.",
+                "if_it_were_true": "Если бы один `TTL` подходил всем, не было бы таблицы с разными сроками по типам данных.",
+                "how_it_should_be": "`TTL` дифференцируют по волатильности данных, а не задают единым числом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для часто обновляемых данных нужен максимально длинный `TTL`, чтобы реже пересчитывать значение и экономить БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для часто обновляемых данных берут СЕКУНДНЫЙ `TTL` или инвалидацию по событию; длинный `TTL` отдавал бы устаревшие данные почти всё время.",
+                "source_of_confusion": "Экономия на пересчёте выглядит выгодной, но ценой свежести.",
+                "if_it_were_true": "Если бы длинный `TTL` подходил динамике, баланс или цена кэшировались бы на часы — что недопустимо.",
+                "how_it_should_be": "Часто меняющиеся данные — короткий `TTL`/событие; длинный `TTL` оставляют конфигурации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Jitter на `TTL` вреден, потому что вносит непредсказуемость; ключи должны истекать строго одновременно для удобства мониторинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Jitter намеренно разносит сроки истечения, чтобы избежать avalanche — одновременного протухания множества ключей и всплеска к БД; это полезная практика.",
+                "source_of_confusion": "Кажется, что одновременное истечение проще отслеживать.",
+                "if_it_were_true": "Если бы одновременное истечение было лучше, не рекомендовали бы jitter как защиту от avalanche.",
+                "how_it_should_be": "Jitter (`base + random`) рекомендуется именно для предотвращения синхронного истечения и avalanche."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбирать между Caffeine, Redis и Hazelcast?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Caffeine` — распределённый кэш с общим хранилищем между сервисами, поэтому его выбирают для общего кэша вместо `Redis`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Caffeine` — ЛОКАЛЬНЫЙ in-process кэш БЕЗ общего хранилища (не разделяется между инстансами); общий кэш между сервисами дают `Redis` и `Hazelcast`.",
+                "source_of_confusion": "Раз `Caffeine` популярен и быстр, его ошибочно считают полноценной заменой `Redis`.",
+                "if_it_were_true": "Если бы `Caffeine` был общим, не строили бы гибрид `L1 Caffeine + L2 Redis` — где `Redis` как раз закрывает общий слой.",
+                "how_it_should_be": "`Caffeine` — локальный кэш одного инстанса; общий кэш — это `Redis`/`Hazelcast`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Caffeine` — локальный in-process, латентность наносекундная, без общего кэша и персистентности, нулевая эксплуатация — для горячих данных одного инстанса. `Redis` — распределённый, 1-5 мс по сети, общий кэш, персистентность RDB/AOF, средняя эксплуатация — общий кэш между сервисами. `Hazelcast` — распределённый in-cluster, микросекунды-мс, общий, тесная Java-интеграция (`MapLoader`/`MapStore`), сложная эксплуатация. Часто эффективнее гибрид `L1 Caffeine + L2 Redis`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор — это компромисс латентность/общность/эксплуатация: `Caffeine` максимально быстр, но локален; `Redis` общий ценой сети; `Hazelcast` мощен, но сложен в эксплуатации.",
+                "example": "Для read-heavy одного инстанса берут `Caffeine`; для общего кэша нескольких сервисов — `Redis`; для тесной интеграции с Java и read/write-through — `Hazelcast` (`MapLoader`/`MapStore`).",
+                "when_to_apply": "Решение принимают по тому, нужен ли общий кэш, какая допустима латентность и эксплуатационная сложность; для production часто берут гибрид двух слоёв.",
+                "edge_cases": "Ставка только на один слой бывает неоптимальна: чистый `Caffeine` не делится между инстансами, чистый `Redis` добавляет сеть на каждое чтение — поэтому гибрид `L1+L2` обычно эффективнее.",
+                "related": "[[caching-strategies-interview#Q1]] локальный vs распределённый; [[caching-strategies-interview#Q2]] гибрид L1/L2; [[caching-strategies-interview#Q14]] CacheLoader/MapLoader для read-through."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Redis` обеспечивает наносекундную латентность, такую же как локальный `Caffeine`, поэтому локальный слой не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Redis` даёт 1-5 мс из-за сети, а `Caffeine` — наносекунды в памяти процесса; именно эта разница оправдывает локальный `L1` поверх `Redis`.",
+                "source_of_confusion": "Оба «быстрые», поэтому их латентности уравнивают.",
+                "if_it_were_true": "Если бы `Redis` был наносекундным, гибрид `L1 Caffeine + L2 Redis` не давал бы выигрыша — но он даёт за счёт локального слоя.",
+                "how_it_should_be": "`Redis` — миллисекунды (сеть), `Caffeine` — наносекунды (память); поэтому `L1` поверх `Redis` имеет смысл."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Hazelcast` проще всех в эксплуатации и не требует кластера, поэтому его выбирают как самый простой вариант по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Hazelcast` — наоборот, самый СЛОЖНЫЙ в эксплуатации (распределённый in-cluster); самый простой — `Caffeine` (нулевая эксплуатация, библиотека в процессе).",
+                "source_of_confusion": "Богатая функциональность `Hazelcast` создаёт впечатление удобства.",
+                "if_it_were_true": "Если бы он был проще всех, его не помечали бы «сложная эксплуатация» против «нулевой» у `Caffeine`.",
+                "how_it_should_be": "По простоте эксплуатации лидирует `Caffeine`; `Hazelcast` мощнее, но сложнее в сопровождении."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как мониторить кэш в production и какие метрики и алерты использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главная и единственная метрика кэша в проде — размер кэша в байтах; hit ratio и latency не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключевые метрики — hit ratio, miss ratio, latency get/set, размер и eviction rate; hit ratio и latency как раз важнее всего, а не только объём.",
+                "source_of_confusion": "Размер легко измерить, поэтому его принимают за главный показатель.",
+                "if_it_were_true": "Если бы хватало размера, не было бы алерта «hit ratio < 70% за 15 минут» — а он стандартный.",
+                "how_it_should_be": "Мониторят hit/miss ratio, latency и eviction rate; размер — лишь одна из метрик."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы `Micrometer` экспортировал метрики `Caffeine`, ничего настраивать не нужно — они собираются автоматически без `recordStats()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `recordStats()` `Caffeine` не собирает статистику, и `Micrometer` не увидит `cache.gets`/`cache.puts`/`cache.evictions`; вызов `recordStats()` обязателен.",
+                "source_of_confusion": "Кажется, что метрики «есть из коробки» без явного включения.",
+                "if_it_were_true": "Если бы статистика собиралась сама, не подчёркивали бы `recordStats()` как условие экспорта метрик.",
+                "how_it_should_be": "Для метрик `Caffeine` обязателен `recordStats()`; только тогда `Micrometer` их экспортирует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Метрики: hit ratio, miss ratio, latency (get/set), размер кэша, eviction rate. С `recordStats()` `Micrometer` автоматически экспортирует `cache.gets`/`cache.puts`/`cache.evictions`. Алерты: hit ratio < 70% за 15 минут, рост p99 latency get, память `Redis` > 80%, резкий рост eviction rate. В `Redis` — `INFO stats` (`keyspace_hits`/`keyspace_misses`), `Redis Exporter` для `Prometheus`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Набор метрик показывает и эффективность (hit ratio), и здоровье (latency, eviction, память); алерты ловят деградацию до того, как она ударит по пользователям.",
+                "example": "`@Bean CacheManager cacheManager(MeterRegistry r){ manager.setCaffeine(Caffeine.newBuilder().maximumSize(1000).recordStats()); ... }` — `recordStats()` включает `cache.gets`, `cache.puts`, `cache.evictions`.",
+                "when_to_apply": "Мониторинг включают для любого продового кэша; `spring-boot-starter-cache` + `micrometer-registry-prometheus` экспортируют метрики в `Actuator` автоматически.",
+                "edge_cases": "Падение hit ratio сразу после деплоя — обычно холодный кэш или смена ключей, а не сбой; интерпретировать алерт надо в контексте релиза, иначе будет ложная тревога.",
+                "related": "[[caching-strategies-interview#Q4]] hit/miss ratio; [[caching-strategies-interview#Q38]] интерпретация метрик; [[caching-strategies-interview#Q8]] recordStats при настройке Caffeine."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Redis` метрики попаданий и промахов недоступны; их можно получить только из приложения через ручной счётчик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Redis` отдаёт `keyspace_hits` и `keyspace_misses` через `INFO stats`, а `Redis Exporter` публикует их в `Prometheus` — ручной счётчик не нужен.",
+                "source_of_confusion": "Кажется, что серверная статистика недоступна снаружи.",
+                "if_it_were_true": "Если бы метрик не было, не упоминали бы `Redis INFO stats` и `Redis Exporter` как источники.",
+                "how_it_should_be": "`Redis INFO stats` даёт `keyspace_hits`/`keyspace_misses`; `Redis Exporter` экспортирует их в `Prometheus`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать сбои кэша, когда Redis недоступен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "При падении `Redis` правильно без ограничений переключиться на БД и запустить агрессивные retry, чтобы быстрее восстановить кэш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это антипаттерн: безлимитный переход на БД + агрессивные retry дают каскадный сбой БД; нужны circuit breaker, локальный fallback и ленивое восстановление.",
+                "source_of_confusion": "Кажется логичным «раз кэша нет — сразу всё из БД и быстро чиним».",
+                "if_it_were_true": "Если бы это было верно, не описывали бы данный сценарий прямо как антипаттерн каскадного сбоя.",
+                "how_it_should_be": "При сбое `Redis` применяют circuit breaker и `Caffeine`-fallback; агрессивные retry в БД исключают."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При недоступности `Redis` приложение должно сразу падать с ошибкой, потому что работать без кэша нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэш — оптимизация, а не источник истины: при сбое `Redis` сервис деградирует gracefully (fallback на `Caffeine`/БД через circuit breaker), а не падает.",
+                "source_of_confusion": "Кажется, что раз архитектура завязана на кэш, его отказ фатален.",
+                "if_it_were_true": "Если бы падение было обязательным, не существовало бы fallback-метода и локального резервного кэша в схеме resilience.",
+                "how_it_should_be": "При сбое кэша сервис продолжает работать через fallback и БД; полный отказ — неверная реакция."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "После восстановления `Redis` его нужно немедленно заполнить батчевой загрузкой всех ключей из БД одним проходом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После восстановления предпочтительна ЛЕНИВАЯ загрузка (`Cache-Aside`): ключи наполняются по запросам; батчевое заполнение всего сразу даёт всплеск нагрузки на БД.",
+                "source_of_confusion": "Хочется «прогреть всё разом», чтобы вернуть hit ratio.",
+                "if_it_were_true": "Если бы батчевое заполнение было правильным, не рекомендовали бы ленивую загрузку при восстановлении `Redis`.",
+                "how_it_should_be": "При восстановлении кэш наполняют лениво через `Cache-Aside`, а не массовым батчем из БД."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Антипаттерн — при падении `Redis` без ограничений идти в БД и одновременно запускать агрессивные retry (каскадный сбой БД). Правильно: circuit breaker (`@CircuitBreaker(name=\"redis\", fallbackMethod=\"fallbackGet\")`), локальный fallback-кэш (`Caffeine` с коротким `TTL`) и graceful degradation; при восстановлении предпочтительна ленивая загрузка (`Cache-Aside`), а не батчевое заполнение.",
+              "correct": true,
+              "sections": {
+                "explanation": "Цель — изолировать сбой кэша от БД: circuit breaker гасит лавину запросов к недоступному `Redis`, а локальный fallback держит хотя бы горячие данные.",
+                "example": "`@CircuitBreaker(name=\"redis\", fallbackMethod=\"fallbackGet\") public Object get(String key){ return redis.opsForValue().get(key); }`, а `fallbackGet` отдаёт из локального `Caffeine` (`fallback.getIfPresent(key)`).",
+                "when_to_apply": "Применяют, когда `Redis` критичен по нагрузке и его отказ может обрушить БД; circuit breaker + fallback держат сервис живым в деградированном режиме.",
+                "edge_cases": "Fallback-`Caffeine` с коротким `TTL` ограничивает риск отдачи устаревших данных, но при долгом сбое `Redis` БД всё равно примет повышенную нагрузку — нужен лимит/таймауты на обращения к ней.",
+                "related": "[[caching-strategies-interview#Q18]] avalanche при холодном кэше; [[caching-strategies-interview#Q31]] алерты по доступности Redis; [[caching-strategies-interview#Q1]] локальный кэш как fallback-слой."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить безопасность кэша (Redis)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Рекомендации: приватная сеть (firewall, `VPC`); аутентификация (`requirepass`); `TLS` для шифрования в transit; отключить опасные команды (`FLUSHALL`, `CONFIG`) через `rename-command`; не хранить `PII` в открытом виде (шифрование на уровне приложения). В `Spring`: `spring.data.redis.password` из переменной окружения, для `TLS` — `spring.data.redis.ssl.enabled=true`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Защита `Redis` многослойна: сеть ограничивает доступ, аутентификация и `TLS` закрывают канал, отключение команд снижает поверхность атаки, а шифрование данных защищает на случай утечки.",
+                "example": "В `redis.conf`: `requirepass ${REDIS_PASSWORD}`, `rename-command FLUSHALL \"\"`, `rename-command CONFIG \"\"`, `tls-port 6380`, `port 0`, `bind 127.0.0.1`.",
+                "when_to_apply": "Применяют для любого продового `Redis`, особенно если в кэше оседают персональные данные или он доступен из общей сети.",
+                "edge_cases": "Пароль и ключи нельзя хардкодить — их берут из переменных окружения; при этом `rename-command` ломает инструменты, ожидающие стандартные команды, поэтому изменения согласуют с эксплуатацией.",
+                "related": "[[caching-strategies-interview#Q9]] пароль Redis из env при настройке; [[caching-strategies-interview#Q23]] шифрование при сериализации PII; [[caching-strategies-interview#Q32]] доступность Redis при сбоях."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "По умолчанию `Redis` требует пароль и шифрует трафик `TLS`, поэтому дополнительно настраивать безопасность не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `Redis` НЕ требует пароля и НЕ использует `TLS`; `requirepass` и `tls-port` надо включать явно, иначе кэш открыт.",
+                "source_of_confusion": "Хочется верить в «secure by default», как у некоторых СУБД.",
+                "if_it_were_true": "Если бы защита была по умолчанию, не было бы рекомендаций настроить `requirepass` и `TLS` вручную.",
+                "how_it_should_be": "Аутентификацию (`requirepass`) и `TLS` включают явно; из коробки `Redis` незащищён."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Опасные команды вроде `FLUSHALL` можно отключить только пересборкой `Redis` из исходников с удалением соответствующего кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Их отключают конфигурацией без пересборки: `rename-command FLUSHALL \"\"` (переименование в пустую строку) делает команду недоступной.",
+                "source_of_confusion": "Кажется, что встроенную команду можно убрать только на уровне кода.",
+                "if_it_were_true": "Если бы требовалась пересборка, не существовало бы директивы `rename-command` в `redis.conf`.",
+                "how_it_should_be": "`rename-command` в конфиге отключает или переименовывает опасные команды без пересборки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Redis` сам шифрует все значения на диске и в памяти, поэтому хранить `PII` в открытом виде безопасно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Redis` не шифрует данные прозрачно; `PII` нельзя хранить в открытом виде — его шифруют на уровне приложения перед записью в кэш.",
+                "source_of_confusion": "`TLS` для transit создаёт впечатление, что и данные at-rest зашифрованы.",
+                "if_it_were_true": "Если бы значения шифровались автоматически, не было бы рекомендации шифровать `PII` на уровне приложения.",
+                "how_it_should_be": "Значения в `Redis` по умолчанию в открытом виде; `PII` шифруют в приложении до записи."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать кэширование (unit и integration)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Проверить, что результат закэширован, можно только интеграционным тестом с реальным `Redis`; в unit-тестах кэш проверить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В unit-тесте проверяют через `@MockBean` репозитория и `verify(..., times(1))`: при двух вызовах метода репозиторий должен вызваться один раз — значит второй ответ из кэша.",
+                "source_of_confusion": "Кажется, что кэш — это инфраструктура, которую без реального хранилища не проверить.",
+                "if_it_were_true": "Если бы unit-проверка была невозможна, не приводили бы пример `@SpringBootTest` с `verify(productRepository, times(1)).findById(1L)`.",
+                "how_it_should_be": "Кэширование проверяют в unit-тесте через мок репозитория и подсчёт вызовов; реальный `Redis` нужен для integration."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Unit-тесты: `@SpringBootTest` с `@MockBean ProductRepository`; первый вызов идёт в репозиторий, второй — из кэша, проверяют `verify(productRepository, times(1)).findById(1L)`; для evict — после `update()` ожидают `times(2)`. Между тестами кэш чистят в `@AfterEach`. Integration-тесты: реальный `Redis` через `Testcontainers` — проверяют запись, чтение, `TTL`, инвалидацию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Подсчёт вызовов мока показывает, что кэш реально перехватил повторное обращение, а `Testcontainers` проверяет поведение с настоящим хранилищем (сериализацию, `TTL`).",
+                "example": "`when(productRepository.findById(1L)).thenReturn(...); productService.findById(1L); productService.findById(1L); verify(productRepository, times(1)).findById(1L)` — второй вызов обслужен кэшем.",
+                "when_to_apply": "Unit-уровень — для логики кэширования (hit/evict через моки), integration — для интеграции с `Redis` (`TTL`, инвалидация, сериализация) на `Testcontainers`.",
+                "edge_cases": "Без `@AfterEach` очистки кэш протекает между тестами и даёт ложные `times()`; а проверку `TTL` в unit-тесте сделать трудно — для неё нужен реальный `Redis` с контролем времени.",
+                "related": "[[caching-strategies-interview#Q7]] @Cacheable/@CacheEvict, которые тестируют; [[caching-strategies-interview#Q9]] Redis для integration-тестов; [[caching-strategies-interview#Q23]] сериализация в integration-тестах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы проверить инвалидацию (`@CacheEvict`), достаточно вызвать `update()` и убедиться, что репозиторий ни разу не дёрнулся при последующем `findById`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: после evict следующий `findById` ДОЛЖЕН снова сходить в репозиторий, поэтому ожидают `verify(..., times(2))`, а не ноль вызовов.",
+                "source_of_confusion": "Кажется, что после обновления данные снова в кэше, поэтому чтение не пойдёт в репозиторий.",
+                "if_it_were_true": "Если бы вызовов не было, нельзя было бы доказать, что `@CacheEvict` действительно удалил запись и кэш пуст.",
+                "how_it_should_be": "После `@CacheEvict` повторное чтение обращается к репозиторию заново (`times(2)`), что и подтверждает инвалидацию."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Очищать кэш между тестами не нужно — каждый `@Test` в `@SpringBootTest` стартует со свежим пустым контекстом и пустым кэшем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекст (и кэш) в `@SpringBootTest` обычно переиспользуется между тестами, поэтому кэш чистят явно в `@AfterEach`, иначе остатки исказят счётчики вызовов.",
+                "source_of_confusion": "Кажется, что Spring пересоздаёт контекст на каждый тест.",
+                "if_it_were_true": "Если бы кэш всегда был пуст, не добавляли бы `@AfterEach`, перебирающий `cacheManager.getCacheNames()` и зовущий `clear()`.",
+                "how_it_should_be": "Между тестами кэш очищают в `@AfterEach`, так как контекст и кэш-менеджер переиспользуются."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как кэш влияет на латентность и throughput приложения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Кэш всегда снижает латентность даже при промахе, потому что обращение к кэшу заведомо быстрее обращения к БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При промахе кэш ДОБАВЛЯЕТ накладные расходы (сеть, сериализация) поверх обращения к БД, поэтому latency при miss = latency БД + overhead, то есть выше, чем без кэша.",
+                "source_of_confusion": "Кажется, что «кэш = всегда быстрее», без учёта стоимости промаха.",
+                "if_it_were_true": "Если бы miss всегда был быстрее, не было бы строки «50-500 мс + overhead» для промаха в сравнении латентностей.",
+                "how_it_should_be": "Выигрыш даёт hit; при miss добавляется overhead обращения к кэшу поверх БД."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Throughput с кэшем всегда выше, чем без, независимо от hit ratio, потому что часть запросов всё равно гасится кэшем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Throughput растёт при ВЫСОКОМ hit ratio; при низком hit ratio двойной вызов (кэш + БД) может даже снизить пропускную способность относительно прямого обращения к БД.",
+                "source_of_confusion": "Кажется, что любой кэш безусловно повышает throughput.",
+                "if_it_were_true": "Если бы это было так, не было бы оговорки «throughput высокий при высоком hit ratio» и «ниже при miss (двойной вызов)».",
+                "how_it_should_be": "Throughput зависит от hit ratio: высокий ratio помогает, низкий с двойным вызовом может вредить."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Латентность: без кэша 50-500 мс; с кэшем при hit — <1 мс (локальный) или 1-5 мс (`Redis`); при miss — латентность БД + overhead кэша. Throughput: без кэша ограничен БД; с кэшем высокий при высоком hit ratio, но ниже при miss (двойной вызов). Снижение средней латентности тем выше, чем выше hit ratio.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эффект кэша асимметричен: попадание резко сокращает время ответа, а промах добавляет накладные расходы; общая выгода определяется долей попаданий.",
+                "example": "При hit ratio 95% подавляющее большинство чтений отвечает за <1-5 мс вместо 50-500 мс, и БД разгружается, что поднимает общий throughput сервиса.",
+                "when_to_apply": "Эту модель используют, оценивая выигрыш от кэша: считают ожидаемую латентность как взвешенную по hit ratio сумму времени hit и miss.",
+                "edge_cases": "При промахах добавляется сеть и сериализация; неправильный размер или `TTL` (низкий hit ratio) может не дать выигрыша вовсе или ухудшить latency из-за двойного обращения.",
+                "related": "[[caching-strategies-interview#Q4]] hit ratio как драйвер выигрыша; [[caching-strategies-interview#Q23]] стоимость сериализации; [[caching-strategies-interview#Q30]] латентность Caffeine vs Redis."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Латентность при попадании в локальный `Caffeine` и в распределённый `Redis` одинакова — около 1-5 мс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Локальный hit — <1 мс (память процесса), а `Redis` hit — 1-5 мс из-за сети; это разные порядки, и именно поэтому ставят `L1 Caffeine` поверх `Redis`.",
+                "source_of_confusion": "Оба «попадания», поэтому их латентности уравнивают.",
+                "if_it_were_true": "Если бы они совпадали, локальный слой не давал бы выигрыша по latency — но он даёт.",
+                "how_it_should_be": "Локальный hit на порядок быстрее (<1 мс) распределённого hit (1-5 мс по сети)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cache partitioning (шардирование) и зачем оно нужно?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Partitioning кэша — это создание реплик одного и того же набора ключей на нескольких узлах для отказоустойчивости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описана РЕПЛИКАЦИЯ. Partitioning (шардирование) — РАСПРЕДЕЛЕНИЕ разных ключей по узлам по хешу, чтобы каждый узел хранил свою часть данных.",
+                "source_of_confusion": "Репликация и шардирование оба «про несколько узлов», поэтому их путают.",
+                "if_it_were_true": "Если бы это была репликация, partitioning не давал бы горизонтального масштабирования ОБЪЁМА — а именно это его цель.",
+                "how_it_should_be": "Partitioning делит ключи между узлами по хешу; копирование одного набора — это репликация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Redis Cluster` ключ всегда попадает на случайный узел, поэтому связанные ключи нельзя держать вместе для атомарных операций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключ хешируется в один из 16384 слотов детерминированно (не случайно), а hash tags (`{user}:123`, `{user}:456`) направляют связанные ключи в один слот для атомарных операций.",
+                "source_of_confusion": "Кажется, что распределение по узлам случайно и неуправляемо.",
+                "if_it_were_true": "Если бы размещение было случайным, hash tags не работали бы — а они существуют именно ради совместного размещения.",
+                "how_it_should_be": "Размещение детерминированно по хешу слота; hash tags позволяют группировать связанные ключи в один слот."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Partitioning нужен только для уменьшения латентности отдельного запроса, а на объём и throughput он не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главные цели partitioning — горизонтальное масштабирование ОБЪЁМА, распределение нагрузки и рост пропускной способности; латентность одного запроса — не основная мотивация.",
+                "source_of_confusion": "Любую оптимизацию хочется свести к «быстрее один запрос».",
+                "if_it_were_true": "Если бы дело было только в латентности, partitioning не описывали бы как способ масштабировать объём и throughput.",
+                "how_it_should_be": "Partitioning масштабирует объём и throughput и распределяет нагрузку; ускорение одного запроса — не его цель."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Partitioning (шардирование) кэша — распределение ключей по нескольким узлам по хешу ключа. Нужно для: горизонтального масштабирования объёма кэша, распределения нагрузки, увеличения пропускной способности. В `Redis Cluster` ключ хешируется в один из 16384 слотов; каждый узел владеет диапазоном слотов. Hash tags (`{user}:123`, `{user}:456`) направляют связанные ключи в один слот для атомарных операций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Шардирование позволяет хранить больше данных и обрабатывать больше операций, чем способен один узел, размазывая ключи по кластеру.",
+                "example": "В `Redis Cluster` ключи без hash tag расходятся по слотам, а `{user}:123` и `{user}:456` с общим тегом `{user}` попадают в один слот, что даёт атомарные `MULTI`/`EXEC` над ними.",
+                "when_to_apply": "Применяют, когда объём кэша или нагрузка превышают возможности одного узла; hash tags используют для операций над группой связанных ключей.",
+                "edge_cases": "Hash tags нужны осознанно: если переусердствовать, много ключей сядет в один слот и создаст hot slot, сводя на нет балансировку нагрузки шардирования.",
+                "related": "[[caching-strategies-interview#Q28]] coherence и слоты в Redis Cluster; [[caching-strategies-interview#Q21]] дизайн ключей с hash tags; [[caching-strategies-interview#Q37]] coherence между датацентрами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое cache coherence в мультидатацентровой среде и как её обеспечивают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В мультидатацентровой среде каждый `DC` может иметь свой кэш, и при обновлении в одном `DC` кэши в других могут содержать устаревшие данные. Подходы: инвалидация по событию (при записи в DC1 публикуется событие через `Kafka` с cross-DC репликацией, подписчики в DC2 инвалидируют ключ); короткий `TTL`; централизованный кэш (один `Redis Cluster` с репликами в DC, выше latency для удалённого DC); версионирование (версия в ключе/значении, клиент сравнивает).",
+              "correct": true,
+              "sections": {
+                "explanation": "Между датацентрами добавляется межрегиональная задержка и риск рассогласования, поэтому инвалидацию распространяют асинхронно через cross-DC шину событий.",
+                "example": "При записи в DC1 публикуется событие в `Kafka` (с cross-DC репликацией топика); потребитель в DC2 получает его и инвалидирует соответствующий ключ в локальном кэше.",
+                "when_to_apply": "Подходы выбирают по требованиям: событийная инвалидация для свежести, централизованный кэш для простоты (ценой latency), версионирование для обнаружения устаревших копий.",
+                "edge_cases": "Для строгой консистентности между DC часто вообще ОТКАЗЫВАЮТСЯ от кэша для критичных данных, потому что cross-DC инвалидация всегда асинхронна и оставляет окно рассогласования.",
+                "related": "[[caching-strategies-interview#Q28]] coherence в одном кластере; [[caching-strategies-interview#Q36]] partitioning и слоты; [[caching-strategies-interview#Q16]] событийная инвалидация и TTL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В мультидатацентровой среде кэши разных `DC` синхронизируются мгновенно и всегда консистентны без дополнительных усилий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cross-DC синхронизация асинхронна и имеет задержку; кэши в других `DC` могут содержать устаревшие данные, и для свежести нужны события, короткий `TTL` или версионирование.",
+                "source_of_confusion": "Хочется верить, что инфраструктура «сама всё синхронизирует».",
+                "if_it_were_true": "Если бы синхронизация была мгновенной, не отказывались бы от кэша для критичных cross-DC данных.",
+                "how_it_should_be": "Между DC всегда есть окно рассогласования; coherence обеспечивают событиями, `TTL` и версионированием."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Централизованный единый `Redis Cluster` на все датацентры даёт одинаково низкую latency из любого `DC`, поэтому это лучший вариант без компромиссов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Централизованный кэш упрощает coherence, но удалённый `DC` платит ПОВЫШЕННОЙ latency при обращении к кластеру в другом регионе — компромисс есть.",
+                "source_of_confusion": "«Один источник истины» создаёт впечатление решения без минусов.",
+                "if_it_were_true": "Если бы latency была всюду одинаковой, межрегиональные задержки не упоминались бы как минус централизованного кэша.",
+                "how_it_should_be": "Централизованный кэш проще для согласованности, но добавляет latency удалённым DC — это компромисс."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для критичных данных между датацентрами кэш надо использовать максимально агрессивно с длинным `TTL`, чтобы снизить cross-DC трафик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для строго консистентных критичных данных между DC часто ОТКАЗЫВАЮТСЯ от кэша; длинный `TTL` лишь увеличил бы окно рассогласования между датацентрами.",
+                "source_of_confusion": "Снижение cross-DC трафика выглядит выгодным, но ценой свежести критичных данных.",
+                "if_it_were_true": "Если бы агрессивное кэширование с длинным `TTL` подходило, не было бы рекомендации отказываться от кэша для критичных cross-DC данных.",
+                "how_it_should_be": "Критичные cross-DC данные либо не кэшируют, либо держат короткий `TTL`; длинный `TTL` усугубляет рассогласование."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как измерять и интерпретировать метрики кэша в production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Резкое падение hit ratio сразу после деплоя — это всегда баг в коде кэширования, требующий немедленного отката релиза.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Падение hit ratio после деплоя чаще объясняется холодным кэшем или сменой формата ключей/`TTL`, а не багом; это ожидаемо и проходит после прогрева.",
+                "source_of_confusion": "Любое отклонение метрики после релиза хочется счесть регрессией.",
+                "if_it_were_true": "Если бы это всегда был баг, не указывали бы «возможна смена ключей или TTL» как штатную причину падения hit ratio.",
+                "how_it_should_be": "После деплоя падение hit ratio интерпретируют в контексте: холодный кэш и смена ключей нормальны, откат не всегда нужен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Ключевые метрики: hit ratio (цель 80-95%; низкий → плохой дизайн ключей или короткий `TTL`); latency get/set p50/p99 (рост → проблемы с `Redis` или сетью); eviction rate (частые evictions снижают hit ratio → увеличить память или сократить `TTL`); ошибки (timeout, connection refused → доступность). Инструменты: `Micrometer` + `Prometheus`/`Grafana`, `Redis INFO stats`, `Caffeine.stats()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Метрики читают связанно: hit ratio показывает эффективность, latency и eviction — здоровье и ёмкость, ошибки — доступность; их сочетание указывает на корень проблемы.",
+                "example": "Высокий hit ratio при высокой latency указывает на проблему сети или сериализации, а не дизайна ключей; рост eviction rate — на нехватку памяти или слишком длинный `TTL`.",
+                "when_to_apply": "Интерпретацию применяют при разборе инцидентов и тюнинге: по комбинации метрик решают, менять ли память, `TTL` или дизайн ключей.",
+                "edge_cases": "Падение hit ratio сразу после деплоя — обычно холодный кэш или смена ключей, а не сбой; не каждый алерт по hit ratio означает регрессию, контекст релиза обязателен.",
+                "related": "[[caching-strategies-interview#Q4]] определение hit/miss ratio; [[caching-strategies-interview#Q31]] алерты и сбор метрик; [[caching-strategies-interview#Q35]] latency при hit/miss."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Рост eviction rate означает, что `TTL` слишком короткий, поэтому единственное решение — увеличить `TTL` всех ключей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Частые evictions обычно говорят о нехватке ПАМЯТИ под объём ключей; лечат увеличением `maxmemory` ИЛИ сокращением `TTL` (меньше живущих одновременно ключей), а не удлинением `TTL`.",
+                "source_of_confusion": "Кажется, что evictions и истечение по `TTL` — одно и то же.",
+                "if_it_were_true": "Если бы решением был длинный `TTL`, рекомендовали бы именно его — но советуют увеличить память или СОКРАТИТЬ `TTL`.",
+                "how_it_should_be": "Eviction rate растёт при нехватке памяти; решают большим `maxmemory` или более коротким `TTL`, а не длинным."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Высокий hit ratio в сочетании с высокой latency всегда означает, что дизайн ключей плохой и его надо переделывать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Высокий hit ratio при высокой latency указывает скорее на проблему СЕТИ или СЕРИАЛИЗАЦИИ (попадания есть, но ответ медленный), а не на дизайн ключей — он как раз хорош, раз hit ratio высок.",
+                "source_of_confusion": "Высокую latency инстинктивно списывают на дизайн ключей, не глядя на то, что hit ratio при этом остаётся высоким.",
+                "if_it_were_true": "Если бы виноваты были ключи, страдал бы и hit ratio — но он высокий, значит проблема в другом слое.",
+                "how_it_should_be": "Высокий hit ratio + высокая latency → смотреть сеть/сериализацию, а не дизайн ключей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как предотвратить cache stampede с помощью distributed lock?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Distributed lock против stampede работает так: ВСЕ потоки берут блокировку и пересчитывают значение по очереди, гарантируя свежесть для каждого.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть в обратном: блокировку (`SETNX`) берёт ТОЛЬКО ОДИН поток и пересчитывает значение, а остальные ждут или берут stale; цель — чтобы тяжёлый запрос выполнился один раз.",
+                "source_of_confusion": "Кажется, что lock «по очереди для всех» — это и есть защита.",
+                "if_it_were_true": "Если бы пересчитывали все по очереди, нагрузка на БД не снизилась бы — а смысл lock именно в одном пересчёте.",
+                "how_it_should_be": "`SETNX`-lock пропускает к БД один поток; остальные ждут результат — так гасится stampede."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Double-check (повторная проверка кэша после взятия lock) не нужна — если поток захватил lock, кэш точно пуст.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Double-check обязателен: пока поток ждал и брал lock, другой держатель мог уже наполнить кэш; повторная `GET` после lock избавляет от лишнего обращения к БД.",
+                "source_of_confusion": "Кажется, что раз lock захвачен, ситуация не изменилась с момента первого промаха.",
+                "if_it_were_true": "Если бы повторная проверка была не нужна, в примере не делали бы `cached = redis.get(cacheKey)` сразу после взятия lock.",
+                "how_it_should_be": "После взятия lock повторно проверяют кэш (double-check), так как его мог наполнить другой поток."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Distributed lock через `Redis` (`SETNX`): поток сначала пробует взять значение из кэша; при промахе пытается захватить lock (`setIfAbsent(lockKey, \"1\", Duration.ofSeconds(5))`). Захвативший делает повторную проверку кэша (double-check), грузит из БД, пишет в кэш с `TTL` и снимает lock в `finally`. Остальные потоки получают stale или ждут с backoff. Так тяжёлый запрос к БД выполняется один раз.",
+              "correct": true,
+              "sections": {
+                "explanation": "Лок ограничивает число одновременных пересчётов до одного на ключ во всём кластере, что и решает межинстансный stampede, недоступный для `sync=true`.",
+                "example": "`Boolean locked = redisTemplate.opsForValue().setIfAbsent(lockKey, \"1\", Duration.ofSeconds(5)); if (TRUE.equals(locked)) { try { ...load+set... } finally { redisTemplate.delete(lockKey); } }` — `TTL` на lock защищает от вечной блокировки при падении держателя.",
+                "when_to_apply": "Применяют для горячих ключей с дорогим пересчётом в МНОГОинстансной среде, где внутрипроцессного `sync=true`/`LoadingCache` недостаточно.",
+                "edge_cases": "`TTL` на lock обязателен: если держатель упадёт без снятия lock, без `TTL` ключ заблокируется навсегда; при этом слишком короткий lock-`TTL` истечёт до завершения загрузки и впустит второй поток.",
+                "related": "[[caching-strategies-interview#Q17]] обзор решений stampede; [[caching-strategies-interview#Q40]] PER как безблокировочная альтернатива; [[caching-strategies-interview#Q28]] почему sync=true не хватает в кластере."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Lock не нужно снимать вручную: достаточно положиться на то, что `Redis` сам удалит его сразу после успешной записи значения в кэш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lock снимают явно в `finally` (`redis.delete(lockKey)`); страховкой служит `TTL` на lock, но `Redis` не связывает удаление lock с записью значения автоматически.",
+                "source_of_confusion": "Кажется, что lock и значение — связанная транзакция, и lock уйдёт сам.",
+                "if_it_were_true": "Если бы lock снимался автоматически, в примере не было бы блока `finally { redisTemplate.delete(lockKey); }`.",
+                "how_it_should_be": "Lock снимают руками в `finally`; `TTL` на lock — лишь страховка от зависшего держателя."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое probabilistic early expiration (PER) и как оно работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "PER обновляет кэш строго в момент истечения `TTL`, просто делая это в фоне одним заранее назначенным потоком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PER (XFetch) обновляет кэш ВЕРОЯТНОСТНО и ДО истечения `TTL`: вероятность пересчёта растёт по мере приближения к дедлайну, и какой-то поток обновляет значение раньше, без фиксированного момента.",
+                "source_of_confusion": "«Early expiration» воспринимают как «ровно в момент истечения».",
+                "if_it_were_true": "Если бы обновление было в фиксированный момент, это не давало бы преимущества «нет единой точки синхронизации» над lock.",
+                "how_it_should_be": "PER пересчитывает вероятностно и заранее, а не в строго определённый момент истечения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "PER требует distributed lock, потому что без блокировки несколько потоков всё равно начнут пересчёт одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Преимущество PER именно в ОТСУТСТВИИ блокировок: вероятностный механизм сам делает одновременный пересчёт маловероятным, работая в конкурентной среде без единой точки синхронизации.",
+                "source_of_confusion": "Кажется, что любой способ против stampede нуждается в lock.",
+                "if_it_were_true": "Если бы PER требовал lock, его не противопоставляли бы distributed lock как безблокировочную альтернативу.",
+                "how_it_should_be": "PER работает без блокировок; вероятностная формула сама разводит пересчёты во времени."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В формуле PER чем ДАЛЬШЕ `currentTime` от `expiryTime`, тем ВЫШЕ вероятность досрочного обновления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: чем БЛИЖЕ `currentTime` к `expiryTime`, тем выше вероятность срабатывания — у формулы `currentTime - delta*beta*ln(random()) > expiryTime` шанс растёт у дедлайна.",
+                "source_of_confusion": "Знак сравнения в формуле `currentTime - delta*beta*ln(random()) > expiryTime` легко прочитать наоборот и перепутать направление вероятности.",
+                "if_it_were_true": "Если бы вероятность росла вдали от дедлайна, кэш пересчитывался бы слишком рано и постоянно, теряя смысл `TTL`.",
+                "how_it_should_be": "Вероятность досрочного обновления растёт по мере приближения к `expiryTime`, а не отдаления."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Probabilistic Early Expiration (XFetch) — алгоритм, обновляющий кэш ДО истечения `TTL` с вероятностью, нарастающей по мере приближения к дедлайну: один поток «добровольно» пересчитывает значение раньше, не допуская одновременного stampede. Условие: `currentTime - delta*beta*ln(random()) > expiryTime`, где `delta` — время вычисления, `beta` — агрессивность (обычно 1.0), `random()` ∈ [0,1).",
+              "correct": true,
+              "sections": {
+                "explanation": "Чем ближе к дедлайну, тем выше шанс, что очередной запрос инициирует досрочный пересчёт; так нагрузка обновления размазывается во времени и не падает залпом при истечении.",
+                "example": "`shouldEarlyExpire`: `now - entry.delta()*BETA*Math.log(rand) > expiry` — учитывает реальное время вычисления (`delta`), поэтому дорогие значения обновляются раньше.",
+                "when_to_apply": "Применяют для горячих ключей с дорогим пересчётом в высококонкурентной среде, где блокировки нежелательны.",
+                "edge_cases": "Преимущество перед distributed lock — нет блокировок и ожидания и нет единой точки синхронизации; но `delta` нужно измерять корректно, иначе вероятность пересчёта будет занижена или завышена.",
+                "related": "[[caching-strategies-interview#Q39]] distributed lock как альтернатива; [[caching-strategies-interview#Q17]] обзор решений stampede; [[caching-strategies-interview#Q20]] фоновое обновление в SWR."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать cache warming при старте приложения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cache warming — предварительное наполнение кэша при старте (или перед ростом нагрузки), чтобы первые запросы не уходили в холодную БД. Стратегии: eager preload (`ApplicationRunner` для небольшого редко меняющегося набора), lazy warming (первые запросы наполняют кэш для больших объёмов), background warming (`@Scheduled` для периодического обновления), import snapshot (`Redis BGSAVE`/`RESTORE`). Важно: в Kubernetes `readinessProbe` должна вернуть `200` только после прогрева.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор стратегии зависит от объёма и волатильности: малый стабильный набор грузят целиком при старте, большой — лениво, а горячее подмножество обновляют фоном по расписанию.",
+                "example": "`CacheWarmupRunner implements ApplicationRunner` грузит топ-1000: `productRepository.findTop1000ByOrderByViewCountDesc().forEach(p -> productCache.put(p.getId(), p))`; фоновый `@Scheduled(fixedDelay=300000)` обновляет топ-500 каждые 5 минут.",
+                "when_to_apply": "Eager preload — для конфигов и справочников; lazy — для больших каталогов; background — для поддержания горячего набора свежим; snapshot — при перезапуске с сохранением кэша.",
+                "edge_cases": "В Kubernetes критичен порядок: если `readinessProbe` вернёт `200` до завершения прогрева, трафик придёт на холодный кэш и первые запросы массово промахнутся в БД.",
+                "related": "[[caching-strategies-interview#Q27]] базовое понятие cache warming; [[caching-strategies-interview#Q18]] avalanche при холодном старте; [[caching-strategies-interview#Q4]] падение hit ratio после рестарта."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cache warming можно делать только синхронно в одном `ApplicationRunner`, загружая все данные целиком; ленивого и фонового вариантов не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть несколько стратегий: eager preload (`ApplicationRunner`), lazy warming (первые запросы), background warming (`@Scheduled`), import snapshot — не только синхронная загрузка всего.",
+                "source_of_confusion": "Простейший eager-вариант принимают за единственно возможный.",
+                "if_it_were_true": "Если бы был только он, не приводили бы таблицу стратегий с lazy и background warming.",
+                "how_it_should_be": "Warming реализуют разными способами: eager, lazy, background, snapshot — под объём и частоту обновления."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В Kubernetes `readinessProbe` должна возвращать `200` сразу при старте процесса, ещё до прогрева кэша, чтобы под быстрее принял трафик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот — `readinessProbe` должна вернуть `200` ТОЛЬКО после завершения прогрева; иначе трафик придёт на холодный кэш раньше готовности, и первые запросы промахнутся в БД.",
+                "source_of_confusion": "«Быстрее принять трафик» кажется выгодным для скорости развёртывания.",
+                "if_it_were_true": "Если бы ранний `200` был правильным, не подчёркивали бы привязку готовности к завершению warming.",
+                "how_it_should_be": "`readinessProbe` отдаёт `200` после прогрева, чтобы под не получил трафик на холодный кэш."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Background warming через `@Scheduled` нужно запускать как можно реже (раз в сутки), потому что частое обновление кэша вредит производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Частоту background warming подбирают под волатильность горячих данных (например `fixedDelay=300000` — каждые 5 минут); слишком редкое обновление оставит горячий набор устаревшим.",
+                "source_of_confusion": "Кажется, что любое фоновое обновление — это нагрузка, которую надо минимизировать.",
+                "if_it_were_true": "Если бы раз в сутки было оптимально, пример не использовал бы интервал в 5 минут для обновления топ-ключей.",
+                "how_it_should_be": "Интервал background warming задают по динамике данных; для горячего набора это обычно минуты, а не сутки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает инвалидация кэша через pub/sub (Redis Keyspace Notifications)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Redis Keyspace Notifications гарантируют доставку событий об изменениях ключей, поэтому подходят для критичных систем без потерь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pub/sub в `Redis` работает по принципу fire-and-forget и НЕ гарантирует доставку: при падении инстанса события теряются; для гарантий используют `Redis Streams` с consumer groups.",
+                "source_of_confusion": "Слово «notifications» создаёт впечатление надёжной шины.",
+                "if_it_were_true": "Если бы доставка гарантировалась, не рекомендовали бы `Redis Streams` для критичных систем взамен pub/sub.",
+                "how_it_should_be": "Keyspace Notifications не гарантируют доставку; для at-least-once берут `Redis Streams` с consumer groups."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Redis Keyspace Notifications — механизм, дающий подписчикам события об изменениях ключей (SET, DEL, EXPIRE, EXPIRED). Включается `notify-keyspace-events \"KEA\"` (K — keyspace, E — keyevent, A — все события). Сценарий: при изменении в `Redis` все инстансы получают событие и инвалидируют соответствующую запись в `L1` (`Caffeine`), после чего следующий запрос заполнит `L1` из `Redis`.",
+              "correct": true,
+              "sections": {
+                "explanation": "События позволяют распространить инвалидацию локальных копий по всем инстансам: изменил один — узнали все и сбросили свой `L1`, удерживая coherence многоуровневого кэша.",
+                "example": "Слушатель ловит событие и делает `local.evict(cacheKey)` для соответствующего кэша; после `SET product:1` оба инстанса инвалидируют `product:1` в своём `Caffeine`, и следующий запрос подтянет свежее из `Redis`.",
+                "when_to_apply": "Применяют для инвалидации `L1` в многоинстансной среде при изменениях в общем `L2 Redis`; конфигурацию `notify-keyspace-events` включают осознанно.",
+                "edge_cases": "Pub/sub не гарантирует доставку (fire-and-forget) — при падении инстанса события теряются и его `L1` остаётся устаревшим; для критичных систем берут `Redis Streams`, а `notify-keyspace-events` повышает CPU `Redis` на 10-15%.",
+                "related": "[[caching-strategies-interview#Q2]] инвалидация L1 в многоуровневом кэше; [[caching-strategies-interview#Q28]] coherence и ограничения pub/sub; [[caching-strategies-interview#Q25]] событийная инвалидация в микросервисах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Keyspace Notifications включены в `Redis` по умолчанию, поэтому подписчики сразу получают все события без настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию они ВЫКЛЮЧЕНЫ; их надо включить через `notify-keyspace-events \"KEA\"` (или нужный набор флагов), иначе события не публикуются.",
+                "source_of_confusion": "Кажется, что такая базовая возможность активна из коробки.",
+                "if_it_were_true": "Если бы они были включены, не требовалось бы упоминать `notify-keyspace-events` как обязательную конфигурацию.",
+                "how_it_should_be": "Keyspace Notifications включают явно через `notify-keyspace-events`; по умолчанию они отключены."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Включение `notify-keyspace-events` никак не влияет на нагрузку `Redis`, потому что события генерируются бесплатно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Генерация keyspace-событий увеличивает CPU `Redis` примерно на 10-15%, так что включение не бесплатно и его взвешивают по нагрузке.",
+                "source_of_confusion": "Кажется, что публикация событий — лёгкая операция без стоимости.",
+                "if_it_were_true": "Если бы накладных расходов не было, их не указывали бы в ограничениях механизма.",
+                "how_it_should_be": "`notify-keyspace-events` добавляет ~10-15% к CPU `Redis`; это учитывают при включении."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
