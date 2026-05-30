@@ -12,7 +12,7 @@ aliases:
   - "Шардирование БД собеседование"
   - "Consistent hashing sharding"
   - "Vitess Citus MongoDB sharding"
-updated: "2026-05-21"
+updated: "2026-05-27"
 ---
 
 # Вопросы на собеседовании: `Database Sharding`
@@ -751,15 +751,15 @@ Primary key в DynamoDB — это `partition key` либо `(partition key, sor
 
 ## See also
 
-- [[database-architecture-interview]] — общая архитектура БД, partitioning, replication patterns
-- [[database-transactions-interview]] — ACID, изоляция, распределённые транзакции
-- [[database-replication-interview]] — master-slave, multi-master, sync vs async
-- [[postgresql-interview]] — PG-нативные partitioning + Citus
-- [[mongodb-interview]] — mongos, config servers, chunks, balancer (детали)
-- [[cassandra-interview]] — consistent hashing, vnodes, partition key
-- [[dynamodb-interview]] — partition key + sort key, GSI
-- [[../architecture/distributed-systems-interview]] — CAP, consensus, partition tolerance
-- [[../architecture/scalability-patterns-interview]] — vertical/horizontal scaling, шардирование как паттерн
-- [[../architecture/consistency-patterns-interview]] — eventual / strong consistency, quorum
-- [[../system-design/system-design-interview]] — sharding в system design интервью
+- [database-architecture-interview](database-architecture-interview.md) — общая архитектура БД, partitioning, replication patterns
+- [database-transactions-interview](database-transactions-interview.md) — ACID, изоляция, распределённые транзакции
+- [database-replication-interview](database-replication-interview.md) — master-slave, multi-master, sync vs async
+- [postgresql-interview](postgresql-interview.md) — PG-нативные partitioning + Citus
+- [mongodb-interview](mongodb-interview.md) — mongos, config servers, chunks, balancer (детали)
+- [cassandra-interview](cassandra-interview.md) — consistent hashing, vnodes, partition key
+- [dynamodb-interview](dynamodb-interview.md) — partition key + sort key, GSI
+- [../architecture/distributed-systems-interview](../architecture/distributed-systems-interview.md) — CAP, consensus, partition tolerance
+- [../architecture/scalability-patterns-interview](../architecture/scalability-patterns-interview.md) — vertical/horizontal scaling, шардирование как паттерн
+- [../architecture/consistency-patterns-interview](../architecture/consistency-patterns-interview.md) — eventual / strong consistency, quorum
+- [../system-design/system-design-interview](../system-design/system-design-interview.md) — sharding в system design интервью
 

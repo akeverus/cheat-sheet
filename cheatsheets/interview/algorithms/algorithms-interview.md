@@ -14,9 +14,9 @@ aliases:
   - "обзор"
   - "Algorithms interview overview"
 prerequisites:
-  - "[[algorithms]]"
+  - "[algorithms](algorithms-interview.md)"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-27"
 ---
 # Вопросы на собеседовании: `Алгоритмы (обзор)`
 

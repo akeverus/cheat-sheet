@@ -13,9 +13,9 @@ aliases:
   - "Java Exceptions interview"
   - "Java Exceptions собеседование"
 prerequisites:
-  - "[[java-exceptions]]"
+  - "[java-exceptions](java-exceptions-interview.md)"
 next: []
-updated: "2026-05-20"
+updated: "2026-05-27"
 ---
 # Вопросы на собеседовании: `Java Exceptions`
 
