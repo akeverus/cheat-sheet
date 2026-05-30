@@ -4,7 +4,7 @@ description: "Полный план аудита всех 304 interview-файл
 updated: "2026-05-29"
 status: "active"
 audit_version: 5
-progress: "MCQ-сидеры: 155/306 .md имеют выровненный JSON; 151 NO-JSON в работе (Phase 2). Готовы: Spring (28), Security (10/10). Architecture 13/17 done (wave A+B+ddd), wave C (4) генерится. Дальше: testing (14), databases (12), devops (12)."
+progress: "MCQ-сидеры: 159/306 .md имеют выровненный JSON; 147 NO-JSON в работе (Phase 2). Готовы: Spring (28), Security (10/10). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17). Дальше: testing (14), databases (12), devops (12), api (6), monitoring (9), cloud (6), programming-languages (36)."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -405,12 +405,12 @@ Pass: `OK FILE.md`.
 | 67 | `architecture` | `load-balancing` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 68 | `architecture` | `microservices` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 69 | `architecture` | `networking` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 70 | `architecture` | `resilience-patterns` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 70 | `architecture` | `resilience-patterns` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 71 | `architecture` | `reverse-proxy` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 72 | `architecture` | `saga-pattern` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 73 | `architecture` | `scalability-patterns` | 41 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 72 | `architecture` | `saga-pattern` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 73 | `architecture` | `scalability-patterns` | 41 | 41 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 74 | `architecture` | `service-discovery` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 75 | `architecture` | `strangler-fig` | 18 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 75 | `architecture` | `strangler-fig` | 18 | 18 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 76 | `behavioral` | `behavioral` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 77 | `behavioral` | `conflict-stories` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 78 | `behavioral` | `culture-fit` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
