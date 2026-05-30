@@ -581,7 +581,7 @@
                 "related": "[[hash-tables-interview#Q9]] load factor; [[hash-tables-interview#Q19]] thread-safety; [[hash-tables-interview#Q20]] ConcurrentHashMap."
               },
               "label": "C",
-              "text": "Rehashing: при `size > threshold` создаётся новый массив **в 2 раза больше**, все элементы перераспределяются по новым индексам (в Java 8+ — оптимизация: элементы цепочки разделяются на 2 группы по одному биту `hash & oldCapacity` — те с битом 0 остаются на месте, остальные переезжают на `oldPosition + oldCapacity`). Суммарная стоимость O(n), amortized O(1) на put.",
+              "text": "Rehashing: при `size > threshold` создаётся новый массив в 2 раза больше, все элементы перераспределяются по новым индексам (в Java 8+ — оптимизация: элементы цепочки разделяются на 2 группы по одному биту `hash & oldCapacity` — те с битом 0 остаются на месте, остальные переезжают на `oldPosition + oldCapacity`). Суммарная стоимость O(n), amortized O(1) на put.",
               "correct": true,
               "order": 2
             },
@@ -617,7 +617,7 @@
                 "related": "[[hash-tables-interview#Q8]] устройство HashMap; [[hash-tables-interview#Q31]] HashDoS; [[hash-tables-interview#Q32]] деградация HashMap."
               },
               "label": "A",
-              "text": "Treeify конвертирует **отдельный** bucket в красно-чёрное дерево, когда длина цепочки достигает TREEIFY_THRESHOLD=8 и общий capacity ≥ MIN_TREEIFY_CAPACITY=64; обратная конвертация (untreeify) при уменьшении до UNTREEIFY_THRESHOLD=6 элементов; даёт O(log n) worst-case вместо O(n) при плохом hashCode.",
+              "text": "Treeify конвертирует отдельный bucket в красно-чёрное дерево, когда длина цепочки достигает TREEIFY_THRESHOLD=8 и общий capacity ≥ MIN_TREEIFY_CAPACITY=64; обратная конвертация (untreeify) при уменьшении до UNTREEIFY_THRESHOLD=6 элементов; даёт O(log n) worst-case вместо O(n) при плохом hashCode.",
               "correct": true,
               "order": 0
             },
@@ -629,7 +629,7 @@
                 "how_it_should_be": "Treeify — per-bucket; большинство buckets остаются list; глобальная структура — массив, hashCode → index, list/tree внутри bucket."
               },
               "label": "B",
-              "text": "Treeify превращает **весь** HashMap в одно красно-чёрное дерево при достижении определённого размера.",
+              "text": "Treeify превращает весь HashMap в одно красно-чёрное дерево при достижении определённого размера.",
               "correct": false,
               "order": 1
             },
@@ -713,7 +713,7 @@
                 "related": "[[hash-tables-interview#Q11]] treeify; [[hash-tables-interview#Q32]] деградация; [[hash-tables-interview#Q10]] rehashing amortized."
               },
               "label": "D",
-              "text": "get/put/remove/containsKey — O(1) average, O(log n) worst-case (Java 8+ через treeify) или O(n) (до Java 8 / без treeify); containsValue — O(n + capacity) **всегда** (линейное сканирование); iteration — O(n + capacity).",
+              "text": "get/put/remove/containsKey — O(1) average, O(log n) worst-case (Java 8+ через treeify) или O(n) (до Java 8 / без treeify); containsValue — O(n + capacity) всегда (линейное сканирование); iteration — O(n + capacity).",
               "correct": true,
               "order": 3
             }
@@ -1229,7 +1229,7 @@
                 "related": "[[hash-tables-interview#Q19]] thread-safety HashMap; [[hash-tables-interview#Q20]] устройство CHM; [[hash-tables-interview#Q22]] атомарные методы."
               },
               "label": "B",
-              "text": "Hashtable и synchronizedMap используют **глобальный лок** на каждую операцию — get/put/remove блокируют всю карту; throughput не растёт с числом ядер. ConcurrentHashMap использует **bucket-level locking** + lock-free reads — параллельные write в разные buckets не конкурируют, reads не блокируются; throughput линейно масштабируется. Также CHM предоставляет атомарные методы (`computeIfAbsent`, `merge`), которые нельзя безопасно реализовать поверх synchronizedMap без внешнего лока.",
+              "text": "Hashtable и synchronizedMap используют глобальный лок на каждую операцию — get/put/remove блокируют всю карту; throughput не растёт с числом ядер. ConcurrentHashMap использует bucket-level locking + lock-free reads — параллельные write в разные buckets не конкурируют, reads не блокируются; throughput линейно масштабируется. Также CHM предоставляет атомарные методы (`computeIfAbsent`, `merge`), которые нельзя безопасно реализовать поверх synchronizedMap без внешнего лока.",
               "correct": true,
               "order": 1
             },
@@ -1396,7 +1396,7 @@
                 "how_it_should_be": "Weak — на ключи; values — strong; entry удаляется когда ключ unreachable извне."
               },
               "label": "A",
-              "text": "WeakHashMap кеширует weak-ссылки на **значения** (не на ключи) — значения могут быть собраны GC.",
+              "text": "WeakHashMap кеширует weak-ссылки на значения (не на ключи) — значения могут быть собраны GC.",
               "correct": false,
               "order": 0
             },
@@ -1577,7 +1577,7 @@
                 "related": "[[hash-tables-interview#Q28]] rendezvous hashing; [[hash-tables-interview#Q3]] коллизии; [[hash-tables-interview#Q31]] HashDoS."
               },
               "label": "A",
-              "text": "При `hash % N` смена N со 100 на 101 меняет destination практически **всех** ключей — нужно мигрировать ~99% данных. Consistent hashing решает это: и узлы, и ключи маппятся на круговое hash space (`[0, 2³²)`); ключ принадлежит первому узлу по часовой стрелке; добавление узла перемещает только ~K/N ключей (его «сектор» на ринге). Virtual nodes (50-200 per physical node) улучшают балансировку.",
+              "text": "При `hash % N` смена N со 100 на 101 меняет destination практически всех ключей — нужно мигрировать ~99% данных. Consistent hashing решает это: и узлы, и ключи маппятся на круговое hash space (`[0, 2³²)`); ключ принадлежит первому узлу по часовой стрелке; добавление узла перемещает только ~K/N ключей (его «сектор» на ринге). Virtual nodes (50-200 per physical node) улучшают балансировку.",
               "correct": true,
               "order": 0
             },
@@ -1673,7 +1673,7 @@
                 "related": "[[hash-tables-interview#Q27]] consistent hashing; [[hash-tables-interview#Q2]] хеш-функции; [[hash-tables-interview#Q3]] коллизии."
               },
               "label": "D",
-              "text": "Для каждого ключа HRW вычисляет `hash(key, node)` для **всех** узлов и выбирает узел с максимальным hash. Преимущества: stateless (нет ring metadata), лучшая балансировка, простая реализация, top-K по hash даёт стабильные реплики. Недостаток: O(N) на каждый lookup vs O(log N) для consistent hashing с TreeMap.",
+              "text": "Для каждого ключа HRW вычисляет `hash(key, node)` для всех узлов и выбирает узел с максимальным hash. Преимущества: stateless (нет ring metadata), лучшая балансировка, простая реализация, top-K по hash даёт стабильные реплики. Недостаток: O(N) на каждый lookup vs O(log N) для consistent hashing с TreeMap.",
               "correct": true,
               "order": 3
             }
@@ -1709,7 +1709,7 @@
                 "related": "[[hash-tables-interview#Q30]] Cuckoo hashing/filter; [[hash-tables-interview#Q27]] consistent hashing; [[hash-tables-interview#Q2]] хеш-функции."
               },
               "label": "B",
-              "text": "`mightContain() == false` гарантирует, что ключа **точно нет** в наборе — нет false negatives. `mightContain() == true` означает «возможно есть» — допустимы false positives (другие ключи установили те же биты). Cassandra использует это: при false — пропускает SSTable (экономия disk I/O); при true — читает SSTable (изредка впустую при false positive).",
+              "text": "`mightContain() == false` гарантирует, что ключа точно нет в наборе — нет false negatives. `mightContain() == true` означает «возможно есть» — допустимы false positives (другие ключи установили те же биты). Cassandra использует это: при false — пропускает SSTable (экономия disk I/O); при true — читает SSTable (изредка впустую при false positive).",
               "correct": true,
               "order": 1
             },
@@ -1781,7 +1781,7 @@
                 "related": "[[hash-tables-interview#Q16]] open addressing; [[hash-tables-interview#Q17]] double hashing; [[hash-tables-interview#Q29]] Bloom filter (Cuckoo filter — его улучшение)."
               },
               "label": "C",
-              "text": "Cuckoo hashing использует **две хеш-функции**: `h1(key)` и `h2(key)` — две candidate-позиции на ключ. При insert если обе позиции заняты — выкидываем существующий элемент в его альтернативную позицию (рекурсивно, как «кукушка выселяет птенцов»). Lookup всегда O(1) worst-case (2 чтения), удаление тривиально без tombstones, но **insert может зациклиться** при load factor > 0.5 — требуется rebuild с новыми хешами.",
+              "text": "Cuckoo hashing использует две хеш-функции: `h1(key)` и `h2(key)` — две candidate-позиции на ключ. При insert если обе позиции заняты — выкидываем существующий элемент в его альтернативную позицию (рекурсивно, как «кукушка выселяет птенцов»). Lookup всегда O(1) worst-case (2 чтения), удаление тривиально без tombstones, но insert может зациклиться при load factor > 0.5 — требуется rebuild с новыми хешами.",
               "correct": true,
               "order": 2
             },
@@ -1817,7 +1817,7 @@
                 "related": "[[hash-tables-interview#Q11]] treeify; [[hash-tables-interview#Q32]] деградация HashMap; [[hash-tables-interview#Q2]] хеш-функции."
               },
               "label": "A",
-              "text": "**Algorithmic complexity attack**: атакующий подбирает ключи (POST-параметры, JSON-ключи, HTTP headers) с **одинаковым hashCode** — все попадают в один bucket HashMap; bucket вырождается в O(n) цепочку, обработка одного запроса с N ключами стоит O(n²); CPU thread занят на секунды/минуты. Java 8+ защита: **treeify** при длине цепочки ≥ 8 (red-black tree, O(log n) worst-case) + на уровне приложения — Tomcat `maxParameterCount`, лимиты на JSON depth.",
+              "text": "Algorithmic complexity attack: атакующий подбирает ключи (POST-параметры, JSON-ключи, HTTP headers) с одинаковым hashCode — все попадают в один bucket HashMap; bucket вырождается в O(n) цепочку, обработка одного запроса с N ключами стоит O(n²); CPU thread занят на секунды/минуты. Java 8+ защита: treeify при длине цепочки ≥ 8 (red-black tree, O(log n) worst-case) + на уровне приложения — Tomcat `maxParameterCount`, лимиты на JSON depth.",
               "correct": true,
               "order": 0
             },
@@ -1889,7 +1889,7 @@
                 "related": "[[hash-tables-interview#Q11]] treeify; [[hash-tables-interview#Q31]] HashDoS; [[hash-tables-interview#Q7]] immutable keys."
               },
               "label": "B",
-              "text": "**Множественные сценарии** даже в Java 17: (1) плохой hashCode (все ключи в один bucket — с treeify O(log n), без — O(n)); (2) HashDoS (преднамеренные коллизии); (3) недооцененная capacity (множественные resize до правильного размера); (4) mutable keys, изменённые после insert (get идёт в другой bucket → запись «теряется»); (5) `containsValue()` всегда O(n + capacity); (6) iteration O(n + capacity) при large capacity / small size.",
+              "text": "Множественные сценарии даже в Java 17: (1) плохой hashCode (все ключи в один bucket — с treeify O(log n), без — O(n)); (2) HashDoS (преднамеренные коллизии); (3) недооцененная capacity (множественные resize до правильного размера); (4) mutable keys, изменённые после insert (get идёт в другой bucket → запись «теряется»); (5) `containsValue()` всегда O(n + capacity); (6) iteration O(n + capacity) при large capacity / small size.",
               "correct": true,
               "order": 1
             },

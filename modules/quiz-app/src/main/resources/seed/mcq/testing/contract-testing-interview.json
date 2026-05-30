@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`CDCT` — подход, при котором **provider** заранее описывает полную схему API, а consumer'ы обязаны подстроиться под неё.",
+              "text": "`CDCT` — подход, при котором provider заранее описывает полную схему API, а consumer'ы обязаны подстроиться под неё.",
               "correct": false,
               "sections": {
                 "what_actually": "Это provider-driven (schema-first) модель; в `CDCT` именно consumer задаёт ожидания, а provider под них верифицируется.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`CDCT` — подход, при котором **consumer** определяет свои ожидания к provider'у (через тест с mock-сервером, генерирующий pact-файл), а provider обязан этим ожиданиям соответствовать. Контракт фиксирует только то, что consumer реально использует: если он читает 3 поля из 20, в pact попадут лишь эти 3.",
+              "text": "`CDCT` — подход, при котором consumer определяет свои ожидания к provider'у (через тест с mock-сервером, генерирующий pact-файл), а provider обязан этим ожиданиям соответствовать. Контракт фиксирует только то, что consumer реально использует: если он читает 3 поля из 20, в pact попадут лишь эти 3.",
               "correct": true,
               "sections": {
                 "explanation": "Consumer-тест гоняет реальный HTTP-клиент против mock'а Pact, тот записывает pact-файл, публикует в брокер; provider скачивает и верифицирует, повторяя запросы против реального API.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При **provider-driven** контракт задаёт provider в виде полной схемы, но что именно фиксирует consumer-driven подход — здесь не раскрывается.",
+              "text": "При provider-driven контракт задаёт provider в виде полной схемы, но что именно фиксирует consumer-driven подход — здесь не раскрывается.",
               "correct": false,
               "sections": {
                 "what_actually": "Это лишь половина картины: верно про provider-driven (вся схема, единый spec), но не показано, что consumer-driven фиксирует только используемые поля.",
@@ -155,7 +155,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "**Consumer-driven** (`Pact`): контракт задаёт consumer, фиксируются только реально используемые поля, источник истины — pact'ы от каждого consumer'а, добавление полей не ломает consumer'ов. **Provider-driven / schema-first** (`OpenAPI`, `Spring Cloud Contract` по умолчанию): контракт задаёт provider, фиксируется вся схема API, источник истины — единый spec-файл.",
+              "text": "Consumer-driven (`Pact`): контракт задаёт consumer, фиксируются только реально используемые поля, источник истины — pact'ы от каждого consumer'а, добавление полей не ломает consumer'ов. Provider-driven / schema-first (`OpenAPI`, `Spring Cloud Contract` по умолчанию): контракт задаёт provider, фиксируется вся схема API, источник истины — единый spec-файл.",
               "correct": true,
               "sections": {
                 "explanation": "Ключевые оси различия: кто задаёт контракт, что фиксируется (используемые поля vs вся схема), источник истины (pact'ы vs spec) и цель (безопасность consumer'ов vs стабильность и документация всего API).",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "**Consumer-driven** хорош для публичных API с тысячами неизвестных consumer'ов, а **provider-driven** — только для внутренних сервисов одной команды.",
+              "text": "Consumer-driven хорош для публичных API с тысячами неизвестных consumer'ов, а provider-driven — только для внутренних сервисов одной команды.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: consumer-driven требует известного списка consumer'ов (внутри организации), а schema-first лучше работает для публичных API с неизвестными клиентами.",
@@ -227,7 +227,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Контрактные тесты расположены **между unit и integration** слоями (иногда их ставят рядом с integration): быстрее `integration` (на consumer-side нет реальной сети и зависимостей), но медленнее `unit` (поднимается mock-сервер, пишется pact-файл). Их десятки-сотни, и цель — резко сократить число дорогих `E2E`-тестов, перенеся проверку интеграций на contract-уровень.",
+              "text": "Контрактные тесты расположены между unit и integration слоями (иногда их ставят рядом с integration): быстрее `integration` (на consumer-side нет реальной сети и зависимостей), но медленнее `unit` (поднимается mock-сервер, пишется pact-файл). Их десятки-сотни, и цель — резко сократить число дорогих `E2E`-тестов, перенеся проверку интеграций на contract-уровень.",
               "correct": true,
               "sections": {
                 "explanation": "По скорости: `unit` (мс) < contract (секунды, mock-сервер) < integration (секунды, реальные зависимости) < `E2E` (минуты). Контракт закрывает межсервисные интеграции дёшево.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Pact — фреймворк для `Consumer-Driven Contract Testing` (создан в `realestate.com.au`, ныне `Pact Foundation`), делающий две вещи: **на consumer-side** подставляет mock-сервер, ловит запросы и записывает ответы в JSON-файл (pact), **на provider-side** берёт pact-файл, повторяет запросы против реального API и сверяет ответы. `Pact JVM` — реализация для `Java`/`Kotlin`/`Scala`/`Groovy` с интеграцией `JUnit 4/5` и плагинами `Gradle`/`Maven`.",
+              "text": "Pact — фреймворк для `Consumer-Driven Contract Testing` (создан в `realestate.com.au`, ныне `Pact Foundation`), делающий две вещи: на consumer-side подставляет mock-сервер, ловит запросы и записывает ответы в JSON-файл (pact), на provider-side берёт pact-файл, повторяет запросы против реального API и сверяет ответы. `Pact JVM` — реализация для `Java`/`Kotlin`/`Scala`/`Groovy` с интеграцией `JUnit 4/5` и плагинами `Gradle`/`Maven`.",
               "correct": true,
               "sections": {
                 "explanation": "Поток: consumer-тест (мок отвечает) → генерирует `pact.json` → публикация в `Pact Broker` → provider-тест (pact скачивается) → replay против реального API → verification result в брокер.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Matchers позволяют сравнивать значения **по типу, формату или regex**, а не точно. Основные в Pact JVM: `stringType`/`integerType`/`numberType`/`booleanType` (по типу), `stringMatcher(regex, v)` (по regex), `date`/`datetime` (по формату), `uuid` (UUID-формат), `eachLike`/`minArrayLike` (массивы). Без matchers любая случайная разница (новый ID, timestamp) сломала бы верификацию.",
+              "text": "Matchers позволяют сравнивать значения по типу, формату или regex, а не точно. Основные в Pact JVM: `stringType`/`integerType`/`numberType`/`booleanType` (по типу), `stringMatcher(regex, v)` (по regex), `date`/`datetime` (по формату), `uuid` (UUID-формат), `eachLike`/`minArrayLike` (массивы). Без matchers любая случайная разница (новый ID, timestamp) сломала бы верификацию.",
               "correct": true,
               "sections": {
                 "explanation": "Контракт должен описывать форму, а не конкретные значения: consumer заявляет «ожидаю integer», а не «именно 42»; provider свободен возвращать любое значение того же типа.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Matchers нужны, чтобы Pact требовал **точного** совпадения значений, включая ID и timestamp, ради максимальной строгости контракта.",
+              "text": "Matchers нужны, чтобы Pact требовал точного совпадения значений, включая ID и timestamp, ради максимальной строгости контракта.",
               "correct": false,
               "sections": {
                 "what_actually": "Matchers делают ровно обратное: они ослабляют сравнение до типа/формата/regex, чтобы случайные значения (ID, timestamp) не ломали верификацию.",
@@ -803,7 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Provider verification — процесс, когда **provider** проигрывает pact-файл против своего реального API и проверяет, что ответы соответствуют ожиданиям consumer'а. Проверяется: статус-код совпадает; упомянутые в контракте заголовки присутствуют (лишние игнорируются); тело соответствует matching rules (типы, regex, обязательные поля). Лишние поля в реальном ответе **не ломают** верификацию.",
+              "text": "Provider verification — процесс, когда provider проигрывает pact-файл против своего реального API и проверяет, что ответы соответствуют ожиданиям consumer'а. Проверяется: статус-код совпадает; упомянутые в контракте заголовки присутствуют (лишние игнорируются); тело соответствует matching rules (типы, regex, обязательные поля). Лишние поля в реальном ответе не ломают верификацию.",
               "correct": true,
               "sections": {
                 "explanation": "Поток: provider забирает pact'ы из брокера → для каждой interaction ставит provider state → реплеит запрос → сравнивает ответ → публикует verification result обратно в брокер.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Consumer Version Selectors задаются на стороне **consumer'а**, чтобы выбрать, какие версии provider'а скачать для верификации.",
+              "text": "Consumer Version Selectors задаются на стороне consumer'а, чтобы выбрать, какие версии provider'а скачать для верификации.",
               "correct": false,
               "sections": {
                 "what_actually": "Selectors задаются на стороне **provider'а** и определяют, какие версии **consumer'ов** верифицировать (например, `mainBranch`, `deployedOrReleased`).",
@@ -1115,7 +1115,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@State` объявляется на методе provider-теста и выполняется **до** каждой interaction с таким state'ом. Возможности: setup-метод (`@State(\"user 42 exists\")`), teardown (`@State(value=..., action=StateChangeAction.TEARDOWN)`), несколько states на один метод (`@State({\"cart is empty\",\"user has no orders\"})`) и параметры (`@State(\"user exists\") void m(Map<String,Object> params)`). Порядок: setup-`@State` → HTTP-запрос к контроллеру → сравнение ответа → teardown-`@State` → следующая interaction.",
+              "text": "`@State` объявляется на методе provider-теста и выполняется до каждой interaction с таким state'ом. Возможности: setup-метод (`@State(\"user 42 exists\")`), teardown (`@State(value=..., action=StateChangeAction.TEARDOWN)`), несколько states на один метод (`@State({\"cart is empty\",\"user has no orders\"})`) и параметры (`@State(\"user exists\") void m(Map<String,Object> params)`). Порядок: setup-`@State` → HTTP-запрос к контроллеру → сравнение ответа → teardown-`@State` → следующая interaction.",
               "correct": true,
               "sections": {
                 "explanation": "Один метод можно навесить на несколько state-строк и принять `Map` параметров — это сокращает дублирование и обслуживает множество interactions одним обработчиком.",
@@ -1355,7 +1355,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`can-i-deploy` — CLI-команда `pact-broker-client`, отвечающая «безопасно ли задеплоить эту версию сервиса в это окружение?». Алгоритм: брокер смотрит матрицу → находит версии зависимых сервисов, развёрнутых в целевом окружении → проверяет, есть ли успешная верификация между моей версией и **всеми** этими версиями → да → exit 0 (safe), нет → exit 1 + отчёт. Это ключевой элемент CDCT: без него контрактные тесты не предотвращают падения в проде.",
+              "text": "`can-i-deploy` — CLI-команда `pact-broker-client`, отвечающая «безопасно ли задеплоить эту версию сервиса в это окружение?». Алгоритм: брокер смотрит матрицу → находит версии зависимых сервисов, развёрнутых в целевом окружении → проверяет, есть ли успешная верификация между моей версией и всеми этими версиями → да → exit 0 (safe), нет → exit 1 + отчёт. Это ключевой элемент CDCT: без него контрактные тесты не предотвращают падения в проде.",
               "correct": true,
               "sections": {
                 "explanation": "Команда вызывается в CI перед деплоем с `--pacticipant`, `--version`, `--to-environment`. После успешного деплоя обязателен `record-deployment`, чтобы матрица знала актуальное состояние окружения.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`record-deployment` — CLI-команда, уведомляющая брокер, что версия X развёрнута в environment Y; обязательна после успешного деплоя, иначе матрица отстаёт и `can-i-deploy` может врать. WIP pacts — pact'ы от **новых** consumer-веток, ещё не верифицированных провайдером: они **не ломают** provider CI, но провайдер видит, что consumer работает над новым контрактом (`includeWipPactsSince=\"2024-01-01\"`).",
+              "text": "`record-deployment` — CLI-команда, уведомляющая брокер, что версия X развёрнута в environment Y; обязательна после успешного деплоя, иначе матрица отстаёт и `can-i-deploy` может врать. WIP pacts — pact'ы от новых consumer-веток, ещё не верифицированных провайдером: они не ломают provider CI, но провайдер видит, что consumer работает над новым контрактом (`includeWipPactsSince=\"2024-01-01\"`).",
               "correct": true,
               "sections": {
                 "explanation": "WIP решает circular dependency: consumer хочет новый endpoint, но не может закоммитить pact, пока provider не реализует, а provider не реализует, пока не увидит pact. WIP показывает pact, не блокируя provider.",
@@ -1523,7 +1523,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Consumer-side **не требует Spring** — тест поднимает клиент (`WebClient`/`RestTemplate`) руками против mock-сервера. Provider-side использует `@SpringBootTest(webEnvironment=RANDOM_PORT)` + `@Provider` + `@PactBroker`, `@LocalServerPort` для target'а и `@State`-методы с реальными репозиториями. Подводные камни: Spring Security (отключить в test profile или слать `Authorization`), транзакционность `@State` (`@Transactional` откатит данные до запроса) и реальная БД (Testcontainers, не H2).",
+              "text": "Consumer-side не требует Spring — тест поднимает клиент (`WebClient`/`RestTemplate`) руками против mock-сервера. Provider-side использует `@SpringBootTest(webEnvironment=RANDOM_PORT)` + `@Provider` + `@PactBroker`, `@LocalServerPort` для target'а и `@State`-методы с реальными репозиториями. Подводные камни: Spring Security (отключить в test profile или слать `Authorization`), транзакционность `@State` (`@Transactional` откатит данные до запроса) и реальная БД (Testcontainers, не H2).",
               "correct": true,
               "sections": {
                 "explanation": "На provider-side `@BeforeEach` через `PactVerificationContext` ставит target `new HttpTestTarget(\"localhost\", port)`, а `@State`-методы готовят данные в реальной БД, чтобы верифицировался тот же код, что пойдёт в прод.",
@@ -1595,7 +1595,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Pact поддерживает **message pacts** — контракты для асинхронных сообщений, проверяющие формат сообщения, а не саму Kafka/Rabbit. Consumer-side: `@PactTestFor(providerType=ProviderType.ASYNCH)`, `MessagePactBuilder` с `.expectsToReceive(...).withContent(new PactDslJsonBody()...)`, а в тесте Pact отдаёт сериализованное сообщение (`messages.get(0).contentsAsBytes()`) реальному коду консьюмера. Provider-side: `@PactVerifyProvider(\"an order created event\")`-метод возвращает JSON сообщения, target — `new MessageTestTarget()`.",
+              "text": "Pact поддерживает message pacts — контракты для асинхронных сообщений, проверяющие формат сообщения, а не саму Kafka/Rabbit. Consumer-side: `@PactTestFor(providerType=ProviderType.ASYNCH)`, `MessagePactBuilder` с `.expectsToReceive(...).withContent(new PactDslJsonBody()...)`, а в тесте Pact отдаёт сериализованное сообщение (`messages.get(0).contentsAsBytes()`) реальному коду консьюмера. Provider-side: `@PactVerifyProvider(\"an order created event\")`-метод возвращает JSON сообщения, target — `new MessageTestTarget()`.",
               "correct": true,
               "sections": {
                 "explanation": "Проверяется формат JSON, типы и обязательность полей; не проверяется реальная отправка в Kafka, чтение consumer'ом, headers топика и retries — для этого нужны Testcontainers + Kafka.",
@@ -1667,7 +1667,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Spring Cloud Contract` (`SCC`) — Spring-ориентированный фреймворк, по умолчанию **producer-driven**: provider описывает контракт (Groovy/YAML DSL), из которого генерируются JUnit-тесты для провайдера и `WireMock`-стабы (`stubs.jar`) для consumer'а. Отличия от Pact: подход (producer-driven vs consumer-driven), язык контракта (Groovy/YAML DSL vs код теста + JSON), хранилище (Maven/Git vs Pact Broker), язык-агностичность (JVM vs много языков), mock на consumer-side (`WireMock` vs встроенный mock Pact).",
+              "text": "`Spring Cloud Contract` (`SCC`) — Spring-ориентированный фреймворк, по умолчанию producer-driven: provider описывает контракт (Groovy/YAML DSL), из которого генерируются JUnit-тесты для провайдера и `WireMock`-стабы (`stubs.jar`) для consumer'а. Отличия от Pact: подход (producer-driven vs consumer-driven), язык контракта (Groovy/YAML DSL vs код теста + JSON), хранилище (Maven/Git vs Pact Broker), язык-агностичность (JVM vs много языков), mock на consumer-side (`WireMock` vs встроенный mock Pact).",
               "correct": true,
               "sections": {
                 "explanation": "Поток `SCC`: `contract.groovy` у provider'а → `spring-cloud-contract` plugin → авто-тест провайдера + `WireMock`-стаб в `stubs.jar` → Maven/Nexus → consumer через `@AutoConfigureStubRunner`.",
@@ -1907,7 +1907,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Да, `SCC` поддерживает `Pact Broker` как бэкенд, но семантика остаётся **producer-driven**: producer публикует контракты через `contractRepository.repositoryUrl='pact://https://broker...'`, consumer тянет через `@AutoConfigureStubRunner(stubsMode=REMOTE, repositoryRoot=\"pact://https://broker...\")`. На практике команды обычно выбирают что-то одно: если выбран `Pact Broker`, чаще берут нативный Pact; если `SCC` — чаще Maven/Artifactory.",
+              "text": "Да, `SCC` поддерживает `Pact Broker` как бэкенд, но семантика остаётся producer-driven: producer публикует контракты через `contractRepository.repositoryUrl='pact://https://broker...'`, consumer тянет через `@AutoConfigureStubRunner(stubsMode=REMOTE, repositoryRoot=\"pact://https://broker...\")`. На практике команды обычно выбирают что-то одно: если выбран `Pact Broker`, чаще берут нативный Pact; если `SCC` — чаще Maven/Artifactory.",
               "correct": true,
               "sections": {
                 "explanation": "Брокер здесь — лишь хранилище контрактов; он не превращает `SCC` в consumer-driven, потому что договорённость по-прежнему задаёт producer.",
@@ -2028,7 +2028,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Добавление нового **опционального** поля в ответ provider'а — это breaking change, ломающий всех consumer'ов.",
+              "text": "Добавление нового опционального поля в ответ provider'а — это breaking change, ломающий всех consumer'ов.",
               "correct": false,
               "sections": {
                 "what_actually": "Добавление опционального поля в ответ — non-breaking: consumer-driven контракт фиксирует лишь используемые поля, поэтому новые поля никого не ломают.",
@@ -2123,7 +2123,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Контрактное тестирование не нужно, если в системе **много** независимых микросервисов от разных команд — там проще обойтись E2E.",
+              "text": "Контрактное тестирование не нужно, если в системе много независимых микросервисов от разных команд — там проще обойтись E2E.",
               "correct": false,
               "sections": {
                 "what_actually": "Именно множество независимых команд и сервисов — главный сценарий, где CDCT окупается; E2E там слишком дорог и flaky.",
@@ -2411,7 +2411,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Ключевые правила: Pact описывает **контракт, а не тест** (дешёвая проверка формата, бизнес-логику — обычными тестами); matchers по типу, не по значению (никогда не фиксировать ID/timestamp/UUID точно); использовать `Pact Broker`, не Git; `can-i-deploy` — обязательный шаг; публиковать результаты верификации; provider states атомарные; реальная БД в provider-тестах; Consumer Version Selectors с `deployedOrReleased`; environments вместо tags; WIP/pending pacts для non-blocking разработки; версионировать по git SHA, а не semver.",
+              "text": "Ключевые правила: Pact описывает контракт, а не тест (дешёвая проверка формата, бизнес-логику — обычными тестами); matchers по типу, не по значению (никогда не фиксировать ID/timestamp/UUID точно); использовать `Pact Broker`, не Git; `can-i-deploy` — обязательный шаг; публиковать результаты верификации; provider states атомарные; реальная БД в provider-тестах; Consumer Version Selectors с `deployedOrReleased`; environments вместо tags; WIP/pending pacts для non-blocking разработки; версионировать по git SHA, а не semver.",
               "correct": true,
               "sections": {
                 "explanation": "Эти практики делятся на два слоя: устойчивость контракта (matchers, атомарные states, реальная БД) и здоровье процесса (брокер, `can-i-deploy`, результаты, селекторы, версии).",

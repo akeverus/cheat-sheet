@@ -227,7 +227,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Dependency Injection` — конкретная реализация IoC: зависимости передаются объекту **извне** через конструктор (обязательные), сеттер (необязательные) или поле (`@Autowired`); рекомендуется конструктор — поля `final`, невозможно создать объект в невалидном состоянии.",
+              "text": "`Dependency Injection` — конкретная реализация IoC: зависимости передаются объекту извне через конструктор (обязательные), сеттер (необязательные) или поле (`@Autowired`); рекомендуется конструктор — поля `final`, невозможно создать объект в невалидном состоянии.",
               "correct": true,
               "sections": {
                 "explanation": "Три способа DI: конструктор (`public OrderService(Repo r)`), сеттер (`@Autowired public void setRepo(Repo r)`), поле (`@Autowired private Repo repo`); конструктор рекомендуется как единственный правильный для обязательных зависимостей.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Жизненный цикл `ApplicationContext`: 1) **Создание** (`new AnnotationConfigApplicationContext`), 2) **`refresh()`** — загрузка `BeanDefinition`, регистрация `BeanPostProcessor`, создание singleton-бинов, публикация `ContextRefreshedEvent`, 3) **Работа** — `getBean()`, события, 4) **`close()`** — `ContextClosedEvent`, `@PreDestroy`, освобождение ресурсов.",
+              "text": "Жизненный цикл `ApplicationContext`: 1) Создание (`new AnnotationConfigApplicationContext`), 2) `refresh()` — загрузка `BeanDefinition`, регистрация `BeanPostProcessor`, создание singleton-бинов, публикация `ContextRefreshedEvent`, 3) Работа — `getBean()`, события, 4) `close()` — `ContextClosedEvent`, `@PreDestroy`, освобождение ресурсов.",
               "correct": true,
               "sections": {
                 "explanation": "Самый тяжёлый этап — `finishBeanFactoryInitialization()` внутри `refresh()`: здесь создаются все singleton-бины в правильном порядке зависимостей; именно здесь возникают `NoSuchBeanDefinitionException` и циклические зависимости.",
@@ -395,7 +395,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`BeanFactory` — базовый контейнер (`DefaultListableBeanFactory`): **ленивая** инициализация бинов при `getBean()`, `BeanPostProcessor`-ы регистрируются вручную, нет событий, i18n, профилей. `ApplicationContext` расширяет `BeanFactory`: **жадная** инициализация singleton-бинов при `refresh()`, автоматическая регистрация `BeanPostProcessor`, события `ApplicationEvent`, `MessageSource`, `Environment` и профили.",
+              "text": "`BeanFactory` — базовый контейнер (`DefaultListableBeanFactory`): ленивая инициализация бинов при `getBean()`, `BeanPostProcessor`-ы регистрируются вручную, нет событий, i18n, профилей. `ApplicationContext` расширяет `BeanFactory`: жадная инициализация singleton-бинов при `refresh()`, автоматическая регистрация `BeanPostProcessor`, события `ApplicationEvent`, `MessageSource`, `Environment` и профили.",
               "correct": true,
               "sections": {
                 "explanation": "`ApplicationContext` находит все ошибки конфигурации при старте (жадная инициализация); `BeanFactory` обнаруживает их лениво при первом `getBean()`, что хуже для production.",
@@ -635,7 +635,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Статический `@Bean` объявляется с модификатором `static` внутри `@Configuration`-класса: `@Bean public static PropertySourcesPlaceholderConfigurer cfg() {...}`. `Spring` вызывает его **до** полной инициализации `@Configuration`-класса (CGLIB-прокси). Обязателен для `BeanFactoryPostProcessor` и `BeanDefinitionRegistryPostProcessor`.",
+              "text": "Статический `@Bean` объявляется с модификатором `static` внутри `@Configuration`-класса: `@Bean public static PropertySourcesPlaceholderConfigurer cfg() {...}`. `Spring` вызывает его до полной инициализации `@Configuration`-класса (CGLIB-прокси). Обязателен для `BeanFactoryPostProcessor` и `BeanDefinitionRegistryPostProcessor`.",
               "correct": true,
               "sections": {
                 "explanation": "Статический `@Bean`-метод вызывается до CGLIB-проксирования `@Configuration`-класса, поэтому зависит только от параметров, но не от других `@Bean`-методов в том же классе.",
@@ -707,7 +707,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Три способа внедрения бина: 1) **Конструктор** — рекомендуется для обязательных зависимостей, поля можно сделать `final`, невозможно создать в невалидном состоянии; 2) **Сеттер** — для необязательных (`@Autowired(required=false)`); 3) **Поле** (`@Autowired private Repo repo`) — антипаттерн в production (нельзя `final`, сложно тестировать).",
+              "text": "Три способа внедрения бина: 1) Конструктор — рекомендуется для обязательных зависимостей, поля можно сделать `final`, невозможно создать в невалидном состоянии; 2) Сеттер — для необязательных (`@Autowired(required=false)`); 3) Поле (`@Autowired private Repo repo`) — антипаттерн в production (нельзя `final`, сложно тестировать).",
               "correct": true,
               "sections": {
                 "explanation": "Spring 4.3+ автоматически использует единственный конструктор без `@Autowired`; с двумя конструкторами нужно явно пометить нужный.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Autowired` — аннотация Spring для автоматического внедрения зависимости **по типу**. Алгоритм: если один бин типа T — внедряет его; несколько — ищет `@Primary`, затем `@Qualifier`, затем совпадение имени параметра с именем бина; ноль — `NoSuchBeanDefinitionException` (если `required=true`).",
+              "text": "`@Autowired` — аннотация Spring для автоматического внедрения зависимости по типу. Алгоритм: если один бин типа T — внедряет его; несколько — ищет `@Primary`, затем `@Qualifier`, затем совпадение имени параметра с именем бина; ноль — `NoSuchBeanDefinitionException` (если `required=true`).",
               "correct": true,
               "sections": {
                 "explanation": "`@Service public class NotificationService { public NotificationService(@Qualifier(\"emailSender\") MessageSender sender) { this.sender = sender; } }` — `@Qualifier` снимает неоднозначность при нескольких реализациях `MessageSender`.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@Autowired` внедряет зависимость по **имени** бина — имя поля или параметра должно совпадать с именем бина в контексте.",
+              "text": "`@Autowired` внедряет зависимость по имени бина — имя поля или параметра должно совпадать с именем бина в контексте.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Autowired` первично ищет по **типу**; по имени — только как fallback при неоднозначности (несколько бинов одного типа); для явного внедрения по имени используют `@Qualifier`.",
@@ -803,7 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Spring поддерживает шесть scope: `singleton` (один экземпляр на контекст, по умолчанию), `prototype` (новый при каждом `getBean()`/внедрении), `request` (на HTTP-запрос), `session` (на HTTP-сессию), `application` (на `ServletContext`), `websocket` (на WS-сессию). Ловушка с `prototype`: Spring **не вызывает** `@PreDestroy` для prototype-бинов.",
+              "text": "Spring поддерживает шесть scope: `singleton` (один экземпляр на контекст, по умолчанию), `prototype` (новый при каждом `getBean()`/внедрении), `request` (на HTTP-запрос), `session` (на HTTP-сессию), `application` (на `ServletContext`), `websocket` (на WS-сессию). Ловушка с `prototype`: Spring не вызывает `@PreDestroy` для prototype-бинов.",
               "correct": true,
               "sections": {
                 "explanation": "Проблема: `singleton`-бин с `@Autowired prototype`-бином получит **один** экземпляр prototype навсегда. Решение: `@Lookup`-метод или `ObjectProvider<T>` — каждый вызов возвращает новый экземпляр.",
@@ -875,7 +875,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Рекомендация Spring Team: **конструктор** для обязательных зависимостей, **сеттер** для необязательных. Конструктор позволяет поля `final` (иммутабельность), гарантирует валидное состояние при создании, явная сигнатура зависимостей (>5-7 параметров — сигнал к рефакторингу), легко тестировать через `new`.",
+              "text": "Рекомендация Spring Team: конструктор для обязательных зависимостей, сеттер для необязательных. Конструктор позволяет поля `final` (иммутабельность), гарантирует валидное состояние при создании, явная сигнатура зависимостей (>5-7 параметров — сигнал к рефакторингу), легко тестировать через `new`.",
               "correct": true,
               "sections": {
                 "explanation": "`@Service @RequiredArgsConstructor public class OrderService { private final OrderRepository repo; private final PaymentGateway gateway; }` — Lombok генерирует конструктор; Spring 4.3+ внедряет автоматически без `@Autowired`.",
@@ -947,7 +947,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Singleton Bean` **НЕ является** потокобезопасным автоматически. `Singleton` — паттерн создания (один экземпляр на контекст), а не поведения. Потокобезопасность зависит от реализации: stateless бин (без mutable state) — безопасен; бин с изменяемым состоянием — требует синхронизации (`AtomicInteger`, `synchronized`, `ThreadLocal`).",
+              "text": "`Singleton Bean` НЕ является потокобезопасным автоматически. `Singleton` — паттерн создания (один экземпляр на контекст), а не поведения. Потокобезопасность зависит от реализации: stateless бин (без mutable state) — безопасен; бин с изменяемым состоянием — требует синхронизации (`AtomicInteger`, `synchronized`, `ThreadLocal`).",
               "correct": true,
               "sections": {
                 "explanation": "`@Service public class CounterService { private int count = 0; public void increment() { count++; } }` — гонка данных при параллельных запросах. Решение: `AtomicInteger` или stateless-дизайн (не хранить mutable state).",
@@ -1187,7 +1187,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Spring Framework использует множество паттернов GoF: **Singleton** (scope по умолчанию), **Factory Method** (`@Bean`-методы, `BeanFactory`), **Proxy** (AOP, `@Transactional`, `@Cacheable` через JDK/CGLIB), **Template Method** (`JdbcTemplate`, `RestTemplate`), **Observer** (`ApplicationEvent`/`@EventListener`), **Strategy** (`HandlerMapping`, `ViewResolver`), **Adapter** (`HandlerAdapter`), **Decorator** (`BeanPostProcessor` оборачивает прокси), **Front Controller** (`DispatcherServlet`).",
+              "text": "Spring Framework использует множество паттернов GoF: Singleton (scope по умолчанию), Factory Method (`@Bean`-методы, `BeanFactory`), Proxy (AOP, `@Transactional`, `@Cacheable` через JDK/CGLIB), Template Method (`JdbcTemplate`, `RestTemplate`), Observer (`ApplicationEvent`/`@EventListener`), Strategy (`HandlerMapping`, `ViewResolver`), Adapter (`HandlerAdapter`), Decorator (`BeanPostProcessor` оборачивает прокси), Front Controller (`DispatcherServlet`).",
               "correct": true,
               "sections": {
                 "explanation": "`@Transactional` — Proxy: Spring оборачивает бин прокси, перехватывающим вызовы методов. `JdbcTemplate.query()` — Template Method: алгоритм запроса фиксирован, `RowMapper` подставляется. `ApplicationEvent` — Observer: издатель публикует событие, подписчики реагируют.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "AOP — методология выделения сквозной функциональности (cross-cutting concerns) в отдельные модули — **аспекты** (`@Aspect`). Ключевые понятия: Aspect, Join Point (только вызов метода в Spring AOP), Pointcut (предикат выбора Join Points), Advice (`@Before`, `@After`, `@Around`, `@AfterReturning`, `@AfterThrowing`), Weaving (применение аспекта к объекту).",
+              "text": "AOP — методология выделения сквозной функциональности (cross-cutting concerns) в отдельные модули — аспекты (`@Aspect`). Ключевые понятия: Aspect, Join Point (только вызов метода в Spring AOP), Pointcut (предикат выбора Join Points), Advice (`@Before`, `@After`, `@Around`, `@AfterReturning`, `@AfterThrowing`), Weaving (применение аспекта к объекту).",
               "correct": true,
               "sections": {
                 "explanation": "`@Aspect @Component public class PerformanceAspect { @Around(\"execution(* com.example.service.*.*(..))\") public Object measure(ProceedingJoinPoint pjp) throws Throwable { long t = System.nanoTime(); try { return pjp.proceed(); } finally { log(pjp, System.nanoTime()-t); } } }` — логирование времени без изменения бизнес-кода.",
@@ -1283,7 +1283,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Spring AOP создаёт **прокси-объект** вокруг целевого бина: при наличии аспекта `BeanPostProcessor.postProcessAfterInitialization()` возвращает прокси вместо оригинала. Два типа: JDK Dynamic Proxy (бин реализует интерфейс) и CGLIB Proxy (подкласс; Spring Boot 2.0+ по умолчанию). Главная ловушка — **self-invocation**: `this.method()` обходит прокси.",
+              "text": "Spring AOP создаёт прокси-объект вокруг целевого бина: при наличии аспекта `BeanPostProcessor.postProcessAfterInitialization()` возвращает прокси вместо оригинала. Два типа: JDK Dynamic Proxy (бин реализует интерфейс) и CGLIB Proxy (подкласс; Spring Boot 2.0+ по умолчанию). Главная ловушка — self-invocation: `this.method()` обходит прокси.",
               "correct": true,
               "sections": {
                 "explanation": "`@Transactional public void createUser(User u) { ... this.sendWelcome(u); }` — `sendWelcome` вызывается через `this`, минуя прокси, поэтому `@Async` на нём не сработает. Решение: вынести в другой бин или `AopContext.currentProxy()`.",
@@ -1355,7 +1355,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Weaving` — процесс применения аспектов к целевым объектам для создания advised-объекта. Три типа: **Compile-time** (AspectJ compiler, лучшая производительность), **Load-time** (AspectJ LTW + Java agent, при загрузке класса), **Runtime** (Spring AOP через прокси, есть overhead). Spring AOP использует runtime weaving — перехватывает только вызовы методов Spring-бинов.",
+              "text": "`Weaving` — процесс применения аспектов к целевым объектам для создания advised-объекта. Три типа: Compile-time (AspectJ compiler, лучшая производительность), Load-time (AspectJ LTW + Java agent, при загрузке класса), Runtime (Spring AOP через прокси, есть overhead). Spring AOP использует runtime weaving — перехватывает только вызовы методов Spring-бинов.",
               "correct": true,
               "sections": {
                 "explanation": "Runtime weaving: при создании бина `BeanPostProcessor` оборачивает его CGLIB/JDK-прокси. Compile-time weaving: AspectJ модифицирует bytecode во время `javac`; нет overhead в runtime, работает для конструкторов и static-методов.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`CommandLineRunner` и `ApplicationRunner` — интерфейсы для выполнения кода **после полного запуска** Spring Boot-приложения (после `ContextRefreshedEvent`, после `@PostConstruct`). `CommandLineRunner.run(String... args)` — аргументы как сырой массив строк; `ApplicationRunner.run(ApplicationArguments args)` — структурированный доступ к `--key=value` аргументам. Порядок управляется `@Order`.",
+              "text": "`CommandLineRunner` и `ApplicationRunner` — интерфейсы для выполнения кода после полного запуска Spring Boot-приложения (после `ContextRefreshedEvent`, после `@PostConstruct`). `CommandLineRunner.run(String... args)` — аргументы как сырой массив строк; `ApplicationRunner.run(ApplicationArguments args)` — структурированный доступ к `--key=value` аргументам. Порядок управляется `@Order`.",
               "correct": true,
               "sections": {
                 "explanation": "`@Component @Order(1) public class DataInitializer implements CommandLineRunner { public void run(String... args) { db.init(); } }` — инициализация данных после запуска; `@Order(2) ApplicationRunner` запускается следующим.",
@@ -1763,7 +1763,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@Lookup` — аннотация для инъекции **нового экземпляра** `prototype`-бина из `singleton`-бина при каждом вызове метода. Spring переопределяет аннотированный метод через CGLIB, вызывая `getBean()` при каждом обращении. Требования: класс non-final (CGLIB) или метод абстрактный. Альтернативы: `ObjectProvider<T>`, `Provider<T>`.",
+              "text": "`@Lookup` — аннотация для инъекции нового экземпляра `prototype`-бина из `singleton`-бина при каждом вызове метода. Spring переопределяет аннотированный метод через CGLIB, вызывая `getBean()` при каждом обращении. Требования: класс non-final (CGLIB) или метод абстрактный. Альтернативы: `ObjectProvider<T>`, `Provider<T>`.",
               "correct": true,
               "sections": {
                 "explanation": "`@Service public abstract class OrderProcessor { @Lookup protected abstract ShoppingCart createCart(); public void process(List<Item> items) { ShoppingCart cart = createCart(); /* каждый раз новый */ } }` — CGLIB подменяет `createCart()` вызовом `ctx.getBean(ShoppingCart.class)`.",
@@ -1931,7 +1931,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Spring поддерживает иерархию контекстов: дочерний видит бины родительского, **но не наоборот**. Классический пример в Spring MVC: Root context (бизнес-логика: `@Service`, `@Repository`, `DataSource`) → Web context (`@Controller`, `ViewResolver`). Дочерний ищет бин сначала у себя, затем у родителя. `@Autowired` в дочернем может внедрить бин из родительского.",
+              "text": "Spring поддерживает иерархию контекстов: дочерний видит бины родительского, но не наоборот. Классический пример в Spring MVC: Root context (бизнес-логика: `@Service`, `@Repository`, `DataSource`) → Web context (`@Controller`, `ViewResolver`). Дочерний ищет бин сначала у себя, затем у родителя. `@Autowired` в дочернем может внедрить бин из родительского.",
               "correct": true,
               "sections": {
                 "explanation": "`AnnotationConfigApplicationContext child = new AnnotationConfigApplicationContext(); child.setParent(root); child.register(ChildConfig.class); child.refresh();` — `child.getBean(ServiceFromRoot.class)` работает; `root.getBean(ControllerFromChild.class)` бросает исключение.",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Pointcut` — аннотация для обозначения методов, которые **НЕ** должны перехватываться аспектом (`@Pointcut` как exclusion-marker).",
+              "text": "`Pointcut` — аннотация для обозначения методов, которые НЕ должны перехватываться аспектом (`@Pointcut` как exclusion-marker).",
               "correct": false,
               "sections": {
                 "what_actually": "`@Pointcut` в Spring AOP определяет **предикат выбора** — какие методы перехватывать; исключение методов достигается через `!` в выражении: `serviceLayer() && !execution(* *.toString(..))`.",
