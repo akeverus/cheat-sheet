@@ -1,0 +1,2465 @@
+{
+  "topic_slug": "database-architecture-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое нормализация базы данных?",
+          "options": [
+            {
+              "text": "Нормализация — процесс организации схемы БД для устранения избыточности и аномалий вставки/обновления/удаления; данные разбиваются по нормальным формам (`1NF`–`BCNF`), чтобы минимизировать дублирование и повысить целостность.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая нормальная форма убирает свой тип зависимостей: `1NF` требует атомарных значений, `2NF` убирает частичную зависимость от составного ключа, `3NF` — транзитивные зависимости неключевых атрибутов.",
+                "example": "Вместо хранения телефонов строкой `'123,456,789'` в `employees` создают таблицу `employee_phones (employee_id, phone)` — это приведение к `1NF` с атомарными значениями.",
+                "when_to_apply": "Нормализацию применяют при проектировании схемы `OLTP`-системы, где важна целостность и нет жёсткого требования к скорости денормализованного чтения.",
+                "edge_cases": "Иногда осознанно нарушают нормальные формы (денормализация): например, хранят `total_amount` прямо в таблице заказов, чтобы не пересчитывать сумму из позиций при каждом чтении.",
+                "related": "[[database-architecture-interview#Q3]] ACID как гарантия целостности; [[database-architecture-interview#Q25]] схема в SQL vs NoSQL; [[database-architecture-interview#Q21]] партиционирование больших таблиц."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Нормализация — это сжатие данных на диске для экономии места за счёт алгоритмов вроде `gzip` поверх файлов таблиц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нормализация — логическое проектирование схемы (нормальные формы), а сжатие на диске — отдельный физический механизм (`TOAST`, compression).",
+                "source_of_confusion": "И то и другое уменьшает «объём», поэтому нормализацию путают с экономией места.",
+                "if_it_were_true": "Тогда нормализацию настраивали бы параметром компрессии, но она задаётся структурой таблиц и ключей.",
+                "how_it_should_be": "Нормализация устраняет логическую избыточность через формы `1NF`–`BCNF`, а сжатие байтов — это физический слой хранения."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Нормализация — приведение всех числовых значений в столбцах к диапазону `[0, 1]` для корректной работы запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Масштабирование чисел в `[0,1]` — это нормализация признаков в ML, а не нормализация реляционной схемы.",
+                "source_of_confusion": "Термин «нормализация» совпадает с понятием из машинного обучения, отсюда смешение.",
+                "if_it_were_true": "Тогда нормализацией нельзя было бы описать таблицы со строками и датами, но формы `1NF`–`BCNF` применимы к любым типам.",
+                "how_it_should_be": "В БД нормализация — это декомпозиция таблиц по нормальным формам, а не математическое преобразование значений."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Нормализация — это создание индексов на всех столбцах таблицы, чтобы любой запрос выполнялся через `Index Scan`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Индексы — структуры для ускорения поиска; нормализация же меняет структуру самих таблиц и связей.",
+                "source_of_confusion": "И индексы, и нормализация повышают «качество» БД, поэтому их объединяют в одно понятие.",
+                "if_it_were_true": "Тогда нормализация замедляла бы запись (как лишние индексы), но она, наоборот, упрощает структуру данных.",
+                "how_it_should_be": "Нормализация описывает разбиение данных по формам без избыточности; индексирование — независимая оптимизация чтения."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое BASE и каковы его принципы?",
+          "options": [
+            {
+              "text": "`BASE` — это набор гарантий строгой немедленной согласованности, при котором все реплики всегда возвращают одинаковое значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Строгую немедленную согласованность даёт `ACID`/strong consistency, а `BASE` сознательно допускает временную рассинхронизацию.",
+                "source_of_confusion": "Слово «consistent» в `Eventually Consistent` создаёт ложное впечатление мгновенной согласованности.",
+                "if_it_were_true": "Тогда `BASE` ничем не отличался бы от `ACID`, и не было бы смысла вводить отдельный термин для `NoSQL`.",
+                "how_it_should_be": "`BASE` — это eventual consistency и высокая доступность, а строгую согласованность обеспечивает `ACID`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`BASE` (`Basically Available`, `Soft-state`, `Eventually Consistent`) — набор принципов `NoSQL`-систем, альтернатива `ACID`: система остаётся доступной при частичных сбоях, состояние может меняться со временем, а узлы согласуются в конечном итоге.",
+              "correct": true,
+              "sections": {
+                "explanation": "Основная идея — пожертвовать строгой согласованностью ради доступности и горизонтального масштабирования; это прямое следствие выбора `AP` в `CAP`-теореме.",
+                "example": "В `Cassandra` запись принимается одним узлом и асинхронно реплицируется — пара секунд другие узлы могут отдавать старое значение (eventual consistency).",
+                "when_to_apply": "О `BASE` вспоминают при выборе `NoSQL`-хранилища под высокую доступность и масштаб, когда бизнес готов терпеть кратковременную несогласованность реплик.",
+                "edge_cases": "«Eventually» не означает «никогда не согласуется»: при отсутствии новых записей все реплики сходятся, но окно рассинхронизации зависит от нагрузки и топологии.",
+                "related": "[[database-architecture-interview#Q3]] что такое ACID; [[database-architecture-interview#Q4]] разница ACID и BASE; [[database-architecture-interview#Q26]] типы NoSQL баз."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`BASE` — это акроним для `Backup`, `Archive`, `Snapshot`, `Export` — четырёх обязательных операций резервного копирования БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BASE` расшифровывается как `Basically Available`, `Soft-state`, `Eventually Consistent` и описывает модель согласованности, а не бэкап.",
+                "source_of_confusion": "Аббревиатуру легко придумать заново по созвучным словам про резервные копии.",
+                "if_it_were_true": "Тогда `BASE` относился бы к disaster recovery, но его всегда противопоставляют именно `ACID`.",
+                "how_it_should_be": "`BASE` — это принципы согласованности `NoSQL`, а резервное копирование — отдельная операционная задача."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`BASE` применим только к реляционным БД с `ACID` и описывает оптимизацию блокировок внутри `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BASE` — модель именно `NoSQL`/распределённых систем и противопоставляется `ACID` реляционных БД.",
+                "source_of_confusion": "И `ACID`, и `BASE` говорят про транзакции, поэтому кажется, что они об одной и той же СУБД.",
+                "if_it_were_true": "Тогда `PostgreSQL` рекламировал бы `BASE`-семантику, но он гарантирует `ACID`.",
+                "how_it_should_be": "`BASE` описывает распределённые `NoSQL`-хранилища (`Cassandra`, `DynamoDB`), а не внутренние блокировки `PostgreSQL`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ACID и что означает каждая буква?",
+          "options": [
+            {
+              "text": "`ACID` — это `Availability`, `Caching`, `Indexing`, `Distribution` — четыре свойства высокопроизводительной БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ACID` — это `Atomicity`, `Consistency`, `Isolation`, `Durability`, набор гарантий транзакций, а не производительности.",
+                "source_of_confusion": "Можно подобрать другие технические слова на те же буквы, и расшифровка выглядит правдоподобно.",
+                "if_it_were_true": "Тогда `ACID` описывал бы кэш и индексы, но речь всегда про транзакционные гарантии.",
+                "how_it_should_be": "Правильная расшифровка — `Atomicity/Consistency/Isolation/Durability`; кэширование и индексы к ней не относятся."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Durability` в `ACID` означает, что транзакция выполняется максимально быстро и не блокирует другие соединения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Durability` — это сохранность зафиксированных данных при сбое (через `WAL`/`fsync`), а не скорость выполнения.",
+                "source_of_confusion": "Слово «durability» (выносливость) ассоциируется с производительностью под нагрузкой.",
+                "if_it_were_true": "Тогда `Durability` настраивалась бы пулом соединений, но она обеспечивается записью на диск.",
+                "how_it_should_be": "`Durability` гарантирует, что после `COMMIT` данные переживут падение сервера; скорость — отдельная характеристика."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`ACID` — `Atomicity` (всё или ничего), `Consistency` (БД остаётся в валидном состоянии), `Isolation` (параллельные транзакции не мешают друг другу), `Durability` (зафиксированное переживает сбой); это гарантии надёжности транзакций реляционных БД.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `PostgreSQL` атомарность и durability обеспечивает `WAL` и `ROLLBACK`, согласованность — constraints и triggers, изоляцию — `MVCC` и блокировки.",
+                "example": "Перевод денег `UPDATE balance - 1000` и `UPDATE balance + 1000` в одном `BEGIN…COMMIT`: если вторая операция упадёт, откатывается весь блок — деньги не исчезнут.",
+                "when_to_apply": "На `ACID` опираются при проектировании транзакционных сценариев (платежи, бухгалтерия), где недопустима частичная или теряемая запись.",
+                "edge_cases": "`Consistency` в `ACID` — это соблюдение объявленных ограничений (`CHECK`, `FK`), это не то же самое, что `Consistency` из `CAP`-теоремы про согласованность реплик.",
+                "related": "[[database-architecture-interview#Q2]] что такое BASE; [[database-architecture-interview#Q4]] разница ACID и BASE; [[database-architecture-interview#Q9]] WAL и Durability."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Atomicity` означает, что каждая отдельная SQL-команда выполняется как одна машинная инструкция процессора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Atomicity` относится к транзакции целиком (все операции внутри `BEGIN…COMMIT` либо применяются, либо откатываются), а не к CPU-инструкциям.",
+                "source_of_confusion": "Слово «атомарность» в железе значит неделимую инструкцию, отсюда перенос на SQL.",
+                "if_it_were_true": "Тогда транзакция из нескольких `UPDATE` не была бы атомарной, но `ACID` гарантирует именно блок целиком.",
+                "how_it_should_be": "`Atomicity` — это «всё или ничего» для всей транзакции; неделимость на уровне процессора здесь ни при чём."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между ACID и BASE?",
+          "options": [
+            {
+              "text": "Разницы нет: `ACID` и `BASE` — это синонимы, описывающие одни и те же гарантии транзакций под разными названиями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это противоположные модели: `ACID` — строгая согласованность, `BASE` — eventual consistency ради доступности.",
+                "source_of_confusion": "Оба термина — аббревиатуры про работу с данными, поэтому их принимают за синонимы.",
+                "if_it_were_true": "Тогда не было бы смысла в отдельном термине `BASE` для `NoSQL`, но он введён именно как контраст `ACID`.",
+                "how_it_should_be": "`ACID` гарантирует строгую согласованность, `BASE` — конечную; это разные точки trade-off, а не синонимы."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`ACID` всегда быстрее `BASE`, потому что не тратит время на репликацию между узлами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Скорость зависит от нагрузки: `BASE`-системы часто быстрее на запись благодаря отсутствию синхронных гарантий, а `ACID` платит за согласованность.",
+                "source_of_confusion": "Кажется, что отсутствие «лишних» проверок согласованности делает `ACID` быстрее.",
+                "if_it_were_true": "Тогда `NoSQL` не выбирали бы под высокий write-throughput, но именно там `BASE` выигрывает.",
+                "how_it_should_be": "Это не про абсолютную скорость, а про trade-off: `ACID` — согласованность, `BASE` — доступность и масштаб записи."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`BASE` подходит для банковских систем, а `ACID` — для соцсетей и кэшей, где важна скорость.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: финансам нужен `ACID` (нельзя терять транзакции), а соцсетям достаточно `BASE`.",
+                "source_of_confusion": "Легко перепутать, какой модели какой сценарий соответствует.",
+                "if_it_were_true": "Тогда банки строились бы на eventually consistent хранилищах, рискуя потерять списания.",
+                "how_it_should_be": "`ACID` — для финансов/`OLTP`, `BASE` — для соцсетей, IoT, аналитики с допустимой eventual consistency."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`ACID` даёт строгую немедленную согласованность и подходит для `OLTP`/финансов, но масштабируется в основном вертикально; `BASE` жертвует строгой согласованностью ради высокой доступности и горизонтального масштабирования, и подходит для соцсетей, IoT, аналитики.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это два полюса trade-off из `CAP`: `ACID`-системы (`PostgreSQL`, `Oracle`) выбирают согласованность, `BASE`-системы (`Cassandra`, `DynamoDB`) — доступность и партиционирование.",
+                "example": "Банковский перевод требует `ACID` (нельзя потерять списание), а лента лайков в соцсети спокойно живёт с `BASE` — задержка в пару секунд незаметна пользователю.",
+                "when_to_apply": "Сравнение `ACID` и `BASE` всплывает при выборе хранилища: сначала решают, нужна ли строгая согласованность, и от этого идут к `SQL` или `NoSQL`.",
+                "edge_cases": "Граница размыта: `MongoDB 4.0+` поддерживает multi-document `ACID`, а `PostgreSQL` с асинхронными репликами на чтении ведёт себя eventually consistent.",
+                "related": "[[database-architecture-interview#Q2]] что такое BASE; [[database-architecture-interview#Q3]] что такое ACID; [[database-architecture-interview#Q32]] транзакции в SQL и NoSQL."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие есть уровни изоляции транзакций?",
+          "options": [
+            {
+              "text": "Четыре уровня по стандарту SQL: `READ UNCOMMITTED`, `READ COMMITTED`, `REPEATABLE READ`, `SERIALIZABLE` — от слабого к сильному; каждый последующий запрещает больше аномалий (dirty read, non-repeatable read, phantom read) ценой производительности.",
+              "correct": true,
+              "sections": {
+                "explanation": "`READ COMMITTED` запрещает только dirty read, `REPEATABLE READ` ещё и non-repeatable read, `SERIALIZABLE` — все аномалии, включая phantom read.",
+                "example": "В `PostgreSQL` уровень по умолчанию — `READ COMMITTED`; задать другой можно `BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ`.",
+                "when_to_apply": "Уровень изоляции выбирают под конкретную операцию: для отчётов хватает `READ COMMITTED`, для денежных переводов берут `REPEATABLE READ`/`SERIALIZABLE`.",
+                "edge_cases": "В `PostgreSQL` `REPEATABLE READ` предотвращает и phantom read благодаря реализации через snapshot (`SSI` на уровне `SERIALIZABLE`), хотя стандарт этого не требует.",
+                "related": "[[database-architecture-interview#Q6]] аномалии параллельного доступа; [[database-architecture-interview#Q8]] MVCC и snapshot; [[database-architecture-interview#Q3]] Isolation в ACID."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Есть только два уровня изоляции: `LOCKED` (всё блокируется) и `UNLOCKED` (ничего не блокируется).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандарт SQL определяет четыре уровня (`READ UNCOMMITTED`…`SERIALIZABLE`), а не бинарный переключатель блокировок.",
+                "source_of_confusion": "Изоляция интуитивно ассоциируется с «включена/выключена блокировка».",
+                "if_it_were_true": "Тогда нельзя было бы выбрать `READ COMMITTED`, но он есть и используется по умолчанию в `PostgreSQL`.",
+                "how_it_should_be": "Уровней четыре, и различаются они тем, какие аномалии чтения допускаются, а не «вкл/выкл»."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Уровень изоляции `SERIALIZABLE` — самый быстрый, потому что не тратит ресурсы на проверку конфликтов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SERIALIZABLE` — самый строгий и обычно самый медленный: он как раз проверяет конфликты сериализации и делает retry.",
+                "source_of_confusion": "Кажется, что «строгий» порядок выполнения упрощает работу движку.",
+                "if_it_were_true": "Тогда его ставили бы по умолчанию ради скорости, но дефолт в `PostgreSQL` — `READ COMMITTED`.",
+                "how_it_should_be": "`SERIALIZABLE` даёт максимум гарантий и минимум параллелизма; самый быстрый — `READ UNCOMMITTED`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "По умолчанию `PostgreSQL` работает на уровне `SERIALIZABLE`, поэтому phantom read невозможен никогда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолт в `PostgreSQL` — `READ COMMITTED`, где phantom read и non-repeatable read возможны.",
+                "source_of_confusion": "Сильные гарантии `PostgreSQL` создают впечатление, что он по умолчанию максимально строгий.",
+                "if_it_were_true": "Тогда не нужно было бы явно писать `ISOLATION LEVEL SERIALIZABLE` для критичных операций.",
+                "how_it_should_be": "По умолчанию `READ COMMITTED`; для устранения всех аномалий уровень нужно поднять явно."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие проблемы возникают при одновременном доступе нескольких транзакций?",
+          "options": [
+            {
+              "text": "Единственная проблема параллельного доступа — это переполнение пула соединений, когда транзакций больше, чем `max_connections`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исчерпание пула — отдельная операционная проблема; аномалии параллелизма — это dirty/non-repeatable/phantom read и lost update.",
+                "source_of_confusion": "И то и другое возникает «при многих транзакциях», отсюда подмена понятий.",
+                "if_it_were_true": "Тогда хватило бы увеличить `max_connections`, но это не устранит lost update или dirty read.",
+                "how_it_should_be": "Проблемы параллелизма — это аномалии согласованности данных, а лимит соединений решается пулингом."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Классические аномалии: `Lost Update` (две транзакции перезаписывают изменения друг друга), `Dirty Read` (чтение незафиксированных данных), `Non-Repeatable Read` (повторное чтение строки даёт другое значение) и `Phantom Read` (повторный запрос возвращает новые строки).",
+              "correct": true,
+              "sections": {
+                "explanation": "Защита строится на блокировках и версиях: pessimistic (`SELECT … FOR UPDATE`), optimistic (`WHERE version = N`) и `MVCC` (каждая транзакция видит свой snapshot).",
+                "example": "`Lost Update`: две транзакции читают баланс 1000, одна вычитает 100, другая — 200; без защиты итог 800 вместо 700, потому что вторая перезаписала результат первой.",
+                "when_to_apply": "Эти аномалии учитывают при проектировании конкурентных операций (списание со счёта, резерв товара), выбирая pessimistic/optimistic locking или `MVCC`.",
+                "edge_cases": "Не каждый уровень изоляции ловит каждую аномалию: `READ COMMITTED` пропускает non-repeatable и phantom read, поэтому для критичных мест берут `SERIALIZABLE` с retry.",
+                "related": "[[database-architecture-interview#Q5]] уровни изоляции; [[database-architecture-interview#Q7]] блокировка строки vs таблицы; [[database-architecture-interview#Q8]] MVCC как snapshot."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Параллельные транзакции всегда выполняются строго по очереди, поэтому никаких аномалий в принципе не бывает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию транзакции выполняются конкурентно, и именно поэтому возникают dirty read, lost update и phantom read.",
+                "source_of_confusion": "`SERIALIZABLE` действительно создаёт иллюзию последовательного выполнения, что переносят на все уровни.",
+                "if_it_were_true": "Тогда не существовало бы уровней изоляции ниже `SERIALIZABLE`, но они есть и допускают аномалии.",
+                "how_it_should_be": "Строго последовательное выполнение даёт только `SERIALIZABLE`; на других уровнях аномалии возможны."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Dirty Read` — это чтение данных, которые уже были зафиксированы (`COMMIT`) другой транзакцией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Dirty Read` — это чтение именно незафиксированных (uncommitted) изменений, которые могут откатиться.",
+                "source_of_confusion": "Слово «dirty» путают с «изменённые», то есть уже сохранённые данные.",
+                "if_it_were_true": "Тогда `READ COMMITTED` не защищал бы ни от чего, но он как раз запрещает dirty read.",
+                "how_it_should_be": "`Dirty Read` — чтение незакоммиченных данных; чтение зафиксированных — это нормальная операция."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между блокировкой строки и блокировкой таблицы?",
+          "options": [
+            {
+              "text": "Row-level lock всегда медленнее table-level, поэтому в высоконагруженных `OLTP`-системах предпочитают блокировать всю таблицу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `OLTP` предпочитают именно row-level lock: он позволяет многим транзакциям работать параллельно с разными строками.",
+                "source_of_confusion": "Меньший overhead table-level lock создаёт впечатление, что он лучше под нагрузкой.",
+                "if_it_were_true": "Тогда `SELECT FOR UPDATE` был бы бесполезен, но он — основной инструмент конкурентного `OLTP`.",
+                "how_it_should_be": "Row-level lock даёт высокую конкурентность и предпочтителен в `OLTP`; table-level убивает параллелизм."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Table-level lock имеет более высокий риск deadlock, чем row-level, потому что блокирует больше данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: при table-level lock deadlock-риск ниже (захватывается один объект целиком), а при row-level — выше из-за множества частичных блокировок в разном порядке.",
+                "source_of_confusion": "Кажется, что «больше заблокировано» автоматически значит «больше deadlock».",
+                "if_it_were_true": "Тогда массовые DDL под table lock постоянно ловили бы deadlock, но они как раз стабильнее.",
+                "how_it_should_be": "Deadlock-риск выше у row-level (много локов в разном порядке); table-level лочит один объект и реже даёт deadlock."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Row-level lock блокирует одну строку, table-level — всю таблицу: построчная блокировка даёт высокую конкурентность, но больший overhead на метаданные и выше риск deadlock; таблична — минимальный overhead, но низкий параллелизм.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `PostgreSQL` обычный `UPDATE`/`DELETE` автоматически берёт row-level lock, а `LOCK TABLE … ACCESS EXCLUSIVE` нужен для DDL и массовых операций.",
+                "example": "`SELECT * FROM orders WHERE id = 100 FOR UPDATE` блокирует одну строку, не мешая работать с остальными; `LOCK TABLE orders IN ACCESS EXCLUSIVE MODE` останавливает всех.",
+                "when_to_apply": "Гранулярность блокировки выбирают по нагрузке: row-level для конкурентного `OLTP`, table-level для DDL и массовых операций.",
+                "edge_cases": "Table-level lock иногда оправдан: при `ALTER TABLE` или массовой загрузке дешевле один общий лок, чем миллионы построчных блокировок.",
+                "related": "[[database-architecture-interview#Q6]] аномалии и механизмы защиты; [[database-architecture-interview#Q5]] уровни изоляции; [[database-architecture-interview#Q8]] MVCC и читатели без блокировок."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В `PostgreSQL` обычный `UPDATE` по умолчанию берёт `ACCESS EXCLUSIVE` блокировку на всю таблицу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный `UPDATE` берёт row-level lock на затронутые строки; `ACCESS EXCLUSIVE` на таблицу — это уровень DDL вроде `ALTER TABLE`.",
+                "source_of_confusion": "`UPDATE` меняет данные, поэтому кажется, что он должен «закрыть» таблицу целиком.",
+                "if_it_were_true": "Тогда любой `UPDATE` останавливал бы все остальные транзакции, и `OLTP` был бы невозможен.",
+                "how_it_should_be": "`UPDATE` блокирует только свои строки; `ACCESS EXCLUSIVE` на таблицу берут DDL и `VACUUM FULL`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое MVCC и как он работает в PostgreSQL?",
+          "options": [
+            {
+              "text": "`MVCC` — это механизм, который при каждой записи берёт эксклюзивную блокировку на строку, заставляя читателей ждать завершения писателей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть `MVCC` ровно обратная: читатели видят старую версию по snapshot и не ждут писателей; писатели создают новую версию строки.",
+                "source_of_confusion": "До-`MVCC` СУБД действительно блокировали читателей при записи, отсюда устаревшее представление.",
+                "if_it_were_true": "Тогда `PostgreSQL` не славился бы высокой конкурентностью на смешанной нагрузке read/write.",
+                "how_it_should_be": "`MVCC` — это версионирование без блокировки читателей: каждая транзакция работает со своим snapshot."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`MVCC` обновляет строки in-place, перезаписывая старое значение новым прямо на той же странице.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MVCC` не пишет in-place: `UPDATE` создаёт новую версию строки, а старая помечается через `xmax` и позже чистится `VACUUM`.",
+                "source_of_confusion": "Логично предположить, что обновление меняет данные «на месте», как в файле.",
+                "if_it_were_true": "Тогда не накапливались бы dead tuples и не нужен был бы `VACUUM`, но они есть.",
+                "how_it_should_be": "Новая версия строки создаётся отдельно (out-of-place), а старая остаётся до очистки `VACUUM`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`MVCC` хранит ровно одну версию каждой строки и для изоляции полагается исключительно на табличные блокировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MVCC` хранит несколько версий одной строки одновременно (отсюда Multi-Version) и обходится без блокировки читателей.",
+                "source_of_confusion": "Название «concurrency control» наводит на мысль о классических блокировках вместо версий.",
+                "if_it_were_true": "Тогда параллельная транзакция блокировала бы чтение во время `UPDATE`, но в `PostgreSQL` этого нет.",
+                "how_it_should_be": "`MVCC` поддерживает несколько версий строки и snapshot-видимость; блокировки — вспомогательный, а не основной механизм."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`MVCC` (Multi-Version Concurrency Control) — механизм, при котором каждая транзакция видит собственный snapshot данных: читатели не блокируют писателей и наоборот, что даёт высокую конкурентность `PostgreSQL`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая строка хранит скрытые поля `xmin` (транзакция-создатель) и `xmax` (транзакция, удалившая/обновившая); `UPDATE` не меняет строку in-place, а создаёт новую версию и помечает старую.",
+                "example": "Сессия с `REPEATABLE READ` прочитала `amount = 500`; параллельная транзакция сделала `UPDATE … = 700` и `COMMIT`, но первая сессия по своему snapshot всё ещё видит 500.",
+                "when_to_apply": "Понимание `MVCC` нужно при отладке раздувания таблиц, настройке autovacuum и объяснении, почему длинные транзакции тормозят очистку.",
+                "edge_cases": "Побочный эффект — накопление dead tuples (мёртвых версий), которые приходится убирать `VACUUM`; длинные транзакции, удерживающие snapshot, мешают очистке и раздувают таблицу.",
+                "related": "[[database-architecture-interview#Q10]] VACUUM и dead tuples; [[database-architecture-interview#Q9]] WAL; [[database-architecture-interview#Q5]] уровни изоляции и snapshot."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое WAL (Write-Ahead Log) и зачем он нужен?",
+          "options": [
+            {
+              "text": "`WAL` (Write-Ahead Log) — журнал упреждающей записи: изменения сначала пишутся в журнал на диск (с `fsync`), и только потом применяются к файлам данных; это обеспечивает `Durability` из `ACID`.",
+              "correct": true,
+              "sections": {
+                "explanation": "После сбоя `PostgreSQL` «проигрывает» `WAL` вперёд (redo) и восстанавливает все зафиксированные транзакции; тот же поток `WAL` используется для streaming-репликации и `PITR`.",
+                "example": "Параметры: `wal_level = replica` (минимум для репликации), `max_wal_size` (порог checkpoint), `synchronous_commit = on` — ждать `fsync` `WAL` при `COMMIT` для надёжности.",
+                "when_to_apply": "Параметры `WAL` настраивают при балансировке надёжности и скорости записи, а также при подготовке репликации и `PITR`.",
+                "edge_cases": "`synchronous_commit = off` ускоряет запись, но при крахе можно потерять последние несколько фиксированных транзакций — это допустимо лишь для некритичных данных.",
+                "related": "[[database-architecture-interview#Q11]] checkpoint и сброс WAL; [[database-architecture-interview#Q22]] репликация через WAL; [[database-architecture-interview#Q3]] Durability в ACID."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`WAL` записывает изменения в файлы данных сразу, а в журнал — только после успешного `COMMIT`, для удобства аудита.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Принцип write-ahead обратный: сначала запись в `WAL`, и лишь потом (фоново, при checkpoint) изменения попадают в файлы данных.",
+                "source_of_confusion": "Слово «log» ассоциируется с аудитом постфактум, а не с гарантией перед записью.",
+                "if_it_were_true": "Тогда после краха нельзя было бы восстановить незаписанные в данные транзакции, но redo по `WAL` это делает.",
+                "how_it_should_be": "`WAL` пишется ПЕРЕД применением к данным; именно это даёт crash recovery и durability."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`WAL` — это кэш часто читаемых страниц в оперативной памяти для ускорения `SELECT`-запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэш страниц в памяти — это `shared_buffers`; `WAL` — журнал изменений на диске для durability и восстановления.",
+                "source_of_confusion": "И то и другое — про «буферы и память», отсюда смешение `WAL` и `shared_buffers`.",
+                "if_it_were_true": "Тогда `WAL` не помогал бы восстановлению после краха, но именно для этого он и нужен.",
+                "how_it_should_be": "Чтение ускоряет `shared_buffers`; `WAL` гарантирует сохранность записей и используется для recovery/репликации."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`WAL` нужен только для логической репликации и совершенно не задействован при crash recovery.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WAL` — основа именно crash recovery (redo после сбоя); репликация и `PITR` — дополнительные применения того же журнала.",
+                "source_of_confusion": "Связь `WAL` с репликацией реальна, поэтому его роль в восстановлении недооценивают.",
+                "if_it_were_true": "Тогда после `kill -9` `PostgreSQL` терял бы зафиксированные транзакции, но он их восстанавливает по `WAL`.",
+                "how_it_should_be": "Первая задача `WAL` — durability и crash recovery; репликация построена поверх него, но не единственная цель."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает VACUUM в PostgreSQL?",
+          "options": [
+            {
+              "text": "`VACUUM` сжимает все таблицы алгоритмом компрессии, уменьшая объём файлов на диске независимо от dead tuples.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`VACUUM` работает именно с мёртвыми версиями строк от `MVCC`, освобождая занятое ими место, а не сжимает живые данные кодеком.",
+                "source_of_confusion": "Слово «vacuum» (пылесос) наводит на мысль об общем сжатии/уплотнении.",
+                "if_it_were_true": "Тогда `VACUUM` помогал бы и таблице без обновлений, но там dead tuples нет и чистить нечего.",
+                "how_it_should_be": "`VACUUM` убирает dead tuples из-за `MVCC`; компрессия живых данных — это `TOAST`/page compression."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`VACUUM` очищает мёртвые (dead) версии строк, которые накапливаются из-за `MVCC`: помечает занятое ими место как свободное для повторного использования, чтобы таблица не раздувалась (table bloat).",
+              "correct": true,
+              "sections": {
+                "explanation": "Обычный `VACUUM` не блокирует чтение/запись; `VACUUM FULL` переписывает таблицу и реально отдаёт место ОС, но берёт `ACCESS EXCLUSIVE`; `autovacuum` делает это фоново.",
+                "example": "`VACUUM ANALYZE orders` чистит dead tuples и обновляет статистику; долю мёртвых строк видно в `pg_stat_user_tables.n_dead_tup`.",
+                "when_to_apply": "`VACUUM` и autovacuum тюнят на таблицах с высоким update/delete-rate, где иначе накапливается bloat и деградируют запросы.",
+                "edge_cases": "Если autovacuum не успевает (например, из-за длинной транзакции, удерживающей snapshot), dead tuples не очищаются, таблица пухнет, и запросы деградируют.",
+                "related": "[[database-architecture-interview#Q8]] MVCC и dead tuples; [[database-architecture-interview#Q11]] checkpoint; [[database-architecture-interview#Q17]] обновление статистики через ANALYZE."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Обычный `VACUUM` всегда возвращает освобождённое место операционной системе, уменьшая размер файла таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Место ОС возвращает только `VACUUM FULL` (с переписыванием таблицы); обычный `VACUUM` лишь помечает место как переиспользуемое внутри таблицы.",
+                "source_of_confusion": "Логично ожидать, что «очистка» уменьшает файл на диске.",
+                "if_it_were_true": "Тогда не понадобился бы отдельный `VACUUM FULL`, но он существует именно для возврата места ОС.",
+                "how_it_should_be": "Обычный `VACUUM` оставляет размер файла прежним (место переиспользуется внутри); ОС отдаёт `VACUUM FULL`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`autovacuum` физически перестраивает индексы и устраняет их фрагментацию при каждом запуске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`autovacuum` чистит dead tuples в таблицах и индексах, но не перестраивает структуру индекса; для этого нужен `REINDEX`.",
+                "source_of_confusion": "И `VACUUM`, и `REINDEX` относятся к обслуживанию, поэтому их функции смешивают.",
+                "if_it_were_true": "Тогда фрагментация индексов решалась бы сама собой, но на практике требуется `REINDEX CONCURRENTLY`.",
+                "how_it_should_be": "`autovacuum` освобождает место, но фрагментацию индекса лечит отдельный `REINDEX`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое checkpoint в PostgreSQL?",
+          "options": [
+            {
+              "text": "Checkpoint — это точка отката (savepoint) внутри транзакции, к которой можно вернуться через `ROLLBACK TO`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Точка отката внутри транзакции — это `SAVEPOINT`; checkpoint — сброс грязных страниц на диск на уровне всего сервера.",
+                "source_of_confusion": "Оба слова означают «контрольную точку», отсюда путаница savepoint и checkpoint.",
+                "if_it_were_true": "Тогда checkpoint задавался бы внутри `BEGIN…COMMIT`, но он управляется параметрами кластера.",
+                "how_it_should_be": "Checkpoint — это flush грязных страниц на уровне сервера; откат внутри транзакции — это `SAVEPOINT`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "После checkpoint `PostgreSQL` удаляет все данные транзакций, начатых до него, чтобы освободить память.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Checkpoint ничего из данных не удаляет; он лишь записывает грязные страницы на диск и позволяет удалить старые `WAL`-сегменты.",
+                "source_of_confusion": "Фраза «можно удалить старые `WAL`» переносится на удаление самих данных.",
+                "if_it_were_true": "Тогда checkpoint терял бы зафиксированные транзакции, но он, наоборот, гарантирует их сохранность на диске.",
+                "how_it_should_be": "Checkpoint сбрасывает грязные страницы и чистит лишь старый `WAL`; данные транзакций остаются."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Checkpoint — момент, когда `PostgreSQL` гарантированно сбрасывает все «грязные» страницы из shared buffers на диск (с `fsync`); после него старые `WAL`-файлы можно удалить, потому что все изменения уже в файлах данных.",
+              "correct": true,
+              "sections": {
+                "explanation": "Crash recovery всегда стартует с последнего checkpoint и проигрывает `WAL` от него вперёд — чем чаще checkpoint, тем короче восстановление, но выше I/O-нагрузка.",
+                "example": "Принудительно — командой `CHECKPOINT`; статистику timed/req-чекпоинтов смотрят в `pg_stat_bgwriter` (`checkpoints_timed`, `checkpoints_req`).",
+                "when_to_apply": "Настройки checkpoint трогают, когда наблюдают пики I/O или хотят сократить время crash recovery на нагруженном сервере.",
+                "edge_cases": "`checkpoint_completion_target = 0.9` растягивает запись грязных страниц по времени, чтобы не создавать пики I/O; `max_wal_size` задаёт порог автоматического checkpoint по объёму `WAL`.",
+                "related": "[[database-architecture-interview#Q9]] WAL и сброс старых сегментов; [[database-architecture-interview#Q10]] VACUUM; [[database-architecture-interview#Q34]] параметры конфигурации производительности."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Checkpoint происходит после каждого `COMMIT`, синхронно записывая на диск все изменения именно этой транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Durability каждой транзакции обеспечивает `WAL` при `COMMIT`; checkpoint — периодическое массовое событие, а не после каждого `COMMIT`.",
+                "source_of_confusion": "Кажется, что фиксация транзакции и сброс страниц на диск — это одно и то же действие.",
+                "if_it_were_true": "Тогда не было бы смысла в `max_wal_size` и `checkpoint_completion_target`, регулирующих частоту чекпоинтов.",
+                "how_it_should_be": "При `COMMIT` синхронно пишется `WAL`; грязные страницы сбрасываются позже, на периодическом checkpoint."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое индекс и какие типы индексов существуют в PostgreSQL?",
+          "options": [
+            {
+              "text": "Индекс — это копия всей таблицы в отсортированном виде, которую БД хранит отдельно и обновляет при каждом запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Индекс хранит только значения индексируемых столбцов и указатели на строки, а не полную копию таблицы (кроме `INCLUDE`-покрывающих частей).",
+                "source_of_confusion": "Покрывающие индексы с `INCLUDE` действительно дублируют часть данных, что обобщают на всю таблицу.",
+                "if_it_were_true": "Тогда каждый индекс удваивал бы размер БД, но обычный индекс заметно компактнее таблицы.",
+                "how_it_should_be": "Индекс — это структура из ключей и ссылок на строки, а не полная отсортированная копия таблицы."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В `PostgreSQL` существует только один тип индекса — `B-tree`, остальные типы доступны лишь в коммерческих СУБД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PostgreSQL` поддерживает несколько типов: `B-tree`, `Hash`, `GiST`, `GIN`, `BRIN`, `SP-GiST` — каждый под свой класс операторов.",
+                "source_of_confusion": "`B-tree` — дефолт и самый частый, поэтому про остальные типы забывают.",
+                "if_it_were_true": "Тогда нельзя было бы индексировать `JSONB` через `GIN` или геоданные через `GiST`, но это работает в `PostgreSQL`.",
+                "how_it_should_be": "Типов индексов несколько, и выбор зависит от данных: `GIN` для `JSONB`/массивов, `BRIN` для больших отсортированных таблиц."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`GIN`-индекс предназначен для ускорения операций `<` и `>` на числовых столбцах и заменяет `B-tree` для диапазонов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для диапазонных операторов `<`, `>`, `BETWEEN` используется `B-tree` (или `BRIN`); `GIN` нужен для составных значений — массивов, `JSONB`, `tsvector`.",
+                "source_of_confusion": "Все индексы «ускоряют запросы», поэтому назначение `GIN` обобщают до любых сравнений.",
+                "if_it_were_true": "Тогда `GIN` ставили бы на обычные числовые столбцы, но там эффективнее `B-tree`.",
+                "how_it_should_be": "`GIN` — инвертированный индекс для `@>`, `&&`, полнотекста; диапазоны по числам обслуживает `B-tree`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Индекс — структура данных, ускоряющая поиск, сортировку и фильтрацию: хранит отсортированные значения столбца с указателями на строки в heap; в `PostgreSQL` есть `B-tree`, `Hash`, `GiST`, `GIN`, `BRIN`, `SP-GiST`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`B-tree` — дефолт для `=`, `<`, `>`, `BETWEEN`, `ORDER BY` (90% случаев); `GIN` — для массивов, `JSONB`, полнотекста; `BRIN` — для огромных таблиц с естественным порядком.",
+                "example": "`CREATE INDEX idx_products_attrs ON products USING GIN (attributes)` индексирует `JSONB`-поле для операторов `@>`; `BRIN` на `created_at` в логах занимает крошечный объём.",
+                "when_to_apply": "Тип индекса выбирают под класс операторов запроса: `B-tree` для диапазонов и сортировки, `GIN` для `JSONB`/массивов, `BRIN` для огромных отсортированных таблиц.",
+                "edge_cases": "Тип критичен: `Hash`-индекс умеет только `=`, а `B-tree` покрывает и равенство, и диапазоны/сортировку, поэтому `Hash` редко выигрывает у `B-tree`.",
+                "related": "[[database-architecture-interview#Q14]] кластерный vs некластерный; [[database-architecture-interview#Q15]] как планировщик выбирает индекс; [[database-architecture-interview#Q20]] оптимизация запросов индексами."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что произойдёт, если в БД создать два одинаковых индекса?",
+          "options": [
+            {
+              "text": "Два идентичных индекса — это чистый минус: при каждом `INSERT`/`UPDATE`/`DELETE` обновляются оба, занимают вдвое больше места на диске и в `shared_buffers`, но прироста на чтении нет — планировщик выберет только один.",
+              "correct": true,
+              "sections": {
+                "explanation": "Дубликаты ищут запросом по `pg_index` с группировкой по `indrelid, indkey` и `HAVING count(*) > 1`; неиспользуемые индексы видно по `idx_scan = 0` в `pg_stat_user_indexes`.",
+                "example": "Если на `orders(customer_id)` случайно создать `idx_a` и `idx_b` с одинаковым определением, запись каждой строки оплачивает поддержку обоих, а ускорения чтения не будет.",
+                "when_to_apply": "Поиск дубликатов индексов проводят при аудите схемы, когда запись деградировала, а место под индексы выросло без пользы для чтения.",
+                "edge_cases": "Дубликат может быть «почти одинаковым» (например, отличается лишь `INCLUDE` или порядком столбцов) — тогда он не полностью лишний; полностью идентичный стоит удалить.",
+                "related": "[[database-architecture-interview#Q12]] типы индексов; [[database-architecture-interview#Q18]] фрагментация индексов; [[database-architecture-interview#Q20]] подходы к оптимизации индексов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Два одинаковых индекса ускоряют чтение вдвое, потому что планировщик может задействовать оба параллельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Планировщик выберет лишь один индекс для условия; второй идентичный не ускоряет чтение, только дублирует затраты на запись.",
+                "source_of_confusion": "Кажется, что «больше индексов = быстрее», как с добавлением дисков в RAID.",
+                "if_it_were_true": "Тогда дублирование индексов было бы паттерном оптимизации, но это известный анти-паттерн.",
+                "how_it_should_be": "Прироста чтения нет — используется один индекс; дубликат лишь замедляет запись и тратит место."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`PostgreSQL` запретит создание второго индекса с таким же определением и вернёт ошибку уникальности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PostgreSQL` спокойно создаст полностью идентичный индекс — он не запрещает дубликаты, поэтому их и приходится искать вручную.",
+                "source_of_confusion": "Ограничения уникальности на данные путают с «уникальностью» определений индексов.",
+                "if_it_were_true": "Тогда не нужен был бы запрос по `pg_index` для поиска дубликатов, но он используется на практике.",
+                "how_it_should_be": "Создание дубля разрешено; обнаруживать и удалять его — задача DBA через `pg_index`/`pg_stat_user_indexes`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Дублирующий индекс не влияет на запись и существует только как резервная копия на случай повреждения основного.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый лишний индекс обновляется при любой записи в таблицу, то есть напрямую замедляет `INSERT`/`UPDATE`/`DELETE`.",
+                "source_of_confusion": "Слово «копия» наводит на мысль о бесплатном резерве без накладных расходов.",
+                "if_it_were_true": "Тогда число индексов не влияло бы на скорость записи, но это один из главных факторов её деградации.",
+                "how_it_should_be": "Дубль не резерв, а постоянный overhead на запись; восстановление индекса делает `REINDEX`, а не второй индекс."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое кластерный и некластерный индексы?",
+          "options": [
+            {
+              "text": "Кластерный индекс — это индекс, который хранится в кластере серверов и реплицируется между шардами, в отличие от локального некластерного.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Кластерный» здесь относится к физической кластеризации строк по ключу на одном сервере, а не к кластеру серверов или шардам.",
+                "source_of_confusion": "Слово «кластер» перегружено: и физический порядок строк, и группа серверов.",
+                "if_it_were_true": "Тогда кластерный индекс существовал бы только в распределённых БД, но он есть и в одиночном `InnoDB`.",
+                "how_it_should_be": "Кластерный индекс задаёт физический порядок строк в таблице; распределение по серверам — это шардирование/репликация."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Кластерный индекс определяет физический порядок хранения строк таблицы (на таблицу он один), а некластерный — отдельная структура со ссылками на строки, и их может быть много; range-scan по кластерному быстрее, но `INSERT` медленнее из-за поддержки порядка.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `MySQL InnoDB` кластерный индекс по primary key создаётся автоматически; в `PostgreSQL` таблица — heap, а команда `CLUSTER` лишь разово переупорядочивает строки по индексу.",
+                "example": "`CLUSTER orders USING idx_orders_created_at` физически сортирует строки `orders` по дате, ускоряя последующие range-запросы по `created_at` — но берёт `ACCESS EXCLUSIVE LOCK`.",
+                "when_to_apply": "Различие кластерного и некластерного учитывают при выборе primary key в `InnoDB` и при решении, кластеризовать ли таблицу `PostgreSQL` под range-запросы.",
+                "edge_cases": "В `PostgreSQL` порядок после `CLUSTER` не поддерживается при новых вставках — со временем кластеризация «расходится», и команду приходится повторять.",
+                "related": "[[database-architecture-interview#Q12]] типы индексов; [[database-architecture-interview#Q19]] CLUSTER против фрагментации; [[database-architecture-interview#Q15]] выбор индекса планировщиком."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "На одну таблицу можно создать сколько угодно кластерных индексов, как и некластерных, ограничений нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кластерный индекс на таблицу только один — он задаёт единственный физический порядок строк; некластерных может быть много.",
+                "source_of_confusion": "Симметрия с некластерными индексами создаёт впечатление отсутствия ограничения.",
+                "if_it_were_true": "Тогда строки имели бы несколько физических порядков одновременно, что невозможно.",
+                "how_it_should_be": "Физический порядок один, поэтому кластерный индекс единственный; множественными бывают только некластерные."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Некластерный индекс определяет физический порядок строк, а кластерный — это просто отдельная структура со ссылками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Определения перепутаны местами: физический порядок задаёт кластерный индекс, а некластерный — отдельная структура указателей.",
+                "source_of_confusion": "Легко перепутать, какой из двух типов влияет на физическое расположение данных.",
+                "if_it_were_true": "Тогда у таблицы было бы много «физических порядков» через множество некластерных индексов, что невозможно.",
+                "how_it_should_be": "Кластерный — упорядочивает строки физически; некластерный — отдельная структура ссылок, не влияющая на их порядок."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как БД определяет, какой индекс использовать для запроса?",
+          "options": [
+            {
+              "text": "БД всегда использует индекс, если он существует на столбце из `WHERE`, независимо от размера таблицы и селективности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Планировщик может предпочесть `Seq Scan`, если он дешевле (маленькая таблица или низкая селективность условия) — наличие индекса не обязывает его использовать.",
+                "source_of_confusion": "Кажется, что «есть индекс — значит он применяется», иначе зачем его создавали.",
+                "if_it_were_true": "Тогда `SET enable_seqscan = off` не имел бы смысла, но его используют именно чтобы заставить планировщик игнорировать `Seq Scan`.",
+                "how_it_should_be": "Использование индекса решает cost-based оптимизатор; на малых/низкоселективных выборках `Seq Scan` часто выгоднее."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "БД выбирает индекс случайным образом из всех подходящих, чтобы равномерно распределить нагрузку между ними.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбор детерминирован и основан на минимальной оценочной стоимости плана, а не на случайности или балансировке.",
+                "source_of_confusion": "Слово «выбор» из нескольких индексов наводит на мысль о рандомизации.",
+                "if_it_were_true": "Тогда один и тот же запрос давал бы разные планы при неизменных данных и статистике, чего не происходит.",
+                "how_it_should_be": "Планировщик выбирает самый дешёвый план по статистике; это воспроизводимое, а не случайное решение."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Оптимизатор (`Query Planner`) работает по стоимостной модели (cost-based): генерирует варианты планов, оценивает стоимость каждого по статистике и выбирает план с минимальной оценочной стоимостью.",
+              "correct": true,
+              "sections": {
+                "explanation": "На выбор влияют селективность условия (из `pg_statistic`), стоимость I/O (`seq_page_cost`, `random_page_cost`), размер таблицы и корреляция физического порядка данных с порядком индекса.",
+                "example": "`EXPLAIN SELECT * FROM orders WHERE customer_id = 42` покажет `Index Scan using idx_orders_customer`, если планировщик решил, что это дешевле `Seq Scan`.",
+                "when_to_apply": "Эти факторы анализируют, когда планировщик игнорирует «очевидно нужный» индекс — проверяют селективность, размер таблицы и cost-параметры.",
+                "edge_cases": "Для маленьких таблиц `Seq Scan` нередко дешевле `Index Scan` (меньше random I/O), поэтому наличие индекса не гарантирует его использование.",
+                "related": "[[database-architecture-interview#Q16]] чтение плана через EXPLAIN ANALYZE; [[database-architecture-interview#Q17]] роль статистики; [[database-architecture-interview#Q12]] типы индексов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "БД выбирает самый новый по времени создания индекс, считая его наиболее актуальным для данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Время создания индекса не влияет на выбор; решает оценочная стоимость плана по статистике (`pg_statistic`, `pg_class`).",
+                "source_of_confusion": "Интуиция «новее = лучше» переносится с кэшей на индексы.",
+                "if_it_were_true": "Тогда `CREATE INDEX` менял бы планы только из-за свежести, а не из-за полезности структуры.",
+                "how_it_should_be": "Решение принимается по стоимости и селективности, а не по дате создания индекса."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое EXPLAIN ANALYZE и как читать план запроса?",
+          "options": [
+            {
+              "text": "`EXPLAIN ANALYZE` только показывает оценочный план и никогда не выполняет сам запрос, поэтому абсолютно безопасен для `UPDATE`/`DELETE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EXPLAIN ANALYZE` реально выполняет запрос (включая `UPDATE`/`DELETE`), поэтому изменяющие запросы оборачивают в транзакцию с `ROLLBACK`; без `ANALYZE` план только оценивается.",
+                "source_of_confusion": "Обычный `EXPLAIN` без `ANALYZE` действительно не выполняет запрос, и это свойство переносят на `ANALYZE`-вариант.",
+                "if_it_were_true": "Тогда нельзя было бы получить колонку `actual time`, но она появляется именно из реального исполнения.",
+                "how_it_should_be": "`EXPLAIN ANALYZE` исполняет запрос ради замеров; безопасен для изменений только под `ROLLBACK`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Колонка `cost` в плане измеряется в миллисекундах и показывает точное время выполнения каждого узла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`cost` — это оценка в условных единицах планировщика, а реальное время в миллисекундах показывает `actual time`.",
+                "source_of_confusion": "И `cost`, и `actual time` стоят рядом в одной строке, отсюда смешение единиц.",
+                "if_it_were_true": "Тогда `cost` и `actual time` всегда совпадали бы, но они часто расходятся в разы.",
+                "how_it_should_be": "`cost` — абстрактные единицы для сравнения планов; миллисекунды даёт `actual time` из `ANALYZE`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Seq Scan` в плане — всегда ошибка, который нужно немедленно устранять созданием индекса на всех столбцах из `WHERE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Seq Scan` оправдан на малых таблицах и при низкой селективности (когда нужно прочитать большую долю строк); проблемой он становится лишь на больших таблицах с узким фильтром.",
+                "source_of_confusion": "`Seq Scan` звучит как «медленно», поэтому его считают безусловным антипаттерном.",
+                "if_it_were_true": "Тогда планировщик никогда не выбирал бы `Seq Scan`, но на малых выборках он сознательно дешевле индекса.",
+                "how_it_should_be": "`Seq Scan` — не всегда проблема; красный флаг — `Seq Scan` на большой таблице с селективным фильтром."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`EXPLAIN ANALYZE` реально выполняет запрос и показывает план с замерами: для каждого узла видны оценочные `cost`/`rows`, фактические `actual time`/`rows`, число `loops` и (с `BUFFERS`) попадания в кэш vs чтения с диска.",
+              "correct": true,
+              "sections": {
+                "explanation": "Расхождение оценки и факта — главный сигнал: если `rows` (estimated) сильно меньше `actual rows`, статистика устарела и нужен `ANALYZE`; `Seq Scan` на большой таблице с фильтром намекает на отсутствие индекса.",
+                "example": "В плане `Index Scan Backward using idx_orders_status_date … Index Cond: ((status = 'SHIPPED') AND (created_at > '2026-01-01'))` показывает, что фильтр ушёл в индекс, а не в `Seq Scan`.",
+                "when_to_apply": "`EXPLAIN ANALYZE` применяют при оптимизации медленных запросов: ищут `Seq Scan` на больших таблицах, расхождение оценок и сортировки на диске.",
+                "edge_cases": "`Sort Method: external merge Disk` означает нехватку `work_mem` (сортировка ушла на диск), а `Buffers: shared read >> shared hit` — что данных мало в кэше и стоит увеличить `shared_buffers`.",
+                "related": "[[database-architecture-interview#Q15]] как планировщик выбирает индекс; [[database-architecture-interview#Q17]] статистика и оценки; [[database-architecture-interview#Q34]] work_mem и shared_buffers."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое значение имеет статистика при работе с индексами?",
+          "options": [
+            {
+              "text": "Статистика — основа решений оптимизатора: по числу строк (`reltuples` в `pg_class`) и распределению значений (гистограммы, most common values, correlation в `pg_statistic`) он оценивает селективность и выбирает план; без актуальной статистики план будет неэффективным.",
+              "correct": true,
+              "sections": {
+                "explanation": "`pg_class` хранит `reltuples`/`relpages`, а `pg_stats` — `n_distinct`, `most_common_vals`, `null_fraction`, `correlation`, по которым считается, сколько строк вернёт условие.",
+                "example": "`ALTER TABLE orders ALTER COLUMN customer_id SET STATISTICS 1000; ANALYZE orders;` увеличивает детализацию гистограммы для столбца с неравномерным распределением.",
+                "when_to_apply": "Про статистику вспоминают, когда после массовой загрузки или большого `DELETE` планы внезапно «поплыли» — и запускают `ANALYZE`.",
+                "edge_cases": "Если статистика устарела (думает «100 строк», а их 10 млн), планировщик выберет `Seq Scan` вместо `Index Scan`; после массовой загрузки нужен ручной `ANALYZE`, autovacuum не всегда успевает.",
+                "related": "[[database-architecture-interview#Q15]] выбор индекса планировщиком; [[database-architecture-interview#Q16]] estimated vs actual rows; [[database-architecture-interview#Q10]] autovacuum и обновление статистики."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Статистика для оптимизатора — это просто счётчик, сколько раз каждый индекс был использован, и не влияет на выбор плана.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Счётчики использования (`idx_scan`) — это другое; для выбора плана нужна статистика распределения значений (гистограммы, селективность).",
+                "source_of_confusion": "В `pg_stat_user_indexes` действительно есть счётчики сканов, что путают со статистикой планировщика.",
+                "if_it_were_true": "Тогда `ANALYZE` не менял бы планы, но обновление статистики напрямую влияет на выбор `Seq Scan` vs `Index Scan`.",
+                "how_it_should_be": "Планировщику нужна статистика распределения данных (`pg_statistic`), а не счётчик использований индекса."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`PostgreSQL` не хранит никакой статистики и каждый раз сканирует всю таблицу, чтобы оценить селективность условия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PostgreSQL` хранит статистику в `pg_class`/`pg_statistic` и обновляет её `ANALYZE`/autovacuum — полное сканирование для каждой оценки было бы слишком дорого.",
+                "source_of_confusion": "Кажется, что без хранимых данных оценка возможна только прямым подсчётом.",
+                "if_it_were_true": "Тогда планирование запроса занимало бы столько же, сколько его выполнение, чего не происходит.",
+                "how_it_should_be": "Статистика заранее собрана `ANALYZE` и хранится в системных каталогах; на лету таблица не пересчитывается."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Статистика обновляется мгновенно при каждом `INSERT`/`UPDATE`, поэтому ручной `ANALYZE` после массовой загрузки не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Статистика обновляется не на каждой строке, а периодически (autovacuum) или вручную `ANALYZE`; после bulk-загрузки она может сильно отстать.",
+                "source_of_confusion": "Ожидание «данные изменились — статистика тоже» создаёт иллюзию синхронности.",
+                "if_it_were_true": "Тогда не возникало бы плохих планов после `COPY` миллионов строк, но это типичная проблема.",
+                "how_it_should_be": "После массовой загрузки статистика устаревает, и нужен явный `ANALYZE`, чтобы планы стали корректными."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое проблема фрагментации индексов?",
+          "options": [
+            {
+              "text": "Фрагментация индексов — это когда индекс по ошибке создан на нескольких столбцах вместо одного, что снижает его эффективность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Многостолбцовый (составной) индекс — это нормальная и часто полезная структура, а не фрагментация; фрагментация — разреженность и распухание страниц.",
+                "source_of_confusion": "Слово «фрагментация» путают с «разбиением на части/столбцы».",
+                "if_it_were_true": "Тогда лечением была бы пересборка индекса на одном столбце, но фрагментацию устраняет `REINDEX`.",
+                "how_it_should_be": "Фрагментация — это частично заполненные, разбросанные страницы; число столбцов в индексе тут ни при чём."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Фрагментация (index bloat) — когда страницы индекса заполнены частично и разбросаны из-за удалений и обновлений: плотность падает, индекс распухает, и `Index Scan` читает больше страниц, чем нужно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Последствия — лишний I/O при сканировании, рост размера индекса на диске и деградация производительности чтения по нему.",
+                "example": "`pgstatindex('idx_orders_customer')` из расширения `pgstattuple` показывает `avg_leaf_density`: если она ниже ~50%, индекс сильно фрагментирован.",
+                "when_to_apply": "Оценку фрагментации делают на индексах нагруженных таблиц, когда `Index Scan` замедлился, а размер индекса вырос без роста данных.",
+                "edge_cases": "Часть пустот в индексе нормальна (`fillfactor` оставляет место под вставки); проблемой это становится при стабильно низкой плотности и заметном росте размера.",
+                "related": "[[database-architecture-interview#Q19]] как лечить фрагментацию; [[database-architecture-interview#Q10]] VACUUM и dead tuples; [[database-architecture-interview#Q13]] дублирующие индексы."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Фрагментация индексов означает, что индекс физически разбит на несколько файлов по разным дискам RAID.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фрагментация — это логическая разреженность страниц индекса (низкая плотность из-за удалений/обновлений), а не распределение файлов по дискам.",
+                "source_of_confusion": "Термин «фрагментация» на уровне ФС (разбросанные блоки файла) переносят на индекс.",
+                "if_it_were_true": "Тогда проблему решала бы дефрагментация диска, но в БД нужен `REINDEX`/`pg_repack`.",
+                "how_it_should_be": "Речь о плотности страниц внутри индекса; размещение файлов по дискам — задача файловой системы/RAID."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Фрагментация ускоряет `Index Scan`, потому что данные раскладываются по большему числу страниц и читаются параллельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фрагментация замедляет `Index Scan`: больше частично заполненных страниц — больше I/O на то же число строк.",
+                "source_of_confusion": "Параллельное чтение нескольких страниц звучит как преимущество.",
+                "if_it_were_true": "Тогда фрагментацию специально создавали бы для ускорения, но её, наоборот, устраняют.",
+                "how_it_should_be": "Распухший индекс читается медленнее; цель `REINDEX` — уплотнить страницы и сократить I/O."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как решить проблему фрагментации индексов в PostgreSQL?",
+          "options": [
+            {
+              "text": "Единственный способ убрать фрагментацию — удалить индекс командой `DROP INDEX` и больше его не создавать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Удаление индекса лишает запросы ускорения; фрагментацию устраняют перестройкой (`REINDEX`/`REINDEX CONCURRENTLY`), сохраняя индекс.",
+                "source_of_confusion": "Радикальное «удалить проблему вместе с индексом» кажется простым решением.",
+                "if_it_were_true": "Тогда после дефрагментации запросы теряли бы `Index Scan`, что недопустимо для нагруженных таблиц.",
+                "how_it_should_be": "Индекс перестраивают, а не удаляют: `REINDEX CONCURRENTLY` уплотняет его без потери функциональности."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`REINDEX` без `CONCURRENTLY` не берёт никаких блокировок и его можно безопасно запускать на проде в часы пик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный `REINDEX` берёт `ACCESS EXCLUSIVE` на время перестройки и блокирует таблицу; для прода без простоя нужен `REINDEX CONCURRENTLY`.",
+                "source_of_confusion": "Слово «reindex» звучит как фоновая операция без последствий.",
+                "if_it_were_true": "Тогда не было бы смысла в варианте `CONCURRENTLY`, добавленном именно ради отсутствия блокировки.",
+                "how_it_should_be": "Простой `REINDEX` лочит таблицу; на проде в нагрузке используют `REINDEX CONCURRENTLY`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Основной инструмент — перестройка индекса: `REINDEX` (блокирует таблицу, `ACCESS EXCLUSIVE`) или `REINDEX CONCURRENTLY` (с PG12, почти без блокировки); также помогают `VACUUM` (освобождает страницы от dead tuples), `CLUSTER` и расширение `pg_repack`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`autovacuum` чистит dead tuples в индексах, но не перестраивает их структуру, поэтому для таблиц с высоким update/delete-rate нужен периодический `REINDEX CONCURRENTLY`.",
+                "example": "`REINDEX INDEX CONCURRENTLY idx_orders_customer;` перестраивает индекс без простоя; запуск можно автоматизировать через `pg_cron` по расписанию (например, в 03:00 в воскресенье).",
+                "when_to_apply": "Перестройку индекса планируют как регулярное обслуживание таблиц с интенсивными update/delete, выбирая `CONCURRENTLY` для работы без простоя.",
+                "edge_cases": "`REINDEX CONCURRENTLY` требует временно вдвое больше места под индекс и может упасть на конфликте — тогда останется невалидный индекс, который нужно дочистить вручную.",
+                "related": "[[database-architecture-interview#Q18]] что такое фрагментация; [[database-architecture-interview#Q10]] VACUUM и dead tuples; [[database-architecture-interview#Q14]] CLUSTER и физический порядок."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чтобы убрать фрагментацию, достаточно выполнить `ANALYZE` — он пересчитывает статистику и попутно уплотняет страницы индекса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ANALYZE` только обновляет статистику для планировщика и физически индекс не перестраивает; уплотнение делает `REINDEX`.",
+                "source_of_confusion": "И `ANALYZE`, и `REINDEX` относятся к обслуживанию индексов, отсюда смешение их функций.",
+                "if_it_were_true": "Тогда фрагментация лечилась бы дешёвым `ANALYZE`, но он не трогает физическую структуру страниц.",
+                "how_it_should_be": "`ANALYZE` чинит планы через статистику; за плотность страниц индекса отвечает `REINDEX`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие подходы повышают производительность запросов с индексами?",
+          "options": [
+            {
+              "text": "Главный способ ускорить запросы — создать отдельный индекс на каждый столбец таблицы, тогда любой запрос будет быстрым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Индекс на каждый столбец раздувает запись и редко помогает: эффективнее составные индексы под реальные паттерны запросов и покрывающие индексы.",
+                "source_of_confusion": "Кажется, что «индекс на всё» гарантирует быстрый доступ к любому полю.",
+                "if_it_were_true": "Тогда `INSERT`/`UPDATE` не замедлялись бы от множества индексов, но именно это и происходит.",
+                "how_it_should_be": "Нужны целевые составные/частичные/покрывающие индексы под запросы, а не индекс на каждый столбец."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В составном индексе `(a, b)` порядок столбцов не важен — он одинаково ускоряет запросы и по `a`, и по `b` по отдельности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок критичен: `(a, b)` эффективен для условий по `a` (и `a, b`), но обычно не используется для запроса только по `b`.",
+                "source_of_confusion": "Симметрия записи `(a, b)` создаёт впечатление взаимозаменяемости столбцов.",
+                "if_it_were_true": "Тогда не пришлось бы заводить отдельный индекс по `b`, но именно это рекомендуется при запросах по второму столбцу.",
+                "how_it_should_be": "Левый префикс составного индекса определяет применимость; запросу только по `b` нужен отдельный индекс."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Функция над столбцом в `WHERE`, например `LOWER(email) = '…'`, использует обычный `B-tree` индекс на этом столбце без дополнительных действий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный индекс на `email` не применяется при `LOWER(email)`; нужен функциональный индекс на само выражение `LOWER(email)`.",
+                "source_of_confusion": "Кажется, что индекс на столбце покрывает и любые функции от него.",
+                "if_it_were_true": "Тогда не существовало бы функциональных индексов, но их создают именно под такие условия.",
+                "how_it_should_be": "Под выражение `LOWER(email)` создают функциональный индекс; иначе планировщик уходит в `Seq Scan`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Ключевые приёмы: составные индексы (первым столбцом — самое селективное условие `WHERE`), покрывающие индексы (`INCLUDE` → Index Only Scan без обращения к heap), частичные индексы (только нужное подмножество строк) и индексы под `ORDER BY`+`LIMIT`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Порядок столбцов в составном индексе критичен: `idx (a, b)` не помогает запросу только по `b`; для функции над столбцом нужен функциональный индекс, иначе обычный не используется.",
+                "example": "`CREATE INDEX idx_orders_email_lower ON orders (LOWER(email))` чинит `WHERE LOWER(email) = …`; `CREATE INDEX … INCLUDE (status, total_amount)` даёт `Index Only Scan` без heap access.",
+                "when_to_apply": "Эти приёмы применяют при оптимизации горячих запросов: подбирают порядок столбцов, покрывающие и частичные индексы под реальные `WHERE`/`ORDER BY`.",
+                "edge_cases": "Индекс с низкой селективностью (2–3 уникальных значения) бесполезен — `Seq Scan` будет быстрее; слишком много индексов замедляет запись, а забытый `ANALYZE` после bulk-загрузки портит планы.",
+                "related": "[[database-architecture-interview#Q12]] типы индексов; [[database-architecture-interview#Q15]] выбор индекса планировщиком; [[database-architecture-interview#Q17]] статистика и селективность."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое партиционирование таблиц?",
+          "options": [
+            {
+              "text": "Партиционирование — разбиение одной большой логической таблицы на меньшие физические части (partitions), прозрачное для приложения; ускоряет запросы через partition pruning и упрощает обслуживание (быстрое удаление старых данных).",
+              "correct": true,
+              "sections": {
+                "explanation": "В `PostgreSQL` есть три типа: `RANGE` (по диапазону, например по дате помесячно), `LIST` (по списку значений, например по региону `RU`/`KZ`/`BY`) и `HASH` (равномерно по N партициям).",
+                "example": "`SELECT … WHERE created_at > '2026-04-01'` при range-партиционировании по дате сканирует только нужные партиции (partition pruning), а `DROP TABLE orders_2025_q1` мгновенно удаляет старые данные вместо медленного `DELETE`.",
+                "when_to_apply": "Партиционирование вводят на больших таблицах (> 10–50 GB) с фильтрацией по ключу и потребностью быстро удалять старые данные.",
+                "edge_cases": "Партиционирование оправдано на больших таблицах (>10–50 GB), где запросы фильтруют по partition key; для маленьких таблиц overhead планировщика перевешивает выгоду.",
+                "related": "[[database-architecture-interview#Q23]] шардирование как разнесение по серверам; [[database-architecture-interview#Q22]] репликация; [[database-architecture-interview#Q30]] горизонтальное масштабирование."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Партиционирование — это распределение таблицы между разными физическими серверами БД, где каждый сервер хранит свою часть данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разнесение данных по разным серверам — это шардирование; партиционирование разбивает таблицу на части в пределах одного сервера/инстанса.",
+                "source_of_confusion": "Обе техники «делят данные на части», отсюда путаница партиционирования и шардирования.",
+                "if_it_were_true": "Тогда `DROP TABLE orders_2025_q1` затрагивал бы удалённый узел, но партиции живут локально.",
+                "how_it_should_be": "Партиционирование — деление таблицы внутри одной БД; разнесение по серверам — это шардирование."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Партиционирование требует менять код приложения: для каждой партиции пишется отдельный `SELECT` с явным указанием имени партиции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Партиционирование прозрачно для приложения: запрос идёт к родительской таблице, а БД сама выбирает партиции через pruning.",
+                "source_of_confusion": "Видимые имена партиций (`orders_2026_q1`) наводят на мысль, что к ним обращаются напрямую.",
+                "if_it_were_true": "Тогда исчезла бы главная выгода — прозрачность; но запрос к родителю работает без изменений кода.",
+                "how_it_should_be": "Приложение работает с родительской таблицей; маршрутизацию по партициям выполняет планировщик."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Партиционирование всегда полезно и его стоит применять к любой таблице, даже маленькой, ради ускорения запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На маленьких таблицах партиционирование вредит: overhead планировщика на выбор партиций перевешивает выгоду; оно оправдано лишь для крупных таблиц.",
+                "source_of_confusion": "Раз partition pruning ускоряет запросы, кажется, что он полезен везде.",
+                "if_it_were_true": "Тогда не было бы порога «>10–50 GB», но именно с него партиционирование начинает окупаться.",
+                "how_it_should_be": "Партиционируют большие таблицы с фильтрацией по ключу; для мелких это лишняя сложность."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое репликация БД и какие виды бывают?",
+          "options": [
+            {
+              "text": "Репликация — это разбиение данных на непересекающиеся части и распределение их по серверам, где каждый хранит только свою долю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разбиение на непересекающиеся части — это шардирование; репликация, наоборот, держит полные копии одних и тех же данных на нескольких узлах.",
+                "source_of_confusion": "Обе техники относятся к «нескольким серверам», отсюда смешение репликации и шардирования.",
+                "if_it_were_true": "Тогда чтение с реплики возвращало бы лишь часть данных, но реплика содержит полную копию.",
+                "how_it_should_be": "Репликация — это копии всех данных; разбиение на доли по узлам — это шардирование."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Репликация — автоматическое копирование данных с primary (master) на реплики (standby) ради отказоустойчивости, масштабирования чтения и geo-distribution; в `PostgreSQL` бывает streaming (async/sync) и logical.",
+              "correct": true,
+              "sections": {
+                "explanation": "Streaming-репликация передаёт поток `WAL`: async отстаёт на миллисекунды и допускает потерю последних транзакций при сбое primary, sync ждёт ACK от реплики (нет потерь, но выше latency), logical работает построчно через публикацию/подписку.",
+                "example": "На primary `CREATE PUBLICATION my_pub FOR TABLE orders, customers`, на другом сервере `CREATE SUBSCRIPTION … PUBLICATION my_pub` — это logical-репликация; отставание реплики смотрят в `pg_stat_replication`.",
+                "when_to_apply": "Репликацию настраивают для отказоустойчивости и масштабирования чтения, выбирая sync/async по требованиям к потере данных и latency.",
+                "edge_cases": "Delayed replica (реплика с задержкой N часов) защищает от человеческих ошибок: если на primary сделали `DROP TABLE`, есть окно, чтобы поднять данные с отстающей реплики до применения изменения.",
+                "related": "[[database-architecture-interview#Q9]] WAL как основа streaming; [[database-architecture-interview#Q40]] read replicas для масштабирования; [[database-architecture-interview#Q23]] отличие от шардирования."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Синхронная репликация быстрее асинхронной, потому что не ждёт подтверждения от реплик и сразу подтверждает `COMMIT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: синхронная репликация ждёт ACK от реплики перед подтверждением `COMMIT` (выше latency, но без потерь), а асинхронная подтверждает сразу.",
+                "source_of_confusion": "«Синхронность» интуитивно ассоциируется с «быстро и слаженно».",
+                "if_it_were_true": "Тогда не было бы trade-off между sync и async, но он ключевой при выборе режима.",
+                "how_it_should_be": "Async быстрее (подтверждает `COMMIT` сразу), sync надёжнее (ждёт реплику) — это компромисс latency vs durability."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Асинхронная streaming-репликация гарантирует, что реплика всегда содержит ровно те же данные, что и primary, без отставания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У async-репликации всегда есть лаг: реплика может отставать и отдавать слегка устаревшие данные, особенно под пиковой нагрузкой.",
+                "source_of_confusion": "Слово «репликация» создаёт ожидание идеальной зеркальной копии в реальном времени.",
+                "if_it_were_true": "Тогда не нужно было бы мониторить `replay_lag` в `pg_stat_replication`, но это стандартная метрика.",
+                "how_it_should_be": "Async-реплика отстаёт; для read-your-writes читают с primary или используют sync-репликацию."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое шардирование и как выбрать ключ шардирования?",
+          "options": [
+            {
+              "text": "Шардирование — это создание полных копий всей базы на нескольких серверах, чтобы при отказе одного работали остальные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полные копии данных — это репликация; шардирование разбивает данные на непересекающиеся подмножества по серверам.",
+                "source_of_confusion": "И репликация, и шардирование используют несколько серверов, отсюда смешение.",
+                "if_it_were_true": "Тогда каждый шард содержал бы все данные, и не нужен был бы маршрутизатор по shard key.",
+                "how_it_should_be": "Шард хранит лишь часть данных; полные копии на узлах — это репликация."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Лучший shard key — это столбец с низкой кардинальностью, например `status` с тремя значениями, чтобы было удобно группировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Низкая кардинальность даёт перекос (hotspot): большинство строк попадёт в 2–3 шарда; хороший ключ имеет высокую кардинальность и равномерное распределение.",
+                "source_of_confusion": "Кажется, что мало значений ключа упрощает маршрутизацию и группировку.",
+                "if_it_were_true": "Тогда один шард со `status = 'ACTIVE'` собрал бы основную нагрузку, что и есть hotspot.",
+                "how_it_should_be": "Shard key должен иметь высокую кардинальность и равномерно распределяться, например `user_id`, а не `status`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Шардирование — горизонтальное разделение данных между несколькими независимыми серверами БД, где каждый шард хранит своё подмножество строк; маршрутизатор направляет запрос на нужный шард по shard key.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стратегии: hash (`shard = hash(key) % N`, равномерно, но сложный resharding), range (простые range-запросы, но hotspots), directory (lookup-таблица, гибко, но bottleneck) и consistent hashing (минимальный resharding).",
+                "example": "Хороший shard key — `user_id` (высокая кардинальность, равномерное распределение, большинство запросов содержат его → single-shard query); плохой — `status` с 3 значениями, дающий перекос.",
+                "when_to_apply": "Шардирование вводят, когда одна нода упирается в лимиты по объёму/записи; ключ подбирают под доминирующий паттерн запросов.",
+                "edge_cases": "Главные боли — cross-shard `JOIN` (дорого, отсюда денормализация или application-level join), resharding при добавлении узла и распределённые транзакции (2PC или Saga).",
+                "related": "[[database-architecture-interview#Q21]] партиционирование на одном сервере; [[database-architecture-interview#Q22]] репликация vs шардирование; [[database-architecture-interview#Q30]] горизонтальное масштабирование."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Cross-shard `JOIN` в шардированной БД выполняется так же дёшево, как обычный `JOIN` в одной таблице.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cross-shard `JOIN` дорог: данные на разных серверах, нужна сетевая агрегация — поэтому прибегают к денормализации или application-level join.",
+                "source_of_confusion": "Привычка к дешёвым локальным `JOIN` переносится на распределённый случай.",
+                "if_it_were_true": "Тогда выбор shard key не имел бы значения, но его подбирают именно чтобы избежать cross-shard запросов.",
+                "how_it_should_be": "Cross-shard `JOIN` дорог из-за сети; его минимизируют денормализацией и удачным shard key."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое connection pooling и зачем он нужен?",
+          "options": [
+            {
+              "text": "Connection pooling — это объединение нескольких физических серверов БД в один кластер для распределения нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Объединение серверов в кластер — это репликация/шардирование; pooling переиспользует соединения к одной БД, а не объединяет серверы.",
+                "source_of_confusion": "Слово «pool» (пул серверов) путают с пулом соединений.",
+                "if_it_were_true": "Тогда `PgBouncer` балансировал бы между узлами, но его задача — переиспользование соединений.",
+                "how_it_should_be": "Pooling — это пул соединений к БД; объединение серверов — это кластеризация/репликация."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Каждое соединение к `PostgreSQL` — это лёгкий поток (thread) внутри одного процесса, поэтому пул соединений практически не экономит память.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `PostgreSQL` соединение — это отдельный ОС-процесс (~5–10 MB), а не лёгкий поток, поэтому пул экономит значительную память.",
+                "source_of_confusion": "Модель «соединение = поток» из других СУБД (`MySQL`) ошибочно переносят на `PostgreSQL`.",
+                "if_it_were_true": "Тогда сотни соединений были бы дешёвыми, но именно их стоимость и решает connection pooling.",
+                "how_it_should_be": "Соединение в `PostgreSQL` — процесс с заметным расходом RAM; поэтому пул и нужен."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Connection pooling в режиме `transaction` полностью поддерживает session-level состояние: `PREPARE`, временные таблицы и session-переменные сохраняются между запросами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Режим `transaction` как раз ломает session-level состояние: соединение возвращается в пул после каждой транзакции, поэтому `PREPARE` и session-переменные не сохраняются.",
+                "source_of_confusion": "Кажется, что пул прозрачен и не меняет семантику соединения.",
+                "if_it_were_true": "Тогда не было бы отдельного режима `session` с полной совместимостью, но он существует именно для таких случаев.",
+                "how_it_should_be": "`transaction`-режим жертвует session-состоянием ради переиспользования; полную совместимость даёт режим `session`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Connection pooling — пул заранее установленных соединений к БД, переиспользуемых между запросами; каждое соединение `PostgreSQL` — отдельный процесс (~5–10 MB RAM), поэтому без пула сотни клиентов исчерпают память сервера.",
+              "correct": true,
+              "sections": {
+                "explanation": "Пул убирает дорогой цикл «открыть TCP + аутентификация + закрыть» на каждый запрос: вместо тысячи клиентских соединений к БД идёт ограниченное число (например, 20) реальных backend-соединений.",
+                "example": "`PgBouncer` в режиме `transaction` отдаёт соединение обратно в пул после `COMMIT`/`ROLLBACK`, позволяя 1000 клиентам делить 20 соединений; в Spring Boot ту же роль играет `HikariCP`.",
+                "when_to_apply": "Пул соединений ставят перед любой нагруженной БД, особенно `PostgreSQL`, где соединение — отдельный процесс с заметным расходом памяти.",
+                "edge_cases": "Режим `transaction` несовместим с session-level фичами: нельзя полагаться на `PREPARE` и session-переменные между запросами одной логической сессии — это плата за высокий коэффициент переиспользования.",
+                "related": "[[database-architecture-interview#Q39]] HikariCP и его настройки; [[database-architecture-interview#Q34]] max_connections; [[database-architecture-interview#Q40]] пул перед репликами."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем SQL база данных отличается от NoSQL?",
+          "options": [
+            {
+              "text": "`SQL` (реляционные) — таблицы со строгой схемой, единый язык `SQL`, `ACID`-транзакции, мощные `JOIN`, преимущественно вертикальное масштабирование; `NoSQL` — гибкая/schema-less модель (документы, KV, графы, wide-column), свой API на каждую БД, обычно `BASE` и горизонтальное масштабирование из коробки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Различие проявляется в схеме (`DDL` vs schema-less), транзакциях (`ACID` vs `BASE`), `JOIN` (мощные vs ограниченные) и масштабировании (scale-up vs scale-out).",
+                "example": "`PostgreSQL`/`MySQL`/`Oracle` — типичные `SQL`-СУБД; `MongoDB`/`Redis`/`Cassandra` — `NoSQL` с разными моделями данных и собственными языками запросов.",
+                "when_to_apply": "Это сравнение проводят на старте проекта, выбирая хранилище под характер данных, паттерны доступа и требования к согласованности.",
+                "edge_cases": "Граница не абсолютна: `PostgreSQL` с `JSONB` ведёт себя «документно», а `MongoDB 4.0+` поддерживает multi-document `ACID` — поэтому выбор зависит от use case, а не от ярлыка.",
+                "related": "[[database-architecture-interview#Q26]] типы NoSQL баз; [[database-architecture-interview#Q28]] плюсы и минусы; [[database-architecture-interview#Q29]] критерии выбора SQL vs NoSQL."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`SQL` и `NoSQL` отличаются только синтаксисом языка запросов, а внутренняя модель данных и гарантии у них одинаковы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отличия глубже синтаксиса: разные модели данных (таблицы vs документы/KV/графы), разные гарантии (`ACID` vs `BASE`) и подходы к масштабированию.",
+                "source_of_confusion": "Самое заметное различие — язык запросов, поэтому остальное кажется одинаковым.",
+                "if_it_were_true": "Тогда `Cassandra` и `PostgreSQL` масштабировались бы одинаково, но у них принципиально разные модели.",
+                "how_it_should_be": "Различия — в модели данных, транзакциях и масштабировании, а не только в синтаксисе запросов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`NoSQL` базы всегда быстрее и лучше `SQL`, поэтому современные проекты должны полностью отказаться от реляционных БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нет универсально «лучшего»: выбор зависит от характера данных и паттернов доступа; для сложных `JOIN` и строгой согласованности `SQL` выигрывает.",
+                "source_of_confusion": "Маркетинг `NoSQL` как «масштабируемых» создаёт впечатление безусловного превосходства.",
+                "if_it_were_true": "Тогда банки и `ERP` ушли бы с `PostgreSQL`/`Oracle`, но они остаются на `SQL` ради `ACID`.",
+                "how_it_should_be": "Выбор делается под use case; `SQL` незаменим там, где нужны транзакции, `JOIN` и нормализация."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`SQL`-базы не поддерживают горизонтальное масштабирование вообще, а `NoSQL` не поддерживают транзакции ни в каком виде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обе крайности неверны: `SQL` масштабируется горизонтально через реплики/шардинг, а многие `NoSQL` (`MongoDB 4.0+`) поддерживают `ACID`-транзакции.",
+                "source_of_confusion": "Типичные сильные стороны абсолютизируют до «никогда/всегда».",
+                "if_it_were_true": "Тогда не существовало бы read replicas в `PostgreSQL` и multi-doc транзакций в `MongoDB`, но они есть.",
+                "how_it_should_be": "`SQL` умеет horizontal scaling (сложнее), а часть `NoSQL` поддерживает транзакции — это вопрос степени, а не «всё или ничего»."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие есть типы NoSQL баз данных?",
+          "options": [
+            {
+              "text": "Существует только один тип NoSQL — документные базы вроде `MongoDB`, а всё остальное относится к реляционным СУБД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Типов `NoSQL` несколько: Key-Value, Document, Wide-Column, Graph, Search — Document лишь один из них.",
+                "source_of_confusion": "`MongoDB` — самый известный `NoSQL`, поэтому его модель принимают за единственную.",
+                "if_it_were_true": "Тогда `Redis` и `Cassandra` были бы реляционными, но это KV и wide-column соответственно.",
+                "how_it_should_be": "`NoSQL` включает минимум пять семейств; документные базы — только одно из них."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Основные типы: Key-Value (`Redis`, `DynamoDB`), Document (`MongoDB`, `CouchDB`), Wide-Column (`Cassandra`, `HBase`), Graph (`Neo4j`, `Neptune`) и Search (`Elasticsearch`, `OpenSearch`) — каждый оптимизирован под свою модель данных и паттерн доступа.",
+              "correct": true,
+              "sections": {
+                "explanation": "Key-Value — простая пара ключ→значение для кэша/сессий; Document — JSON/BSON для каталогов и гибких схем; Wide-Column — семейства столбцов для временных рядов; Graph — узлы и рёбра для связей; Search — инвертированный индекс для полнотекста.",
+                "example": "`Redis` хранит сессии и rate-limit счётчики (KV); `MongoDB` — каталог товаров (Document); `Cassandra` — метрики IoT (Wide-Column); `Neo4j` — социальный граф; `Elasticsearch` — поиск и логи.",
+                "when_to_apply": "Типы `NoSQL` перебирают при подборе специализированного хранилища: кэш — KV, каталог — document, метрики — wide-column, поиск — search.",
+                "edge_cases": "Границы условны: `Redis` с `RediSearch` приближается к Search, а `PostgreSQL` с `JSONB` перекрывает Document-сценарии — тип выбирают по доминирующему паттерну доступа, а не строго по ярлыку.",
+                "related": "[[database-architecture-interview#Q25]] SQL vs NoSQL; [[database-architecture-interview#Q33]] сравнение конкретных БД; [[database-architecture-interview#Q31]] индексы в разных БД."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Графовые базы данных (`Neo4j`) — это разновидность Key-Value хранилищ, где ключ это узел, а значение — список рёбер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Graph-БД — отдельный тип с моделью узлов и рёбер и операциями обхода графа, а не частный случай KV-хранилища.",
+                "source_of_confusion": "И там, и там есть «узлы и связи», что наводит на сведение графа к KV.",
+                "if_it_were_true": "Тогда `Neo4j` не давал бы эффективный обход связей (`MATCH … -[:FRIEND]-> …`), но это его суть.",
+                "how_it_should_be": "Graph — самостоятельное семейство с алгоритмами обхода; KV хранит независимые пары ключ-значение."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Все NoSQL-базы имеют одинаковую внутреннюю модель данных и различаются лишь названием и логотипом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модели принципиально разные: KV, документы, семейства столбцов, графы, инвертированный индекс — под разные задачи.",
+                "source_of_confusion": "Общий ярлык «NoSQL» создаёт иллюзию однородности.",
+                "if_it_were_true": "Тогда `Redis` и `Neo4j` решали бы одни задачи одинаково, но их модели несопоставимы.",
+                "how_it_should_be": "Каждый тип `NoSQL` имеет свою модель данных и сценарии; объединяет их лишь нереляционность."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Можно ли использовать язык запросов SQL с NoSQL?",
+          "options": [
+            {
+              "text": "Нет, `SQL` принципиально невозможно использовать ни с одной NoSQL-базой — у них нет и не может быть SQL-подобного синтаксиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Многие `NoSQL` предоставляют SQL-подобные языки (`CQL`, `PartiQL`, `SQL API` в `Elasticsearch`), так что заявление неверно.",
+                "source_of_confusion": "Жёсткое противопоставление «SQL vs NoSQL» доводят до «у NoSQL не бывает SQL».",
+                "if_it_were_true": "Тогда `Cassandra` не называла бы свой язык `Cassandra Query Language`, но `CQL` существует.",
+                "how_it_should_be": "SQL-подобные языки в `NoSQL` есть; нет лишь полной реляционной семантики (`JOIN`, строгий `ACID`)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Да, и наличие `CQL` или `PartiQL` означает, что `Cassandra` и `DynamoDB` — это полноценные реляционные базы с `JOIN` и `ACID`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SQL-подобный синтаксис не делает БД реляционной: `Cassandra` не поддерживает произвольные `JOIN`, а её модель остаётся wide-column.",
+                "source_of_confusion": "Похожий синтаксис создаёт впечатление полной реляционной функциональности.",
+                "if_it_were_true": "Тогда в `Cassandra` работал бы любой многотабличный `JOIN`, но `CQL` его не допускает.",
+                "how_it_should_be": "Язык похож на SQL лишь внешне; реляционные возможности (`JOIN`, FK, `ACID`) при этом не появляются."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Да, многие `NoSQL`-решения предоставляют SQL-подобные языки: `Cassandra` — `CQL`, `MongoDB` — `MQL`/Aggregation с `$lookup`, `HBase` — `Apache Phoenix` (полный SQL), `DynamoDB` — `PartiQL`, `Elasticsearch` — `SQL API` с версии 6.3.",
+              "correct": true,
+              "sections": {
+                "explanation": "SQL-подобный синтаксис — это удобный фасад, но он не превращает `NoSQL` в реляционную БД: внутренние ограничения модели данных остаются (нет полноценных `JOIN`, транзакций и т. п.).",
+                "example": "`CQL` в `Cassandra` синтаксически похож на SQL (`SELECT … WHERE`), но не поддерживает произвольные `JOIN` и сильно ограничивает `GROUP BY` — это видно сразу при попытке соединить таблицы.",
+                "when_to_apply": "Про SQL-подобные языки `NoSQL` вспоминают при оценке порога входа команды и при миграции аналитики на новое хранилище.",
+                "edge_cases": "`Apache Phoenix` поверх `HBase` даёт почти полный SQL, но за него платят накладными расходами слоя трансляции; «SQL поверх NoSQL» удобен, но не отменяет природу хранилища.",
+                "related": "[[database-architecture-interview#Q25]] SQL vs NoSQL; [[database-architecture-interview#Q26]] типы NoSQL; [[database-architecture-interview#Q32]] транзакции в SQL и NoSQL."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Использовать SQL с NoSQL можно только через полную конвертацию базы в `PostgreSQL` с последующим импортом данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конвертация не нужна: SQL-подобные интерфейсы (`Phoenix`, `PartiQL`, `Elasticsearch SQL`) работают прямо поверх исходного `NoSQL`-хранилища.",
+                "source_of_confusion": "Кажется, что SQL возможен только в «настоящей» реляционной БД, поэтому требуется миграция.",
+                "if_it_were_true": "Тогда `Elasticsearch SQL API` не выполнял бы `SELECT` по индексам напрямую, но он это делает.",
+                "how_it_should_be": "SQL-слой работает поверх `NoSQL` без переноса в реляционную БД; данные остаются в исходном движке."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каковы преимущества и недостатки SQL в сравнении с NoSQL?",
+          "options": [
+            {
+              "text": "`SQL` не имеет недостатков по сравнению с `NoSQL` и превосходит его по всем параметрам, включая горизонтальное масштабирование записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `SQL` есть слабые места — именно горизонтальное масштабирование записи и гибкость схемы даются тяжелее, чем в `NoSQL`.",
+                "source_of_confusion": "Зрелость и надёжность `SQL` создают впечатление отсутствия слабостей.",
+                "if_it_were_true": "Тогда не возникал бы класс `NoSQL` под высокий write-throughput, но он появился ради этого.",
+                "how_it_should_be": "`SQL` силён в целостности и `JOIN`, но уступает `NoSQL` в горизонтальном масштабировании записи."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Главное преимущество `SQL` — отсутствие фиксированной схемы, что позволяет менять структуру данных на лету без миграций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Schema-on-write (фиксированная схема, миграции) — это свойство `SQL`; гибкая схема на лету — преимущество `NoSQL`, а не `SQL`.",
+                "source_of_confusion": "Сильные стороны `NoSQL` ошибочно приписывают `SQL`.",
+                "if_it_were_true": "Тогда `ALTER TABLE` был бы не нужен, но в `SQL` изменение схемы идёт именно через миграции.",
+                "how_it_should_be": "У `SQL` фиксированная схема (плюс для целостности); гибкость без миграций — это про `NoSQL`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`SQL` проигрывает `NoSQL` в сложных запросах, потому что не поддерживает `JOIN`, подзапросы и агрегации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сложные запросы — как раз сильная сторона `SQL`: мощные `JOIN`, подзапросы, CTE и оптимизатор; ограничены здесь обычно `NoSQL`.",
+                "source_of_confusion": "Акцент на масштабируемости `NoSQL` заслоняет слабость его запросов.",
+                "if_it_were_true": "Тогда аналитику строили бы на `NoSQL`, но для сложных `JOIN`/агрегаций выбирают `SQL`.",
+                "how_it_should_be": "`SQL` превосходит `NoSQL` в сложных запросах; `NoSQL` чаще требует денормализации и ограничен в `JOIN`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Плюсы `SQL`: строгая целостность (constraints, FK, `ACID`), мощные сложные запросы (`JOIN`, подзапросы, CTE), зрелая экосистема и единый стандарт языка; минусы: сложнее горизонтально масштабировать запись и менее гибкая схема (миграции через `ALTER TABLE`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`NoSQL` зеркально: гибкая схема и встроенное горизонтальное масштабирование записи, но целостность на стороне приложения и ограниченные запросы (часто через денормализацию).",
+                "example": "На практике часто берут polyglot persistence: `PostgreSQL` для заказов/пользователей, `Redis` для кэша/сессий, `Elasticsearch` для поиска/логов, `Cassandra` для временных рядов.",
+                "when_to_apply": "Эти плюсы и минусы взвешивают при выборе основной БД проекта и при решении, добавлять ли второе специализированное хранилище.",
+                "edge_cases": "Эти плюсы и минусы — не абсолют: `PostgreSQL` масштабирует чтение репликами, а гибкость схемы частично закрывает `JSONB`; границы зависят от конкретной нагрузки.",
+                "related": "[[database-architecture-interview#Q25]] SQL vs NoSQL базово; [[database-architecture-interview#Q29]] критерии выбора; [[database-architecture-interview#Q30]] горизонтальное vs вертикальное масштабирование."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "По каким критериям выбирать между SQL и NoSQL для проекта?",
+          "options": [
+            {
+              "text": "Выбирают `SQL` при фиксированной нормализованной структуре, критичных `ACID`-транзакциях, сложных `JOIN`/агрегациях и умеренном write-throughput; `NoSQL` — при динамической/вложенной структуре, допустимой eventual consistency, простых CRUD по ключу и очень высоком потоке записи.",
+              "correct": true,
+              "sections": {
+                "explanation": "Практический чек-лист сравнивает структуру данных, требования к транзакциям, сложность запросов, масштаб записи, стабильность схемы и опыт команды.",
+                "example": "Нужны `ACID` и структурированные данные → `PostgreSQL`/`MySQL`; нужна гибкая схема, но всё ещё `SQL` → `PostgreSQL + JSONB`; доступ по ключу и >100K writes/sec → `Redis`/`DynamoDB`/`Cassandra`.",
+                "when_to_apply": "Чек-лист применяют на этапе архитектурного решения, чтобы обосновать выбор `SQL`/`NoSQL` требованиями, а не модой.",
+                "edge_cases": "Решение редко бинарно: часто в одном проекте уживаются и `SQL`, и `NoSQL` (polyglot persistence), а граница смещается с ростом нагрузки и эволюцией требований.",
+                "related": "[[database-architecture-interview#Q25]] базовые отличия; [[database-architecture-interview#Q28]] плюсы и минусы; [[database-architecture-interview#Q33]] сравнение конкретных БД."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Единственный критерий выбора — популярность БД: нужно брать ту, у которой больше звёзд на GitHub, независимо от задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбор определяется требованиями (транзакции, структура данных, паттерн доступа, масштаб записи), а не рейтингом популярности.",
+                "source_of_confusion": "Хайп вокруг популярных БД подменяет инженерный анализ требований.",
+                "if_it_were_true": "Тогда финансовую систему строили бы на трендовом `NoSQL`, теряя `ACID`-гарантии.",
+                "how_it_should_be": "Решает соответствие задаче: структура, согласованность, запросы и масштаб, а не количество звёзд."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Если в проекте ожидается более 100K записей в секунду, всегда выбирают `SQL`, потому что он лучше держит высокий write-throughput.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При очень высоком потоке записи (>100K writes/sec) обычно выбирают `NoSQL` с горизонтальным масштабированием; `SQL` тяжелее масштабирует именно запись.",
+                "source_of_confusion": "Надёжность `SQL` создаёт ложное ощущение, что он лучше под любой нагрузкой.",
+                "if_it_were_true": "Тогда `Cassandra` не использовали бы под write-heavy сценарии, но её для них и берут.",
+                "how_it_should_be": "Под write-heavy нагрузку выбирают `NoSQL`; сильная сторона `SQL` — целостность и сложные запросы."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Критерий согласованности не важен при выборе: и `SQL`, и `NoSQL` дают одинаково строгие `ACID`-гарантии по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Требования к согласованности — один из ключевых критериев: `SQL` по умолчанию `ACID`, типичный `NoSQL` — `BASE` (eventual consistency).",
+                "source_of_confusion": "Поверхностное «обе хранят данные надёжно» стирает разницу в моделях согласованности.",
+                "if_it_were_true": "Тогда для банковской транзакции было бы безразлично, какую БД брать, но это не так.",
+                "how_it_should_be": "Согласованность критична для выбора: нужен `ACID` → `SQL`; допустима eventual consistency → можно `NoSQL`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое горизонтальное и вертикальное масштабирование БД?",
+          "options": [
+            {
+              "text": "Горизонтальное масштабирование — это добавление ресурсов (CPU, RAM) к одному серверу, а вертикальное — добавление новых серверов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Определения перепутаны: добавление ресурсов одному серверу — это вертикальное (scale up), а новых серверов — горизонтальное (scale out).",
+                "source_of_confusion": "Легко перепутать, какое из направлений «вверх», а какое «вширь».",
+                "if_it_were_true": "Тогда `Cassandra` масштабировалась бы «вертикально» добавлением узлов, но это классический scale-out.",
+                "how_it_should_be": "Scale up — ресурсы одному серверу; scale out — новые серверы; названия не следует менять местами."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Вертикальное (scale up) — наращивание ресурсов одного сервера (CPU, RAM, диск): просто, но упирается в потолок железа и дорожает экспоненциально; горизонтальное (scale out) — добавление новых серверов: предел почти неограничен и стоимость растёт линейно, но требует шардирования.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вертикальное обычно требует downtime при апгрейде и проще в эксплуатации; горизонтальное при правильной архитектуре масштабируется без простоя, но усложняет согласованность данных.",
+                "example": "`PostgreSQL`/`MySQL` чаще растят вертикально (плюс реплики на чтение), а `Cassandra`/`MongoDB`/`CockroachDB` спроектированы под горизонтальное масштабирование из коробки.",
+                "when_to_apply": "Выбор типа масштабирования делают при росте нагрузки: сначала выжимают scale up, затем переходят к scale out с шардированием.",
+                "edge_cases": "Граница условна: `PostgreSQL` тоже масштабируется горизонтально через read replicas и шардирование, просто это сложнее, чем у изначально распределённых систем.",
+                "related": "[[database-architecture-interview#Q23]] шардирование как основа scale-out; [[database-architecture-interview#Q40]] read replicas; [[database-architecture-interview#Q37]] NewSQL и горизонтальный ACID."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Вертикальное масштабирование не имеет предела и стоит линейно, поэтому всегда предпочтительнее горизонтального.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вертикальное упирается в потолок одного сервера и дорожает экспоненциально; линейная стоимость и почти неограниченный предел — у горизонтального.",
+                "source_of_confusion": "Простота scale up создаёт впечатление, что он дешевле и безграничен.",
+                "if_it_were_true": "Тогда не строили бы распределённые кластеры, но их используют именно при упоре в лимиты железа.",
+                "how_it_should_be": "Предел вертикального — мощнейший доступный сервер; почти неограниченно и линейно растёт горизонтальное."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Горизонтальное масштабирование не требует никаких изменений в архитектуре — достаточно подключить ещё один сервер, и данные распределятся сами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scale out требует шардирования и работы с согласованностью: данные сами по себе не распределяются между узлами.",
+                "source_of_confusion": "Облачные «add node» кнопки создают иллюзию бесшовности.",
+                "if_it_were_true": "Тогда выбор shard key не имел бы значения, но он критичен для горизонтального масштабирования.",
+                "how_it_should_be": "Горизонтальное масштабирование требует шардирования и продуманной архитектуры согласованности."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие виды индексов поддерживаются в SQL и NoSQL базах?",
+          "options": [
+            {
+              "text": "Все базы данных — и SQL, и NoSQL — поддерживают ровно один универсальный тип индекса: `B-tree`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Набор индексов сильно различается: `Elasticsearch` использует инвертированный индекс, `Cassandra` строит вокруг partition key, у `Redis` классических индексов нет.",
+                "source_of_confusion": "`B-tree` — дефолт в реляционных БД, поэтому его считают единственным повсеместным.",
+                "if_it_were_true": "Тогда `Elasticsearch` не делал бы полнотекстовый поиск, но он построен на инвертированном индексе, а не `B-tree`.",
+                "how_it_should_be": "Типы индексов зависят от БД и модели данных; единого `B-tree` на всех нет."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В `Cassandra` вторичные индексы по любому столбцу работают так же эффективно, как первичный ключ, без ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вторичные индексы в `Cassandra` ограничены и опасны на высококардинальных/часто меняющихся полях; эффективны запросы по partition key.",
+                "source_of_confusion": "Привычка к равноправным индексам в реляционных БД переносится на `Cassandra`.",
+                "if_it_were_true": "Тогда не было бы рекомендаций избегать secondary index в `Cassandra`, но они общеизвестны.",
+                "how_it_should_be": "В `Cassandra` основной путь — partition key; вторичные индексы (`SASI`/`SAI`) имеют существенные ограничения."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Набор индексов зависит от БД: `PostgreSQL` — `B-tree`/`Hash`/`GiST`/`GIN`/`BRIN`/`SP-GiST` (плюс частичные, функциональные, покрывающие); `MongoDB` — `B-tree`/`Hashed`/`Text`/`2dsphere`/`Wildcard`; `Cassandra` — первичный ключ (partition+clustering) и ограниченные вторичные (`SASI`/`SAI`); `Elasticsearch` — инвертированный индекс `Lucene`; `Redis` — Sorted Sets/`RediSearch`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Тип индекса диктуется моделью данных и паттерном запросов: реляционные дают богатый выбор, а `Cassandra` оптимизирована под запросы по partition key и плохо индексирует произвольные столбцы.",
+                "example": "В `Elasticsearch` все поля по умолчанию попадают в инвертированный индекс `Lucene`, тогда как в `Redis` классических индексов нет — порядок и поиск обеспечивают Sorted Sets или модуль `RediSearch`.",
+                "when_to_apply": "Набор индексов сверяют при проектировании запросов под конкретную БД, особенно учитывая ограничения вторичных индексов в `Cassandra`.",
+                "edge_cases": "У `Cassandra` вторичные индексы существуют, но применять их к высококардинальным или часто меняющимся полям опасно — это известный антипаттерн, ведущий к деградации.",
+                "related": "[[database-architecture-interview#Q12]] типы индексов в PostgreSQL; [[database-architecture-interview#Q26]] типы NoSQL; [[database-architecture-interview#Q33]] сравнение конкретных БД."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Redis` имеет полный набор классических `B-tree`-индексов на каждом поле, как реляционная БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Redis` нет классических индексов: упорядочивание и поиск делают через Sorted Sets, а полнотекст — через модуль `RediSearch`.",
+                "source_of_confusion": "Богатый набор структур данных `Redis` принимают за наличие SQL-подобных индексов.",
+                "if_it_were_true": "Тогда не существовало бы отдельного модуля `RediSearch`, но он создан именно для поиска поверх `Redis`.",
+                "how_it_should_be": "`Redis` индексирует через Sorted Sets/`RediSearch`, а не через `B-tree` на полях."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатываются транзакции в SQL и NoSQL?",
+          "options": [
+            {
+              "text": "Все NoSQL-базы полностью поддерживают `ACID`-транзакции с полным rollback точно так же, как `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Гарантии разнятся: `Cassandra` не имеет классических транзакций, `Redis MULTI/EXEC` не откатывается; полный `ACID`-rollback есть у `SQL` и (для документов) `MongoDB 4.0+`.",
+                "source_of_confusion": "Появление multi-doc транзакций в `MongoDB` обобщают на весь `NoSQL`.",
+                "if_it_were_true": "Тогда `Redis` поддерживал бы `ROLLBACK`, но `MULTI/EXEC` его не предоставляет.",
+                "how_it_should_be": "Транзакционность в `NoSQL` варьируется от отсутствия до multi-doc `ACID`; единого полного `ACID` у всех нет."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Redis` через `MULTI/EXEC` обеспечивает полноценные транзакции с автоматическим откатом при ошибке любой команды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MULTI/EXEC` лишь атомарно выполняет очередь команд без rollback: ошибка в одной команде не отменяет уже выполненные.",
+                "source_of_confusion": "Слово «транзакция» применительно к `MULTI/EXEC` создаёт ожидание `ACID`-отката.",
+                "if_it_were_true": "Тогда `Redis` приравнивался бы к `PostgreSQL` по транзакциям, но rollback в нём отсутствует.",
+                "how_it_should_be": "`MULTI/EXEC` — атомарная очередь без отката; полноценный rollback дают `SQL`-СУБД."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Для распределённых транзакций между разными БД в микросервисах достаточно обычного `BEGIN…COMMIT`, охватывающего все сервисы сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один `BEGIN…COMMIT` не охватывает несколько независимых БД; для распределённой согласованности применяют Saga или 2PC с компенсациями.",
+                "source_of_confusion": "Привычный локальный транзакционный блок мысленно растягивают на всю распределённую систему.",
+                "if_it_were_true": "Тогда не понадобились бы паттерны Saga/2PC, но их используют именно из-за отсутствия общей транзакции.",
+                "how_it_should_be": "Распределённую согласованность обеспечивают Saga/2PC; локальный `COMMIT` не работает между разными хранилищами."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В `SQL` (`PostgreSQL`) — полноценный `ACID` с `BEGIN…COMMIT` и полным rollback; `MongoDB 4.0+` поддерживает multi-document `ACID` со snapshot isolation; `Cassandra` транзакций в привычном смысле не имеет (только Lightweight Transactions); `Redis` даёт `MULTI/EXEC` как атомарную очередь без rollback.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чем дальше от реляционной модели, тем слабее транзакционные гарантии: от полного `ACID` с откатом до атомарного выполнения команд без возможности отката изменений.",
+                "example": "В микросервисах с данными в нескольких БД распределённую согласованность обеспечивают паттерном Saga: шаги «заказ → платёж → резерв склада», а при сбое — компенсирующие действия (вернуть платёж, отменить заказ).",
+                "when_to_apply": "Модель транзакций учитывают при проектировании бизнес-операций поверх выбранной БД и при выходе в распределённый сценарий с Saga.",
+                "edge_cases": "`Redis MULTI/EXEC` атомарен, но не транзакционен в `ACID`-смысле: если команда внутри блока логически провалится, уже выполненные команды не откатываются — это принципиальное отличие от `BEGIN…ROLLBACK`.",
+                "related": "[[database-architecture-interview#Q3]] что такое ACID; [[database-architecture-interview#Q25]] SQL vs NoSQL; [[database-architecture-interview#Q33]] сравнение БД по транзакциям."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между PostgreSQL, MongoDB, Elasticsearch, Redis и Cassandra?",
+          "options": [
+            {
+              "text": "Это пять разных классов: `PostgreSQL` — RDBMS (таблицы, `ACID`, SQL, `OLTP`/аналитика); `MongoDB` — document (JSON/BSON, шардирование, каталоги/CMS); `Elasticsearch` — search engine (инвертированный индекс, поиск/логи, без транзакций); `Redis` — KV-store (структуры данных, кэш/очереди, `MULTI/EXEC`); `Cassandra` — wide-column (линейное масштабирование, временные ряды/IoT).",
+              "correct": true,
+              "sections": {
+                "explanation": "Различия по транзакциям: `ACID` в `PostgreSQL` и `MongoDB 4.0+`, нет транзакций в `Elasticsearch` и `Cassandra`, `MULTI/EXEC` без rollback в `Redis`.",
+                "example": "Под заказы и пользователей берут `PostgreSQL`, под полнотекстовый поиск — `Elasticsearch`, под кэш и сессии — `Redis`, под метрики IoT — `Cassandra`, под гибкий каталог — `MongoDB`.",
+                "when_to_apply": "Это сравнение используют при выборе хранилища под подсистему (заказы, поиск, кэш, метрики) в polyglot-архитектуре.",
+                "edge_cases": "Выбор обосновывают не словами, а измерениями: `EXPLAIN ANALYZE`, профиль нагрузки, latency p95/p99 — у каждой БД свои сильные зоны, и универсального победителя нет.",
+                "related": "[[database-architecture-interview#Q25]] SQL vs NoSQL; [[database-architecture-interview#Q26]] типы NoSQL; [[database-architecture-interview#Q32]] транзакции в этих БД."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Все пять (`PostgreSQL`, `MongoDB`, `Elasticsearch`, `Redis`, `Cassandra`) — это разные дистрибутивы одной и той же реляционной СУБД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это пять разных классов БД (RDBMS, document, search, KV, wide-column) с несовместимыми моделями данных, а не дистрибутивы одной системы.",
+                "source_of_confusion": "Все они «базы данных», что создаёт впечатление общей основы.",
+                "if_it_were_true": "Тогда между ними можно было бы свободно мигрировать схему, но их модели несопоставимы.",
+                "how_it_should_be": "Это самостоятельные системы разных типов; общего реляционного ядра у них нет."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Elasticsearch` — это реляционная СУБД с полной поддержкой `ACID`-транзакций и `JOIN`, как у `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Elasticsearch` — поисковый движок на инвертированном индексе без транзакций и без полноценных `JOIN`; его сила в полнотекстовом поиске.",
+                "source_of_confusion": "Наличие `SQL API` в `Elasticsearch` создаёт иллюзию реляционности.",
+                "if_it_were_true": "Тогда на нём строили бы `OLTP`-системы, но он применяется для поиска и логов.",
+                "how_it_should_be": "`Elasticsearch` — search engine без `ACID`; реляционные транзакции и `JOIN` — это `PostgreSQL`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Redis` и `Cassandra` взаимозаменяемы: оба предназначены для одних и тех же задач и имеют одинаковую модель данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У них разные модели и сценарии: `Redis` — in-memory KV для кэша/очередей с sub-ms latency, `Cassandra` — wide-column для больших временных рядов на диске.",
+                "source_of_confusion": "Оба относятся к `NoSQL`, отсюда ощущение взаимозаменяемости.",
+                "if_it_were_true": "Тогда сессии хранили бы в `Cassandra`, а IoT-метрики — в `Redis`, но их роли противоположны.",
+                "how_it_should_be": "`Redis` — быстрый кэш/очереди в памяти; `Cassandra` — масштабируемое хранилище временных рядов; задачи разные."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ключевые параметры конфигурации PostgreSQL влияют на производительность?",
+          "options": [
+            {
+              "text": "Главный и единственный параметр производительности — `max_connections`: чем он больше, тем быстрее работает `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Завышенный `max_connections` скорее вредит (каждое соединение — процесс с памятью); производительность определяют `shared_buffers`, `work_mem`, `effective_cache_size` и др.",
+                "source_of_confusion": "Кажется, что «больше соединений = больше пропускная способность».",
+                "if_it_were_true": "Тогда не ставили бы `PgBouncer`, чтобы ограничить число соединений, но это стандартная практика.",
+                "how_it_should_be": "Производительность зависит от памяти и cost-параметров; `max_connections` держат умеренным (100–300) и ставят пул."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Ключевые: `shared_buffers` (~25% RAM, кэш страниц), `effective_cache_size` (50–75% RAM, оценка кэша ОС), `work_mem` (память на сортировку/хеш, умножается на число операций!), `maintenance_work_mem` (для `VACUUM`/`CREATE INDEX`), `random_page_cost` (1.1 для SSD) и `checkpoint_completion_target` (0.9).",
+              "correct": true,
+              "sections": {
+                "explanation": "`work_mem` особенно коварен: он выделяется на каждую сортировку/хеш в каждом соединении, поэтому при `256MB` и сотне соединений потребление памяти может достигать десятков гигабайт.",
+                "example": "Для сервера 64 GB SSD типично: `shared_buffers = 16GB`, `effective_cache_size = 48GB`, `work_mem = 128MB`, `random_page_cost = 1.1`, `effective_io_concurrency = 200`.",
+                "when_to_apply": "Эти параметры тюнят при нагрузочном тестировании и деградации, отталкиваясь от объёма RAM, типа диска (SSD/HDD) и профиля запросов.",
+                "edge_cases": "Дефолтный `random_page_cost = 4.0` рассчитан на HDD: на SSD случайный доступ почти равен последовательному, и без снижения до ~1.1 планировщик зря избегает `Index Scan`.",
+                "related": "[[database-architecture-interview#Q16]] work_mem и Sort на диске; [[database-architecture-interview#Q11]] checkpoint_completion_target; [[database-architecture-interview#Q35]] мониторинг производительности."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`work_mem` задаёт общий лимит памяти на весь сервер, поэтому значение `256MB` безопасно при любом числе соединений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`work_mem` выделяется на каждую сортировку/хеш в каждом запросе, так что при многих соединениях суммарное потребление умножается и может исчерпать RAM.",
+                "source_of_confusion": "Имя `work_mem` звучит как глобальный бюджет памяти сервера.",
+                "if_it_were_true": "Тогда `256MB × 100 соединений` не грозили бы OOM, но именно эта арифметика опасна.",
+                "how_it_should_be": "`work_mem` — лимит на операцию, а не на сервер; его умножают на число параллельных сортировок и соединений."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "На SSD параметр `random_page_cost` нужно повышать до 8–10, чтобы планировщик чаще выбирал `Seq Scan` вместо индексов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На SSD `random_page_cost` наоборот снижают (до ~1.1), так как случайный доступ дёшев — это поощряет `Index Scan`, а не `Seq Scan`.",
+                "source_of_confusion": "Дефолт `4.0` (для HDD) наводит на мысль, что значение надо ещё увеличивать.",
+                "if_it_were_true": "Тогда на быстрых дисках индексы простаивали бы, но цель тюнинга — наоборот их задействовать.",
+                "how_it_should_be": "Для SSD `random_page_cost` уменьшают до ~1.1; высокое значение оправдано лишь для HDD."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как мониторить производительность PostgreSQL?",
+          "options": [
+            {
+              "text": "Производительность `PostgreSQL` можно оценить только по загрузке CPU сервера; внутренних метрик у самой БД нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `PostgreSQL` богатый набор внутренних view (`pg_stat_statements`, `pg_stat_activity`, `pg_stat_database` и др.); CPU — лишь один внешний сигнал.",
+                "source_of_confusion": "Привычка мониторить инфраструктуру по CPU заслоняет встроенную статистику БД.",
+                "if_it_were_true": "Тогда нельзя было бы найти медленный запрос, но `pg_stat_statements` показывает его напрямую.",
+                "how_it_should_be": "Мониторят через системные view БД (запросы, блокировки, cache hit, лаг), а не только по CPU."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`pg_stat_statements` показывает текущие выполняющиеся запросы в реальном времени, как диспетчер задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Текущие активные запросы показывает `pg_stat_activity`; `pg_stat_statements` агрегирует статистику по нормализованным запросам за всё время (calls, total/mean time).",
+                "source_of_confusion": "Похожие имена `pg_stat_statements` и `pg_stat_activity` легко перепутать.",
+                "if_it_were_true": "Тогда в `pg_stat_statements` не было бы накопленных `calls` и `total_exec_time`, но они там есть.",
+                "how_it_should_be": "Реальное «сейчас» даёт `pg_stat_activity`; `pg_stat_statements` — это агрегированная история запросов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Через системные view и расширения: `pg_stat_statements` (самые медленные/частые запросы), `pg_stat_activity` (активные запросы и долгие транзакции), `pg_locks` (блокировки), `pg_stat_database` (cache hit ratio), `pg_stat_user_tables` (index usage, dead tuples), `pg_stat_replication` (лаг реплик).",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждой метрике — целевое значение: cache hit ratio > 99%, index usage > 95%, dead tuples ratio < 10%, replication lag < 1 сек, connections < 80% от max, long queries < 5 мин.",
+                "example": "`SELECT query, calls, mean_exec_time FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10` находит топ запросов по суммарному времени — отправную точку оптимизации.",
+                "when_to_apply": "Мониторинг настраивают для нагруженного `PostgreSQL`, чтобы заранее ловить деградацию: медленные запросы, блокировки, лаг реплик, рост dead tuples.",
+                "edge_cases": "Низкий cache hit ratio сам по себе не приговор: на огромных аналитических таблицах данные физически не помещаются в `shared_buffers`, и важнее смотреть на латентность конкретных запросов.",
+                "related": "[[database-architecture-interview#Q34]] shared_buffers и cache hit; [[database-architecture-interview#Q16]] EXPLAIN ANALYZE для запроса; [[database-architecture-interview#Q22]] replication lag."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Целевой cache hit ratio для `PostgreSQL` — около 50%, и превышать это значение не имеет смысла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Целевой cache hit ratio — > 99%: при 50% половина страниц читается с диска, что резко замедляет запросы.",
+                "source_of_confusion": "Кажется, что «половина из кэша» — уже хороший результат.",
+                "if_it_were_true": "Тогда не было бы рекомендации держать `shared_buffers` достаточным для высокого hit ratio.",
+                "how_it_should_be": "Норма cache hit ratio — выше 99%; 50% сигнализирует о нехватке памяти под кэш."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое HTAP и как совместить OLTP и OLAP?",
+          "options": [
+            {
+              "text": "`HTAP` — это формат файлов для резервного копирования транзакционных логов в облако.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HTAP` — это совмещение `OLTP` и `OLAP` нагрузок на одной платформе, а не формат бэкапов.",
+                "source_of_confusion": "Незнакомую аббревиатуру домысливают по созвучию с backup-форматами.",
+                "if_it_were_true": "Тогда `TiDB` и `SingleStore` не позиционировались бы как `HTAP`-системы, но они именно про смешанную нагрузку.",
+                "how_it_should_be": "`HTAP` — гибридная транзакционно-аналитическая обработка; резервное копирование тут ни при чём."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`HTAP` означает обязательный ночной `ETL`-перенос данных из `OLTP` в отдельный Data Warehouse раз в сутки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ночной `ETL` в DWH — это как раз традиционный подход, который `HTAP` стремится устранить, давая аналитику без многочасовой задержки.",
+                "source_of_confusion": "Старую схему `OLTP → ETL → DWH` принимают за определение `HTAP`.",
+                "if_it_were_true": "Тогда исчезла бы главная цель `HTAP` — near-real-time аналитика, но именно её он и обеспечивает.",
+                "how_it_should_be": "`HTAP` убирает разрыв ночного `ETL`, позволяя аналитику близко к реальному времени."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`HTAP` — это исключительно row-based хранение, которое полностью отказывается от колоночных форматов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HTAP`-системы как раз сочетают row-store (для `OLTP`) и column-store (для `OLAP`), как TiKV + TiFlash в `TiDB`.",
+                "source_of_confusion": "`OLTP`-ориентированность наводит на мысль о чисто строчном хранении.",
+                "if_it_were_true": "Тогда аналитические сканы были бы медленными, но колоночная часть `HTAP` их ускоряет.",
+                "how_it_should_be": "`HTAP` объединяет строчное и колоночное хранение; отказ от columnar противоречил бы его сути."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`HTAP` (Hybrid Transactional/Analytical Processing) — подход, позволяющий выполнять транзакционные (`OLTP`) и аналитические (`OLAP`) запросы на одной платформе без задержки ночного `ETL` в отдельный DWH.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реализации совмещают row-store и column-store: `TiDB` (TiKV + TiFlash), `SingleStore` (in-memory row + disk column), `PostgreSQL + Citus` (distributed SQL + columnar), `Oracle HeatWave`.",
+                "example": "Для Java-бэкенда практичный путь — `PostgreSQL` как primary `OLTP` и near-real-time аналитика в `ClickHouse` через `Kafka CDC` (`Debezium` + `Kafka Connect`) с задержкой < 1 минуты вместо часов.",
+                "when_to_apply": "`HTAP` рассматривают, когда бизнесу нужна near-real-time аналитика поверх свежих транзакционных данных без ночного `ETL`.",
+                "edge_cases": "`HTAP` на одной системе не бесплатен: смешивание нагрузок конкурирует за ресурсы, аналитические сканы могут мешать `OLTP`-латентности, поэтому часто всё равно разводят горячие и холодные данные.",
+                "related": "[[database-architecture-interview#Q21]] партиционирование горячих/холодных данных; [[database-architecture-interview#Q37]] NewSQL; [[database-architecture-interview#Q38]] polyglot persistence."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое NewSQL (CockroachDB, Google Spanner)?",
+          "options": [
+            {
+              "text": "`NewSQL` — класс реляционных СУБД, дающих горизонтальную масштабируемость `NoSQL` при сохранении `ACID`-семантики и `SQL`-интерфейса; примеры — `CockroachDB` и `Google Spanner`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`CockroachDB` шардирует данные на ranges (~64 MB), реплицирует их через `Raft` и даёт Serializable Snapshot Isolation; `Spanner` использует `TrueTime` (атомные часы + GPS) для глобального упорядочивания транзакций.",
+                "example": "`CockroachDB` совместим с протоколом `PostgreSQL` (`CREATE TABLE … gen_random_uuid()`), а geo-partitioning пинит данные региона EU к узлам EU — реляционная модель работает на распределённом кластере.",
+                "when_to_apply": "`NewSQL` выбирают для глобально распределённых приложений, которым нужен `ACID` и `SQL` без ручного шардирования.",
+                "edge_cases": "Плата за это — повышенная latency на запись из-за consensus round-trips, более сложная эксплуатация и более высокая стоимость, чем у managed `PostgreSQL`.",
+                "related": "[[database-architecture-interview#Q30]] горизонтальное масштабирование; [[database-architecture-interview#Q23]] шардирование; [[database-architecture-interview#Q36]] HTAP."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`NewSQL` — это новая версия стандарта языка `SQL` (после `SQL:2016`) с дополнительными ключевыми словами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NewSQL` — это класс распределённых реляционных СУБД (`CockroachDB`, `Spanner`), а не редакция стандарта языка `SQL`.",
+                "source_of_confusion": "Приставка «New» + «SQL» наводит на мысль о новой версии языка.",
+                "if_it_were_true": "Тогда `NewSQL` поддерживала бы любая СУБД, обновив парсер, но речь о конкретной архитектуре.",
+                "how_it_should_be": "`NewSQL` — это масштабируемые `ACID`-СУБД, а не очередная ревизия SQL-стандарта."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`NewSQL`-системы отказываются от `ACID` ради горизонтального масштабирования, как обычные `NoSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная идея `NewSQL` — сохранить `ACID` И получить горизонтальное масштабирование; отказ от `ACID` свёл бы его к `NoSQL`.",
+                "source_of_confusion": "Связь масштабируемости с `NoSQL` создаёт впечатление, что `ACID` приносится в жертву.",
+                "if_it_were_true": "Тогда `Spanner` не давал бы внешнюю согласованность сильнее `Serializable`, но это его ключевая фича.",
+                "how_it_should_be": "`NewSQL` сочетает `ACID` и scale-out; именно отказ от `ACID` отличает классический `NoSQL`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Google Spanner` достигает глобальной согласованности обычной асинхронной репликацией без специальной синхронизации времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spanner` опирается на `TrueTime API` (атомные часы + GPS) для глобального упорядочивания транзакций — обычной async-репликации для этого недостаточно.",
+                "source_of_confusion": "Кажется, что глобальная согласованность достижима стандартными средствами репликации.",
+                "if_it_were_true": "Тогда `Google` не строил бы инфраструктуру атомных часов в дата-центрах, но `TrueTime` — основа `Spanner`.",
+                "how_it_should_be": "Глобальную внешнюю согласованность `Spanner` обеспечивает через `TrueTime`, а не простую async-репликацию."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Polyglot Persistence и Database Federation?",
+          "options": [
+            {
+              "text": "Polyglot Persistence означает, что всё приложение обязано использовать строго одну универсальную БД для любых данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Polyglot Persistence — ровно противоположное: намеренное использование нескольких разных хранилищ под разные задачи.",
+                "source_of_confusion": "Слово «persistence» (единое хранение) вводит в заблуждение про «одну БД».",
+                "if_it_were_true": "Тогда не имело бы смысла само название «polyglot» (многоязычие хранилищ).",
+                "how_it_should_be": "Polyglot — это несколько специализированных хранилищ; одна БД на всё — противоположный подход."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Polyglot Persistence — паттерн, при котором разные части приложения используют разные хранилища, оптимальные под задачу; Database Federation — единый слой доступа поверх нескольких физических БД, маршрутизирующий запросы за одним API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея polyglot: транзакционные данные в `PostgreSQL`, кэш/сессии в `Redis`, гибкий контент в `MongoDB`, поиск в `Elasticsearch`, метрики в `ClickHouse`, граф связей в `Neo4j`.",
+                "example": "Федеративный движок `Trino`/`Presto` позволяет одним SQL соединить источники: `SELECT … FROM postgresql.mydb.users u JOIN mongodb.mydb.orders o ON u.id = o.user_id`.",
+                "when_to_apply": "Polyglot и федерацию применяют в крупных системах, где одна БД не покрывает все паттерны доступа, а данные разнесены по сервисам.",
+                "edge_cases": "Цена polyglot — сложность согласованности между хранилищами (eventual consistency), транзакции через Saga/2PC и операционные накладные расходы на мониторинг нескольких систем.",
+                "related": "[[database-architecture-interview#Q28]] polyglot в плюсах/минусах; [[database-architecture-interview#Q41]] федерация и app-level sharding; [[database-architecture-interview#Q33]] сравнение БД."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Database Federation — это слияние нескольких физических БД в одну путём физического копирования всех данных в общий инстанс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Федерация не копирует данные в общий инстанс: это слой доступа (`Trino`/`Presto`), который маршрутизирует запросы к источникам, оставляя данные на местах.",
+                "source_of_confusion": "Слово «federation» (объединение) наводит на мысль о физическом слиянии данных.",
+                "if_it_were_true": "Тогда `Trino` дублировал бы все данные у себя, но он лишь оркестрирует запросы к внешним источникам.",
+                "how_it_should_be": "Федерация — это виртуальный слой над несколькими БД; данные остаются в исходных системах."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Polyglot Persistence не имеет недостатков и автоматически обеспечивает строгую согласованность между всеми хранилищами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная сложность polyglot — как раз согласованность между разными хранилищами (eventual consistency) и распределённые транзакции через Saga/2PC.",
+                "source_of_confusion": "Гибкость выбора хранилищ заслоняет операционную и транзакционную цену.",
+                "if_it_were_true": "Тогда не нужны были бы Saga-паттерны, но именно они компенсируют отсутствие общей транзакции.",
+                "how_it_should_be": "Polyglot повышает сложность согласованности и эксплуатации; строгую согласованность он сам по себе не даёт."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает HikariCP и что важно настроить?",
+          "options": [
+            {
+              "text": "`HikariCP` открывает новое физическое соединение к БД на каждый SQL-запрос и закрывает его сразу после выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HikariCP` именно переиспользует соединения: `connection.close()` возвращает его в пул, а не закрывает физически — в этом смысл пула.",
+                "source_of_confusion": "Метод `close()` создаёт иллюзию, что соединение действительно закрывается каждый раз.",
+                "if_it_were_true": "Тогда пул не давал бы выигрыша, но избегание цикла open/close — его основная задача.",
+                "how_it_should_be": "Соединения переиспользуются из пула; физическое открытие на каждый запрос — это поведение без пула."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Правильная настройка — выставить `maximum-pool-size` в несколько сотен, потому что чем больше соединений, тем выше пропускная способность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Огромный пул вредит: он перегружает БД (каждое соединение — процесс/память) и обычно медленнее; рекомендуемый размер — порядка 10–20.",
+                "source_of_confusion": "Интуиция «больше потоков = больше throughput» переносится на пул соединений.",
+                "if_it_were_true": "Тогда формулу размера пула не ограничивали бы небольшим числом, но и `HikariCP`, и `PostgreSQL` советуют умеренный пул.",
+                "how_it_should_be": "Оптимум — небольшой пул (10–20); сотни соединений создают contention и съедают ресурсы БД."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`HikariCP` — де-факто стандартный пул соединений для Java/Spring Boot, выбираемый автоматически при наличии в classpath; он держит набор готовых соединений и выдаёт их приложению, а `close()` возвращает соединение в пул, а не закрывает.",
+              "correct": true,
+              "sections": {
+                "explanation": "При `getConnection()` пул отдаёт свободное соединение; если их нет и пул не полон — создаёт новое; если пул заполнен (`maximumPoolSize`) — ждёт `connectionTimeout` и кидает исключение.",
+                "example": "Ключевые параметры: `maximum-pool-size` (по умолчанию 10), `minimum-idle`, `connection-timeout` (30000 мс), `idle-timeout`, `max-lifetime` (1800000 мс); практичный размер пула — обычно 10–20.",
+                "when_to_apply": "`HikariCP` настраивают в любом Spring Boot сервисе с БД: подбирают размер пула, таймауты и `max-lifetime` под лимиты сервера БД.",
+                "edge_cases": "Тонкость: `max-lifetime` должен быть меньше `wait_timeout` БД, иначе словите «broken pipe»; ставить `minimum-idle = maximum-pool-size` без нужды расточительно — пул будет всегда держать максимум.",
+                "related": "[[database-architecture-interview#Q24]] зачем нужен пул соединений; [[database-architecture-interview#Q34]] max_connections в PostgreSQL; [[database-architecture-interview#Q40]] пул перед репликами."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Значение `max-lifetime` можно делать сколь угодно большим, оно никак не связано с настройками `wait_timeout` на стороне БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`max-lifetime` должен быть меньше `wait_timeout`/`idle_in_transaction_session_timeout` БД, иначе сервер закроет соединение первым и приложение поймает «broken pipe».",
+                "source_of_confusion": "Изоляция настроек пула от настроек БД создаёт впечатление их независимости.",
+                "if_it_were_true": "Тогда не возникало бы ошибок разорванного соединения, но это типичная проблема при неверном `max-lifetime`.",
+                "how_it_should_be": "`max-lifetime` согласуют с таймаутами БД (делают меньше), чтобы пул закрывал соединение раньше сервера."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать Read Replicas для масштабирования чтения?",
+          "options": [
+            {
+              "text": "Read Replicas можно использовать и для записи: достаточно направить `INSERT`/`UPDATE` на любую реплику, и она сама синхронизирует данные с primary.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запись идёт только на primary; реплики доступны на чтение (`hot_standby`), и попытка писать в них завершится ошибкой — обратной синхронизации к primary нет.",
+                "source_of_confusion": "Симметрия «несколько серверов» наводит на мысль, что писать можно в любой.",
+                "if_it_were_true": "Тогда multi-master работал бы из коробки, но обычная streaming-репликация — single-primary.",
+                "how_it_should_be": "Запись — только на primary; реплики обслуживают чтение, поток `WAL` идёт от primary к ним."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Read Replicas всегда возвращают абсолютно актуальные данные, идентичные primary, без какой-либо задержки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У async-реплик есть replication lag, поэтому они могут отдавать слегка устаревшие данные, особенно под пиковой нагрузкой.",
+                "source_of_confusion": "Слово «реплика» создаёт ожидание мгновенного зеркала primary.",
+                "if_it_were_true": "Тогда не было бы проблемы read-your-writes, но из-за лага её специально обходят чтением с primary.",
+                "how_it_should_be": "Реплика может отставать; для строго свежих данных читают с primary или применяют sync-репликацию."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В Spring Boot невозможно автоматически направлять запросы на реплику — нужно вручную в каждом методе открывать отдельное JDBC-соединение к реплике.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Boot умеет маршрутизировать декларативно через `AbstractRoutingDataSource`, опираясь на флаг `@Transactional(readOnly = true)` — ручное соединение не требуется.",
+                "source_of_confusion": "Кажется, что выбор источника данных всегда задаётся явно в коде запроса.",
+                "if_it_were_true": "Тогда не существовало бы `determineCurrentLookupKey()` и routing DataSource, но именно они автоматизируют выбор.",
+                "how_it_should_be": "Маршрутизация на реплику делается через routing DataSource и `readOnly`-флаг, а не ручным соединением в каждом методе."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Read Replicas — главный способ масштабировать чтение РСУБД без шардирования: primary обрабатывает запись, а реплики (через streaming replication) принимают `SELECT`-нагрузку, разгружая основной сервер.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Spring Boot маршрутизацию делают через `AbstractRoutingDataSource`: `@Transactional(readOnly = true)` направляет запрос на реплику, обычный `@Transactional` — на primary.",
+                "example": "`getMonthlyReport()` с `@Transactional(readOnly = true)` уходит на реплику, а `createOrder()` с `@Transactional` — на primary; на primary лаг реплик видно в `pg_stat_replication`.",
+                "when_to_apply": "Read replicas вводят, когда чтение упирается в primary, а данные допускают eventual consistency — отчёты, выборки, дашборды.",
+                "edge_cases": "С реплики можно читать лишь данные, для которых eventual consistency приемлема: из-за replication lag (обычно < 100 мс, но растёт под нагрузкой) для read-your-writes читают с primary или используют sync-репликацию.",
+                "related": "[[database-architecture-interview#Q22]] виды репликации; [[database-architecture-interview#Q24]] пул соединений перед репликами; [[database-architecture-interview#Q30]] горизонтальное масштабирование чтения."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Database Federation и горизонтальное партиционирование на уровне приложения?",
+          "options": [
+            {
+              "text": "Database Federation — разделение одной логической БД на несколько физических серверов: вертикально (по функциональному признаку/домену) или горизонтально (по данным); app-level sharding — частный случай, где приложение само выбирает шард по ключу.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вертикальная федерация — это БД-на-сервис (users-service → своя БД, orders-service → своя): сервисы изолированы, `JOIN` идёт через API, а не SQL; горизонтальная — разнос строк по шардам по ключу вроде `user_id`.",
+                "example": "App-level sharding в Spring реализуют через `AbstractRoutingDataSource`: `determineCurrentLookupKey()` возвращает `\"shard\" + (userId % SHARD_COUNT)`, направляя запрос к нужному инстансу.",
+                "when_to_apply": "Федерацию и app-level sharding применяют при декомпозиции монолита на сервисы и при масштабировании по данным после реальных bottlenecks.",
+                "edge_cases": "Сравнение подходов: вертикальная даёт изоляцию и независимый деплой (но нет cross-service `JOIN`), горизонтальная масштабирует по данным (но требует выбора shard key и усложняет cross-shard запросы).",
+                "related": "[[database-architecture-interview#Q38]] federation и polyglot persistence; [[database-architecture-interview#Q23]] выбор shard key; [[database-architecture-interview#Q30]] горизонтальное масштабирование."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Database Federation бывает только горизонтальной (по данным); вертикального разделения по доменам в федерации не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Федерация бывает и вертикальной (по функциональному признаку/домену, БД-на-сервис), и горизонтальной (по данным) — это два равноправных подхода.",
+                "source_of_confusion": "Шардирование по данным — самый обсуждаемый сценарий, поэтому про вертикальное разделение забывают.",
+                "if_it_were_true": "Тогда паттерн «database per service» не относился бы к федерации, но это её вертикальная форма.",
+                "how_it_should_be": "Федерация включает и вертикальное (по домену), и горизонтальное (по данным) разделение."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "App-level sharding означает, что выбор шарда делает сама БД автоматически, а приложение про шарды вообще ничего не знает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При app-level sharding шард выбирает именно приложение (например, через `AbstractRoutingDataSource` по `user_id % N`), а не БД скрыто.",
+                "source_of_confusion": "Прозрачное партиционирование внутри одного `PostgreSQL` обобщают на распределённый app-level случай.",
+                "if_it_were_true": "Тогда не нужен был бы `determineCurrentLookupKey()` в коде, но он и реализует выбор шарда.",
+                "how_it_should_be": "В app-level sharding маршрутизацию по шардам выполняет приложение; БД о других шардах не знает."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "При вертикальной федерации (БД-на-сервис) сервисы соединяют свои таблицы обычными SQL `JOIN` между разными базами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При БД-на-сервис у каждого сервиса своя изолированная схема — нет общих таблиц, и данные соединяют через API-вызовы, а не SQL `JOIN`.",
+                "source_of_confusion": "Привычка к `JOIN` в монолите переносится на изолированные сервисные БД.",
+                "if_it_were_true": "Тогда терялась бы изоляция доменов — главное преимущество вертикальной федерации.",
+                "how_it_should_be": "Cross-service данные собирают через API; прямой SQL `JOIN` между сервисными БД нарушает изоляцию."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

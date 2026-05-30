@@ -29,28 +29,57 @@
     --sky-50: #f0f9ff;
     --amber-50-warm: #fef3e2; --red-50-pale: #fff5f5;
 
-    /* === Dark Neural palette === */
+    /* === Dark "Developer Console" — semantic tokens (brand / base) ===
+       Light overrides live at the END of this file
+       (:root[data-theme=light] + @media prefers-color-scheme: light).
+       Spec: .design/cheat-sheet-ui/DESIGN_TOKENS.css. */
+    color-scheme: dark;
+
+    /* Canvas & opaque surfaces */
     --bg: #07101f;
     --bg-subtle: #0b1628;
     --surface: #0f1d35;
-    --surface-glass: rgba(12, 21, 42, 0.88);
+    --surface-2: #132643;
+
+    /* Themed RGB bases for TRANSLUCENT surfaces. Components use
+       rgba(var(--x-rgb), A) so each call keeps its own alpha → dark renders
+       unchanged, while light only swaps the base color. */
+    --panel-rgb: 10, 19, 38;   /* header, glass panels (≈10,19,40 / 12,21,42) */
+    --well-rgb: 7, 16, 31;     /* sunken: inputs, code, dark wells */
+
+    /* Text */
     --text: #dde6f5;
     --text-2: #8b9ec2;
     --text-3: #546283;
+    --text-on-accent: #ffffff;
+
+    /* Borders */
     --border: rgba(110, 140, 220, 0.13);
     --border-light: rgba(110, 140, 220, 0.07);
+    --border-strong: rgba(110, 140, 220, 0.24);
 
+    /* Accent (indigo / periwinkle — brand) */
     --accent: #7c8ff5;
     --accent-hover: #a3b2fa;
     --accent-bg: rgba(124, 143, 245, 0.1);
+    --accent-bg-2: rgba(124, 143, 245, 0.16);
     --accent-border: rgba(124, 143, 245, 0.28);
+    --accent-grad-end-rgb: 99, 85, 240;
 
+    /* Semantic state */
     --green: #34d17a;
     --green-bg: rgba(52, 209, 122, 0.09);
     --green-border: rgba(52, 209, 122, 0.3);
     --red: #f06b6b;
     --red-bg: rgba(240, 107, 107, 0.09);
     --red-border: rgba(240, 107, 107, 0.3);
+    --amber: #fbbf24;
+    --amber-bg: rgba(251, 191, 36, 0.12);
+
+    /* Ambient mood lighting (body radial gradients) */
+    --ambient-1: rgba(99, 102, 241, 0.13);
+    --ambient-2: rgba(139, 92, 246, 0.10);
+    --ambient-3: rgba(16, 185, 129, 0.06);
 
     /* Typography */
     --sans: 'DM Sans', system-ui, -apple-system, sans-serif;
@@ -72,10 +101,14 @@
     --space-sm: 12px;
     --space-md: 16px;
     --space-lg: 20px;
+    --space-xl: 28px;
     --line-compact: 1.4;
     --line-comfortable: 1.6;
     --control-height: 44px;
     --cta-height: 50px;
+    --content-max: 820px;        /* centered content column */
+    --content-max-wide: 960px;   /* tabular / stats */
+    --measure: 70ch;             /* comfortable prose line-length anchor */
 
     /* Shadows */
     --shadow-sm: 0 1px 4px rgba(0,0,0,0.5), 0 0 0 1px rgba(110,140,220,0.06);
@@ -86,7 +119,10 @@
     --shadow-glow-green: 0 0 24px rgba(52,209,122,0.25), 0 4px 16px rgba(0,0,0,0.4);
     --shadow-glow-red: 0 0 24px rgba(240,107,107,0.25), 0 4px 16px rgba(0,0,0,0.4);
 
-    /* Code */
+    /* Focus ring (a11y) — one ring style for both themes */
+    --focus-ring: 0 0 0 3px rgba(124,143,245,0.45);
+
+    /* Code wells (stay dark in both themes — pairs with hljs atom-one-dark) */
     --code-bg: #040b17;
     --code-fg: #b8cef0;
 }
@@ -99,9 +135,9 @@ body {
     line-height: 1.65;
     color: var(--text);
     background:
-        radial-gradient(ellipse 70% 50% at 15% 5%, rgba(99,102,241,0.13) 0%, transparent 55%),
-        radial-gradient(ellipse 55% 45% at 85% 85%, rgba(139,92,246,0.1) 0%, transparent 55%),
-        radial-gradient(ellipse 45% 60% at 65% 15%, rgba(16,185,129,0.06) 0%, transparent 55%),
+        radial-gradient(ellipse 70% 50% at 15% 5%, var(--ambient-1) 0%, transparent 55%),
+        radial-gradient(ellipse 55% 45% at 85% 85%, var(--ambient-2) 0%, transparent 55%),
+        radial-gradient(ellipse 45% 60% at 65% 15%, var(--ambient-3) 0%, transparent 55%),
         var(--bg);
     background-attachment: fixed;
     padding: clamp(8px, 1vw, 14px);
@@ -160,7 +196,7 @@ header {
     margin-bottom: var(--gap);
     border: 1px solid var(--border);
     border-radius: calc(var(--radius) + 2px);
-    background: rgba(10, 19, 38, 0.92);
+    background: rgba(var(--panel-rgb), 0.92);
     backdrop-filter: blur(20px) saturate(1.4);
     box-shadow: var(--shadow-card), 0 0 0 1px rgba(124,143,245,0.1);
     flex-shrink: 0;
@@ -214,7 +250,7 @@ nav a.active {
 
 /* ===== Cards ===== */
 .card {
-    background: rgba(12, 21, 42, 0.7);
+    background: rgba(var(--panel-rgb), 0.7);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: clamp(14px, 1.8vw, 20px);
@@ -404,7 +440,7 @@ select, input[type="text"], input[type="number"] {
     padding: 8px 12px;
     border: 1px solid rgba(110,140,220,0.2);
     border-radius: var(--radius-xs);
-    background: rgba(7, 16, 31, 0.8);
+    background: rgba(var(--well-rgb), 0.8);
     color: var(--text);
     transition: all 0.2s var(--ease);
     -webkit-appearance: none;
@@ -430,7 +466,7 @@ input[type="checkbox"] {
     height: 18px;
     border: 2px solid rgba(110,140,220,0.3);
     border-radius: 5px;
-    background: rgba(7,16,31,0.8);
+    background: rgba(var(--well-rgb), 0.8);
     cursor: pointer;
     position: relative;
     transition: all 0.2s var(--ease);
@@ -457,7 +493,7 @@ button, .btn {
     font-weight: 600;
     min-height: var(--control-height);
     padding: 8px 16px;
-    background: linear-gradient(135deg, var(--accent), rgba(99,85,240,0.9));
+    background: linear-gradient(135deg, var(--accent), rgba(var(--accent-grad-end-rgb), 0.9));
     color: var(--white);
     border: none;
     border-radius: 12px;
@@ -508,7 +544,7 @@ button:active, .btn:active { transform: scale(0.98); transition-duration: 0.1s; 
 .stat-item {
     text-align: center;
     padding: 12px 8px;
-    background: rgba(7, 16, 31, 0.6);
+    background: rgba(var(--well-rgb), 0.6);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     min-width: 0;
@@ -816,7 +852,7 @@ button:active, .btn:active { transform: scale(0.98); transition-duration: 0.1s; 
     align-items: flex-start;
     gap: clamp(8px, 1vw, 12px);
     padding: clamp(10px, 1.2vw, 14px) clamp(12px, 1.4vw, 16px);
-    background: rgba(10, 19, 40, 0.65);
+    background: rgba(var(--panel-rgb), 0.65);
     border: 1px solid rgba(110,140,220,0.15);
     border-radius: var(--radius-sm);
     cursor: pointer;
@@ -903,7 +939,7 @@ button:active, .btn:active { transform: scale(0.98); transition-duration: 0.1s; 
     font-size: 0.95rem;
     font-weight: 700;
     font-family: var(--display);
-    background: linear-gradient(135deg, var(--accent), rgba(99,85,240,0.95));
+    background: linear-gradient(135deg, var(--accent), rgba(var(--accent-grad-end-rgb), 0.95));
     color: var(--white);
     border-radius: var(--radius-sm);
     margin-top: 6px;
@@ -925,7 +961,7 @@ button:active, .btn:active { transform: scale(0.98); transition-duration: 0.1s; 
 
 /* ===== Answer / Markdown ===== */
 .answer {
-    background: rgba(7, 16, 31, 0.6);
+    background: rgba(var(--well-rgb), 0.6);
     padding: var(--pad);
     border-radius: var(--radius-sm);
     margin-top: 10px;
@@ -1079,7 +1115,7 @@ button:active, .btn:active { transform: scale(0.98); transition-duration: 0.1s; 
     gap: 8px;
     margin-top: 16px;
     padding: 14px 18px;
-    background: rgba(7,16,31,0.5);
+    background: rgba(var(--well-rgb), 0.5);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     animation: fadeIn 0.35s var(--ease);
@@ -1099,7 +1135,7 @@ button:active, .btn:active { transform: scale(0.98); transition-duration: 0.1s; 
     padding: 9px 18px;
     border: 1px solid var(--border);
     border-radius: 980px;
-    background: rgba(7,16,31,0.6);
+    background: rgba(var(--well-rgb), 0.6);
     color: var(--text);
     cursor: pointer;
     transition: all 0.2s var(--ease);
@@ -1197,7 +1233,7 @@ button:active, .btn:active { transform: scale(0.98); transition-duration: 0.1s; 
     text-align: center;
     margin-top: clamp(8px, 1vw, 12px);
     padding: clamp(10px, 1.5vw, 14px);
-    background: linear-gradient(135deg, var(--accent), rgba(99,85,240,0.9));
+    background: linear-gradient(135deg, var(--accent), rgba(var(--accent-grad-end-rgb), 0.9));
     color: var(--white);
     font-weight: 700;
     font-family: var(--display);
@@ -1246,7 +1282,7 @@ th {
     font-weight: 600;
     color: var(--text-2);
     font-size: 0.85rem;
-    background: rgba(7,16,31,0.4);
+    background: rgba(var(--well-rgb), 0.4);
 }
 
 /* ===== Progress bars ===== */
@@ -1365,7 +1401,7 @@ th {
 .stats-page .topic-table thead th {
     position: sticky;
     top: 0;
-    background: rgba(10,19,38,0.95);
+    background: rgba(var(--panel-rgb), 0.95);
     font-size: 0.75rem;
     text-transform: none;
     letter-spacing: 0;
@@ -1531,7 +1567,7 @@ th {
     max-height: calc(100vh - 32px);
     overflow: auto;
     border-radius: var(--radius-sm);
-    background: rgba(7,16,31,0.7);
+    background: rgba(var(--well-rgb), 0.7);
     border: 1px solid var(--border);
     padding: clamp(10px, 1vw, 14px);
 }
@@ -1680,7 +1716,7 @@ th {
     font-size: 1rem;
     font-weight: 700;
     font-family: var(--display);
-    background: linear-gradient(135deg, var(--accent), rgba(99,85,240,0.9));
+    background: linear-gradient(135deg, var(--accent), rgba(var(--accent-grad-end-rgb), 0.9));
     color: var(--white);
     border: none;
     border-radius: 980px;
@@ -1701,7 +1737,7 @@ th {
     font-weight: 600;
     border: 1px solid rgba(110,140,220,0.25);
     border-radius: 980px;
-    background: rgba(7,16,31,0.6);
+    background: rgba(var(--well-rgb), 0.6);
     cursor: pointer;
     transition: all 0.2s var(--ease);
     color: var(--text);
@@ -1938,11 +1974,40 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
 
 /* ===== UX v2 focus-mode overrides ===== */
 .focus-page .app-layout { display: flex; }
-.focus-page .main-content { width: 100%; max-width: 1120px; margin: 0 auto; }
+.focus-page #main-content {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: clamp(8px, 1.2vw, 28px) clamp(8px, 1.4vw, 36px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 1.4vw, 22px);
+}
+.focus-page .surface-toolbar,
+.focus-page .focus-training,
+.focus-page .empty-card-inner,
+.focus-page section.result-card,
+.focus-page .post-answer-section {
+    width: 100%;
+    max-width: min(1280px, 92vw);
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .settings-page #main-content { width: 100%; max-width: none; margin: 0; }
 .settings-page .app-layout { display: flex; }
-.settings-page .settings-content { width: 100%; max-width: 860px; margin: 0 auto; }
-.stats-page .main-content { width: 100%; max-width: 1180px; margin: 0 auto; }
+.settings-page .settings-content { width: 100%; max-width: min(1280px, 92vw); margin: 0 auto; padding: 0 clamp(8px, 1.5vw, 24px); }
+
+.stats-page #main-content,
+.stats-page main {
+    padding: 0 clamp(8px, 1.5vw, 32px);
+}
+.stats-page .main-content,
+.stats-page .stats-shell {
+    width: 100%;
+    max-width: min(1680px, 95vw);
+    margin: 0 auto;
+}
 
 .focus-page .surface-toolbar {
     display: flex;
@@ -1962,7 +2027,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
     font-weight: 600;
     border: 1px solid rgba(110,140,220,0.18);
     color: var(--text-2);
-    background: rgba(10,19,38,0.7);
+    background: rgba(var(--panel-rgb), 0.7);
     transition: all 0.2s var(--ease);
 }
 .focus-page .surface-tab:hover {
@@ -1972,7 +2037,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
 }
 .focus-page .surface-tab.active {
     color: var(--white);
-    background: linear-gradient(135deg, var(--accent), rgba(99,85,240,0.9));
+    background: linear-gradient(135deg, var(--accent), rgba(var(--accent-grad-end-rgb), 0.9));
     border-color: var(--accent);
     box-shadow: 0 0 16px rgba(124,143,245,0.3);
 }
@@ -1987,7 +2052,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
     margin-bottom: 10px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    background: rgba(7,16,31,0.5);
+    background: rgba(var(--well-rgb), 0.5);
     color: var(--text-2);
     font-size: 0.82rem;
     font-weight: 600;
@@ -2045,7 +2110,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
 .focus-progress-item {
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    background: rgba(7,16,31,0.5);
+    background: rgba(var(--well-rgb), 0.5);
     padding: 8px 10px;
     display: flex;
     align-items: baseline;
@@ -2062,7 +2127,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
     margin-top: 12px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    background: rgba(7,16,31,0.5);
+    background: rgba(var(--well-rgb), 0.5);
     overflow: hidden;
 }
 .practice-modes-panel summary {
@@ -2083,7 +2148,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
     gap: 8px;
     font-size: 0.8rem;
     color: var(--text-2);
-    background: rgba(7,16,31,0.6);
+    background: rgba(var(--well-rgb), 0.6);
     border: 1px solid var(--border);
     border-radius: 999px;
     padding: 6px 10px;
@@ -2101,7 +2166,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
     gap: 8px;
     padding: 10px;
     border-radius: var(--radius-sm);
-    background: rgba(10, 19, 38, 0.95);
+    background: rgba(var(--panel-rgb), 0.95);
     backdrop-filter: blur(16px);
     box-shadow: var(--shadow-card), 0 0 0 1px rgba(124,143,245,0.1);
     border: 1px solid var(--border);
@@ -2114,7 +2179,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
     color: var(--text-2);
     padding: 2px 8px;
     border-radius: 999px;
-    background: rgba(7,16,31,0.6);
+    background: rgba(var(--well-rgb), 0.6);
     border: 1px solid var(--border);
     font-family: var(--mono);
 }
@@ -2133,7 +2198,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
     margin-top: 10px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    background: rgba(10,19,38,0.6);
+    background: rgba(var(--panel-rgb), 0.6);
     padding: 12px;
     box-shadow: none;
 }
@@ -2145,7 +2210,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
 .inline-short-feedback { margin-top: 10px; line-height: 1.6; }
 
 .question-support {
-    background: rgba(10,19,38,0.7);
+    background: rgba(var(--panel-rgb), 0.7);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     overflow: hidden;
@@ -2184,19 +2249,121 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
     box-shadow: 0 0 8px rgba(124,143,245,0.4);
 }
 
-.focus-training { width: 100%; max-width: none; margin: 0; }
+.focus-training {
+    width: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(14px, 1.4vw, 22px);
+    padding: clamp(22px, 2.4vw, 36px) clamp(22px, 2.6vw, 44px);
+}
 .focus-progress-line {
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
     gap: 12px;
-    margin-bottom: 12px;
     color: var(--text-2);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.focus-progress-line .session-progress {
+    color: var(--accent-hover);
+    font-weight: 700;
     font-size: 0.95rem;
 }
+.focus-page .session-progress-track {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(110,140,220,0.08);
+    border: 1px solid rgba(110,140,220,0.12);
+    overflow: hidden;
+    position: relative;
+}
+.focus-page .session-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent) 0%, #a3b2fa 60%, #d8defb 100%);
+    border-radius: 999px;
+    transition: width 0.6s var(--ease);
+    box-shadow: 0 0 18px rgba(124,143,245,0.55), inset 0 0 0 1px rgba(255,255,255,0.08);
+}
 .focus-question {
-    margin-bottom: 16px;
-    line-height: 1.4;
+    font-family: var(--display);
+    font-size: clamp(1.5rem, 2.6vw, 2.05rem);
+    font-weight: 700;
+    line-height: 1.22;
+    letter-spacing: -0.025em;
     color: var(--text);
+    margin: clamp(6px, 0.6vw, 12px) 0 clamp(14px, 1.4vw, 22px);
+    max-width: 64ch;
+    background: linear-gradient(180deg, var(--text) 0%, var(--accent-hover) 140%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.focus-page .question-zone-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    margin: 0;
+}
+.focus-page .zone-chip {
+    background: linear-gradient(135deg, rgba(124,143,245,0.15), rgba(124,143,245,0.06));
+    border: 1px solid rgba(124,143,245,0.32);
+    color: var(--accent-hover);
+}
+.focus-page .zone-hint {
+    color: var(--text-3);
+    font-size: 0.86rem;
+    letter-spacing: 0.005em;
+    max-width: 60ch;
+    line-height: 1.5;
+}
+.focus-page .question-code-wrap {
+    margin: 4px 0 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.focus-page .question-code-wrap button {
+    align-self: flex-start;
+}
+.focus-page .question-code-wrap pre {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    font-family: var(--mono);
+    font-size: 0.86rem;
+    line-height: 1.55;
+    padding: clamp(14px, 1.2vw, 20px) clamp(16px, 1.4vw, 24px);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    overflow: auto;
+    margin: 0;
+}
+.focus-page .focus-training .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+.focus-page .focus-training .options label {
+    padding: clamp(14px, 1.2vw, 18px) clamp(16px, 1.5vw, 22px);
+    font-size: clamp(0.94rem, 0.55vw + 0.86rem, 1.05rem);
+    line-height: 1.5;
+}
+.focus-page .focus-training .options label::before {
+    width: 34px;
+    height: 34px;
+    font-size: 0.9rem;
+}
+.focus-page .focus-training #interview-submit,
+.focus-page .focus-training .action-footer {
+    width: 100%;
+}
+.focus-page .focus-training .action-footer {
+    margin-top: clamp(8px, 1vw, 14px);
 }
 
 #interview-options label {
@@ -2225,7 +2392,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
     border: 1px solid var(--border);
     border-radius: 999px;
     padding: 4px;
-    background: rgba(10,19,38,0.7);
+    background: rgba(var(--panel-rgb), 0.7);
     backdrop-filter: blur(8px);
 }
 .training-head-tools .btn-favorite,
@@ -2264,7 +2431,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
 
 .training-shell .options label {
     border: 1px solid rgba(110,140,220,0.15);
-    background: rgba(10, 19, 40, 0.6);
+    background: rgba(var(--panel-rgb), 0.6);
     box-shadow: none;
     align-items: flex-start;
     line-height: 1.45;
@@ -2306,7 +2473,7 @@ button:focus-visible, .btn:focus-visible, a:focus-visible,
     padding: 7px 10px;
     font-size: 0.74rem;
     color: var(--text-3);
-    background: rgba(7,16,31,0.4);
+    background: rgba(var(--well-rgb), 0.4);
 }
 .answer-flow-step.is-active {
     border-color: rgba(124,143,245,0.4);
@@ -2352,8 +2519,8 @@ body.stats-page,
 body.result-page {
     background:
         radial-gradient(ellipse 70% 50% at 10% 5%, rgba(99,102,241,0.14) 0%, transparent 55%),
-        radial-gradient(ellipse 55% 40% at 88% 80%, rgba(139,92,246,0.1) 0%, transparent 55%),
-        radial-gradient(ellipse 45% 55% at 60% 20%, rgba(16,185,129,0.06) 0%, transparent 55%),
+        radial-gradient(ellipse 55% 40% at 88% 80%, var(--ambient-2) 0%, transparent 55%),
+        radial-gradient(ellipse 45% 55% at 60% 20%, var(--ambient-3) 0%, transparent 55%),
         var(--bg);
     background-attachment: fixed;
 }
@@ -2364,7 +2531,7 @@ body.result-page {
 
 .focus-page .surface-toolbar {
     border: 1px solid var(--border);
-    background: rgba(10,19,38,0.75);
+    background: rgba(var(--panel-rgb), 0.75);
     backdrop-filter: blur(12px);
 }
 
@@ -2372,14 +2539,14 @@ body.result-page {
 .settings-page .compact-sidebar.control-card,
 .result-page .top-row > section.card {
     border: 1px solid rgba(124,143,245,0.12);
-    background: rgba(10,19,38,0.8);
+    background: rgba(var(--panel-rgb), 0.8);
 }
 
 .stats-page .stats-filter-row { gap: 16px; }
 
 .stats-page .stats-filters-form,
 .stats-page .stats-search-form {
-    background: rgba(7,16,31,0.6);
+    background: rgba(var(--well-rgb), 0.6);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 10px;
@@ -2390,7 +2557,7 @@ body.result-page {
 .focus-page .options label,
 .result-page .options label {
     border: 1px solid rgba(110,140,220,0.15);
-    background: rgba(10, 19, 40, 0.6);
+    background: rgba(var(--panel-rgb), 0.6);
 }
 .focus-page .options label:hover,
 .result-page .options label:hover {

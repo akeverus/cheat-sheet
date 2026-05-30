@@ -1,0 +1,1685 @@
+{
+  "topic_slug": "clickhouse-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `ClickHouse`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ClickHouse` — open-source columnar (колоночная) OLAP-СУБД, созданная `Yandex` для `Yandex.Metrica` и выложенная в open source в 2016. Хранит данные по колонкам, использует vectorized execution и даёт очень высокую скорость на аналитических запросах (миллиарды строк в секунду).",
+              "correct": true,
+              "sections": {
+                "explanation": "`ClickHouse` объединяет колоночное хранение, векторизованное выполнение, высокую компрессию (5-10x) и SQL с расширениями; применяется для логов, метрик, трейсов, web- и ad-tech-аналитики.",
+                "example": "За колоночным форматом удобно хранить web-аналитику `Yandex.Metrica`: запрос агрегирует одну метрику по миллиардам визитов, не читая остальные колонки строки.",
+                "when_to_apply": "Берут `ClickHouse`, когда нужны быстрые аналитические сканы по огромным объёмам данных и real-time ingestion (миллионы вставок в секунду), а не точечные OLTP-запросы.",
+                "edge_cases": "Это не замена OLTP-базы: точечные lookup и частые UPDATE/DELETE здесь медленные, поэтому рядом часто держат `PostgreSQL` для транзакционной нагрузки.",
+                "related": "[[clickhouse-interview#Q2]] почему он быстрый; [[clickhouse-interview#Q3]] сравнение со `Snowflake`/`BigQuery`; [[clickhouse-interview#Q4]] сравнение с `PostgreSQL`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ClickHouse` — это in-memory key-value кэш от `Yandex`, аналог `Redis`, который хранит горячие данные в оперативной памяти для точечных lookup по ключу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` — дисковая колоночная OLAP-СУБД для аналитических сканов, а не in-memory key-value кэш для точечного доступа по ключу.",
+                "source_of_confusion": "И `ClickHouse`, и `Redis` ассоциируются с высокой скоростью, поэтому их ошибочно ставят в один ряд как «быстрые хранилища».",
+                "if_it_were_true": "Если бы это был key-value кэш, у него не было бы SQL, колоночного хранения и агрегаций по миллиардам строк, ради которых его и берут.",
+                "how_it_should_be": "`ClickHouse` — это columnar OLAP-СУБД с SQL; за роль key-value кэша в памяти отвечает `Redis` или `Memcached`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ClickHouse` — это row-based OLTP-СУБД, оптимизированная под транзакции и точечные обновления отдельных строк с полным ACID.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хранение в `ClickHouse` колоночное и заточено под аналитику; полноценные транзакции и быстрые точечные UPDATE здесь не его сильная сторона.",
+                "source_of_confusion": "Слово «база данных» вызывает ассоциацию с классической OLTP-СУБД вроде `PostgreSQL` или `MySQL`.",
+                "if_it_were_true": "Будь это OLTP-движок, он не давал бы 10-100x ускорения на аналитических сканах относительно `PostgreSQL`, чем и известен.",
+                "how_it_should_be": "`ClickHouse` — это OLAP-движок для аналитики; роль OLTP с ACID-транзакциями выполняет `PostgreSQL` или `MySQL`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ClickHouse` — это распределённая файловая система и движок batch-обработки наподобие `Hadoop`/`HDFS`, который сам не выполняет SQL-запросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` — это самостоятельная СУБД, которая выполняет SQL-запросы, а не просто хранилище файлов или batch-фреймворк.",
+                "source_of_confusion": "Распределённость и работа с большими данными роднят его в восприятии с экосистемой `Hadoop`.",
+                "if_it_were_true": "Если бы он был просто файловой системой, не было бы native-протокола, sparse-индексов и sub-second latency на запросах.",
+                "how_it_should_be": "`ClickHouse` — это SQL-СУБД с собственным движком запросов; распределённое файловое хранилище — это `HDFS` или `S3`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему `ClickHouse` такой быстрый?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главная причина скорости — `ClickHouse` целиком держит все данные в оперативной памяти, как in-memory СУБД, поэтому диск вообще не читается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` хранит данные на диске в колоночном сжатом виде и оптимизирует именно дисковые сканы (async I/O, чтение нужных колонок), а не держит всё в RAM.",
+                "source_of_confusion": "In-memory базы тоже славятся скоростью, поэтому быстроту `ClickHouse` ошибочно объясняют тем же механизмом.",
+                "if_it_were_true": "Будь всё в памяти, `ClickHouse` не справлялся бы с петабайтами данных на дешёвых дисках и S3, что он как раз умеет.",
+                "how_it_should_be": "Скорость даёт колоночное хранение, векторизация и компрессия на диске, а не размещение всего датасета в RAM."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "За счёт сочетания оптимизаций: колоночное хранение (читаются только нужные колонки), vectorized execution с SIMD (обработка батчами, а не построчно), высокая компрессия, sparse primary index, data skipping (min/max, bloom filters), параллельные асинхронные вставки и параллельный запрос по шардам.",
+              "correct": true,
+              "sections": {
+                "explanation": "Колоночный формат даёт чтение только запрошенных колонок, векторизация обрабатывает батчи строк через SIMD, а sparse-индекс и data skipping позволяют пропускать гранулы — в сумме часто 10-100x быстрее `PostgreSQL` на аналитике.",
+                "example": "Запрос `SELECT sum(amount) FROM events` читает только колонку amount и проходит её векторизованно по 8192-строчным гранулам, тогда как `PostgreSQL` тянул бы с диска целые строки.",
+                "when_to_apply": "На эти механизмы опираются при проектировании схемы: правильный `ORDER BY`, codecs компрессии и skip-индексы напрямую определяют, насколько быстро будут идти сканы.",
+                "edge_cases": "Скорость проявляется на сканах и агрегациях; на точечном поиске по одной строке sparse-индекс заставляет читать целую гранулу из 8192 строк, поэтому здесь `ClickHouse` медленнее.",
+                "related": "[[clickhouse-interview#Q1]] что это вообще такое; [[clickhouse-interview#Q10]] sparse index и гранулы; [[clickhouse-interview#Q22]] компрессия и codecs."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Скорость достигается тем, что `ClickHouse` строит B-tree индекс на каждую строку, как `PostgreSQL`, и потому мгновенно находит любую запись.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` использует sparse-индекс — одну запись на ~8192 строки, а не плотный B-tree на каждую строку; быстры именно сканы, а не точечный поиск.",
+                "source_of_confusion": "Привычка из OLTP-СУБД: там индекс на каждую строку действительно ускоряет lookup, и это переносят на `ClickHouse`.",
+                "if_it_were_true": "Будь индекс плотным B-tree на строку, он бы не помещался в память на миллиардах строк и точечные lookup не были бы слабым местом.",
+                "how_it_should_be": "Быстроту даёт sparse primary index плюс data skipping по гранулам, а не B-tree на каждую строку."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ClickHouse` быстрый, потому что хранит данные построчно (row-based) и кэширует целые строки, что ускоряет любые запросы одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хранение в `ClickHouse` колоночное: запрос читает только нужные колонки, а row-based формат как раз заставлял бы читать лишние данные.",
+                "source_of_confusion": "Row-based — самый знакомый формат хранения, поэтому скорость по инерции объясняют им.",
+                "if_it_were_true": "Будь хранение построчным, агрегат по одной колонке тянул бы с диска все остальные, и преимущества над `PostgreSQL` не было бы.",
+                "how_it_should_be": "Ключ к скорости — именно columnar storage, читающий минимум колонок, а не построчное хранение со строковым кэшем."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`ClickHouse` vs `Snowflake`/`BigQuery` — в чём разница?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ClickHouse`, `Snowflake` и `BigQuery` — это одно и то же: разные коммерческие названия одного движка от `Yandex`, отличающиеся только ценой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это три независимых продукта от разных компаний с разной архитектурой; общий у них только класс задач — аналитика OLAP.",
+                "source_of_confusion": "Все три — колоночные аналитические системы, поэтому их по ошибке считают вариациями одного движка.",
+                "if_it_were_true": "Будь это один движок, у них не было бы разных SQL-диалектов, моделей ценообразования и владельцев (`Yandex`/`ClickHouse Inc.`, `Snowflake`, `Google`).",
+                "how_it_should_be": "Это три разных продукта: `ClickHouse` self-hosted/cloud, `Snowflake` managed, `BigQuery` serverless от `Google`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главное отличие в том, что `ClickHouse` — это managed-only сервис без возможности self-hosting, а `Snowflake` и `BigQuery` можно ставить на свои серверы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `ClickHouse` можно self-host (или взять в `ClickHouse Cloud`), а `Snowflake` и `BigQuery` доступны только как managed/serverless.",
+                "source_of_confusion": "Логика «managed = дорого = `Snowflake`» переносится наоборот, и self-hosting ошибочно приписывают облачным DWH.",
+                "if_it_were_true": "Будь `ClickHouse` managed-only, его не выбирали бы ради дешёвого self-hosting на собственном железе.",
+                "how_it_should_be": "Self-hosting доступен именно у `ClickHouse`; `Snowflake` и `BigQuery` — это managed/serverless без установки на свои серверы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ClickHouse` — self-hosted или cloud, shared-nothing с шардированием, самый дешёвый и очень быстрый, но требует ручной настройки и имеет свой SQL-диалект. `Snowflake` — fully managed (shared storage + virtual warehouses), `BigQuery` — serverless с оплатой за запрос; оба ANSI SQL, дороже, но без ops.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор сводится к trade-off: `ClickHouse` даёт минимальную стоимость и контроль ценой ручного ops, а `Snowflake`/`BigQuery` — zero/low-ops и managed-опыт ценой денег и привязки к вендору (`BigQuery` — к `GCP`).",
+                "example": "Команда из 3 человек на своих серверах поднимает `ClickHouse` для логов почти бесплатно; тот же объём в `Snowflake` дал бы счёт за warehouse-часы, а в `BigQuery` — за просканированные байты на каждый запрос.",
+                "when_to_apply": "`ClickHouse` берут при cost-sensitivity, уже имеющемся self-hosting, real-time ingestion и потребности в sub-second latency; managed-решения — когда не хотят заниматься эксплуатацией.",
+                "edge_cases": "У `ClickHouse` меньше экосистема и concurrency измеряется сотнями, тогда как `Snowflake`/`BigQuery` тянут тысячи параллельных запросов — для multi-tenant DWH это может стать решающим.",
+                "related": "[[clickhouse-interview#Q1]] что такое `ClickHouse`; [[clickhouse-interview#Q4]] сравнение с `PostgreSQL`; [[clickhouse-interview#Q26]] production use cases."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Ключевое отличие — `ClickHouse` самый дорогой из трёх, а `Snowflake` и `BigQuery` дешевле за счёт serverless-биллинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` обычно самый дешёвый (особенно self-hosted), а `Snowflake`/`BigQuery` дороже из-за managed-модели и оплаты за запрос/warehouse.",
+                "source_of_confusion": "Раз `ClickHouse` мощный и быстрый, кажется, что он и самый дорогой, хотя cost-sensitivity — частая причина его выбора.",
+                "if_it_were_true": "Будь `ClickHouse` дороже всех, его не выбирали бы именно cost-sensitive команды, для которых это типичный сценарий.",
+                "how_it_should_be": "По стоимости `ClickHouse` обычно дешевле; `Snowflake` стоит дорого, `BigQuery` — заметно дороже при оплате за запрос."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`ClickHouse` vs `PostgreSQL` для аналитики?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PostgreSQL` всегда быстрее `ClickHouse` на любых запросах, потому что он зрелее, поэтому `ClickHouse` для аналитики брать не имеет смысла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На больших аналитических сканах `ClickHouse` обычно в 10-100x быстрее `PostgreSQL` именно за счёт колоночного хранения и векторизации.",
+                "source_of_confusion": "Зрелость и популярность `PostgreSQL` создают ощущение, что он быстрее во всех сценариях.",
+                "if_it_were_true": "Будь `PostgreSQL` всегда быстрее, не появилась бы практика выгружать аналитику из него в `ClickHouse` ради ускорения.",
+                "how_it_should_be": "На аналитических сканах быстрее `ClickHouse`; `PostgreSQL` выигрывает на точечных OLTP-запросах, а не на массовых агрегациях."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ClickHouse` отлично подходит для точечных lookup и частых UPDATE/DELETE отдельных строк, поэтому может полностью заменить `PostgreSQL` как OLTP-базу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Точечные lookup и частые UPDATE/DELETE — слабое место `ClickHouse`: мутации медленные и асинхронные, а sparse-индекс плох для поиска одной строки.",
+                "source_of_confusion": "Раз `ClickHouse` быстрый на аналитике, кажется, что он быстрый и универсальный, включая OLTP.",
+                "if_it_were_true": "Будь `ClickHouse` хорош в OLTP, его не позиционировали бы строго как OLAP-движок без полноценных транзакций.",
+                "how_it_should_be": "Для точечных lookup и UPDATE/DELETE нужен `PostgreSQL`; `ClickHouse` оптимизирован под аналитические сканы, а не OLTP."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оба движка хранят данные построчно, и разница только в том, что у `ClickHouse` больше встроенных функций для аналитики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` хранит данные колоночно, а `PostgreSQL` — построчно; именно это, а не набор функций, даёт разницу в скорости сканов.",
+                "source_of_confusion": "Богатый набор аналитических функций `ClickHouse` заметнее новичку, чем фундаментальное отличие в формате хранения.",
+                "if_it_were_true": "Будь оба построчными, `ClickHouse` не давал бы кратного ускорения на сканах одной-двух колонок.",
+                "how_it_should_be": "Ключевое отличие — columnar (`ClickHouse`) против row-based (`PostgreSQL`); набор функций вторичен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ClickHouse` колоночный и очень быстрый на больших аналитических сканах, но слаб в OLTP: точечные lookup, частые UPDATE/DELETE и сложные JOIN ограничены. `PostgreSQL` row-based, быстр на точечных запросах, даёт полный ACID, полноценные JOIN и гибкую схему, но медленный на больших сканах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для дашбордов и агрегаций по миллиардам строк выбирают `ClickHouse`; для транзакций, точечных lookup и сложных нормализованных моделей с JOIN — `PostgreSQL`. Часто используют связку: OLTP в `PostgreSQL`, аналитику в `ClickHouse`.",
+                "example": "Дашборд «уникальные посетители за месяц по 2 млрд событий» в `ClickHouse` отвечает за доли секунды, а аналогичный `GROUP BY` в `PostgreSQL` на тех же данных идёт минуты из-за построчного чтения.",
+                "when_to_apply": "`ClickHouse` берут, когда аналитические сканы стали узким местом `PostgreSQL`; саму OLTP-нагрузку при этом оставляют в `PostgreSQL`, выгружая данные в `ClickHouse` для аналитики.",
+                "edge_cases": "JOIN в `ClickHouse` ограничены (broadcast только небольшой правой таблицы, риск OOM), а UPDATE/DELETE реализованы через медленные мутации — то, что в `PostgreSQL` делается тривиально.",
+                "related": "[[clickhouse-interview#Q3]] сравнение со `Snowflake`/`BigQuery`; [[clickhouse-interview#Q15]] особенности JOIN; [[clickhouse-interview#Q27]] ограничения `ClickHouse`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `MergeTree`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`MergeTree` — основной storage engine `ClickHouse`, лежащий в основе всех его таблиц. Данные разбиты на immutable parts, фоновый merge сливает части в более крупные (как LSM-tree), внутри part данные отсортированы по ключу `ORDER BY`, а в памяти держится sparse primary index.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вставки создают новые parts, которые фон сливает в крупные, поддерживая сортировку по `ORDER BY`; это даёт быструю вставку и эффективные range-сканы по отсортированным данным.",
+                "example": "`CREATE TABLE events (...) ENGINE = MergeTree() PARTITION BY toYYYYMM(event_time) ORDER BY (event_time, user_id)` создаёт таблицу, где данные лежат в parts, отсортированных по `event_time, user_id`.",
+                "when_to_apply": "`MergeTree` выбирают как движок по умолчанию почти для всех таблиц; специализированные варианты (`Replacing`, `Summing`, `Replicated`) — это надстройки над ним для конкретных задач.",
+                "edge_cases": "Слишком частые мелкие вставки порождают много parts, merge не успевает их сливать, и появляется ошибка `Too many parts` — поэтому вставлять нужно крупными батчами.",
+                "related": "[[clickhouse-interview#Q6]] семейство `MergeTree`; [[clickhouse-interview#Q8]] `ReplicatedMergeTree`; [[clickhouse-interview#Q10]] sparse index внутри parts."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`MergeTree` — это система резервного копирования `ClickHouse`, которая периодически сливает бэкапы таблиц в один архив для восстановления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MergeTree` — это storage engine для хранения и слияния data parts, а не инструмент бэкапов; за бэкапы отвечает `ALTER TABLE FREEZE`.",
+                "source_of_confusion": "Слово «merge» наводит на мысль о слиянии резервных копий, отсюда путаница с бэкап-системой.",
+                "if_it_were_true": "Будь это система бэкапов, на ней нельзя было бы создавать таблицы и выполнять `SELECT`, что для `MergeTree` базово.",
+                "how_it_should_be": "`MergeTree` — основной движок хранения; бэкапы в `ClickHouse` делают через `FREEZE` и копирование parts."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`MergeTree` — это движок, который хранит данные построчно и обновляет каждую строку на месте, как обычная OLTP-таблица.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Parts в `MergeTree` immutable и колоночные: данные не обновляются на месте, а перезаписываются через merge и мутации.",
+                "source_of_confusion": "Привычка к in-place UPDATE из OLTP-СУБД переносится на `MergeTree`, хотя он работает иначе.",
+                "if_it_were_true": "Будь parts изменяемыми построчно, не было бы LSM-подобного слияния и проблемы `Too many parts`.",
+                "how_it_should_be": "`MergeTree` хранит immutable колоночные parts и сливает их фоном, а не обновляет строки на месте."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`MergeTree` — это движок только для маленьких справочных таблиц в памяти, тогда как большие таблицы используют отдельный движок `Log`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MergeTree` — основной движок именно для больших таблиц с миллиардами строк; `Log`-движки — для маленьких вспомогательных данных.",
+                "source_of_confusion": "Название звучит «лёгким», поэтому его ошибочно отводят под мелкие in-memory справочники.",
+                "if_it_were_true": "Будь он только для маленьких таблиц, на нём не строились бы partitioning, sparse-индекс и распределённые сценарии.",
+                "how_it_should_be": "`MergeTree` — движок по умолчанию для крупных таблиц; для мелких временных данных есть `Memory`/`Log`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Семейство `MergeTree` (`ReplacingMergeTree`, `SummingMergeTree`, `AggregatingMergeTree`) — для чего каждый?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ReplacingMergeTree` суммирует числовые колонки, `SummingMergeTree` дедуплицирует строки, а `AggregatingMergeTree` отвечает за репликацию между нодами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Названия перепутаны: `Replacing` дедуплицирует (оставляет последнюю), `Summing` суммирует метрики, а репликацию даёт `ReplicatedMergeTree`, не `Aggregating`.",
+                "source_of_confusion": "Имена движков созвучны задачам друг друга, поэтому их функции легко перепутать местами.",
+                "if_it_were_true": "Будь так, `SummingMergeTree` не складывал бы счётчики, ради чего его и применяют для агрегатов.",
+                "how_it_should_be": "`Replacing` — дедупликация, `Summing` — суммирование, `Aggregating` — произвольные агрегаты; репликация — это `Replicated`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ReplacingMergeTree` дедуплицирует строки с одинаковым ключом `ORDER BY` (eventually остаётся последняя вставка). `SummingMergeTree` при merge суммирует числовые колонки для одинакового `ORDER BY`. `AggregatingMergeTree` хранит произвольные агрегаты через `AggregateFunction`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все три применяют свою логику в момент фонового merge для строк с одинаковым ключом `ORDER BY`: `Replacing` оставляет последнюю версию, `Summing` складывает метрики, `Aggregating` доагрегирует состояния агрегатных функций.",
+                "example": "Таблица `users` на `ReplacingMergeTree(updated_at) ORDER BY id` оставит после merge для каждого `id` строку с максимальным `updated_at`, реализуя upsert по ключу.",
+                "when_to_apply": "`ReplacingMergeTree` берут для дедупликации/upsert по ключу, `SummingMergeTree` — для счётчиков и сумм, `AggregatingMergeTree` — для real-time агрегаций в materialized views.",
+                "edge_cases": "Дедупликация и суммирование происходят только после merge и потому eventually: до слияния parts запрос увидит дубликаты, поэтому используют `FINAL` или агрегируют в самом `SELECT`.",
+                "related": "[[clickhouse-interview#Q5]] базовый `MergeTree`; [[clickhouse-interview#Q7]] `CollapsingMergeTree`; [[clickhouse-interview#Q17]] materialized views на `AggregatingMergeTree`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все три движка применяют свою логику мгновенно в момент вставки, поэтому сразу после `INSERT` дубликатов и несуммированных строк уже не остаётся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Логика применяется при фоновом merge, а не при вставке, поэтому до слияния запрос видит и дубликаты, и несуммированные строки.",
+                "source_of_confusion": "Хочется верить, что дедупликация и суммирование происходят сразу, как UPSERT в OLTP-базах.",
+                "if_it_were_true": "Будь так, не требовался бы `FINAL` или агрегация в `SELECT` для получения консистентного результата до merge.",
+                "how_it_should_be": "Эффект наступает eventually после merge; для немедленного результата используют `FINAL` или агрегацию в запросе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Эти движки различаются только производительностью вставки, а логика хранения у всех одинаковая — как у обычного `MergeTree` без особых правил merge.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый движок применяет свою специальную логику при merge (дедупликация, суммирование, агрегация) — это и есть их назначение, а не скорость вставки.",
+                "source_of_confusion": "Раз все они из семейства `MergeTree`, кажется, что отличаются лишь нюансами производительности.",
+                "if_it_were_true": "Будь логика одинаковой, не было бы смысла в отдельных названиях и в правилах схлопывания строк по ключу.",
+                "how_it_should_be": "Движки различаются именно логикой merge по ключу `ORDER BY`, а не только скоростью вставки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`CollapsingMergeTree` — для чего и как работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CollapsingMergeTree` сжимает (collapses) колонки в одну, объединяя несколько полей таблицы в одну строку для экономии места.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Collapsing` относится к схлопыванию строк по знаку `sign`, а не к объединению колонок; за компрессию отвечают codecs, а не этот движок.",
+                "source_of_confusion": "Слово «collapse» наводит на мысль о сжатии или объединении полей, отсюда путаница с компрессией.",
+                "if_it_were_true": "Будь так, не нужна была бы колонка `sign` со значениями +1/-1, которая и управляет схлопыванием строк.",
+                "how_it_should_be": "`CollapsingMergeTree` схлопывает пары строк с противоположным `sign`; объединение/сжатие данных — это codecs компрессии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CollapsingMergeTree` физически удаляет строки сразу при вставке отменяющей записи, поэтому до merge таблица всегда содержит только актуальное состояние.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Схлопывание происходит при фоновом merge, а не мгновенно: до него и старые, и отменяющие строки лежат в таблице.",
+                "source_of_confusion": "Хочется, чтобы отмена работала как немедленный DELETE, но `ClickHouse` откладывает её до merge.",
+                "if_it_were_true": "Будь удаление мгновенным, не требовалось бы считать агрегаты с учётом `sign` или использовать `FINAL`.",
+                "how_it_should_be": "До merge присутствуют все строки; корректность обеспечивают через `sum(value * sign)` или `FINAL`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CollapsingMergeTree` нужен для «отмены» строк с помощью колонки `sign` (+1 / -1): чтобы изменить запись, вставляют отменяющую строку с `sign = -1` и новую с `sign = +1`. При merge строки с противоположными знаками схлопываются (cancel out), и остаётся актуальное состояние.",
+              "correct": true,
+              "sections": {
+                "explanation": "Старое состояние пишут с `sign = 1`, для апдейта вставляют `(-1)` (отмена старого) и `(+1)` (новое значение); при merge пары +1/-1 взаимно уничтожаются, оставляя финальное состояние.",
+                "example": "Чтобы исправить `activity_count` со 100 на 150, вставляют `(user_id=1, sign=-1, 100)` и `(user_id=1, sign=1, 150)`; при merge пара по 100 схлопывается, остаётся строка со 150.",
+                "when_to_apply": "Применяют, когда нужно имитировать UPDATE в иначе immutable-модели: вместо изменения строки на месте отменяют старую версию и добавляют новую.",
+                "edge_cases": "До merge в таблице лежат и старые, и отменяющие строки, поэтому корректные агрегаты считают с учётом `sign` (например `sum(value * sign)`), иначе результат завышен.",
+                "related": "[[clickhouse-interview#Q6]] другие движки семейства; [[clickhouse-interview#Q5]] базовый `MergeTree`; [[clickhouse-interview#Q27]] ограничения UPDATE в `ClickHouse`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Колонка `sign` в `CollapsingMergeTree` хранит порядковый номер версии строки, и движок оставляет строку с максимальным `sign`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sign` принимает только +1/-1 и управляет схлопыванием пар, а не нумерует версии; «последняя версия по полю» — это про `ReplacingMergeTree`.",
+                "source_of_confusion": "Механику «оставить последнюю версию» из `ReplacingMergeTree` переносят на `sign`, путая два движка.",
+                "if_it_were_true": "Будь `sign` номером версии, отрицательные значения -1 для отмены строк не имели бы смысла.",
+                "how_it_should_be": "`sign` — это +1/-1 для отмены пар строк; выбор последней версии по колонке делает `ReplacingMergeTree`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`ReplicatedMergeTree` — что добавляет к `MergeTree`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ReplicatedMergeTree` добавляет к `MergeTree` поддержку транзакций ACID и блокировок на уровне строк, превращая `ClickHouse` в OLTP-базу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Replicated` добавляет именно репликацию между нодами, а не ACID-транзакции; `ClickHouse` остаётся OLAP-движком без полноценных транзакций.",
+                "source_of_confusion": "Слово «Replicated» путают с транзакционной надёжностью, хотя речь про дублирование данных на реплики.",
+                "if_it_were_true": "Будь так, `ClickHouse` получил бы полноценный OLTP, чего у него нет даже с этим движком.",
+                "how_it_should_be": "`ReplicatedMergeTree` даёт репликацию и HA; ACID-транзакций он не добавляет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ReplicatedMergeTree` обеспечивает строго синхронную репликацию: запись считается успешной только после подтверждения всеми репликами, как в кворумной СУБД по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию репликация асинхронная и eventually consistent; синхронность кворумом включается опционально, а не работает сама собой.",
+                "source_of_confusion": "Опыт кворумных СУБД создаёт ожидание синхронной репликации по умолчанию.",
+                "if_it_were_true": "Будь репликация всегда синхронной, реплики не могли бы кратко отставать, что в `ClickHouse` нормально.",
+                "how_it_should_be": "По умолчанию репликация асинхронная; синхронный кворум настраивается отдельно при необходимости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ReplicatedMergeTree` добавляет шардирование: он сам разбивает данные на шарды и распределяет их по нодам без отдельной distributed-таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Replicated` отвечает за репликацию (копии тех же данных), а шардирование (разбиение на части) обеспечивает `Distributed`-таблица.",
+                "source_of_confusion": "Репликацию и шардирование часто упоминают вместе, поэтому функции смешивают.",
+                "if_it_were_true": "Будь так, не нужна была бы отдельная `Distributed`-таблица для распределения запросов по шардам.",
+                "how_it_should_be": "`Replicated` — это копии данных (HA); шардирование делает движок `Distributed`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ReplicatedMergeTree` добавляет к `MergeTree` репликацию данных между нодами. Репликация multi-master (любая реплика принимает записи), eventually consistent (асинхронная), координируется через `ZooKeeper` или `ClickHouse Keeper`, с auto-recovery после сбоев. В production это рекомендованный движок ради HA.",
+              "correct": true,
+              "sections": {
+                "explanation": "В движке указывают путь в `ZooKeeper`/`Keeper` (`/clickhouse/tables/{shard}/...`) и идентификатор реплики `{replica}`; координация обеспечивает синхронизацию частей и очередь репликации между нодами.",
+                "example": "`ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/events', '{replica}')` регистрирует реплику в `Keeper`, и вставка на одну ноду автоматически подтягивается остальными репликами шарда.",
+                "when_to_apply": "Используют в production всегда вместо обычного `MergeTree`, чтобы получить high availability: данные дублируются на репликах и переживают отказ отдельной ноды или диска.",
+                "edge_cases": "Репликация асинхронная и eventually consistent: только что записанные на одну реплику данные могут на доли секунды отставать на другой, а слишком частые мелкие вставки перегружают `ZooKeeper`/`Keeper`.",
+                "related": "[[clickhouse-interview#Q5]] базовый `MergeTree`; [[clickhouse-interview#Q20]] координация через `ZooKeeper`/`Keeper`; [[clickhouse-interview#Q19]] distributed-таблицы поверх реплик."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Partitioning в `ClickHouse` — как работает и зачем?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Partitioning задаётся выражением `PARTITION BY` (например `toYYYYMM(event_time)` — по месяцам) и делит данные на партиции, хранящиеся отдельно. Это даёт partition pruning (запрос с фильтром по дате читает только нужные партиции), независимые операции drop/detach/optimize по партициям и лучшую параллельность запросов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Запрос `WHERE event_time = '2025-04-19'` при партиционировании по месяцу прочитает только одну партицию вместо всей таблицы; устаревшие данные удаляют целой партицией через `DROP PARTITION`.",
+                "example": "При `PARTITION BY toYYYYMM(event_time)` запрос `WHERE event_time = '2025-04-19'` читает только партицию `202504`, а удаление старого месяца делается мгновенно через `DROP PARTITION 202403`.",
+                "when_to_apply": "Партиционируют обычно по времени (месяц/неделя для time-series), чтобы дёшево удалять старые данные и ускорять запросы по диапазону дат.",
+                "edge_cases": "Нельзя over-partition: высококардинальный ключ партиционирования (например по user_id) порождает тысячи мелких партиций и parts, merge не справляется — держат ≤ ~1000 партиций на таблицу.",
+                "related": "[[clickhouse-interview#Q10]] sparse index внутри партиций; [[clickhouse-interview#Q5]] parts и merge; [[clickhouse-interview#Q28]] pitfalls с ключом партиционирования."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Partitioning в `ClickHouse` — это то же, что sparse primary index: оно определяет порядок сортировки строк внутри part и ускоряет точечный поиск.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Partitioning делит данные на отдельные физические партиции (`PARTITION BY`), а сортировку внутри part задаёт `ORDER BY` и primary index — это разные механизмы.",
+                "source_of_confusion": "И партиции, и индекс ускоряют запросы, поэтому их функции путают между собой.",
+                "if_it_were_true": "Будь это одно и то же, нельзя было бы независимо делать `DROP PARTITION`, не трогая сортировку и индекс.",
+                "how_it_should_be": "Partitioning — это разбиение данных на партиции; сортировку и индекс задаёт `ORDER BY`/primary key."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чем больше партиций, тем быстрее `ClickHouse`, поэтому партиционировать лучше по высококардинальной колонке вроде `user_id`, создавая партицию на каждого пользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Над-партиционирование по высококардинальному ключу губительно: тысячи мелких партиций ломают merge и замедляют систему; держат ≤ ~1000 партиций.",
+                "source_of_confusion": "Интуиция «больше партиций = тоньше нарезка = быстрее» неверна для `ClickHouse`.",
+                "if_it_were_true": "Будь так, документация не предупреждала бы против high-cardinality partition key и большого числа партиций.",
+                "how_it_should_be": "Партиционируют по низкокардинальному ключу (обычно время); high-cardinality ключ создаёт слишком много partitions и parts."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Partitioning обязателен для каждой таблицы `MergeTree`: без `PARTITION BY` таблицу нельзя создать, поэтому всегда указывают хотя бы партицию по `id`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PARTITION BY` опционален: без него вся таблица — одна партиция, и `MergeTree` прекрасно работает без явного партиционирования.",
+                "source_of_confusion": "Раз партиционирование полезно, кажется, что оно обязательно для любой таблицы.",
+                "if_it_were_true": "Будь оно обязательным, примеры `ENGINE = MergeTree() ORDER BY id` без `PARTITION BY` были бы невалидны.",
+                "how_it_should_be": "Партиционирование опционально; его добавляют ради pruning и удаления старых данных, а не из обязательности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Sparse index в `ClickHouse` — что это?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sparse index означает, что `ClickHouse` строит плотный индекс на каждую строку, но хранит его сжатым, чтобы он занимал мало места.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sparse index — это одна запись на ~8192 строки (гранулу), а не сжатый плотный индекс по каждой строке; в этом и суть разрежённости.",
+                "source_of_confusion": "Слово «sparse» путают со «сжатым», хотя речь о пропуске строк, а не о компрессии полного индекса.",
+                "if_it_were_true": "Будь индекс по каждой строке, он не был бы крошечным и не помещался бы целиком в память на миллиардах строк.",
+                "how_it_should_be": "Sparse index хранит ключ на гранулу из 8192 строк, а не запись на каждую строку."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ClickHouse` не индексирует каждую строку, а строит sparse (разрежённый) index: одна запись на каждые 8192 строки (default) — это гранула (granule). Запрос `WHERE key = 150` делает binary search по индексу, находит нужную гранулу и сканирует её 8192 строки с фильтрацией.",
+              "correct": true,
+              "sections": {
+                "explanation": "Индекс хранит ключ для границ гранул: при поиске бинарным поиском определяется гранула, затем читается весь её блок из 8192 строк — поэтому индекс крошечный и целиком помещается в память.",
+                "example": "Для `WHERE key = 150` бинарный поиск по индексу `[10→g0, 100→g1, 200→g2]` укажет на гранулу 1, и `ClickHouse` прочитает её 8192 строки, отфильтровав нужную.",
+                "when_to_apply": "Sparse index эффективен для range-сканов и аналитики; на нём строится скорость `ClickHouse` при правильном `ORDER BY`, где наиболее частые фильтры идут первыми.",
+                "edge_cases": "Для точечного lookup это минус: чтобы достать одну строку, всё равно читается целая гранула из 8192 строк, поэтому `ClickHouse` не предназначен для point lookups.",
+                "related": "[[clickhouse-interview#Q2]] почему `ClickHouse` быстрый; [[clickhouse-interview#Q11]] `ORDER BY` vs `PRIMARY KEY`; [[clickhouse-interview#Q12]] skip-индексы для пропуска гранул."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Гранула в `ClickHouse` — это одна строка, и sparse index хранит каждую 8192-ю колонку таблицы для экономии памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Гранула — это блок из 8192 строк, а индекс пропускает строки, а не колонки; колонки тут ни при чём.",
+                "source_of_confusion": "Число 8192 относят к колонкам по аналогии с шириной строки, хотя это размер блока строк.",
+                "if_it_were_true": "Будь гранула одной строкой, не было бы выигрыша от пропуска блоков при range-сканах.",
+                "how_it_should_be": "Гранула — блок 8192 строк; индекс хранит границы гранул по строкам, а не по колонкам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Благодаря sparse index `ClickHouse` идеален для точечных lookup одной строки по ключу — он читает ровно одну запись без лишнего чтения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для точечного lookup приходится читать целую гранулу из 8192 строк, поэтому `ClickHouse` как раз плох на point lookups.",
+                "source_of_confusion": "Раз есть индекс, кажется, что он обеспечивает мгновенный доступ к одной строке, как в OLTP-базах.",
+                "if_it_were_true": "Будь это так, `ClickHouse` не позиционировали бы строго под сканы и аналитику, а не под точечный поиск.",
+                "how_it_should_be": "Sparse index хорош для range-сканов; точечный lookup всё равно тянет всю гранулу 8192 строк."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`ORDER BY` vs `PRIMARY KEY` в `ClickHouse`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PRIMARY KEY` в `ClickHouse` гарантирует уникальность строк по ключу и отклоняет дубликаты при вставке, как в `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PRIMARY KEY` в `ClickHouse` нужен только для построения sparse-индекса и не обеспечивает уникальность — дубликаты вставятся свободно.",
+                "source_of_confusion": "Семантика `PRIMARY KEY` из реляционных СУБД (уникальность) переносится на `ClickHouse`, где она иная.",
+                "if_it_were_true": "Будь уникальность гарантирована, не понадобился бы `ReplacingMergeTree` для дедупликации по ключу.",
+                "how_it_should_be": "`PRIMARY KEY` здесь — префикс `ORDER BY` для индекса, без enforcement уникальности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ORDER BY` задаёт порядок только в выводе `SELECT` (как сортировка результата), а на физическое хранение данных не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ORDER BY` в определении таблицы задаёт именно физический порядок строк внутри parts, а не сортировку результата запроса.",
+                "source_of_confusion": "Привычный смысл `ORDER BY` в обычном `SELECT` (сортировка вывода) переносят на определение движка.",
+                "if_it_were_true": "Будь так, `ORDER BY` не был бы главным рычагом производительности сканов и индекса.",
+                "how_it_should_be": "В DDL `ORDER BY` определяет физическую раскладку; сортировка результата — это `ORDER BY` уже в `SELECT`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ORDER BY` определяет физический порядок сортировки данных внутри parts, а `PRIMARY KEY` — это префикс `ORDER BY`, по которому строится sparse primary index. Если `PRIMARY KEY` не указан, он равен `ORDER BY`. Тюнинг `ORDER BY` — главный рычаг производительности.",
+              "correct": true,
+              "sections": {
+                "explanation": "Например `ORDER BY (user_id, event_time)` задаёт физическую раскладку, а `PRIMARY KEY user_id` берёт префикс для индекса; колонки в `ORDER BY` располагают от низкой кардинальности к высокой и ставят самые частые фильтры первыми.",
+                "example": "При `ORDER BY (user_id, event_time)` и `PRIMARY KEY user_id` индекс строится только по `user_id`, а сортировка строк в part учитывает обе колонки — частый фильтр по `user_id` идёт первым.",
+                "when_to_apply": "Разделять `PRIMARY KEY` и `ORDER BY` имеет смысл, когда нужна более грубая (короче) гранулярность индекса, чем порядок сортировки; в большинстве случаев их оставляют равными.",
+                "edge_cases": "`PRIMARY KEY` обязан быть префиксом `ORDER BY` — нельзя сделать его произвольным набором колонок; неправильный `ORDER BY` приводит к медленным запросам и раздутому индексу.",
+                "related": "[[clickhouse-interview#Q10]] sparse index из префикса; [[clickhouse-interview#Q5]] сортировка внутри parts; [[clickhouse-interview#Q9]] partitioning рядом с `ORDER BY`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`PRIMARY KEY` может быть любым произвольным набором колонок, не связанным с `ORDER BY`, и они настраиваются полностью независимо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PRIMARY KEY` обязан быть префиксом `ORDER BY`; произвольный независимый набор колонок указать нельзя.",
+                "source_of_confusion": "В реляционных СУБД primary key независим от сортировки, и это ожидание переносят на `ClickHouse`.",
+                "if_it_were_true": "Будь он произвольным, sparse-индекс не соответствовал бы физическому порядку строк и был бы бесполезен.",
+                "how_it_should_be": "`PRIMARY KEY` — строго префикс `ORDER BY`; иначе индекс не совпадает с раскладкой данных."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Skip indexes (data skipping) в `ClickHouse` — что это?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Skip index — это первичный (primary) индекс `ClickHouse`, который строится автоматически на ключе `ORDER BY` и без него таблица не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Skip index — это вторичный, явно создаваемый индекс (`INDEX ... TYPE ...`), а первичный sparse-индекс на `ORDER BY` — отдельная сущность.",
+                "source_of_confusion": "Оба «индексы для ускорения», поэтому вторичный skip-индекс путают с обязательным первичным.",
+                "if_it_were_true": "Будь он первичным и обязательным, его не задавали бы вручную через `INDEX name TYPE bloom_filter`.",
+                "how_it_should_be": "Skip-индексы — опциональные вторичные индексы; первичный — это sparse-индекс по `ORDER BY`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Skip index хранит полную копию данных колонки в отдельной структуре, чтобы запрос читал её вместо основной таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Skip-индекс хранит лишь компактные метаданные на гранулу (min/max, set, bloom), а не полную копию колонки.",
+                "source_of_confusion": "Materialized-механизмы дублируют данные, и это ожидание переносят на skip-индексы.",
+                "if_it_were_true": "Будь это копия данных, индекс не был бы лёгким и не позволял бы пропускать гранулы по метаданным.",
+                "how_it_should_be": "Skip-индекс — это метаданные для пропуска гранул; полная копия данных — это projection или MV."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Skip index гарантированно точен: если он сказал, что в грануле нет значения, оно там точно отсутствует, ложных срабатываний не бывает никогда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`bloom_filter`/`tokenbf_v1` вероятностны и дают false positive (могут не пропустить гранулу зря); они лишь сокращают, а не исключают чтение.",
+                "source_of_confusion": "Слово «индекс» вызывает ожидание детерминированной точности, как у B-tree.",
+                "if_it_were_true": "Будь индекс абсолютно точным, не было бы параметров вроде размера bloom-фильтра, влияющих на ошибки.",
+                "how_it_should_be": "Bloom-based skip-индексы вероятностны: они исключают точное отсутствие, но допускают ложные совпадения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Skip indexes — вторичные индексы для пропуска (skipping) целых гранул без их чтения. Типы: `minmax` (min/max значения на гранулу), `set` (множество уникальных значений), `bloom_filter` (проверка существования), `tokenbf_v1` (токены для full-text-like поиска), `ngrambf_v1` (n-граммы для подстрок).",
+              "correct": true,
+              "sections": {
+                "explanation": "Например индекс `tokenbf_v1` на колонке message позволяет запросу `WHERE message LIKE '%error%'` пропустить гранулы, заведомо не содержащие нужных токенов, не читая их данные.",
+                "example": "Индекс `INDEX message_idx message TYPE tokenbf_v1(8192, 3, 0) GRANULARITY 4` позволяет `WHERE message LIKE '%error%'` пропустить гранулы без токена `error`, не читая их.",
+                "when_to_apply": "Skip-индексы добавляют, когда фильтрация идёт по неключевым колонкам и нужно сократить объём сканируемых гранул сверх того, что даёт primary index по `ORDER BY`.",
+                "edge_cases": "Skip-индексы вероятностны и эффективны только при удачной раскладке данных: если искомые значения размазаны по всем гранулам, индекс ничего не пропустит и лишь добавит накладные расходы.",
+                "related": "[[clickhouse-interview#Q10]] гранулы и sparse index; [[clickhouse-interview#Q11]] первичный индекс по `ORDER BY`; [[clickhouse-interview#Q2]] data skipping среди причин скорости."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`ClickHouse` SQL — какие особенности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "SQL в `ClickHouse` в основном стандартный, но с расширениями: higher-order и array-функции (`arraySum`, `arrayAvg`), функции по времени (`toStartOfHour`) и, главное, approximate-агрегаты вроде `uniqHLL12` и `quantileTDigest`, которые намного быстрее точных ценой небольшой погрешности.",
+              "correct": true,
+              "sections": {
+                "explanation": "Например `uniqHLL12(user_id)` приближённо считает число уникальных пользователей через HyperLogLog заметно быстрее точного `uniqExact`, а `toStartOfHour(event_time)` удобно группирует события по часам.",
+                "example": "`SELECT uniqHLL12(user_id) FROM events` через HyperLogLog считает уникальных пользователей быстрее точного `uniqExact`, а `toStartOfHour(event_time)` группирует события по часам одной функцией.",
+                "when_to_apply": "Approximate-функции применяют для дашбордов и больших агрегаций, где допустима небольшая неточность ради скорости; точные `uniqExact`/`quantileExact` — когда нужна абсолютная корректность.",
+                "edge_cases": "Approximate-агрегаты дают погрешность: `uniqHLL12` может слегка ошибиться в числе уникальных, поэтому для биллинга или точных метрик используют exact-варианты.",
+                "related": "[[clickhouse-interview#Q14]] array- и higher-order функции; [[clickhouse-interview#Q16]] window functions; [[clickhouse-interview#Q2]] скорость за счёт таких оптимизаций."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SQL в `ClickHouse` полностью соответствует ANSI SQL без каких-либо расширений, поэтому любой запрос из `PostgreSQL` работает там без изменений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` использует свой диалект с расширениями (array-функции, approximate-агрегаты) и отличиями, так что не любой `PostgreSQL`-запрос пройдёт без правок.",
+                "source_of_confusion": "Наличие стандартного SQL создаёт впечатление полной ANSI-совместимости.",
+                "if_it_were_true": "Будь это чистый ANSI без расширений, не было бы `uniqHLL12`, `arrayMap` и `ARRAY JOIN`.",
+                "how_it_should_be": "Это ANSI-подобный диалект с собственными расширениями, а не строгий ANSI SQL."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Approximate-функции вроде `uniqHLL12` всегда дают точный результат, просто работают быстрее за счёт кэширования промежуточных значений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`uniqHLL12` приближённый (на базе HyperLogLog) и даёт небольшую погрешность; для точности есть отдельный `uniqExact`.",
+                "source_of_confusion": "Хочется верить, что ускорение бесплатно и без потери точности.",
+                "if_it_were_true": "Будь результат точным, не существовало бы пары `uniqHLL12`/`uniqExact` с разной семантикой.",
+                "how_it_should_be": "`uniqHLL12` приближённый ради скорости; точный счёт даёт `uniqExact`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Array-функции в `ClickHouse` работают только над одной строкой и не могут принимать лямбды, поэтому higher-order функций там нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` поддерживает higher-order функции с лямбдами (`arrayMap(x -> x*1.2, prices)`, `arrayFilter`), а не только простые операции над массивом.",
+                "source_of_confusion": "Ограниченность array-функций в обычных СУБД переносят на богатый набор `ClickHouse`.",
+                "if_it_were_true": "Будь лямбд не было, примеры `arrayFilter(x -> x > 10, prices)` были бы невалидны.",
+                "how_it_should_be": "Array-функции поддерживают лямбды и higher-order семантику — это сильная сторона диалекта."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Array functions и higher-order functions в `ClickHouse`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Массивы в `ClickHouse` — не настоящий тип, а строка с разделителями: чтобы работать с элементами, их приходится парсить функцией `splitByChar`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Array(...)` — это полноценный first-class тип со своими функциями (`arrayMap`, `has`), а не строка-через-разделитель, требующая парсинга.",
+                "source_of_confusion": "Опыт хранения списков строкой в простых БД переносят на `ClickHouse`.",
+                "if_it_were_true": "Будь массив строкой, не было бы типов `Array(String)`/`Array(Float64)` и higher-order функций над ними.",
+                "how_it_should_be": "Массив — нативный тип; `splitByChar` нужен лишь для разбора обычных строк, а не для доступа к элементам массива."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Массивы в `ClickHouse` — first-class тип (`Array(String)`, `Array(Float64)`). Над ними работают higher-order функции с лямбдами: `arrayFilter(x -> x > 10, prices)`, `arrayMap(x -> x*1.2, prices)`, `arraySum(prices)`, `has(tags, 'discount')`, а `ARRAY JOIN` разворачивает (explode) массив в строки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Например `SELECT id, tag FROM products ARRAY JOIN tags AS tag` разворачивает массив тегов в отдельные строки, а `has(tags, 'discount')` проверяет наличие элемента — всё без нормализации данных.",
+                "example": "`SELECT id, tag FROM products ARRAY JOIN tags AS tag` разворачивает массив `tags` в отдельные строки, а `arrayFilter(x -> x > 10, prices)` оставляет в массиве цен только элементы больше 10.",
+                "when_to_apply": "Это мощный инструмент для денормализованных данных: вместо разбиения на отдельные таблицы хранят массивы прямо в строке и обрабатывают их функциями.",
+                "edge_cases": "`ARRAY JOIN` размножает строки по числу элементов массива — на длинных массивах это резко увеличивает объём промежуточного результата и потребление памяти.",
+                "related": "[[clickhouse-interview#Q13]] особенности SQL-диалекта; [[clickhouse-interview#Q15]] почему предпочитают денормализацию JOIN; [[clickhouse-interview#Q16]] window functions."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ARRAY JOIN` соединяет две таблицы по массиву ключей, как обычный SQL JOIN, и не имеет отношения к разворачиванию массива в строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ARRAY JOIN` разворачивает (explode) массив одной таблицы в отдельные строки, а не соединяет две таблицы по ключу.",
+                "source_of_confusion": "Слово «JOIN» наводит на классическое соединение таблиц.",
+                "if_it_were_true": "Будь это обычный JOIN, пример `ARRAY JOIN tags AS tag` без второй таблицы был бы бессмысленным.",
+                "how_it_should_be": "`ARRAY JOIN` — это explode массива в строки; соединение таблиц — это обычный `JOIN`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Higher-order функции вроде `arrayMap` поддерживают только встроенные операции и не принимают пользовательские лямбды-выражения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`arrayMap`/`arrayFilter` принимают лямбды (`x -> x*1.2`), то есть произвольные выражения над элементом, а не только фиксированный набор операций.",
+                "source_of_confusion": "Ограниченность array-API в других системах создаёт ложное ожидание отсутствия лямбд.",
+                "if_it_were_true": "Будь лямбды невозможны, синтаксис `arrayMap(x -> x * 1.2, prices)` не существовал бы.",
+                "how_it_should_be": "Higher-order функции принимают лямбды с произвольными выражениями над элементами массива."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "JOIN в `ClickHouse` — какие особенности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "JOIN в `ClickHouse` устроены так же, как в `PostgreSQL`: оптимизатор сам выбирает hash/merge/nested loop и спокойно соединяет любые большие таблицы без риска OOM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JOIN в `ClickHouse` по умолчанию broadcast-ят правую таблицу и могут уйти в OOM на больших данных; это не полноценный cost-based JOIN как в `PostgreSQL`.",
+                "source_of_confusion": "Привычка к зрелому планировщику `PostgreSQL` создаёт ложное ожидание такой же гибкости.",
+                "if_it_were_true": "Будь так, не советовали бы избегать join и заменять их на `IN` и денормализацию.",
+                "how_it_should_be": "По умолчанию правая таблица broadcast-ится; большие join рискуют OOM, в отличие от `PostgreSQL`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `ClickHouse` для join broadcast-ится левая таблица, поэтому маленькой ради производительности нужно держать именно левую сторону.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Broadcast-ится правая таблица, поэтому маленькой держат именно правую, а не левую сторону join.",
+                "source_of_confusion": "Стороны join легко перепутать, не помня направление broadcast в `ClickHouse`.",
+                "if_it_were_true": "Будь так, рекомендация «small right table» в документации была бы ошибочной.",
+                "how_it_should_be": "Маленькой держат правую таблицу — именно она рассылается на все ноды."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "JOIN в `ClickHouse` отличаются от `PostgreSQL`: по умолчанию правая таблица broadcast-ится целиком на все ноды (рассчитано на маленькую правую таблицу), при больших join возможен OOM (в старых версиях нет spill на диск), и они медленнее колоночных сканов. Рекомендуют избегать join, использовать денормализацию и заменять JOIN на `IN`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместо `SELECT * FROM events JOIN users ON ... WHERE users.country='US'` быстрее `SELECT * FROM events WHERE user_id IN (SELECT id FROM users WHERE country='US')` — фильтрация через `IN` дешевле широковещательного join.",
+                "example": "Вместо `events JOIN users ON events.user_id = users.id WHERE users.country='US'` пишут `events WHERE user_id IN (SELECT id FROM users WHERE country='US')`, и фильтрация через множество идёт быстрее.",
+                "when_to_apply": "Если join неизбежен, держат правую таблицу маленькой (она broadcast-ится), а в распределённых сценариях используют `GLOBAL JOIN` и parallel replicas.",
+                "edge_cases": "Большая правая таблица в broadcast-join приводит к OOM, так как её копия раскладывается в память на каждой ноде; в 2025 появились parallel/grace hash join, но денормализация всё равно выигрывает.",
+                "related": "[[clickhouse-interview#Q4]] почему JOIN слабее, чем в `PostgreSQL`; [[clickhouse-interview#Q14]] денормализация через массивы; [[clickhouse-interview#Q27]] JOIN среди ограничений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Замена JOIN на `IN` в `ClickHouse` всегда медленнее, потому что подзапрос пересчитывается для каждой строки внешней таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`IN`-подзапрос обычно быстрее broadcast-join: он вычисляется один раз и используется как множество для фильтрации, а не пересчитывается построчно.",
+                "source_of_confusion": "Опыт коррелированных подзапросов в OLTP наводит на мысль о построчном пересчёте.",
+                "if_it_were_true": "Будь `IN` медленнее, его не рекомендовали бы как более быструю альтернативу JOIN.",
+                "how_it_should_be": "`IN` вычисляется один раз и фильтрует множеством, поэтому чаще быстрее, чем JOIN."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Window functions в `ClickHouse`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ClickHouse` не поддерживает window functions вообще: любой `OVER (...)` приводит к ошибке синтаксиса, и running total приходится считать самостоятельно через join.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оконные функции поддерживаются с 2021 года: `sum(...) OVER (PARTITION BY ...)` и `rank()` работают штатно.",
+                "source_of_confusion": "Раннее отсутствие window functions в старых версиях породило устаревшее представление.",
+                "if_it_were_true": "Будь их нет, пример `sum(amount) OVER (PARTITION BY user_id ORDER BY event_time)` был бы невалиден.",
+                "how_it_should_be": "Window functions поддерживаются с 2021; `OVER (...)` — валидный синтаксис."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Window functions в `ClickHouse`, как и `GROUP BY`, схлопывают строки группы в одну, поэтому исходные строки в результате не сохраняются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оконные функции вычисляют значение для каждой строки, сохраняя все строки результата, в отличие от схлопывающего `GROUP BY`.",
+                "source_of_confusion": "И то и другое разбивает данные на группы/партиции, поэтому поведение путают.",
+                "if_it_were_true": "Будь так, running total на каждую строку было бы невозможно получить.",
+                "how_it_should_be": "Window functions сохраняют все строки и добавляют к ним оконный результат; схлопывает только `GROUP BY`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оконные функции в `ClickHouse` полностью идентичны `PostgreSQL` по возможностям и frame-спецификациям, без каких-либо ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `ClickHouse` оконные функции появились позже и имеют отдельные ограничения относительно `PostgreSQL`, а не полностью идентичны.",
+                "source_of_confusion": "Стандартный синтаксис `OVER` создаёт впечатление полного паритета.",
+                "if_it_were_true": "Будь паритет полным, в материалах не оговаривали бы limitations vs `PostgreSQL`.",
+                "how_it_should_be": "Поддержка есть, но с ограничениями относительно `PostgreSQL`, а не один-в-один."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ClickHouse` поддерживает оконные функции (window functions) с 2021 года: `sum(...) OVER (PARTITION BY ... ORDER BY ...)` для running total, `rank()`/`row_number()` для ранжирования и т. п. Синтаксис `OVER (PARTITION BY ... ORDER BY ...)` стандартный, хотя есть отдельные ограничения относительно `PostgreSQL`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Например `sum(amount) OVER (PARTITION BY user_id ORDER BY event_time)` считает нарастающий итог по пользователю, а `rank() OVER (PARTITION BY user_id ORDER BY amount DESC)` ранжирует транзакции внутри пользователя.",
+                "example": "`rank() OVER (PARTITION BY user_id ORDER BY amount DESC)` присваивает каждой транзакции пользователя ранг по сумме, не схлопывая строки, как сделал бы `GROUP BY`.",
+                "when_to_apply": "Оконные функции применяют для running totals, ранжирования, скользящих агрегатов и сравнения строки с соседями — там, где `GROUP BY` схлопнул бы строки, а нужно сохранить их все.",
+                "edge_cases": "Поддержка появилась относительно поздно (2021) и в части возможностей и frame-спецификаций всё ещё уступает `PostgreSQL`, поэтому отдельные конструкции могут вести себя иначе.",
+                "related": "[[clickhouse-interview#Q13]] особенности SQL-диалекта; [[clickhouse-interview#Q14]] array- и higher-order функции; [[clickhouse-interview#Q17]] materialized views для предагрегаций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Materialized views в `ClickHouse`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MV в `ClickHouse` отличаются от `PostgreSQL`: они обновляются инкрементально при каждом `INSERT` в исходную таблицу (триггер только на вставку), дают предагрегации в реальном времени и не требуют ручного refresh — данные всегда актуальны. По сути это триггер, который пишет результат `SELECT` в целевую таблицу.",
+              "correct": true,
+              "sections": {
+                "explanation": "MV `hourly_stats` с `ENGINE = SummingMergeTree` и `SELECT toStartOfHour(event_time) ..., sum(amount) FROM events GROUP BY ...` при каждом `INSERT` в `events` автоматически дописывает агрегаты по часам в `hourly_stats`.",
+                "example": "MV `hourly_stats ENGINE = SummingMergeTree ... AS SELECT toStartOfHour(event_time) AS hour, sum(amount) FROM events GROUP BY hour` при каждом `INSERT` в `events` дописывает почасовые суммы.",
+                "when_to_apply": "MV используют для real-time дашбордов: тяжёлую агрегацию считают один раз на вставке, а запросы потом идут по компактной предагрегированной таблице, а не по сырым данным.",
+                "edge_cases": "Триггер срабатывает только на `INSERT`: данные, вставленные до создания MV, в неё не попадут, а UPDATE/DELETE в источнике MV не отслеживает — это не «представление поверх таблицы».",
+                "related": "[[clickhouse-interview#Q6]] `AggregatingMergeTree` для MV; [[clickhouse-interview#Q18]] projections как альтернатива; [[clickhouse-interview#Q24]] MV для materialization из `Kafka`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MV в `ClickHouse` — это виртуальное представление, которое не хранит данные и каждый раз пересчитывает `SELECT` при обращении, как обычный `VIEW`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MV в `ClickHouse` материализует результат в отдельную таблицу при `INSERT`, а не пересчитывается при каждом чтении; пересчёт на чтении — это обычный `VIEW`.",
+                "source_of_confusion": "Слово «view» наводит на семантику обычного представления без хранения данных.",
+                "if_it_were_true": "Будь так, MV не давала бы предагрегаций в реальном времени и не было бы целевой таблицы для записи.",
+                "how_it_should_be": "MV хранит материализованный результат и обновляется на вставке; ленивый пересчёт — это `VIEW`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MV в `ClickHouse` нужно периодически вручную обновлять командой `REFRESH MATERIALIZED VIEW`, иначе данные в ней устаревают, как в `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Классическая MV в `ClickHouse` обновляется инкрементально на каждом `INSERT` и не требует ручного refresh — данные всегда актуальны.",
+                "source_of_confusion": "Поведение MV в `PostgreSQL` (ручной `REFRESH`) переносят на `ClickHouse`.",
+                "if_it_were_true": "Будь нужен ручной refresh, не было бы тезиса «always up-to-date, no refresh».",
+                "how_it_should_be": "MV обновляется автоматически при вставке; ручной `REFRESH` — это модель `PostgreSQL`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MV в `ClickHouse` срабатывает на любые изменения источника — `INSERT`, `UPDATE` и `DELETE` — и автоматически пересчитывает агрегаты при удалении строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Триггер MV срабатывает только на `INSERT`; `UPDATE`/`DELETE` (мутации) в источнике MV не отслеживает.",
+                "source_of_confusion": "Ожидание полноценных триггеров на все DML из реляционных СУБД переносят на `ClickHouse`.",
+                "if_it_were_true": "Будь так, удаление строки из источника корректировало бы агрегаты, чего MV не делает.",
+                "how_it_should_be": "MV реагирует только на `INSERT`; изменения через мутации в неё не пробрасываются."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Projections в `ClickHouse`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Projections — это проекция (выборка подмножества) колонок в `SELECT`, то есть просто список выводимых полей, не имеющий отношения к хранению данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Projections в `ClickHouse` — это предвычисленные раскладки/агрегаты, хранимые с таблицей, а не выбор колонок в `SELECT`.",
+                "source_of_confusion": "Термин «projection» в реляционной алгебре означает выбор колонок, отсюда путаница.",
+                "if_it_were_true": "Будь это просто список колонок, не было бы `ADD PROJECTION` с собственным `ORDER BY` и хранением.",
+                "how_it_should_be": "Projection — это материализованная альтернативная раскладка таблицы, а не выбор колонок в запросе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Projections (с 2020) — альтернатива MV: дополнительные предвычисленные раскладки данных внутри той же таблицы, которые `ClickHouse` выбирает автоматически, если запрос от них выигрывает. Например `ADD PROJECTION events_by_user (SELECT * ORDER BY user_id)` даёт второй порядок сортировки без отдельной таблицы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Запрос с фильтром по user_id `ClickHouse` сам обслужит через projection `events_by_user`, отсортированную по user_id, не требуя от разработчика явно указывать её в SQL.",
+                "example": "`ALTER TABLE events ADD PROJECTION events_by_user (SELECT * ORDER BY user_id)` создаёт вторую раскладку по `user_id`, и запрос с фильтром по пользователю `ClickHouse` обслужит из неё автоматически.",
+                "when_to_apply": "Projections берут, когда нужны несколько порядков сортировки для одной таблицы (разные частые фильтры) или предагрегаты, не вынося их в отдельную таблицу, как при MV.",
+                "edge_cases": "Projections хранятся вместе с данными таблицы и увеличивают объём и стоимость вставки (каждая вставка обновляет все projections); в отличие от MV они не создают отдельную таблицу.",
+                "related": "[[clickhouse-interview#Q17]] сравнение с materialized views; [[clickhouse-interview#Q11]] порядок сортировки `ORDER BY`; [[clickhouse-interview#Q12]] skip-индексы как другой способ ускорения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Projection нужно явно указывать в запросе через `FROM table PROJECTION name`, иначе `ClickHouse` её не использует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` выбирает projection автоматически, когда запрос от неё выигрывает; явно указывать её в `FROM` не требуется.",
+                "source_of_confusion": "Привычка к hints/индексным подсказкам наводит на мысль о явном указании.",
+                "if_it_were_true": "Будь нужно явное указание, исчезло бы ключевое свойство projections — автоматический выбор.",
+                "how_it_should_be": "Projection применяется оптимизатором автоматически, без явного указания в запросе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Projection всегда создаёт отдельную физическую таблицу с другим именем, как materialized view, и хранится независимо от исходной.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Projection хранится внутри той же таблицы как дополнительная раскладка, а отдельную таблицу создаёт именно MV.",
+                "source_of_confusion": "Сходство задач projection и MV приводит к смешению их моделей хранения.",
+                "if_it_were_true": "Будь это отдельная таблица, не было бы отличия projections от MV «multiple sort orders для same table».",
+                "how_it_should_be": "Projection — часть исходной таблицы; отдельную целевую таблицу делает MV."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Distributed table в `ClickHouse`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Distributed`-таблица сама хранит все данные кластера в одном месте и при запросе раздаёт их нодам для обработки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Distributed`-таблица не хранит данные: она лишь прокси поверх локальных таблиц на шардах, где и лежат реальные данные.",
+                "source_of_confusion": "Слово «table» наводит на мысль, что данные физически в ней.",
+                "if_it_were_true": "Будь данные в самой `Distributed`-таблице, не нужны были бы локальные таблицы на каждой ноде.",
+                "how_it_should_be": "Данные хранят локальные таблицы шардов; `Distributed` — это прокси-слой над ними."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Distributed`-таблица обеспечивает репликацию данных между нодами, поэтому при её использовании `ReplicatedMergeTree` уже не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Distributed` отвечает за шардирование и маршрутизацию запросов, а репликацию (копии данных) обеспечивает `ReplicatedMergeTree` под ней.",
+                "source_of_confusion": "Шардирование и репликацию часто упоминают вместе, отсюда смешение ролей.",
+                "if_it_were_true": "Будь так, локальные таблицы не делали бы на `ReplicatedMergeTree` ради HA.",
+                "how_it_should_be": "`Distributed` — это шардирование; репликацию даёт `ReplicatedMergeTree` на локальных таблицах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Distributed`-таблица — это таблица-прокси, которая сама не хранит данные, а выполняет запросы across шардов поверх локальных таблиц на каждой ноде. Создаётся как `ENGINE = Distributed(cluster, db, local_table, sharding_key)`: вставка маршрутизируется по шардам, запрос параллелится по ним и результат мёржится.",
+              "correct": true,
+              "sections": {
+                "explanation": "На каждой ноде есть `events_local` (`ReplicatedMergeTree`), а `events_distributed` поверх них (`Distributed(my_cluster, default, events_local, rand())`) рассылает запрос по всем шардам кластера и собирает ответ.",
+                "example": "`CREATE TABLE events_distributed AS events_local ENGINE = Distributed(my_cluster, default, events_local, rand())` раскидывает вставки по шардам `my_cluster` и параллелит чтение по ним.",
+                "when_to_apply": "Distributed-таблицу используют, когда данные шардированы по нескольким нодам и нужен единый интерфейс для записи и параллельного чтения по всему кластеру.",
+                "edge_cases": "Сама `Distributed`-таблица не хранит данные — без локальных таблиц на нодах она пуста; неудачный sharding key даёт перекос данных по шардам.",
+                "related": "[[clickhouse-interview#Q8]] локальные `ReplicatedMergeTree` под распределением; [[clickhouse-interview#Q20]] координация реплик; [[clickhouse-interview#Q3]] shared-nothing архитектура."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Запрос к `Distributed`-таблице выполняется последовательно: одна нода читает все шарды по очереди, поэтому распараллеливания нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запрос к `Distributed`-таблице параллелится across шардов одновременно, а затем результаты мёржатся — в этом и смысл распределения.",
+                "source_of_confusion": "Образ единой прокси-таблицы наводит на мысль о последовательной обработке.",
+                "if_it_were_true": "Будь обработка последовательной, не было бы выигрыша от распределённого параллельного скана.",
+                "how_it_should_be": "Запрос параллелится по всем шардам сразу; результат собирается из частичных ответов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Replication через `ZooKeeper` / `Keeper` — зачем нужна координация?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Координация через `ZooKeeper`/`Keeper` нужна обычному `MergeTree` без репликации — она управляет фоновым merge даже на одной ноде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Координатор требуется именно `ReplicatedMergeTree` для согласования между репликами; одиночный `MergeTree` обходится без `ZooKeeper`/`Keeper`.",
+                "source_of_confusion": "Раз merge есть и в `MergeTree`, кажется, что координатор нужен и ему.",
+                "if_it_were_true": "Будь так, нельзя было бы запустить `ClickHouse` с `MergeTree` без `ZooKeeper`, а это штатный сценарий.",
+                "how_it_should_be": "Координатор нужен только репликации; нереплицируемый `MergeTree` работает без него."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ZooKeeper`/`Keeper` хранят сами данные таблиц `ClickHouse`, выступая основным хранилищем, а ноды лишь обрабатывают запросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Координатор хранит только метаданные координации (очереди, регистрацию реплик), а данные таблиц лежат на нодах `ClickHouse`.",
+                "source_of_confusion": "Роль централизованного сервиса наводит на мысль, что в нём и хранятся данные.",
+                "if_it_were_true": "Будь данные в `ZooKeeper`, он не справился бы с петабайтами и не назывался бы лишь сервисом координации.",
+                "how_it_should_be": "`ZooKeeper`/`Keeper` держат метаданные координации; данные — на нодах `ClickHouse`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Координация нужна только для распределённых запросов через `Distributed`-таблицу, а репликации `ZooKeeper`/`Keeper` не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Координатор нужен именно для репликации (`ReplicatedMergeTree`); распределённые запросы через `Distributed` могут работать и без него.",
+                "source_of_confusion": "Распределённость и репликация смешиваются, отсюда путаница в назначении координатора.",
+                "if_it_were_true": "Будь так, `ReplicatedMergeTree` не требовал бы путь в `ZooKeeper`/`Keeper` в определении.",
+                "how_it_should_be": "`ZooKeeper`/`Keeper` координируют репликацию; `Distributed`-запросы — отдельный механизм."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ReplicatedMergeTree` требует внешний сервис координации — `Apache ZooKeeper` (старый default) или `ClickHouse Keeper` (новый, нативный). Координация нужна для регистрации реплик, упорядочивания вставок (очередь репликации), синхронизации merge, leader election и распространения DDL-запросов по кластеру.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда реплика принимает вставку, она кладёт запись в координируемую очередь в `ZooKeeper`/`Keeper`, остальные реплики видят её и подтягивают тот же part — так данные сходятся между нодами.",
+                "example": "При вставке реплика кладёт задачу в очередь репликации в `Keeper` по пути `/clickhouse/tables/{shard}/events`; остальные реплики видят её и скачивают тот же part, синхронизируя данные.",
+                "when_to_apply": "Координационный сервис ставят, как только используется репликация (`ReplicatedMergeTree`): без него реплики не смогут договариваться о порядке вставок и merge.",
+                "edge_cases": "Слишком частые мелкие вставки создают шквал записей в `ZooKeeper`/`Keeper` и перегружают его — поэтому вставляют крупными батчами, а `ZooKeeper` исторически узкое место.",
+                "related": "[[clickhouse-interview#Q8]] `ReplicatedMergeTree` поверх координации; [[clickhouse-interview#Q21]] `Keeper` vs `ZooKeeper`; [[clickhouse-interview#Q28]] перегрузка координатора частыми вставками."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`ClickHouse Keeper` vs `ZooKeeper`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ClickHouse Keeper` (с 2021) — drop-in замена `ZooKeeper`, написанная на C++. Он быстрее (до 10x на некоторых операциях), потребляет меньше памяти, может встраиваться в процесс `ClickHouse`, использует тот же Raft-консенсус и совместим с протоколом `ZooKeeper`. Для новых развёртываний рекомендуется именно `Keeper`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку `Keeper` совместим с протоколом `ZooKeeper`, его можно подставить вместо `ZooKeeper` без изменения клиентского кода `ClickHouse`, получив меньший расход памяти и более высокую скорость.",
+                "example": "`Keeper` поднимают вместо `ZooKeeper` тем же путём в конфиге `ReplicatedMergeTree`, без правок клиентского кода, и на больших кластерах он заметно экономит память относительно JVM-based `ZooKeeper`.",
+                "when_to_apply": "`Keeper` выбирают для новых кластеров и при миграции с тяжёлого JVM-based `ZooKeeper`: он легче в эксплуатации и встраивается прямо в ноды `ClickHouse`.",
+                "edge_cases": "Несмотря на drop-in совместимость, это всё ещё отдельный сервис консенсуса со своими требованиями к кворуму; неправильная настройка кворума `Keeper` так же опасна, как и у `ZooKeeper`.",
+                "related": "[[clickhouse-interview#Q20]] роль координатора в репликации; [[clickhouse-interview#Q8]] `ReplicatedMergeTree`; [[clickhouse-interview#Q28]] перегрузка координатора частыми вставками."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ClickHouse Keeper` написан на Java поверх `ZooKeeper` и просто добавляет к нему кэширующий слой, не меняя движок консенсуса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Keeper` — это самостоятельная реализация на C++ с собственным Raft-консенсусом, а не Java-надстройка над `ZooKeeper`.",
+                "source_of_confusion": "Раз он совместим с `ZooKeeper`, кажется, что он построен поверх него на той же JVM.",
+                "if_it_were_true": "Будь это надстройка на Java, не было бы выигрыша по памяти и скорости относительно `ZooKeeper`.",
+                "how_it_should_be": "`Keeper` — отдельная C++-реализация с Raft; от `ZooKeeper` он берёт лишь совместимость протокола."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ClickHouse Keeper` несовместим с протоколом `ZooKeeper`, поэтому миграция требует переписывания всех клиентов и не является drop-in заменой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Keeper` совместим с протоколом `ZooKeeper` и является drop-in заменой — клиентский код менять не нужно.",
+                "source_of_confusion": "Новая реализация на другом языке создаёт ложное ожидание несовместимости.",
+                "if_it_were_true": "Будь он несовместим, его не называли бы drop-in replacement для `ZooKeeper`.",
+                "how_it_should_be": "`Keeper` протокол-совместим с `ZooKeeper`; это именно drop-in замена."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ClickHouse Keeper` медленнее `ZooKeeper` и потребляет больше памяти, его создали только ради единого вендора, а не ради производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Keeper` как раз быстрее (до 10x на части операций) и легче по памяти, чем `ZooKeeper` — это и есть мотивация перехода.",
+                "source_of_confusion": "Новые компоненты иногда подозревают в незрелости и худшей производительности.",
+                "if_it_were_true": "Будь он медленнее и тяжелее, его не рекомендовали бы для новых развёртываний.",
+                "how_it_should_be": "`Keeper` быстрее и легче `ZooKeeper`; производительность — основная причина его появления."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Storage engine оптимизации (compression, sparse data) в `ClickHouse`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Компрессия в `ClickHouse` задаётся только глобально на весь сервер одним алгоритмом и не может настраиваться отдельно для каждой колонки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Codecs задаются per-column через `CODEC(...)`, поэтому разные колонки сжимают разными алгоритмами под их тип данных.",
+                "source_of_confusion": "Глобальные настройки сжатия в других системах создают впечатление единого алгоритма на всё.",
+                "if_it_were_true": "Будь так, синтаксис `value Float64 CODEC(Gorilla, ZSTD)` на отдельной колонке был бы невозможен.",
+                "how_it_should_be": "Codecs настраиваются на каждую колонку отдельно, а не одним глобальным алгоритмом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ClickHouse` сжимает данные codecs: `LZ4` (default, быстрый), `ZSTD` (лучше ratio), и специализированные `Delta`/`DoubleDelta` (для time-series), `Gorilla` (для float). Их задают на колонку, например `timestamp DateTime CODEC(DoubleDelta, ZSTD)`. Типичная компрессия 5-10x, иногда до 50x. Для низкокардинальных колонок есть `LowCardinality(String)` (dictionary encoding).",
+              "correct": true,
+              "sections": {
+                "explanation": "Колонку времени удобно сжимать `CODEC(DoubleDelta, ZSTD)` (дельты дат хорошо сжимаются), а статус-колонку с малым числом значений объявить `LowCardinality(String)`, чтобы хранить словарь вместо повторяющихся строк.",
+                "example": "`CREATE TABLE metrics (timestamp DateTime CODEC(DoubleDelta, ZSTD), value Float64 CODEC(Gorilla, ZSTD))` сжимает время дельтами, а float — кодеком `Gorilla`, давая компрессию в разы.",
+                "when_to_apply": "Codecs подбирают под тип данных: дельта-кодеки для монотонных временных рядов, `Gorilla` для float-метрик, `LowCardinality` для колонок вроде country/status с десятками уникальных значений.",
+                "edge_cases": "`LowCardinality` выгоден только при действительно низкой кардинальности: на колонке с миллионами уникальных значений словарь раздувается и даёт обратный эффект.",
+                "related": "[[clickhouse-interview#Q2]] компрессия среди причин скорости; [[clickhouse-interview#Q23]] tiered storage для холодных данных; [[clickhouse-interview#Q5]] хранение данных в parts."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`LowCardinality(String)` ускоряет работу с любой строковой колонкой, включая колонки с миллионами уникальных значений, поэтому его стоит ставить везде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LowCardinality` выгоден лишь при малом числе уникальных значений; на высококардинальной колонке словарь раздувается и вредит.",
+                "source_of_confusion": "Универсальная польза dictionary encoding преувеличивается без оглядки на кардинальность.",
+                "if_it_were_true": "Будь так, не было бы самого слова «LowCardinality» в названии типа.",
+                "how_it_should_be": "`LowCardinality` применяют к низкокардинальным колонкам (status, country), а не ко всем подряд."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Специализированные codecs `DoubleDelta` и `Gorilla` предназначены для строковых колонок и сжимают текст лучше, чем `ZSTD`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DoubleDelta` рассчитан на монотонные числовые ряды (время), а `Gorilla` — на float; для строк это неподходящие кодеки.",
+                "source_of_confusion": "Раз codecs «специализированные», кажется, что они универсальны, включая текст.",
+                "if_it_were_true": "Будь так, их не привязывали бы в примерах к `DateTime` и `Float64`.",
+                "how_it_should_be": "`DoubleDelta` — для time-series, `Gorilla` — для float; строки сжимает `ZSTD`/`LZ4`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Tiered storage (hot/cold) в `ClickHouse`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tiered storage в `ClickHouse` означает кэширование горячих данных в оперативной памяти, а холодных — на диске; внешние тома и `S3` тут ни при чём.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tiered storage — это уровни дисковых томов (SSD → `S3`) с перемещением по TTL, а не RAM-кэш горячих данных.",
+                "source_of_confusion": "«Hot/cold» ассоциируется с кэшем в памяти, а не с уровнями постоянного хранилища.",
+                "if_it_were_true": "Будь это RAM-кэш, не было бы конфигурации `<disk>s3</disk>` и `TTL TO VOLUME 'cold'`.",
+                "how_it_should_be": "Tiered storage — это уровни дисков/объектного хранилища с TTL-перемещением, а не RAM-кэширование."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Перемещение данных между hot и cold выполняется только вручную командой `OPTIMIZE`, автоматического переезда по TTL в `ClickHouse` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перемещение автоматизируют через `TTL ... TO VOLUME 'cold'` и `move_factor`; ручной `OPTIMIZE` для этого не требуется.",
+                "source_of_confusion": "Привычка к ручному обслуживанию данных наводит на мысль об отсутствии автоматизации.",
+                "if_it_were_true": "Будь только ручной режим, пример с `MODIFY TTL ... TO VOLUME 'cold'` был бы бессмысленным.",
+                "how_it_should_be": "Переезд между томами автоматизируется TTL-правилами и `move_factor`, а не только вручную."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Tiered storage описывают storage policy в конфиге: тома `hot` (например быстрый SSD) и `cold` (например `S3`) с параметром `move_factor`, а таблице задают `SETTINGS storage_policy = 'hot_cold'`. Через `TTL ... TO VOLUME 'cold'` старые данные автоматически переезжают на дешёвое холодное хранилище, экономя деньги.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ALTER TABLE events MODIFY TTL event_time + INTERVAL 30 DAY TO VOLUME 'cold'` автоматически перемещает данные старше 30 дней на том `cold` (S3), оставляя свежие на быстром SSD.",
+                "example": "`ALTER TABLE events MODIFY TTL event_time + INTERVAL 30 DAY TO VOLUME 'cold'` автоматически переносит данные старше 30 дней с SSD на том `cold` (`S3`), оставляя свежие на быстром диске.",
+                "when_to_apply": "Tiered storage применяют для time-series и логов: горячие свежие данные держат на дорогом быстром диске, а редко запрашиваемые старые — на дешёвом `S3`/объектном хранилище.",
+                "edge_cases": "Запросы к холодным данным на `S3` медленнее, чем к SSD; неверный порог TTL может оставить часто читаемые данные на холодном томе и замедлить дашборды.",
+                "related": "[[clickhouse-interview#Q22]] компрессия для экономии места; [[clickhouse-interview#Q25]] `S3`-движок как внешнее хранилище; [[clickhouse-interview#Q9]] partitioning для управления данными по времени."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Запросы к данным на холодном томе (`S3`) выполняются так же быстро, как к SSD, поэтому никакого компромисса по скорости при tiered storage нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Доступ к `S3` заметно медленнее, чем к локальному SSD, поэтому tiered storage — это trade-off скорости ради стоимости.",
+                "source_of_confusion": "Прозрачность доступа к холодному тому создаёт впечатление одинаковой скорости.",
+                "if_it_were_true": "Будь скорость равной, не было бы смысла делить тома на hot и cold вообще.",
+                "how_it_should_be": "Холодный `S3` медленнее SSD; tiered storage экономит деньги ценой скорости старых данных."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`Kafka` engine для ingestion в `ClickHouse`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Kafka Engine` сам по себе постоянно хранит все вычитанные из топика сообщения, поэтому достаточно делать `SELECT` прямо из Kafka-таблицы, без MV и целевой таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka-таблица не хранит данные: это потребитель, и сообщения нужно перекладывать в `MergeTree` через MV; прямой `SELECT` лишь единожды вычитывает их и двигает offset.",
+                "source_of_confusion": "Слово «table» создаёт впечатление, что данные в ней хранятся постоянно.",
+                "if_it_were_true": "Будь так, не нужна была бы MV `TO events` для материализации сообщений в постоянную таблицу.",
+                "how_it_should_be": "Kafka-таблица — это потребитель без хранения; данные материализуют в `MergeTree` через MV."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для ingestion из `Kafka` в `ClickHouse` обязателен внешний коннектор вроде `Kafka Connect` или `Spark`, потому что сам `ClickHouse` не умеет читать топики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` нативно потребляет топики через `Kafka Engine` без внешнего коннектора — в этом и смысл движка.",
+                "source_of_confusion": "Опыт внешних ETL-пайплайнов наводит на мысль об обязательном коннекторе.",
+                "if_it_were_true": "Будь нужен внешний коннектор, не существовало бы `ENGINE = Kafka(...)` с настройками брокеров.",
+                "how_it_should_be": "`ClickHouse` сам читает `Kafka` через `Kafka Engine`; внешний коннектор не обязателен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Kafka Engine` — единственный потоковый движок `ClickHouse`; интеграции с `RabbitMQ`, `NATS` или `S3 Queue` не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аналогичные движки есть: `RabbitMQ Engine`, `NATS Engine`, `S3 Queue Engine` — `Kafka` не единственный источник потоковой загрузки.",
+                "source_of_confusion": "`Kafka` — самый известный, поэтому его считают единственным вариантом.",
+                "if_it_were_true": "Будь он единственным, документация не упоминала бы аналогичные `RabbitMQ`/`NATS`/`S3 Queue` движки.",
+                "how_it_should_be": "Кроме `Kafka` есть `RabbitMQ`, `NATS` и `S3 Queue` движки для потоковой загрузки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Kafka Engine` — таблица, которая читает сообщения прямо из топика `Kafka` (задаются `kafka_broker_list`, `kafka_topic_list`, `kafka_group_name`, `kafka_format`). Поверх неё делают materialized view `TO target_table`, которая перекладывает данные из Kafka-таблицы в `MergeTree`-таблицу — получается непрерывный ingestion `Kafka` → `ClickHouse` без внешнего pipeline.",
+              "correct": true,
+              "sections": {
+                "explanation": "Связка `events_kafka` (`ENGINE = Kafka(..., kafka_format='JSONEachRow')`) + MV `events_consumer TO events AS SELECT * FROM events_kafka` непрерывно вычитывает топик и материализует сообщения в `MergeTree`-таблицу `events`.",
+                "example": "`ENGINE = Kafka(..., kafka_format='JSONEachRow')` плюс MV `events_consumer TO events AS SELECT * FROM events_kafka` непрерывно вычитывает топик и складывает сообщения в `MergeTree`-таблицу `events`.",
+                "when_to_apply": "Этот паттерн применяют для streaming-ingestion: вместо отдельного коннектора/Spark-джобы `ClickHouse` сам потребляет топик `Kafka` и складывает данные в таблицу.",
+                "edge_cases": "Kafka-таблица — это потребитель: прямой `SELECT` из неё вычитывает (и сдвигает offset) сообщения единожды, поэтому читать данные нужно через целевую `MergeTree`-таблицу, а не из самой Kafka-таблицы.",
+                "related": "[[clickhouse-interview#Q17]] MV как механизм materialization; [[clickhouse-interview#Q25]] другие внешние движки (`S3`, `PostgreSQL`); [[clickhouse-interview#Q26]] streaming-ingestion в production."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Other table engines (`S3`, `MySQL`, `PostgreSQL`) в `ClickHouse`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "У `ClickHouse` есть table-функции и внешние движки для работы с чужими источниками: `S3` (чтение/запись `Parquet`/`CSV`/`JSON` в `S3`), `PostgreSQL` и `MySQL` (federated-запросы к чужой БД), а также `HDFS`, `URL`, `File`. Типичный use case — ETL без внешнего pipeline: `INSERT INTO local SELECT FROM s3(...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`SELECT * FROM s3('s3://bucket/data.parquet', 'Parquet')` читает файл из `S3` прямо в запросе, а `ENGINE = PostgreSQL('host:5432', 'db', 'users', ...)` даёт federated-доступ к таблице `PostgreSQL` без копирования.",
+                "example": "`SELECT * FROM s3('s3://bucket/data.parquet', 'Parquet')` читает `Parquet` прямо из `S3`, а `ENGINE = PostgreSQL('host:5432', 'db', 'users', ...)` даёт federated-доступ к живой таблице `PostgreSQL`.",
+                "when_to_apply": "Эти движки применяют для загрузки данных и ad-hoc federated-запросов: подтянуть `Parquet` из `S3`, объединить с локальными данными или импортировать из существующей `PostgreSQL`/`MySQL`.",
+                "edge_cases": "Federated-запросы к внешней БД идут с её скоростью и по сети: тяжёлый `SELECT` через `PostgreSQL`-движок не получит ускорения `ClickHouse` и нагрузит исходную базу.",
+                "related": "[[clickhouse-interview#Q24]] `Kafka` engine как другой источник; [[clickhouse-interview#Q23]] `S3` как cold-хранилище; [[clickhouse-interview#Q4]] сравнение с `PostgreSQL`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`PostgreSQL`-движок в `ClickHouse` физически копирует всю таблицу `PostgreSQL` внутрь `ClickHouse` при создании, после чего связь с исходной БД теряется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PostgreSQL`-движок даёт federated-доступ: данные читаются из живой `PostgreSQL` по запросу, а не копируются единожды при создании таблицы.",
+                "source_of_confusion": "Привычка к импорту-снимку наводит на мысль о разовом копировании.",
+                "if_it_were_true": "Будь это копия, изменения в `PostgreSQL` не отражались бы при последующих запросах, а они отражаются.",
+                "how_it_should_be": "`PostgreSQL`-движок — это federated-проксирование к живой БД; копирование делают через `INSERT ... SELECT`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`S3`-движок умеет только читать данные из `S3` и не способен записывать туда результаты запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`S3`-движок и table-функция умеют и читать, и писать `Parquet`/`CSV`/`JSON` в `S3` — запись поддерживается.",
+                "source_of_confusion": "Роль `S3` как источника данных заслоняет его возможность записи.",
+                "if_it_were_true": "Будь только чтение, нельзя было бы выгружать результаты обратно в `S3`, а это штатный сценарий.",
+                "how_it_should_be": "`S3`-движок поддерживает и чтение, и запись в объектное хранилище."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Внешние движки `ClickHouse` ограничены только реляционными БД; читать файлы из `S3`, `HDFS` или по `URL` он не умеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` читает и файловые/объектные источники: `S3`, `HDFS`, `URL`, `File`, а не только реляционные БД.",
+                "source_of_confusion": "Акцент на `PostgreSQL`/`MySQL` создаёт впечатление, что поддержка ограничена реляционными системами.",
+                "if_it_were_true": "Будь так, пример `s3('s3://bucket/data.parquet', 'Parquet')` был бы невозможен.",
+                "how_it_should_be": "Кроме реляционных БД поддерживаются `S3`, `HDFS`, `URL`, `File` для файловых источников."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие use cases `ClickHouse` в production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ClickHouse` в production чаще всего используют как основную OLTP-базу для обработки платежей и заказов благодаря его ACID-транзакциям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Use cases `ClickHouse` аналитические (observability, дашборды, ad-tech); OLTP с платежами и заказами ведут в транзакционных СУБД вроде `PostgreSQL`.",
+                "source_of_confusion": "Высокая скорость `ClickHouse` создаёт ложное впечатление пригодности под транзакционную нагрузку.",
+                "if_it_were_true": "Будь он OLTP-базой, его не противопоставляли бы `PostgreSQL` по слабым транзакциям и точечным операциям.",
+                "how_it_should_be": "`ClickHouse` применяют для аналитики; платежи и заказы — задача OLTP-СУБД."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Типичные сценарии: observability (логи как дешёвая замена `ELK`, метрики вместо `Prometheus`, трейсы как backend для `Jaeger`), real-time аналитика и дашборды, ad-tech (анализ ставок, атрибуция), web-аналитика (clickstream) и time-series (IoT, мониторинг). Среди adopters — `Yandex` (Metrica), `Cloudflare`, `Uber`, `Spotify`, `GitLab`, `eBay`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Uber` использует `ClickHouse` для observability (логи, метрики, трейсы), `Cloudflare` — для аналитики трафика, а `Yandex` исходно построил на нём `Yandex.Metrica` — все это сценарии массовых аналитических сканов.",
+                "example": "`Uber` хранит в `ClickHouse` логи, метрики и трейсы своей observability-платформы, выполняя поиск и агрегации по триллионам строк событий за секунды.",
+                "when_to_apply": "`ClickHouse` берут там, где нужны быстрые агрегации по огромным потокам событий: observability-бэкенд, real-time дашборды, clickstream и ad-tech, а не транзакционная нагрузка.",
+                "edge_cases": "Все use cases аналитические (OLAP); как primary OLTP-хранилище для заказов или платежей `ClickHouse` не используют из-за слабых транзакций и точечных операций.",
+                "related": "[[clickhouse-interview#Q1]] что такое `ClickHouse`; [[clickhouse-interview#Q24]] `Kafka`-ingestion для потоков событий; [[clickhouse-interview#Q27]] ограничения, сужающие область применения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ClickHouse` используется только внутри `Yandex` и не нашёл применения в других крупных компаниях из-за сложности эксплуатации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` широко используют `Cloudflare`, `Uber`, `Spotify`, `GitLab`, `eBay` и многие другие, а не только `Yandex`.",
+                "source_of_confusion": "Происхождение из `Yandex` создаёт впечатление узкой внутренней системы.",
+                "if_it_were_true": "Будь так, не было бы публичных кейсов observability в `Uber` и аналитики в `Cloudflare`.",
+                "how_it_should_be": "`ClickHouse` массово применяют вне `Yandex`: `Cloudflare`, `Uber`, `Spotify`, `GitLab` и др."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Основной production-сценарий `ClickHouse` — быть кэшем перед реляционной БД для ускорения точечных запросов конечных пользователей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` применяют для аналитических сканов и агрегаций, а не как кэш точечных lookup перед OLTP-базой.",
+                "source_of_confusion": "Скорость наводит на мысль об использовании как кэша, как `Redis` перед БД.",
+                "if_it_were_true": "Будь он кэшем точечных запросов, sparse-индекс (плохой для point lookups) делал бы его непригодным.",
+                "how_it_should_be": "`ClickHouse` — аналитический бэкенд для сканов; кэш точечных запросов — это `Redis`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ограничения / минусы у `ClickHouse`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ClickHouse` поддерживает полноценные ACID-транзакции с rollback и быстрыми in-place UPDATE/DELETE, как `PostgreSQL`, поэтому ограничений по изменению данных у него нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `ClickHouse` нет полноценных транзакций, а UPDATE/DELETE реализованы как медленные асинхронные мутации — это одно из ключевых ограничений.",
+                "source_of_confusion": "Наличие SQL и слова «база данных» наводит на ожидание привычных ACID-транзакций.",
+                "if_it_were_true": "Будь у него быстрые транзакции, его не противопоставляли бы `PostgreSQL` по слабому OLTP.",
+                "how_it_should_be": "Транзакций нет, а UPDATE/DELETE — медленные мутации; быстрый ACID-апдейт — это `PostgreSQL`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главное ограничение `ClickHouse` — он медленный на аналитических запросах, поэтому для дашбордов берут `PostgreSQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На аналитике `ClickHouse` как раз очень быстрый — это его сильная сторона; минусы лежат в OLTP, JOIN и транзакциях.",
+                "source_of_confusion": "Перечисление минусов создаёт ложное впечатление, что слаба и аналитика.",
+                "if_it_were_true": "Будь он медленным на аналитике, не было бы смысла в его существовании как OLAP-движка.",
+                "how_it_should_be": "Аналитика — сильная сторона; ограничения касаются транзакций, UPDATE/DELETE и JOIN, а не скорости сканов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Основные минусы: нет полноценных транзакций (по сути только вставки), ограниченные и медленные асинхронные UPDATE/DELETE (мутации), более слабые JOIN, чем в `PostgreSQL`, schema-on-write с жёсткими схемами, отсутствие foreign keys и constraints, sparse-индекс плох для point lookups, крутая кривая обучения для тюнинга, сложный кластерный ops и риск OOM на тяжёлых запросах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Например, чтобы изменить строку, приходится запускать мутацию `ALTER TABLE ... UPDATE`, которая медленна и переписывает целые parts, а тяжёлый JOIN большой таблицы может выбросить запрос по памяти (OOM).",
+                "example": "Чтобы поменять одно поле, запускают мутацию `ALTER TABLE events UPDATE status = 'done' WHERE id = 42`, которая асинхронно переписывает целые parts, а не меняет строку на месте.",
+                "when_to_apply": "Эти ограничения учитывают при выборе `ClickHouse`: он подходит для аналитики, но не для нагрузки с частыми точечными изменениями, сложными JOIN и потребностью в транзакциях.",
+                "edge_cases": "Часть минусов смягчается практиками (батч-вставки, денормализация, `ReplacingMergeTree` вместо UPDATE), но фундаментальные ограничения (нет ACID, слабые JOIN) остаются.",
+                "related": "[[clickhouse-interview#Q4]] сравнение с `PostgreSQL` по этим минусам; [[clickhouse-interview#Q15]] слабые JOIN; [[clickhouse-interview#Q28]] частые pitfalls на практике."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ClickHouse` имеет гибкую schema-on-read модель с поддержкой foreign keys и constraints, как полноценная реляционная СУБД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClickHouse` использует жёсткий schema-on-write и не поддерживает foreign keys и constraints — это часть его ограничений.",
+                "source_of_confusion": "Реляционный SQL-интерфейс создаёт ожидание полного набора constraints.",
+                "if_it_were_true": "Будь схема гибкой с FK, эти пункты не входили бы в список минусов.",
+                "how_it_should_be": "Схема жёсткая (schema-on-write), foreign keys и constraints отсутствуют."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Common pitfalls в `ClickHouse` production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ClickHouse` сам автоматически выбирает оптимальный `ORDER BY` и ключ партиционирования, поэтому ошибиться в схеме на практике невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ORDER BY` и ключ партиционирования задаёт инженер, и неверный выбор — одна из главных причин проблем в production.",
+                "source_of_confusion": "Обилие автоматики в `ClickHouse` создаёт впечатление, что и схему он подбирает сам.",
+                "if_it_were_true": "Будь выбор автоматическим, «wrong ORDER BY» и «high-cardinality partition key» не были бы типичными pitfalls.",
+                "how_it_should_be": "Схему (`ORDER BY`, partitioning) проектирует инженер; ошибки здесь — частый источник проблем."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Слишком много мелких вставок — это хорошо: чем чаще и мельче вставки, тем меньше нагрузка на `ZooKeeper`/`Keeper` и тем стабильнее кластер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Множество мелких вставок как раз перегружает `ZK`/`Keeper` и порождает много parts; вставлять нужно крупными батчами.",
+                "source_of_confusion": "Интуиция «мелкими порциями — безопаснее» неверна для координируемой репликации.",
+                "if_it_were_true": "Будь так, не было бы рекомендации батчить вставки и предупреждения про `Too many parts`.",
+                "how_it_should_be": "Мелкие частые вставки вредны; их объединяют в батчи, чтобы не перегружать координатор."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В production `ClickHouse` репликация и бэкапы не нужны: данные на одной ноде надёжны сами по себе, и потеря диска не грозит потерей данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без репликации (`ReplicatedMergeTree`) и бэкапов (`ALTER TABLE FREEZE`) отказ диска ведёт к потере данных — это классический pitfall.",
+                "source_of_confusion": "Высокая надёжность движка создаёт ложное чувство, что копии не нужны.",
+                "if_it_were_true": "Будь данные надёжны на одной ноде, «no replication» и «no backups» не входили бы в список граблей.",
+                "how_it_should_be": "Нужны и репликация, и бэкапы; их отсутствие — прямой путь к потере данных при отказе диска."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Частые грабли: неправильный `ORDER BY` (медленные запросы, раздутый индекс), высококардинальный ключ партиционирования (слишком много parts, merge не справляется), OOM на JOIN (broadcast большой таблицы), потенциальная потеря данных на async-вставках, медленные блокирующие parts мутации, отсутствие TTL (диск переполняется), слишком много мелких вставок (перегрузка `ZK`/`Keeper`), отсутствие репликации (потеря данных при отказе диска), отсутствие бэкапов и неверный выбор движка.",
+              "correct": true,
+              "sections": {
+                "explanation": "Например партиционирование по высококардинальной колонке порождает тысячи мелких partitions и parts, merge перестаёт справляться и появляется ошибка `Too many parts`; а множество мелких вставок перегружает координатор `ZooKeeper`/`Keeper`.",
+                "example": "Партиционирование `PARTITION BY user_id` на миллионах пользователей порождает тысячи мелких партиций, merge не успевает, и вставки падают с ошибкой `Too many parts`.",
+                "when_to_apply": "Эти pitfalls проверяют при ревью схемы и эксплуатации: корректный `ORDER BY`, низкокардинальный ключ партиционирования, батч-вставки, TTL для ретенции, репликация и бэкапы через `ALTER TABLE FREEZE`.",
+                "edge_cases": "Многие из этих ошибок проявляются не сразу, а под нагрузкой или на росте данных: `Too many parts`, заполнение диска без TTL и OOM на JOIN всплывают именно в production.",
+                "related": "[[clickhouse-interview#Q9]] высококардинальный ключ партиционирования; [[clickhouse-interview#Q15]] OOM на JOIN; [[clickhouse-interview#Q20]] перегрузка `ZK`/`Keeper` мелкими вставками."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

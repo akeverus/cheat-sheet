@@ -1,0 +1,1445 @@
+{
+  "topic_slug": "cockroachdb-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CockroachDB` и для чего он спроектирован?",
+          "options": [
+            {
+              "text": "`CockroachDB` — distributed SQL-база (NewSQL), спроектированная под горизонтальное масштабирование (добавляешь ноды ради ёмкости), high availability без single point of failure, строгую согласованность (`ACID`, `SERIALIZABLE`) и совместимость с `PostgreSQL` по wire-протоколу. Создана ex-Googlers (Spanner, F1) в 2015 году; нацелена на global-приложения и multi-region.",
+              "correct": true,
+              "sections": {
+                "explanation": "Под капотом — KV-слой поверх движка `Pebble`, данные разбиты на диапазоны (ranges), реплицируемые через `Raft`; SQL-слой транслирует запросы в KV-операции, поэтому одна логическая таблица живёт на многих нодах сразу.",
+                "example": "Кластер из 6 нод в трёх регионах обслуживает один логический `orders`: добавив 7-ю ноду, ты увеличиваешь ёмкость, а `CockroachDB` сам перебалансирует часть ranges на неё без простоя.",
+                "when_to_apply": "Берут для приложений, которым нужны и SQL/`ACID`, и масштаб за пределы одной машины: финансовые ledger'ы, payment-платформы, multi-region SaaS, приложения, переросшие одиночный `PostgreSQL`.",
+                "edge_cases": "На single-node workload `CockroachDB` часто медленнее обычного `PostgreSQL`: распределённость и `Raft` дают накладные расходы, которые окупаются только на масштабе и multi-region.",
+                "related": "[[cockroachdb-interview#Q2]] NewSQL как класс баз; [[cockroachdb-interview#Q3]] связь со Spanner; [[cockroachdb-interview#Q4]] архитектура ranges/replicas/leases; [[cockroachdb-interview#Q22]] когда выбирать."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`CockroachDB` — это in-memory key-value кэш, ускоряющий `PostgreSQL` за счёт хранения горячих строк в RAM, без собственной долговечности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CockroachDB` — самостоятельная durable distributed SQL-база с дисковым движком `Pebble` и репликацией через `Raft`, а не кэш поверх другой СУБД.",
+                "source_of_confusion": "Совместимость с `PostgreSQL` по wire-протоколу создаёт впечатление, что это просто надстройка-ускоритель, а не отдельная база.",
+                "if_it_were_true": "Будь это кэш, данные терялись бы при перезапуске и требовался бы backing-store, но `CockroachDB` сам хранит данные на диске и переживает рестарт.",
+                "how_it_should_be": "Это полноценная durable СУБД; роль кэша играют `Redis`/`Memcached`, а `CockroachDB` заменяет саму базу."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`CockroachDB` — это NoSQL document-база без поддержки SQL и транзакций, конкурент `MongoDB`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CockroachDB` — это именно SQL-база с полноценными `ACID`-транзакциями и `PostgreSQL`-совместимостью, а не document-store без транзакций.",
+                "source_of_confusion": "И там, и там есть распределённость и горизонтальное масштабирование, поэтому `CockroachDB` ошибочно ставят в один ряд с `MongoDB`.",
+                "if_it_were_true": "Будь это document-NoSQL, не было бы ни `JOIN`, ни `SERIALIZABLE`, но `CockroachDB` поддерживает и то, и другое.",
+                "how_it_should_be": "Это NewSQL: SQL-интерфейс и `ACID` сохранены, а масштабируемость взята из мира NoSQL."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`CockroachDB` спроектирован как single-node OLAP-движок для аналитики, оптимизированный под колоночное хранение и крупные сканы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CockroachDB` — OLTP distributed SQL для транзакционной нагрузки, а не колоночный OLAP-движок; для аналитики берут `ClickHouse`/`Snowflake`.",
+                "source_of_confusion": "Слово «SQL» и масштаб наводят на мысль об аналитическом хранилище, отсюда путаница с OLAP.",
+                "if_it_were_true": "Будь это OLAP, он хранил бы данные по колонкам и плохо держал бы точечные транзакции, но `CockroachDB` — строчный OLTP.",
+                "how_it_should_be": "Это горизонтально масштабируемая OLTP-база; тяжёлую аналитику выносят в отдельные колоночные системы."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `NewSQL` как класс баз данных?",
+          "options": [
+            {
+              "text": "`NewSQL` — это маркетинговое название для обычных реляционных СУБД (`PostgreSQL`, `MySQL`), получивших новую мажорную версию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NewSQL` — отдельный класс баз, сочетающий SQL/`ACID` с горизонтальной масштабируемостью, а не ребрендинг очередной версии классической РСУБД.",
+                "source_of_confusion": "Приставка «New» воспринимается как «новая версия», поэтому термин путают с обновлением знакомых СУБД.",
+                "if_it_were_true": "Будь это просто новая версия `PostgreSQL`, она не масштабировалась бы за пределы одной машины, а именно это — суть `NewSQL`.",
+                "how_it_should_be": "Это класс систем (`Spanner`, `CockroachDB`, `YugabyteDB`, `TiDB`, `VoltDB`), а не релиз существующей базы."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`NewSQL` — класс баз, объединяющий SQL-интерфейс и `ACID` (как у традиционных РСУБД) с горизонтальной масштабируемостью (как у NoSQL). Примеры: `Google Spanner`, `CockroachDB`, `YugabyteDB`, `TiDB`, `VoltDB`. В отличие от классического SQL — масштабируется за пределы одной машины; в отличие от NoSQL — сохраняет SQL, `ACID` и `JOIN`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея: не жертвовать транзакционностью ради масштаба. Шардинг и репликация спрятаны внутрь, поэтому приложение видит привычный SQL, а данные при этом размазаны по кластеру.",
+                "example": "Например, `CockroachDB` принимает обычный `SELECT ... JOIN ...` с `ACID`-транзакцией, но за кулисами выполняет его на кластере из десятков нод — то, чего не дают ни single-node `PostgreSQL`, ни eventual-consistent `MongoDB`.",
+                "when_to_apply": "`NewSQL` берут, когда нужны и строгие транзакции, и масштаб: переросли одиночный `PostgreSQL`, но не готовы отказаться от `JOIN` и `ACID` ради eventual-consistency NoSQL.",
+                "edge_cases": "Trade-off: внутренности сложнее, а на single-node нагрузке `NewSQL` иногда медленнее классической РСУБД — выигрыш проявляется на масштабе и распределённости.",
+                "related": "[[cockroachdb-interview#Q1]] CockroachDB как представитель NewSQL; [[cockroachdb-interview#Q3]] Spanner — родоначальник; [[cockroachdb-interview#Q20]] сравнение с YugabyteDB; [[cockroachdb-interview#Q21]] сравнение с TiDB."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`NewSQL` — это базы данных без схемы (schemaless), которые принимают любой JSON и не требуют `CREATE TABLE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NewSQL`-базы как раз строго схемные и реляционные с `CREATE TABLE`; schemaless — признак document-NoSQL, а не `NewSQL`.",
+                "source_of_confusion": "И NoSQL, и `NewSQL` ассоциируются с масштабируемостью, поэтому schemaless-свойство ошибочно переносят на `NewSQL`.",
+                "if_it_were_true": "Будь `NewSQL` schemaless, в нём не было бы строгого SQL и типизированных колонок, но они там есть.",
+                "how_it_should_be": "Это строго схемные SQL-базы; schemaless-гибкость — атрибут document-store вроде `MongoDB`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`NewSQL` — это исключительно in-memory СУБД, существующие только в оперативной памяти ради скорости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Часть `NewSQL` (например `VoltDB`) in-memory, но в целом класс не требует жить только в RAM: `CockroachDB` и `Spanner` — дисковые с durable-хранением.",
+                "source_of_confusion": "Громкий акцент на производительности `NewSQL` создаёт впечатление, что все они in-memory.",
+                "if_it_were_true": "Будь весь класс in-memory, он не пережил бы рестарт без внешнего persistence, но `CockroachDB` durable по умолчанию.",
+                "how_it_should_be": "In-memory — частный случай (`VoltDB`); большинство `NewSQL` хранит данные на диске."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что значит, что `CockroachDB` «inspired by Google Spanner»?",
+          "options": [
+            {
+              "text": "Это значит, что `CockroachDB` — официальный open-source-форк исходного кода `Spanner`, выложенного Google.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Google никогда не выкладывал код `Spanner`; `CockroachDB` написан с нуля, лишь повторяя идеи `Spanner`, а не его кодовую базу.",
+                "source_of_confusion": "Фраза «inspired by» воспринимается как «форк», хотя речь только о концептуальном вдохновении.",
+                "if_it_were_true": "Будь это форк, у них совпадал бы код и лицензия Google, но `Spanner` проприетарен и managed-only.",
+                "how_it_should_be": "`CockroachDB` — независимая реализация похожих концепций, а не форк закрытого `Spanner`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Это значит, что `CockroachDB` тоже использует атомные часы (`TrueTime`) для глобально согласованных таймстампов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CockroachDB` сознательно обходится без атомных часов: вместо `TrueTime` он применяет `Hybrid Logical Clocks (HLC)` поверх NTP.",
+                "source_of_confusion": "Раз база вдохновлена `Spanner`, кажется, что она копирует и аппаратный `TrueTime`.",
+                "if_it_were_true": "Будь у `CockroachDB` атомные часы, его uncertainty был бы микросекундным, но на NTP он порядка сотен мс.",
+                "how_it_should_be": "`TrueTime` остаётся у `Spanner`; `CockroachDB` заменяет его на `HLC` без специального железа."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Spanner` (Google, 2012) — первая глобально распределённая SQL-база с `TrueTime` (атомные часы), `Paxos`-консенсусом, multi-region writes и external consistency. `CockroachDB` реализует похожие концепции **без атомных часов**: `Hybrid Logical Clocks (HLC)` вместо `TrueTime`, `Raft` вместо `Paxos`, и open-source — тогда как `Spanner` доступен только как managed-сервис в GCP.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная идея `Spanner` — глобально согласованные транзакции; `CockroachDB` достигает похожих гарантий на commodity-железе, заменяя дорогой `TrueTime` на программный `HLC` и retry-логику.",
+                "example": "Например, там где `Spanner` ждёт окно `TrueTime` ~7 мс перед коммитом, `CockroachDB` на `HLC`+NTP может «выждать» сотни мс или перезапустить транзакцию — та же гарантия согласованности, но без атомных часов в дата-центре.",
+                "when_to_apply": "Это сравнение полезно на собеседовании, чтобы объяснить, почему `CockroachDB` доступнее `Spanner`: те же концепции, но без привязки к GCP и атомным часам.",
+                "edge_cases": "Цена замены `TrueTime` на `HLC` — большая неопределённость времени (сотни мс против ~7 мс), из-за чего иногда приходится «выжидать» clock uncertainty и делать retry.",
+                "related": "[[cockroachdb-interview#Q1]] что такое CockroachDB; [[cockroachdb-interview#Q7]] HLC как замена TrueTime; [[cockroachdb-interview#Q5]] Raft как замена Paxos; [[cockroachdb-interview#Q18]] детальное сравнение со Spanner."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Это значит, что `CockroachDB` работает только внутри `Google Cloud`, как и `Spanner`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `CockroachDB` self-hostable и multi-cloud, а привязан к GCP именно `Spanner` — это одно из ключевых отличий.",
+                "source_of_confusion": "Раз базы концептуально родственны, ошибочно переносят GCP-привязку `Spanner` и на `CockroachDB`.",
+                "if_it_were_true": "Будь `CockroachDB` GCP-only, не было бы смысла в его open-source-модели и multi-cloud-позиционировании.",
+                "how_it_should_be": "`Spanner` GCP-only, а `CockroachDB` запускается где угодно — в этом и состоит «демократизация» идей `Spanner`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ranges, replicas и leases в архитектуре `CockroachDB`?",
+          "options": [
+            {
+              "text": "`Range` — это отдельная физическая нода кластера; `replica` — её бэкап на диске; `lease` — TCP-сессия клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Range` — это логический непрерывный кусок данных (~512 MB), а не нода; `replica` — копия диапазона на ноде; `lease` — право одной реплики координировать чтения/записи.",
+                "source_of_confusion": "Термины звучат инфраструктурно, поэтому их привязывают к нодам и сессиям вместо данных.",
+                "if_it_were_true": "Будь range нодой, на одной машине не жили бы тысячи range'ей, но именно так и устроено разбиение данных.",
+                "how_it_should_be": "Это уровни данных: данные → ranges → replicas на нодах → leaseholder координирует range."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Каждый range по умолчанию хранится в одной копии (single replica) ради экономии места, реплики добавляются вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию у range **три реплики**, а не одна: репликация включена сразу и обеспечивает high availability без single point of failure.",
+                "source_of_confusion": "Логика экономии диска создаёт ложное ощущение, что репликация — опциональная ручная настройка.",
+                "if_it_were_true": "Будь по умолчанию одна копия, отказ ноды терял бы данные range'а, что противоречит HA-обещанию `CockroachDB`.",
+                "how_it_should_be": "Дефолт — 3 реплики на range, формирующие `Raft`-группу с кворумом 2."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Leaseholder` выбирается заново для каждого отдельного запроса случайной репликой, чтобы равномерно нагрузить кластер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Leaseholder` стабилен: одна реплика держит lease и координирует чтения/записи range'а, обычно совпадая с `Raft`-лидером, а не меняется на каждый запрос.",
+                "source_of_confusion": "Идея балансировки нагрузки наводит на мысль о случайном выборе координатора на каждый запрос.",
+                "if_it_were_true": "Будь leaseholder случайным каждый раз, согласованность чтений и кэш лидерства разрушились бы постоянными перевыборами.",
+                "how_it_should_be": "Lease закреплён за одной репликой на длительный срок; перевыборы происходят при сбоях, а не на каждый запрос."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Range` — непрерывный кусок данных (по умолчанию ~512 MB), идентифицируемый по start/end-ключам и реплицируемый независимо. `Replica` — копия range на ноде; по умолчанию **3 реплики**. `Lease` — у каждого range есть **leaseholder** (одна реплика), которая координирует чтения и записи диапазона. Все реплики range образуют `Raft`-группу, и leaseholder обычно совпадает с `Raft`-лидером.",
+              "correct": true,
+              "sections": {
+                "explanation": "SQL-слой транслирует запрос в KV-операции, KV-слой находит нужный range, направляет его leaseholder'у, тот через `Raft` реплицирует запись на followers и коммитит по кворуму.",
+                "example": "Например, таблица `orders` на 5 GB живёт примерно в 10 range'ах по ~512 MB; каждый из них имеет 3 реплики на разных нодах и свой leaseholder, поэтому запросы к разным заказам обслуживают разные ноды.",
+                "when_to_apply": "Понимание ranges/replicas/leases нужно при диагностике hot range'ей, настройке локальности реплик и объяснении, почему запись идёт через конкретную ноду-leaseholder'а.",
+                "edge_cases": "Leaseholder и `Raft`-лидер обычно совпадают, но могут разойтись при перебалансировке: тогда чтения координирует leaseholder, а консенсус по записи ведёт `Raft`-лидер.",
+                "related": "[[cockroachdb-interview#Q1]] общая архитектура CockroachDB; [[cockroachdb-interview#Q5]] Raft-консенсус внутри range; [[cockroachdb-interview#Q6]] разбиение range при росте; [[cockroachdb-interview#Q15]] ranges как механизм шардинга."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `Raft`-консенсус в `CockroachDB`?",
+          "options": [
+            {
+              "text": "`Raft` — алгоритм распределённого консенсуса; `CockroachDB` использует **отдельный `Raft` на каждый range**. Процесс: лидер (он же leaseholder) принимает запись, реплицирует её на followers, и как только **большинство** (кворум) подтвердило — запись коммитится и применяется к state machine. При 3 репликах кворум = 2 (терпит 1 отказ), при 5 репликах кворум = 3 (терпит 2 отказа). При сбоях `Raft` автоматически переизбирает лидера.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый range ведёт свой `Raft`-лог независимо, поэтому отказ ноды затрагивает лишь те range'и, чьи реплики на ней жили, а остальные продолжают коммитить записи как обычно.",
+                "example": "Например, при 3 репликах одна нода может упасть — кворум из 2 живых реплик продолжит коммитить записи; но падение второй реплики того же range остановит запись в него до восстановления.",
+                "when_to_apply": "Знание per-range `Raft` нужно, чтобы правильно считать отказоустойчивость: сколько нод можно потерять, исходя из replication factor, и почему нечётное число реплик предпочтительнее.",
+                "edge_cases": "Кворум считается от числа реплик range, а не от числа нод кластера: при 3 репликах потеря 2 из них останавливает запись в этот range, даже если в кластере ещё много живых нод.",
+                "related": "[[cockroachdb-interview#Q4]] leaseholder и Raft-группа; [[cockroachdb-interview#Q3]] Raft вместо Paxos из Spanner; [[cockroachdb-interview#Q8]] кворум через регионы; [[cockroachdb-interview#Q24]] недостаток нод и невозможность кворума."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`CockroachDB` использует один глобальный `Raft`-кворум на весь кластер: любая запись проходит консенсус всех нод.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Консенсус **per-range**, а не глобальный: каждый диапазон данных имеет свою `Raft`-группу из своих реплик, поэтому записи в разные range'и независимы.",
+                "source_of_confusion": "Привычный образ «один Raft-лидер на систему» переносят на распределённую базу, где это не так.",
+                "if_it_were_true": "Будь кворум глобальным, любая запись ждала бы большинство всех нод и не масштабировалась бы линейно с ростом кластера.",
+                "how_it_should_be": "Каждый range имеет независимую `Raft`-группу; глобального кворума на весь кластер нет."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Запись в `Raft` коммитится сразу, как только её приняла **любая одна** реплика, без ожидания большинства.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Коммит требует подтверждения **большинства** (кворума) реплик, а не одной: это и даёт строгую согласованность при отказах.",
+                "source_of_confusion": "Желание низкой latency наводит на мысль, что хватит одного ack, как в async-репликации.",
+                "if_it_were_true": "Будь достаточно одной реплики, split-brain и потеря подтверждённых записей стали бы возможны, что нарушает `ACID`.",
+                "how_it_should_be": "Нужен кворум: при 3 репликах — минимум 2 ack, иначе запись не считается закоммиченной."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "При отказе лидера `Raft` требует ручного вмешательства администратора для назначения нового лидера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Raft` автоматически переизбирает лидера при сбоях по таймауту выборов — ручное вмешательство не требуется.",
+                "source_of_confusion": "Опыт классических master-slave-БД с ручным failover переносят на `Raft`.",
+                "if_it_were_true": "Будь выбор лидера ручным, обещание high availability без single point of failure не выполнялось бы.",
+                "how_it_should_be": "Лидерство восстанавливается автоматически через `Raft`-выборы за доли секунды."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроено разбиение диапазонов (range splitting) в `CockroachDB`?",
+          "options": [
+            {
+              "text": "Range'и никогда не разбиваются автоматически: администратор обязан вручную выполнять `SPLIT AT` по мере роста таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Range'и разбиваются **автоматически** при достижении порога (~512 MB); ручной `SPLIT AT` — лишь опциональная оптимизация, а не обязанность.",
+                "source_of_confusion": "Наличие команды `ALTER TABLE ... SPLIT AT` создаёт впечатление, что разбиение всегда ручное.",
+                "if_it_were_true": "Будь сплит только ручным, забытая таблица превратилась бы в один гигантский неделимый range, чего на практике не происходит.",
+                "how_it_should_be": "Авто-сплит работает по порогу размера; ручной `SPLIT AT` нужен лишь для тонкой настройки производительности."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`CockroachDB` **автоматически** разбивает range при росте примерно до 512 MB: range, выросший к ~1 GB, делится надвое (например, ключи A-K → A-G и G-K), и новые range'и размещаются на менее загруженных нодах. Можно сделать **ручной сплит** через `ALTER TABLE orders SPLIT AT VALUES (100), (200), (300);` — это полезно **перед bulk-import**, чтобы заранее распределить записи по нодам.",
+              "correct": true,
+              "sections": {
+                "explanation": "Перед массовой загрузкой данных ручной `SPLIT AT` заранее создаёт пустые range'и на разных нодах, поэтому import пишет параллельно во много мест, а не упирается в один растущий range.",
+                "example": "Например, `ALTER TABLE orders SPLIT AT VALUES (100),(200),(300)` перед загрузкой 10 млн строк создаёт 4 пустых range'я: импорт пишет в них параллельно с 4 нод вместо одной, и время загрузки падает кратно.",
+                "when_to_apply": "Авто-сплит важен при планировании bulk-load и борьбе с hot range'ами: понимаешь, что система сама дробит большие диапазоны, но «прогрев» сплитами ускоряет старт.",
+                "edge_cases": "Сразу после ручного сплита range'и пустые и могут со временем снова слиться (merge), если данных в них окажется мало — сплит не гарантирует вечного разделения.",
+                "related": "[[cockroachdb-interview#Q4]] range как единица данных; [[cockroachdb-interview#Q15]] сплиты как часть шардинга; [[cockroachdb-interview#Q5]] Raft-группа нового range; [[cockroachdb-interview#Q24]] hot ranges и их устранение."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "При сплите оба новых range'я остаются на той же ноде, что и исходный, чтобы не двигать данные по сети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Новые range'и наоборот размещаются на **менее загруженных нодах** — в этом и смысл сплита для распределения нагрузки.",
+                "source_of_confusion": "Стремление избежать сетевого трафика наводит на мысль, что данные остаются на месте.",
+                "if_it_were_true": "Оставайся оба range'я на одной ноде, сплит не решал бы проблему hot range и перегруженной ноды.",
+                "how_it_should_be": "Сплит сопровождается ребалансировкой: часть новых range'ей переезжает на недогруженные ноды."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Порог сплита фиксирован на уровне отдельной строки: range делится, как только в нём появляется более одной записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порог измеряется в **размере данных** (~512 MB), а не в числе строк: range может спокойно держать миллионы мелких строк до сплита.",
+                "source_of_confusion": "Слово «split» наводит на построчное деление, как при партиционировании по ключу.",
+                "if_it_were_true": "Делись range на каждой строке, число range'ей взорвалось бы и overhead `Raft`-групп стал бы неподъёмным.",
+                "how_it_should_be": "Сплит срабатывает по достижении размерного порога диапазона, а не по количеству строк."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Hybrid Logical Clocks (HLC)` в `CockroachDB`?",
+          "options": [
+            {
+              "text": "`HLC` — это аппаратные атомные часы, встроенные в каждую ноду `CockroachDB` для точного времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HLC` — программный алгоритм поверх NTP, а не железо: атомные часы — это `TrueTime` у `Spanner`, которого в `CockroachDB` нет.",
+                "source_of_confusion": "Раз `HLC` решает ту же задачу, что `TrueTime`, его ошибочно считают таким же аппаратным.",
+                "if_it_were_true": "Будь `HLC` атомными часами, неопределённость времени была бы микросекундной, но на NTP она порядка сотен мс.",
+                "how_it_should_be": "`HLC` чисто программный: физическое время NTP плюс логический счётчик, без специального железа."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`HLC` — это чисто логические счётчики (как векторные часы) без какой-либо привязки к физическому времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HLC` **комбинирует** физическое время (NTP) с логическим счётчиком, а не отбрасывает физическое время полностью.",
+                "source_of_confusion": "Слово «logical» в названии создаёт впечатление, что физический компонент отсутствует.",
+                "if_it_were_true": "Будь это чисто логические часы, таймстампы не соотносились бы с реальным временем и uncertainty-окно не имело бы смысла.",
+                "how_it_should_be": "`HLC` гибридный: `(physical_time, logical_counter)` — физическая часть от NTP, логическая разрешает ничьи."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`HLC` объединяет **физическое время** (NTP) и **логический счётчик** ради глобально упорядоченных таймстампов формата `(physical_time, logical_counter)`. В отличие от `Spanner TrueTime` (аппаратные атомные часы, неопределённость ~7 мс), `CockroachDB` на NTP+HLC имеет бо́льшую неопределённость (~250 мс–1 с). Эффект: иногда нужно **выждать clock uncertainty**, применяются retry для разрешения конфликтов и чуть выше write latency. На практике этого достаточно для большинства workload'ов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда чтение видит запись с таймстампом внутри окна неопределённости, `CockroachDB` не может уверенно сказать, что было раньше, и выполняет uncertainty restart — перечитывает на более позднем таймстампе.",
+                "example": "Например, таймстамп `(1700000000.123, 5)` означает физическое время от NTP плюс логический счётчик 5: если две записи пришли в одну миллисекунду, счётчик 4 и 5 однозначно упорядочит их без атомных часов.",
+                "when_to_apply": "Понимание `HLC` нужно при объяснении, почему `CockroachDB` иногда делает retry-транзакции и почему синхронизация NTP (clock offset) критична для корректности и производительности.",
+                "edge_cases": "Если рассинхрон часов между нодами превысит максимально допустимый offset, нода уводится из кластера (self-terminate), иначе нарушилась бы согласованность таймстампов.",
+                "related": "[[cockroachdb-interview#Q3]] HLC как замена TrueTime; [[cockroachdb-interview#Q14]] Serializable и таймстампы; [[cockroachdb-interview#Q13]] ACID и распределённые транзакции; [[cockroachdb-interview#Q24]] retry из-за clock uncertainty."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`HLC` гарантирует нулевую неопределённость времени, поэтому `CockroachDB` никогда не делает retry из-за часов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Неопределённость у `HLC` как раз **больше**, чем у `TrueTime` (~250 мс–1 с против ~7 мс), и именно из-за неё бывают uncertainty-retry.",
+                "source_of_confusion": "Раз `HLC` обеспечивает согласованность, кажется, что он устраняет неопределённость полностью.",
+                "if_it_were_true": "Будь uncertainty нулевой, не нужны были бы ни «выжидание» окна, ни перезапуски транзакций, но они есть.",
+                "how_it_should_be": "`HLC` управляет, а не устраняет неопределённость: окно есть, и при попадании в него транзакция перезапускается."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроены multi-region deployments в `CockroachDB`?",
+          "options": [
+            {
+              "text": "Multi-region означает, что данные хранятся в одном регионе, а другие регионы держат только read-only кэш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В multi-region реальные **реплики** живут в нескольких регионах (например, по 3 на регион), а не один регион с кэшами в остальных.",
+                "source_of_confusion": "Опыт CDN/read-replica архитектур переносят на распределённые реплики `CockroachDB`.",
+                "if_it_were_true": "Будь данные в одном регионе, отказ этого региона ронял бы всю базу — это противоречит region survival.",
+                "how_it_should_be": "Реплики реально размазаны по регионам; запись проходит кворум, а чтения могут идти из ближайшей реплики."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Записи в multi-region всегда локальны и не требуют согласования между регионами, поэтому latency записи не растёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Записи требуют **кворума**, который при region survival собирается через регионы, поэтому write latency растёт из-за межрегиональных round-trip'ов.",
+                "source_of_confusion": "Желание дешёвой записи наводит на мысль, что кворум всегда локален.",
+                "if_it_were_true": "Будь запись всегда локальной, она не пережила бы отказ целого региона, нарушив гарантии survival.",
+                "how_it_should_be": "Чтения могут быть локальными, но запись при region survival оплачивается cross-region кворумом и латентностью."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В multi-region есть только одна стратегия выживания — пережить отказ одной ноды, без различия зон и регионов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стратегий выживания две: **region survival** (пережить отказ региона) и **zone survival** (пережить отказ зоны, дешевле) — а не единственная нодовая.",
+                "source_of_confusion": "Упрощённое «база переживает отказ ноды» переносят на multi-region, теряя различие зон/регионов.",
+                "if_it_were_true": "Будь стратегия одна, нельзя было бы выбирать между ценой/латентностью (zone) и устойчивостью к падению региона.",
+                "how_it_should_be": "Есть выбор: zone survival (дешевле, ниже latency) или region survival (дороже, переживает падение региона)."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`CockroachDB` поддерживает развёртывание **через несколько регионов** (например, по 3 реплики в `us-east`, `us-west`, `eu-west`). Есть две стратегии репликации: **region survival** (переживает отказ целого региона) и **zone survival** (переживает отказ зоны, дешевле). **Чтения** могут быть локальными (ближайшая реплика), а **записи** требуют кворума через регионы, что повышает latency.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чтобы европейские пользователи читали быстро, leaseholder и реплики их данных размещают в `eu-west`; тогда чтение идёт по локальной сети, а не через океан.",
+                "example": "Например, при region survival на трёх регионах запись из `us-east` собирает кворум с `us-west` или `eu-west`, и её latency вырастает с локальных ~2 мс до десятков-сотен мс на трансатлантический round-trip.",
+                "when_to_apply": "Multi-region проектируют под географию пользователей и требования compliance: размещают данные ближе к клиентам и выбирают survival-уровень исходя из бюджета и критичности.",
+                "edge_cases": "Region survival удорожает запись из-за cross-region кворума, поэтому часто комбинируют: критичные таблицы — region survival, остальные — zone survival ради latency.",
+                "related": "[[cockroachdb-interview#Q9]] region survival vs zone survival; [[cockroachdb-interview#Q10]] locality-настройки нод; [[cockroachdb-interview#Q11]] geo-partitioning данных; [[cockroachdb-interview#Q5]] кворум Raft через регионы."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличается region survival от zone survival в `CockroachDB`?",
+          "options": [
+            {
+              "text": "**Zone survival**: реплики в нескольких зонах одного региона, переживает отказ зоны, **ниже latency** (зоны рядом), дешевле (один регион). **Region survival**: реплики в нескольких регионах, переживает отказ целого региона, **выше latency** (cross-region кворум для записи), дороже. Задаётся через `ALTER DATABASE my_db SURVIVE REGION FAILURE;`. Best practice: zone survival обычно достаточно, region survival — для compliance / критичных приложений.",
+              "correct": true,
+              "sections": {
+                "explanation": "Если БД настроена на zone survival, отказ всей зоны (например, целой AZ в облаке) не роняет базу, но падение всего региона — роняет; region survival закрывает и этот сценарий ценой межрегиональной записи.",
+                "example": "Например, банковский `ledger` с требованием пережить потерю региона переводят командой `ALTER DATABASE bank SURVIVE REGION FAILURE`, и `CockroachDB` сам раскидывает реплики так, чтобы кворум собирался минимум из двух регионов.",
+                "when_to_apply": "Выбор делают по требованиям: zone survival — дефолт для большинства, region survival включают, когда регулятор или SLA требуют пережить потерю целого региона.",
+                "edge_cases": "Region survival требует минимум трёх регионов, чтобы собрать кворум при падении одного: на двух регионах пережить отказ региона нельзя — не наберётся большинство.",
+                "related": "[[cockroachdb-interview#Q8]] multi-region deployments; [[cockroachdb-interview#Q10]] locality для размещения реплик; [[cockroachdb-interview#Q5]] кворум Raft и отказоустойчивость; [[cockroachdb-interview#Q22]] выбор уровня под compliance."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Zone survival переживает отказ региона, а region survival — отказ зоны; разница только в названии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: **zone** survival переживает отказ зоны, **region** survival — отказ региона; названия точно отражают уровень устойчивости.",
+                "source_of_confusion": "Похожие термины «zone» и «region» легко перепутать местами.",
+                "if_it_were_true": "Будь так, команда `SURVIVE REGION FAILURE` защищала бы лишь от падения зоны, что противоречит её имени.",
+                "how_it_should_be": "Имя стратегии = уровню, который она переживает: zone → зона, region → регион."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Region survival дешевле и быстрее zone survival, потому что данных в нём меньше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Region survival **дороже и медленнее на запись** из-за cross-region кворума; zone survival дешевле и быстрее, так как зоны рядом.",
+                "source_of_confusion": "Кажется, что более «крупная» защита эффективнее и потому дешевле, но cross-region трафик стоит латентности.",
+                "if_it_were_true": "Будь region survival быстрее, не было бы смысла оставлять zone survival дефолтом ради latency.",
+                "how_it_should_be": "Цена устойчивости к падению региона — рост write latency; zone survival остаётся дешевле и быстрее."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Уровень выживания нельзя менять на лету — он задаётся только при первичной установке кластера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уровень меняется декларативно на работающей базе через `ALTER DATABASE ... SURVIVE ...`, а не фиксируется при установке кластера.",
+                "source_of_confusion": "Опыт жёстких топологий старых СУБД создаёт впечатление, что survival неизменяем.",
+                "if_it_were_true": "Будь он неизменяемым, нельзя было бы повысить устойчивость критичной таблицы без пересоздания кластера.",
+                "how_it_should_be": "Survival goal — свойство БД, переключаемое `ALTER DATABASE`, и `CockroachDB` сам перебалансирует реплики."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Для чего нужны locality-настройки в `CockroachDB`?",
+          "options": [
+            {
+              "text": "`--locality` задаёт пароль ноды для аутентификации в кластере и не влияет на размещение данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--locality` описывает географию ноды (region/zone) и используется для размещения реплик и leaseholder'ов, а не для аутентификации.",
+                "source_of_confusion": "Флаг при `cockroach start` выглядит как параметр подключения, поэтому его путают с настройкой доступа.",
+                "if_it_were_true": "Будь это пароль, изменение локальности не влияло бы на failure isolation и follower reads, но оно влияет.",
+                "how_it_should_be": "`--locality` — это метки топологии (region/zone), которые движок учитывает при балансировке реплик."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Каждая нода объявляет свою локальность, например: `cockroach start --locality=region=us-east-1,zone=us-east-1a`. `CockroachDB` использует locality, чтобы: размещать реплики в разных зонах/регионах (failure isolation), располагать **leaseholder** ближе к пользователю, и включать **follower reads** (чтение из локальной реплики). По сути это метки топологии, по которым движок принимает решения о расстановке данных.",
+              "correct": true,
+              "sections": {
+                "explanation": "Указав `region=eu-west` европейским нодам, ты позволяешь системе держать реплики и leaseholder'ы данных EU-пользователей именно там, сокращая latency их чтений и записей.",
+                "example": "Например, шесть нод стартуют как `--locality=region=us-east,zone=a/b/c` и `region=eu-west,zone=a/b/c`; по этим меткам движок раскладывает 3 реплики каждого range по трём разным зонам, а не в одну.",
+                "when_to_apply": "Locality настраивают при развёртывании multi-region кластера: без корректных меток `CockroachDB` не сможет ни изолировать отказы по зонам, ни оптимизировать чтения по близости.",
+                "edge_cases": "Неверные метки опасны: если все ноды объявят одну зону, реплики окажутся в одной зоне и отказ этой зоны положит базу, несмотря на формальный replication factor 3.",
+                "related": "[[cockroachdb-interview#Q8]] multi-region и размещение реплик; [[cockroachdb-interview#Q9]] survival-стратегии и зоны; [[cockroachdb-interview#Q11]] geo-partitioning поверх locality; [[cockroachdb-interview#Q24]] ошибки конфигурации locality."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Locality задаётся один раз глобально для всего кластера, а не для каждой ноды отдельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Локальность объявляет **каждая нода** про себя (свой region/zone) — именно так движок узнаёт топологию кластера.",
+                "source_of_confusion": "Желание «настроить кластер целиком» наводит на мысль о единой глобальной локальности.",
+                "if_it_were_true": "Будь locality глобальной, движок не различал бы, где какая нода стоит, и не смог бы изолировать отказы зон.",
+                "how_it_should_be": "Каждая нода стартует со своим `--locality`; кластер собирает топологию из этих меток."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Locality влияет только на чтения и никак не учитывается при размещении реплик и записей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Locality влияет и на размещение **реплик** (failure isolation), и на расстановку leaseholder'ов — то есть на записи тоже, не только на чтения.",
+                "source_of_confusion": "Акцент на follower reads создаёт впечатление, что locality — чисто read-оптимизация.",
+                "if_it_were_true": "Будь это только про чтения, нельзя было бы добиться зональной изоляции отказов для записей.",
+                "how_it_should_be": "Locality управляет полным размещением данных: где реплики, где leaseholder и откуда читать."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое geo-partitioning (data locality) в `CockroachDB`?",
+          "options": [
+            {
+              "text": "Geo-partitioning — это автоматическое дублирование всех данных во все регионы без какого-либо контроля разработчика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Geo-partitioning, наоборот, **прикрепляет конкретные партиции к конкретным регионам** (`PARTITION BY LIST` + `CONFIGURE ZONE`), а не слепо копирует всё всюду.",
+                "source_of_confusion": "Multi-region ассоциируется с «данные везде», поэтому geo-partitioning путают с тотальным дублированием.",
+                "if_it_were_true": "Будь это дублирование всего, не достигалась бы цель GDPR — держать данные ЕС именно в ЕС, а не во всех регионах.",
+                "how_it_should_be": "Это адресное размещение: партиции по region-ключу прибиваются к нужным регионам zone-constraints."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Geo-partitioning работает только для чтений: данные физически лежат в одном регионе, а пользователи лишь читают их локально.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Geo-partitioning физически **размещает сами данные** в нужном регионе, обеспечивая локальные и чтения, и записи, а не только чтение из одного места.",
+                "source_of_confusion": "Read-replica-модель наводит на мысль, что данные централизованы, а локально только чтения.",
+                "if_it_were_true": "Лежи данные ЕС в одном регионе, не выполнялось бы требование резидентности данных (GDPR) и записи были бы межрегиональными.",
+                "how_it_should_be": "Партиция реально живёт в своём регионе, поэтому и чтения, и записи к ней локальны."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Geo-partitioning **разбивает таблицу по региону** ради data locality (compliance, latency): `ALTER TABLE customers PARTITION BY LIST (region) (PARTITION europe VALUES IN ('FR','DE'), PARTITION us VALUES IN ('US'));`, затем `ALTER PARTITION europe ... CONFIGURE ZONE USING constraints = '[+region=eu-west]';`. Эффект: европейские клиенты → данные в EU (GDPR compliance), US-клиенты → данные в US, локальные чтения/записи (низкая latency). Аналог regional placement у `Spanner`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Строка клиента с `region='DE'` физически окажется в `eu-west`, поэтому запросы немецкого пользователя обслуживаются европейскими нодами без трансатлантических round-trip'ов.",
+                "example": "Например, у SaaS с клиентами из ЕС и США партиция `europe VALUES IN ('FR','DE')` прибивается constraint'ом `[+region=eu-west]`, и персональные данные французов гарантированно не покидают ЕС — это закрывает требование GDPR по резидентности.",
+                "when_to_apply": "Применяют, когда есть регуляторное требование резидентности данных (GDPR) и/или нужно резко снизить latency для географически разнесённых пользователей.",
+                "edge_cases": "Ключ партиционирования должен реально коррелировать с географией пользователя: если `region`-колонка заполнена неверно, данные уедут не в тот регион, и compliance/latency сломаются.",
+                "related": "[[cockroachdb-interview#Q8]] multi-region основа; [[cockroachdb-interview#Q10]] locality-метки для constraints; [[cockroachdb-interview#Q9]] survival и размещение; [[cockroachdb-interview#Q3]] regional placement как у Spanner."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Geo-partitioning — это шифрование данных по регионам, чтобы каждый регион имел свой ключ шифрования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Geo-partitioning — про физическое **размещение** партиций по регионам, а не про региональные ключи шифрования.",
+                "source_of_confusion": "Тема compliance/GDPR ассоциируется с шифрованием, отсюда подмена понятия.",
+                "if_it_were_true": "Будь это шифрование, данные всё равно могли бы лежать вне ЕС, нарушая резидентность, которую geo-partitioning как раз обеспечивает.",
+                "how_it_should_be": "Это управление местоположением данных по region-ключу; шифрование — отдельный, независимый механизм."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Насколько `CockroachDB` совместим с `PostgreSQL`?",
+          "options": [
+            {
+              "text": "`CockroachDB` — это форк исходного кода `PostgreSQL`, поэтому поддерживает абсолютно все его фичи и расширения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CockroachDB` совместим только по **wire-протоколу** и написан с нуля на Go; это не форк PG-кода, и часть фич (PostGIS, триггеры, хранимки) ограничена.",
+                "source_of_confusion": "Полная wire-совместимость создаёт иллюзию, что внутри тот же `PostgreSQL`.",
+                "if_it_were_true": "Будь это форк PG, поддерживались бы все расширения, но `PostGIS`, `hstore` и FDW ограничены или отсутствуют.",
+                "how_it_should_be": "Совместимость на уровне протокола и SQL-диалекта, а не кодовой базы; форкнул PG-код как раз `YugabyteDB`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Совместимость означает, что `CockroachDB` понимает только синтаксис SQL, но требует другой клиент и драйвер, а не pgwire.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CockroachDB` совместим именно по **pgwire**: работают `pgBouncer`, стандартные pgwire-клиенты и ORM (`Hibernate`, `ActiveRecord`, `Sequelize`) без своего драйвера.",
+                "source_of_confusion": "Раз база другая, кажется, что и протокол подключения должен быть свой.",
+                "if_it_were_true": "Будь нужен особый драйвер, нельзя было бы подключаться существующими PG-клиентами и ORM без изменений.",
+                "how_it_should_be": "Подключение идёт через стандартный PostgreSQL-драйвер по wire-протоколу; отдельный клиент не нужен."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Миграция с `PostgreSQL` на `CockroachDB` всегда полностью бесшовна и не требует тестирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Миграция обычно проходит гладко, но требует **тщательного тестирования**: часть функций, триггеров и хранимок поддержана ограниченно.",
+                "source_of_confusion": "Громкое обещание совместимости создаёт ложную уверенность в нулевых усилиях.",
+                "if_it_were_true": "Будь миграция всегда бесшовной, не было бы списка ограничений и предупреждения «test thoroughly».",
+                "how_it_should_be": "Совместимость высокая, но не стопроцентная: перед продакшеном миграцию нужно тщательно проверять."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`CockroachDB` совместим с `PostgreSQL` по **wire-протоколу**, поэтому большинство приложений работает без изменений. **Совместимо:** стандартный SQL (по большей части), `pgBouncer` и pgwire-клиенты, ORM (`Hibernate`, `ActiveRecord`, `Sequelize`), миграционные инструменты. **Несовместимо или ограниченно:** PostgreSQL-расширения (`PostGIS`, `hstore` — limited), часть функций, триггеры и хранимые процедуры (limited). Путь миграции PostgreSQL → CockroachDB обычно smooth, но нужно **test thoroughly**.",
+              "correct": true,
+              "sections": {
+                "explanation": "Существующее Spring-приложение на `Hibernate` с PostgreSQL-диалектом часто подключается к `CockroachDB`, лишь сменив URL, потому что общается с базой по тому же pgwire.",
+                "example": "Например, `psql -h cockroach-host -p 26257` подключается к `CockroachDB` стандартным клиентом `PostgreSQL`, и обычные `SELECT`/`INSERT`/`JOIN` выполняются как есть, без переписывания запросов.",
+                "when_to_apply": "Знание границ совместимости нужно при оценке миграции: что переедет без правок, а где придётся переписать триггеры, хранимки или отказаться от `PostGIS`.",
+                "edge_cases": "Подводный камень — поведение по умолчанию: уровень изоляции у `CockroachDB` `SERIALIZABLE`, а у `PostgreSQL` `READ COMMITTED`, что меняет частоту retry даже при полной синтаксической совместимости.",
+                "related": "[[cockroachdb-interview#Q1]] что такое CockroachDB; [[cockroachdb-interview#Q14]] разница в уровне изоляции по умолчанию; [[cockroachdb-interview#Q17]] ограничения vs PostgreSQL; [[cockroachdb-interview#Q20]] более полная совместимость у YugabyteDB."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `CockroachDB` обеспечивает `ACID`-транзакции?",
+          "options": [
+            {
+              "text": "`CockroachDB` даёт **полный `ACID`** даже для распределённых транзакций. Пример: `BEGIN; INSERT INTO orders ...; UPDATE inventory SET qty = qty - 1 WHERE id = 5; COMMIT;`. Распределённая транзакция использует coordinator-ноды (`TxnCoordSender`), протокол **two-phase commit (2PC)** и **автоматические retry при contention**. Минус: транзакции **медленны** для high-conflict нагрузок (много retry), поэтому лучше всего работают **изолированные** транзакции, не пересекающиеся по одним и тем же ключам.",
+              "correct": true,
+              "sections": {
+                "explanation": "Транзакция, меняющая `orders` и `inventory` на разных нодах, атомарна: либо обе записи коммитятся через 2PC, либо обе откатываются — частичного результата не бывает даже при распределении по кластеру.",
+                "example": "Например, перевод денег между счетами `A` и `B`, чьи строки лежат в разных range'ах на разных нодах, либо спишет и зачислит обе суммы, либо не сделает ничего — баланс никогда не «зависнет» наполовину.",
+                "when_to_apply": "Понимание распределённого `ACID` нужно при проектировании схемы: транзакции стоит делать короткими и не конкурирующими по горячим строкам, иначе retry убьют производительность.",
+                "edge_cases": "При высокой конкуренции `CockroachDB` может вернуть retryable-ошибку (`40001`), и приложение обязано повторить транзакцию — это нормальная часть модели, а не сбой.",
+                "related": "[[cockroachdb-interview#Q14]] уровни изоляции; [[cockroachdb-interview#Q7]] HLC и таймстампы транзакций; [[cockroachdb-interview#Q5]] Raft-коммит записи; [[cockroachdb-interview#Q24]] transaction retries как частая проблема."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`CockroachDB` поддерживает `ACID` только в пределах одной ноды; транзакции через несколько нод работают как eventual consistency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CockroachDB` даёт полный `ACID` **через несколько нод** благодаря 2PC и `Raft`; распределённые транзакции строго согласованы, а не eventual.",
+                "source_of_confusion": "Опыт NoSQL, где cross-node означает eventual consistency, переносят на `CockroachDB`.",
+                "if_it_were_true": "Будь cross-node транзакции eventual, нельзя было бы использовать базу для банковских ledger'ов, для которых её и берут.",
+                "how_it_should_be": "Распределённые транзакции `CockroachDB` строго `ACID`: 2PC + `Raft`-кворум гарантируют атомарность и согласованность."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Распределённые транзакции в `CockroachDB` используют однофазный коммит без координатора, поэтому всегда мгновенны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используется **two-phase commit (2PC)** с координатором (`TxnCoordSender`), а не однофазный коммит, и при contention бывают retry.",
+                "source_of_confusion": "Желание простоты и скорости наводит на мысль об отсутствии второй фазы и координатора.",
+                "if_it_were_true": "Будь коммит однофазным без координатора, атомарность нескольких range'ей не гарантировалась бы при сбое посередине.",
+                "how_it_should_be": "Транзакция координируется (`TxnCoordSender`) и коммитится в две фазы; мгновенности при конфликтах нет."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "При contention `CockroachDB` молча теряет одну из конкурирующих транзакций без уведомления приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При contention транзакция либо автоматически ретраится внутри, либо возвращает **retryable-ошибку** приложению — данные не теряются молча.",
+                "source_of_confusion": "Идея «кто-то должен проиграть» при конфликте наводит на мысль о тихой потере транзакции.",
+                "if_it_were_true": "Теряй база транзакцию молча, это нарушало бы Durability и Consistency из `ACID`, которые она гарантирует.",
+                "how_it_should_be": "Конфликт разрешается через retry; проигравшая транзакция явно перезапускается, а не исчезает без следа."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие уровни изоляции в `CockroachDB` и почему `SERIALIZABLE` по умолчанию?",
+          "options": [
+            {
+              "text": "По умолчанию в `CockroachDB`, как и в `PostgreSQL`, уровень `READ COMMITTED`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `CockroachDB` по умолчанию **`SERIALIZABLE`** — это сознательное отличие от `PostgreSQL`, где дефолт `READ COMMITTED`.",
+                "source_of_confusion": "Привычка к PostgreSQL-дефолту переносится на `CockroachDB` из-за их совместимости.",
+                "if_it_were_true": "Будь дефолт `READ COMMITTED`, не было бы характерных для `CockroachDB` serialization-retry на конкурентной нагрузке.",
+                "how_it_should_be": "Дефолт — самый строгий `SERIALIZABLE`; `READ COMMITTED` нужно запрашивать явно."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "**По умолчанию `SERIALIZABLE`** — сильнейшая изоляция, гарантирующая `ACID` без аномалий. Это отличается от `PostgreSQL`, где дефолт — `READ COMMITTED`. Цена `SERIALIZABLE`: больше retry и медленнее записи при конкуренции. С **`CockroachDB` v23+** добавили опцию **`READ COMMITTED`** (для PostgreSQL-совместимости): `BEGIN ISOLATION LEVEL READ COMMITTED;`. Best practice: `SERIALIZABLE` для correctness-critical, `READ COMMITTED` для legacy-миграций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Под `SERIALIZABLE` две конкурентные транзакции, читающие и пишущие пересекающиеся строки, не могут закоммититься обе с аномалией — одна получит serialization-ошибку и перезапустится.",
+                "example": "Например, два параллельных бронирования последнего билета под `SERIALIZABLE` не пройдут оба: одно закоммитится, второе получит ошибку `40001` и повторится, увидев, что мест уже нет — write skew исключён.",
+                "when_to_apply": "Уровень выбирают по задаче: финансовая логика и инварианты — `SERIALIZABLE`; перенос legacy-кода, рассчитанного на PG-семантику и меньшее число retry, — `READ COMMITTED`.",
+                "edge_cases": "`READ COMMITTED` в `CockroachDB` появился только с v23+: на более старых версиях такого выбора не было, и весь код работал строго под `SERIALIZABLE`.",
+                "related": "[[cockroachdb-interview#Q13]] ACID-транзакции; [[cockroachdb-interview#Q12]] PostgreSQL-совместимость и дефолты; [[cockroachdb-interview#Q7]] HLC и упорядочивание транзакций; [[cockroachdb-interview#Q24]] retry из-за Serializable."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`CockroachDB` поддерживает только `SERIALIZABLE` и не имеет других уровней изоляции вовсе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо `SERIALIZABLE`, с v23+ доступен и **`READ COMMITTED`** (`BEGIN ISOLATION LEVEL READ COMMITTED`), так что выбор есть.",
+                "source_of_confusion": "Раз `SERIALIZABLE` — дефолт и «фишка» базы, кажется, что других уровней нет.",
+                "if_it_were_true": "Будь уровень один, не появилась бы команда `BEGIN ISOLATION LEVEL READ COMMITTED` и упоминание PostgreSQL-совместимости.",
+                "how_it_should_be": "Есть как минимум два уровня: `SERIALIZABLE` (дефолт) и `READ COMMITTED` (с v23+)."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`SERIALIZABLE` в `CockroachDB` быстрее `READ COMMITTED`, потому что не нужно отслеживать конфликты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SERIALIZABLE` **дороже**: он отслеживает конфликты и при их обнаружении делает retry, поэтому на конкурентной нагрузке медленнее, чем `READ COMMITTED`.",
+                "source_of_confusion": "Кажется, что «строгий» уровень оптимизирован и потому быстрее, но строгость стоит дополнительных проверок.",
+                "if_it_were_true": "Будь `SERIALIZABLE` быстрее, незачем было бы вводить `READ COMMITTED` ради производительности legacy-нагрузок.",
+                "how_it_should_be": "Самая строгая изоляция платит латентностью и retry; `READ COMMITTED` слабее, но быстрее при конкуренции."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова стратегия шардинга (sharding) в `CockroachDB`?",
+          "options": [
+            {
+              "text": "Шардинг в `CockroachDB` настраивается вручную: разработчик сам определяет shard-ключ и распределяет данные по нодам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шардинг **автоматический**: `CockroachDB` сам делит данные на ranges по primary key и ребалансирует их — ручной shard-ключ не нужен.",
+                "source_of_confusion": "Опыт ручного шардинга (`Vitess`, app-level sharding) переносят на `CockroachDB`.",
+                "if_it_were_true": "Будь шардинг ручным, добавление ноды требовало бы ручного переразмещения данных, но `CockroachDB` ребалансирует сам.",
+                "how_it_should_be": "Шардинг auto: данные дробятся на ranges автоматически, ручная настройка shard-ключа не требуется."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`CockroachDB` шардирует данные по случайному хэшу всех колонок строки, игнорируя primary key.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолтное разбиение на ranges идёт **по primary key** (по порядку ключей), а не по случайному хэшу всех колонок.",
+                "source_of_confusion": "Желание равномерности наводит на мысль о хэше всей строки.",
+                "if_it_were_true": "Будь шардинг по хэшу всех колонок, диапазонные сканы по PK были бы невозможны, но они работают.",
+                "how_it_should_be": "Ranges формируются по primary key; хэш применяется адресно — в hash-sharded индексах против hot range."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Шардинг **автоматический** — ручной настройки нет. `CockroachDB` сам делит данные на ranges: по primary key, размер range ~512 MB, авто-ребаланс на новые ноды. **Ручной контроль:** `PARTITION BY` (geo-partitioning), `SPLIT AT` (ручные сплиты), `INDEX (col) USING HASH` (hash-sharded индекс против hot ranges). **Проблема hot range:** последовательный PK (timestamp, sequence) → все записи в один range; решение — `UUID` или hash-sharded индекс.",
+              "correct": true,
+              "sections": {
+                "explanation": "Если PK — авто-инкремент или текущий timestamp, новые строки всегда попадают в «правый» край и пишутся в один range на одной ноде; замена на `UUID` размазывает записи по кластеру.",
+                "example": "Например, таблица событий с PK `INT GENERATED ALWAYS AS IDENTITY` упрётся в один hot range; смена PK на `gen_random_uuid()` или индекс `USING HASH WITH BUCKET_COUNT = 8` распределит вставки по 8 нодам.",
+                "when_to_apply": "Стратегию шардинга учитывают при проектировании схемы под write-heavy нагрузку: выбор PK и решение про hash-sharded индекс напрямую определяют, упрётся ли запись в hot range.",
+                "edge_cases": "Hash-sharded индекс убирает hot range, но добавляет накладные расходы и портит локальность диапазонных сканов по этому ключу — это компромисс, а не бесплатное ускорение.",
+                "related": "[[cockroachdb-interview#Q6]] range splitting; [[cockroachdb-interview#Q16]] hash-sharded индексы; [[cockroachdb-interview#Q4]] ranges как единица распределения; [[cockroachdb-interview#Q24]] hot ranges как частая проблема."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "После старта число ranges фиксировано: `CockroachDB` не создаёт новые шарды при росте данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Число ranges **динамическое**: при росте до ~512 MB range авто-сплитится, и новые ranges размещаются на недогруженных нодах.",
+                "source_of_confusion": "Опыт статичных шард-кластеров наводит на мысль о фиксированном числе шардов.",
+                "if_it_were_true": "Будь число ranges фиксированным, рост таблицы упирался бы в ёмкость одного range, чего на практике нет.",
+                "how_it_should_be": "Ranges создаются и сплитятся динамически по мере роста; шардинг эластичен."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы индексов поддерживает `CockroachDB`?",
+          "options": [
+            {
+              "text": "`CockroachDB` поддерживает только обычные B-tree индексы и не имеет hash-sharded, partial, inverted и spatial индексов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо B-tree, есть **hash-sharded**, **partial** (`WHERE`), **inverted** (для `JSONB`) и **spatial** (limited PostGIS) индексы.",
+                "source_of_confusion": "Образ «распределённая база — значит примитивные индексы» наводит на мысль об одном типе.",
+                "if_it_were_true": "Будь только B-tree, не было бы инструментов против hot range (`USING HASH`) и индексов по `JSONB`.",
+                "how_it_should_be": "Типов несколько: B-tree, hash-sharded, partial, inverted (JSONB) и ограниченные spatial."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Hash-sharded индекс (`USING HASH`) нужен, чтобы ускорить точечный поиск по одному значению ключа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hash-sharded индекс существует для **распределения hot range'ей** (например, по `timestamp`), а не для ускорения точечного поиска по одному значению.",
+                "source_of_confusion": "Слово «hash» ассоциируется с быстрым точечным lookup, как hash-индекс в обычных СУБД.",
+                "if_it_were_true": "Будь это про точечный поиск, B-tree справлялся бы не хуже; смысл `USING HASH` — именно размазать последовательные записи.",
+                "how_it_should_be": "Hash-sharded индекс борется с hot range при монотонном ключе, распределяя записи по bucket'ам."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Inverted-индексы в `CockroachDB` создаются для ускорения числовых диапазонных запросов по обычным колонкам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inverted-индексы предназначены для **`JSONB`** (и подобных составных типов), а не для числовых диапазонов по скалярным колонкам — для них служит B-tree.",
+                "source_of_confusion": "Термин «inverted index» из полнотекстового поиска путают с обычными range-индексами.",
+                "if_it_were_true": "Будь inverted про числа, не было бы примера `CREATE INVERTED INDEX ON orders (data)` именно по `JSONB`-колонке.",
+                "how_it_should_be": "Inverted-индекс индексирует содержимое `JSONB`; диапазоны по числам покрывает B-tree."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Типы индексов: **B-tree** (стандартные, в т.ч. составные: `CREATE INDEX ON orders (customer_id, created_at)`); **hash-sharded** для распределения hot range'ей: `CREATE INDEX ON events (timestamp) USING HASH WITH BUCKET_COUNT = 8`; **partial** (по условию): `CREATE INDEX active_users ON users (last_login) WHERE active = true`; **inverted** (для `JSONB`): `CREATE INVERTED INDEX ON orders (data)`; **spatial** — limited PostGIS support.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hash-sharded индекс по `timestamp` с 8 bucket'ами раскидывает монотонно растущие записи по 8 диапазонам вместо одного, устраняя hot range на write-heavy таблице событий.",
+                "example": "Например, `CREATE INDEX active_users ON users (last_login) WHERE active = true` индексирует только активных пользователей, поэтому индекс меньше и быстрее, чем полный индекс по всей таблице с миллионами неактивных строк.",
+                "when_to_apply": "Тип индекса выбирают под запрос: составной B-tree под фильтр по нескольким колонкам, partial — чтобы не индексировать неактивные строки, inverted — для поиска внутри `JSONB`.",
+                "edge_cases": "Spatial-индексы поддержаны ограниченно: полноценный `PostGIS` в `CockroachDB` неполон, поэтому тяжёлую геоаналитику закладывать на него рискованно.",
+                "related": "[[cockroachdb-interview#Q15]] индексы против hot range; [[cockroachdb-interview#Q12]] PostgreSQL-совместимость индексов; [[cockroachdb-interview#Q17]] ограниченный PostGIS; [[cockroachdb-interview#Q6]] range splitting и распределение записей."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ограничения у `CockroachDB` по сравнению с `PostgreSQL`?",
+          "options": [
+            {
+              "text": "`CockroachDB` не поддерживает или поддерживает ограниченно: хранимые процедуры (limited), триггеры (limited), materialized views (появились позже), full-text search (limited), `PostGIS` (limited), часть `JSONB`-операторов, `LISTEN/NOTIFY`, foreign data wrappers (FDW), тип `XML`, custom types (limited), часть `LATERAL`-джойнов. Вывод для продакшена: миграцию legacy PostgreSQL-приложений нужно **тщательно тестировать**, не полагаясь на стопроцентную совместимость.",
+              "correct": true,
+              "sections": {
+                "explanation": "Приложение, завязанное на `LISTEN/NOTIFY` для пуш-уведомлений или на `PostGIS` для геозапросов, не переедет «как есть»: эти механизмы придётся заменить (например, на CDC через changefeeds вместо NOTIFY).",
+                "example": "Например, код на `PostgreSQL`, ждущий событий через `LISTEN new_order;`, в `CockroachDB` переписывают на `CREATE CHANGEFEED FOR orders INTO 'kafka://...'`, потому что `LISTEN/NOTIFY` там не поддержан.",
+                "when_to_apply": "Список ограничений сверяют на этапе оценки миграции: он определяет, какие части приложения переедут без правок, а какие требуют переписывания или иной архитектуры.",
+                "edge_cases": "Часть ограничений со временем снимается (materialized views уже появились), поэтому актуальный список нужно сверять с версией: то, что нельзя в одной версии, может стать доступным в следующей.",
+                "related": "[[cockroachdb-interview#Q12]] PostgreSQL-совместимость в целом; [[cockroachdb-interview#Q16]] ограниченный PostGIS среди индексов; [[cockroachdb-interview#Q20]] более полная совместимость YugabyteDB; [[cockroachdb-interview#Q24]] ошибки при миграции с PostgreSQL."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`CockroachDB` поддерживает все возможности `PostgreSQL`, включая `PostGIS`, FDW и `LISTEN/NOTIFY`, без ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Многое поддержано лишь **ограниченно или отсутствует**: `PostGIS`, FDW, `LISTEN/NOTIFY`, триггеры и хранимки — как раз в списке ограничений.",
+                "source_of_confusion": "Сильная wire-совместимость создаёт иллюзию полного паритета фич.",
+                "if_it_were_true": "Будь паритет полным, не существовало бы предупреждения «test thoroughly» и перечня неподдерживаемых возможностей.",
+                "how_it_should_be": "Совместимость частична: ряд PostgreSQL-фич ограничен или не реализован."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Главное ограничение `CockroachDB` — отсутствие поддержки `JOIN` и подзапросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JOIN` и подзапросы как раз **поддерживаются** (это NewSQL); ограничения касаются триггеров, хранимок, `PostGIS`, FDW и подобного.",
+                "source_of_confusion": "Образ «распределённая база не умеет JOIN» из мира NoSQL переносят на `CockroachDB`.",
+                "if_it_were_true": "Не будь `JOIN`, `CockroachDB` не претендовал бы на роль PostgreSQL-совместимой SQL-базы.",
+                "how_it_should_be": "`JOIN` и подзапросы доступны; ограничены экзотические и тяжёлые PG-фичи, а не базовый SQL."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Ограничения `CockroachDB` зафиксированы навсегда и никогда не расширяются от версии к версии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Список ограничений **сокращается со временем**: например, materialized views уже добавили, и фичи постепенно появляются в новых версиях.",
+                "source_of_confusion": "Статичное восприятие продукта наводит на мысль о неизменном наборе ограничений.",
+                "if_it_were_true": "Будь список неизменным, не было бы пометок «newer support» и эволюции совместимости между релизами.",
+                "how_it_should_be": "Ограничения версионно-зависимы: их нужно сверять с конкретной версией, так как набор расширяется."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `CockroachDB` отличается от `Google Spanner`?",
+          "options": [
+            {
+              "text": "`CockroachDB` использует `TrueTime` (атомные часы) и `Paxos`, как и `Spanner`, — отличий по часам и консенсусу нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CockroachDB` использует `HLC` (на NTP) и `Raft`, а `TrueTime`+`Paxos` — это именно `Spanner`; в этом ключевое архитектурное различие.",
+                "source_of_confusion": "Концептуальное родство наводит на мысль об идентичных механизмах времени и консенсуса.",
+                "if_it_were_true": "Будь у `CockroachDB` атомные часы, исчезла бы его главная фишка — работать на commodity-железе без спец-оборудования.",
+                "how_it_should_be": "Время: `HLC` (NTP) против `TrueTime`; консенсус: `Raft` против `Paxos` — это и отличает базы."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Ключевые отличия: **хостинг** — `CockroachDB` self-host или `CockroachCloud`, `Spanner` — только managed в GCP; **open source** — `CockroachDB` BSL (в основном бесплатен), `Spanner` проприетарен; **время** — `HLC` (NTP) против `TrueTime` (атомные часы); **согласованность** — `SERIALIZABLE` против external consistency (строже); **SQL** — PostgreSQL wire против собственного GoogleSQL; **стоимость** — `CockroachDB` дешевле, `Spanner` дорог. `Spanner` — gold standard, но GCP-only; `CockroachDB` демократизирует его идеи как open-source.",
+              "correct": true,
+              "sections": {
+                "explanation": "Команде, которой нельзя в GCP (multi-cloud или on-prem требование), `Spanner` недоступен в принципе, а `CockroachDB` ставится где угодно — это часто решающий фактор выбора.",
+                "example": "Например, финтех с требованием on-prem и работы поверх `AWS`+`Azure` развернёт `CockroachDB` в обоих облаках одним кластером, тогда как `Spanner` пришлось бы целиком переезжать в `GCP`.",
+                "when_to_apply": "Сравнение разбирают, когда нужна глобальная распределённая SQL: `Spanner` берут внутри GCP при максимальных требованиях к согласованности, `CockroachDB` — ради open-source и multi-cloud.",
+                "edge_cases": "External consistency `Spanner` строго сильнее `SERIALIZABLE`: благодаря `TrueTime` он гарантирует ещё и согласованность реального времени между транзакциями, чего `HLC` без атомных часов дать не может.",
+                "related": "[[cockroachdb-interview#Q3]] inspired by Spanner; [[cockroachdb-interview#Q7]] HLC против TrueTime; [[cockroachdb-interview#Q5]] Raft против Paxos; [[cockroachdb-interview#Q22]] когда выбирать CockroachDB."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Spanner` дешевле и проще `CockroachDB`, потому что это open-source-проект без облачной привязки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Spanner` проприетарен, GCP-only и дорог, а open-source и (как правило) дешевле — `CockroachDB`.",
+                "source_of_confusion": "Громкое имя Google ассоциируется с доступностью и открытостью, что здесь не так.",
+                "if_it_were_true": "Будь `Spanner` open-source и дешёвым, не возник бы запрос на `CockroachDB` как на его демократизацию.",
+                "how_it_should_be": "Open-source и более низкая стоимость — у `CockroachDB`; `Spanner` закрыт, привязан к GCP и дорог."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`CockroachDB` использует собственный диалект GoogleSQL, а `Spanner` — PostgreSQL wire-протокол.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: **PostgreSQL wire** — у `CockroachDB`, а собственный **GoogleSQL** — у `Spanner` (хотя `Spanner` позже добавил PG-интерфейс).",
+                "source_of_confusion": "Диалекты легко перепутать местами при поверхностном сравнении.",
+                "if_it_were_true": "Будь у `CockroachDB` GoogleSQL, не работали бы PostgreSQL-ORM и pgwire-клиенты, на которые он рассчитан.",
+                "how_it_should_be": "`CockroachDB` говорит на pgwire; родной диалект `Spanner` — GoogleSQL."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `CockroachDB` отличается от `Amazon Aurora`?",
+          "options": [
+            {
+              "text": "И `CockroachDB`, и `Aurora` — multi-master: запись можно вести в любую ноду в обоих случаях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-master (запись в любую ноду) — это `CockroachDB`; `Aurora PostgreSQL` имеет **один writer** (single master), реплики — read-only.",
+                "source_of_confusion": "Обе масштабируемы и распределены по хранилищу, поэтому модель записи путают.",
+                "if_it_were_true": "Будь `Aurora` multi-master, у неё не было бы ограничения «один writer» и отдельного Global Database для multi-region.",
+                "how_it_should_be": "Multi-master — у `CockroachDB`; `Aurora` пишет через единственный master."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Aurora` — настоящая distributed SQL с multi-region writes, а `CockroachDB` работает только в одном регионе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: multi-region writes — у `CockroachDB`; `Aurora` распределяет **хранилище**, но имеет single writer, а cross-region — это read-replica или Global DB с одним writer.",
+                "source_of_confusion": "Маркетинг «distributed storage» у `Aurora` путают с distributed SQL и multi-region записью.",
+                "if_it_were_true": "Будь `CockroachDB` single-region, его не выбирали бы именно ради global multi-region writes.",
+                "how_it_should_be": "Multi-region writes — сильная сторона `CockroachDB`; `Aurora` распределяет storage при одном writer'е."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Ключевые отличия: **тип** — `CockroachDB` это distributed SQL, `Aurora PostgreSQL` — distributed storage с single writer; **записи** — multi-master (любая нода) против single master; **multi-region** — `CockroachDB` multi-master, `Aurora` только read-replicas (или Global DB с одним writer); **согласованность** — `SERIALIZABLE` всегда против PostgreSQL-дефолтов; **совместимость** — pgwire против полного `PostgreSQL`. `Aurora` — проверенный drop-in, быстрее на стандартной нагрузке; `CockroachDB` — реально распределённый, multi-region writes, но медленнее на одиночной ноде.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для AWS-шопа с одним регионом и стандартной OLTP-нагрузкой `Aurora` обычно быстрее и проще (полная совместимость с PG); `CockroachDB` выигрывает, когда нужны записи в нескольких регионах.",
+                "example": "Например, приложению с активной записью из `us-east` и `eu-west` `Aurora` позволит писать только в один master-регион (второй — read-replica), а `CockroachDB` примет записи в обоих регионах локально.",
+                "when_to_apply": "Сравнение разбирают при выборе под AWS: в 2025 `Aurora` — дефолт для single-region AWS-проектов, `CockroachDB` берут под multi-region и multi-cloud.",
+                "edge_cases": "У `Aurora` совместимость с `PostgreSQL` полнее (это форк PG-движка), поэтому часть фич, недоступных в `CockroachDB`, в `Aurora` работает — но ценой single-writer-модели.",
+                "related": "[[cockroachdb-interview#Q18]] сравнение со Spanner; [[cockroachdb-interview#Q12]] PostgreSQL-совместимость; [[cockroachdb-interview#Q22]] когда выбирать CockroachDB; [[cockroachdb-interview#Q8]] multi-region writes."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`CockroachDB` использует PostgreSQL-дефолты изоляции, а `Aurora` всегда работает в `SERIALIZABLE`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: **`SERIALIZABLE` всегда** — у `CockroachDB`; `Aurora` придерживается PostgreSQL-дефолтов (`READ COMMITTED`).",
+                "source_of_confusion": "Дефолты изоляции двух баз легко перепутать местами.",
+                "if_it_were_true": "Будь у `Aurora` всегда `SERIALIZABLE`, она вела бы себя не как drop-in `PostgreSQL`, чем её и ценят.",
+                "how_it_should_be": "Строгий `SERIALIZABLE` по умолчанию — у `CockroachDB`; `Aurora` наследует PG-дефолты."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `CockroachDB` отличается от `YugabyteDB`?",
+          "options": [
+            {
+              "text": "`YugabyteDB` совместим только с `Cassandra` (CQL) и не имеет PostgreSQL-интерфейса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`YugabyteDB` поддерживает и **YSQL** (PostgreSQL, на форке PG-кода), и **YCQL** (Cassandra-совместимый), а не только CQL.",
+                "source_of_confusion": "Двухуровневость `YugabyteDB` сводят к одному только Cassandra-API.",
+                "if_it_were_true": "Будь только CQL, не было бы заявления о «более полной PostgreSQL-совместимости» через форк PG.",
+                "how_it_should_be": "У `YugabyteDB` два API: YSQL (Postgres) и YCQL (Cassandra); PostgreSQL-интерфейс есть."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`CockroachDB`, как и `YugabyteDB`, форкнул исходный код `PostgreSQL`, поэтому их совместимость одинакова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PG-код форкнул именно `YugabyteDB` (отсюда более полная совместимость); `CockroachDB` совместим лишь по wire-протоколу и написан с нуля.",
+                "source_of_confusion": "Общая «PostgreSQL-совместимость» создаёт впечатление одинакового подхода у обеих баз.",
+                "if_it_were_true": "Будь у `CockroachDB` форкнутый PG-код, у него не было бы списка ограничений vs PostgreSQL.",
+                "how_it_should_be": "`YugabyteDB` форкнул PG-движок; `CockroachDB` — лишь pgwire-совместим, реализация своя."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Обе базы выпущены под одной лицензией BSL, поэтому по открытости они идентичны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лицензии разные: `CockroachDB` — BSL, а `YugabyteDB` — **Apache 2.0** (более свободная), это заметное отличие по openness.",
+                "source_of_confusion": "Раз обе позиционируются как open-source, кажется, что лицензии совпадают.",
+                "if_it_were_true": "Будь у `YugabyteDB` BSL, не подчёркивалось бы его преимущество «more free» по Apache 2.0.",
+                "how_it_should_be": "`CockroachDB` под BSL, `YugabyteDB` под Apache 2.0 — последняя свободнее."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`YugabyteDB` (Yugabyte, ex-Facebook) — главный конкурент. Отличия: **архитектура** — у `CockroachDB` единый SQL-слой, у `YugabyteDB` два уровня (YSQL + YCQL); **PostgreSQL-совместимость** — `CockroachDB` по wire-протоколу, `YugabyteDB` **полнее** (форк PG-кода); **Cassandra-совместимость** — нет у `CockroachDB`, **есть (YCQL)** у `YugabyteDB`; **лицензия** — BSL против Apache 2.0 (свободнее); **производительность** — `YugabyteDB` нередко быстрее. В 2025 — близкая конкуренция, оба варианта жизнеспособны.",
+              "correct": true,
+              "sections": {
+                "explanation": "Если приложению нужен и SQL, и Cassandra-подобный wide-column API в одной базе, `YugabyteDB` закрывает это через YCQL, а `CockroachDB` пришлось бы дополнять отдельной `Cassandra`/`ScyllaDB`.",
+                "example": "Например, расширение `pg_trgm` или продвинутые stored-процедуры, унаследованные от форкнутого PG-движка, чаще работают в `YugabyteDB` «как есть», тогда как в `CockroachDB` их пришлось бы обходить.",
+                "when_to_apply": "Сравнение разбирают при выборе distributed SQL под PostgreSQL: `YugabyteDB` берут за более полную PG-совместимость и Apache-лицензию, `CockroachDB` — за зрелость и multi-region.",
+                "edge_cases": "«YugabyteDB часто быстрее» — обобщение: реальная разница сильно зависит от схемы, нагрузки и версии, поэтому под конкретный workload обе базы стоит бенчмаркать самостоятельно.",
+                "related": "[[cockroachdb-interview#Q12]] PostgreSQL-совместимость CockroachDB; [[cockroachdb-interview#Q21]] сравнение с TiDB; [[cockroachdb-interview#Q23]] лицензия BSL; [[cockroachdb-interview#Q18]] сравнение со Spanner."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `CockroachDB` отличается от `TiDB`?",
+          "options": [
+            {
+              "text": "`TiDB` (PingCAP, Китай) — другой distributed SQL. Отличия: **совместимость** — `CockroachDB` с `PostgreSQL`, `TiDB` с **`MySQL`**; **архитектура** — `CockroachDB` монолитен, `TiDB` разделяет compute (`TiDB`) и storage (`TiKV`); **HTAP/аналитика** — у `CockroachDB` limited, у `TiDB` **сильный** (`TiFlash` для колоночного хранения); **лицензия** — BSL против Apache 2.0; **распространение** — `CockroachDB` на Западе (US, EU), `TiDB` в Китае (PingCAP) и глобально. `TiDB` берут под MySQL-совместимость и HTAP, `CockroachDB` — под PostgreSQL и multi-region.",
+              "correct": true,
+              "sections": {
+                "explanation": "Если у компании legacy на `MySQL` и нужны и OLTP, и аналитика в одной системе, `TiDB` с `TiFlash` закрывает HTAP, а `CockroachDB` пришлось бы дополнять отдельным колоночным движком вроде `ClickHouse`.",
+                "example": "Например, дашборд с аналитическим `SELECT ... GROUP BY` по миллиардам строк в `TiDB` уйдёт на колоночный `TiFlash` рядом с OLTP-нагрузкой, тогда как в `CockroachDB` такой запрос лёг бы на тот же строчный движок и тормозил.",
+                "when_to_apply": "Сравнение разбирают при выборе distributed SQL: ориентируешься на существующий диалект (MySQL → `TiDB`, PostgreSQL → `CockroachDB`) и на потребность в HTAP.",
+                "edge_cases": "Разделение compute и storage у `TiDB` даёт независимое масштабирование слоёв, но усложняет эксплуатацию: больше компонентов (`TiDB`, `TiKV`, `PD`, `TiFlash`), чем у монолитной ноды `CockroachDB`.",
+                "related": "[[cockroachdb-interview#Q20]] сравнение с YugabyteDB; [[cockroachdb-interview#Q18]] сравнение со Spanner; [[cockroachdb-interview#Q12]] PostgreSQL-совместимость; [[cockroachdb-interview#Q22]] когда выбирать CockroachDB."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`TiDB` совместим с `PostgreSQL`, как и `CockroachDB`, — диалект у них общий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TiDB` совместим с **`MySQL`**, а не с `PostgreSQL`; именно по диалекту базы и расходятся.",
+                "source_of_confusion": "Раз обе — distributed SQL, кажется, что и целевой диалект один и тот же.",
+                "if_it_were_true": "Будь `TiDB` PostgreSQL-совместим, не было бы смысла выбирать его именно под MySQL-нагрузки.",
+                "how_it_should_be": "`TiDB` — MySQL-совместим; PostgreSQL — это про `CockroachDB`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`CockroachDB` сильнее в HTAP/аналитике благодаря встроенному колоночному движку, а `TiDB` — чисто OLTP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: сильный HTAP — у `TiDB` (`TiFlash` для колоночного хранения), а у `CockroachDB` аналитика **limited**.",
+                "source_of_confusion": "«Распределённая SQL» ассоциируется с аналитикой, и сильную сторону приписывают не той базе.",
+                "if_it_were_true": "Будь у `CockroachDB` сильный HTAP, его не советовали бы выносить OLAP в `ClickHouse`/`Snowflake`.",
+                "how_it_should_be": "HTAP-преимущество у `TiDB` через `TiFlash`; `CockroachDB` под тяжёлую аналитику не предназначен."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`TiDB` имеет монолитную архитектуру (compute и storage в одном процессе), как `CockroachDB`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TiDB` **разделяет** compute (`TiDB`) и storage (`TiKV`) на отдельные слои; монолитен здесь как раз `CockroachDB`.",
+                "source_of_confusion": "Обе — distributed SQL, поэтому архитектурные модели сваливают в одну.",
+                "if_it_were_true": "Будь `TiDB` монолитным, не было бы отдельного `TiKV` и независимого масштабирования хранилища.",
+                "how_it_should_be": "У `TiDB` compute и storage разнесены (`TiDB`+`TiKV`); монолитная нода — это `CockroachDB`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда стоит выбирать `CockroachDB`, а когда нет?",
+          "options": [
+            {
+              "text": "`CockroachDB` — лучший выбор для single-region read-heavy нагрузок с редкими записями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для single-region read-heavy сценариев советуют **`Aurora`/`RDS` с read-replica**; `CockroachDB` оправдан при multi-region writes и масштабе, а не при редких записях в одном регионе.",
+                "source_of_confusion": "Способность масштабироваться наводит на мысль, что `CockroachDB` хорош везде, включая простые read-heavy кейсы.",
+                "if_it_were_true": "Будь он оптимален для single-region, его не отговаривали бы использовать там в пользу `Aurora`/`RDS`.",
+                "how_it_should_be": "`CockroachDB` берут под multi-region/масштаб; для single-region read-heavy проще и быстрее read-replicas обычной РСУБД."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "**Выбирай когда:** нужны multi-region writes (низкая write latency глобально), приложение переросло `PostgreSQL` (проблемы масштаба), требуется строгая согласованность (финансы, регуляторика), multi-cloud (без vendor lock-in), geo-partitioning под compliance (GDPR), предпочтителен open-source (vs `Spanner`). **Не выбирай когда:** single-region (`Aurora`/`RDS` быстрее и проще), нужны полные PostgreSQL-фичи (расширения и т.п.), read-heavy с малым числом записей (хватит read-replica), важна цена (ноды и Cloud-версия дороги), нужна real-time аналитика (это не OLAP).",
+              "correct": true,
+              "sections": {
+                "explanation": "Глобальному финтеху с пользователями в EU, US и APAC `CockroachDB` даёт локальную запись в каждом регионе при строгом `SERIALIZABLE` — то, что single-master `Aurora` или managed-only `Spanner` дают хуже или дороже.",
+                "example": "Например, простому блогу с одним регионом и редкими записями `CockroachDB` противопоказан: `RDS PostgreSQL` с парой read-replica дешевле, проще в эксплуатации и быстрее на такой нагрузке.",
+                "when_to_apply": "Эти критерии — чек-лист на этапе выбора СУБД: сначала проверяешь, действительно ли нужны multi-region/масштаб/compliance, и только тогда платишь за сложность и стоимость `CockroachDB`.",
+                "edge_cases": "Граница не бинарна: гибридные случаи (один регион, но строгий рост и требование multi-cloud в перспективе) решают по дорожной карте, а не по сиюминутной нагрузке.",
+                "related": "[[cockroachdb-interview#Q1]] что такое CockroachDB; [[cockroachdb-interview#Q18]] сравнение со Spanner; [[cockroachdb-interview#Q19]] сравнение с Aurora; [[cockroachdb-interview#Q24]] частые проблемы в эксплуатации."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`CockroachDB` отлично подходит для real-time OLAP-аналитики и заменяет `ClickHouse`/`Snowflake`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CockroachDB` **не предназначен для OLAP**: для real-time аналитики используют `ClickHouse`/`Snowflake`, а его берут под OLTP.",
+                "source_of_confusion": "Масштаб и SQL ассоциируются с аналитическими хранилищами, отсюда ошибочный выбор под OLAP.",
+                "if_it_were_true": "Будь он хорош для OLAP, его не отговаривали бы прямо от real-time аналитики в списке «не выбирай».",
+                "how_it_should_be": "Это OLTP distributed SQL; тяжёлую аналитику выносят в специализированные колоночные системы."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Главный аргумент за `CockroachDB` — это его низкая стоимость по сравнению с обычными РСУБД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стоимость — наоборот, аргумент **против**: ноды и managed `CockroachCloud` дороги, и для cost-sensitive проектов это минус.",
+                "source_of_confusion": "Open-source-природа создаёт впечатление дешевизны эксплуатации.",
+                "if_it_were_true": "Будь `CockroachDB` дешевле РСУБД, «cost-sensitive» не стоял бы в списке причин его не выбирать.",
+                "how_it_should_be": "За `CockroachDB` идут ради multi-region/масштаба/согласованности, а не ради экономии — он недёшев в эксплуатации."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что означает лицензия `BSL` у `CockroachDB`?",
+          "options": [
+            {
+              "text": "`BSL` означает, что `CockroachDB` полностью проприетарен и недоступен для self-host без покупки лицензии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BSL` оставляет `CockroachDB` **бесплатным для self-host** и модификации; платная лицензия нужна лишь чтобы предлагать его *как сервис* третьим лицам.",
+                "source_of_confusion": "Слово «restrictions» в описании `BSL` раздувают до полной проприетарности.",
+                "if_it_were_true": "Будь self-host платным, `CockroachDB` не считался бы в основном бесплатным open-source-вариантом.",
+                "how_it_should_be": "Self-host и модификация бесплатны; ограничение касается только перепродажи как managed-сервиса."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`BSL` — это та же лицензия Apache 2.0, просто под другим названием.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BSL` **отличается** от Apache 2.0: у неё есть ограничение на предложение продукта как сервиса, а Apache 2.0 такого не накладывает.",
+                "source_of_confusion": "Обе ассоциируются с open-source, поэтому `BSL` ошибочно приравнивают к Apache 2.0.",
+                "if_it_were_true": "Будь `BSL` тождественна Apache 2.0, AWS/Google могли бы свободно продавать «CockroachDB as a Service», но это запрещено.",
+                "how_it_should_be": "`BSL` строже Apache 2.0 по коммерческому использованию; именно поэтому `YugabyteDB` (Apache 2.0) называют свободнее."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "**Business Source License (BSL)** — лицензия `CockroachDB` с 2019 года. **Ограничения:** нельзя предлагать `CockroachDB` **как сервис** третьим лицам (без коммерческой лицензии); в остальном — бесплатно для self-host, модификации и т.п. **`BSL` конвертируется в Apache 2.0 через 3 года** (старые версии становятся полностью открытыми). Похоже на Elastic License (тот шёл Apache → SSPL). Эффект: AWS/Google не могут предлагать «CockroachDB as a Service», а Cockroach Labs продаёт managed `CockroachCloud`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Версия, выпущенная в 2022, к 2025 уже переходит под Apache 2.0, поэтому её можно использовать без BSL-ограничений — задержка открытости составляет ровно 3 года.",
+                "example": "Например, банк может свободно запускать `CockroachDB` для своего приложения на собственной инфраструктуре, но облачный провайдер не вправе поднять публичный «Managed CockroachDB» и продавать его — на это нужна коммерческая лицензия.",
+                "when_to_apply": "Лицензию учитывают при оценке vendor lock-in и легальности использования: для внутренних нужд `BSL` свободна, но коммерческое предложение как DBaaS требует контракта с Cockroach Labs.",
+                "edge_cases": "Тонкость в том, что ограничение бьёт по облачным провайдерам, а не по обычным пользователям: своё приложение на `CockroachDB` хостить можно свободно, нельзя лишь перепродавать саму базу как сервис.",
+                "related": "[[cockroachdb-interview#Q1]] что такое CockroachDB; [[cockroachdb-interview#Q20]] Apache 2.0 у YugabyteDB; [[cockroachdb-interview#Q18]] проприетарность Spanner; [[cockroachdb-interview#Q22]] стоимость как фактор выбора."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`BSL` навсегда запрещает любое коммерческое использование `CockroachDB`, даже внутри собственной компании.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BSL` разрешает коммерческое **внутреннее** использование и self-host; запрещено лишь перепродавать продукт *как сервис* третьим лицам.",
+                "source_of_confusion": "Слово «commercial» в ограничении трактуют максимально широко, вплоть до запрета внутреннего использования.",
+                "if_it_were_true": "Будь запрещено любое коммерческое использование, `CockroachDB` не работал бы в продакшене коммерческих компаний, а он работает.",
+                "how_it_should_be": "Внутренняя коммерческая эксплуатация разрешена; ограничение — только на предложение `CockroachDB` как managed-сервиса."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие частые проблемы возникают при эксплуатации `CockroachDB`?",
+          "options": [
+            {
+              "text": "Главная проблема `CockroachDB` — невозможность горизонтального масштабирования: нельзя добавлять ноды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Горизонтальное масштабирование — это сильная сторона `CockroachDB`; реальные проблемы — hot ranges, write latency, retry, ошибки миграции и конфигурации.",
+                "source_of_confusion": "Раз речь о «проблемах», ошибочно приписывают слабость там, где у базы как раз преимущество.",
+                "if_it_were_true": "Будь масштабирование невозможным, `CockroachDB` не выбирали бы ради роста за пределы одного `PostgreSQL`.",
+                "how_it_should_be": "Ноды добавляются и кластер ребалансируется сам; типичные боли — hot ranges и latency, а не масштабирование."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Hot ranges возникают из-за использования `UUID` в качестве primary key и лечатся переходом на последовательный счётчик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: hot range вызывает **последовательный** PK (timestamp, sequence), а лечится переходом на `UUID` или hash-sharded индекс.",
+                "source_of_confusion": "Причину и решение hot range меняют местами: кажется, что «случайный» UUID и есть проблема.",
+                "if_it_were_true": "Будь UUID причиной hot range, его не советовали бы как лекарство против перегрузки одного range.",
+                "how_it_should_be": "Hot range создаёт монотонный ключ; `UUID`/hash-sharded индекс его устраняют, размазывая записи по кластеру."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Transaction retries — это баг `CockroachDB`, и при правильной настройке их можно полностью исключить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retry — **штатная часть** модели `SERIALIZABLE` при contention, а не баг; приложение должно их корректно обрабатывать, а не рассчитывать на полное исчезновение.",
+                "source_of_confusion": "Желание «идеальной» базы наводит на мысль, что любые retry можно убрать настройкой.",
+                "if_it_were_true": "Будь retry устраняемы полностью, не требовалось бы писать retry-loop вокруг транзакций в клиентском коде.",
+                "how_it_should_be": "Retry неизбежны при конкуренции под `SERIALIZABLE`; их минимизируют дизайном схемы, но не отключают совсем."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Частые проблемы: 1) **hot ranges** — последовательный PK грузит один range (лечится `UUID`/hash-shard); 2) высокая **write latency** из-за multi-region кворума; 3) **transaction retries** — `SERIALIZABLE` + contention дают много повторов; 4) ошибки миграции с `PostgreSQL` (совместимость неполна — test thoroughly); 5) большие транзакции — медленны, проблемы с блокировками; 6) недостаток нод — кворум невозможен после отказов; 7) неверная конфигурация locality (реплики в одной зоне → отказ зоны кладёт кластер); 8) сюрпризы по стоимости managed-версии; 9) отсутствие backup-стратегии; 10) OLAP-запросы — не для того (используй `ClickHouse`/`Snowflake`). В 2025 `CockroachDB` зрел, но требует **экспертизы в эксплуатации**.",
+              "correct": true,
+              "sections": {
+                "explanation": "Команда настроила replication factor 3, но не задала корректный `--locality`, реплики легли в одну AZ — и плановое обслуживание этой зоны положило базу, хотя формально «было 3 копии».",
+                "example": "Например, таблица событий с PK по `now()` создаёт hot range на одной ноде, та упирается в потолок по записи, contention растит число `40001`-retry — и один неудачный выбор PK тянет за собой каскад проблем производительности.",
+                "when_to_apply": "Этот чек-лист используют при подготовке к продакшену и разборе инцидентов: каждый пункт — типичная грабля, которую закрывают дизайном схемы, конфигурацией или процессами (backup, мониторинг).",
+                "edge_cases": "Часть проблем взаимосвязана: hot range усиливает contention, contention множит retry, а multi-region кворум добавляет к этому latency — лечить нужно комплексно, а не по одному симптому.",
+                "related": "[[cockroachdb-interview#Q15]] hot ranges и шардинг; [[cockroachdb-interview#Q8]] write latency в multi-region; [[cockroachdb-interview#Q13]] transaction retries и ACID; [[cockroachdb-interview#Q10]] ошибки конфигурации locality."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
