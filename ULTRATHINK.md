@@ -4,7 +4,7 @@ description: "Полный план аудита всех 304 interview-файл
 updated: "2026-05-29"
 status: "active"
 audit_version: 5
-progress: "MCQ-сидеры: 166/306 .md имеют выровненный JSON; 140 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17), testing 7/14 (wave 1). Дальше: testing wave 2 (7), databases (12), devops (12), api (6), monitoring (9), cloud (6), programming-languages (36)."
+progress: "MCQ-сидеры: 170/306 .md имеют выровненный JSON; 136 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17), testing 11/14 (wave1+2; test-strategies pending session-limit; property-based+test-automation DEFER-md). Дальше: test-strategies (retry post-14:00 MSK), databases (12), devops (12), api (6), monitoring (9), cloud (6), programming-languages (36)."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -365,9 +365,9 @@ Pass: `OK FILE.md`.
 | 27 | `algorithms/algorithmic-paradigms` | `backtracking` | 24 | 23 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 28 | `algorithms/algorithmic-paradigms` | `divide-and-conquer` | 21 | 21 | ✅ | ❌ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 29 | `algorithms/algorithmic-paradigms` | `dynamic-programming` | 33 | 33 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 30 | `algorithms/algorithmic-paradigms` | `greedy-algorithms` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 30 | `algorithms/algorithmic-paradigms` | `greedy-algorithms` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 31 | `algorithms/algorithmic-paradigms` | `recursion` | 27 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 32 | `algorithms/algorithmic-paradigms` | `two-pointers-sliding-window` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 32 | `algorithms/algorithmic-paradigms` | `two-pointers-sliding-window` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 33 | `algorithms/complexity` | `complexity-analysis` | 31 | 31 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 34 | `algorithms/data-structures` | `arrays-strings` | 36 | 36 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 35 | `algorithms/data-structures` | `graphs` | 33 | 31 | ✅ | ❌ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
@@ -378,7 +378,7 @@ Pass: `OK FILE.md`.
 | 40 | `algorithms/data-structures` | `trees` | 34 | 34 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 41 | `algorithms/data-structures` | `tries` | 28 | 28 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 42 | `algorithms/sorting-searching` | `searching-algorithms` | 8 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 43 | `algorithms/sorting-searching` | `sorting-algorithms` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 43 | `algorithms/sorting-searching` | `sorting-algorithms` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 44 | `api` | `api-design-best-practices` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 45 | `api` | `api-versioning` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 46 | `api` | `graphql` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
@@ -420,26 +420,26 @@ Pass: `OK FILE.md`.
 | 82 | `cicd` | `deployment-strategies` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 83 | `cicd` | `pipeline-design` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 84 | `cloud` | `aws` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 85 | `cloud` | `aws-lambda` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 85 | `cloud` | `aws-lambda` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 86 | `cloud` | `azure` | 25 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 87 | `cloud` | `cloud-native-patterns` | 14 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 88 | `cloud` | `gcp` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 89 | `cloud` | `serverless` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 90 | `code-quality` | `clean-code-practices` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 88 | `cloud` | `gcp` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 89 | `cloud` | `serverless` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 90 | `code-quality` | `clean-code-practices` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 91 | `code-quality` | `code-coverage` | 25 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 92 | `code-quality` | `code-review` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 93 | `code-quality` | `code-smells` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 94 | `code-quality` | `refactoring-patterns` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 92 | `code-quality` | `code-review` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 93 | `code-quality` | `code-smells` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 94 | `code-quality` | `refactoring-patterns` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 95 | `code-quality` | `static-analysis` | 6 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 96 | `code-quality` | `technical-debt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 96 | `code-quality` | `technical-debt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 97 | `data-engineering` | `apache-airflow` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 98 | `data-engineering` | `apache-flink` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 99 | `data-engineering` | `apache-spark` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 98 | `data-engineering` | `apache-flink` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 99 | `data-engineering` | `apache-spark` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 100 | `data-engineering` | `data-lake-lakehouse` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 101 | `data-engineering` | `data-warehousing` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 102 | `data-engineering` | `dbt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 103 | `data-engineering` | `kafka-streams` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 104 | `data-engineering` | `stream-processing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 102 | `data-engineering` | `dbt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 103 | `data-engineering` | `kafka-streams` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 104 | `data-engineering` | `stream-processing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 105 | `databases` | `cassandra` | 44 | 44 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 106 | `databases` | `clickhouse` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 107 | `databases` | `cockroachdb` | 24 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
@@ -474,10 +474,10 @@ Pass: `OK FILE.md`.
 | 136 | `devops` | `linux` | 33 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 137 | `devops` | `terraform` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 138 | `devops` | `vault` | 26 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 139 | `frameworks/jvm-alternatives` | `ktor` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 139 | `frameworks/jvm-alternatives` | `ktor` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 140 | `frameworks/jvm-alternatives` | `micronaut` | 25 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 141 | `frameworks/jvm-alternatives` | `quarkus` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 142 | `frameworks/jvm-alternatives` | `vertx` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 141 | `frameworks/jvm-alternatives` | `quarkus` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 142 | `frameworks/jvm-alternatives` | `vertx` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 143 | `frameworks/spring` | `resilience4j` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 144 | `frameworks/spring` | `spring-ai` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 145 | `frameworks/spring` | `spring-aop` | 22 | 22 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
@@ -505,73 +505,73 @@ Pass: `OK FILE.md`.
 | 167 | `frameworks/spring` | `spring-security` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 168 | `frameworks/spring` | `spring-session` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 169 | `frameworks/spring` | `spring-state-machine` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 170 | `frameworks/spring` | `spring-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 170 | `frameworks/spring` | `spring-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 171 | `frameworks/spring` | `spring-transaction` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 172 | `frameworks/spring` | `spring-validation` | 16 | 16 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 173 | `frameworks/spring` | `spring-vault` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 174 | `frameworks/spring` | `spring-webflux` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 175 | `jvm` | `graalvm-native` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 176 | `jvm` | `jvm` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 177 | `leadership` | `code-review-practices` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 177 | `leadership` | `code-review-practices` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 178 | `leadership` | `conflict-resolution` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 179 | `leadership` | `estimations-planning` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 180 | `leadership` | `mentoring` | 1 | 25 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ STUB |
-| 181 | `leadership` | `team-leadership` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 181 | `leadership` | `team-leadership` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 182 | `leadership` | `teching` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 183 | `leadership` | `technical-decisions` | 1 | 22 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ STUB |
 | 184 | `logging` | `logging` | 9 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 185 | `messaging` | `aws-sqs-sns` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 185 | `messaging` | `aws-sqs-sns` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 186 | `messaging` | `kafka` | 50 | 50 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 187 | `messaging` | `message-brokers-comparison` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 187 | `messaging` | `message-brokers-comparison` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 188 | `messaging` | `nats` | 8 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 189 | `messaging` | `pulsar` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 189 | `messaging` | `pulsar` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 190 | `messaging` | `rabbitmq` | 41 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 191 | `messaging` | `redpanda` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
-| 192 | `monitoring` | `elk-stack` | 5 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 193 | `monitoring` | `jaeger-zipkin` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 194 | `monitoring` | `logging-strategies` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 195 | `monitoring` | `loki-grafana` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 196 | `monitoring` | `metrics-tracing` | 6 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 197 | `monitoring` | `micrometer` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 192 | `monitoring` | `elk-stack` | 5 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=5) |
+| 193 | `monitoring` | `jaeger-zipkin` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 194 | `monitoring` | `logging-strategies` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 195 | `monitoring` | `loki-grafana` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 196 | `monitoring` | `metrics-tracing` | 6 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=6) |
+| 197 | `monitoring` | `micrometer` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 198 | `monitoring` | `observability` | 15 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 199 | `monitoring` | `opentelemetry` | 9 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 200 | `monitoring` | `prometheus-grafana` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 201 | `performance` | `application-profiling` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 202 | `performance` | `caching-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 203 | `performance` | `database-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 204 | `performance` | `jvm-performance-tuning` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 205 | `performance` | `memory-management` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 206 | `performance` | `network-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 207 | `performance` | `performance-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 202 | `performance` | `caching-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 203 | `performance` | `database-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 204 | `performance` | `jvm-performance-tuning` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 205 | `performance` | `memory-management` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 206 | `performance` | `network-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 207 | `performance` | `performance-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 208 | `programming-languages/go` | `go-concurrency` | 35 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 209 | `programming-languages/go` | `go-generics` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 210 | `programming-languages/go` | `go` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 211 | `programming-languages/go` | `go-memory-gc` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 209 | `programming-languages/go` | `go-generics` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 210 | `programming-languages/go` | `go` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 211 | `programming-languages/go` | `go-memory-gc` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 212 | `programming-languages/go` | `go-modules` | 27 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 213 | `programming-languages/go` | `go-stdlib` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 214 | `programming-languages/go` | `go-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 214 | `programming-languages/go` | `go-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 215 | `programming-languages/java` | `java-17-21` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 216 | `programming-languages/java` | `java-8` | 41 | 31 | ✅ | ❌ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 217 | `programming-languages/java` | `java-annotations` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 218 | `programming-languages/java` | `java-collections` | 46 | 34 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 219 | `programming-languages/java` | `java-completable-future` | 13 | 13 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ THIN |
 | 220 | `programming-languages/java` | `java-concurrency` | 56 | 56 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 221 | `programming-languages/java` | `java-conditional-statements` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 221 | `programming-languages/java` | `java-conditional-statements` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 222 | `programming-languages/java` | `java-core` | 39 | 28 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 223 | `programming-languages/java` | `java-exceptions` | 42 | 7 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 224 | `programming-languages/java` | `java-functional-interface` | 14 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 225 | `programming-languages/java` | `java-generics` | 40 | 7 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 226 | `programming-languages/java` | `java-initialization` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 226 | `programming-languages/java` | `java-initialization` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 227 | `programming-languages/java` | `java-io-nio` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 228 | `programming-languages/java` | `java-jackson` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 229 | `programming-languages/java` | `java-lombok` | 5 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 230 | `programming-languages/java` | `java-mapstruct` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 228 | `programming-languages/java` | `java-jackson` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 229 | `programming-languages/java` | `java-lombok` | 5 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=5) |
+| 230 | `programming-languages/java` | `java-mapstruct` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 231 | `programming-languages/java` | `java-modules` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 232 | `programming-languages/java` | `java-oop` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 233 | `programming-languages/java` | `java-optional` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ THIN |
 | 234 | `programming-languages/java` | `java-pattern-matching` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 235 | `programming-languages/java` | `java-records` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 236 | `programming-languages/java` | `java-reflection` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 236 | `programming-languages/java` | `java-reflection` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 237 | `programming-languages/java` | `java-serialization` | 40 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 238 | `programming-languages/java` | `java-stream` | 42 | 6 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 239 | `programming-languages/java` | `java-string` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
@@ -579,16 +579,16 @@ Pass: `OK FILE.md`.
 | 241 | `programming-languages/java` | `java-virtual-threads` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 242 | `programming-languages/kotlin` | `kotlin-collections` | 42 | — | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 243 | `programming-languages/kotlin` | `kotlin-coroutines` | 19 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 244 | `programming-languages/kotlin` | `kotlin-dsl` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 245 | `programming-languages/kotlin` | `kotlin-exceptions` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 244 | `programming-languages/kotlin` | `kotlin-dsl` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
+| 245 | `programming-languages/kotlin` | `kotlin-exceptions` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=7) |
 | 246 | `programming-languages/kotlin` | `kotlin-flow` | 17 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 247 | `programming-languages/kotlin` | `kotlin-interop-java` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 248 | `programming-languages/kotlin` | `kotlin` | 27 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 249 | `programming-languages/kotlin` | `kotlin-sealed-classes` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 250 | `programming-languages/kotlin` | `kotlin-serialization` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 250 | `programming-languages/kotlin` | `kotlin-serialization` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 251 | `programming-languages/kotlin` | `kotlin-spring` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 252 | `programming-languages/kotlin` | `kotlin-value-classes` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 253 | `programming-languages/scala` | `scala` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 253 | `programming-languages/scala` | `scala` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 254 | `reactive` | `project-reactor` | 47 | 47 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 255 | `reactive` | `reactive-patterns` | 26 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 256 | `reactive` | `reactive-streams` | 30 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
@@ -625,7 +625,7 @@ Pass: `OK FILE.md`.
 | 287 | `system-design` | `design-vending-machine-oo` | 24 | 24 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 288 | `system-design` | `design-web-crawler` | 26 | 26 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 289 | `system-design` | `design-youtube` | 28 | 28 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 290 | `system-design` | `system-design` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 290 | `system-design` | `system-design` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 291 | `testing` | `chaos-engineering` | 44 | 44 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 292 | `testing` | `contract-testing` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 293 | `testing` | `integration-testing` | 39 | 39 | ✅ | ❌ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
@@ -634,12 +634,12 @@ Pass: `OK FILE.md`.
 | 296 | `testing` | `mockito` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 297 | `testing` | `mutation-testing` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 298 | `testing` | `property-based-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER (малформ: только Q1 + ~400 строк неструктур. прозы (TOC обещает Q1-21)) |
-| 299 | `testing` | `rest-assured` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 300 | `testing` | `selenium` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 299 | `testing` | `rest-assured` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
+| 300 | `testing` | `selenium` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 301 | `testing` | `test-automation` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER (неполный: реальны Q1-Q7, TOC обещает Q1-30 (Q8-30 отсутствуют)) |
 | 302 | `testing` | `test-strategies` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 303 | `testing` | `testcontainers` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 304 | `testing` | `unit-testing` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 303 | `testing` | `testcontainers` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 304 | `testing` | `unit-testing` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 
 ---
 
