@@ -6,6 +6,25 @@
     <!-- Цвет браузерного chrome для мобильных (Android Chrome, iOS Safari). -->
     <meta name="theme-color" content="#1f2336">
     <meta name="color-scheme" content="dark light">
+    <!-- Тема: ставим data-theme на <html> ДО первого кадра (без вспышки белым).
+         Приоритет: сохранённый выбор → системная prefers-color-scheme → dark (бренд).
+         Синхронизируем meta[theme-color] под активную тему. Инлайн — осознанно:
+         внешний скрипт грузится асинхронно и дал бы FOUC при перезагрузке в light. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t !== 'light' && t !== 'dark') {
+            t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          }
+          document.documentElement.setAttribute('data-theme', t);
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', t === 'light' ? '#edf0f7' : '#07101f');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
     <!-- Приложение — личная подготовка к интервью, не public web-site:
          запрещаем индексацию поисковиками, чтобы случайный публичный деплой
          не светил вопросы/ответы в Google. Снимай если нужен SEO. -->
@@ -24,8 +43,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Preload styles.css: браузер начнёт скачивать его параллельно с парсингом
          head, не дожидаясь обработки <link rel=stylesheet> ниже → меньше FOUC. -->
-    <link rel="preload" as="style" th:href="@{/css/styles.css(v=13)}">
-    <link rel="stylesheet" th:href="@{/css/styles.css(v=13)}">
+    <link rel="preload" as="style" th:href="@{/css/styles.css(v=14)}">
+    <link rel="stylesheet" th:href="@{/css/styles.css(v=14)}">
     <!-- mobile-fixes.css — точечные media-query override для < 900px.
          Подключается после styles.css, чтобы переопределить грид/borders
          в .stats-filter-row на мобильном. -->

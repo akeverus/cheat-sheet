@@ -13,19 +13,50 @@
     <div class="progress-container" th:if="${progressPercent != null}">
         <div class="progress-bar" th:attr="data-progress=${progressPercent}"></div>
     </div>
-    <nav aria-label="Основная навигация" th:if="${showPrimaryNav}">
-        <a href="/" th:href="@{/}"
-           th:classappend="${activePage == 'focus'} ? 'active'"
-           th:attr="aria-current=${activePage == 'focus'} ? 'page' : null">Фокус</a>
-        <a href="/stats" th:href="@{/stats}"
-           th:classappend="${activePage == 'analytics'} ? 'active'"
-           th:attr="aria-current=${activePage == 'analytics'} ? 'page' : null">Аналитика</a>
-        <a href="/settings" th:href="@{/settings}"
-           th:classappend="${activePage == 'settings'} ? 'active'"
-           th:attr="aria-current=${activePage == 'settings'} ? 'page' : null">Настройки</a>
-        <a th:if="${statsPage}" href="/export?format=json" th:href="@{/export(format='json')}" class="nav-export" title="Экспорт JSON" aria-label="Экспорт в JSON">📥 JSON</a>
-        <a th:if="${statsPage}" href="/export?format=csv" th:href="@{/export(format='csv')}" class="nav-export" title="Экспорт CSV" aria-label="Экспорт в CSV">📥 CSV</a>
-    </nav>
+    <div class="header-actions">
+        <nav aria-label="Основная навигация" th:if="${showPrimaryNav}">
+            <a href="/" th:href="@{/}"
+               th:classappend="${activePage == 'focus'} ? 'active'"
+               th:attr="aria-current=${activePage == 'focus'} ? 'page' : null">Фокус</a>
+            <a href="/stats" th:href="@{/stats}"
+               th:classappend="${activePage == 'analytics'} ? 'active'"
+               th:attr="aria-current=${activePage == 'analytics'} ? 'page' : null">Аналитика</a>
+            <a href="/settings" th:href="@{/settings}"
+               th:classappend="${activePage == 'settings'} ? 'active'"
+               th:attr="aria-current=${activePage == 'settings'} ? 'page' : null">Настройки</a>
+            <a th:if="${statsPage}" href="/export?format=json" th:href="@{/export(format='json')}" class="nav-export" title="Экспорт JSON" aria-label="Экспорт в JSON">📥 JSON</a>
+            <a th:if="${statsPage}" href="/export?format=csv" th:href="@{/export(format='csv')}" class="nav-export" title="Экспорт CSV" aria-label="Экспорт в CSV">📥 CSV</a>
+        </nav>
+        <button type="button" class="theme-toggle" id="theme-toggle"
+                aria-label="Переключить тему" aria-pressed="false" title="Светлая / тёмная тема">
+            <span class="theme-toggle-icon" aria-hidden="true"></span>
+        </button>
+    </div>
+    <!-- Переключатель темы: меняет data-theme на <html>, пишет выбор в
+         localStorage, синхронит aria-pressed и meta[theme-color]. Инлайн в
+         фрагменте — кнопка уже в DOM выше, скрипт есть на каждой странице. -->
+    <script>
+      (function () {
+        var btn = document.getElementById('theme-toggle');
+        if (!btn) return;
+        var root = document.documentElement;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        function sync() {
+          var t = root.getAttribute('data-theme') || 'dark';
+          btn.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+          btn.setAttribute('title', t === 'light' ? 'Тёмная тема' : 'Светлая тема');
+          btn.setAttribute('aria-label', t === 'light' ? 'Включить тёмную тему' : 'Включить светлую тему');
+        }
+        sync();
+        btn.addEventListener('click', function () {
+          var next = (root.getAttribute('data-theme') === 'light') ? 'dark' : 'light';
+          root.setAttribute('data-theme', next);
+          try { localStorage.setItem('theme', next); } catch (e) {}
+          if (meta) meta.setAttribute('content', next === 'light' ? '#edf0f7' : '#07101f');
+          sync();
+        });
+      })();
+    </script>
 </header>
 </body>
 </html>

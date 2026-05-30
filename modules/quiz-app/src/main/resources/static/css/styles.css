@@ -2658,3 +2658,135 @@ body.result-page {
     .settings-page .main-content,
     .focus-page .main-content { box-sizing: border-box; padding-inline: 8px; }
 }
+
+/* ===================================================================
+   LIGHT THEME — "Developer Console" light (Phase 6 / B3)
+   Re-skins the whole app by swapping ONLY semantic token values:
+   components reference var(--*) and rgba(var(--*-rgb), A) bases, so each
+   per-use alpha is preserved while the base color flips to light.
+   Spec: .design/cheat-sheet-ui/DESIGN_TOKENS.css
+   A no-flash inline <head> script sets data-theme before first paint;
+   the @media block is the no-JS fallback (OS light, no user override).
+   =================================================================== */
+:root[data-theme="light"] {
+    color-scheme: light;
+
+    --bg: #edf0f7;
+    --bg-subtle: #e4e9f3;
+    --surface: #ffffff;
+    --surface-2: #f7f9fd;
+
+    --panel-rgb: 255, 255, 255;   /* header / glass → white translucent */
+    --well-rgb: 224, 230, 242;    /* sunken inputs → light grey-blue */
+
+    --text: #14203a;
+    --text-2: #45527a;
+    --text-3: #5e6a87;
+    --text-on-accent: #ffffff;
+
+    --border: rgba(30, 45, 95, 0.12);
+    --border-light: rgba(30, 45, 95, 0.07);
+    --border-strong: rgba(30, 45, 95, 0.20);
+
+    --accent: #4a5ad4;            /* indigo darkened for contrast on white */
+    --accent-hover: #3a49bd;
+    --accent-bg: rgba(74, 90, 212, 0.08);
+    --accent-bg-2: rgba(74, 90, 212, 0.14);
+    --accent-border: rgba(74, 90, 212, 0.28);
+    --accent-grad-end-rgb: 61, 76, 196;
+
+    --green: #178a4a;
+    --green-bg: rgba(23, 138, 74, 0.10);
+    --green-border: rgba(23, 138, 74, 0.30);
+    --red: #cf3a3a;
+    --red-bg: rgba(207, 58, 58, 0.09);
+    --red-border: rgba(207, 58, 58, 0.28);
+    --amber: #b4720a;
+    --amber-bg: rgba(180, 114, 10, 0.10);
+
+    --ambient-1: rgba(99, 102, 241, 0.06);
+    --ambient-2: rgba(139, 92, 246, 0.05);
+    --ambient-3: rgba(16, 185, 129, 0.035);
+
+    /* Code wells stay dark — pairs with hljs atom-one-dark */
+    --code-bg: #0f1d35;
+    --code-fg: #c9d8f5;
+
+    --shadow-sm: 0 1px 3px rgba(20,32,58,0.08), 0 0 0 1px rgba(20,32,58,0.04);
+    --shadow-md: 0 4px 16px rgba(20,32,58,0.10), 0 0 0 1px rgba(20,32,58,0.05);
+    --shadow-lg: 0 12px 32px rgba(20,32,58,0.14), 0 0 0 1px rgba(20,32,58,0.06);
+    --shadow-card: 0 0 0 1px rgba(20,32,58,0.06), 0 4px 20px rgba(20,32,58,0.08);
+    --shadow-glow: 0 0 20px rgba(74,90,212,0.16), 0 4px 14px rgba(20,32,58,0.10);
+    --shadow-glow-green: 0 0 20px rgba(23,138,74,0.16), 0 4px 14px rgba(20,32,58,0.08);
+    --shadow-glow-red: 0 0 20px rgba(207,58,58,0.16), 0 4px 14px rgba(20,32,58,0.08);
+
+    --focus-ring: 0 0 0 3px rgba(74,90,212,0.40);
+}
+
+/* No-JS fallback: OS prefers light AND no explicit user choice */
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme]) {
+        color-scheme: light;
+        --bg: #edf0f7; --bg-subtle: #e4e9f3; --surface: #ffffff; --surface-2: #f7f9fd;
+        --panel-rgb: 255, 255, 255; --well-rgb: 224, 230, 242;
+        --text: #14203a; --text-2: #45527a; --text-3: #5e6a87; --text-on-accent: #ffffff;
+        --border: rgba(30,45,95,0.12); --border-light: rgba(30,45,95,0.07); --border-strong: rgba(30,45,95,0.20);
+        --accent: #4a5ad4; --accent-hover: #3a49bd;
+        --accent-bg: rgba(74,90,212,0.08); --accent-bg-2: rgba(74,90,212,0.14);
+        --accent-border: rgba(74,90,212,0.28); --accent-grad-end-rgb: 61, 76, 196;
+        --green: #178a4a; --green-bg: rgba(23,138,74,0.10); --green-border: rgba(23,138,74,0.30);
+        --red: #cf3a3a; --red-bg: rgba(207,58,58,0.09); --red-border: rgba(207,58,58,0.28);
+        --amber: #b4720a; --amber-bg: rgba(180,114,10,0.10);
+        --ambient-1: rgba(99,102,241,0.06); --ambient-2: rgba(139,92,246,0.05); --ambient-3: rgba(16,185,129,0.035);
+        --code-bg: #0f1d35; --code-fg: #c9d8f5;
+        --shadow-sm: 0 1px 3px rgba(20,32,58,0.08), 0 0 0 1px rgba(20,32,58,0.04);
+        --shadow-md: 0 4px 16px rgba(20,32,58,0.10), 0 0 0 1px rgba(20,32,58,0.05);
+        --shadow-lg: 0 12px 32px rgba(20,32,58,0.14), 0 0 0 1px rgba(20,32,58,0.06);
+        --shadow-card: 0 0 0 1px rgba(20,32,58,0.06), 0 4px 20px rgba(20,32,58,0.08);
+        --shadow-glow: 0 0 20px rgba(74,90,212,0.16), 0 4px 14px rgba(20,32,58,0.10);
+        --shadow-glow-green: 0 0 20px rgba(23,138,74,0.16), 0 4px 14px rgba(20,32,58,0.08);
+        --shadow-glow-red: 0 0 20px rgba(207,58,58,0.16), 0 4px 14px rgba(20,32,58,0.08);
+        --focus-ring: 0 0 0 3px rgba(74,90,212,0.40);
+    }
+}
+
+/* === Theme toggle (header) === */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;            /* всегда у правого края шапки */
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.theme-toggle {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: rgba(var(--panel-rgb), 0.5);
+    color: var(--text-2);
+    cursor: pointer;
+    transition: color 0.2s var(--ease), border-color 0.2s var(--ease),
+                background 0.2s var(--ease), transform 0.15s var(--ease);
+}
+.theme-toggle:hover {
+    color: var(--accent);
+    border-color: var(--accent-border);
+    background: var(--accent-bg);
+}
+.theme-toggle:active { transform: scale(0.94); }
+.theme-toggle:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    border-color: var(--accent);
+}
+.theme-toggle-icon { font-size: 1.05rem; line-height: 1; }
+/* ☀ в тёмной теме (клик → светлая); ☾ в светлой (клик → тёмная) */
+.theme-toggle-icon::before { content: "\2600"; }
+:root[data-theme="light"] .theme-toggle-icon::before { content: "\263E"; }
