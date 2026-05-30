@@ -633,10 +633,10 @@ Pass: `OK FILE.md`.
 | 295 | `testing` | `load-testing` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 296 | `testing` | `mockito` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 297 | `testing` | `mutation-testing` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 298 | `testing` | `property-based-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 298 | `testing` | `property-based-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER (малформ: только Q1 + ~400 строк неструктур. прозы (TOC обещает Q1-21)) |
 | 299 | `testing` | `rest-assured` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 300 | `testing` | `selenium` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 301 | `testing` | `test-automation` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 301 | `testing` | `test-automation` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER (неполный: реальны Q1-Q7, TOC обещает Q1-30 (Q8-30 отсутствуют)) |
 | 302 | `testing` | `test-strategies` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 303 | `testing` | `testcontainers` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 304 | `testing` | `unit-testing` | 45 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
