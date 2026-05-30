@@ -4,7 +4,7 @@ description: "Полный план аудита всех 304 interview-файл
 updated: "2026-05-29"
 status: "active"
 audit_version: 5
-progress: "MCQ-сидеры: 149/306 .md имеют выровненный JSON; 157 NO-JSON в работе (Phase 2). Готовы: Spring (28), Security (10/10). Architecture в работе (7/17 wave A+ddd done, wave B генерится). Дальше: testing (14), databases (12), devops (12)."
+progress: "MCQ-сидеры: 155/306 .md имеют выровненный JSON; 151 NO-JSON в работе (Phase 2). Готовы: Spring (28), Security (10/10). Architecture 13/17 done (wave A+B+ddd), wave C (4) генерится. Дальше: testing (14), databases (12), devops (12)."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -394,17 +394,17 @@ Pass: `OK FILE.md`.
 | 56 | `architecture` | `cdn` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 57 | `architecture` | `clean-architecture` | 41 | 41 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 58 | `architecture` | `consistency-patterns` | 31 | 31 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 59 | `architecture` | `cqrs-event-sourcing` | 41 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 59 | `architecture` | `cqrs-event-sourcing` | 41 | 41 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 60 | `architecture` | `ddd` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 61 | `architecture` | `distributed-systems` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 61 | `architecture` | `distributed-systems` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 62 | `architecture` | `dns` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 63 | `architecture` | `edge-computing` | 18 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 64 | `architecture` | `event-driven-patterns` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 63 | `architecture` | `edge-computing` | 18 | 18 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
+| 64 | `architecture` | `event-driven-patterns` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 65 | `architecture` | `hexagonal-architecture` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 66 | `architecture` | `latency-numbers` | 24 | 24 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 67 | `architecture` | `load-balancing` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 67 | `architecture` | `load-balancing` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 68 | `architecture` | `microservices` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 69 | `architecture` | `networking` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 69 | `architecture` | `networking` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 70 | `architecture` | `resilience-patterns` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 71 | `architecture` | `reverse-proxy` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 72 | `architecture` | `saga-pattern` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
