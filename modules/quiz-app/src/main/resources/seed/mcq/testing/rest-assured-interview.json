@@ -1,0 +1,905 @@
+{
+  "topic_slug": "rest-assured-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `REST Assured` и для чего он используется?",
+          "options": [
+            {
+              "text": "`REST Assured` — Java DSL для тестирования REST API с fluent BDD-синтаксисом `given().when().then()`: отправляет HTTP-запросы и валидирует ответы (статус, тело, заголовки). Применяется для интеграционных и smoke-тестов API в `CI/CD`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Библиотека подключается как `test`-зависимость и даёт декларативный DSL: вместо ручной работы с `HttpClient` и парсингом JSON вы описываете запрос и ожидания цепочкой методов, читаемой как спецификация поведения.",
+                "example": "`given().baseUri(\"http://localhost:8080\").when().get(\"/users/1\").then().statusCode(200).body(\"name\", equalTo(\"Alice\"))` — один тест проверяет код ответа и поле `name` в JSON.",
+                "when_to_apply": "Берут `REST Assured`, когда нужны end-to-end проверки реального REST API: интеграционные тесты сервиса, smoke-тесты после деплоя, частичный contract testing против запущенного приложения.",
+                "edge_cases": "Для unit-тестов одного контроллера без сети это избыточно — там быстрее `MockMvc`; `REST Assured` поднимает реальный HTTP-стек, что медленнее, но ближе к проду.",
+                "related": "[[rest-assured-interview#Q2]] BDD-синтаксис given/when/then; [[rest-assured-interview#Q10]] интеграция со Spring Boot Test; [[rest-assured-interview#Q15]] сравнение с WebTestClient."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`REST Assured` — это mock-сервер, который сам поднимает заглушки REST API вместо тестируемого приложения, чтобы фронтенд работал без бэкенда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REST Assured` — клиент для отправки запросов и валидации ответов реального API, а не сервер-заглушка; роль mock-сервера играют `WireMock` или `MockServer`.",
+                "source_of_confusion": "И mock-серверы, и `REST Assured` относятся к тестированию API, поэтому их функции легко перепутать по названию.",
+                "if_it_were_true": "Если бы это был mock-сервер, у него были бы методы регистрации стабов и матчеров запросов, но в DSL есть только отправка запроса и проверки ответа.",
+                "how_it_should_be": "`REST Assured` шлёт настоящие HTTP-запросы к работающему сервису и валидирует ответ; заглушки внешних зависимостей делает отдельный инструмент вроде `WireMock`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`REST Assured` — это плагин сборки `Maven`/`Gradle`, который генерирует REST-контроллеры из `OpenAPI`-спецификации во время компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REST Assured` — runtime-библиотека для тестов, она ничего не генерирует при сборке; кодогенерацию из `OpenAPI` делают плагины вроде `openapi-generator`.",
+                "source_of_confusion": "И генераторы кода, и `REST Assured` упоминаются рядом с `OpenAPI` и REST, отсюда путаница про этап сборки.",
+                "if_it_were_true": "Если бы это был кодогенератор, в проекте появлялись бы сгенерированные классы контроллеров, но `REST Assured` живёт только в `src/test` и работает в рантайме теста.",
+                "how_it_should_be": "`REST Assured` — это test-time DSL для вызова и проверки API; генерацию контроллеров из спецификации выполняют отдельные build-плагины."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`REST Assured` — это нагрузочный инструмент для измерения пропускной способности API под параллельной нагрузкой, аналог `JMeter` и `Gatling`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REST Assured` проверяет функциональную корректность одного запроса/ответа, а нагрузку и пропускную способность измеряют `JMeter` или `Gatling`.",
+                "source_of_confusion": "Оба класса инструментов шлют HTTP-запросы, поэтому функциональное тестирование путают с нагрузочным.",
+                "if_it_were_true": "Если бы это был load-инструмент, были бы настройки числа потоков, ramp-up и отчёты по latency-перцентилям, но в DSL их нет — есть только проверки ответа.",
+                "how_it_should_be": "`REST Assured` отвечает за функциональную валидацию API; для нагрузочного тестирования берут специализированные `Gatling`/`JMeter`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой BDD-синтаксис использует `REST Assured`?",
+          "options": [
+            {
+              "text": "`REST Assured` использует синтаксис `arrange().act().assert()` — три обязательных метода с такими именами, иначе тест не скомпилируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальные методы DSL называются `given()`, `when()`, `then()`; `arrange/act/assert` — это лишь концептуальные названия фаз, а не методы API.",
+                "source_of_confusion": "Паттерн AAA (Arrange-Act-Assert) описывает те же три фазы теста, поэтому его имена принимают за реальные методы `REST Assured`.",
+                "if_it_were_true": "Если бы методы назывались `arrange().act().assert()`, `assert` вообще был бы зарезервированным словом Java и не мог быть именем метода.",
+                "how_it_should_be": "Структура — `given()` (настройка), `when()` (запрос), `then()` (проверки); это и есть реализация идеи AAA в виде BDD-цепочки."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`REST Assured` структурирует тест как Given-When-Then: `given()` — настройка запроса (URI, заголовки, тело), `when()` — выполнение HTTP-метода, `then()` — проверки ответа (статус, тело, заголовки, время).",
+              "correct": true,
+              "sections": {
+                "explanation": "Три блока читаются как спецификация поведения API: что дано, что делаем, что ожидаем. Это BDD-стиль, заимствованный из `Cucumber`/`Gherkin`, но выраженный fluent-цепочкой Java-методов.",
+                "example": "`given().header(\"Authorization\", \"Bearer \"+token).contentType(JSON).body(user).when().post(\"/users\").then().statusCode(201).body(\"id\", notNullValue())` — наглядно видно три фазы.",
+                "when_to_apply": "Этот синтаксис применяют всегда при написании теста на `REST Assured`: он делает намерение читаемым и отделяет setup от действия и от ассертов.",
+                "edge_cases": "Блоки можно опускать частично — например, без явного `given()`, если запросу не нужна настройка; но для читаемости все три обычно пишут целиком.",
+                "related": "[[rest-assured-interview#Q1]] что такое REST Assured; [[rest-assured-interview#Q3]] POST с JSON-телом; [[rest-assured-interview#Q7]] RequestSpecification для переиспользования given."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "BDD-синтаксис `REST Assured` требует записывать сценарии в отдельных `.feature`-файлах на языке `Gherkin`, которые потом парсит runner.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REST Assured` выражает Given-When-Then прямо в Java-коде fluent-цепочкой, без `.feature`-файлов; `Gherkin`-файлы — это про `Cucumber`.",
+                "source_of_confusion": "Слово BDD у обоих инструментов общее, а `Cucumber` действительно использует `.feature`, отсюда смешение подходов.",
+                "if_it_were_true": "Если бы нужны были `.feature`-файлы, в проекте лежали бы `Gherkin`-сценарии и step-definitions, но тест `REST Assured` — это обычный Java-метод.",
+                "how_it_should_be": "В `REST Assured` Given-When-Then — это методы DSL внутри `@Test`; внешние `Gherkin`-файлы не используются."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В `REST Assured` блоки `given/when/then` идут в произвольном порядке, и `then()` может стоять до `when()` — библиотека сама переставит вызовы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок строгий: сначала `given()`, затем `when()` (запрос), затем `then()` (проверки); fluent-цепочка возвращает типы, делающие иной порядок невозможным.",
+                "source_of_confusion": "Кажется, что fluent-API гибок к порядку, ведь все методы цепляются точкой, поэтому делают вывод о произвольности.",
+                "if_it_were_true": "Если бы порядок был свободным, нельзя было бы проверять ответ до его получения, но `then()` физически работает с результатом `when()`.",
+                "how_it_should_be": "Цепочка строго упорядочена: настройка → выполнение → проверки; типы возвращаемых значений не дают переставить фазы."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как отправить POST-запрос с JSON-телом в `REST Assured`?",
+          "options": [
+            {
+              "text": "Тело можно передать только JSON-строкой через `.body(String)`; объекты Java и `Map` `REST Assured` сериализовать не умеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тело принимается строкой, Java-объектом (авто-сериализация через `Jackson`/`Gson`) и `Map` — все три варианта поддерживаются.",
+                "source_of_confusion": "Передача строки — самый явный способ, поэтому ошибочно кажется единственным.",
+                "if_it_were_true": "Если бы поддерживалась только строка, не было бы примеров `.body(new CreateUserRequest(...))` и `.body(Map.of(...))`, но они работают.",
+                "how_it_should_be": "`.body()` принимает строку, POJO и `Map`; при наличии `Jackson`/`Gson` в classpath объект и `Map` автоматически превращаются в JSON."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Для POST с JSON обязательно вручную сериализовать объект в строку через `objectMapper.writeValueAsString()` перед передачей в `.body()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достаточно положить `Jackson`/`Gson` в classpath и передать сам объект в `.body(obj)` — `REST Assured` сериализует его сам.",
+                "source_of_confusion": "Ручная сериализация привычна по работе с `RestTemplate`, поэтому её считают обязательной и здесь.",
+                "if_it_were_true": "Если бы ручная сериализация была обязательной, не работал бы пример `.body(request)` без `writeValueAsString`, но он валиден.",
+                "how_it_should_be": "Авто-сериализация включается наличием `Jackson`/`Gson`; ручной `writeValueAsString` нужен лишь в особых случаях контроля формата."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Указать `contentType(ContentType.JSON)` и передать тело в `.body(...)`: либо JSON-строкой, либо Java-объектом (авто-сериализация через `Jackson`/`Gson`), либо `Map`. Затем `.post(\"/users\")` и проверки в `then()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Заголовок `Content-Type: application/json` сообщает серверу формат тела. Если в classpath есть `Jackson`/`Gson`, объект или `Map` сериализуются автоматически — писать JSON руками не нужно.",
+                "example": "`given().contentType(ContentType.JSON).body(new CreateUserRequest(\"Alice\", \"alice@example.com\")).when().post(\"/users\").then().statusCode(201)` — объект сам станет JSON.",
+                "when_to_apply": "Так шлют любой POST/PUT с телом: создание ресурса, отправку формы в JSON. Вариант с `Map.of(...)` удобен для быстрых ad-hoc тел без отдельного DTO.",
+                "edge_cases": "Без `contentType(JSON)` сервер может не распознать формат и вернуть `415 Unsupported Media Type`; авто-сериализация молча не сработает, если в classpath нет `Jackson`/`Gson`.",
+                "related": "[[rest-assured-interview#Q2]] BDD-синтаксис given/when/then; [[rest-assured-interview#Q4]] извлечение значений из ответа; [[rest-assured-interview#Q9]] form и multipart параметры вместо JSON-тела."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "POST-запрос в `REST Assured` отправляется методом `.send(\"POST\", body)`, а `contentType` указывать не нужно — он всегда `application/json` по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP-метод задаётся отдельными методами `.post(path)`, `.put(path)` и т.д., а `contentType` нужно указывать явно — дефолта `application/json` нет.",
+                "source_of_confusion": "В некоторых HTTP-клиентах действительно есть обобщённый `send(method, body)`, отсюда ложная аналогия.",
+                "if_it_were_true": "Если бы `contentType` всегда был JSON по умолчанию, не приходилось бы писать `URLENC` для form-параметров, но это необходимо.",
+                "how_it_should_be": "Метод запроса — это `.post(\"/users\")`; формат тела задаётся явным `contentType(...)`, иначе сервер не поймёт тип данных."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как извлекать значения из ответа в `REST Assured`?",
+          "options": [
+            {
+              "text": "Значения извлекают только методом `.getBody()`, который возвращает весь ответ строкой, а парсить JSON приходится вручную через `objectMapper`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Извлечение делается через `.extract()`: `.jsonPath().getLong(\"id\")` для поля, `.response()` для всего ответа, `.as(Pojo.class)` для десериализации — ручной парсинг не нужен.",
+                "source_of_confusion": "Получить тело строкой действительно можно, поэтому кажется, что это единственный путь.",
+                "if_it_were_true": "Если бы был только `getBody()`, не работали бы примеры `.extract().jsonPath().getLong(\"id\")` и `.extract().as(User.class)`, но они валидны.",
+                "how_it_should_be": "Цепочка `.extract()` даёт доступ к `jsonPath()`, к полному `response()` и к типобезопасной десериализации `.as(Class)`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Извлечь поле можно прямо в `then()` через `.body(\"id\").get()` — отдельный блок `.extract()` для этого не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.body(path, matcher)` в `then()` только проверяет значение; чтобы получить его в переменную, нужен блок `.extract()`.",
+                "source_of_confusion": "Раз `.body(\"id\", ...)` уже обращается к полю, кажется логичным, что у него есть и геттер значения.",
+                "if_it_were_true": "Если бы `.body(\"id\").get()` возвращал значение, не понадобился бы `.extract().jsonPath().getLong(\"id\")`, но именно он используется.",
+                "how_it_should_be": "Проверки живут в `then().body(...)`, а извлечение значения в переменную — в `extract().jsonPath()...` или `extract().path(...)`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`.extract().as(User.class)` возвращает не объект, а JSON-строку, которую затем надо самому передать в `Jackson` для десериализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.as(User.class)` сразу возвращает готовый типизированный объект `User`, десериализуя ответ через `Jackson`/`Gson` под капотом.",
+                "source_of_confusion": "Слово `as` иногда ассоциируется с приведением к строке, отсюда неверное ожидание про текст.",
+                "if_it_were_true": "Если бы `.as()` отдавал строку, в примере не было бы `assertThat(user.getName()).isEqualTo(\"Alice\")` сразу после вызова, но он есть.",
+                "how_it_should_be": "`.as(Class)` выполняет авто-десериализацию и отдаёт заполненный POJO, а не сырую строку."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Через блок `.extract()`: `.extract().jsonPath().getLong(\"id\")` достаёт одно поле, `.extract().response()` — весь `Response` для дальнейшей навигации, `.extract().as(User.class)` десериализует тело в POJO. Извлечённое значение можно использовать в следующем запросе.",
+              "correct": true,
+              "sections": {
+                "explanation": "`extract()` идёт после проверок в `then()` и завершает цепочку, возвращая данные в Java-код. Это нужно, чтобы переиспользовать `id` созданного ресурса, разобрать список или замапить ответ в типизированный объект.",
+                "example": "`Long userId = given().body(Map.of(\"name\",\"Alice\")).when().post(\"/users\").then().statusCode(201).extract().jsonPath().getLong(\"id\")` — `id` достаётся и затем используется в `GET /users/{userId}`.",
+                "when_to_apply": "Извлечение применяют, когда результат запроса нужен дальше: chained-сценарии (создать → прочитать), агрегатные проверки через `assertThat`, либо маппинг в DTO для бизнес-ассертов.",
+                "edge_cases": "`.extract()` не выполняет проверок сам — если важно валидировать ответ, ассерты ставят в `then()` до `extract()`; иначе можно молча извлечь данные из ошибочного ответа.",
+                "related": "[[rest-assured-interview#Q3]] отправка POST с телом; [[rest-assured-interview#Q5]] JsonPath для навигации по ответу; [[rest-assured-interview#Q6]] извлечение токена из ответа логина."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `JsonPath` и как он используется в `REST Assured`?",
+          "options": [
+            {
+              "text": "`JsonPath` — синтаксис навигации по JSON (аналог `XPath` для XML). В `REST Assured` он используется в `.body(path, matcher)` и при извлечении: индексация `users[0].name`, wildcards `users.name`, а также Groovy-замыкания `find`, `findAll`, `collect` для фильтрации массивов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Путь адресует элементы документа: точка — переход вглубь, `[i]` — индекс массива. Для условной выборки `REST Assured` использует Groovy-нотацию с `it` (текущий элемент), что мощнее чистого `JsonPath`.",
+                "example": "`.body(\"users.find { it.id == 2 }.name\", equalTo(\"Bob\"))` находит пользователя с `id==2` и проверяет его имя; `.body(\"users.age\", everyItem(greaterThan(20)))` — что все возрасты больше 20.",
+                "when_to_apply": "`JsonPath` применяют в каждой проверке тела JSON: доступ к вложенным полям, ассерты по массивам, поиск элемента по условию вместо хрупкой привязки к индексу.",
+                "edge_cases": "Выражения `find`/`findAll`/`collect` — это Groovy, а не Java, и ошибки в них всплывают только в рантайме; синтаксис `JsonPath` для XML-ответов отличается (там работает `XPath`).",
+                "related": "[[rest-assured-interview#Q4]] извлечение значений через jsonPath; [[rest-assured-interview#Q11]] XPath для XML-ответов; [[rest-assured-interview#Q14]] хрупкость привязки к индексу массива."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`JsonPath` в `REST Assured` — это полноценная реализация стандарта `Jayway JsonPath` с синтаксисом `$.users[?(@.id==2)].name`, и Groovy он не использует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REST Assured` применяет собственный Groovy-`GPath`, а не `Jayway`-синтаксис с `$` и `@`; фильтры пишутся как `find { it.id == 2 }`.",
+                "source_of_confusion": "Существует популярная библиотека `Jayway JsonPath` с долларовым синтаксисом, отсюда перенос её нотации на `REST Assured`.",
+                "if_it_were_true": "Если бы использовался `Jayway`-синтаксис, в примерах стояло бы `$.users[?(@.id==2)]`, но там `users.find { it.id == 2 }`.",
+                "how_it_should_be": "В `REST Assured` путь — это Groovy-`GPath` с `it` и замыканиями; `Jayway`-нотация `$`/`@` — отдельная библиотека."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`JsonPath` нужен только для извлечения значений в `extract()`, а в проверках `then().body(...)` использовать его нельзя — там работают лишь имена полей верхнего уровня.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один и тот же `JsonPath` используется и в `then().body(path, matcher)`, и в `extract().jsonPath()` — он не ограничен извлечением и работает с вложенностью.",
+                "source_of_confusion": "`extract().jsonPath()` явно содержит слово `jsonPath`, поэтому кажется, что путь только там и применим.",
+                "if_it_were_true": "Если бы в `body()` работали только поля верхнего уровня, не проходил бы `.body(\"users[1].age\", equalTo(25))`, но он валиден.",
+                "how_it_should_be": "`JsonPath` одинаково применим в проверках `then().body(...)` и при извлечении, включая вложенные пути и массивы."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`JsonPath` индексирует массивы с единицы: `users[1]` означает первый элемент, как в `XPath`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Индексация в `GPath` `REST Assured` начинается с нуля: `users[0]` — первый элемент, `users[1]` — второй.",
+                "source_of_confusion": "`XPath` для XML действительно нумерует узлы с единицы, отсюда ложный перенос на JSON.",
+                "if_it_were_true": "Если бы индексация шла с единицы, пример `.body(\"users[0].name\", equalTo(\"Alice\"))` указывал бы на несуществующий элемент, но он корректен.",
+                "how_it_should_be": "В `JsonPath`/`GPath` массивы нумеруются с нуля; единичная индексация — особенность `XPath`, а не JSON-навигации."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать аутентификацию в `REST Assured`?",
+          "options": [
+            {
+              "text": "Аутентификация задаётся только заголовком `.header(\"Authorization\", ...)` вручную; встроенных хелперов для Basic, OAuth2 и Digest в `REST Assured` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть встроенный DSL `.auth()`: `.auth().basic(u,p)`, `.auth().oauth2(token)`, `.auth().digest(u,p)`; ручной заголовок — лишь один из способов.",
+                "source_of_confusion": "Ручной `Authorization`-заголовок работает всегда, поэтому кажется единственным механизмом.",
+                "if_it_were_true": "Если бы хелперов не было, не работали бы примеры `.auth().basic(...)` и `.auth().oauth2(...)`, но они валидны.",
+                "how_it_should_be": "`REST Assured` предоставляет `.auth().basic/oauth2/digest(...)`; ручной заголовок — запасной вариант, например для нестандартных схем."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`REST Assured` поддерживает аутентификацию через `.auth()`: `.basic(user, pass)` для Basic, `.oauth2(token)` для Bearer/OAuth2, `.digest(user, pass)` для Digest. Можно и вручную: `.header(\"Authorization\", \"Bearer \"+token)`. Токен из логина извлекают и подставляют в следующий запрос.",
+              "correct": true,
+              "sections": {
+                "explanation": "DSL берёт на себя кодирование и формирование заголовка `Authorization`: для Basic — `base64(user:pass)`, для OAuth2 — `Bearer <token>`. Это короче и надёжнее ручной сборки строки.",
+                "example": "`String token = given().body(Map.of(\"username\",\"alice\",\"password\",\"secret\")).when().post(\"/auth/login\").then().extract().path(\"token\")`, затем `given().auth().oauth2(token).when().get(\"/users/me\")`.",
+                "when_to_apply": "Basic применяют для простых внутренних API, OAuth2/Bearer — для большинства защищённых REST-сервисов, Digest — для legacy; login-then-use покрывает токен-флоу реального сценария.",
+                "edge_cases": "`.auth().oauth2()` и ручной `Bearer`-заголовок дают одинаковый результат — дублировать их не нужно; Basic-credentials в коде теста — потенциальная утечка, держите их в конфигурации.",
+                "related": "[[rest-assured-interview#Q4]] извлечение токена через extract; [[rest-assured-interview#Q7]] вынос auth в RequestSpecification; [[rest-assured-interview#Q3]] тело запроса логина."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`.auth().oauth2(token)` запускает полный OAuth2-флоу: сам идёт на authorization server, обменивает credentials на токен и обновляет его по истечении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.auth().oauth2(token)` лишь подставляет уже готовый токен в заголовок `Bearer`; получение и refresh токена — забота теста, а не DSL.",
+                "source_of_confusion": "Название `oauth2` ассоциируется со всем протоколом, отсюда ожидание полного grant-флоу.",
+                "if_it_were_true": "Если бы метод сам ходил за токеном, в примере не было бы отдельного `POST /auth/login` для его получения, но он есть.",
+                "how_it_should_be": "Метод просто кладёт переданный токен в заголовок; авторизационный обмен и обновление токена выполняются явным запросом в тесте."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В `REST Assured` Basic Auth задаётся как `.auth().preemptive().basic(...)` обязательно, иначе credentials не отправятся вовсе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Работает и обычный `.auth().basic(...)`; `preemptive()` лишь шлёт заголовок сразу, не дожидаясь `401`-challenge, но не является обязательным.",
+                "source_of_confusion": "`preemptive` встречается в документации, поэтому его принимают за единственно рабочий вариант.",
+                "if_it_were_true": "Если бы без `preemptive()` ничего не отправлялось, пример `.auth().basic(\"username\",\"password\")` не проходил бы, но он валиден.",
+                "how_it_should_be": "`basic(...)` работает по challenge-схеме, а `preemptive().basic(...)` отправляет credentials заранее; выбор зависит от поведения сервера, оба допустимы."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `RequestSpecification` и когда его использовать?",
+          "options": [
+            {
+              "text": "`RequestSpecification` — это интерфейс самого тестируемого REST-контроллера, который `REST Assured` генерирует из аннотаций для проверки сигнатур эндпоинтов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RequestSpecification` — переиспользуемая конфигурация исходящего запроса (baseUri, заголовки, auth), а не контракт контроллера на стороне сервера.",
+                "source_of_confusion": "Слово `Specification` ассоциируется с контрактом API, отсюда подмена смысла на серверную сторону.",
+                "if_it_were_true": "Если бы это был интерфейс контроллера, его строили бы из server-кода, но его собирают через `RequestSpecBuilder` в тесте.",
+                "how_it_should_be": "Это клиентская спецификация запроса для переиспользования настроек; контракты контроллера к ней отношения не имеют."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`RequestSpecification` хранит ожидаемые проверки ответа (статус-код, заголовки, время) и применяется в блоке `then()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Проверки ответа описывает `ResponseSpecification` и применяется в `then().spec(...)`; `RequestSpecification` задаёт параметры запроса и идёт в `given().spec(...)`.",
+                "source_of_confusion": "Обе спецификации называются похоже и строятся билдерами, поэтому их роли путают местами.",
+                "if_it_were_true": "Если бы `RequestSpecification` проверял ответ, его подключали бы в `then()`, но он подключается в `given()`.",
+                "how_it_should_be": "`RequestSpecification` — про настройку запроса в `given()`; ассерты ответа — это `ResponseSpecification` в `then()`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`RequestSpecification` — переиспользуемая конфигурация запроса (baseUri, basePath, contentType, заголовки, аутентификация, логирование). Собирается через `RequestSpecBuilder`, подключается в тесте через `given().spec(specification)` и убирает дублирование boilerplate.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместо повторения одинаковых настроек в каждом тесте их описывают один раз в базовом классе или фабрике, а тесты лишь добавляют специфику запроса. Это `DRY` для setup-части.",
+                "example": "`spec = new RequestSpecBuilder().setBaseUri(\"https://api.example.com\").setContentType(ContentType.JSON).setAuth(RestAssured.oauth2(token)).build()`, затем `given().spec(spec).when().get(\"/users/1\")`.",
+                "when_to_apply": "Спецификации применяют, когда у набора тестов общий baseUri, заголовки и auth: их выносят в `@BeforeEach`/базовый класс, оставляя в тестах только метод, путь и проверки.",
+                "edge_cases": "Глобально `RestAssured.requestSpecification` удобно, но мутирует общее состояние и небезопасно в параллельных тестах — для них лучше локальные спецификации.",
+                "related": "[[rest-assured-interview#Q6]] вынос аутентификации в spec; [[rest-assured-interview#Q8]] парная ResponseSpecification для проверок; [[rest-assured-interview#Q14]] thread-safety при параллельных тестах."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`RequestSpecification` неизменяема: добавить специфичный заголовок к конкретному запросу поверх общей спецификации нельзя, нужно строить новую с нуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После `given().spec(common)` можно дополнять запрос обычными методами DSL — например, добавить заголовок или query-параметр поверх общей спецификации.",
+                "source_of_confusion": "Слово «спецификация» намекает на жёсткую фиксацию, отсюда вывод о невозможности дополнения.",
+                "if_it_were_true": "Если бы дополнения были запрещены, нельзя было бы к `spec` добавить специфичную проверку или параметр, но `given().spec(spec).header(...)` работает.",
+                "how_it_should_be": "Общая спецификация задаёт базу, а конкретный тест свободно добавляет к ней свои заголовки и параметры через DSL."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `ResponseSpecification`?",
+          "options": [
+            {
+              "text": "`ResponseSpecification` задаёт параметры исходящего запроса (заголовки, тело) и подключается через `given().spec(...)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметры запроса описывает `RequestSpecification` в `given()`; `ResponseSpecification` хранит ожидания по ответу и подключается в `then().spec(...)`.",
+                "source_of_confusion": "Обе спецификации строятся билдерами и звучат похоже, поэтому их роли путают.",
+                "if_it_were_true": "Если бы `ResponseSpecification` настраивал запрос, его подключали бы в `given()`, но он идёт в `then()`.",
+                "how_it_should_be": "`ResponseSpecification` — это переиспользуемые проверки ответа в `then()`; настройку запроса делает `RequestSpecification`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`ResponseSpecification` полностью заменяет проверки в `then()`: после `.spec(responseSpec)` добавлять `.body(...)` уже нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Спецификация задаёт общие проверки, а к ним в `then()` свободно добавляются специфичные, например `.body(\"name\", equalTo(\"Alice\"))`.",
+                "source_of_confusion": "Кажется, что подключённая спецификация «закрывает» блок проверок целиком.",
+                "if_it_were_true": "Если бы добавлять было нельзя, пример `then().spec(responseSpec).body(\"name\", equalTo(\"Alice\"))` не компилировался бы, но он валиден.",
+                "how_it_should_be": "Спецификация даёт переиспользуемую базу проверок, поверх которой тест добавляет уникальные ассерты."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`ResponseSpecification` умеет проверять только статус-код ответа; заголовки, время ответа и тело через неё валидировать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Через `ResponseSpecBuilder` задаются проверки статуса, content-type, заголовков, времени ответа и тела — не только код.",
+                "source_of_confusion": "Статус-код — самая частая проверка, отсюда заблуждение об ограниченности спецификации.",
+                "if_it_were_true": "Если бы проверялся только статус, не работали бы `.expectHeader(...)` и `.expectResponseTime(...)`, но они валидны.",
+                "how_it_should_be": "Спецификация ответа покрывает статус, заголовки, content-type, время и тело сразу."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`ResponseSpecification` — переиспользуемая валидация ответов. Через `ResponseSpecBuilder` задают ожидания: `expectStatusCode(200)`, `expectContentType(JSON)`, `expectHeader(...)`, `expectResponseTime(lessThan(2000L))`. Подключается в `then().spec(responseSpec)`, к ней можно добавить специфичные `.body(...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Симметрично `RequestSpecification`, но для проверок: общие ожидания (статус, content-type, SLA по времени) выносятся один раз и применяются ко многим тестам, оставляя в них только уникальные ассерты.",
+                "example": "`responseSpec = new ResponseSpecBuilder().expectStatusCode(200).expectContentType(ContentType.JSON).expectResponseTime(lessThan(2000L)).build()`, затем `then().spec(responseSpec).body(\"name\", equalTo(\"Alice\"))`.",
+                "when_to_apply": "Применяют, когда у группы эндпоинтов общие гарантии ответа: один и тот же успешный статус, JSON-тип, лимит времени — это удобно описать раз и переиспользовать.",
+                "edge_cases": "Спецификация не отменяет специфичных проверок — их добавляют после `.spec(...)`; чрезмерно строгий `expectResponseTime` делает тесты flaky на нагруженном CI.",
+                "related": "[[rest-assured-interview#Q7]] парная RequestSpecification; [[rest-assured-interview#Q2]] блок then в синтаксисе; [[rest-assured-interview#Q14]] flaky-тесты из-за жёстких проверок времени."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать query parameters и path variables в `REST Assured`?",
+          "options": [
+            {
+              "text": "Query-параметры задают через `.queryParam(name, value)` (попадают в строку запроса `?a=1&b=2`), path-переменные — через `.pathParam(name, value)` с плейсхолдерами `{name}` в URL, form-параметры — `.formParam(...)` с `ContentType.URLENC`, файлы — `.multiPart(...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разные виды параметров идут в разные части запроса: query — в URL после `?`, path — подстановкой в шаблон пути, form — в тело `application/x-www-form-urlencoded`, multipart — в тело `multipart/form-data`.",
+                "example": "`given().pathParam(\"userId\",123).pathParam(\"orderId\",456).when().get(\"/users/{userId}/orders/{orderId}\")` подставит 123 и 456; `given().queryParam(\"page\",0).queryParam(\"size\",20)` даст `?page=0&size=20`.",
+                "when_to_apply": "`queryParam` — для пагинации/фильтров, `pathParam` — для идентификаторов ресурса в URL, `formParam` — для классических HTML-форм и login, `multiPart` — для загрузки файлов.",
+                "edge_cases": "Путать `queryParam` и `param` рискованно: для GET они совпадают, но `param` для POST уйдёт в тело как form; плейсхолдер `{name}` без `pathParam` останется в URL как литерал.",
+                "related": "[[rest-assured-interview#Q3]] JSON-тело вместо form-параметров; [[rest-assured-interview#Q2]] блок given для настройки запроса; [[rest-assured-interview#Q6]] form-параметры для login."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Path-переменные подставляются автоматически из переменных Java с теми же именами: достаточно объявить `int userId = 123;`, и `{userId}` в пути возьмёт это значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подстановка идёт только из явного `.pathParam(\"userId\", 123)`; `REST Assured` не сканирует локальные переменные метода по именам.",
+                "source_of_confusion": "Шаблон `{userId}` визуально похож на интерполяцию строк, отсюда ожидание авто-связывания с переменной.",
+                "if_it_were_true": "Если бы значения брались из переменных, не нужен был бы вызов `.pathParam(\"userId\", 123)`, но без него `{userId}` останется в URL как текст.",
+                "how_it_should_be": "Плейсхолдеры заполняются значениями из явных `.pathParam(...)`; имя переменной Java на подстановку не влияет."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`queryParam` и `pathParam` взаимозаменяемы: оба формируют строку запроса `?...`, разница только в названии метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`queryParam` идёт в строку запроса после `?`, а `pathParam` подставляется в `{плейсхолдер}` внутри самого пути — это разные части URL.",
+                "source_of_confusion": "Оба метода настраивают URL в `given()`, поэтому их считают эквивалентными.",
+                "if_it_were_true": "Если бы они были взаимозаменяемы, `pathParam(\"userId\",123)` давал бы `?userId=123` вместо подстановки в `/users/123`, но результат разный.",
+                "how_it_should_be": "`queryParam` → `?key=value`; `pathParam` → подстановка в шаблон пути `/users/{userId}`; путать их нельзя."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Загрузка файла делается через `.body(new File(...))`, а отдельный `.multiPart(...)` нужен только для текстовых полей формы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Файлы и поля `multipart/form-data` передают именно через `.multiPart(...)`; `.body(File)` отправит содержимое файла как сырое тело, а не как multipart-часть.",
+                "source_of_confusion": "И `.body(File)`, и `.multiPart(File)` принимают `File`, отсюда смешение их назначения.",
+                "if_it_were_true": "Если бы `.body(File)` делал multipart, не понадобился бы `.multiPart(\"file\", new File(\"test.pdf\"), \"application/pdf\")`, но он используется для загрузки.",
+                "how_it_should_be": "Для `multipart/form-data` (файл + поля) используют `.multiPart(...)`; `.body(File)` шлёт файл как цельное тело запроса."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как интегрировать `REST Assured` со Spring Boot Test?",
+          "options": [
+            {
+              "text": "Нужно вручную хардкодить порт `8080` в `baseUri`, потому что `REST Assured` не умеет получать случайный порт от `@SpringBootTest(webEnvironment = RANDOM_PORT)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Случайный порт берут из `@LocalServerPort` и присваивают `RestAssured.port = port` в `@BeforeEach`; хардкод `8080` для `RANDOM_PORT` неверен.",
+                "source_of_confusion": "Дефолтный порт Spring Boot — `8080`, поэтому кажется, что его и надо прописывать.",
+                "if_it_were_true": "Если бы порт был фиксированным, тесты падали бы при `RANDOM_PORT`, где порт каждый раз другой, но `RestAssured.port = port` решает это.",
+                "how_it_should_be": "Порт инжектят через `@LocalServerPort` и кладут в `RestAssured.port`; жёсткий `8080` ломает тесты на случайном порту."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Поднять контекст через `@SpringBootTest(webEnvironment = RANDOM_PORT)`, получить порт в `@LocalServerPort int port` и в `@BeforeEach` присвоить `RestAssured.port = port`. Для MVC без старта сервера используют `RestAssuredMockMvc.mockMvc(mockMvc)` с `@WebMvcTest`.",
+              "correct": true,
+              "sections": {
+                "explanation": "При `RANDOM_PORT` Spring запускает реальный сервер на случайном порту, который `REST Assured` должен знать. Альтернатива — `RestAssuredMockMvc` поверх `MockMvc`: быстрее, без сетевого стека, для тонких контроллер-тестов.",
+                "example": "`@BeforeEach void setUp(){ RestAssured.port = port; }`, затем `given().body(new CreateUserRequest(\"Alice\",\"alice@example.com\")).when().post(\"/api/users\").then().statusCode(201)`.",
+                "when_to_apply": "`RANDOM_PORT` + реальный HTTP — для end-to-end интеграционных тестов слайса; `RestAssuredMockMvc` + `@WebMvcTest` — когда нужен только слой контроллера без сети и БД.",
+                "edge_cases": "При `RANDOM_PORT` забытое присваивание `RestAssured.port` отправит запросы на дефолтный `8080` и тесты упадут с connection refused; `RestAssuredMockMvc` не проверяет реальный сетевой стек и сериализацию HTTP.",
+                "related": "[[rest-assured-interview#Q1]] что такое REST Assured; [[rest-assured-interview#Q7]] RequestSpecification для общего setup; [[rest-assured-interview#Q15]] сравнение с MockMvc/WebTestClient."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`RestAssuredMockMvc` поднимает встроенный сервер `Tomcat` на случайном порту и шлёт реальные HTTP-запросы, как и обычный `REST Assured`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RestAssuredMockMvc` работает поверх `MockMvc` без запуска сервера и сетевого стека — запросы обрабатываются in-process через `DispatcherServlet`.",
+                "source_of_confusion": "В названии есть и `RestAssured`, и реальный HTTP-клиент рядом, поэтому кажется, что сервер тоже стартует.",
+                "if_it_were_true": "Если бы поднимался `Tomcat`, не было бы смысла в отдельном `RestAssuredMockMvc` — он существует именно ради тестов без сервера.",
+                "how_it_should_be": "`RestAssuredMockMvc` — это in-process тестирование через `MockMvc`; реальный сервер поднимает обычный `REST Assured` с `RANDOM_PORT`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Для интеграции достаточно добавить зависимость — `REST Assured` сам определит порт работающего Spring Boot приложения через classpath, без `@LocalServerPort`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порт нужно явно прокинуть через `@LocalServerPort` в `RestAssured.port`; библиотека не знает порт автоматически по classpath.",
+                "source_of_confusion": "Spring-автоконфигурация многое делает «магически», отсюда ожидание авто-определения порта.",
+                "if_it_were_true": "Если бы порт определялся сам, в примерах не было бы `@LocalServerPort int port` и присваивания `RestAssured.port`, но они обязательны.",
+                "how_it_should_be": "Связь с тестовым портом задают явно: `@LocalServerPort` → `RestAssured.port`; автоопределения по classpath нет."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как валидировать XML-ответы в `REST Assured`?",
+          "options": [
+            {
+              "text": "XML-ответы валидируют тем же `JsonPath`, что и JSON: `REST Assured` сам конвертирует XML в JSON перед проверкой `.body(...)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для XML используется `XPath`-подобная навигация (`users.user[0].name`, `@id` для атрибутов), а не `JsonPath`; конвертации XML→JSON не происходит.",
+                "source_of_confusion": "Метод `.body(path, matcher)` один и тот же для обоих форматов, отсюда вывод про единый `JsonPath`.",
+                "if_it_were_true": "Если бы XML конвертировался в JSON, обращение к атрибуту `users.user.@id` было бы невозможно, но именно оно используется.",
+                "how_it_should_be": "XML обходят XPath-нотацией с поддержкой атрибутов через `@`; `JsonPath`/`GPath` — для JSON."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Проверить соответствие XML схеме нельзя — `REST Assured` умеет только парсить значения тегов, но не валидировать по `XSD`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть матчер `matchesXsdInClasspath(\"users.xsd\")`, который проверяет тело против `XSD`-схемы прямо в `then().body(...)`.",
+                "source_of_confusion": "JSON Schema-валидация известнее, и кажется, что для XML аналога нет.",
+                "if_it_were_true": "Если бы XSD-валидации не было, не работал бы `.body(matchesXsdInClasspath(\"users.xsd\"))`, но он валиден.",
+                "how_it_should_be": "`REST Assured` поддерживает XSD-валидацию через `matchesXsdInClasspath`/`matchesXsd`, помимо доступа к отдельным узлам."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Указать `accept(ContentType.XML)`, проверить `contentType(ContentType.XML)` и обращаться к узлам через XPath-подобную навигацию: `users.user[0].name`, а к атрибутам — через `@`, например `users.user.@id`. Для проверки структуры есть `matchesXsdInClasspath(\"users.xsd\")`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для XML `REST Assured` использует `XmlPath` (GPath по XML): теги адресуются по именам, индекс `[i]` берёт повторяющийся элемент, префикс `@` — атрибут. XSD-матчер валидирует всё тело против схемы.",
+                "example": "`given().accept(ContentType.XML).when().get(\"/users\").then().contentType(ContentType.XML).body(\"users.user[0].name\", equalTo(\"Alice\")).body(\"users.user.@id\", hasItem(\"1\"))`.",
+                "when_to_apply": "Применяют для legacy/SOAP-подобных API и сервисов, отдающих XML: проверка значений тегов, атрибутов и соответствия документа `XSD`-контракту.",
+                "edge_cases": "Синтаксис навигации для XML отличается от JSON (атрибуты через `@`, иное обращение к namespace); забытый `accept(XML)` может вернуть JSON и сломать XPath-выражения.",
+                "related": "[[rest-assured-interview#Q5]] JsonPath для JSON-ответов; [[rest-assured-interview#Q2]] accept-заголовок в given; [[rest-assured-interview#Q1]] область применения REST Assured."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Для XML обязательно подключать стороннюю библиотеку `JAXB` и вручную анмаршалить тело, потому что `REST Assured` с XML из коробки не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REST Assured` парсит XML встроенно через `XmlPath`: навигация и XSD-валидация доступны без ручного `JAXB`-анмаршалинга.",
+                "source_of_confusion": "`JAXB` исторически связан с XML в Java, отсюда ожидание ручной работы с ним.",
+                "if_it_were_true": "Если бы требовался ручной `JAXB`, не работали бы примеры `.body(\"users.user[0].name\", ...)` напрямую, но они валидны.",
+                "how_it_should_be": "XML поддерживается из коробки через `XmlPath` и `matchesXsd...`; ручной `JAXB` нужен лишь для маппинга в собственные POJO."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как протестировать WebSocket или SSE с помощью `REST Assured`?",
+          "options": [
+            {
+              "text": "`REST Assured` полноценно поддерживает WebSocket: через `.websocket(\"/ws\")` можно открыть соединение, слать кадры и проверять входящие сообщения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REST Assured` работает только с REST/HTTP и не имеет WebSocket-API; для WS берут отдельные клиенты (`StandardWebSocketClient`, `Tyrus`, `okhttp3.WebSocket`).",
+                "source_of_confusion": "Раз библиотека про API-тесты, кажется, что и двунаправленный WebSocket она покрывает.",
+                "if_it_were_true": "Если бы был метод `.websocket(...)`, не пришлось бы упоминать отдельные WS-библиотеки, но именно они нужны.",
+                "how_it_should_be": "WebSocket тестируют сторонними клиентами; `REST Assured` ограничен запрос-ответной моделью HTTP."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "SSE нельзя проверить через `REST Assured` вообще, так как это не HTTP, а отдельный бинарный протокол поверх TCP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SSE (`text/event-stream`) — это обычный HTTP-ответ потоком текста, и его можно получить через `REST Assured` как строку и проверить содержимое.",
+                "source_of_confusion": "SSE путают с WebSocket и считают отдельным не-HTTP протоколом, отсюда вывод о неприменимости.",
+                "if_it_were_true": "Если бы SSE не был HTTP, не работал бы `given().accept(\"text/event-stream\").when().get(...).then().extract().asString()`, но он валиден.",
+                "how_it_should_be": "SSE — потоковый HTTP-ответ; `REST Assured` способен получить его тело как текст и сделать проверки по событиям."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Для SSE `REST Assured` отдаёт реактивный `Flux<String>` событий, на который можно подписаться и проверять элементы по мере поступления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REST Assured` синхронен и не возвращает `Flux`; SSE он читает как цельную строку через `.extract().asString()` после завершения ответа.",
+                "source_of_confusion": "Реактивные стримы ассоциируются с потоковыми ответами, поэтому ожидают `Flux` и здесь.",
+                "if_it_were_true": "Если бы возвращался `Flux`, в примере был бы `.subscribe(...)`, но там `extract().asString()` и проверка `contains`.",
+                "how_it_should_be": "Стрим SSE `REST Assured` получает как строку целиком; реактивная подписка на события — это `WebClient`/`WebTestClient`, а не `REST Assured`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`REST Assured` работает только с REST/HTTP. SSE (`text/event-stream`) можно получить как текстовый стрим через `.accept(\"text/event-stream\")` и `.extract().asString()`, затем проверить содержимое. WebSocket он не поддерживает — нужны отдельные клиенты: `StandardWebSocketClient`, `Tyrus`, `okhttp3.WebSocket`.",
+              "correct": true,
+              "sections": {
+                "explanation": "SSE — это однонаправленный HTTP-стрим текста, поэтому укладывается в модель `REST Assured` (получить тело — проверить). WebSocket двунаправлен и не основан на запрос-ответе, поэтому выходит за рамки библиотеки.",
+                "example": "`String events = given().accept(\"text/event-stream\").when().get(\"/api/events/stream\").then().statusCode(200).extract().asString(); assertThat(events).contains(\"event: order-created\")`.",
+                "when_to_apply": "SSE-подход применяют для проверки потоковых уведомлений по HTTP; для WebSocket-сценариев (чаты, live-обновления) подключают специализированный WS-клиент рядом с `REST Assured`.",
+                "edge_cases": "Чтение SSE как строки ждёт завершения/закрытия стрима — для бесконечных потоков нужен таймаут или ограничение; WebSocket через `REST Assured` протестировать нельзя в принципе.",
+                "related": "[[rest-assured-interview#Q1]] область применения REST Assured (REST/HTTP); [[rest-assured-interview#Q4]] extract().asString() для тела; [[rest-assured-interview#Q15]] реактивный WebTestClient как альтернатива."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать тестовые данные в тестах на `REST Assured`?",
+          "options": [
+            {
+              "text": "Используют несколько подходов: JSON-фикстуры из файлов через `.body(new File(\"src/test/resources/user.json\"))`, Builder-паттерн (`TestDataBuilder.validUser()`) для типизированных DTO и `@ParameterizedTest` с `@CsvSource` для прогона одного сценария на разных входах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Цель — отделить данные от логики теста и убрать дублирование: файлы держат большие/реалистичные payload'ы, билдеры дают читаемые валидные объекты с вариациями, параметризация покрывает граничные случаи без копипасты.",
+                "example": "`@ParameterizedTest @CsvSource({\"invalid-email,400\", \"alice@example.com,201\", \",400\"}) void create(String email,int status){ given().body(Map.of(\"email\",email)).when().post(\"/users\").then().statusCode(status); }`.",
+                "when_to_apply": "Файлы-фикстуры — для крупных стабильных тел; билдеры — когда нужны валидные объекты с точечными отличиями; параметризация — для матрицы валидаций (валидный/невалидный/пустой email).",
+                "edge_cases": "JSON-файлы легко устаревают при смене контракта и не типобезопасны; в `@CsvSource` пустое значение между запятыми передаётся как `null`, что важно при проверке обязательных полей.",
+                "related": "[[rest-assured-interview#Q3]] тело запроса из файла и Map; [[rest-assured-interview#Q9]] параметры запроса; [[rest-assured-interview#Q14]] хрупкость тестов и flaky-данные."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Тестовые данные обязательно держать прямо в коде теста большими JSON-строками — внешние файлы `REST Assured` в `.body()` не принимает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.body(new File(...))` напрямую читает JSON из файла-фикстуры; inline-строки — лишь один из вариантов, не единственный.",
+                "source_of_confusion": "Строковые литералы JSON в тестах встречаются часто, отсюда вывод об их обязательности.",
+                "if_it_were_true": "Если бы файлы не принимались, не работал бы пример `.body(new File(\"src/test/resources/user.json\"))`, но он валиден.",
+                "how_it_should_be": "Тело можно брать из файла, из билдера-объекта или из `Map`; гигантские inline-строки — наименее поддерживаемый способ."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@ParameterizedTest` в `REST Assured` работает только с одним параметром-строкой; передать вход и ожидаемый статус-код одной строкой `@CsvSource` нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@CsvSource` передаёт несколько колонок в метод (например `String email, int status`), это стандарт JUnit 5 и с `REST Assured` совместимо.",
+                "source_of_confusion": "Простые примеры с одним аргументом создают впечатление ограничения параметризации.",
+                "if_it_were_true": "Если бы поддерживался только один параметр, не компилировался бы метод `void create(String email, int expectedStatus)` с `@CsvSource`, но он валиден.",
+                "how_it_should_be": "`@CsvSource` даёт несколько типизированных колонок на тест; число и типы параметров ограничены только сигнатурой метода."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Builder-паттерн для тестовых данных бесполезен с `REST Assured`, потому что `.body()` принимает только `Map`, но не Java-объекты из билдеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.body()` принимает и POJO (с авто-сериализацией), поэтому объект из билдера `TestDataBuilder.validUser()` отправляется напрямую.",
+                "source_of_confusion": "Примеры с `Map.of(...)` создают впечатление, что только `Map` и поддерживается.",
+                "if_it_were_true": "Если бы POJO не принимались, не работал бы `.body(TestDataBuilder.validUser())`, но билдеры с `REST Assured` используются штатно.",
+                "how_it_should_be": "Билдеры строят DTO, которые `.body()` сериализует автоматически; ограничение «только Map» неверно."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие проблемы могут возникнуть при использовании `REST Assured`?",
+          "options": [
+            {
+              "text": "Главная проблема в том, что `REST Assured` не умеет проверять статус-код и тело одновременно — приходится писать два отдельных теста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Статус, тело, заголовки и время проверяются в одном `then()` цепочкой; реальные проблемы иные — Groovy-замыкания, скорость, flaky-зависимость от порядка.",
+                "source_of_confusion": "Звучит как ограничение, но это выдумка: один `then()` содержит сколько угодно проверок.",
+                "if_it_were_true": "Если бы нельзя было совмещать проверки, не работал бы `then().statusCode(200).body(\"name\", equalTo(\"Alice\"))`, но он валиден.",
+                "how_it_should_be": "Один `then()` валидирует всё сразу; настоящие сложности — Groovy-синтаксис, медленный HTTP, хрупкие ассерты по индексу и thread-safety."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Типичные проблемы: Groovy-замыкания в ассертах (`find { it.id == 2 }`) требуют знания Groovy и падают только в рантайме; реальный HTTP делает тесты медленнее `MockMvc`; flaky-тесты при привязке к индексу массива; зависимость от внешних сервисов; распухание логов; `RestAssured.given()` не thread-safe.",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство проблем — следствие того, что `REST Assured` гоняет настоящие запросы и использует Groovy-`GPath`: это даёт реализм и мощь, но добавляет хрупкости, скрытых рантайм-ошибок и нюансов параллелизма.",
+                "example": "Хрупко: `.body(\"users[0].name\", equalTo(\"Alice\"))` ломается при смене порядка; надёжно: `.body(\"users.find { it.id == 1 }.name\", equalTo(\"Alice\"))` ищет по `id`.",
+                "when_to_apply": "Об этих рисках помнят при выборе уровня теста (unit vs integration), изоляции внешних зависимостей через `WireMock`/`MockServer` и настройке параллельного прогона.",
+                "edge_cases": "Для unit-тестов одного контроллера `MockMvc` быстрее; в параллельных тестах глобальный `RestAssured.given()` небезопасен — нужны локальные спецификации, иначе гонки состояния.",
+                "related": "[[rest-assured-interview#Q5]] Groovy-замыкания JsonPath; [[rest-assured-interview#Q7]] локальные спецификации против гонок; [[rest-assured-interview#Q15]] выбор MockMvc для быстрых тестов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Основная проблема — `REST Assured` несовместим с `JUnit 5` и работает только под устаревшим `JUnit 4`, поэтому в современных проектах его не используют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REST Assured` — это HTTP-DSL, не зависящий от runner'а, и прекрасно работает с `JUnit 5` (`@Test`, `@ParameterizedTest`); проблема надуманная.",
+                "source_of_confusion": "Некоторые старые библиотеки действительно отставали по поддержке `JUnit 5`, отсюда ложный перенос.",
+                "if_it_were_true": "Если бы он не работал с `JUnit 5`, не было бы примеров с `@ParameterizedTest` и `@CsvSource`, но они валидны.",
+                "how_it_should_be": "`REST Assured` совместим с `JUnit 5` и `TestNG`; реальные проблемы — Groovy, скорость, flaky-ассерты и thread-safety."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`RestAssured.given()` полностью thread-safe, поэтому в параллельных тестах можно безопасно мутировать глобальные `RestAssured.baseURI` и `port` из разных потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Глобальное состояние `RestAssured` не thread-safe: при параллельном прогоне нужно использовать локальные `RequestSpecification`, а не общие статические поля.",
+                "source_of_confusion": "Fluent-вызов `given()` выглядит как создание нового независимого объекта, отсюда вывод о потокобезопасности.",
+                "if_it_were_true": "Если бы оно было thread-safe, в списке проблем не значился бы пункт про thread-safety и локальные спецификации, но он есть.",
+                "how_it_should_be": "В параллельных тестах изолируют конфигурацию через локальные спецификации; мутация глобальных `baseURI`/`port` ведёт к гонкам."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `REST Assured` отличается от `WebTestClient` и `TestRestTemplate`?",
+          "options": [
+            {
+              "text": "Все три инструмента одинаковы и взаимозаменяемы: это просто разные имена одной библиотеки из Spring для тестирования REST.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это три разных инструмента с разными нишами: `REST Assured` — BDD и любой Java-проект, `WebTestClient` — реактивный `WebFlux`, `TestRestTemplate` — простые интеграционные тесты Spring MVC.",
+                "source_of_confusion": "Все решают похожую задачу — вызвать API в тесте, отсюда вывод об эквивалентности.",
+                "if_it_were_true": "Если бы они были одним и тем же, не было бы смысла сравнивать их по стилю, платформе и mock-возможностям, но различия существенны.",
+                "how_it_should_be": "У каждого свой стиль и область: BDD-универсал, реактивный клиент и синхронный helper Spring Boot Test."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`REST Assured` — часть Spring Framework и работает только в Spring Boot приложениях, как `WebTestClient` и `TestRestTemplate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`REST Assured` — независимая библиотека для любого Java-проекта, а `WebTestClient` и `TestRestTemplate` действительно из Spring; платформенная привязка у них разная.",
+                "source_of_confusion": "Все три часто встречаются в Spring-тестах, отсюда вывод, что и `REST Assured` — часть Spring.",
+                "if_it_were_true": "Если бы он был частью Spring, его нельзя было бы применять вне Spring, но `REST Assured` тестирует любой REST API.",
+                "how_it_should_be": "`REST Assured` платформенно-нейтрален; `WebTestClient`/`TestRestTemplate` — Spring-специфичны."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`REST Assured` — BDD-стиль (given-when-then), работает в любом Java-проекте, mock без сервера через `RestAssuredMockMvc`. `WebTestClient` — fluent reactive для Spring `WebFlux`, проверки через `StepVerifier`/assertions. `TestRestTemplate` — синхронный, самый простой, для быстрых интеграционных тестов Spring MVC через `ResponseEntity` + AssertJ.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор определяют стиль и платформа: `REST Assured` — когда нужен читаемый BDD и универсальность; `WebTestClient` — для реактивных `WebFlux`-приложений; `TestRestTemplate` — для простых синхронных проверок без отдельного DSL.",
+                "example": "End-to-end API на `REST Assured`: `given().when().get(\"/users/1\").then().statusCode(200).body(\"name\", equalTo(\"Alice\"))`; то же на `TestRestTemplate` — `restTemplate.getForEntity(\"/users/1\", User.class)` с проверкой `ResponseEntity` через AssertJ.",
+                "when_to_apply": "`REST Assured` — для end-to-end API-тестов и не-Spring проектов; `WebTestClient` — для `WebFlux`-контроллеров; `TestRestTemplate` — для быстрых интеграционных тестов Spring MVC.",
+                "edge_cases": "`WebTestClient` работает и в блокирующем стеке (через `bindToServer`), а не только в `WebFlux`; `TestRestTemplate` проще всех, но без BDD-читаемости и встроенной JsonPath-навигации.",
+                "related": "[[rest-assured-interview#Q1]] что такое REST Assured; [[rest-assured-interview#Q10]] интеграция со Spring Boot Test и MockMvc; [[rest-assured-interview#Q2]] BDD-синтаксис как отличие."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Единственное различие — синтаксис: `REST Assured` использует `given-when-then`, а остальные два полностью идентичны ему по платформе и возможностям mock без сервера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различия не только в синтаксисе: разные платформы (любой Java vs Spring `WebFlux` vs Spring MVC) и разные mock-возможности (`RestAssuredMockMvc` vs `bindToServer()` vs отсутствие).",
+                "source_of_confusion": "Стиль `given-when-then` — самое заметное отличие, поэтому остальные различия упускают.",
+                "if_it_were_true": "Если бы различался только синтаксис, не было бы смысла в таблице сравнения по платформе и mock-режимам, но они отличаются.",
+                "how_it_should_be": "Помимо стиля, инструменты расходятся по платформе, реактивности и способу мокать без поднятого сервера."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

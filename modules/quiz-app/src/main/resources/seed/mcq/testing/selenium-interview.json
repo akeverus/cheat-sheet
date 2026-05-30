@@ -1,0 +1,905 @@
+{
+  "topic_slug": "selenium-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Selenium WebDriver` и как устроена его архитектура?",
+          "options": [
+            {
+              "text": "`Selenium WebDriver` — библиотека для автоматизации браузеров по протоколу `WebDriver` (стандарт W3C). Цепочка управления: код теста → `Selenium WebDriver API` → HTTP-команды → browser driver (`chromedriver`, `geckodriver`) → сам браузер. Драйвер браузера выступает мостом между API и браузером.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевые компоненты: `WebDriver` (API управления браузером), browser driver как мост, `Selenium Grid` для распределённого запуска и `Selenium IDE` для записи-воспроизведения при прототипировании.",
+                "example": "`new ChromeDriver()` создаёт сессию, далее `driver.get(url)`, `driver.findElement(By.id(...))`, `button.click()` и в конце `driver.quit()` — типичный жизненный цикл скрипта.",
+                "when_to_apply": "Применяют для E2E-тестов веб-интерфейсов на разных языках (Java, Python, JS) и для поддержки legacy UI-тестов, где уже накоплена кодовая база на Selenium.",
+                "edge_cases": "Каждый язык шлёт одни и те же W3C-команды по HTTP, поэтому драйвер можно поднимать удалённо (`RemoteWebDriver`) и гонять на Grid без изменения тестовой логики.",
+                "related": "[[selenium-interview#Q2]] выбор локаторов; [[selenium-interview#Q8]] Selenium Grid для распределённого запуска; [[selenium-interview#Q11]] альтернативы Selenium."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Selenium WebDriver` — это сам браузер с встроенным движком рендеринга, не требующий установки `chromedriver` или `geckodriver`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebDriver — это библиотека-клиент; он не рендерит страницы, а шлёт команды реальному браузеру через отдельный driver-процесс (`chromedriver`).",
+                "source_of_confusion": "Названия «WebDriver» и «driver браузера» созвучны, поэтому их сливают в одну сущность, которая якобы и есть браузер.",
+                "if_it_were_true": "Если бы WebDriver был браузером, не нужен был бы `chromedriver` нужной версии, но без совместимого драйвера сессия просто не стартует.",
+                "how_it_should_be": "WebDriver — API-клиент; рендеринг делает настоящий браузер, а browser driver служит мостом между ними по W3C-протоколу."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Selenium WebDriver` управляет браузером, напрямую дёргая JavaScript-функции страницы, а не через отдельный протокол.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Управление идёт по протоколу `WebDriver` (W3C) через HTTP-команды к драйверу, а не прямым вызовом JS-функций страницы.",
+                "source_of_confusion": "`executeScript` действительно умеет выполнять JS, поэтому кажется, что весь WebDriver работает только так.",
+                "if_it_were_true": "Если бы всё шло через JS страницы, нельзя было бы кликать нативные диалоги и alert'ы, но WebDriver управляет и ими.",
+                "how_it_should_be": "Базовый канал — W3C-команды к driver-процессу; JS через `executeScript` — лишь дополнительная возможность поверх него."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Selenium WebDriver` — это исключительно инструмент записи-воспроизведения действий пользователя без программного API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запись-воспроизведение — это `Selenium IDE`; WebDriver же предоставляет программный API на Java/Python/JS для написания тестов кодом.",
+                "source_of_confusion": "`Selenium IDE` и `Selenium WebDriver` входят в один проект, поэтому их функции путают между собой.",
+                "if_it_were_true": "Если бы WebDriver был только рекордером, нельзя было бы писать `Page Object`-классы и циклы, но на нём строят полноценный код.",
+                "how_it_should_be": "WebDriver — это библиотека с API для кода; record-and-playback — отдельный компонент `Selenium IDE`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие локаторы (`By`) есть в Selenium и когда какой использовать?",
+          "options": [
+            {
+              "text": "Локатор `By.xpath` всегда быстрее и предпочтительнее `By.cssSelector`, поэтому в первую очередь стоит использовать XPath.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `cssSelector` обычно быстрее и читаемее, а XPath берут только когда CSS не хватает (поиск по тексту, навигация по иерархии).",
+                "source_of_confusion": "XPath мощнее по возможностям (умеет идти вверх по дереву), отсюда ложный вывод, что он и быстрее.",
+                "if_it_were_true": "Если бы XPath был всегда быстрее, не было бы рекомендации предпочитать CSS, но именно CSS советуют по умолчанию.",
+                "how_it_should_be": "Приоритет такой: `id` → `name` → `cssSelector` → `xpath`; XPath — крайнее средство, а не первый выбор."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Порядок выбора: `By.id` — самый быстрый и уникальный, если есть; `By.name` — для полей форм; `By.cssSelector` — предпочтительнее XPath (быстрее, читаемее); `By.xpath` — только когда CSS не справляется (поиск по тексту, навигация по дереву вверх). Также есть `className`, `tagName`, `linkText`, `partialLinkText`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`id` уникален и не зависит от структуры, поэтому даёт самый стабильный и быстрый поиск; CSS-селекторы — баланс гибкости и скорости для остальных случаев.",
+                "example": "`By.cssSelector(\"button.primary[type='submit']\")` точнее `className`, а `By.xpath(\"//button[contains(text(),'Submit')]\")` нужен, когда искать приходится по видимому тексту.",
+                "when_to_apply": "Локаторы выбирают на этапе написания Page Object: для каждого элемента берут максимально стабильный селектор, чтобы тест не ломался при рефакторинге вёрстки.",
+                "edge_cases": "Локаторы по visible text на нескольких языках — плохая практика: они ломаются при локализации, поэтому для текста лучше `data-testid`.",
+                "related": "[[selenium-interview#Q1]] архитектура WebDriver; [[selenium-interview#Q10]] стабильные локаторы против флейков; [[selenium-interview#Q14]] хрупкие локаторы как анти-паттерн."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Локатор `By.linkText` ищет элемент по любому атрибуту, содержащему указанную подстроку, а не только по тексту ссылки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`By.linkText` ищет ссылку строго по полному видимому тексту; для частичного совпадения есть `By.partialLinkText`, и оба работают только с `<a>`.",
+                "source_of_confusion": "`partialLinkText` действительно про подстроку, поэтому его поведение приписывают и обычному `linkText`, и другим атрибутам.",
+                "if_it_were_true": "Если бы `linkText` искал по любым атрибутам, он находил бы и `<button>`, но он ограничен текстом тегов-ссылок.",
+                "how_it_should_be": "`linkText` — полный текст ссылки, `partialLinkText` — частичный; поиск по атрибутам делают через `cssSelector` или `xpath`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Локаторы по видимому тексту на разных языках — лучшая практика, так как тест читается понятнее для бизнеса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это как раз плохая практика: такие локаторы ломаются при локализации, когда текст меняется на другой язык.",
+                "source_of_confusion": "Читаемость для людей подкупает, поэтому привязку к человекочитаемому тексту ошибочно считают надёжной.",
+                "if_it_were_true": "Если бы текстовые локаторы были стабильны, локализация не ломала бы тесты, но смена языка делает их невалидными.",
+                "how_it_should_be": "Для устойчивости элементам добавляют `data-testid` и ищут по нему, а не по переводимому видимому тексту."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между implicit, explicit и fluent wait?",
+          "options": [
+            {
+              "text": "`Implicit wait` ждёт конкретное условие (например, кликабельность) для одного элемента, а `explicit wait` — глобальный таймаут на все вызовы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `implicit` — глобальный таймаут для всех `findElement`, а `explicit` (`WebDriverWait`) ждёт конкретное условие для конкретного элемента.",
+                "source_of_confusion": "Слово «explicit» звучит как «глобально настроенный», поэтому роли implicit и explicit путают местами.",
+                "if_it_were_true": "Если бы explicit был глобальным, его не пришлось бы заводить под каждый элемент, но `WebDriverWait` создают точечно.",
+                "how_it_should_be": "`implicit` — общий таймаут поиска, `explicit` — ожидание условия `ExpectedConditions` для конкретного локатора."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Fluent wait` — это просто синоним `implicit wait`, отличается только названием в новых версиях Selenium.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FluentWait` — отдельный механизм с настройкой интервала опроса (`pollingEvery`) и игнорированием исключений, а не переименованный implicit.",
+                "source_of_confusion": "Оба «настраиваются один раз», отсюда ложное впечатление, что fluent — это новое имя implicit.",
+                "if_it_were_true": "Если бы это был синоним, у `FluentWait` не было бы `pollingEvery` и `ignoring`, но именно они отличают его.",
+                "how_it_should_be": "`FluentWait` даёт полный контроль над polling и игнорируемыми исключениями; `implicit` — простой глобальный таймаут без такой тонкой настройки."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Implicit wait` — глобальный таймаут, применяемый ко всем `findElement`; задаётся один раз через `manage().timeouts().implicitlyWait(...)`. `Explicit wait` (`WebDriverWait` + `ExpectedConditions`) ждёт конкретное условие для конкретного элемента — самый гибкий. `FluentWait` добавляет тонкую настройку polling (`pollingEvery`) и игнорирование исключений.",
+              "correct": true,
+              "sections": {
+                "explanation": "Implicit влияет на все поиски сразу и потому плохо контролируется; explicit точечно ждёт нужное условие, а fluent даёт полный контроль над частотой опроса.",
+                "example": "`new WebDriverWait(driver, Duration.ofSeconds(10)).until(ExpectedConditions.elementToBeClickable(By.id(\"submit\")))` ждёт именно кликабельности кнопки, а не просто истечения времени.",
+                "when_to_apply": "Explicit-ожидания применяют для динамического контента (AJAX, спиннеры), fluent — для кастомных условий с редким polling, implicit — как грубый страховочный таймаут.",
+                "edge_cases": "Смешивать implicit и explicit не рекомендуется: суммарные таймауты складываются непредсказуемо, и ожидания начинают вести себя странно.",
+                "related": "[[selenium-interview#Q4]] почему `Thread.sleep()` плохо; [[selenium-interview#Q10]] явные ожидания против флейков; [[selenium-interview#Q1]] архитектура WebDriver."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Implicit и explicit wait безопасно смешивать — их таймауты просто берут максимум из двух значений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смешивать их не рекомендуется: реальное поведение непредсказуемо, таймауты могут складываться, а не браться по максимуму.",
+                "source_of_confusion": "Логично ожидать, что система возьмёт больший таймаут, поэтому смешение кажется безвредным.",
+                "if_it_were_true": "Если бы брался просто максимум, не было бы предупреждения против смешивания, но официально его избегают.",
+                "how_it_should_be": "Лучше выбрать один подход: обычно отключают implicit и пользуются только explicit `WebDriverWait` для предсказуемости."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему `Thread.sleep()` считается плохой практикой в UI-тестах?",
+          "options": [
+            {
+              "text": "`Thread.sleep()` плох тем, что вообще не приостанавливает поток, поэтому тест продолжается до готовности элемента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Проблема ровно обратная: `Thread.sleep()` жёстко блокирует поток на фиксированное время, не реагируя на готовность элемента.",
+                "source_of_confusion": "Кажется, будто «sleep ничего не делает», отсюда вывод, что он не тормозит выполнение.",
+                "if_it_were_true": "Если бы sleep не приостанавливал поток, тесты не замедлялись бы, но именно лишние секунды ожидания — главная боль.",
+                "how_it_should_be": "`Thread.sleep(5000)` всегда ждёт все 5 секунд; заменяют его на `WebDriverWait`, который завершается сразу по выполнении условия."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Thread.sleep()` нежелателен только из-за многословного синтаксиса, а по поведению он не хуже `WebDriverWait`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дело не в синтаксисе, а в поведении: фиксированная пауза делает тесты медленными и flaky, в отличие от условного ожидания.",
+                "source_of_confusion": "`WebDriverWait` выглядит длиннее в коде, поэтому проблему ошибочно сводят к лишней «писанине».",
+                "if_it_were_true": "Если бы разница была лишь косметической, не было бы рекомендации заменять sleep на ожидания условий, но она есть.",
+                "how_it_should_be": "`WebDriverWait` ждёт реальное условие и завершается раньше, поэтому он быстрее и стабильнее, а не просто иначе записан."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Thread.sleep()` опасен тем, что закрывает сессию браузера по истечении времени и `driver` приходится пересоздавать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Thread.sleep()` не трогает сессию — он лишь приостанавливает поток теста; браузер и `driver` остаются живыми.",
+                "source_of_confusion": "Любую долгую паузу подсознательно связывают с таймаутом сессии, отсюда миф про закрытие браузера.",
+                "if_it_were_true": "Если бы sleep закрывал сессию, после него падал бы любой `findElement`, но код спокойно продолжает работать с тем же driver.",
+                "how_it_should_be": "`Thread.sleep()` — это просто блокирующая пауза; за жизнь сессии отвечает `driver.quit()`, а не таймер сна."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Thread.sleep()` плох по трём причинам: медленно (ждём фиксированные 5 секунд, даже если элемент готов через 1), flaky (при медленной сети 5 секунд может не хватить) и не реагирует на изменения (ждёт время, а не условие). Вместо него используют `WebDriverWait` с `ExpectedConditions`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Фиксированная пауза не связана с реальным состоянием страницы: она либо тратит лишнее время, либо завершается раньше, чем элемент появился.",
+                "example": "Замена `Thread.sleep(5000)` на `wait.until(ExpectedConditions.presenceOfElementLocated(By.id(\"result\")))` завершается сразу, как только элемент в DOM, и не зависит от угаданного числа секунд.",
+                "when_to_apply": "Любое ожидание AJAX, анимаций или подгрузки данных нужно делать через `ExpectedConditions` (`visibilityOf`, `elementToBeClickable`, `textToBePresentInElement`), а не через sleep.",
+                "edge_cases": "Иногда короткий sleep остаётся как костыль для нестандартных анимаций, но это исключение, требующее комментария, а не норма.",
+                "related": "[[selenium-interview#Q3]] виды wait; [[selenium-interview#Q10]] борьба с флейками; [[selenium-interview#Q14]] sleep как анти-паттерн."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое паттерн `Page Object` и зачем он нужен?",
+          "options": [
+            {
+              "text": "`Page Object` — паттерн, где каждая страница приложения представлена отдельным Java-классом, а локаторы и действия инкапсулированы внутри него. Тест работает с методами вроде `login()`, а не с сырыми локаторами. Метод действия обычно возвращает объект следующей страницы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Инкапсуляция локаторов даёт три выгоды: переиспользование (`login()` зовётся из любого теста), maintainability (при смене UI правят один класс) и читаемость (тест читается как сценарий).",
+                "example": "`loginPage.login(\"alice\", \"password\")` возвращает `DashboardPage`, после чего тест проверяет `dashboard.getWelcomeMessage()` — детали `sendKeys`/`click` скрыты в Page Object.",
+                "when_to_apply": "Применяют почти во всех нетривиальных Selenium-проектах, особенно когда страниц много и одни и те же элементы используются в разных тестах.",
+                "edge_cases": "Page Object не должен содержать assertions — проверки остаются в тестах; иначе классы страниц превращаются в смесь логики страницы и тестовых ожиданий.",
+                "related": "[[selenium-interview#Q6]] PageFactory и @FindBy; [[selenium-interview#Q2]] выбор локаторов внутри Page Object; [[selenium-interview#Q13]] Page Object в Cucumber-шагах."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Page Object` — это класс, который хранит результаты прогонов тестов и скриншоты для отчётности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Page Object моделирует страницу приложения (локаторы и действия), а не хранит отчёты или скриншоты прогонов.",
+                "source_of_confusion": "И отчёты, и Page Object относятся к инфраструктуре тестов, поэтому их роли смешивают.",
+                "if_it_were_true": "Если бы Page Object хранил результаты, он не содержал бы методов вроде `login()`, но именно они — его суть.",
+                "how_it_should_be": "Page Object инкапсулирует элементы и действия страницы; за отчёты и скриншоты отвечают репортеры (Allure, Surefire)."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Page Object` обязан содержать assertions внутри себя, чтобы тесты состояли только из вызовов его методов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хорошая практика — наоборот держать assertions в тестах; Page Object предоставляет данные (геттеры), а проверки делает тест.",
+                "source_of_confusion": "Стремление к «тонким тестам» подталкивает запихнуть проверки в Page Object, что выглядит как упрощение.",
+                "if_it_were_true": "Если бы assertions жили в Page Object, один класс отвечал бы и за страницу, и за ожидания теста, нарушая разделение ответственности.",
+                "how_it_should_be": "Page Object возвращает состояние (`getWelcomeMessage()`), а `assertThat(...)` остаётся в тесте — так логика страницы и проверки разделены."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Page Object` — это паттерн, при котором все страницы приложения описываются в одном общем классе со статическими методами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Идея в том, что каждая страница — отдельный класс; объединение всего в один статический класс убивает инкапсуляцию и переиспользование.",
+                "source_of_confusion": "Желание «не плодить классы» подталкивает свалить все страницы в один утилитный класс.",
+                "if_it_were_true": "Если бы всё было в одном классе, изменение одной страницы задевало бы остальные, а Page Object как раз изолирует их.",
+                "how_it_should_be": "Каждая страница — свой класс (`LoginPage`, `DashboardPage`); это и даёт локальность изменений при рефакторинге UI."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `PageFactory` и как работают аннотации `@FindBy`?",
+          "options": [
+            {
+              "text": "`@FindBy`-поля инициализируются один раз в конструкторе и кэшируют найденный `WebElement` на всё время жизни Page Object.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `@FindBy`-поля — это lazy proxy: реальный `findElement` выполняется при каждом обращении, а не кэшируется навсегда.",
+                "source_of_confusion": "`PageFactory.initElements` вызывают в конструкторе, отсюда вывод, что там же элементы и находятся окончательно.",
+                "if_it_were_true": "Если бы элементы кэшировались навсегда, после перерисовки страницы летел бы `StaleElementReferenceException`, но proxy переискивает элемент.",
+                "how_it_should_be": "Поля `@FindBy` — прокси с отложенным поиском; именно это снижает количество `StaleElementReferenceException` при навигации."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`PageFactory.initElements(driver, this)` инициализирует поля, помеченные `@FindBy`, превращая их в lazy proxy-элементы. Реальный поиск (`findElement`) происходит при каждом обращении к полю, а не один раз — это снижает риск `StaleElementReferenceException` после переходов. Есть также `@FindBys` (цепочка AND) и `@FindAll` (любой из, OR).",
+              "correct": true,
+              "sections": {
+                "explanation": "Прокси откладывает поиск до момента использования элемента, поэтому после перерисовки DOM ссылка переразрешается заново, а не указывает на устаревший узел.",
+                "example": "`@FindBy(id=\"user-name\")` объявляет поле, а `@FindBys({@FindBy(className=\"list-item\"), @FindBy(tagName=\"a\")})` ищет `<a>` внутри `.list-item` — последовательное сужение.",
+                "when_to_apply": "PageFactory удобен, когда страница описывается декларативно полями-элементами; для динамических списков и сложной логики иногда возвращаются к явным `By`-локаторам.",
+                "edge_cases": "`@FindAll` возвращает первый совпавший по любому из локаторов (OR), а `@FindBys` требует выполнения всех условий в цепочке (AND) — их легко перепутать.",
+                "related": "[[selenium-interview#Q5]] паттерн Page Object; [[selenium-interview#Q2]] локаторы внутри @FindBy; [[selenium-interview#Q10]] стабильные локаторы для @FindBy."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@FindBys` и `@FindAll` — это одно и то же: оба возвращают элемент, удовлетворяющий любому из перечисленных локаторов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различие принципиально: `@FindBys` — это AND (цепочка вложенных локаторов), а `@FindAll` — OR (первый совпавший из списка).",
+                "source_of_confusion": "Похожие имена и соседство в API создают ощущение взаимозаменяемости аннотаций.",
+                "if_it_were_true": "Если бы они работали одинаково, незачем было бы держать обе аннотации, но семантика AND/OR у них разная.",
+                "how_it_should_be": "`@FindBys` сужает поиск по цепочке (все условия), `@FindAll` берёт первый подходящий по любому условию — это противоположные стратегии."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чтобы `@FindBy`-поля заработали, вызывать `PageFactory.initElements` не обязательно — Selenium инициализирует их автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `PageFactory.initElements(driver, this)` поля с `@FindBy` останутся `null`: именно этот вызов создаёт прокси-элементы.",
+                "source_of_confusion": "Аннотации воспринимают как «магию», которая срабатывает сама, без явной инициализации.",
+                "if_it_were_true": "Если бы инициализация была автоматической, забытый вызов не вызывал бы `NullPointerException`, но без него поле пустое.",
+                "how_it_should_be": "Поля `@FindBy` оживают только после `PageFactory.initElements`, обычно вызываемого в конструкторе Page Object."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как в Selenium работать с alerts, frames и windows?",
+          "options": [
+            {
+              "text": "С alert'ом можно работать обычным `findElement` по его тексту — переключаться через `switchTo().alert()` не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нативный alert не часть DOM, поэтому `findElement` его не видит; нужно `driver.switchTo().alert()`, а затем `accept()`/`dismiss()`.",
+                "source_of_confusion": "Alert визуально выглядит как элемент на странице, отсюда ожидание, что его найдёт обычный поиск.",
+                "if_it_were_true": "Если бы alert искался через DOM, не понадобился бы отдельный `switchTo().alert()`, но именно он даёт доступ к диалогу.",
+                "how_it_should_be": "Для alert'ов: `Alert alert = driver.switchTo().alert(); alert.accept();`; `sendKeys` работает только для prompt-диалога."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "После работы внутри iframe возвращаться в основной контекст не нужно — Selenium делает это автоматически при следующем `findElement`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После `switchTo().frame(...)` контекст остаётся внутри фрейма, пока явно не вызвать `switchTo().defaultContent()` — автоматического возврата нет.",
+                "source_of_confusion": "Ожидание «умного» поведения драйвера порождает миф об автоматическом выходе из фрейма.",
+                "if_it_were_true": "Если бы возврат был автоматическим, элементы вне фрейма находились бы сразу, но без `defaultContent()` они не видны.",
+                "how_it_should_be": "Внутрь фрейма входят через `switchTo().frame(name/index/element)`, а возвращаются явным `switchTo().defaultContent()`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Для alert: `driver.switchTo().alert()`, затем `getText()`, `sendKeys(...)` (только prompt) и `accept()`/`dismiss()`. Для frame: `switchTo().frame(name|index|element)` для входа и `switchTo().defaultContent()` для возврата в top-level. Для окон/вкладок: запоминают `getWindowHandle()`, перебирают `getWindowHandles()`, переключаются `switchTo().window(handle)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все три — это переключение контекста управления: alert, фрейм и окно живут отдельно от текущего DOM, и без `switchTo()` команды уходят не туда.",
+                "example": "Перебор окон: `String main = driver.getWindowHandle();` затем по `getWindowHandles()` ищут handle, не равный `main`, переключаются на него, работают и возвращаются `switchTo().window(main)`.",
+                "when_to_apply": "Эти приёмы нужны для popup-окон логина OAuth, встроенных виджетов в iframe и нативных confirm-диалогов, которые нельзя достать обычным `findElement`.",
+                "edge_cases": "`driver.close()` закрывает только текущее окно, а `driver.quit()` — всю сессию; после `close()` нужно явно вернуться на оставшийся handle.",
+                "related": "[[selenium-interview#Q1]] архитектура WebDriver; [[selenium-interview#Q2]] локаторы внутри фрейма; [[selenium-interview#Q4]] ожидания вместо sleep при переключении."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Переключиться на новое окно можно по его заголовку через `switchTo().window(\"Заголовок страницы\")`, а не по window handle.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`switchTo().window(...)` принимает именно window handle (строку-идентификатор из `getWindowHandles()`), а не заголовок страницы.",
+                "source_of_confusion": "Хочется адресовать окно по человекочитаемому заголовку, поэтому handle путают с title.",
+                "if_it_were_true": "Если бы окна адресовались по заголовку, два окна с одинаковым title были бы неразличимы, но handle уникален всегда.",
+                "how_it_should_be": "Правильно: получить `Set<String>` хэндлов через `getWindowHandles()`, найти нужный и передать его в `switchTo().window(handle)`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Selenium Grid` и когда его применять?",
+          "options": [
+            {
+              "text": "`Selenium Grid` — это библиотека ожиданий, заменяющая `WebDriverWait` для синхронизации с динамическими страницами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Grid отвечает за распределённый запуск тестов на разных машинах и браузерах, а не за ожидания элементов.",
+                "source_of_confusion": "И Grid, и ожидания относятся к инфраструктуре тестов, отсюда смешение их назначения.",
+                "if_it_were_true": "Если бы Grid заменял `WebDriverWait`, он не нуждался бы в Hub и Node, но его суть — именно распределение нагрузки.",
+                "how_it_should_be": "Синхронизацию делает `WebDriverWait`/`ExpectedConditions`, а Grid распределяет прогон по узлам через `RemoteWebDriver`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Selenium Grid` запускает все тесты строго последовательно на одной машине, гарантируя отсутствие конфликтов состояния.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Grid создан ровно для обратного — параллельного запуска на множестве узлов; последовательность на одной машине не его задача.",
+                "source_of_confusion": "Слово «контролируемый запуск» наводит на мысль о строгой последовательности и одной машине.",
+                "if_it_were_true": "Если бы Grid гонял всё последовательно, не было бы выигрыша «100 тестов на 10 nodes → 10x», но именно он и есть цель.",
+                "how_it_should_be": "Grid распараллеливает тесты по нескольким Node; за изоляцию состояния отвечает дизайн тестов (свой driver на тест), а не последовательность."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Selenium Grid` работает только с Chrome и не поддерживает Firefox, Safari или Edge на разных узлах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Grid как раз и нужен для cross-browser: разные Node могут предоставлять Chrome, Firefox, Safari, Edge одновременно.",
+                "source_of_confusion": "Локальные эксперименты часто идут только на Chrome, отсюда ложное ограничение Grid одним браузером.",
+                "if_it_were_true": "Если бы Grid поддерживал лишь Chrome, не было бы смысла в cross-browser testing на нём, но это одна из ключевых задач Grid.",
+                "how_it_should_be": "На узлах Grid поднимают разные браузеры и ОС; именно это даёт одновременный прогон в Chrome, Firefox, Safari и Edge."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Selenium Grid` — это distributed execution для параллельного запуска тестов на разных машинах и браузерах: Hub (Router + Distributor) раздаёт задачи на Node-узлы. Подключаются через `RemoteWebDriver` с URL вида `http://selenium-hub:4444/wd/hub`. Применяют для cross-browser testing, параллелизации (100 тестов на 10 nodes → ~10x ускорение) и распределения по ОС.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hub принимает запросы и распределяет их между Node, каждый из которых предоставляет браузеры; за счёт этого один набор тестов гоняется одновременно на многих окружениях.",
+                "example": "`new RemoteWebDriver(new URL(\"http://selenium-hub:4444/wd/hub\"), new ChromeOptions())` отправляет W3C-команды на Hub, а тот выбирает свободный Node с нужным браузером.",
+                "when_to_apply": "Grid берут, когда прогон на одной машине слишком долгий или нужна матрица браузер×ОС; для маленьких наборов хватает локального драйвера.",
+                "edge_cases": "Альтернативы и обёртки: Docker Selenium, Selenoid, а также облачные BrowserStack и Sauce Labs, снимающие заботу о поддержке Node-инфраструктуры.",
+                "related": "[[selenium-interview#Q1]] RemoteWebDriver и протокол; [[selenium-interview#Q9]] параллельный запуск тестов; [[selenium-interview#Q12]] Grid в CI/CD."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как запускать Selenium-тесты параллельно?",
+          "options": [
+            {
+              "text": "В JUnit 5 параллелизм включают через `junit-platform.properties` (`junit.jupiter.execution.parallel.enabled=true`, `mode.default=concurrent`, `config.fixed.parallelism=4`). Но `WebDriver` обычно НЕ thread-safe, поэтому каждому тесту/потоку нужен свой `driver`: либо новый `ChromeDriver` в `@BeforeEach`, либо `ThreadLocal<WebDriver>`. TestNG проще для параллельных UI-тестов (`parallel=\"methods\" thread-count=\"4\"`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная опасность — общий `driver` между потоками: команды разных тестов перемешиваются в одной браузерной сессии, поэтому изоляция driver обязательна.",
+                "example": "`ThreadLocal<WebDriver>` в `DriverFactory.getDriver()` создаёт по экземпляру на поток, а `quitDriver()` вызывает `quit()` и `remove()`, чтобы не оставлять висящие сессии.",
+                "when_to_apply": "Параллелизацию включают, когда набор тестов растёт и прогон занимает десятки минут; для пары тестов выигрыша почти нет, а сложность растёт.",
+                "edge_cases": "Забытый `quit()` в параллельном прогоне быстро плодит зомби-процессы браузера и съедает память на CI-агенте — поэтому `tearDown`/`remove()` критичны.",
+                "related": "[[selenium-interview#Q8]] Selenium Grid для распределения; [[selenium-interview#Q12]] параллельный прогон в CI; [[selenium-interview#Q14]] shared state как анти-паттерн."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Один общий экземпляр `WebDriver` можно безопасно использовать из нескольких потоков, так как Selenium thread-safe по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WebDriver` обычно НЕ thread-safe: общий driver между потоками приводит к гонкам, поэтому каждому потоку дают свой экземпляр.",
+                "source_of_confusion": "Объект driver кажется обычным сервисом, который не жалко переиспользовать, отсюда вывод о безопасности.",
+                "if_it_were_true": "Если бы driver был thread-safe, не понадобился бы `ThreadLocal<WebDriver>`, но именно его и заводят для параллелизма.",
+                "how_it_should_be": "На каждый поток создают отдельный `ChromeDriver` (часто через `ThreadLocal`), а не делят один на всех."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Чтобы запустить тесты параллельно в JUnit 5, достаточно поставить аннотацию `@Parallel` над тестовым классом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой `@Parallel`-аннотации нет: параллелизм JUnit 5 включают через `junit-platform.properties`, а не аннотацией над классом.",
+                "source_of_confusion": "По аналогии с `@Test`/`@Disabled` кажется, что и для параллели есть готовая аннотация.",
+                "if_it_were_true": "Если бы хватало `@Parallel`, не нужен был бы конфиг-файл с `parallel.enabled=true`, но именно он управляет режимом.",
+                "how_it_should_be": "Включают `junit.jupiter.execution.parallel.enabled=true` в `junit-platform.properties` и настраивают `parallelism`; аннотация для этого не используется."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "TestNG не умеет запускать UI-тесты параллельно, поэтому для параллелизма обязательно переходить на JUnit 5.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, TestNG исторически удобнее для параллельных UI-тестов: атрибуты `parallel=\"methods\"` и `thread-count` в suite-XML включают это из коробки.",
+                "source_of_confusion": "Популярность JUnit 5 создаёт впечатление, что параллельный UI-прогон — только его прерогатива.",
+                "if_it_were_true": "Если бы TestNG не умел параллелить, в его `<suite>` не было бы `parallel`/`thread-count`, но они там есть.",
+                "how_it_should_be": "Оба фреймворка поддерживают параллель: TestNG — через suite-XML, JUnit 5 — через `junit-platform.properties`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как бороться с флейки (flaky) тестами в Selenium?",
+          "options": [
+            {
+              "text": "Главный способ победить флейки — добавить `Thread.sleep()` побольше перед каждой проверкой, чтобы страница точно успела загрузиться.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Увеличение `Thread.sleep()` лишь маскирует флейки и замедляет тесты; правильное решение — явные ожидания `WebDriverWait`.",
+                "source_of_confusion": "Sleep иногда «случайно чинит» падение, отсюда соблазн глушить флейки именно им.",
+                "if_it_were_true": "Если бы больший sleep решал проблему, флейки не возвращались бы на медленной сети, но они возвращаются.",
+                "how_it_should_be": "Флейки лечат явными ожиданиями условий, стабильными локаторами (`data-testid`) и контролируемым retry, а не наращиванием пауз."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Набор приёмов: retry-аннотации (`@RetryingTest(3)` из JUnit Pioneer) для перезапуска нестабильных тестов; явные ожидания (`wait.until(ExpectedConditions.elementToBeClickable(...))`) вместо `sleep`; стабильные локаторы (`data-testid` вместо CSS-классов); скриншоты при падении для диагностики; и карантин/фильтрация флейков из CI через `@Tag(\"flaky\")` + `@Disabled` с тикетом.",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство флейков — это гонки с асинхронной загрузкой и хрупкие локаторы, поэтому ставка делается на условные ожидания и устойчивые селекторы, а retry — лишь страховка.",
+                "example": "`@FindBy(css=\"[data-testid='submit-button']\")` не ломается при рефакторинге CSS-классов, а скриншот в `@AfterEach` через `TakesScreenshot` помогает понять причину конкретного падения.",
+                "when_to_apply": "Эти меры применяют, когда тест периодически краснеет без изменений кода; систематически флейкущие сценарии помечают `@Tag` и заводят на них тикет.",
+                "edge_cases": "Бездумный `@RetryingTest` опасен: он может прятать реальный баг продукта, который проявляется лишь иногда, поэтому retry дополняют анализом причин.",
+                "related": "[[selenium-interview#Q4]] почему sleep плох; [[selenium-interview#Q3]] виды ожиданий; [[selenium-interview#Q2]] выбор стабильных локаторов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Лучший способ устранить флейки — привязать локаторы к XPath по позиции в дереве, например `/html/body/div[2]/div[3]`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Позиционный XPath, наоборот, делает тесты хрупкими: любая перестановка вёрстки ломает локатор; для стабильности берут `data-testid`.",
+                "source_of_confusion": "Абсолютный путь выглядит «точным и однозначным», поэтому кажется надёжным.",
+                "if_it_were_true": "Если бы позиционный XPath был стабилен, рефакторинг разметки не ломал бы тесты, но он ломает их первым делом.",
+                "how_it_should_be": "Стабильные локаторы — это уникальные `id`/`data-testid`, а не привязка к позиции элемента в дереве DOM."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Флейки полностью устраняются включением общего `implicit wait` на 60 секунд для всех элементов сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большой implicit-таймаут не убирает гонки, лишь сильно замедляет падения и плохо контролируется; флейки требуют точечных explicit-ожиданий.",
+                "source_of_confusion": "Идея «подождать подольше глобально» выглядит как универсальное лекарство от нестабильности.",
+                "if_it_were_true": "Если бы 60-секундный implicit решал всё, не нужны были бы retry и `data-testid`, но они остаются необходимы.",
+                "how_it_should_be": "Вместо одного огромного implicit используют адресные `WebDriverWait` под конкретные условия и устойчивые локаторы."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие альтернативы Selenium существуют и чем они отличаются?",
+          "options": [
+            {
+              "text": "`Cypress` поддерживает все основные браузеры одинаково — Chrome, Firefox, Safari и Edge — и в этом его главное преимущество над Selenium.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cypress` работает только в Chromium-based браузерах (и частично Firefox); полноценной Safari-поддержки у него нет, в отличие от Selenium.",
+                "source_of_confusion": "Удобство и популярность `Cypress` создают впечатление широкой кросс-браузерности.",
+                "if_it_were_true": "Если бы `Cypress` покрывал Safari, его не критиковали бы за ограниченную браузерную матрицу, но это известное ограничение.",
+                "how_it_should_be": "Сильные стороны `Cypress` — простота и живой debug, а не широта браузеров; для Safari чаще берут Selenium или Playwright."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Playwright` старше Selenium и потому считается самым зрелым и проверенным инструментом на рынке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Playwright` моложе (примерно 2020 год); его плюсы — скорость, auto-wait и multi-browser, а зрелость и широкая экосистема — как раз у Selenium.",
+                "source_of_confusion": "Активный маркетинг и быстрый рост `Playwright` создают иллюзию долгой истории.",
+                "if_it_were_true": "Если бы `Playwright` был старше, у Selenium не было бы преимущества «зрелый, широкая поддержка», но именно оно за Selenium.",
+                "how_it_should_be": "`Playwright` — современный и быстрый, но молодой; Selenium — зрелый стандарт с самой широкой поддержкой языков и браузеров."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Selenium — зрелый, широкая поддержка языков/браузеров, но медленный и склонный к флейкам. `Playwright` (~2020) — быстрее, auto-wait, multi-browser, но моложе. `Cypress` — простой, живой debug, но только Chromium-based. `Puppeteer` — Chrome-only. `WebDriverIO` — Node.js, mocha-стиль. `TestCafe` — без WebDriver, auto-wait, но моложе и меньше плагинов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная ось сравнения — зрелость/широта против скорости и встроенного auto-wait: Selenium берут за стандарт и совместимость, новые инструменты — за стабильность ожиданий и производительность.",
+                "example": "В `Playwright` Java `page.locator(\"button[type=submit]\").click()` сам дожидается доступности элемента (auto-wait), а `page.waitForURL(\"**/dashboard\")` ждёт навигацию без явного `WebDriverWait`.",
+                "when_to_apply": "Selenium выбирают, когда нужна максимальная кросс-браузерность и поддержка языка вроде Java; `Playwright`/`Cypress` — для новых проектов, где важны скорость и меньше флейков.",
+                "edge_cases": "`Cypress` и `Puppeteer` ограничены Chromium-семейством, поэтому для обязательного тестирования в Safari они не подойдут без оговорок.",
+                "related": "[[selenium-interview#Q1]] архитектура WebDriver; [[selenium-interview#Q4]] auto-wait против Thread.sleep; [[selenium-interview#Q15]] когда вообще нужны UI-тесты."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Puppeteer` — это полноценный кросс-браузерный инструмент, изначально рассчитанный на Chrome, Firefox, Safari и Edge.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Puppeteer` исторически Chrome-only (DevTools Protocol); полноценной multi-browser матрицы у него нет, в отличие от Selenium и Playwright.",
+                "source_of_confusion": "Мощь и популярность `Puppeteer` в Node-экосистеме наводят на мысль о широкой браузерной поддержке.",
+                "if_it_were_true": "Если бы `Puppeteer` был кросс-браузерным, не было бы смысла подчёркивать его «Chrome-only» против `Playwright`, но это его профиль.",
+                "how_it_should_be": "Для multi-browser берут Selenium или `Playwright`; `Puppeteer` ориентирован прежде всего на Chrome/Chromium."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать запуск Selenium-тестов в CI/CD?",
+          "options": [
+            {
+              "text": "В CI Selenium-тесты обязательно запускать в окне с графическим интерфейсом, headless-режим там не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В CI как раз используют headless-браузер (`--headless=new`), потому что на агентах обычно нет дисплея; графическое окно не требуется.",
+                "source_of_confusion": "Привычка отлаживать тесты в видимом браузере локально переносится на CI как обязательное условие.",
+                "if_it_were_true": "Если бы headless не работал в CI, флаг `--headless=new` был бы бесполезен, но именно он и нужен на агентах без GUI.",
+                "how_it_should_be": "На CI браузер запускают headless с флагами `--no-sandbox`, `--disable-dev-shm-usage`, `--window-size=...` — без реального дисплея."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Скриншоты упавших тестов нужно загружать как артефакты при КАЖДОМ прогоне, в том числе при полностью зелёном билде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Скриншоты обычно публикуют только при падении (`if: failure()`), чтобы не раздувать артефакты успешных прогонов.",
+                "source_of_confusion": "Желание «всегда иметь доказательства» подталкивает грузить артефакты безусловно.",
+                "if_it_were_true": "Если бы скриншоты грузились всегда, шаг не помечали бы условием `if: failure()`, но именно его и ставят.",
+                "how_it_should_be": "В пайплайне делают `if: failure()` перед `upload-artifact`, сохраняя скриншоты только для упавших прогонов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Драйверы (`chromedriver` и др.) в CI приходится скачивать и прописывать путь вручную в каждом джобе — автоматизировать это нечем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WebDriverManager` как раз автоматизирует это: `WebDriverManager.chromedriver().setup()` скачивает нужную версию драйвера сам.",
+                "source_of_confusion": "Старый опыт «руками класть chromedriver и задавать system property» создаёт впечатление, что иначе никак.",
+                "if_it_were_true": "Если бы автоматизации не было, не существовало бы `WebDriverManager`, но он именно для этого и создан.",
+                "how_it_should_be": "С `WebDriverManager.chromedriver().setup()` ручное скачивание драйвера не нужно — он подбирает версию под установленный браузер."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Тесты вешают на события (`on: [push, pull_request]`), джоб ставит JDK и гоняет `./mvnw test`. Браузер запускают headless: `ChromeOptions` с `--headless=new`, `--no-sandbox`, `--disable-dev-shm-usage`, `--window-size=1920,1080`. Скриншоты падений публикуют артефактами при `if: failure()`. Драйверы берёт на себя `WebDriverManager.chromedriver().setup()` вместо ручного скачивания.",
+              "correct": true,
+              "sections": {
+                "explanation": "CI-агенты без дисплея и без предустановленных драйверов, поэтому связка headless-флагов и `WebDriverManager` делает прогон воспроизводимым и не зависящим от окружения.",
+                "example": "В GitHub Actions шаг `actions/upload-artifact@v3` с `if: failure()` и `path: screenshots/` сохраняет скриншоты упавших тестов для последующей диагностики.",
+                "when_to_apply": "Такую схему применяют для PR-проверок и ночных прогонов; для большого объёма UI-тестов headless дополняют Selenium Grid или Selenoid в Docker.",
+                "edge_cases": "`--disable-dev-shm-usage` важен в Docker, где `/dev/shm` мал и Chrome падает без него; на десктопе этот флаг обычно не нужен.",
+                "related": "[[selenium-interview#Q8]] Selenium Grid для масштабирования; [[selenium-interview#Q9]] параллельный запуск; [[selenium-interview#Q10]] скриншоты при падении против флейков."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое BDD-тесты с `Cucumber` и как они связаны с Selenium?",
+          "options": [
+            {
+              "text": "`Cucumber` + Selenium — это BDD UI-тесты: сценарии пишут на естественном языке в `.feature`-файлах (Gherkin: `Given`/`When`/`Then`), а step definitions на Java связывают каждый шаг с действиями Selenium (через Page Object). Это удобно, когда QA/BA формулируют сценарии человекочитаемым языком, а разработчики реализуют шаги.",
+              "correct": true,
+              "sections": {
+                "explanation": "Gherkin отделяет описание поведения от реализации: бизнес читает и пишет сценарии, а технические детали Selenium прячутся в step-методах, помеченных `@Given`/`@When`/`@Then`.",
+                "example": "Шаг `When I enter username {string}` маппится на метод `enterUsername(String)`, который внутри зовёт `loginPage.setUsername(username)` — так Gherkin превращается в реальные клики и ввод.",
+                "when_to_apply": "BDD c `Cucumber` берут, когда важна общая для бизнеса и разработки документация поведения, например для критичных пользовательских сценариев логина и оформления заказа.",
+                "edge_cases": "Gherkin сам по себе ничего не тестирует: без step definitions шаги не привязаны к коду, и сценарий просто не выполнится — это частый источник недопонимания.",
+                "related": "[[selenium-interview#Q5]] Page Object внутри шагов; [[selenium-interview#Q15]] какие сценарии стоит покрывать UI; [[selenium-interview#Q1]] Selenium как движок под шагами."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Cucumber` сам выполняет UI-действия в браузере, поэтому Selenium или другой WebDriver-инструмент ему не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Cucumber` лишь парсит Gherkin и связывает шаги со step-методами; реальные действия в браузере выполняет Selenium внутри этих шагов.",
+                "source_of_confusion": "Раз `Cucumber` «гоняет сценарии», кажется, что он и сам управляет браузером.",
+                "if_it_were_true": "Если бы `Cucumber` сам кликал по UI, в step definitions не держали бы `WebDriver` и Page Object, но они там необходимы.",
+                "how_it_should_be": "`Cucumber` — это оркестратор шагов; за управление браузером отвечает Selenium (или Playwright) внутри step definitions."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В `Cucumber` бизнес-сценарии пишут прямо на Java в виде аннотированных методов, а отдельных `.feature`-файлов не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сценарии описывают в `.feature`-файлах на Gherkin, а Java-методы (step definitions) лишь реализуют отдельные шаги.",
+                "source_of_confusion": "Поскольку step definitions — это Java, кажется, что и сами сценарии живут в коде.",
+                "if_it_were_true": "Если бы `.feature`-файлов не было, бизнес не мог бы писать сценарии человекочитаемым языком, а это главная цель BDD.",
+                "how_it_should_be": "Сценарии — в `.feature` на естественном языке; Java-код реализует шаги, но не заменяет сами сценарии."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Ключевые слова Gherkin `Given`, `When`, `Then` — это просто комментарии и никак не связываются с кодом step definitions.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эти ключевые слова сопоставляются с методами через аннотации `@Given`/`@When`/`@Then`; они напрямую связывают шаг сценария с кодом.",
+                "source_of_confusion": "В тексте `.feature` они выглядят как обычные слова, поэтому их принимают за комментарии.",
+                "if_it_were_true": "Если бы они были комментариями, шаги не находили бы свои методы и сценарий падал бы как нереализованный.",
+                "how_it_should_be": "`@When(\"I enter username {string}\")` связывает строку шага с Java-методом — Gherkin-слова управляют запуском кода, а не игнорируются."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие анти-паттерны Selenium стоит избегать?",
+          "options": [
+            {
+              "text": "Проверять бизнес-логику (например, фильтрацию заказов) лучше через UI-сценарий целиком, а не через прямой API-вызов — так надёжнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, логику быстрее и стабильнее проверять прямым API-запросом; гонять её через медленный UI — анти-паттерн.",
+                "source_of_confusion": "UI-проверка выглядит «как у пользователя», поэтому кажется более достоверной для логики.",
+                "if_it_were_true": "Если бы UI-проверка логики была лучше, не приводили бы пример замены 20-секундного сценария на быстрый API-тест.",
+                "how_it_should_be": "Логику тестируют через API (`given().auth()... get(\"/api/orders?status=PENDING\")`), а UI оставляют для пользовательских путей."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Главные анти-паттерны: `Thread.sleep()` вместо `WebDriverWait`; хрупкие локаторы (позиционный XPath `/html/body/div[2]/...` вместо `data-testid`); тесты с shared state (один тест влияет на другой); подмена unit-тестов UI-тестами (медленно, дорого); проверка бизнес-логики через UI вместо API; и отсутствие cleanup (`driver` без `quit()` → утечка процессов).",
+              "correct": true,
+              "sections": {
+                "explanation": "Общий корень этих ошибок — попытка решать UI-тестами задачи, которым место на уровне unit/API, плюс пренебрежение стабильностью локаторов и изоляцией состояния.",
+                "example": "Вместо позиционного `By.xpath(\"/html/body/div[2]/div[3]/table/tr[2]/td[5]\")` берут `By.cssSelector(\"[data-testid='user-email']\")`, а проверку из 4 UI-шагов заменяют одним API-запросом за доли секунды.",
+                "when_to_apply": "На этот список ориентируются при ревью UI-тестов: если видишь sleep, абсолютный XPath или зависимость тестов друг от друга — это кандидаты на переписывание.",
+                "edge_cases": "Самый коварный пункт — отсутствие `quit()`: на CI это не валит тест сразу, но постепенно плодит зомби-процессы браузера и исчерпывает память агента.",
+                "related": "[[selenium-interview#Q4]] почему sleep плох; [[selenium-interview#Q10]] стабильные локаторы и борьба с флейками; [[selenium-interview#Q15]] что НЕ стоит покрывать UI."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Тесты с общим состоянием (shared state) — это хорошая практика: переиспользование данных предыдущего теста ускоряет прогон.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Shared state — анти-паттерн: изменения одного теста влияют на следующий, делая результаты нестабильными и зависящими от порядка.",
+                "source_of_confusion": "Экономия на подготовке данных выглядит как ускорение, поэтому переиспользование состояния кажется плюсом.",
+                "if_it_were_true": "Если бы shared state был хорош, его не включали бы в список анти-паттернов рядом с отсутствием cleanup.",
+                "how_it_should_be": "Каждый тест должен быть независимым: свои данные и чистое состояние, иначе падения становятся плавающими и трудновоспроизводимыми."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Вызывать `driver.quit()` в конце теста не обязательно — браузерные процессы Selenium закрывает сам по завершении JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без явного `quit()` процессы браузера и драйвера утекают; полагаться на «само закроется» — анти-паттерн, ведущий к утечке ресурсов.",
+                "source_of_confusion": "Кажется, что завершение программы автоматически приберёт за собой все дочерние процессы.",
+                "if_it_were_true": "Если бы процессы закрывались сами, отсутствие cleanup не попадало бы в список анти-паттернов, но оно там есть.",
+                "how_it_should_be": "В `@AfterEach`/`tearDown` обязательно зовут `driver.quit()`, чтобы освободить сессию и не накапливать зомби-процессы."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда стоит использовать UI-тесты, а когда — нет?",
+          "options": [
+            {
+              "text": "UI-тесты идеально подходят для проверки всех edge cases бизнес-логики, потому что повторяют действия реального пользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Edge cases дешевле и быстрее покрывать unit/integration тестами; гонять их через медленный UI — перегрузка времени прогона.",
+                "source_of_confusion": "Достоверность «как у пользователя» создаёт соблазн проверять через UI вообще всё, включая граничные случаи.",
+                "if_it_were_true": "Если бы UI годился для всех edge cases, его не относили бы к самому дорогому и узкому слою пирамиды тестов.",
+                "how_it_should_be": "Edge cases закрывают unit-тестами на backend, а UI оставляют для немногих критичных пользовательских путей."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Согласно test pyramid, UI-тесты должны составлять основную массу — около 60–70% всех тестов проекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В пирамиде UI-тесты — самая верхушка (~10–15%); 60–70% приходится на быстрые unit-тесты в основании.",
+                "source_of_confusion": "Видимость и «реалистичность» UI-тестов создают иллюзию, что их должно быть большинство.",
+                "if_it_were_true": "Если бы UI было 60–70%, прогон был бы медленным и флейким, что противоречит идее пирамиды.",
+                "how_it_should_be": "Большинство — это unit-тесты (60–70%), затем integration (20–30%), и лишь 10–15% — дорогие UI-тесты."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "UI-тесты применяют для: critical user journeys (login, checkout, signup), проверки интеграции UI↔backend (данные от API корректно отображаются), визуальных проверок и smoke-тестов. НЕ применяют для: бизнес-логики (это unit/integration на backend), edge cases (раздувают время прогона) и тестирования API (прямые API-тесты быстрее и надёжнее). В пирамиде UI — 10–15%, дорогие и flaky.",
+              "correct": true,
+              "sections": {
+                "explanation": "UI-тесты ценны там, где важно увидеть систему глазами пользователя целиком, но из-за стоимости и хрупкости их держат минимально достаточным набором поверх unit/API.",
+                "example": "Логин и оформление заказа покрывают UI-тестом сквозь весь стек, а вот проверку «5 заказов в статусе PENDING» делают прямым `GET /api/orders?status=PENDING` без браузера.",
+                "when_to_apply": "Этот критерий применяют при планировании тестовой стратегии: сначала спрашивают, можно ли проверить ниже по пирамиде, и только критичные сквозные пути уводят в UI.",
+                "edge_cases": "Smoke-набор UI-тестов держат коротким (старт приложения + пара ключевых фич), иначе он сам становится медленным и flaky, теряя ценность быстрой проверки.",
+                "related": "[[selenium-interview#Q14]] UI вместо unit как анти-паттерн; [[selenium-interview#Q11]] выбор инструмента под UI-тесты; [[selenium-interview#Q10]] борьба с флейками в дорогих UI-тестах."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "UI-тесты дешевле и быстрее unit-тестов, поэтому именно их стоит делать основой проверки приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "UI-тесты как раз самые дорогие: они медленные и flaky, поэтому их держат минимально достаточным набором, а основа — unit-тесты.",
+                "source_of_confusion": "Одна команда `driver.click()` выглядит просто, что создаёт ложное ощущение дешевизны UI-тестов.",
+                "if_it_were_true": "Если бы UI был дешёвым, не было бы рекомендации минимизировать его долю в пирамиде тестов.",
+                "how_it_should_be": "Дешёвый и быстрый слой — unit-тесты; UI-тесты дороги в поддержке и должны быть минимально достаточными."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
