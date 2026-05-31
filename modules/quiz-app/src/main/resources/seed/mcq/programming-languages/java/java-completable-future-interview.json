@@ -210,18 +210,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`thenCombine` автоматически отменяет второй Future, если первый Future завершается с исключением, чтобы не тратить ресурсы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Если один из Future в `thenCombine` завершается с ошибкой, результирующий CF немедленно становится failed, но второй Future НЕ отменяется автоматически — он продолжит выполнение в своём потоке до конца. Для отмены нужен явный `cancel(true)` или Java 21 `StructuredTaskScope.ShutdownOnFailure`.",
-                "source_of_confusion": "Реактивные операторы вроде Reactor `Mono.zip(...)` действительно отменяют sibling-стрим при ошибке через signal-propagation. Также путают с async/await в Kotlin coroutines, где structured concurrency гарантирует отмену.",
-                "if_it_were_true": "Тогда команды могли бы не беспокоиться об утечке async-задач: один failed = всё отменено. В реальности «осиротевшие» Future продолжают есть thread pool и в worst-case — HTTP-соединение к БД остаётся открытым до timeout, что в Capital One 2019 post-mortem (parallel data fetch) приводило к leaked connections.",
-                "how_it_should_be": "Признать lack of cancellation в стандартном `CompletableFuture` и для critical paths использовать `StructuredTaskScope` (Java 21+) или вручную хранить ссылки на оба Future и вызывать `cancel(true)` в `exceptionally`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`thenCombine` подходит для объединения результатов двух независимых async-вызовов, которые выполняются параллельно и оба нужны для итогового результата.",
               "correct": true,
               "sections": {
@@ -230,6 +218,18 @@
                 "when_to_apply": "Когда нужны результаты обоих параллельных вызовов И они независимы: запрос пользователя + его заказов, котировок акций + новостей, валидаций из двух источников. Если зависимы (Б нуждается в результате А) — `thenCompose`. Если результаты однотипны — `allOf`.",
                 "edge_cases": "BiFunction выполняется в потоке, завершившем второй Future (без `Async`) — это может быть commonPool-поток одного из двух. Для предсказуемости используйте `thenCombineAsync(other, fn, executor)`. Если один Future уже завершён — BiFunction исполнится в потоке, завершившем второй.",
                 "related": "[[java-completable-future-interview#Q6]] allOf vs anyOf; [[java-completable-future-interview#Q3]] thenCompose для зависимых; [[java-completable-future-interview#Q5]] Async-суффикс."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`thenCombine` автоматически отменяет второй Future, если первый Future завершается с исключением, чтобы не тратить ресурсы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если один из Future в `thenCombine` завершается с ошибкой, результирующий CF немедленно становится failed, но второй Future НЕ отменяется автоматически — он продолжит выполнение в своём потоке до конца. Для отмены нужен явный `cancel(true)` или Java 21 `StructuredTaskScope.ShutdownOnFailure`.",
+                "source_of_confusion": "Реактивные операторы вроде Reactor `Mono.zip(...)` действительно отменяют sibling-стрим при ошибке через signal-propagation. Также путают с async/await в Kotlin coroutines, где structured concurrency гарантирует отмену.",
+                "if_it_were_true": "Тогда команды могли бы не беспокоиться об утечке async-задач: один failed = всё отменено. В реальности «осиротевшие» Future продолжают есть thread pool и в worst-case — HTTP-соединение к БД остаётся открытым до timeout, что в Capital One 2019 post-mortem (parallel data fetch) приводило к leaked connections.",
+                "how_it_should_be": "Признать lack of cancellation в стандартном `CompletableFuture` и для critical paths использовать `StructuredTaskScope` (Java 21+) или вручную хранить ссылки на оба Future и вызывать `cancel(true)` в `exceptionally`."
               }
             }
           ]
@@ -270,6 +270,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`thenRun` выполняется только при ошибке предыдущего Future, а при успешном завершении пропускается — это «catch» для error-handling.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обратное: и `thenRun`, и `thenAccept` выполняются ТОЛЬКО при успешном завершении. При ошибке оба пропускаются, и исключение пропагируется дальше по цепочке. Для обработки ошибок предназначены `exceptionally(Function<Throwable, T>)`, `handle((T, Throwable) → U)` или `whenComplete((T, Throwable) → void)`.",
+                "source_of_confusion": "В try-catch блоке `catch` срабатывает именно при ошибке. Junior проецирует это поведение на CF и считает, что какой-то метод цепочки — это «catch». Имя `thenRun` без явного указания на «success path» добавляет путаницы.",
+                "if_it_were_true": "Тогда `cf.thenRun(() -> log.info(\"success\"))` логировал бы только при ошибке, что contraintuitive. В реальности логируется именно при успехе — стандартный паттерн `cf.thenRun(metrics::onSuccess).exceptionally(ex -> { metrics.onError(); return null; })`.",
+                "how_it_should_be": "Запомнить: `thenRun`/`thenAccept`/`thenApply` — success-only. Для error-handling — `exceptionally`/`handle`/`whenComplete`. Для side-effect в обоих случаях — `whenComplete`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`thenAccept(Consumer<T>)` получает результат предыдущего этапа, но возвращает `CompletableFuture<Void>` — то есть передавать значение дальше по цепочке через него нельзя.",
               "correct": true,
               "sections": {
@@ -278,18 +290,6 @@
                 "when_to_apply": "Конец цепочки трансформаций со side-effect: запись в кеш/БД, отправка metric, логирование. Идеально для fire-and-forget сценариев типа async-логирования. Если ваш API возвращает `CompletableFuture<Void>` для async-callback'ов — `thenAccept` это самый натуральный builder.",
                 "edge_cases": "Если в `Consumer` бросается исключение — результирующий `CF<Void>` завершается с `CompletionException`, и обработчики `exceptionally`/`handle` после `thenAccept` это поймают. Без `Async`-суффикса `thenAccept` исполняется в потоке, завершившем предыдущий этап (см. Q2/Q5).",
                 "related": "[[java-completable-future-interview#Q5]] Async-суффикс; [[java-completable-future-interview#Q8]] обработка ошибок после thenAccept; [[java-stream-interview#Q12]] forEach vs map в Stream."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`thenRun` выполняется только при ошибке предыдущего Future, а при успешном завершении пропускается — это «catch» для error-handling.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Обратное: и `thenRun`, и `thenAccept` выполняются ТОЛЬКО при успешном завершении. При ошибке оба пропускаются, и исключение пропагируется дальше по цепочке. Для обработки ошибок предназначены `exceptionally(Function<Throwable, T>)`, `handle((T, Throwable) → U)` или `whenComplete((T, Throwable) → void)`.",
-                "source_of_confusion": "В try-catch блоке `catch` срабатывает именно при ошибке. Junior проецирует это поведение на CF и считает, что какой-то метод цепочки — это «catch». Имя `thenRun` без явного указания на «success path» добавляет путаницы.",
-                "if_it_were_true": "Тогда `cf.thenRun(() -> log.info(\"success\"))` логировал бы только при ошибке, что contraintuitive. В реальности логируется именно при успехе — стандартный паттерн `cf.thenRun(metrics::onSuccess).exceptionally(ex -> { metrics.onError(); return null; })`.",
-                "how_it_should_be": "Запомнить: `thenRun`/`thenAccept`/`thenApply` — success-only. Для error-handling — `exceptionally`/`handle`/`whenComplete`. Для side-effect в обоих случаях — `whenComplete`."
               }
             }
           ]
@@ -793,19 +793,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Основной сценарий ручного `complete()`/`completeExceptionally()` — это адаптер callback-API к Future-стилю, где успешный колбэк вызывает `complete`, а ошибка — `completeExceptionally`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Это классический паттерн обёртки legacy callback-based API (JDBC async, Netty channel-handlers, Apache HTTP async-client, AWS SDK v1) в современный composable Future-стиль. Создаётся пустой `new CompletableFuture<>()`, передаётся в callback-API; в `onSuccess` вызывается `cf.complete(result)`, в `onError` — `cf.completeExceptionally(throwable)`. После этого Future участвует в любой композиции через `thenApply`/`thenCombine`/`allOf`. Это мост между callback-hell и composable API, реализованный в множестве библиотек: Spring `WebClient`, gRPC Java client, Reactor adapters.",
-                "example": "Адаптер для legacy `JmsTemplate`-callback: `public CompletableFuture<Message> receiveAsync() { var cf = new CompletableFuture<Message>(); jms.receiveAsync(\"queue\", new MessageListener() { public void onMessage(Message m) { cf.complete(m); } public void onError(JMSException e) { cf.completeExceptionally(e); } }); return cf; }`. Теперь `receiveAsync().thenCompose(this::process).exceptionally(this::handleError)` работает поверх JMS callback'ов.",
-                "when_to_apply": "Обёртка любого legacy async API: JDBC async, JMS, Netty handlers, AWS SDK v1, Twitter Finagle, Akka actors, любые callback-based SDK. Тесты с emulated async: ручной `complete()` в нужный момент теста для управляемого порядка событий. Cancellation token pattern: пустой CF как сигнал отмены сверху.",
-                "edge_cases": "Если callback вызывается дважды (legacy bug) — только первый `complete()` побеждает. Если callback теряется (deadlock в legacy library) — CF висит навечно, обязательно используйте `orTimeout` для bounded wait. Помните о `null` value: `complete(null)` валиден и подписчики получают `null`.",
-                "related": "[[java-completable-future-interview#Q9]] проброс исключения; [[java-completable-future-interview#Q1]] create через new vs supplyAsync; [[java-completable-future-interview#Q13]] альтернативы CF."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`complete()` принудительно отменяет уже запущенную задачу `supplyAsync` и заменяет её результат указанным значением.",
               "correct": false,
               "sections": {
@@ -816,8 +803,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`completeExceptionally(throwable)` принимает только unchecked-исключения — передача checked `IOException` вызовет compile error.",
               "correct": false,
               "sections": {
@@ -825,6 +812,19 @@
                 "source_of_confusion": "В сигнатурах функциональных интерфейсов (`Supplier`, `Function`) нет `throws`, и junior переносит «нельзя checked» на все методы. Но `completeExceptionally` — это setter, у которого параметр — обычный `Throwable`.",
                 "if_it_were_true": "Тогда не было бы стандартного пути доставки `IOException` в CF, и адаптеры IO-callback'ов были бы невозможны. Реально это работает: `cf.completeExceptionally(new IOException(\"read failed\"))` валидно, `cf.get().getCause()` отдаст IOException.",
                 "how_it_should_be": "Передавать любой `Throwable` в `completeExceptionally`. Для consumer'а CF — оборачивать `CompletionException.getCause()` для типизированной обработки checked-исключений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Основной сценарий ручного `complete()`/`completeExceptionally()` — это адаптер callback-API к Future-стилю, где успешный колбэк вызывает `complete`, а ошибка — `completeExceptionally`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это классический паттерн обёртки legacy callback-based API (JDBC async, Netty channel-handlers, Apache HTTP async-client, AWS SDK v1) в современный composable Future-стиль. Создаётся пустой `new CompletableFuture<>()`, передаётся в callback-API; в `onSuccess` вызывается `cf.complete(result)`, в `onError` — `cf.completeExceptionally(throwable)`. После этого Future участвует в любой композиции через `thenApply`/`thenCombine`/`allOf`. Это мост между callback-hell и composable API, реализованный в множестве библиотек: Spring `WebClient`, gRPC Java client, Reactor adapters.",
+                "example": "Адаптер для legacy `JmsTemplate`-callback: `public CompletableFuture<Message> receiveAsync() { var cf = new CompletableFuture<Message>(); jms.receiveAsync(\"queue\", new MessageListener() { public void onMessage(Message m) { cf.complete(m); } public void onError(JMSException e) { cf.completeExceptionally(e); } }); return cf; }`. Теперь `receiveAsync().thenCompose(this::process).exceptionally(this::handleError)` работает поверх JMS callback'ов.",
+                "when_to_apply": "Обёртка любого legacy async API: JDBC async, JMS, Netty handlers, AWS SDK v1, Twitter Finagle, Akka actors, любые callback-based SDK. Тесты с emulated async: ручной `complete()` в нужный момент теста для управляемого порядка событий. Cancellation token pattern: пустой CF как сигнал отмены сверху.",
+                "edge_cases": "Если callback вызывается дважды (legacy bug) — только первый `complete()` побеждает. Если callback теряется (deadlock в legacy library) — CF висит навечно, обязательно используйте `orTimeout` для bounded wait. Помните о `null` value: `complete(null)` валиден и подписчики получают `null`.",
+                "related": "[[java-completable-future-interview#Q9]] проброс исключения; [[java-completable-future-interview#Q1]] create через new vs supplyAsync; [[java-completable-future-interview#Q13]] альтернативы CF."
               }
             }
           ]
@@ -841,18 +841,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`CompletableFuture` — правильный выбор для реактивных стримов с backpressure и бесконечных потоков событий.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`CompletableFuture` представляет ровно ОДИН будущий результат — это «promise», а не «stream». Для multi-value streams с backpressure предназначены Project Reactor (`Flux<T>`) и RxJava (`Observable<T>`/`Flowable<T>`). Они поддерживают operators типа `buffer`, `window`, `groupBy`, backpressure-стратегии (`onBackpressureBuffer`, `onBackpressureDrop`), и signals (`onNext`, `onError`, `onComplete`).",
-                "source_of_confusion": "И CompletableFuture, и Mono представляют «асинхронный результат», и они похожи внешне. Но Mono = 0-1 значение с lazy подпиской, Flux = 0-N значений со streaming, CompletableFuture = ровно одно значение с eager-execution.",
-                "if_it_were_true": "Тогда `CompletableFuture<List<Event>>` использовался бы для подписки на event-stream, и `thenApply` обрабатывал бы каждое событие. Реально приходится накапливать всё в `List` и ждать `complete()` — нет потокового потребления, нет backpressure, нет cancellation сигнала восходящему producer'у.",
-                "how_it_should_be": "Для one-shot async — `CompletableFuture`. Для streaming — Reactor `Flux` или RxJava `Flowable`. Для inter-op `Mono.fromFuture(cf)` и обратно `mono.toFuture()`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`CompletableFuture` удобен для оркестрации нескольких параллельных HTTP/DB-вызовов, но плох для реактивных стримов и сценариев с retry/backpressure.",
               "correct": true,
               "sections": {
@@ -861,6 +849,18 @@
                 "when_to_apply": "Оркестрация 2-5 разовых async-вызовов; адаптация callback-API; параллельный fan-out со сборкой результата через `allOf`. Альтернативы: Reactor для streams/retry/backpressure; Kotlin coroutines на Kotlin-проектах; Virtual Threads (Java 21) для simple blocking style без callback-hell.",
                 "edge_cases": "Смешивание CF и Reactor через `Mono.fromFuture` работает, но теряется backpressure-семантика на CF-стороне. CF не поддерживает structured concurrency: вложенные `supplyAsync` могут пережить родителя. Для structured cancellation — `StructuredTaskScope` (Java 21+ preview/incubator).",
                 "related": "[[java-completable-future-interview#Q2]] commonPool ловушка; [[reactive-streams-interview#Q1]] Mono vs Flux; [[java-17-21-interview#Q8]] Virtual Threads."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CompletableFuture` — правильный выбор для реактивных стримов с backpressure и бесконечных потоков событий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CompletableFuture` представляет ровно ОДИН будущий результат — это «promise», а не «stream». Для multi-value streams с backpressure предназначены Project Reactor (`Flux<T>`) и RxJava (`Observable<T>`/`Flowable<T>`). Они поддерживают operators типа `buffer`, `window`, `groupBy`, backpressure-стратегии (`onBackpressureBuffer`, `onBackpressureDrop`), и signals (`onNext`, `onError`, `onComplete`).",
+                "source_of_confusion": "И CompletableFuture, и Mono представляют «асинхронный результат», и они похожи внешне. Но Mono = 0-1 значение с lazy подпиской, Flux = 0-N значений со streaming, CompletableFuture = ровно одно значение с eager-execution.",
+                "if_it_were_true": "Тогда `CompletableFuture<List<Event>>` использовался бы для подписки на event-stream, и `thenApply` обрабатывал бы каждое событие. Реально приходится накапливать всё в `List` и ждать `complete()` — нет потокового потребления, нет backpressure, нет cancellation сигнала восходящему producer'у.",
+                "how_it_should_be": "Для one-shot async — `CompletableFuture`. Для streaming — Reactor `Flux` или RxJava `Flowable`. Для inter-op `Mono.fromFuture(cf)` и обратно `mono.toFuture()`."
               }
             },
             {
