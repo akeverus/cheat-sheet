@@ -4,7 +4,7 @@ description: "Полный план аудита всех 304 interview-файл
 updated: "2026-05-29"
 status: "active"
 audit_version: 5
-progress: "MCQ-сидеры: 186/306 .md имеют выровненный JSON; 120 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17), testing 12/14 (только property-based+test-automation DEFER-md), databases 12/12 ✓. Дальше: devops 3/12 (argocd/git/gradle-maven/helm/istio/linkerd/linux в работе, vault/terraform далее), databases (12), devops (12), api (6), monitoring (9), cloud (6), programming-languages (36)."
+progress: "MCQ-сидеры: 193/306 .md имеют выровненный JSON; 113 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17), testing 12/14 (только property-based+test-automation DEFER-md), databases 12/12 ✓. Дальше: devops 10/12 (vault/terraform в работе) + java SEVERE-regen, databases (12), devops (12), api (6), monitoring (9), cloud (6), programming-languages (36)."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -462,16 +462,16 @@ Pass: `OK FILE.md`.
 | 124 | `databases` | `sql` | 53 | 0 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 125 | `design-patterns` | `design-patterns` | 48 | 48 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 126 | `devops` | `ansible` | 25 | 25 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 127 | `devops` | `argocd` | 42 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 127 | `devops` | `argocd` | 42 | 42 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 128 | `devops` | `consul` | 24 | 24 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 129 | `devops` | `docker` | 41 | 41 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 130 | `devops` | `git` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 131 | `devops` | `gradle-maven` | 38 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 132 | `devops` | `helm` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 133 | `devops` | `istio-service-mesh` | 26 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 130 | `devops` | `git` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 131 | `devops` | `gradle-maven` | 38 | 38 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
+| 132 | `devops` | `helm` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 133 | `devops` | `istio-service-mesh` | 26 | 26 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 134 | `devops` | `kubernetes` | 45 | 45 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 135 | `devops` | `linkerd` | 20 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 136 | `devops` | `linux` | 33 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 135 | `devops` | `linkerd` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 136 | `devops` | `linux` | 33 | 33 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 137 | `devops` | `terraform` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 138 | `devops` | `vault` | 26 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 139 | `frameworks/jvm-alternatives` | `ktor` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
