@@ -1,0 +1,1145 @@
+{
+  "topic_slug": "kotlin-coroutines-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое корутины в `Kotlin` и зачем они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Корутина — приостанавливаемая (`suspendable`) единица выполнения, которую компилятор превращает в state machine; это не поток ОС, а лёгкая задача, и тысячи корутин выполняются на пуле потоков благодаря `suspend`-точкам.",
+              "correct": true,
+              "sections": {
+                "explanation": "Корутина занимает ~несколько сотен байт против ~1 МБ стека у потока, а в `suspend`-точке поток освобождается и берёт другую корутину. Это даёт асинхронный код в последовательном стиле без callback hell.",
+                "example": "`runBlocking { repeat(100_000) { launch { delay(1000); print('.') } } }` запускает 100k корутин без `OutOfMemoryError`, тогда как 100k потоков упадут с нехваткой нативной памяти.",
+                "when_to_apply": "Применяют для высоконагруженного асинхронного I/O: `Ktor`-сервер держит десятки тысяч соединений на пуле в ~CPU-cores потоков, Android-логику крутят в `viewModelScope`.",
+                "edge_cases": "Если внутри корутины поставить блокирующий `Thread.sleep` вместо `delay`, поток не освободится и преимущество легковесности теряется — пул быстро забивается.",
+                "related": "[[kotlin-coroutines-interview#Q2]] потоки против корутин; [[kotlin-coroutines-interview#Q3]] как работает suspend; [[kotlin-coroutines-interview#Q10]] structured concurrency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Корутина — это лёгкий поток ОС, который `kotlinx.coroutines` создаёт поверх класса `Thread`, поэтому 100k корутин = 100k потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корутина — это НЕ поток ОС, а абстракция над пулом потоков; один поток обслуживает множество корутин через приостановку и возобновление.",
+                "source_of_confusion": "Корутины действительно выполняются на потоках, поэтому их легко отождествить с самими потоками.",
+                "if_it_were_true": "Тогда 100k корутин съели бы ~100 ГБ стека и упали бы с `OutOfMemoryError`, но они спокойно работают на нескольких потоках.",
+                "how_it_should_be": "Корутина — задача на пуле потоков; в `suspend`-точке поток освобождается и переключается на другую корутину."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Корутина — это асинхронный callback-механизм поверх `Future` и `CompletableFuture`, поэтому код пишется в стиле `.thenCompose().thenApply()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корутины не используют callback-стиль; компилятор генерирует state machine через CPS, и код читается как последовательный `suspend`.",
+                "source_of_confusion": "И корутины, и `CompletableFuture` решают задачу асинхронности, поэтому их механизмы путают.",
+                "if_it_were_true": "Тогда корутины не избавляли бы от callback hell, но именно последовательный стиль — их ключевое преимущество.",
+                "how_it_should_be": "Корутина даёт линейный код; компилятор сам строит цепочку продолжений вместо явных колбэков."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Корутина — это `Fiber` из `Project Loom`, заменяющий `Thread` в `JVM 21+`, поэтому корутины доступны только начиная с `JVM 21`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корутины и virtual threads из Loom — независимые модели; корутины работают на любой `JVM 8+` и не требуют Loom.",
+                "source_of_confusion": "И корутины, и виртуальные потоки решают похожую задачу масштабирования, поэтому их отождествляют.",
+                "if_it_were_true": "Тогда корутины не запускались бы на `JVM 11`, но `kotlinx.coroutines` там прекрасно работает.",
+                "how_it_should_be": "Корутина — это compile-time state machine `Kotlin`, не зависящая от `Project Loom` и версии JVM."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между потоками (`Thread`) и корутинами (`Coroutine`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Thread` дешёвый (~несколько байт), а корутина дорогая (~1 МБ стека), поэтому пул потоков масштабируется лучше корутин.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Характеристики перепутаны: это поток имеет ~1 МБ стека, а корутина — несколько сотен байт; масштабируется именно корутина.",
+                "source_of_confusion": "Слово «лёгкий» применимо к корутине, и его ошибочно переносят на поток.",
+                "if_it_were_true": "Тогда `newFixedThreadPool(10000)` был бы дешёвым, но он падает с `OutOfMemoryError: unable to create native thread`.",
+                "how_it_should_be": "Поток — дорогой ресурс ОС (~1 МБ), корутина — дешёвая задача (~сотни байт)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поток — управляемая ОС preemptive-единица (~1 МБ стека, переключение через ядро), а корутина — кооперативная задача (~сотни байт, переключение в user-space); множество корутин выполняется на одном потоке, освобождая его в каждой `suspend`-точке.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поток блокируется при ожидании I/O и простаивает, а корутина приостанавливается, отдавая поток другой работе. Поэтому малое число потоков обслуживает тысячи одновременных запросов.",
+                "example": "Бэкенд на `Ktor` с `Dispatchers.IO` (до 64 потоков) держит десятки тысяч одновременных запросов; `Spring WebFlux` + coroutines использует ту же модель.",
+                "when_to_apply": "Различие важно при выборе пула: для блокирующего JDBC берут `Dispatchers.IO`, для CPU — `Dispatchers.Default`, и не множат потоки ради «легковесности».",
+                "edge_cases": "Если в корутине вызвать `Thread.sleep` вместо `delay`, она заблокирует поток ОС как обычный код, и преимущество кооперативности исчезнет.",
+                "related": "[[kotlin-coroutines-interview#Q1]] что такое корутины; [[kotlin-coroutines-interview#Q8]] диспетчеры и пулы; [[kotlin-coroutines-interview#Q14]] runBlocking как мост."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Thread` приостанавливается без блокировки ОС, а корутина блокирует поток ОС на время выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поведение перепутано: блокируется именно поток, а корутина приостанавливается через `suspend`, освобождая поток.",
+                "source_of_confusion": "Оба работают с потоками, поэтому свойства приостановки и блокировки путают местами.",
+                "if_it_were_true": "Тогда замена `delay(1000)` на `Thread.sleep(1000)` была бы корректнее, но она блокирует `Dispatchers.Default` и роняет latency.",
+                "how_it_should_be": "Поток блокируется и простаивает, корутина приостанавливается и отдаёт поток другим задачам."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Между ними нет разницы — `Coroutine` это синтаксический сахар поверх `Thread`, компилирующийся в обычный поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные модели: корутина выполняется на потоках, но не отождествляется с ними и не компилируется в `Thread`.",
+                "source_of_confusion": "Корутины запускаются на потоках, поэтому кажется, что это просто обёртка над `Thread`.",
+                "if_it_were_true": "Тогда `ThreadLocal` всегда сохранялся бы между `suspend`-точками, но после `withContext` контекст теряется.",
+                "how_it_should_be": "Поток — ресурс ОС, корутина — задача; одна корутина живёт на разных потоках по ходу выполнения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `suspend`-функция и как она работает под капотом?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Компилятор оборачивает каждую `suspend fun` в новый `Thread`, который стартует при вызове функции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой новый поток не создаётся; `suspend` — это компиляция в state machine, выполняемую на текущем потоке диспетчера.",
+                "source_of_confusion": "`suspend` ассоциируется с асинхронностью, а асинхронность — с созданием потоков.",
+                "if_it_were_true": "Тогда в логах на каждый вызов появлялся бы новый `Thread-N`, но его там нет — выполнение идёт на том же потоке.",
+                "how_it_should_be": "Компилятор строит конечный автомат с `Continuation`, выполняемый на потоке диспетчера без новых `Thread`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`suspend` — это runtime-аннотация, которую JVM проверяет при загрузке класса и подменяет тело метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`suspend` — это compile-time преобразование, а не runtime-проверка; в байткод просто добавляется параметр `Continuation`.",
+                "source_of_confusion": "`suspend` пишется перед сигнатурой как модификатор, что напоминает аннотацию.",
+                "if_it_were_true": "Тогда reflection-вызов `method.invoke()` без `Continuation` работал бы, но он падает с `argument count mismatch`.",
+                "how_it_should_be": "`suspend` обрабатывается компилятором: меняется сигнатура и генерируется state machine ещё до запуска JVM."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Компилятор `Kotlin` преобразует `suspend fun` в state machine через `Continuation Passing Style`, добавляя скрытый параметр `Continuation<T>`; возврат значения `COROUTINE_SUSPENDED` сигнализирует о приостановке.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сигнатура `suspend fun fetchUser(id: Long): User` в байткоде становится `fun fetchUser(id: Long, cont: Continuation<User>): Any?`, а каждая `suspend`-точка — это отдельный label в сгенерированном конечном автомате.",
+                "example": "Тот же CPS-механизм используется при интеграции с `Reactor`: `Mono.awaitSingle()` приостанавливает корутину до прихода значения; декомпиляция в `IntelliJ` показывает switch по labels.",
+                "when_to_apply": "Понимание CPS нужно при reflection-вызове `suspend`-метода (надо передать `Continuation`) и при отладке state machine в декомпилированном байткоде.",
+                "edge_cases": "`suspend` не привязан к диспетчеру: функция выполняется на диспетчере вызывающего scope, поэтому CPU-heavy `suspend fun` на `Dispatchers.Main` всё равно заморозит UI.",
+                "related": "[[kotlin-coroutines-interview#Q1]] что такое корутины; [[kotlin-coroutines-interview#Q9]] withContext против async."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`suspend`-функция всегда выполняется на `Dispatchers.IO`, потому что использует non-blocking I/O под капотом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`suspend` не привязан к диспетчеру; функция выполняется на диспетчере того scope, из которого её вызвали.",
+                "source_of_confusion": "`suspend` часто применяют для I/O-кода, поэтому его ассоциируют именно с `Dispatchers.IO`.",
+                "if_it_were_true": "Тогда CPU-heavy `suspend fun` не блокировал бы `Dispatchers.Main`, но на Android он даёт freeze UI.",
+                "how_it_should_be": "Диспетчер задаётся scope или `withContext`; сам по себе `suspend` диспетчер не выбирает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как определить и запустить корутину?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно вызвать `suspend fun` напрямую из `main` — корутина запустится автоматически без билдера и scope.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без билдера и scope `suspend fun` нельзя вызвать из обычного кода — компилятор требует `Continuation`, которого там нет.",
+                "source_of_confusion": "`suspend`-функция выглядит как обычная, поэтому кажется, что её можно просто вызвать.",
+                "if_it_were_true": "Тогда `fun main() { fetchUser() }` компилировался бы, но он падает с «suspend function should be called only from a coroutine».",
+                "how_it_should_be": "Для запуска нужен scope и билдер (`runBlocking`/`launch`/`coroutineScope`), которые предоставят `Continuation`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать `GlobalScope.launch` — это и есть рекомендуемый production-подход для запуска корутин.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GlobalScope` нарушает structured concurrency и ведёт к утечкам: корутина живёт всё время приложения и переживает компонент.",
+                "source_of_confusion": "`GlobalScope` доступен глобально и не требует создавать scope, поэтому кажется удобным.",
+                "if_it_were_true": "Тогда корутина в `ViewModel` корректно завершалась бы, но после rotation она крашит app обращением к мёртвому `LiveData`.",
+                "how_it_should_be": "В production используют scope с жизненным циклом (`viewModelScope`, custom с `cancel()`), а не `GlobalScope`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`runBlocking { }` — рекомендованный способ запуска корутин внутри `Spring`-контроллеров на каждом запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runBlocking` блокирует поток и допустим только в `main`/тестах/Java-bridge, но не в production-обработчиках запросов.",
+                "source_of_confusion": "`runBlocking` запускает корутины из обычного кода, поэтому его принимают за универсальный билдер.",
+                "if_it_were_true": "Тогда обёртка `@GetMapping` в `runBlocking` масштабировалась бы, но при пике она исчерпывает потоки `Tomcat` и даёт thread starvation.",
+                "how_it_should_be": "В контроллерах используют `suspend`-функции WebFlux, а `runBlocking` оставляют для границ приложения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Нужны `CoroutineScope` (или `runBlocking`/`coroutineScope`) и билдер (`launch` для fire-and-forget, `async` для результата); production-выбор — `CoroutineScope` с `SupervisorJob` или встроенный (`viewModelScope`, `lifecycleScope`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Билдеры — это extension-функции на `CoroutineScope`, а сам scope управляет жизненным циклом и обеспечивает structured concurrency, отменяя все корутины при завершении владельца.",
+                "example": "Android `viewModelScope` отменяет корутины в `onCleared()`; в `Spring`-сервисе создают `CoroutineScope(Dispatchers.IO + SupervisorJob())` и зовут `scope.cancel()` в `@PreDestroy`.",
+                "when_to_apply": "Этот паттерн применяют при запуске любых фоновых задач: scope привязывают к жизненному циклу компонента, билдер выбирают по тому, нужен ли результат.",
+                "edge_cases": "`GlobalScope.launch` запускается, но нарушает structured concurrency: корутина переживает компонент и обращается к мёртвым ресурсам после его уничтожения.",
+                "related": "[[kotlin-coroutines-interview#Q5]] launch против async; [[kotlin-coroutines-interview#Q11]] что такое CoroutineScope; [[kotlin-coroutines-interview#Q12]] GlobalScope против lifecycle-scope."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между билдерами `launch` и `async`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`launch` возвращает `Job` (fire-and-forget, исключение немедленно отменяет scope), а `async` возвращает `Deferred<T>` (результат и исключение получают через `await()`); `launch` — для побочных эффектов, `async` — для параллельных вычислений с результатом.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Deferred<T>` — наследник `Job`, поэтому `async` тоже отменяем; даже без `await()` исключение в `async` отменит scope, но stacktrace будет неочевидным.",
+                "example": "Загрузчик дашборда вызывает `async { fetchProfile() }` и `async { fetchOrders() }` параллельно, затем `Pair(p.await(), o.await())` агрегирует результаты.",
+                "when_to_apply": "`launch` берут для задач без результата (сохранение, нотификации), `async` — когда нужно запустить несколько вычислений параллельно и собрать их результаты.",
+                "edge_cases": "Частая ошибка — `async` без `await()`: исключение не ловится в самом блоке, оно ломает scope и/или утекает в родительский `CoroutineExceptionHandler`.",
+                "related": "[[kotlin-coroutines-interview#Q4]] как запустить корутину; [[kotlin-coroutines-interview#Q9]] withContext против async; [[kotlin-coroutines-interview#Q19]] распространение исключений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`launch` возвращает `Deferred<T>` с результатом через `await()`, а `async` возвращает `Job` без результата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Типы перепутаны: `launch` → `Job` (без результата), `async` → `Deferred<T>` (наследник `Job`, с результатом через `await()`).",
+                "source_of_confusion": "Оба билдера запускают корутину, поэтому их возвращаемые типы легко перепутать местами.",
+                "if_it_were_true": "Тогда `val job: Job = scope.async { fetchUser() }` давал бы доступ к `await()`, но `Job` метода `await()` не имеет.",
+                "how_it_should_be": "`launch` отдаёт `Job` для управления, `async` отдаёт `Deferred<T>` для получения результата."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`launch` распараллеливает задачи автоматически, а `async` — это последовательный билдер, выполняющий блоки один за другим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба билдера запускают параллельные корутины; последовательность задаётся тем, где вызван `await()`/`join()`, а не самим билдером.",
+                "source_of_confusion": "Слово «async» ассоциируется с параллельностью, а `launch` — с обычным запуском, отсюда ложное противопоставление.",
+                "if_it_were_true": "Тогда переписывание `async` на `launch` ускоряло бы код, но теряется результат и возвращается `Unit` вместо данных.",
+                "how_it_should_be": "Параллельность даёт запуск нескольких билдеров; точка `await()` определяет, где код снова станет последовательным."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`async` гарантированно ловит любое исключение внутри своего блока, а `launch` всегда пробрасывает их сразу наружу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `await()` исключение в `async` не ловится в самом блоке — оно сохраняется в `Deferred` и/или ломает родительский scope.",
+                "source_of_confusion": "`async` хранит результат в `Deferred`, и кажется, что он так же безопасно хранит и исключения.",
+                "if_it_were_true": "Тогда `async`-блок без `await()` был бы безопасен, но exception утекает в `CoroutineExceptionHandler` и валит соседей.",
+                "how_it_should_be": "Исключение `async` нужно забирать через `await()`; иначе оно проявится через отмену scope."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между асинхронностью (concurrency) и параллелизмом (parallelism)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Асинхронность и параллелизм — синонимы: оба термина означают одновременное физическое выполнение задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные понятия: асинхронность — про переключение между задачами, параллелизм — про физическую одновременность на ядрах CPU.",
+                "source_of_confusion": "В обиходе слова «асинхронно» и «параллельно» используют как взаимозаменяемые.",
+                "if_it_were_true": "Тогда `Dispatchers.Main.limitedParallelism(1)` давал бы реальную параллельность, но задачи на нём сериализуются.",
+                "how_it_should_be": "Concurrency — про структуру (переключение задач), parallelism — про железо (одновременность на ядрах)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Асинхронность (concurrency) — переключение между задачами в `suspend`-точках, возможное даже на одном потоке; параллелизм — реальное одновременное выполнение задач на разных ядрах CPU.",
+              "correct": true,
+              "sections": {
+                "explanation": "Корутины дают concurrency из коробки, а параллелизм зависит от диспетчера: `Dispatchers.Default` использует пул размером с число ядер, `Dispatchers.IO` — до 64 потоков.",
+                "example": "Однопоточный event loop `Node.js` — это concurrency без parallelism; `Dispatchers.Default` для CPU-bound задач даёт и concurrency, и parallelism одновременно.",
+                "when_to_apply": "Различие важно при выборе диспетчера: для I/O хватает concurrency на ограниченном пуле, для CPU-bound нужен parallelism на `Default`.",
+                "edge_cases": "`Dispatchers.Main.limitedParallelism(1)` даёт concurrency без parallelism: задачи чередуются, но физически выполняются по одной, поэтому CPU-heavy блок повесит UI.",
+                "related": "[[kotlin-coroutines-interview#Q5]] launch против async; [[kotlin-coroutines-interview#Q8]] какие диспетчеры есть; [[kotlin-coroutines-interview#Q10]] structured concurrency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параллелизм возможен только при наличии нескольких ядер CPU, а асинхронность требует SSD-диска для быстрого I/O.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Асинхронность не зависит от типа диска — это про suspend/resume, а не про hardware хранилища.",
+                "source_of_confusion": "Асинхронность часто применяют для I/O, и быстрый диск кажется её обязательным условием.",
+                "if_it_were_true": "Тогда покупка SSD ускоряла бы concurrency-код, но он работает одинаково на любом носителе.",
+                "how_it_should_be": "Concurrency обеспечивается suspend-точками независимо от диска; диск влияет лишь на сами I/O-операции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Корутины обеспечивают параллелизм автоматически, даже когда запущены на однопоточном `Dispatchers.Main`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Dispatchers.Main` однопоточный, поэтому корутины на нём дают только concurrency, а не parallelism.",
+                "source_of_confusion": "Корутины ассоциируются с многозадачностью, и кажется, что это всегда и параллелизм.",
+                "if_it_were_true": "Тогда `async(Dispatchers.Main) { sortMillionItems() }` не вешал бы UI, но на Android это даёт ANR.",
+                "how_it_should_be": "Для parallelism нужен многопоточный диспетчер (`Default`/`IO`); `Main` даёт лишь чередование задач."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CoroutineContext` и из чего он состоит?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CoroutineContext` — это `ThreadLocal`-обёртка, автоматически переносящая данные между потоками при переключении диспетчера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CoroutineContext` — это immutable map по ключам типов, а не `ThreadLocal`; для проброса `ThreadLocal` нужен `asContextElement()`.",
+                "source_of_confusion": "И контекст, и `ThreadLocal` хранят данные «рядом с выполнением», поэтому их функции смешивают.",
+                "if_it_were_true": "Тогда `MDC` в `ThreadLocal` сохранялся бы после `withContext(Dispatchers.IO)`, но `traceId` теряется без `MDCContext`.",
+                "how_it_should_be": "Контекст — это коллекция элементов корутины; `ThreadLocal` пробрасывают явно через `asContextElement()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Контекст содержит только `Job` и `Dispatcher`; остальные элементы вроде `CoroutineName` устарели и не используются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекст также включает `CoroutineName`, `CoroutineExceptionHandler` и custom-элементы через `AbstractCoroutineContextElement`.",
+                "source_of_confusion": "`Job` и `Dispatcher` — самые заметные элементы, поэтому остальные кажутся необязательными.",
+                "if_it_were_true": "Тогда нельзя было бы поставить `CoroutineExceptionHandler`, но он активно используется для структурированного логирования ошибок.",
+                "how_it_should_be": "Контекст расширяемый: помимо `Job` и `Dispatcher` в него кладут имя, обработчик ошибок и свои элементы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CoroutineContext` — immutable ассоциативная коллекция по ключам типов; основные элементы — `Job`, `CoroutineDispatcher`, `CoroutineName`, `CoroutineExceptionHandler`; элементы складываются оператором `+` и наследуются по формуле `parent + child + Job()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая дочерняя корутина получает новый `Job` (потомок родительского), а диспетчер и имя наследуются и могут быть переопределены параметром билдера.",
+                "example": "Production-логгер использует `MDCContext()` из `kotlinx-coroutines-slf4j` для пропагации `traceId` между `withContext`, а `CoroutineName(\"order-loader\")` помогает в дампах потоков.",
+                "when_to_apply": "Контекст настраивают при создании scope: складывают диспетчер, `SupervisorJob` и имя, чтобы задать поведение и упростить отладку.",
+                "edge_cases": "Контекст immutable: попытка `coroutineContext[Job]?.cancel()` ради «замены» Job не меняет коллекцию — новый контекст создают только через `+` и передачу в билдер.",
+                "related": "[[kotlin-coroutines-interview#Q8]] какие диспетчеры есть; [[kotlin-coroutines-interview#Q11]] что такое CoroutineScope."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Контекст мутируется на месте через `context.set(key, value)` прямо внутри выполняющейся корутины.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекст immutable; чтобы изменить его, создают новый через `+` и передают в билдер или `withContext`.",
+                "source_of_confusion": "Контекст похож на обычную map, у которой ожидают метод записи по ключу.",
+                "if_it_were_true": "Тогда `context.set(...)` менял бы поведение на лету, но такого метода нет — попытка изменить даёт `UnsupportedOperationException`.",
+                "how_it_should_be": "Новый контекст собирают оператором `+` и применяют через билдер/`withContext`, не мутируя старый."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие `Dispatchers` существуют и когда какой использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для блокирующих JDBC-запросов следует использовать `Dispatchers.Default`, потому что у него больше потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Default` имеет пул размером с число ядер; блокирующий JDBC-вызов займёт все эти потоки и заблокирует CPU-задачи.",
+                "source_of_confusion": "`Default` кажется «дефолтным и универсальным», поэтому его берут и для I/O.",
+                "if_it_were_true": "Тогда `withContext(Dispatchers.Default) { jdbc.query(...) }` масштабировался бы, но на 8 ядрах при 50 запросах latency p99 растёт до 5s.",
+                "how_it_should_be": "Блокирующий JDBC выполняют на `Dispatchers.IO` (эластичный пул), а `Default` оставляют для CPU-работы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Dispatchers.IO` использует non-blocking NIO под капотом, поэтому подходит и для CPU-интенсивных задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`IO` — это пул потоков для блокирующих вызовов, а не NIO; на CPU-heavy задачах его 64 потока быстро забиваются.",
+                "source_of_confusion": "Название «IO» наводит на мысль о неблокирующем вводе-выводе.",
+                "if_it_were_true": "Тогда ML-inference на `IO` шёл бы без вреда, но 64 потока заняты вычислениями, а реальные I/O-запросы стоят в очереди.",
+                "how_it_should_be": "`IO` — для блокирующего I/O; CPU-задачи выполняют на `Dispatchers.Default`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Dispatchers.Main` доступен в любом приложении и отлично подходит для запуска бэкенд-задач на сервере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Main` — это UI-диспетчер Android/Swing; на сервере его инициализация падает с `IllegalStateException: Module with the Main dispatcher is missing`.",
+                "source_of_confusion": "`Main` звучит как «главный/основной», поэтому его принимают за универсальный серверный диспетчер.",
+                "if_it_were_true": "Тогда `viewModelScope.launch(Dispatchers.Main)` работал бы в `Spring`-сервисе, но приложение падает на старте.",
+                "how_it_should_be": "На бэкенде используют `IO`/`Default`; `Main` существует только там, где есть UI-loop."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Default` — для CPU-bound (пул = числу ядер), `IO` — для блокирующего I/O (эластичный, до 64 потоков), `Main` — UI-поток (Android), `Unconfined` — без привязки (тесты); для изоляции делают `Dispatchers.IO.limitedParallelism(N)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Default` подходит для парсинга и сортировок, `IO` — для JDBC/файлов/сети, `Main` — для обновления UI; `limitedParallelism(N)` создаёт выделенный пул, разделяющий потоки с общим `IO`.",
+                "example": "`Spring`-сервис с `HikariCP` размером 20 настраивает `Dispatchers.IO.limitedParallelism(20)`, чтобы не превысить пул соединений; Android сортирует через `viewModelScope.launch(Dispatchers.Default)`.",
+                "when_to_apply": "Диспетчер выбирают по типу работы: CPU — `Default`, блокирующий I/O — `IO`, UI — `Main`; для тяжёлых I/O выделяют изолированный пул.",
+                "edge_cases": "`Default` и `IO` делят потоки, поэтому переключение между ними часто не вызывает реального переключения контекста потока, если поток уже подходит.",
+                "related": "[[kotlin-coroutines-interview#Q7]] что такое CoroutineContext; [[kotlin-coroutines-interview#Q9]] withContext против async; [[kotlin-coroutines-interview#Q14]] runBlocking."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `withContext` и чем оно отличается от `async`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`withContext` — `suspend`-функция, которая переключает контекст и последовательно ждёт результат одной задачи; `async` запускает параллельную корутину и возвращает `Deferred<T>`, результат которого забирают через `await()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`withContext` возвращает значение напрямую и не создаёт параллельную ветку, а `async` нужен, когда несколько задач должны выполняться одновременно и затем агрегироваться.",
+                "example": "Типичный сервис-метод `suspend fun findUser() = withContext(Dispatchers.IO) { repo.find() }`; для дашборда — `coroutineScope { val a = async {...}; val b = async {...}; Pair(a.await(), b.await()) }`.",
+                "when_to_apply": "`withContext` берут для одиночного переключения диспетчера, `async` — для нескольких параллельных задач с последующим `await`.",
+                "edge_cases": "`withContext` не блокирует поток — это `suspend`-функция, она приостанавливает корутину; запрет на неё ради «не блокировать» приводит к pool starvation, когда JDBC крутят на `Default`.",
+                "related": "[[kotlin-coroutines-interview#Q5]] launch против async; [[kotlin-coroutines-interview#Q8]] какие диспетчеры есть."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`withContext(Dispatchers.IO) { ... }` запускает параллельную задачу и возвращает `Deferred`, который надо забрать через `await()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`withContext` НЕ запускает параллельную задачу — он переключает контекст, последовательно ждёт результат и возвращает его напрямую.",
+                "source_of_confusion": "Оба переключают диспетчер, поэтому `withContext` принимают за вариант `async`.",
+                "if_it_were_true": "Тогда `val d = withContext(...) { fetch() }; d.await()` компилировался бы, но `withContext` уже вернул значение, а не `Deferred`.",
+                "how_it_should_be": "`withContext` возвращает результат напрямую; `Deferred` с `await()` даёт только `async`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`withContext` и `async` — синонимы, и выбор между ними зависит исключительно от стиля кода в команде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные инструменты с разной семантикой: `withContext` — последовательное переключение, `async` — параллельный запуск.",
+                "source_of_confusion": "Оба принимают блок и могут менять диспетчер, что создаёт впечатление взаимозаменяемости.",
+                "if_it_were_true": "Тогда замена 5 параллельных `async` на 5 `withContext` не влияла бы на latency, но она растёт с 200ms до 1000ms.",
+                "how_it_should_be": "`withContext` — для одной задачи последовательно, `async` — для нескольких параллельно; это не вопрос стиля."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`withContext` блокирует текущий поток на всё время выполнения переданного блока.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`withContext` НЕ блокирует — это `suspend`-функция, которая приостанавливает корутину и освобождает поток.",
+                "source_of_confusion": "`withContext` синхронно возвращает результат, и это путают с блокировкой потока.",
+                "if_it_were_true": "Тогда запрет `withContext(Dispatchers.IO)` был бы оправдан, но без него JDBC на `Default` даёт pool starvation.",
+                "how_it_should_be": "`withContext` приостанавливает корутину без блокировки потока, лишь переключая контекст выполнения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `structured concurrency`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Structured concurrency — это паттерн запуска всех корутин на одном выделенном потоке для предсказуемости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это модель структуры жизненного цикла, а не привязка к одному потоку; работает с любым диспетчером и пулом.",
+                "source_of_confusion": "Слово «structured» наводит на мысль о строгой однопоточной последовательности выполнения.",
+                "if_it_were_true": "Тогда все корутины крутились бы на `newSingleThreadContext`, но это убило бы параллелизм CPU-задач на нескольких ядрах.",
+                "how_it_should_be": "Structured concurrency — про иерархию scope и каскадную отмену, а не про число потоков."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это принцип «корутина не утекает»: она запускается внутри scope, родитель ждёт детей, отмена распространяется вниз, ошибки — вверх; иерархия корутин гарантированно завершается синхронно с владельцем.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без structured concurrency возникают зомби-корутины; с ней `cancel()` scope каскадно отменяет всех детей, а исключение в ребёнке отменяет родителя (или останавливается на `SupervisorJob`).",
+                "example": "Android `viewModelScope` отменяет всех детей при `onCleared()`; в `Spring` `@PreDestroy { scope.cancel() }` гарантирует отсутствие фоновых задач после shutdown.",
+                "when_to_apply": "Принцип применяют всегда, привязывая scope к жизненному циклу владельца, чтобы ни одна корутина не пережила компонент.",
+                "edge_cases": "`async` тоже structured, когда вызван внутри scope/`coroutineScope`; запрещать его командно бессмысленно — без scope нарушается только запуск через `GlobalScope`.",
+                "related": "[[kotlin-coroutines-interview#Q11]] что такое CoroutineScope; [[kotlin-coroutines-interview#Q12]] GlobalScope против lifecycle-scope; [[kotlin-coroutines-interview#Q19]] распространение исключений."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`GlobalScope.launch` полностью соответствует принципам structured concurrency и потому безопасен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GlobalScope` явно нарушает structured concurrency: он не привязан к жизненному циклу владельца и порождает утечки.",
+                "source_of_confusion": "`GlobalScope` — тоже scope с методом `launch`, поэтому кажется частью структурированной модели.",
+                "if_it_were_true": "Тогда `GlobalScope.launch { syncToServer() }` отменялся бы с компонентом, но он живёт после закрытия Activity и течёт памятью.",
+                "how_it_should_be": "Structured concurrency требует scope с жизненным циклом; `GlobalScope` — антипаттерн, нарушающий принцип."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Structured concurrency — это запрет на использование `async`: только `launch` обеспечивает корректную иерархию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`async` тоже structured, когда вызван внутри scope/`coroutineScope`; запрещён только запуск без scope, а не сам билдер.",
+                "source_of_confusion": "`async` возвращает значение и кажется «свободной» веткой, не подчинённой иерархии.",
+                "if_it_were_true": "Тогда командный запрет `async` улучшал бы структуру, но он лишь убирает параллельные `await` и растит latency.",
+                "how_it_should_be": "И `launch`, и `async` внутри scope structured; нарушение — это запуск вне scope, например через `GlobalScope`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CoroutineScope` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CoroutineScope` — статический singleton, доступный из любого места приложения без создания экземпляра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CoroutineScope` — обычный интерфейс; экземпляры создают под конкретный жизненный цикл, а глобальный singleton — это `GlobalScope` (антипаттерн).",
+                "source_of_confusion": "Существование `GlobalScope` создаёт впечатление, что и `CoroutineScope` тоже глобален.",
+                "if_it_were_true": "Тогда `object AppScope : CoroutineScope by ...` был бы нормой, но забытый `cancel()` оставляет фоновые HTTP-вызовы на shutdown.",
+                "how_it_should_be": "Scope создают экземпляром под владельца и отменяют в его финализаторе; глобальный вариант — антипаттерн."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Scope можно использовать вообще без `Job` в контексте — это рекомендованный лёгкий production-подход.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `Job` scope не сможет отменять корутины; `CoroutineScope(Dispatchers.IO)` создаёт `Job()` неявно, но без `SupervisorJob` сбой одного ребёнка валит scope.",
+                "source_of_confusion": "Конструктор принимает только диспетчер, поэтому `Job` кажется необязательным.",
+                "if_it_were_true": "Тогда `CoroutineScope(Dispatchers.IO)` для batch-импортов был бы устойчив, но одна неудача парсера отменяет все импорты.",
+                "how_it_should_be": "В контекст добавляют `SupervisorJob`, чтобы scope умел отменять корутины и изолировать сбои детей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CoroutineScope` — интерфейс с единственным свойством `coroutineContext`; он задаёт границу жизненного цикла корутин и обеспечивает structured concurrency, а в production его создают с `SupervisorJob` и диспетчером и отменяют в `close()/onCleared()/@PreDestroy`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Готовые scopes — `viewModelScope` и `lifecycleScope` в Android; на сервере scope создают вручную и привязывают к жизненному циклу сервиса или запроса.",
+                "example": "Android `viewModelScope` встроен в Architecture Components; в `Spring` `@Service` с `@PreDestroy { scope.cancel() }` гарантирует чистое завершение всех корутин.",
+                "when_to_apply": "Scope создают для любого владельца фоновых задач: сервиса, ViewModel, запроса — и обязательно отменяют в финализаторе владельца.",
+                "edge_cases": "`CoroutineScope(Dispatchers.IO)` без `SupervisorJob` всё равно создаёт `Job()` неявно, но тогда ошибка одного ребёнка отменит весь scope и остановит остальные задачи.",
+                "related": "[[kotlin-coroutines-interview#Q10]] structured concurrency; [[kotlin-coroutines-interview#Q12]] GlobalScope против lifecycle-scope; [[kotlin-coroutines-interview#Q15]] что такое Job."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CoroutineScope` блокирует текущий поток при создании, аналогично тому, как это делает `runBlocking`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Создание scope не блокирует — это просто конструирование объекта; блокировка происходит только в `runBlocking`.",
+                "source_of_confusion": "И scope, и `runBlocking` связаны с запуском корутин, поэтому их поведение смешивают.",
+                "if_it_were_true": "Тогда `init { val scope = CoroutineScope(...) }` подвешивал бы конструктор, но он отрабатывает мгновенно.",
+                "how_it_should_be": "Создание scope — лёгкая операция; блокирует поток только специальный билдер `runBlocking`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `GlobalScope` и scope с жизненным циклом?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`GlobalScope.launch` отменяется автоматически при выходе из enclosing-функции, в которой он был вызван.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GlobalScope` живёт всё время приложения и не зависит от стека вызовов; выход из функции его не останавливает.",
+                "source_of_confusion": "Локальные корутины завершаются вместе с областью, и это поведение переносят на `GlobalScope`.",
+                "if_it_were_true": "Тогда после возврата из функции корутина исчезала бы, но она висит в памяти и крашит при доступе к закрытым ресурсам.",
+                "how_it_should_be": "`GlobalScope` живёт всё время приложения; для автоотмены нужен scope с жизненным циклом владельца."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`GlobalScope` и `CoroutineScope(Dispatchers.IO)` функционально идентичны и взаимозаменяемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CoroutineScope(...)` — управляемый экземпляр с возможностью `cancel()`, а `GlobalScope` — статический singleton без жизненного цикла.",
+                "source_of_confusion": "Оба позволяют вызвать `launch`, поэтому кажутся равнозначными.",
+                "if_it_were_true": "Тогда замена `CoroutineScope(...)` на `GlobalScope` была бы безобидной, но теряется `cancel()` при graceful shutdown.",
+                "how_it_should_be": "Custom scope управляем и отменяем; `GlobalScope` — глобальный singleton без управления жизненным циклом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Современный `Kotlin` удалил `GlobalScope`, поэтому различие между ним и lifecycle-scope больше неактуально.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GlobalScope` существует, но помечен `@DelicateCoroutinesApi` и требует явного opt-in для использования.",
+                "source_of_confusion": "Из-за громких предупреждений об антипаттерне делают вывод, что API удалили.",
+                "if_it_were_true": "Тогда код с `GlobalScope` не компилировался бы, но он работает под `@OptIn(DelicateCoroutinesApi::class)`.",
+                "how_it_should_be": "`GlobalScope` доступен, но «деликатен»; различие с lifecycle-scope остаётся актуальным."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`GlobalScope` — scope с жизненным циклом всего приложения; он не отменяется автоматически и нарушает structured concurrency, поэтому в production используют scope с явным жизненным циклом (`viewModelScope`, custom `CoroutineScope` с `cancel()`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`GlobalScope.launch` живёт, пока живо приложение: переживает компонент-владелец, ведёт к утечкам и крашам при доступе к уже уничтоженным объектам.",
+                "example": "Android Architecture Components отменяют `viewModelScope` в `onCleared()`; `Spring`-сервис с `@PreDestroy { scope.cancel() }` обеспечивает graceful shutdown.",
+                "when_to_apply": "`GlobalScope` допустим только для задач, живущих всё время приложения (метрики, фоновая синхронизация); в остальных случаях — scope с жизненным циклом.",
+                "edge_cases": "`GlobalScope` не удалён, но помечен `@DelicateCoroutinesApi` и требует opt-in — это сигнал, что API «деликатный» и требует осознанного применения.",
+                "related": "[[kotlin-coroutines-interview#Q10]] structured concurrency; [[kotlin-coroutines-interview#Q11]] что такое CoroutineScope."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `coroutineScope` (функция) и чем она отличается от `CoroutineScope` (конструктор)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`coroutineScope { }` — это `suspend`-функция, создающая вложенный scope и ждущая завершения всех детей перед возвратом; `CoroutineScope(context)` — конструктор для независимого scope с явным жизненным циклом.",
+              "correct": true,
+              "sections": {
+                "explanation": "`coroutineScope` используют для параллельной декомпозиции внутри `suspend`-функций, а `CoroutineScope(...)` — для сервисов и компонентов, где нужен явный `cancel()`.",
+                "example": "`Spring` `suspend fun loadDashboard() = coroutineScope { val a = async{...}; ... }` — параллельная агрегация без утечек; `class OrderService : AutoCloseable { val scope = CoroutineScope(...) }` — для долгоживущего сервиса.",
+                "when_to_apply": "Функцию `coroutineScope` берут для параллелизма внутри `suspend`-кода; конструктор `CoroutineScope` — когда нужен долгоживущий управляемый scope.",
+                "edge_cases": "Оба используют диспетчер из контекста, поэтому `coroutineScope { heavyWork() }` не уходит на «отдельный поток»: CPU-задача выполнится на том же диспетчере, что и вызывающий код.",
+                "related": "[[kotlin-coroutines-interview#Q11]] что такое CoroutineScope; [[kotlin-coroutines-interview#Q12]] GlobalScope против lifecycle-scope; [[kotlin-coroutines-interview#Q19]] распространение исключений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`coroutineScope { }` и `CoroutineScope(...)` — это два названия одной и той же функции, просто с разным регистром.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные сущности: `coroutineScope` — `suspend`-функция (нижний регистр), `CoroutineScope` — конструктор интерфейса (верхний регистр).",
+                "source_of_confusion": "Одинаковое слово в разном регистре делает их визуально почти неотличимыми.",
+                "if_it_were_true": "Тогда `val scope = coroutineScope { ... }` возвращал бы объект scope, но это `suspend`-функция, и она вернёт результат блока.",
+                "how_it_should_be": "`coroutineScope` — suspend-функция для вложенного scope; `CoroutineScope(...)` — конструктор независимого scope."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`coroutineScope` запускает блок на отдельном потоке, а `CoroutineScope` выполняет его на текущем потоке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба используют диспетчер из контекста; различие — в семантике (suspend против конструктора), а не в выборе потока.",
+                "source_of_confusion": "Слово «scope» ассоциируют с переключением выполнения, отсюда миф об отдельном потоке.",
+                "if_it_were_true": "Тогда `coroutineScope { heavyWork() }` уходил бы с `Main`, но CPU-задача выполняется на текущем диспетчере и блокирует UI.",
+                "how_it_should_be": "Поток определяет диспетчер контекста, а не выбор между функцией и конструктором scope."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CoroutineScope` устарел, и в современном коде нужно использовать только функцию `coroutineScope`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба активны и не взаимозаменяемы; `CoroutineScope` — единственный способ создать долгоживущий управляемый scope.",
+                "source_of_confusion": "Совет «предпочитайте structured concurrency» ошибочно трактуют как отказ от конструктора.",
+                "if_it_were_true": "Тогда везде писали бы `coroutineScope { }`, но тогда нельзя было бы отменить корутины из метода `close()` сервиса.",
+                "how_it_should_be": "Конструктор `CoroutineScope` нужен для сервисов с явным `cancel()`; функция — для локального параллелизма."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `runBlocking` и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`runBlocking` — рекомендованный production-инструмент, которым нужно оборачивать каждый `Spring`-контроллер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runBlocking` блокирует поток до завершения и ломает асинхронную модель; в `Spring` используют `suspend`-контроллеры WebFlux.",
+                "source_of_confusion": "`runBlocking` легко запускает корутины из обычного кода, поэтому его принимают за production-решение.",
+                "if_it_were_true": "Тогда обёртка `@GetMapping` в `runBlocking` держала бы нагрузку, но при 10K RPS потоки `Tomcat` заняты, latency p99 5s.",
+                "how_it_should_be": "В контроллерах применяют `suspend`-функции, а `runBlocking` оставляют для `main` и тестов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`runBlocking` — блокирующий билдер: он блокирует текущий поток до завершения всех детей; допустим в `main`, тестах и Java-interop мостах, но запрещён внутри корутин или на UI-потоках, где даёт deadlock.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это мост из обычного кода в корутины; в production-серверном коде его заменяют `suspend`-функциями и `coroutineScope`, чтобы не блокировать поток.",
+                "example": "`fun main() = runBlocking { ... }` для CLI-утилит; `@Test fun ... () = runBlocking { ... }` для legacy-тестов (или `runTest` из coroutines-test).",
+                "when_to_apply": "`runBlocking` ставят только на границах приложения: точка входа `main`, тесты, вызов `suspend`-кода из синхронного Java.",
+                "edge_cases": "Вложенный `runBlocking` на ограниченном диспетчере (`Main`, `Default`) приводит к deadlock: при множестве вызовов все потоки пула ждут друг друга, и компилятор это не оптимизирует.",
+                "related": "[[kotlin-coroutines-interview#Q4]] как запустить корутину; [[kotlin-coroutines-interview#Q13]] coroutineScope против CoroutineScope."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`runBlocking` неблокирующий — он использует suspend и работает так же, как `coroutineScope`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`runBlocking` явно блокирует текущий поток до завершения всех детей; имя точно отражает поведение.",
+                "source_of_confusion": "Оба создают scope и запускают корутины, поэтому их семантику смешивают.",
+                "if_it_were_true": "Тогда `runBlocking { delay(60_000) }` на `Main` не вешал бы UI, но он замораживает его на минуту и даёт ANR.",
+                "how_it_should_be": "`runBlocking` блокирует поток; неблокирующий вложенный scope даёт `coroutineScope`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Вложенный `runBlocking` внутри корутины безопасен, потому что компилятор оптимизирует его в обычную приостановку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вложенный `runBlocking` на ограниченном диспетчере приводит к deadlock; компилятор его не оптимизирует.",
+                "source_of_confusion": "Кажется, что внутри корутины `runBlocking` «понимает контекст» и не блокирует поток.",
+                "if_it_were_true": "Тогда `launch { runBlocking { ... } }` был бы безопасен, но на `Default` (8 потоков) при 10 вызовах все потоки ждут друг друга — вечный deadlock.",
+                "how_it_should_be": "Внутри корутин используют `coroutineScope`/`withContext`; вложенный `runBlocking` рискует deadlock."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Job` и каков его жизненный цикл?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Job.cancel()` мгновенно завершает корутину, бросая ей `InterruptedException`, как у потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отмена кооперативна: `cancel()` ставит флаг, корутина проверяет его в suspend-точках и бросает `CancellationException`, а не `InterruptedException`.",
+                "source_of_confusion": "Аналогия с `Thread.interrupt()` наводит на мысль о том же исключении и мгновенности.",
+                "if_it_were_true": "Тогда `catch (InterruptedException)` после `cancel()` срабатывал бы, но он никогда не вызывается и ресурсы не освобождаются.",
+                "how_it_should_be": "`cancel()` ставит флаг отмены; корутина бросает `CancellationException` при следующей проверке."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Job` имеет всего два состояния — `Active` и `Completed`, без каких-либо промежуточных фаз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Job` проходит `New/Active/Completing/Cancelling/Cancelled/Completed`; промежуточные фазы нужны для каскадной отмены детей.",
+                "source_of_confusion": "В типичном коде видны только «работает/завершён», и остальные фазы остаются незаметными.",
+                "if_it_were_true": "Тогда `isCompleted == true` наступал бы сразу после `cancel()`, но в фазе `Cancelling` `isActive == false && isCompleted == false`, и shutdown-логика ловит race.",
+                "how_it_should_be": "Жизненный цикл многоступенчатый; промежуточные фазы обеспечивают корректное завершение иерархии."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Job` — элемент `CoroutineContext`, представляющий управляемую единицу работы; жизненный цикл: `New → Active → Completing → Completed`, либо ветка `Cancelling → Cancelled`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`cancel()` переводит `Job` в `Cancelling`, ждёт завершения детей и переходит в `Cancelled` — финальное состояние, где `isCompleted == true && isCancelled == true`.",
+                "example": "`Spring`-сервис вызывает `scope.coroutineContext[Job]?.cancelChildren()` при shutdown, а `job.invokeOnCompletion { ... }` навешивает callback на завершение.",
+                "when_to_apply": "С `Job` работают, когда нужно управлять конкретной задачей: проверить состояние, дождаться `join()`, отменить или повесить callback.",
+                "edge_cases": "Каждый `launch`/`async` уже возвращает `Job`/`Deferred`; ручное создание `Job()` для каждого launch разрывает parent-child связь и ломает structured concurrency.",
+                "related": "[[kotlin-coroutines-interview#Q11]] что такое CoroutineScope; [[kotlin-coroutines-interview#Q16]] как отменить корутину."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Job` создаётся только через фабрику `Job()`; билдеры `launch` и `async` свой `Job` не создают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый `launch`/`async` возвращает `Job`/`Deferred` (наследник `Job`); фабрика `Job()` нужна для root-job в кастомных scopes.",
+                "source_of_confusion": "Явная фабрика `Job()` заметнее, поэтому кажется единственным способом получить `Job`.",
+                "if_it_were_true": "Тогда `Job().also { scope.launch(it) { ... } }` для каждого launch был бы нормой, но это рвёт parent-child связь и ломает structured concurrency.",
+                "how_it_should_be": "Билдеры сами создают дочерний `Job`; ручной `Job()` нужен лишь как корень кастомного scope."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как отменить корутину и почему отмена кооперативна?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Отмена прерывает корутину преимптивно, как `Thread.interrupt()`, в любой точке выполнения немедленно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отмена кооперативна: она ставит флаг, а корутина сама проверяет его через `isActive`/`yield`/`ensureActive` или любую suspend-функцию stdlib.",
+                "source_of_confusion": "Привычка к преимптивному прерыванию потоков переносится на корутины.",
+                "if_it_were_true": "Тогда CPU-цикл `while (i < 1_000_000) i++` без `isActive` отменялся бы, но `cancel()` ничего не делает и корутина «бессмертна».",
+                "how_it_should_be": "Отмена = флаг + проверка в suspend-точках; CPU-циклы должны явно звать `ensureActive()`/`isActive`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`cancel()` работает только для корутин, запущенных через `async`, а на `launch` он не действует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`cancel()` работает на любом `Job`, включая результат и `launch`, и `async`.",
+                "source_of_confusion": "`async` возвращает `Deferred` с явными методами, и кажется, что только он управляем.",
+                "if_it_were_true": "Тогда пришлось бы переписать все `launch` на `async` ради отмены, но так теряется fire-and-forget семантика.",
+                "how_it_should_be": "Отмена доступна на любом `Job`; выбор `launch`/`async` зависит от нужды в результате, а не отмене."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Если корутина зависла в `Thread.sleep()`, вызов `cancel()` немедленно её разбудит и завершит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Thread.sleep` блокирует поток, а не приостанавливает корутину; `cancel()` поставит флаг, но проверится он только после sleep.",
+                "source_of_confusion": "`Thread.sleep` и `delay` оба «ждут», и кажется, что отмена работает для них одинаково.",
+                "if_it_were_true": "Тогда `Thread.sleep(5000)` отменялся бы мгновенно, но graceful shutdown ждёт по 5 секунд каждой корутины перед kill.",
+                "how_it_should_be": "Для отменяемого ожидания используют `delay`; `Thread.sleep` блокирует поток и не реагирует на флаг сразу."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`cancel()` устанавливает флаг отмены, а корутина должна проверять его в suspend-точках (`delay`, `yield`, `withContext`, I/O) или явно через `isActive`/`ensureActive`; CPU-циклы без проверок не отменяются.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все стандартные suspend-функции уже бросают `CancellationException` при отмене; для tight-loop CPU-кода нужно вручную писать `while (isActive)` или вызывать `ensureActive()`.",
+                "example": "Батч-обработчик в `Spring` `forEach { item -> ensureActive(); process(item) }` гарантирует graceful cancel при `@PreDestroy`; Android image-processing зовёт `yield()` для отмены при rotation.",
+                "when_to_apply": "Ручные проверки добавляют в долгие CPU-циклы; в I/O-коде отмена работает сама через suspend-вызовы stdlib.",
+                "edge_cases": "`Thread.sleep` блокирует поток, а не приостанавливает корутину: `cancel()` поставит флаг, но корутина проверит его лишь после пробуждения, задерживая graceful shutdown.",
+                "related": "[[kotlin-coroutines-interview#Q15]] что такое Job; [[kotlin-coroutines-interview#Q17]] yield и ensureActive."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `yield` и `ensureActive` и чем они отличаются?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`yield()` — это `suspend`-функция: она приостанавливает корутину, отдаёт поток другим и проверяет отмену; `ensureActive()` — обычная функция, которая только проверяет `isActive` и бросает `CancellationException`, не приостанавливая корутину.",
+              "correct": true,
+              "sections": {
+                "explanation": "`yield()` нужен для cooperation в тяжёлых циклах, чтобы дать другим корутинам выполниться; `ensureActive()` — лёгкая проверка отмены без overhead приостановки.",
+                "example": "PDF-парсер бэкенда вызывает `ensureActive()` каждые 100 страниц для быстрой реакции на cancel; image-processor зовёт `yield()` между фильтрами, чтобы уступить другим корутинам.",
+                "when_to_apply": "`yield()` ставят, когда тяжёлая корутина должна делиться потоком; `ensureActive()` — когда нужна только проверка отмены без приостановки.",
+                "edge_cases": "Поставить `yield()` в hot loop ради простой проверки отмены — ошибка: он добавляет context switching overhead и снижает throughput, тогда как достаточно `ensureActive()`.",
+                "related": "[[kotlin-coroutines-interview#Q16]] как отменить корутину; [[kotlin-coroutines-interview#Q18]] отмена при таймауте."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`yield()` и `ensureActive()` полностью идентичны и взаимозаменяемы в любом коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они различаются: `yield()` приостанавливает (отдаёт поток другим) и проверяет отмену, а `ensureActive()` только бросает `CancellationException`, не приостанавливая.",
+                "source_of_confusion": "Обе функции проверяют отмену, поэтому их считают одним и тем же.",
+                "if_it_were_true": "Тогда `yield()` в hot loop был бы бесплатной заменой `ensureActive()`, но он даёт context switching overhead и снижает throughput на 30%.",
+                "how_it_should_be": "`yield()` — пауза с проверкой; `ensureActive()` — только проверка отмены без приостановки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`yield()` блокирует поток на время уступки, а `ensureActive()` неблокирующий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`yield()` приостанавливает (suspend), а не блокирует; обе функции не блокируют поток ОС.",
+                "source_of_confusion": "Слово «уступить поток» трактуют как блокировку, хотя это приостановка.",
+                "if_it_were_true": "Тогда запрет `yield()` ради «не блокировать» был бы оправдан, но без cooperation одна тяжёлая корутина монополизирует поток `Default`.",
+                "how_it_should_be": "`yield()` приостанавливает без блокировки потока; обе функции дружелюбны к пулу."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ensureActive()` доступен только внутри блоков `withContext` и нигде больше работать не будет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ensureActive()` — extension на `CoroutineContext`/`Job`; он работает в любой корутине с доступом к `coroutineContext`.",
+                "source_of_confusion": "`ensureActive()` часто видят рядом с `withContext`, поэтому привязывают к нему.",
+                "if_it_were_true": "Тогда каждую проверку оборачивали бы в `withContext(coroutineContext) { ensureActive() }`, добавляя ненужный overhead.",
+                "how_it_should_be": "`ensureActive()` зовут напрямую в любой корутине; обёртка в `withContext` лишняя."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить отмену корутины при таймауте?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для таймаута следует запускать `Thread { sleep(timeout); job.cancel() }.start()` на каждый запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это создаёт лишний поток на каждый вызов и не интегрировано с structured concurrency; коробочное решение — `withTimeout`.",
+                "source_of_confusion": "Идея «отдельный таймер отменяет задачу» интуитивна, но реализуют её через поток.",
+                "if_it_were_true": "Тогда такой таймер масштабировался бы, но при 1000 RPS получится 1000 лишних потоков и OOM `unable to create native thread`.",
+                "how_it_should_be": "Таймаут задают через `withTimeout`/`withTimeoutOrNull` — они кооперативны и не плодят потоки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`withTimeout(ms) { ... }` бросает `TimeoutCancellationException`, а `withTimeoutOrNull(ms) { ... }` возвращает `null` при превышении; оба работают кооперативно — внутри блока должны быть suspend-точки или `ensureActive()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Таймаут срабатывает только в точках приостановки; для CPU-циклов без suspend нужно вставлять `yield()`/`ensureActive()`, иначе отмена не сработает вовремя.",
+                "example": "Микросервис на `Ktor` `withTimeout(3000) { httpClient.get(url) }` гарантирует SLA при медленном downstream; паттерн `withTimeoutOrNull(...) ?: fallback` даёт graceful fallback.",
+                "when_to_apply": "Таймауты ставят на внешние вызовы (HTTP, БД), чтобы ограничить время ожидания и не держать ресурсы при зависшем downstream.",
+                "edge_cases": "`TimeoutCancellationException` — наследник `CancellationException`, поэтому отменяется только свой блок, а не родитель; ловить его надо аккуратно, чтобы не зациклить retry.",
+                "related": "[[kotlin-coroutines-interview#Q16]] как отменить корутину; [[kotlin-coroutines-interview#Q17]] yield и ensureActive."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`withTimeout` блокирует поток на указанное число миллисекунд, поэтому его опасно ставить надолго.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`withTimeout` — `suspend`-функция с виртуальным таймером; она не блокирует поток, а приостанавливает корутину.",
+                "source_of_confusion": "Указание времени в `withTimeout(60_000)` наводит на мысль о блокировке на эту длительность.",
+                "if_it_were_true": "Тогда из страха блокировки убрали бы таймауты вовсе, но hung HTTP-запросы держат соединения до TCP timeout 5 минут.",
+                "how_it_should_be": "`withTimeout` не блокирует поток; он лишь ограничивает время блока через виртуальный таймер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`withTimeout` при истечении времени отменяет весь родительский scope вместе с соседними задачами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`withTimeout` бросает `TimeoutCancellationException` (наследник `CancellationException`) и отменяет только свой блок, не родителя.",
+                "source_of_confusion": "Любая отмена кажется каскадной вверх, поэтому ждут отмены родителя.",
+                "if_it_were_true": "Тогда после таймаута родитель был бы мёртв, но в retry-логике он жив, и `catch` без проверки даёт бесконечный цикл.",
+                "how_it_should_be": "Таймаут отменяет только свой блок; родитель остаётся активным, что и позволяет retry."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как распространяются исключения в корутинах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `async` исключение всегда обрабатывается внутри блока и наружу не выходит, поэтому его не нужно ловить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исключение `async` сохраняется в `Deferred` и пробрасывается при `await()`; без `await()` оно всё равно отменит scope.",
+                "source_of_confusion": "`async` хранит результат в `Deferred`, и кажется, что он так же изолированно хранит ошибки.",
+                "if_it_were_true": "Тогда `async`-блок был бы безопасной песочницей, но непрочитанное исключение валит scope и соседей.",
+                "how_it_should_be": "Исключение `async` забирают через `await()`; иначе оно проявится через отмену родительского scope."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Исключение в `launch` влияет только на саму корутину и никогда не затрагивает родителя и соседей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исключение в `launch` немедленно отменяет родительский `Job` и всех его детей (в обычной иерархии без `SupervisorJob`).",
+                "source_of_confusion": "Fire-and-forget семантика `launch` создаёт впечатление полной изоляции от родителя.",
+                "if_it_were_true": "Тогда падение одного `launch` не трогало бы соседей, но `error(\"Boom!\")` отменяет и `fetchUsers`, и `fetchProducts`.",
+                "how_it_should_be": "Исключение `launch` идёт вверх и отменяет родителя с детьми; изоляцию даёт лишь `SupervisorJob`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Правила зависят от билдера: в `launch` исключение немедленно отменяет родительский `Job` и всех его детей; в `async` исключение сохраняется в `Deferred` и пробрасывается при вызове `await()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В обычной иерархии (без `SupervisorJob`) ошибка в одном ребёнке отменяет родителя и его соседей вверх по дереву — это часть structured concurrency.",
+                "example": "В блоке `scope.launch { launch { fetchUsers() }; launch { error(\"Boom!\") }; launch { fetchProducts() } }` исключение во втором `launch` отменит и `fetchUsers`, и `fetchProducts`.",
+                "when_to_apply": "Знание правил нужно при проектировании обработки ошибок: выбрать `launch` против `async`, решить нужна ли изоляция через `SupervisorJob`.",
+                "edge_cases": "`async` без `await()` всё равно отменит scope, но stacktrace будет неочевидным; чтобы изолировать сбой одного ребёнка, нужен `SupervisorJob`/`supervisorScope`.",
+                "related": "[[kotlin-coroutines-interview#Q5]] launch против async."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В корутинах исключения распространяются только вниз к детям и никогда не отменяют родителя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычное исключение идёт вверх и отменяет родителя; вниз каскадно отменяются дети уже отменённого родителя.",
+                "source_of_confusion": "Каскадная отмена детей видна нагляднее, поэтому направление «вверх» упускают.",
+                "if_it_were_true": "Тогда `RuntimeException` в ребёнке не трогал бы родителя, но в structured concurrency он отменяет всё дерево от родителя вниз.",
+                "how_it_should_be": "Ошибки идут вверх (отменяя родителя), отмена — вниз (каскадом к детям); это и есть structured concurrency."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
