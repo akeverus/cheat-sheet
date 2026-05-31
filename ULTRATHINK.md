@@ -543,12 +543,12 @@ Pass: `OK FILE.md`.
 | 205 | `performance` | `memory-management` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 206 | `performance` | `network-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 207 | `performance` | `performance-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 208 | `programming-languages/go` | `go-concurrency` | 35 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 208 | `programming-languages/go` | `go-concurrency` | 35 | 35 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 209 | `programming-languages/go` | `go-generics` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 210 | `programming-languages/go` | `go` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 211 | `programming-languages/go` | `go-memory-gc` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 212 | `programming-languages/go` | `go-modules` | 27 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 213 | `programming-languages/go` | `go-stdlib` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 212 | `programming-languages/go` | `go-modules` | 27 | 27 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 213 | `programming-languages/go` | `go-stdlib` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 214 | `programming-languages/go` | `go-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 215 | `programming-languages/java` | `java-17-21` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 216 | `programming-languages/java` | `java-8` | 41 | 31 | ✅ | ❌ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
@@ -590,11 +590,11 @@ Pass: `OK FILE.md`.
 | 252 | `programming-languages/kotlin` | `kotlin-value-classes` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 253 | `programming-languages/scala` | `scala` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 254 | `reactive` | `project-reactor` | 47 | 47 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
-| 255 | `reactive` | `reactive-patterns` | 26 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 256 | `reactive` | `reactive-streams` | 30 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 257 | `reactive` | `reactive-testing` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 255 | `reactive` | `reactive-patterns` | 26 | 26 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 256 | `reactive` | `reactive-streams` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 257 | `reactive` | `reactive-testing` | 28 | 28 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 258 | `reactive` | `rxjava` | 46 | 46 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 259 | `reactive` | `webflux` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 259 | `reactive` | `webflux` | 28 | 28 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 260 | `security` | `application-security` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 261 | `security` | `authentication-authorization-patterns` | 45 | 45 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 262 | `security` | `jwt` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
