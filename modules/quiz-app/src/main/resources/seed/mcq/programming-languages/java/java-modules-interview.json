@@ -1,0 +1,2285 @@
+{
+  "topic_slug": "java-modules-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `JPMS` и какие проблемы он решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`JPMS` (`Java Platform Module System`, проект `Jigsaw`, `Java 9`) — модульная система платформы: решает JAR Hell (один пакет принадлежит ровно одному модулю, `split packages` запрещены), даёт инкапсуляцию через `exports`, явные зависимости через `requires` и компактный runtime через `jlink`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`JPMS` (`Java Platform Module System`, проект `Jigsaw`, `Java 9`) — модульная система платформы: решает JAR Hell (один пакет принадлежит ровно одному модулю, `split packages` запрещены), даёт инкапсуляцию через `exports`, явные зависимости через `requires` и компактный runtime через `jlink`.",
+                "example": "Модуль — именованная совокупность пакетов с явными зависимостями. Сам `JDK` разбит на модули (`java.base`, `java.sql`, `java.xml`), и приложение зависит только от того, что реально использует.",
+                "when_to_apply": "Самый показательный кейс: микросервис на `Java 9+`, для которого `jlink` собирает runtime-образ ~50 MB вместо полного JDK ~300 MB, и библиотеки с чёткими API-границами.",
+                "edge_cases": "Низкое adoption в application-коде создаёт иллюзию ненужности, но сам JDK построен на модулях, и `InaccessibleObjectException` всплывает в любом Spring-приложении на современной JVM.",
+                "related": "[[java-modules-interview#Q4]] чем module path отличается от classpath; [[java-modules-interview#Q19]] jlink и компактный runtime; [[java-modules-interview#Q5]] exports против opens."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JPMS` запрещает использование `classpath` — все JAR обязаны быть переведены в модули, иначе приложение не запустится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`unnamed module` и `automatic module` позволяют legacy-JAR работать на `classpath`/`module path` без `module-info.java`; classpath полностью поддерживается ради обратной совместимости.",
+                "source_of_confusion": "Радикальность модульной системы наводит на мысль, что старый механизм запрещён, хотя он сосуществует с новым.",
+                "if_it_were_true": "Если бы classpath был запрещён, ни одно существующее приложение не запустилось бы на `Java 9` без переписывания — этого не произошло.",
+                "how_it_should_be": "JPMS добавляет модульность поверх существующего classpath, а не заменяет его; legacy-код работает в unnamed module без изменений."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JPMS` заменяет системы сборки `Maven`/`Gradle` — управление зависимостями полностью переезжает в `module-info.java`, и build-инструменты больше не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPMS и системы сборки решают разные задачи: `Maven`/`Gradle` качают артефакты и управляют версиями при сборке, а JPMS описывает модульность в runtime.",
+                "source_of_confusion": "И там, и там есть слово «зависимости», поэтому возникает ощущение дублирования функций.",
+                "if_it_were_true": "Если бы JPMS заменял Maven, в `module-info.java` указывались бы версии и репозитории, но там нет ни того, ни другого.",
+                "how_it_should_be": "Maven/Gradle разрешают версии при сборке, JPMS описывает читаемость модулей в runtime; они работают вместе, а не вместо."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JPMS` добавляет вертикальное масштабирование JVM — каждый модуль получает свой выделенный heap, и память распределяется по модулям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPMS касается модульности кода и runtime-образа, а не распределения памяти; heap по-прежнему общий для всей JVM независимо от числа модулей.",
+                "source_of_confusion": "Слово «модуль» ассоциируется с изоляцией ресурсов, отсюда домысел про память.",
+                "if_it_were_true": "Если бы модуль имел свой heap, в `module-info.java` были бы директивы про память — их нет.",
+                "how_it_should_be": "Распределением памяти управляют флаги JVM (`-Xmx`, GC), а JPMS лишь описывает границы модулей кода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `module-info.java` и какие директивы в нём доступны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`module-info.java` должен лежать в `src/main/resources`, чтобы попасть в JAR как ресурс, иначе модуль не соберётся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`module-info.java` обязан быть в корне source root (`src/main/java`); компилятор не ищет его в `resources` и не обнаружит описание модуля.",
+                "source_of_confusion": "Файл выглядит как метаданные, а метаданные привычно класть в `resources`.",
+                "if_it_were_true": "Если бы он лежал в `resources`, его пришлось бы компилировать вручную, но `javac` ждёт его именно в source root.",
+                "how_it_should_be": "Файл должен быть в `src/main/java` рядом с корневым пакетом — компилятор превращает его в `module-info.class`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`module-info.java` в корне source root содержит имя модуля и директивы: `requires` (зависимости), `exports` (публичный API для компиляции/вызова), `opens` (рефлексия), `uses`/`provides...with` (ServiceLoader).",
+              "correct": true,
+              "sections": {
+                "explanation": "`module-info.java` в корне source root содержит имя модуля и директивы: `requires` (зависимости), `exports` (публичный API для компиляции/вызова), `opens` (рефлексия), `uses`/`provides...with` (ServiceLoader).",
+                "example": "Полный набор: `requires`, `requires transitive`, `requires static`, `exports`, `exports...to`, `opens`, `opens...to`, `uses`, `provides...with`. На один модуль — ровно один `module-info.java`.",
+                "when_to_apply": "Любой именованный модуль `Java 9+`: например `module com.example.app { requires java.sql; exports com.example.app.api; opens com.example.app.entity to org.hibernate.orm; }`.",
+                "edge_cases": "Имя модуля по соглашению — обратное доменное имя (как для пакетов) и обязано быть уникальным; два модуля с одним именем не разрешатся.",
+                "related": "[[java-modules-interview#Q5]] разница exports и opens; [[java-modules-interview#Q7]] requires и requires transitive; [[java-modules-interview#Q10]] provides и uses."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно написать только `requires` — `exports` для всех `public` классов модуль добавляет автоматически, как было на classpath.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без явного `exports` даже `public` API недоступен другим модулям: модуль закрыт по умолчанию (`closed module by default`), `public` означает лишь «виден внутри модуля».",
+                "source_of_confusion": "В classpath-мире `public` автоматически = «виден всем», и эта привычка переносится на JPMS.",
+                "if_it_were_true": "Если бы `exports` подразумевался, не было бы смысла в самой директиве — но она обязательна для межмодульной видимости.",
+                "how_it_should_be": "Каждый публикуемый пакет нужно явно указать в `exports`; без него `public` тип не виден за пределами модуля."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`opens` и `exports` — синонимы: обе директивы делают пакет доступным для компиляции и для вызова из других модулей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`exports` даёт доступ для компиляции и runtime-вызовов public-членов; `opens` разрешает только рефлексию (`setAccessible`). Spring требует `opens`, не `exports`.",
+                "source_of_confusion": "Обе «открывают» пакет наружу, поэтому кажутся взаимозаменяемыми.",
+                "if_it_were_true": "Если бы они были синонимами, в спецификации осталась бы одна директива, а не две разные оси доступа.",
+                "how_it_should_be": "`exports` = «вызывай мой public API»; `opens` = «разрешена глубокая рефлексия к любым членам, включая private»."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена модульная структура самого `JDK`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`java.base` нужно явно объявлять через `requires java.base` в каждом `module-info.java`, иначе классы `java.lang` будут недоступны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`java.base` подключается неявно ко всем модулям; явный `requires java.base` — лишний код (не ошибка), но писать его не требуется.",
+                "source_of_confusion": "Привычка явно объявлять любую зависимость переносится и на фундаментальный модуль.",
+                "if_it_were_true": "Если бы `java.base` требовал явного `requires`, ни один `module-info.java` без него не скомпилировался бы, а пустой `module M {}` компилируется.",
+                "how_it_should_be": "`java.base` (с `java.lang`, `java.util`) добавляется автоматически; явно его указывать не нужно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JDK` разбит ровно на 10 модулей — этого достаточно, чтобы покрыть весь стандарт SE.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JDK` содержит ~70 модулей (в зависимости от дистрибутива); такая гранулярность нужна `jlink` для сборки минимального runtime.",
+                "source_of_confusion": "Круглое число «10» кажется правдоподобной оценкой для крупной системы.",
+                "if_it_were_true": "Если бы модулей было 10, `jlink` не давал бы тонкой настройки — но он включает десятки `java.*` и `jdk.*` модулей по отдельности.",
+                "how_it_should_be": "Модулей около 70: `java.base`, `java.sql`, `java.xml`, `java.net.http`, `jdk.jlink` и многие другие."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`java.base` содержит `java.lang`/`util`/`io`/`nio`/`net`/`time` и подключается неявно; модули `java.*` — стандарт SE, а `jdk.*` специфичны для конкретной реализации JDK (не SE-стандарт).",
+              "correct": true,
+              "sections": {
+                "explanation": "`java.base` содержит `java.lang`/`util`/`io`/`nio`/`net`/`time` и подключается неявно; модули `java.*` — стандарт SE, а `jdk.*` специфичны для конкретной реализации JDK (не SE-стандарт).",
+                "example": "Ключевые модули: `java.sql` (JDBC), `java.xml` (DOM/SAX/StAX), `java.logging`, `java.desktop` (AWT/Swing), `java.net.http`, `jdk.httpserver`, `jdk.jlink`.",
+                "when_to_apply": "При сборке custom `jlink`-образа в `--add-modules` включают только нужные `java.*` и `jdk.*` модули — это даёт компактный runtime.",
+                "edge_cases": "Различие `java.*` vs `jdk.*` важно при миграции между дистрибутивами: `jdk.*` может отличаться у Temurin, Corretto, Liberica.",
+                "related": "[[java-modules-interview#Q1]] что такое JPMS; [[java-modules-interview#Q19]] jlink и custom runtime; [[java-modules-interview#Q4]] module path против classpath."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все модули `JDK` начинаются с префикса `jdk.*` — `jdk.sql`, `jdk.xml`, `jdk.base` и так далее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартные модули начинаются с `java.*` (`java.sql`, `java.xml`, `java.net.http`); `jdk.*` — внутренние инструменты вроде `jdk.jlink`, `jdk.jdeps`.",
+                "source_of_confusion": "Префикс `jdk` ассоциируется с «всем, что в JDK», отсюда обобщение.",
+                "if_it_were_true": "Если бы всё было `jdk.*`, фундамент назывался бы `jdk.base`, но он называется `java.base`.",
+                "how_it_should_be": "SE-стандарт — это `java.*`; `jdk.*` — реализация-специфичные модули, и фундамент это `java.base`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличается `module path` от `classpath`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "На `classpath` split packages приводят к ошибке компиляции — компилятор сразу запрещает один пакет в двух JAR.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На `classpath` split packages допускаются: побеждает первый найденный JAR в порядке classpath. Только `module path` (JPMS) запрещает их с `ResolutionException`.",
+                "source_of_confusion": "Запрет split packages в JPMS переносят и на classpath, считая его общим правилом.",
+                "if_it_were_true": "Если бы classpath запрещал split packages, не существовало бы классической проблемы «первый найденный побеждает» — а она хорошо известна.",
+                "how_it_should_be": "Split packages запрещены только на module path; на classpath они тихо разрешаются с непредсказуемым выбором."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "На `module path` рефлексия (`setAccessible`) работает без ограничений, как и на classpath — модульность затрагивает только видимость типов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На `module path` рефлексия требует `opens` или `--add-opens`; без них `setAccessible(true)` из другого модуля даёт `InaccessibleObjectException`.",
+                "source_of_confusion": "Кажется, что модули контролируют только компиляцию, а runtime-рефлексия остаётся свободной.",
+                "if_it_were_true": "Если бы рефлексия была свободной, не было бы директивы `opens` отдельно от `exports`.",
+                "how_it_should_be": "Module path ограничивает и рефлексию: для `setAccessible` к чужим членам нужен `opens`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`module path` несовместим с `Maven` — для модулей нужен специальный build-инструмент вместо стандартных плагинов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Maven` поддерживает module path через `maven-compiler-plugin` 3.6+ и `maven-jar-plugin`; это стандартная конфигурация без сторонних инструментов.",
+                "source_of_confusion": "Новизна module path наводит на мысль, что старые build-инструменты с ним не работают.",
+                "if_it_were_true": "Если бы Maven не поддерживал модули, не было бы примеров `module-info.java` в `src/main/java` для Maven-проектов.",
+                "how_it_should_be": "Maven и Gradle давно поддерживают module path; достаточно положить `module-info.java` в source root."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`classpath`: нет инкапсуляции (все public видны), split packages допускаются, ошибки в runtime (`ClassNotFoundException`); `module path`: инкапсуляция через `exports`, split packages запрещены, ошибки при старте (`ResolutionException`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`classpath`: нет инкапсуляции (все public видны), split packages допускаются, ошибки в runtime (`ClassNotFoundException`); `module path`: инкапсуляция через `exports`, split packages запрещены, ошибки при старте (`ResolutionException`).",
+                "example": "На module path зависимости явные и проверяются при запуске, рефлексия требует `opens`; на classpath зависимости неявные и проверяются лениво в runtime.",
+                "when_to_apply": "Переход на module path даёт fail-fast диагностику: отсутствие зависимости или split package выявляется при старте, а не в проде через час работы.",
+                "edge_cases": "При миграции часто используют гибрид: часть артефактов на module path, часть на classpath (как unnamed module) — это допустимо.",
+                "related": "[[java-modules-interview#Q1]] какие проблемы решает JPMS; [[java-modules-interview#Q17]] split packages; [[java-modules-interview#Q12]] рефлексия и opens."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `exports` и `opens`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`exports` = публичный API для компиляции и runtime-вызовов (только `public` типы/члены); `opens` = рефлексия (`setAccessible`) для `Spring`/`Hibernate`, доступ ко всем членам включая `private`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`exports` = публичный API для компиляции и runtime-вызовов (только `public` типы/члены); `opens` = рефлексия (`setAccessible`) для `Spring`/`Hibernate`, доступ ко всем членам включая `private`.",
+                "example": "`exports` проверяется compile-time и runtime, `opens` — только runtime. Без `opens` вызов `field.setAccessible(true)` из другого модуля даёт `InaccessibleObjectException`.",
+                "when_to_apply": "На практике: `exports com.example.service.api;` для API и `opens com.example.service.model to org.hibernate.orm, spring.core;` для DI-фреймворков.",
+                "edge_cases": "`exports` и `opens` ортогональны: пакет может быть экспортирован, но рефлексия к его private-полям всё равно требует `opens` — это две разные оси доступа.",
+                "related": "[[java-modules-interview#Q2]] директивы module-info; [[java-modules-interview#Q12]] рефлексия в JPMS; [[java-modules-interview#Q9]] open module."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`exports` даёт доступ только для вызовов, а рефлексия всегда запрещена — даже для экспортированных пакетов её включить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Экспортированные пакеты доступны для вызовов, но рефлексия (`setAccessible`) всё равно требует `opens`; при этом `opens` вполне разрешает рефлексию.",
+                "source_of_confusion": "Кажется, что в модулях рефлексия запрещена в принципе, а не просто требует отдельного разрешения.",
+                "if_it_were_true": "Если бы рефлексию нельзя было включить, фреймворки вроде Hibernate не работали бы в модульном мире вообще.",
+                "how_it_should_be": "Рефлексия не запрещена насовсем: её включает `opens`, тогда как `exports` отвечает за вызовы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring DI работает без `opens` — ему достаточно `exports`, потому что инъекция идёт только в public-поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring использует рефлексию для инъекции зависимостей и AOP; без `opens com.example.service to spring.core` — `InaccessibleObjectException`.",
+                "source_of_confusion": "Если бины и поля public, кажется, что хватит обычного `exports`.",
+                "if_it_were_true": "Если бы хватало `exports`, не было бы каскада `--add-opens` при запуске Spring Boot на Java 17+.",
+                "how_it_should_be": "Spring требует `opens` для пакетов с бинами; `exports` контролирует только compile-time видимость API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`open module` — это то же самое, что `exports *`: все пакеты становятся доступны и для компиляции, и для вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`open module` открывает все пакеты для рефлексии (`opens` для каждого), но это НЕ `exports`; для compile-time доступа всё равно нужен явный `exports`.",
+                "source_of_confusion": "Слово `open` ассоциируется с «всё открыто», включая компиляцию.",
+                "if_it_were_true": "Если бы `open module` экспортировал всё, в Spring Boot-примерах не писали бы отдельный `exports com.example.app.api` рядом с `open module`.",
+                "how_it_should_be": "`open module` = `opens` всех пакетов для рефлексии; compile-time видимость по-прежнему требует `exports`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `qualified exports` и `qualified opens`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`qualified exports` (`exports X to M`) открывает пакет для рефлексии только из указанных модулей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`exports X to M` даёт доступ для компиляции и вызовов; для рефлексии из конкретного модуля нужен `opens X to M`, а не qualified exports.",
+                "source_of_confusion": "Оба ограничивают доступ перечнем модулей, поэтому их легко перепутать по назначению.",
+                "if_it_were_true": "Если бы qualified exports открывал рефлексию, не существовало бы отдельного `opens...to`.",
+                "how_it_should_be": "Для рефлексии из доверенного модуля используют `opens X to M`; `exports X to M` — это компиляция и вызовы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`exports pkg to M1, M2` ограничивает доступ к internal API только доверенными модулями; `opens pkg to org.hibernate.orm` даёт рефлексию только Hibernate. Это паттерн «друзья» (friend access).",
+              "correct": true,
+              "sections": {
+                "explanation": "`exports pkg to M1, M2` ограничивает доступ к internal API только доверенными модулями; `opens pkg to org.hibernate.orm` даёт рефлексию только Hibernate. Это паттерн «друзья» (friend access).",
+                "example": "Qualified-директивы предоставляют расширенный доступ только перечисленным модулям, не раскрывая пакет всему миру.",
+                "when_to_apply": "Полезно для test-модулей, которым нужен internal API, тесно связанных модулей одного проекта и фреймворков, которым нужна рефлексия к конкретным пакетам.",
+                "edge_cases": "Qualified exports не транзитивен: только сам модуль `M` может использовать пакет, а его клиенты — нет.",
+                "related": "[[java-modules-interview#Q5]] exports против opens; [[java-modules-interview#Q12]] рефлексия в JPMS; [[java-modules-interview#Q25]] тестирование модулей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`qualified exports` нельзя использовать с `Maven` — только при сборке через `jlink`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`exports X to M` — стандартная директива `module-info.java` и работает с любым build-инструментом, включая Maven и Gradle.",
+                "source_of_confusion": "Qualified-формат выглядит «продвинутым», отсюда домысел про специальный инструмент.",
+                "if_it_were_true": "Если бы qualified exports требовал jlink, его нельзя было бы скомпилировать обычным `javac` — но он компилируется.",
+                "how_it_should_be": "Qualified exports — обычная директива module-info; build-инструмент роли не играет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`exports X to M` транзитивен — клиенты модуля `M` тоже автоматически видят пакет `X`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Qualified exports не транзитивен: доступ к `X` получает только модуль `M`, его клиенты пакет `X` не видят.",
+                "source_of_confusion": "Слово «exports» ассоциируется с распространением доступа по цепочке.",
+                "if_it_were_true": "Если бы он был транзитивен, friend-access pattern не работал бы — доступ утёк бы дальше доверенного модуля.",
+                "how_it_should_be": "Доступ по qualified exports получает строго перечисленный модуль; дальше по цепочке он не распространяется."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `requires` и `requires transitive`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`requires transitive` автоматически делает все пакеты целевого модуля видимыми — отдельный `exports` в нём не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`requires transitive` управляет читаемостью модулей, но не видимостью пакетов; пакеты целевого модуля всё равно нужно явно `exports` в его `module-info.java`.",
+                "source_of_confusion": "Кажется, что транзитивность охватывает и читаемость, и экспорт пакетов сразу.",
+                "if_it_were_true": "Если бы exports был не нужен, можно было бы читать internal-пакеты транзитивной зависимости — но они скрыты.",
+                "how_it_should_be": "`requires transitive` пробрасывает читаемость модуля клиентам, но видимость пакетов задаётся `exports` в самом модуле."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`requires transitive` нужен всегда: без него ничего не скомпилируется, потому что любая зависимость должна быть транзитивной.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`requires transitive` нужен только когда типы зависимости появляются в публичном API; избыточный transitive создаёт нежелательную связность между модулями.",
+                "source_of_confusion": "Слово «всегда» звучит безопасно, и есть страх недополучить доступ.",
+                "if_it_were_true": "Если бы transitive требовался всегда, обычный `requires` был бы бесполезен — но он применяется для внутренних зависимостей.",
+                "how_it_should_be": "Для внутренних зависимостей достаточно `requires`; `requires transitive` — только для типов в публичном API."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`requires M` — прямая нетранзитивная зависимость; `requires transitive M` делает зависимость транзитивной (клиенты тоже читают `M`). Transitive нужен, когда типы из `M` появляются в публичном API.",
+              "correct": true,
+              "sections": {
+                "explanation": "`requires M` — прямая нетранзитивная зависимость; `requires transitive M` делает зависимость транзитивной (клиенты тоже читают `M`). Transitive нужен, когда типы из `M` появляются в публичном API.",
+                "example": "Без `requires` нельзя использовать типы целевого модуля — это проверяют компилятор и runtime. Зависимость по умолчанию не транзитивна.",
+                "when_to_apply": "Применяй `requires transitive model` в api-модуле, когда DTO из `model` фигурируют в сигнатурах методов API — иначе клиенты не скомпилируют код.",
+                "edge_cases": "Если тип из зависимости в публичном API (параметры, возвращаемые типы, наследование), а transitive забыт — клиент получит compile error при использовании этого типа.",
+                "related": "[[java-modules-interview#Q8]] requires static; [[java-modules-interview#Q4]] module path и читаемость; [[java-modules-interview#Q28]] хорошие практики дизайна."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обычного `requires` достаточно для транзитивного доступа клиентов — они автоматически увидят зависимости моего модуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `transitive` клиент получит compile error при использовании типов из транзитивной зависимости; для проброса нужно явно писать `requires transitive`.",
+                "source_of_confusion": "Хочется верить, что зависимости «протекают» к клиентам сами по себе.",
+                "if_it_were_true": "Если бы `requires` был транзитивным, директива `requires transitive` была бы избыточной.",
+                "how_it_should_be": "Чтобы клиент видел зависимость, нужен именно `requires transitive`; простой `requires` его не пробрасывает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `requires static` и когда это используется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`requires static M` означает, что `M` загружается при старте, если присутствует на classpath — это форма ленивой eager-загрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`requires static` — compile-only зависимость: если `M` отсутствует в runtime, модуль просто не загружается; это optional dependency, а не eager loading.",
+                "source_of_confusion": "Слово `static` ассоциируется со static-инициализацией и ранней загрузкой.",
+                "if_it_were_true": "Если бы это была eager-загрузка, отсутствие модуля в runtime валило бы старт — но при `requires static` старт проходит.",
+                "how_it_should_be": "`requires static` нужен только при компиляции; в runtime отсутствие модуля допустимо и обрабатывается кодом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`requires static` используется для тестовых зависимостей вместо test scope в `Maven`/`Gradle`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Типичный кейс `requires static` — compile-time аннотации (`Lombok`); тестовые зависимости лучше управлять через scope в системе сборки, а не этой директивой.",
+                "source_of_confusion": "И test scope, и `requires static` про «не в основном runtime», отсюда смешение.",
+                "if_it_were_true": "Если бы это была замена test scope, тесты ломались бы при отсутствии модуля иначе, чем при scope-исключении.",
+                "how_it_should_be": "Test-зависимости — это `<scope>test</scope>` в Maven; `requires static` — про compile-only зависимости основного кода."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`requires static` транзитивен по умолчанию — клиенты автоматически получают доступ к optional-зависимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`requires static` не транзитивен: клиенты не получают автоматически доступ к optional-зависимости и должны объявить её сами.",
+                "source_of_confusion": "Кажется, что «особая» директива должна пробрасываться клиентам.",
+                "if_it_were_true": "Если бы он был транзитивным, optional-зависимость протекала бы во все downstream-модули вопреки её опциональности.",
+                "how_it_should_be": "`requires static` действует только в объявившем модуле; транзитивность к клиентам не пробрасывается."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`requires static M` — `M` нужен при компиляции, но не обязателен при запуске; подходит для `Lombok`, annotation processors, JetBrains/SpotBugs Annotations, опциональных интеграций.",
+              "correct": true,
+              "sections": {
+                "explanation": "`requires static M` — `M` нужен при компиляции, но не обязателен при запуске; подходит для `Lombok`, annotation processors, JetBrains/SpotBugs Annotations, опциональных интеграций.",
+                "example": "Объявляет optional-зависимость: аннотации `Lombok` нужны компилятору, но в runtime бесполезны, поэтому модуль может отсутствовать при запуске.",
+                "when_to_apply": "Применяй для compile-time аннотаций и опциональных фич, где библиотека проверяет наличие зависимости (`Class.forName`) и включает функциональность, если модуль доступен.",
+                "edge_cases": "При отсутствии модуля в runtime обращение к его классам бросит `NoClassDefFoundError`, поэтому код должен корректно обрабатывать отсутствие через try-catch.",
+                "related": "[[java-modules-interview#Q7]] requires и requires transitive; [[java-modules-interview#Q2]] директивы module-info; [[java-modules-interview#Q5]] exports против opens."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `open module`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`open module M` открывает все пакеты для рефлексии (как `opens` для каждого пакета); при этом `exports` по-прежнему нужно указывать явно для compile-time доступа. Удобно для Spring Boot apps с обилием DI-рефлексии.",
+              "correct": true,
+              "sections": {
+                "explanation": "`open module M` открывает все пакеты для рефлексии (как `opens` для каждого пакета); при этом `exports` по-прежнему нужно указывать явно для compile-time доступа. Удобно для Spring Boot apps с обилием DI-рефлексии.",
+                "example": "Это компромисс: вы теряете часть инкапсуляции ради удобства, не прописывая `opens` для каждого пакета вручную.",
+                "when_to_apply": "Применяй на первом шаге модуляризации Spring Boot приложения, чтобы избежать каскада `InaccessibleObjectException`, вместо перечисления `opens` для всех пакетов.",
+                "edge_cases": "Внутри `open module` нельзя использовать директивы `opens` — они конфликтуют с `open` на уровне модуля и дают compile error.",
+                "related": "[[java-modules-interview#Q5]] exports против opens; [[java-modules-interview#Q26]] Spring и JPMS; [[java-modules-interview#Q28]] хорошие практики дизайна."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`open module` автоматически добавляет `exports *` — все пакеты становятся доступны для компиляции из других модулей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`open module` открывает рефлексию, но НЕ добавляет `exports`; для compile-time доступа к API всё равно нужен явный `exports`.",
+                "source_of_confusion": "Слово `open` кажется охватывающим и компиляцию, и рефлексию сразу.",
+                "if_it_were_true": "Если бы `open module` экспортировал всё, не нужно было бы писать `exports com.example.webapp.api` рядом с ним.",
+                "how_it_should_be": "`open module` покрывает только рефлексию; видимость пакетов для компиляции задаётся отдельными `exports`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Внутри `open module` можно и нужно указывать `opens` для дополнительного точечного контроля рефлексии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`opens` внутри `open module` запрещён и даёт compile error: `open module` уже открывает все пакеты, и точечный `opens` избыточен.",
+                "source_of_confusion": "Кажется логичным сочетать «открыто всё» с «открыто точечно» для тонкой настройки.",
+                "if_it_were_true": "Если бы `opens` внутри `open module` был разрешён, он не имел бы эффекта (всё уже открыто) — поэтому компилятор его и запрещает.",
+                "how_it_should_be": "Либо `open module` (всё открыто), либо обычный модуль с точечными `opens`; смешивать их нельзя."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`open module` нельзя комбинировать с `exports` — открытый модуль не может объявлять публичный API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`exports` и `open module` совместимы: `open module` отвечает только за рефлексию, а `exports` контролирует compile-time видимость API как обычно.",
+                "source_of_confusion": "Кажется, что «открытость» и «контролируемый экспорт» взаимоисключающи.",
+                "if_it_were_true": "Если бы их нельзя было сочетать, открытый модуль не мог бы предоставить вызываемый API клиентам — но `exports com.example.webapp.api` в open module валиден.",
+                "how_it_should_be": "Open module спокойно сочетается с `exports`: рефлексия открыта для всех, а compile-time API задаётся явно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `provides` и `uses` в контексте `ServiceLoader`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`uses` в модуле-потребителе необязателен — `ServiceLoader.load()` сам найдёт все реализации на classpath без объявления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `uses` в `module-info.java` именованный модуль не может использовать `ServiceLoader` для этого интерфейса; JPMS проверяет `uses` при старте.",
+                "source_of_confusion": "Привычка classpath-сканирования (где `uses` не нужен) переносится на module path.",
+                "if_it_were_true": "Если бы `uses` был не нужен, в `module-info.java` не было бы такой директивы вообще.",
+                "how_it_should_be": "Потребитель обязан объявить `uses com.example.spi.PaymentProvider`, иначе ServiceLoader не отдаст реализации в named module."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Consumer объявляет `uses PaymentProvider`; provider объявляет `provides PaymentProvider with StripeProvider`; затем `ServiceLoader.load(PaymentProvider.class)` находит все реализации через модульный граф JPMS.",
+              "correct": true,
+              "sections": {
+                "explanation": "Consumer объявляет `uses PaymentProvider`; provider объявляет `provides PaymentProvider with StripeProvider`; затем `ServiceLoader.load(PaymentProvider.class)` находит все реализации через модульный граф JPMS.",
+                "example": "`uses` объявляет потребление сервиса, `provides...with` — его реализацию. Классика из JDK: `provides java.sql.Driver with ...` для JDBC-драйверов.",
+                "when_to_apply": "Применяй для plugin-архитектуры, DI-контейнеров и расширяемых систем без жёстких зависимостей между потребителем и реализациями.",
+                "edge_cases": "Provider-класс не требует `exports`: ServiceLoader получает к нему доступ через `provides`-декларацию, минуя обычный exports.",
+                "related": "[[java-modules-interview#Q11]] ServiceLoader в classpath против JPMS; [[java-modules-interview#Q36]] uses и provides в деталях; [[java-modules-interview#Q24]] ServiceLoader против циклов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`provides X with Y` требует, чтобы класс `Y` был экспортирован через `exports`, иначе ServiceLoader его не увидит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Provider-класс `Y` НЕ требует `exports`: ServiceLoader получает доступ через `provides`-декларацию, минуя обычный механизм экспорта.",
+                "source_of_confusion": "Кажется, что «видимый снаружи» класс обязан быть экспортирован.",
+                "if_it_were_true": "Если бы `exports` был нужен, любой клиент мог бы `import` provider-класс напрямую, минуя ServiceLoader — это разрушило бы инкапсуляцию SPI.",
+                "how_it_should_be": "Реализацию скрывают: `provides` даёт ServiceLoader специальный доступ без `exports`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ServiceLoader` в JPMS работает только если consumer и provider находятся в одном JAR.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ServiceLoader специально создан для разных модулей: provider-модуль и consumer-модуль независимы и связываются только через `provides`/`uses`.",
+                "source_of_confusion": "Привычка к монолиту наводит на мысль, что всё должно быть в одном артефакте.",
+                "if_it_were_true": "Если бы требовался один JAR, plugin-архитектура через ServiceLoader была бы невозможна — но именно она его главный сценарий.",
+                "how_it_should_be": "Provider и consumer — отдельные модули; ServiceLoader связывает их через декларации, а не через общий JAR."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `ServiceLoader` работает в модульном мире по сравнению с `classpath`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В JPMS файлы `META-INF/services` больше не работают вообще — их полностью заменили директивы `provides`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`META-INF/services` поддерживается для обратной совместимости в `automatic` и `unnamed` модулях; именованные модули должны использовать `provides`-директиву.",
+                "source_of_confusion": "Кажется, что новый механизм полностью вытеснил старый во всех случаях.",
+                "if_it_were_true": "Если бы `META-INF/services` не работал, миграция legacy-SPI ломала бы все старые библиотеки сразу.",
+                "how_it_should_be": "Для named-модулей нужен `provides`, но `META-INF/services` живёт в automatic/unnamed модулях ради совместимости."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "JPMS ServiceLoader работает медленнее classpath из-за дополнительной модульной проверки при каждом вызове.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPMS ServiceLoader быстрее на старте: нет сканирования всех JAR, проверяются только модули с `provides`; валидация однократна при разрешении графа.",
+                "source_of_confusion": "Слово «проверка» ассоциируется с накладными расходами.",
+                "if_it_were_true": "Если бы он был медленнее, в JDK не переводили бы внутренние SPI на `provides`-декларации.",
+                "how_it_should_be": "Декларативный `provides` устраняет полное сканирование JAR; это ускоряет, а не замедляет обнаружение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`classpath`: регистрация через файл `META-INF/services/<interface>`, обнаружение сканированием всех JAR, ошибки в runtime; `module path`: `provides...with` в `module-info.java`, обнаружение только модулей с `provides`, валидация при старте.",
+              "correct": true,
+              "sections": {
+                "explanation": "`classpath`: регистрация через файл `META-INF/services/<interface>`, обнаружение сканированием всех JAR, ошибки в runtime; `module path`: `provides...with` в `module-info.java`, обнаружение только модулей с `provides`, валидация при старте.",
+                "example": "В модульном мире ServiceLoader предсказуемее: реализации видны только если модуль объявил `provides`, а потребитель — `uses`.",
+                "when_to_apply": "Применяй `provides`/`uses` для именованных модулей и `META-INF/services` для legacy на classpath; оба механизма поддерживаются.",
+                "edge_cases": "Декларация в `module-info` — часть модуля и проверяется при разрешении графа, поэтому подменить SPI файлом в JAR в named-модуле уже нельзя.",
+                "related": "[[java-modules-interview#Q10]] базовое определение provides и uses; [[java-modules-interview#Q36]] uses и provides в деталях; [[java-modules-interview#Q15]] automatic module и META-INF/services."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`provides X with Y` в `module-info.java` требует явного `exports Y`, чтобы ServiceLoader смог создать экземпляр.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Provider-класс не должен быть экспортирован: ServiceLoader получает к нему доступ внутренне; `provides` — это специальный доступ вне `exports`.",
+                "source_of_confusion": "Интуиция «чтобы создать экземпляр, класс должен быть виден» подталкивает добавить `exports`.",
+                "if_it_were_true": "Если бы `exports` был нужен, реализация утекала бы клиентам напрямую, разрушая смысл SPI.",
+                "how_it_should_be": "Реализацию скрывают; `provides` даёт ServiceLoader доступ без экспорта provider-класса."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как модули влияют на рефлексию и доступ к внутренним `API`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В JPMS `setAccessible(true)` полностью запрещён для всех полей — рефлексия в модульном мире невозможна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`setAccessible` работает, если пакет открыт через `opens`; он запрещён только когда пакет не экспортирован и не открыт.",
+                "source_of_confusion": "Жёсткость инкапсуляции наводит на мысль о полном запрете рефлексии.",
+                "if_it_were_true": "Если бы рефлексия была запрещена полностью, Spring и Hibernate не работали бы в модульном приложении вообще.",
+                "how_it_should_be": "Рефлексия разрешена для пакетов с `opens`; запрещена лишь там, где нет ни `exports`, ни `opens`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`exports` пакета достаточно для `setAccessible(true)` на private-поля — экспорт автоматически открывает и рефлексию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`exports` даёт доступ к public API; для `setAccessible` на private-члены нужен `opens`, иначе `InaccessibleObjectException`.",
+                "source_of_confusion": "Кажется, что «открытый» пакет открыт и для рефлексии тоже.",
+                "if_it_were_true": "Если бы `exports` открывал рефлексию, директива `opens` была бы избыточной.",
+                "how_it_should_be": "Для рефлексии к private-членам нужен `opens`; `exports` покрывает только public API."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`--add-opens` работает только для модулей самого JDK, но не для пользовательских модулей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--add-opens` работает для любых модулей: например `--add-opens com.example.app/com.example.internal=ALL-UNNAMED`.",
+                "source_of_confusion": "В туториалах примеры почти всегда про `java.base`, отсюда впечатление ограниченности флага.",
+                "if_it_were_true": "Если бы флаг работал только для JDK, нельзя было бы открыть собственный internal-пакет фреймворку без правки module-info.",
+                "how_it_should_be": "Синтаксис `--add-opens <module>/<package>=<target>` одинаков и для JDK, и для пользовательских модулей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Без `opens` обращение `setAccessible` к чужим членам даёт `InaccessibleObjectException`; нужно `opens com.example.entities to spring.core, org.hibernate.orm`. Пакет должен быть либо `exports`, либо `opens` для рефлексирующего модуля.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без `opens` обращение `setAccessible` к чужим членам даёт `InaccessibleObjectException`; нужно `opens com.example.entities to spring.core, org.hibernate.orm`. Пакет должен быть либо `exports`, либо `opens` для рефлексирующего модуля.",
+                "example": "Уровни доступа: не экспортирован → доступ запрещён; `exports` → public-члены доступны для вызова, но не для setAccessible на private; `opens` → полный рефлексивный доступ.",
+                "when_to_apply": "Spring DI и Hibernate ORM требуют `opens` для пакетов с бинами и entity; без этого фреймворк падает при инициализации.",
+                "edge_cases": "Обращение к internal-пакетам JDK (`sun.*`, `jdk.internal.*`) без флагов тоже падает: `module java.base does not opens java.lang to unnamed module`.",
+                "related": "[[java-modules-interview#Q5]] exports против opens; [[java-modules-interview#Q13]] JVM-флаги обхода; [[java-modules-interview#Q27]] Hibernate и opens для entity."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие флаги JVM используются для обхода модульных ограничений?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`--add-opens M/pkg=ALL-UNNAMED` открывает пакет для рефлексии; `--add-exports M/pkg=ALL-UNNAMED` — для compile/runtime доступа к public; `--add-reads` добавляет читаемость; `--illegal-access` удалён в Java 17.",
+              "correct": true,
+              "sections": {
+                "explanation": "`--add-opens M/pkg=ALL-UNNAMED` открывает пакет для рефлексии; `--add-exports M/pkg=ALL-UNNAMED` — для compile/runtime доступа к public; `--add-reads` добавляет читаемость; `--illegal-access` удалён в Java 17.",
+                "example": "Полный набор: `--add-opens`, `--add-exports`, `--add-reads`, `--add-modules`, `--patch-module`. `ALL-UNNAMED` — особая цель «все классы из classpath».",
+                "when_to_apply": "Применяй при запуске Spring Boot на Java 17+ без нужных `opens` в module-info: например `--add-opens java.base/java.lang=ALL-UNNAMED`.",
+                "edge_cases": "Эволюция `--illegal-access`: Java 9-15 default `permit`, Java 16 default `deny`, Java 17+ флаг удалён — строгая инкапсуляция; `--add-opens` остаётся.",
+                "related": "[[java-modules-interview#Q12]] рефлексия в JPMS; [[java-modules-interview#Q33]] --add-opens и --add-exports в деталях; [[java-modules-interview#Q5]] opens как декларативное решение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`--add-opens` в Java 17+ удалён вместе с `--illegal-access` — современная JVM не принимает оба флага.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--add-opens` и `--add-exports` живут в Java 17+; удалён только `--illegal-access`. Корректные флаги работают для всех версий.",
+                "source_of_confusion": "Удаление одного флага в Java 17 распространяют и на смежные флаги.",
+                "if_it_were_true": "Если бы `--add-opens` удалили, Spring Boot не запускался бы на Java 17+ ни с какими флагами — а он запускается именно с ним.",
+                "how_it_should_be": "Удалён только `--illegal-access`; `--add-opens`/`--add-exports` остаются рабочими инструментами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`--illegal-access=permit` в Java 17+ включает pre-JPMS поведение и снимает все модульные ограничения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--illegal-access` удалён в Java 17; попытка его использовать даёт warning об нераспознанной опции, и нужно переходить на `--add-opens`.",
+                "source_of_confusion": "Привычка к default `permit` из Java 9-15 заставляет считать его всё ещё рабочим.",
+                "if_it_were_true": "Если бы `permit` работал в Java 17, не было бы смысла в JEP про строгую инкапсуляцию JDK internals.",
+                "how_it_should_be": "В Java 17+ вместо удалённого `--illegal-access` применяют точечные `--add-opens`/`--add-exports`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`--add-modules java.base` нужно указывать явно при каждом запуске, иначе фундаментальный модуль не подключится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`java.base` добавляется в граф автоматически; `--add-modules` нужен только для модулей не из default module graph (например `java.xml.bind`).",
+                "source_of_confusion": "Раз `java.base` фундаментален, кажется логичным «активировать» его явно.",
+                "if_it_were_true": "Если бы его нужно было добавлять вручную, ни одна программа без `--add-modules java.base` не стартовала бы.",
+                "how_it_should_be": "`java.base` подключается неявно; `--add-modules` резервируют для отсутствующих в default-графе модулей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `unnamed module`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Именованный модуль может использовать `requires unnamed` (или `requires ALL-UNNAMED`) для доступа к классам с classpath.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`requires unnamed module` синтаксически невозможен: у unnamed module нет имени, поэтому именованный модуль не может на него зависеть; нужен `automatic module` как мост.",
+                "source_of_confusion": "Кажется, что раз unnamed module существует, на него можно сослаться по «имени» вроде ALL-UNNAMED.",
+                "if_it_were_true": "Если бы `requires unnamed` был возможен, не нужны были бы automatic modules как мост к classpath.",
+                "how_it_should_be": "Именованный модуль не может `requires` на unnamed; чтобы дотянуться до classpath, JAR поднимают на module path как automatic module."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`unnamed module` — совокупность всех классов с `classpath`: у него нет имени и `module-info.class`. Он exports/opens все свои пакеты, неявно читает все именованные модули, но именованные НЕ могут `requires` на него.",
+              "correct": true,
+              "sections": {
+                "explanation": "`unnamed module` — совокупность всех классов с `classpath`: у него нет имени и `module-info.class`. Он exports/opens все свои пакеты, неявно читает все именованные модули, но именованные НЕ могут `requires` на него.",
+                "example": "Один `unnamed module` на один `ClassLoader`; разные JAR на classpath объединяются в один unnamed module. Это обеспечивает обратную совместимость.",
+                "when_to_apply": "Применяй знание, когда legacy-код на classpath работает без изменений рядом с JPMS-модулями на module path.",
+                "edge_cases": "Все JAR на classpath сливаются в один unnamed module на ClassLoader, что становится источником split packages при дублировании пакетов.",
+                "related": "[[java-modules-interview#Q15]] automatic module как мост; [[java-modules-interview#Q16]] сравнение трёх типов модулей; [[java-modules-interview#Q31]] три типа на практике."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`unnamed module` не видит именованные модули из module path — между classpath и module path стена в обе стороны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unnamed module неявно читает все именованные модули на module path; стена односторонняя — это именованные не могут читать unnamed.",
+                "source_of_confusion": "Слово «стена» воспринимается как двусторонняя изоляция.",
+                "if_it_were_true": "Если бы unnamed не видел именованные, legacy-код на classpath не мог бы вызывать JDK-модули вроде `java.sql`.",
+                "how_it_should_be": "Unnamed module читает все именованные; ограничение касается обратного направления — `requires` на unnamed невозможен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Разные JAR на `classpath` создают разные `unnamed module` — по одному на каждый JAR.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все JAR на classpath объединяются в ОДИН unnamed module на один ClassLoader; именно поэтому split packages между ними становятся проблемой.",
+                "source_of_confusion": "Привычное «один JAR — один артефакт» наводит на мысль «один JAR — один модуль».",
+                "if_it_were_true": "Если бы каждый JAR был отдельным unnamed module, split packages на classpath давали бы конфликт, а они тихо разрешаются.",
+                "how_it_should_be": "На один ClassLoader приходится один unnamed module, в который сливаются все classpath-JAR."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `automatic module` и как определяется его имя?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Имя `automatic module` берётся из package declaration в коде — JVM читает первый `package` оператор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя берётся из атрибута `Automatic-Module-Name` в `MANIFEST.MF`, а если его нет — выводится из имени JAR-файла; из кода имя не читается.",
+                "source_of_confusion": "Кажется естественным выводить имя модуля из имён пакетов в нём.",
+                "if_it_were_true": "Если бы имя бралось из package, оно конфликтовало бы при нескольких пакетах в JAR — поэтому источник иной.",
+                "how_it_should_be": "Источник имени — `MANIFEST.MF` (`Automatic-Module-Name`) либо имя файла JAR, но не объявления пакетов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`automatic module` не поддерживает `META-INF/services` для `ServiceLoader` — этот механизм работает только на classpath.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Automatic module поддерживает `META-INF/services` как legacy-classpath; это одно из его преимуществ при миграции.",
+                "source_of_confusion": "Раз модуль «настоящий» (на module path), кажется, что он обязан использовать только `provides`.",
+                "if_it_were_true": "Если бы `META-INF/services` не работал в automatic module, миграция SPI-библиотек ломалась бы на переходном этапе.",
+                "how_it_should_be": "Automatic module читает `META-INF/services`, что облегчает переход legacy-SPI на module path."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`automatic module` — обычный JAR без `module-info.class` на `module path`. Имя — из `Automatic-Module-Name` в `MANIFEST.MF`, иначе из имени JAR (`gson-2.10.1.jar` → `gson`, версия отбрасывается, дефисы → точки). Exports/opens всё.",
+              "correct": true,
+              "sections": {
+                "explanation": "`automatic module` — обычный JAR без `module-info.class` на `module path`. Имя — из `Automatic-Module-Name` в `MANIFEST.MF`, иначе из имени JAR (`gson-2.10.1.jar` → `gson`, версия отбрасывается, дефисы → точки). Exports/opens всё.",
+                "example": "Свойства: `requires transitive` всех других модулей, может читать unnamed module (в отличие от именованных), поддерживает `META-INF/services`.",
+                "when_to_apply": "Применяй как переходный этап миграции: именованный модуль может `requires` на automatic module, а тот читает код из classpath.",
+                "edge_cases": "Имя «выведено из файла» нестабильно: при переименовании JAR (`commons-lang3-3.12.0.jar` → `commons.lang3`) имя меняется и ломает `requires`; лучше задать `Automatic-Module-Name`.",
+                "related": "[[java-modules-interview#Q14]] unnamed module; [[java-modules-interview#Q16]] сравнение трёх типов; [[java-modules-interview#Q31]] три типа модулей на практике."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`automatic module` нельзя использовать в production — это инструмент только для тестов и прототипов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Automatic modules активно используются в production при поэтапной миграции; многие библиотеки (Guava, Jackson) выставляют `Automatic-Module-Name` именно для этого.",
+                "source_of_confusion": "Слово «automatic» (как «авто-сгенерированный») наводит на мысль о черновом качестве.",
+                "if_it_were_true": "Если бы они были только для тестов, крупные библиотеки не публиковали бы стабильные `Automatic-Module-Name`.",
+                "how_it_should_be": "Automatic modules — штатный production-механизм перехода между classpath и полноценными named-модулями."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевые отличия между `unnamed module`, `automatic module` и именованным модулем?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`unnamed module` может зависеть от `automatic module` через `requires` — он объявляет зависимости явно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unnamed module не имеет `module-info.java`, поэтому не может объявлять `requires`; он читает все модули неявно.",
+                "source_of_confusion": "Раз unnamed module «видит» другие модули, кажется, что он их и «требует» через requires.",
+                "if_it_were_true": "Если бы unnamed мог `requires`, у него был бы `module-info.java` — но по определению его нет.",
+                "how_it_should_be": "Unnamed module читает все модули неявно, без `requires`; явные зависимости объявляют только named и automatic."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Именованный модуль автоматически видит `unnamed module` через transitive-чтение остальных модулей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именованный модуль не может `requires` на unnamed module и не читает его; для доступа к classpath нужен automatic module как мост.",
+                "source_of_confusion": "Кажется, что транзитивная читаемость как-нибудь «дотянется» и до classpath.",
+                "if_it_were_true": "Если бы именованный видел unnamed, automatic modules не нужны были бы как мост — но они нужны.",
+                "how_it_should_be": "Named module не видит unnamed; единственный путь к classpath — поднять JAR на module path как automatic module."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все три типа модулей имеют одинаковую инкапсуляцию — разница только в физическом расположении на диске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Named имеет строгую инкапсуляцию (видно только через `exports`); Unnamed и Automatic экспортируют и открывают всё — разница фундаментальна, не только в расположении.",
+                "source_of_confusion": "Раз все три — «модули», кажется, что инкапсуляция у них одинаковая.",
+                "if_it_were_true": "Если бы инкапсуляция была одинаковой, переход на named module не давал бы никакого выигрыша в сокрытии internal-кода.",
+                "how_it_should_be": "Только named-модуль инкапсулирует пакеты; unnamed и automatic открыты полностью."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Unnamed: classpath, нет имени, нельзя `requires`; Automatic: module path без module-info, есть имя, можно `requires`, читает unnamed; Named: module path + module-info, явные `exports`/`requires`, unnamed НЕ читает.",
+              "correct": true,
+              "sections": {
+                "explanation": "Unnamed: classpath, нет имени, нельзя `requires`; Automatic: module path без module-info, есть имя, можно `requires`, читает unnamed; Named: module path + module-info, явные `exports`/`requires`, unnamed НЕ читает.",
+                "example": "Ключевое: `automatic module` можно `requires` из именованного, а `unnamed module` — нельзя. Это делает automatic мостом для поэтапной миграции.",
+                "when_to_apply": "Применяй для понимания взаимодействия артефактов при гибридной миграции, когда часть на classpath, часть на module path.",
+                "edge_cases": "Направление зависимостей через мост строго одно: Named → requires → Automatic → читает → Unnamed; обратно `requires` на unnamed невозможен.",
+                "related": "[[java-modules-interview#Q14]] unnamed module подробно; [[java-modules-interview#Q15]] automatic module и имя; [[java-modules-interview#Q31]] три типа на практике."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `split package` и почему это проблема в `JPMS`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`split package` — один и тот же пакет (`com.example.util`) находится в нескольких модулях одновременно. В JPMS это запрещено: при обнаружении приложение не стартует с `ResolutionException`, потому что система не может однозначно выбрать модуль-владельца.",
+              "correct": true,
+              "sections": {
+                "explanation": "`split package` — один и тот же пакет (`com.example.util`) находится в нескольких модулях одновременно. В JPMS это запрещено: при обнаружении приложение не стартует с `ResolutionException`, потому что система не может однозначно выбрать модуль-владельца.",
+                "example": "Классика: `javax.annotation` в `java.xml.ws.annotation` (JDK) и в `javax.annotation-api.jar` — оба экспортируют один пакет в один модуль.",
+                "when_to_apply": "Решения: переразбить пакеты (один пакет = один модуль), вынести общий пакет в отдельный модуль, `--patch-module` как временный workaround или Maven exclusions.",
+                "edge_cases": "В тестах на classpath (unnamed module) split packages допускаются; строгий запрет действует только для named-модулей на module path.",
+                "related": "[[java-modules-interview#Q32]] split packages и способы устранения; [[java-modules-interview#Q4]] module path против classpath; [[java-modules-interview#Q35]] jdeps для диагностики."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Split packages на `classpath` запрещены так же строго, как на module path, — JVM везде требует уникальности пакета.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На classpath split packages допускаются (побеждает первый JAR в порядке classpath); только JPMS запрещает их с `ResolutionException`.",
+                "source_of_confusion": "Запрет в JPMS воспринимается как общее правило платформы.",
+                "if_it_were_true": "Если бы classpath запрещал split, не было бы плавающих багов «зависит от порядка classpath», которые хорошо известны.",
+                "how_it_should_be": "Split package запрещён лишь на module path; classpath его терпит, выбирая первый найденный."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Split packages в тестах (test scope) тоже запрещены JPMS так же, как в основном коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тестовый код может иметь split packages, если тесты идут на classpath (unnamed module); строгий запрет JPMS касается только named-модулей.",
+                "source_of_confusion": "Кажется, что правило едино для всех частей проекта.",
+                "if_it_were_true": "Если бы тесты подчинялись строгому запрету, нельзя было бы патчить тестовые классы в модуль через `--patch-module`.",
+                "how_it_should_be": "Тесты часто живут в unnamed module, где split допустим; запрет применяется к named-модулям."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`--patch-module` решает split packages навсегда — после него код можно не трогать и проблема исчезает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--patch-module` — временный workaround: он сливает классы JAR в существующий модуль, но в production split package нужно устранять рефакторингом.",
+                "source_of_confusion": "Раз флаг «работает», кажется, что это постоянное решение.",
+                "if_it_were_true": "Если бы `--patch-module` был постоянным решением, он работал бы и с `jlink`, но jlink его не поддерживает.",
+                "how_it_should_be": "`--patch-module` — заплатка для запуска; долгосрочно пакеты переразбивают или исключают дубль."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `multi-release JAR` и как он связан с модулями?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`multi-release JAR` создаёт отдельные исполняемые файлы для каждой версии Java — по одному JAR на версию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MRJAR — это ОДИН JAR-файл; JVM сама выбирает правильную версию класса из `META-INF/versions/<N>/` в зависимости от runtime.",
+                "source_of_confusion": "Слово «multi» наводит на мысль о нескольких файлах-артефактах.",
+                "if_it_were_true": "Если бы это были отдельные JAR, не нужен был бы атрибут `Multi-Release: true` внутри одного манифеста.",
+                "how_it_should_be": "MRJAR — единый JAR с версионными классами внутри; разделения на файлы нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "MRJAR (`Multi-Release: true` в `MANIFEST.MF`) содержит разные классы для разных Java-версий в `META-INF/versions/<N>/`; туда же кладут `module-info.class` для Java 9+, сохраняя базовую версию для Java 8 в корне.",
+              "correct": true,
+              "sections": {
+                "explanation": "MRJAR (`Multi-Release: true` в `MANIFEST.MF`) содержит разные классы для разных Java-версий в `META-INF/versions/<N>/`; туда же кладут `module-info.class` для Java 9+, сохраняя базовую версию для Java 8 в корне.",
+                "example": "Структура: базовый `com/example/Util.class` (Java 8) в корне, версии для Java 9 и 17 — в `META-INF/versions/9/` и `META-INF/versions/17/`.",
+                "when_to_apply": "Применяй для библиотек, которые должны поддерживать и classpath (Java 8), и module path (Java 9+) одним артефактом.",
+                "edge_cases": "MRJAR — не замена модулям, а инструмент совместимости: JVM выбирает наиболее подходящую версию класса автоматически.",
+                "related": "[[java-modules-interview#Q19]] jlink и runtime; [[java-modules-interview#Q15]] automatic module; [[java-modules-interview#Q22]] миграция Maven/Gradle."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`module-info.class` в MRJAR должен лежать в корне архива, а не в `META-INF/versions`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`module-info.class` для модульного MRJAR кладут в `META-INF/versions/9/` (или выше); базовая Java 8-совместимая версия остаётся в корне без module-info.",
+                "source_of_confusion": "Привычка «module-info всегда в корне» переносится и на MRJAR.",
+                "if_it_were_true": "Если бы module-info был в корне, Java 8 наткнулась бы на него и не смогла прочитать — поэтому его прячут в versions/9.",
+                "how_it_should_be": "В MRJAR `module-info.class` размещают в `META-INF/versions/9/`, чтобы Java 8 его не видела."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MRJAR не поддерживается `Maven` — для сборки multi-release JAR нужен только `Gradle`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`maven-compiler-plugin` поддерживает MRJAR через конфигурацию `multiRelease`; это стандартный инструментарий.",
+                "source_of_confusion": "Новизна MRJAR наводит на мысль об ограниченной поддержке инструментов.",
+                "if_it_were_true": "Если бы Maven не поддерживал MRJAR, популярные библиотеки не публиковали бы их через Maven-сборку.",
+                "how_it_should_be": "И Maven, и Gradle умеют собирать MRJAR штатными плагинами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `jlink` и зачем собирать custom runtime image?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`jlink` работает с любыми JAR, включая `unnamed module` и `automatic module`, — он подхватит всё с classpath.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`jlink` требует только именованные модули с `module-info.java`; automatic и unnamed modules не поддерживаются — это его ограничение.",
+                "source_of_confusion": "Кажется, что универсальная утилита сборки runtime принимает любой артефакт.",
+                "if_it_were_true": "Если бы jlink работал с automatic modules, Spring Boot легко собирался бы под jlink — но из-за automatic-зависимостей это проблема.",
+                "how_it_should_be": "Для jlink всё дерево зависимостей должно быть named; automatic/unnamed модули он отклоняет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`jlink` нельзя использовать в Docker — он работает только на bare metal без контейнеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`jlink` + Docker — классическая комбинация: jlink-образ кладут в `FROM scratch` или alpine-контейнер, получая 40-60 MB вместо 200+ MB.",
+                "source_of_confusion": "Раз jlink собирает «образ», кажется, что он конфликтует с контейнерным образом Docker.",
+                "if_it_were_true": "Если бы jlink не работал в Docker, не было бы примеров многоэтапных Dockerfile с jlink-runtime.",
+                "how_it_should_be": "jlink активно применяют именно в Docker для компактных контейнеров с custom JRE."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`jlink` создаёт custom runtime image только с нужными модулями: Docker-образ 40-60 MB против 200+ MB с полным JDK; меньше поверхность атаки; самодостаточный образ. Требует только named modules.",
+              "correct": true,
+              "sections": {
+                "explanation": "`jlink` создаёт custom runtime image только с нужными модулями: Docker-образ 40-60 MB против 200+ MB с полным JDK; меньше поверхность атаки; самодостаточный образ. Требует только named modules.",
+                "example": "Преимущества против полного JDK: размер 30-50 MB вместо ~300 MB, только используемые модули, не требует установленного JDK на хосте.",
+                "when_to_apply": "Применяй для контейнеризованных Java-микросервисов на JPMS, особенно где важен размер образа и cold start.",
+                "edge_cases": "Ограничение: jlink работает только с именованными модулями; automatic и unnamed модули он включить не сможет, что мешает модуляризации Spring Boot.",
+                "related": "[[java-modules-interview#Q3]] модульная структура JDK; [[java-modules-interview#Q20]] плагины и опции jlink; [[java-modules-interview#Q34]] custom minimal JRE на практике."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`jlink` требует покупки коммерческой лицензии Oracle JDK — в OpenJDK его нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`jlink` входит в OpenJDK бесплатно; все популярные дистрибутивы (Temurin, Corretto, Liberica) включают jlink из коробки.",
+                "source_of_confusion": "Раз инструмент «продвинутый», кажется, что он за деньги в Oracle JDK.",
+                "if_it_were_true": "Если бы jlink требовал лицензии, его не было бы в `bin/` бесплатных OpenJDK-дистрибутивов — а он там есть.",
+                "how_it_should_be": "jlink бесплатен и доступен во всех основных OpenJDK-сборках."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие плагины и опции поддерживает `jlink`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`jlink --bind-services` включает только явно перечисленные через запятую provides, остальные игнорирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--bind-services` автоматически включает ВСЕ провайдеры для объявленных `uses`; без него ServiceLoader не найдёт реализации в собранном образе.",
+                "source_of_confusion": "Слово «bind» кажется относящимся к явному связыванию конкретных провайдеров.",
+                "if_it_were_true": "Если бы он включал только перечисленные, не было бы смысла в отдельном флаге — можно было бы просто `--add-modules`.",
+                "how_it_should_be": "`--bind-services` подтягивает все провайдеры для `uses`-деклараций, расширяя граф модулей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`--compress` работает только для Java 17+ — на более ранних версиях jlink сжатие недоступно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--compress` доступен в jlink с Java 9; синтаксис изменился в Java 21 (`zip-N` вместо числовых уровней), но сама опция была всегда.",
+                "source_of_confusion": "Изменение синтаксиса в Java 21 воспринимается как появление опции только тогда.",
+                "if_it_were_true": "Если бы сжатия не было до 17, ранние jlink-образы не были бы компактными — а они были.",
+                "how_it_should_be": "`--compress` есть с Java 9; в Java 21 поменялся лишь формат значения уровня."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`jlink --add-modules` нельзя комбинировать с `--bind-services` — эти флаги взаимоисключающи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба флага комбинируются: `--add-modules` задаёт начальные модули, а `--bind-services` автоматически расширяет граф через ServiceLoader.",
+                "source_of_confusion": "Кажется, что два способа добавления модулей конфликтуют.",
+                "if_it_were_true": "Если бы они исключали друг друга, нельзя было бы собрать образ с ServiceLoader-провайдерами поверх явного списка модулей.",
+                "how_it_should_be": "`--add-modules` и `--bind-services` дополняют друг друга: один задаёт корни, другой подтягивает провайдеров."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Плагины jlink: `--strip-debug` (убирает debug-инфо), `--compress zip-6` (сжатие), `--no-header-files`, `--no-man-pages`, `--launcher name=module/main` (создаёт launcher-скрипт), `--add-modules`, `--bind-services`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Плагины jlink: `--strip-debug` (убирает debug-инфо), `--compress zip-6` (сжатие), `--no-header-files`, `--no-man-pages`, `--launcher name=module/main` (создаёт launcher-скрипт), `--add-modules`, `--bind-services`.",
+                "example": "Комбинация `--compress` + `--strip-debug` + `--no-header-files` + `--no-man-pages` даёт максимально компактный runtime.",
+                "when_to_apply": "Применяй для оптимизации Docker-образов; `--launcher myapp=com.example.app/com.example.Main` создаёт удобный скрипт запуска.",
+                "edge_cases": "Перед jlink полезен `jdeps`: `jdeps -s my-app.jar` для анализа зависимостей и `jdeps --generate-module-info` для генерации шаблона module-info.",
+                "related": "[[java-modules-interview#Q19]] что такое jlink; [[java-modules-interview#Q34]] полный jlink-pipeline; [[java-modules-interview#Q35]] jdeps для анализа зависимостей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие существуют стратегии миграции на модули?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Две стратегии: Bottom-Up (рекомендуемая) — начать с leaf-библиотек графа зависимостей и двигаться к приложению, каждый шаг компилируется и тестируется; Top-Down — начать с приложения, зависимости временно как automatic modules, быстро видны границы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Две стратегии: Bottom-Up (рекомендуемая) — начать с leaf-библиотек графа зависимостей и двигаться к приложению, каждый шаг компилируется и тестируется; Top-Down — начать с приложения, зависимости временно как automatic modules, быстро видны границы.",
+                "example": "Bottom-Up: модуляризуем `utils.jar` → `service.jar` → `app.jar`; зависимости уже модульные на каждом шаге. Top-Down наоборот, но рискует нестабильными именами automatic modules.",
+                "when_to_apply": "Применяй Bottom-Up для библиотек с зависимостями только от JDK; Top-Down — для быстрого прототипа и оценки модульных границ.",
+                "edge_cases": "Чеклист: запустить `jdeps`, убрать `sun.*`/`com.sun.*`, решить split packages, добавить `Automatic-Module-Name`, создать module-info, добавить `--add-opens` для рефлексивных фреймворков, протестировать.",
+                "related": "[[java-modules-interview#Q38]] Bottom-Up против Top-Down в деталях; [[java-modules-interview#Q22]] миграция Maven/Gradle; [[java-modules-interview#Q35]] jdeps для подготовки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Bottom-Up миграция: начинаем с приложения верхнего уровня и спускаемся к библиотекам-листьям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bottom-Up = снизу вверх = начинаем с leaf-библиотек (без зависимостей на свой код); описанное «с приложения» — это Top-Down стратегия.",
+                "source_of_confusion": "Слова «снизу/сверху» легко перепутать относительно графа зависимостей.",
+                "if_it_were_true": "Если бы Bottom-Up начинался с приложения, обе стратегии совпали бы — но они разные по порядку.",
+                "how_it_should_be": "Bottom-Up идёт от листьев к приложению; от приложения вниз — это Top-Down."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Top-Down миграция невозможна, пока все зависимости не переведены в named modules заранее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Top-Down как раз использует automatic modules как мост и позволяет мигрировать до того, как все зависимости получат module-info.",
+                "source_of_confusion": "Кажется, что для `requires` в app-модуле зависимости обязаны быть полноценно модульными.",
+                "if_it_were_true": "Если бы это было так, Top-Down вообще не имел бы смысла как «быстрый» путь.",
+                "how_it_should_be": "Top-Down временно опирается на automatic modules; полноценные module-info добавляют позже."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После миграции на модули нельзя сохранить обратную совместимость с Java 8 — приложение становится Java 9+ only.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-Release JAR (MRJAR) позволяет иметь `module-info.java` для Java 9+ и Java 8-совместимый код в базовом JAR одновременно.",
+                "source_of_confusion": "Кажется, что добавление module-info жёстко привязывает к Java 9+.",
+                "if_it_were_true": "Если бы совместимость терялась, библиотеки не публиковали бы модульные MRJAR с поддержкой Java 8.",
+                "how_it_should_be": "MRJAR сохраняет Java 8-совместимость: module-info лежит в `META-INF/versions/9/`, базовые классы — в корне."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как мигрировать проект с `Maven`/`Gradle` на модули?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Maven` не поддерживает `module-info.java` нативно — обязательно нужен плагин `moditect` для любого модульного проекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`maven-compiler-plugin` 3.6+ нативно поддерживает `module-info.java`; `moditect` нужен только для legacy-кода или генерации module-info для чужих JAR.",
+                "source_of_confusion": "Раз есть специальный плагин, кажется, что без него модули не работают.",
+                "if_it_were_true": "Если бы Maven не поддерживал module-info, нельзя было бы просто положить его в `src/main/java` и собрать.",
+                "how_it_should_be": "Достаточно `maven-compiler-plugin` 3.6+; moditect применяют лишь в особых случаях."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Maven: `maven-compiler-plugin` 3.6+ обрабатывает `module-info.java` автоматически, `maven-surefire` с `--add-opens` для тестов; Gradle: `modularity.inferModulePath = true` автоматически определяет module path.",
+              "correct": true,
+              "sections": {
+                "explanation": "Maven: `maven-compiler-plugin` 3.6+ обрабатывает `module-info.java` автоматически, `maven-surefire` с `--add-opens` для тестов; Gradle: `modularity.inferModulePath = true` автоматически определяет module path.",
+                "example": "`module-info.java` должен лежать в `src/main/java/`; обе системы поддерживают гибрид classpath + module path.",
+                "when_to_apply": "Применяй при наличии `module-info.java` в source root; обе системы сборки с версий ~2017 поддерживают JPMS без дополнительных плагинов.",
+                "edge_cases": "В Gradle для тестов добавляют `jvmArgs += ['--add-opens', 'com.example.app/com.example.internal=ALL-UNNAMED']`, чтобы тесты видели internal-пакеты.",
+                "related": "[[java-modules-interview#Q21]] стратегии миграции; [[java-modules-interview#Q25]] тестирование модулей; [[java-modules-interview#Q33]] --add-opens для тестов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Gradle `modularity.inferModulePath = true` нужно прописывать в каждом подпроекте вручную, иначе он не сработает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Настройку можно сделать в корневом `build.gradle` через `allprojects {}`; Gradle 7+ часто сам определяет module path по наличию `module-info.java`.",
+                "source_of_confusion": "Кажется, что per-module настройку нельзя задать централизованно.",
+                "if_it_were_true": "Если бы её нельзя было вынести в allprojects, крупные multi-module проекты дублировали бы её десятки раз.",
+                "how_it_should_be": "Опцию задают один раз в корневом build-скрипте через `allprojects {}`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Module path вообще не работает с fat JAR (Spring Boot jar) — модули и fat JAR несовместимы в принципе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Boot fat JAR и JPMS имеют ограниченную совместимость, но Spring Boot 3.x её улучшил; полная несовместимость — преувеличение.",
+                "source_of_confusion": "Известные сложности Spring Boot fat JAR + jlink раздувают до «вообще не работает».",
+                "if_it_were_true": "Если бы они были несовместимы в принципе, Spring Boot 3.x не дорабатывал бы поддержку JPMS.",
+                "how_it_should_be": "Совместимость ограниченная, но не нулевая; для jlink нужна нестандартная упаковка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `ModuleLayer` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ModuleLayer` позволяет нескольким версиям одной библиотеки существовать одновременно прямо в boot layer.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В boot layer один модуль = одна версия; `ModuleLayer` позволяет разные версии в РАЗНЫХ слоях с изолированными ClassLoader.",
+                "source_of_confusion": "Раз ModuleLayer решает мультиверсионность, кажется, что это происходит в одном слое.",
+                "if_it_were_true": "Если бы в boot layer уживались две версии, не нужны были бы дополнительные слои вообще.",
+                "how_it_should_be": "Разные версии живут в отдельных ModuleLayer; в одном слое уникальность модуля сохраняется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ModuleLayer` нельзя выгрузить — однажды загруженные модули остаются в памяти навсегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ModuleLayer` с отдельным ClassLoader может быть собран сборщиком мусора, когда на него нет ссылок; это основа hot-reload плагинов.",
+                "source_of_confusion": "Раз модули кажутся «глобальными», кажется, что слой неудаляем.",
+                "if_it_were_true": "Если бы слой нельзя было выгрузить, plugin-системы с горячей перезагрузкой не работали бы.",
+                "how_it_should_be": "Слой с собственным ClassLoader выгружается через GC при отсутствии ссылок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ModuleLayer` — дополнительный слой модулей поверх boot layer; каждый слой имеет свой ClassLoader. Применяется для плагинных систем (загрузка/выгрузка без рестарта), мультиверсионности и изоляции деплойментов.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ModuleLayer` — дополнительный слой модулей поверх boot layer; каждый слой имеет свой ClassLoader. Применяется для плагинных систем (загрузка/выгрузка без рестарта), мультиверсионности и изоляции деплойментов.",
+                "example": "Создание: `ModuleFinder.of(path)` → `parent.configuration().resolve(...)` → `parent.defineModulesWithOneLoader(cfg, loader)`, затем `layer.findLoader(name).loadClass(...)`.",
+                "when_to_apply": "Применяй для Eclipse/IntelliJ plugin-систем, Jakarta EE серверов с изоляцией деплойментов и hot-reload плагинов в runtime.",
+                "edge_cases": "Каждый слой изолирован своим ClassLoader, что предотвращает конфликты версий; `ModuleLayer.boot()` — основа, новые слои — изолированные пространства.",
+                "related": "[[java-modules-interview#Q1]] что такое JPMS; [[java-modules-interview#Q24]] разрешение зависимостей; [[java-modules-interview#Q10]] ServiceLoader для плагинов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ModuleLayer` нужен только для тестирования и в production не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "IntelliJ IDEA, Eclipse и Jakarta EE серверы используют `ModuleLayer` в production для изоляции плагинов и деплойментов.",
+                "source_of_confusion": "Продвинутость API наводит на мысль, что это лишь учебная или тестовая фича.",
+                "if_it_were_true": "Если бы он не применялся в production, крупные IDE и серверы приложений не строили бы на нём изоляцию.",
+                "how_it_should_be": "ModuleLayer — production-механизм изоляции в IDE и серверах приложений."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как в `JPMS` обрабатываются циклические зависимости между модулями?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Циклические зависимости в JPMS разрешаются через `requires transitive` — он разрывает цикл, делая зависимость односторонней.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`requires transitive` только пробрасывает транзитивное чтение; цикл `A → B → A` запрещён независимо от типа requires и даёт `ResolutionException` при старте.",
+                "source_of_confusion": "Раз `transitive` «особенный», кажется, что он умеет обходить запрет циклов.",
+                "if_it_were_true": "Если бы transitive разрешал циклы, не было бы рекомендации выделять общий API-модуль для их устранения.",
+                "how_it_should_be": "Никакой `requires` не разрешает цикл; его устраняют рефакторингом архитектуры."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Циклические зависимости допускаются, если оба модуля упакованы в один JAR-файл.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPMS проверяет циклы по именам модулей, независимо от физического расположения JAR; общий JAR цикл не легализует.",
+                "source_of_confusion": "Кажется, что «внутри одного артефакта» правила мягче.",
+                "if_it_were_true": "Если бы общий JAR разрешал циклы, можно было бы обходить запрет простой переупаковкой — но это не так.",
+                "how_it_should_be": "Цикл запрещён по именам модулей; физическая упаковка значения не имеет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Единственное решение циклической зависимости — объединить оба модуля в один.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выделение общего контракта в api-модуль — лучший архитектурный подход; объединение модулей — крайний случай при невозможности рефакторинга.",
+                "source_of_confusion": "Объединение кажется самым очевидным способом убрать цикл.",
+                "if_it_were_true": "Если бы это было единственным решением, не существовало бы паттернов DIP и ServiceLoader для разрыва циклов.",
+                "how_it_should_be": "Цикл чаще разрывают через общий API-модуль или инверсию зависимостей, а не слиянием."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JPMS запрещает циклы → `ResolutionException` («Cycle detected»); решения: выделить общий контракт в третий api-модуль, инвертировать зависимость через интерфейсы (DIP), использовать `ServiceLoader` (`uses`/`provides`) для слабой связности, либо объединить модули.",
+              "correct": true,
+              "sections": {
+                "explanation": "JPMS запрещает циклы → `ResolutionException` («Cycle detected»); решения: выделить общий контракт в третий api-модуль, инвертировать зависимость через интерфейсы (DIP), использовать `ServiceLoader` (`uses`/`provides`) для слабой связности, либо объединить модули.",
+                "example": "Цикл `A requires B` и `B requires A` одновременно невозможен; при сборке или запуске JVM сообщит о цикле и не стартует.",
+                "when_to_apply": "Применяй запрет как принудительную чистую архитектуру с однонаправленными зависимостями между модулями.",
+                "edge_cases": "Запрет циклов в JPMS заставляет проектировать чистую архитектуру; общий API-модуль ломает цикл, оставляя зависимости направленными к контракту.",
+                "related": "[[java-modules-interview#Q1]] что такое JPMS; [[java-modules-interview#Q10]] ServiceLoader для слабой связности; [[java-modules-interview#Q28]] хорошие практики дизайна модулей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать модульное приложение?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Unit-тесты автоматически «патчатся» в модуль через `--patch-module` и `--add-reads` (Maven Surefire/Gradle делают это сами); для доступа к internal-пакетам нужен `--add-opens` в test argLine; интеграционные тесты лучше гонять в модульном режиме.",
+              "correct": true,
+              "sections": {
+                "explanation": "Unit-тесты автоматически «патчатся» в модуль через `--patch-module` и `--add-reads` (Maven Surefire/Gradle делают это сами); для доступа к internal-пакетам нужен `--add-opens` в test argLine; интеграционные тесты лучше гонять в модульном режиме.",
+                "example": "Surefire/Gradle добавляют тестовый source set в тот же модуль; для не-экспортируемых пакетов прописывают `--add-opens com.example.service/com.example.service.internal=ALL-UNNAMED`.",
+                "when_to_apply": "Применяй blackbox (только `exports` API) для проверки контракта и whitebox (`--add-opens`/`--add-exports`) для доступа к internal-классам.",
+                "edge_cases": "Интеграционный запуск в модульном режиме раньше ловит проблемы, невидимые на classpath: split packages, отсутствие `opens` для фреймворков.",
+                "related": "[[java-modules-interview#Q12]] рефлексия и opens; [[java-modules-interview#Q22]] миграция Maven/Gradle; [[java-modules-interview#Q33]] --add-opens для тестов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Тесты в JPMS не могут обращаться к неэкспортируемым пакетам — internal-классы недоступны тестам вообще.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--add-opens` через maven-surefire/Gradle argLine открывает internal-пакеты для тестов; whitebox-тестирование с JVM-флагами возможно.",
+                "source_of_confusion": "Строгая инкапсуляция наводит на мысль, что internal закрыт даже для тестов.",
+                "if_it_were_true": "Если бы internal был недоступен, нельзя было бы тестировать private-логику без вынесения её в API.",
+                "how_it_should_be": "Internal-пакеты тестируют через `--add-opens` в test-argLine; это и есть whitebox-режим."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Модульные тесты обязаны жить в отдельном named-модуле с собственным `module-info.java`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тесты обычно живут в том же source set или в unnamed module (classpath); Maven Surefire поддерживает оба подхода без отдельного module-info.",
+                "source_of_confusion": "Кажется, что раз основной код модульный, тесты тоже должны быть named-модулем.",
+                "if_it_were_true": "Если бы требовался отдельный модуль, нельзя было бы патчить тесты в основной модуль через `--patch-module`.",
+                "how_it_should_be": "Тесты чаще патчатся в основной модуль или идут как unnamed module; отдельный named-модуль не обязателен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JUnit 5 несовместим с JPMS — для модульного приложения нужен другой фреймворк тестирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JUnit 5 (`junit.jupiter.*`) поставляется с `Automatic-Module-Name` и работает как automatic module с JPMS.",
+                "source_of_confusion": "Раз JUnit старше JPMS, кажется, что он не адаптирован под модули.",
+                "if_it_were_true": "Если бы JUnit 5 был несовместим, модульные проекты не могли бы использовать его — но они используют.",
+                "how_it_should_be": "JUnit 5 совместим с JPMS как automatic module со стабильным `Automatic-Module-Name`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Spring`/`Spring Boot` работает с модульной системой?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring Boot с JPMS не требует `opens` — Spring поддерживает модули без рефлексии, через чистый compile-time API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring DI, AOP, `@ComponentScan` активно используют рефлексию; без `opens com.example.app to spring.core` будет `InaccessibleObjectException`.",
+                "source_of_confusion": "Кажется, что современный фреймворк обходится без рефлексии в модульном мире.",
+                "if_it_were_true": "Если бы Spring не нуждался в рефлексии, не было бы каскада `--add-opens` в командах запуска Spring Boot.",
+                "how_it_should_be": "Spring требует `opens` для пакетов с бинами/конфигурацией; рефлексия — основа его DI и AOP."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring Boot + JPMS требует `open module` или точечные `opens ... to spring.core, spring.beans, spring.context`; большинство Spring Boot apps до сих пор работают на classpath без `module-info.java`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Boot + JPMS требует `open module` или точечные `opens ... to spring.core, spring.beans, spring.context`; большинство Spring Boot apps до сих пор работают на classpath без `module-info.java`.",
+                "example": "Spring использует рефлексию для создания бинов, инъекции, AOP-прокси (CGLIB создаёт подклассы) и classpath scanning через `@ComponentScan`.",
+                "when_to_apply": "Применяй полную модуляризацию с `open module` для связки jlink + Spring Boot; для обычного приложения classpath остаётся прагматичным выбором.",
+                "edge_cases": "Spring полноценно работает с JPMS, но требует много `opens`; `open module` удобнее, чем перечислять каждый пакет вручную.",
+                "related": "[[java-modules-interview#Q5]] exports против opens; [[java-modules-interview#Q9]] open module; [[java-modules-interview#Q37]] Spring/Hibernate/Jackson с JPMS."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring Boot 3.x полностью несовместим с JPMS — модульный режим для него невозможен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Boot 3.x улучшил поддержку JPMS; модульный режим возможен при конфигурации `opens`, хотя большинство приложений пока на classpath.",
+                "source_of_confusion": "Сложность настройки воспринимается как полная несовместимость.",
+                "if_it_were_true": "Если бы Spring Boot 3.x был несовместим, его модули не имели бы стабильных `Automatic-Module-Name`.",
+                "how_it_should_be": "Spring Boot 3.x совместим с JPMS при правильной настройке `opens`; несовместимость — преувеличение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@ComponentScan` не работает с модулями — нужно объявлять явный `@Bean` для каждого компонента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@ComponentScan` работает с unnamed module (classpath); в named module для сканируемых пакетов нужен `opens` или `open module`.",
+                "source_of_confusion": "Раз сканирование рефлексивно, кажется, что в модулях оно полностью отключено.",
+                "if_it_were_true": "Если бы `@ComponentScan` не работал, миграция Spring-приложения на модули требовала бы переписать всю конфигурацию бинов.",
+                "how_it_should_be": "`@ComponentScan` работает при `opens` для сканируемых пакетов; ручной `@Bean` для каждого компонента не нужен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Hibernate`/`JPA` взаимодействует с модулями?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hibernate не требует `opens` — он работает только с экспортированными публичными полями entity.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hibernate читает/пишет private-поля entity через рефлексию (dirty checking, lazy loading); без `opens entity.pkg to org.hibernate.orm.core` будет `InaccessibleObjectException`.",
+                "source_of_confusion": "Если у entity есть public-геттеры, кажется, что Hibernate работает только через них.",
+                "if_it_were_true": "Если бы хватало публичных полей, не возникало бы `InaccessibleObjectException` при создании entity-прокси.",
+                "how_it_should_be": "Hibernate требует `opens` для пакетов entity ради рефлексивного доступа к private-полям."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "JPA entity-классы обязаны находиться в экспортированных (`exports`) пакетах, чтобы Hibernate их увидел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Entity-классы не обязаны быть в `exports`: Hibernate получает доступ через `opens`; exports — для внешних клиентов, opens — для рефлексии, это разные цели.",
+                "source_of_confusion": "Кажется, что «видимый Hibernate» класс должен быть экспортирован.",
+                "if_it_were_true": "Если бы entity требовали `exports`, любой клиент мог бы импортировать их напрямую, нарушая инкапсуляцию домена.",
+                "how_it_should_be": "Entity открывают через `opens to org.hibernate.orm.core`, а не экспортируют; exports тут не нужен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hibernate требует `opens com.example.entity to org.hibernate.orm.core` для доступа к private-полям; без этого — `InaccessibleObjectException` при создании entity-прокси и маппинге.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hibernate требует `opens com.example.entity to org.hibernate.orm.core` для доступа к private-полям; без этого — `InaccessibleObjectException` при создании entity-прокси и маппинге.",
+                "example": "Через рефлексию Hibernate создаёт экземпляры entity (нужен default-конструктор), читает/пишет private-поля (lazy loading, dirty checking), создаёт прокси для lazy-коллекций, обрабатывает аннотации.",
+                "when_to_apply": "Применяй `opens entity.pkg to org.hibernate.orm.core, com.fasterxml.jackson.databind` в module-info, если entity ещё и сериализуются Jackson.",
+                "edge_cases": "Hibernate — reflection-heavy: каждый пакет с entity нужно отдельно указать в `opens`; embedded `@Embeddable` объекты в других пакетах тоже требуют `opens`.",
+                "related": "[[java-modules-interview#Q12]] рефлексия в JPMS; [[java-modules-interview#Q5]] exports против opens; [[java-modules-interview#Q37]] Spring/Hibernate/Jackson вместе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Аннотация `@Entity` в JPMS заменяется на другой механизм маппинга — старые аннотации не работают в модулях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Entity` и все JPA-аннотации работают так же; меняется только доступ через рефлексию — нужен `opens` для пакета entity.",
+                "source_of_confusion": "Кажется, что модульность затрагивает и аннотации, не только рефлексию.",
+                "if_it_were_true": "Если бы `@Entity` не работала, миграция любого JPA-приложения требовала бы переписать весь маппинг.",
+                "how_it_should_be": "JPA-аннотации остаются прежними; модули влияют лишь на необходимость `opens`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие практики проектирования модулей считаются хорошими?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Экспортировать все пакеты модуля через `exports`, потому что иначе клиенты не смогут импортировать нужные классы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Экспортировать нужно ТОЛЬКО API-пакеты (`com.example.api`); internal-пакеты (`impl`, `internal`) намеренно остаются скрытыми — это и есть цель JPMS.",
+                "source_of_confusion": "В classpath-мире любой public-класс был «частью API», и привычка экспортировать всё переносится в JPMS.",
+                "if_it_were_true": "Если бы экспортировали всё, потребители завязались бы на `Impl`-классы, и любой рефакторинг сломал бы совместимость.",
+                "how_it_should_be": "Экспортируют только контракты; реализацию скрывают, сохраняя свободу менять её без слома клиентов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать `open module` глобально вместо точечных `opens pkg to framework` — это универсально упрощает работу со Spring/Hibernate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это анти-практика: `open module` открывает ВСЕ пакеты для рефлексии любому модулю, разрушая runtime-инкапсуляцию; хороший дизайн — точечный `opens to конкретному фреймворку`.",
+                "source_of_confusion": "На первой попытке модуляризации `open module` спасает от каскада `InaccessibleObjectException`, и соблазн оставить так велик.",
+                "if_it_were_true": "Если бы `open module` был хорошей практикой, модуль с ним не был бы эквивалентен JAR на classpath по рефлексии — но он эквивалентен.",
+                "how_it_should_be": "`opens` точечно для конкретного фреймворка — тот выигрыш, ради которого пишут `module-info.java`; глобальный open оправдан лишь как временный костыль."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Группировать модули по техническим слоям: `com.example.controllers`, `com.example.services`, `com.example.repositories`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хорошее правило — модуль = осмысленная единица по домену (`billing`, `users`, `notifications`); слоистая разбивка заставляет менять все модули при любой фиче.",
+                "source_of_confusion": "Spring Boot туториалы демонстрируют 3-слойную архитектуру, и кажется логичным масштабировать её до модулей.",
+                "if_it_were_true": "Если бы это было правдой, добавление одного endpoint требовало бы изменения сразу controller/service/repository/dto модулей.",
+                "how_it_should_be": "Границы модулей проводят по бизнес-доменам, а не по слоям, чтобы локализовать изменения в одном модуле."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Экспортировать только API-пакеты, скрывать `impl`/`internal`, использовать `requires transitive` для публичных зависимостей API, `opens` — точечно для конкретных фреймворков; модуль = осмысленная единица по домену, а не по слою.",
+              "correct": true,
+              "sections": {
+                "explanation": "Экспортировать только API-пакеты, скрывать `impl`/`internal`, использовать `requires transitive` для публичных зависимостей API, `opens` — точечно для конкретных фреймворков; модуль = осмысленная единица по домену, а не по слою.",
+                "example": "Структура: `com.example.api` (контракты, exports), `com.example.impl` (реализации, не exports), `com.example.spi` (точки расширения), `com.example.internal` (утилиты, скрыты).",
+                "when_to_apply": "Применяй для multi-module библиотек (как `jackson-databind`/`jackson-core`/`jackson-annotations`), plugin-систем через ServiceLoader и JDK-style модулей с очевидным контрактом.",
+                "edge_cases": "Подводные камни: длинные цепи `requires transitive` создают неявную связность; добавление метода в exported `interface` ломает downstream-реализации (помогают `default`-методы или `sealed`).",
+                "related": "[[java-modules-interview#Q5]] exports против opens; [[java-modules-interview#Q7]] requires transitive; [[java-modules-interview#Q29]] типичные ошибки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типичные ошибки допускают при работе с модулями?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "При `InaccessibleObjectException` (Hibernate не видит entity) корень — отсутствие `opens`, а не `requires`: нужно `opens com.example.entity to org.hibernate.orm.core`. Hibernate использует рефлексию для lazy loading, dirty checking, доступа к private-полям.",
+              "correct": true,
+              "sections": {
+                "explanation": "При `InaccessibleObjectException` (Hibernate не видит entity) корень — отсутствие `opens`, а не `requires`: нужно `opens com.example.entity to org.hibernate.orm.core`. Hibernate использует рефлексию для lazy loading, dirty checking, доступа к private-полям.",
+                "example": "`requires` решает compile-time видимость типов; `InaccessibleObjectException` — runtime-ошибка от `setAccessible(true)`, лечится только `opens`.",
+                "when_to_apply": "Применяй `opens entity.pkg to org.hibernate.orm.core` для entity, `opens dto.pkg to com.fasterxml.jackson.databind` для DTO, `opens service.pkg to spring.core, spring.beans` для бинов.",
+                "edge_cases": "Reflection cascade: entity ссылается на `@Embeddable` в другом пакете, который тоже надо `opens`; JVM не показывает второй уровень автоматически — внимательно читать stack trace.",
+                "related": "[[java-modules-interview#Q5]] exports против opens; [[java-modules-interview#Q12]] рефлексия в JPMS; [[java-modules-interview#Q37]] Spring/Hibernate/Jackson сценарии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Корень `InaccessibleObjectException` — отсутствие `requires org.hibernate.orm.core`; модуль Hibernate ещё не подключён.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`requires` решает compile-time видимость типов; если бы его не было, ошибка была бы на компиляции («module not found»), а не runtime `InaccessibleObjectException` от рефлексии.",
+                "source_of_confusion": "`requires` и `opens` оба в module-info и оба «про доступ», поэтому одно путают с другим.",
+                "if_it_were_true": "Если бы это было правдой, добавление `requires` убирало бы ошибку, но `setAccessible` к private-полям всё равно упал бы без `opens`.",
+                "how_it_should_be": "Это runtime-проблема рефлексии: модуль Hibernate подключён, но не имеет права на `setAccessible` — нужен `opens`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Решение `InaccessibleObjectException` — запустить с `--illegal-access=permit`, чтобы разрешить всю рефлексию глобально.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Флаг `--illegal-access` удалён в Java 17: на современных JVM он игнорируется с warning или валит запуск; решение — `--add-opens` или (лучше) `opens` в module-info.",
+                "source_of_confusion": "`--illegal-access=permit` был дефолтом в Java 9-15, и устаревшие туториалы советуют его как «магию».",
+                "if_it_were_true": "Если бы это работало, на production с Java 17+ приложение запускалось бы, но оно падает с `Unrecognized VM option`.",
+                "how_it_should_be": "В Java 17+ вместо удалённого `--illegal-access` используют точечные `--add-opens` или декларативный `opens`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Правильное решение — убрать `module-info.java` и запускать на classpath, потому что JPMS несовместим со Spring Boot.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Boot совместим с JPMS при правильной настройке `opens`/`requires`; большинство проектов на classpath не из-за несовместимости, а из-за трудозатратности миграции без выгоды.",
+                "source_of_confusion": "Ранние Spring 5/Spring Boot 2.x имели проблемы с automatic modules, что раздули до «полной несовместимости».",
+                "if_it_were_true": "Если бы JPMS был несовместим, не существовали бы GraalVM native-image и Quarkus, опирающиеся на модульность со Spring.",
+                "how_it_should_be": "Это инженерное решение (ROI), а не блокировка: при настройке `opens` Spring Boot прекрасно работает в модульном режиме."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каковы перспективы развития модульной системы `Java`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "JPMS несовместим со Spring Boot — поэтому его никто не использует, и в ближайших релизах его планируют удалить из JDK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPMS совместим со Spring Boot (нужен `opens`) и его не планируют удалять: на нём построен сам JDK (`java.base`, `java.sql`), а Project Leyden опирается на модульную информацию.",
+                "source_of_confusion": "Низкое adoption в application-коде создаёт иллюзию «умирающей» технологии.",
+                "if_it_were_true": "Если бы JPMS удаляли, GraalVM native-image, Quarkus и Micronaut, опирающиеся на модульную модель JDK, не работали бы.",
+                "how_it_should_be": "JPMS — фундамент JDK, а не deprecated-эксперимент; его развивают, а не сворачивают."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Adoption низкий из-за дороговизны миграции без бизнес-выгоды для типичного приложения, но JPMS критичен для: понимания `InaccessibleObjectException`, оптимизации Docker-образов через `jlink`, работы с JDK internals, native-image инструментов и собеседований.",
+              "correct": true,
+              "sections": {
+                "explanation": "Adoption низкий из-за дороговизны миграции без бизнес-выгоды для типичного приложения, но JPMS критичен для: понимания `InaccessibleObjectException`, оптимизации Docker-образов через `jlink`, работы с JDK internals, native-image инструментов и собеседований.",
+                "example": "JDK сам построен на модулях; `jlink` уменьшает Spring Boot-образ с ~350 MB до ~50 MB; GraalVM/Quarkus/Micronaut требуют чёткой модульной модели для AOT.",
+                "when_to_apply": "Применяй знание JPMS для отладки `InaccessibleObjectException`, оптимизации образов serverless/микросервисов и подготовки native-image (`reflect-config.json`).",
+                "edge_cases": "Развитие: строгая инкапсуляция (Java 16-17, `--illegal-access` удалён), Project Leyden (AOT, ещё в preview), Project Panama (FFI); рассчитывать на AOT через JPMS пока рано.",
+                "related": "[[java-modules-interview#Q1]] что такое JPMS; [[java-modules-interview#Q19]] jlink; [[java-modules-interview#Q37]] Spring/Hibernate/Jackson с JPMS."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Adoption низкий потому, что Java-сообщество ленивое; через год-два все Spring Boot приложения мигрируют на JPMS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Причина не в лени, а в отсутствии бизнес-выгоды: Spring Boot уже даёт инкапсуляцию через DI; добавление module-info требует `opens` для каждого фреймворка и ничего не даёт, кроме декоративной строгости.",
+                "source_of_confusion": "OpenJDK продвигает JPMS, поэтому кажется, что adoption — лишь вопрос времени.",
+                "if_it_were_true": "Если бы все мигрировали, был бы массив tutorials и Spring Boot starter с module-info; но `spring-boot-starter-web` до сих пор automatic module.",
+                "how_it_should_be": "Технологии без явной бизнес-ценности не приживаются массово; приложения останутся на classpath."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JPMS будет полностью заменён Project Loom (virtual threads) — с виртуальными потоками модули больше не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Loom и JPMS ортогональны: Loom решает concurrency (lightweight threads), JPMS — encapsulation/dependency management; они работают вместе, не заменяют друг друга.",
+                "source_of_confusion": "Loom получил много внимания в Java 21, JPMS обсуждается реже, отсюда впечатление вытеснения.",
+                "if_it_were_true": "Если бы Loom заменял JPMS, в Java 21 убрали бы `module-info.java`; вместо этого поддержку модулей расширили.",
+                "how_it_should_be": "Virtual threads используют модуль `java.base` и живут внутри модульной системы; одно не отменяет другое."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются `unnamed module`, `automatic module` и `named module` на практике?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Именованный модуль не может `requires` ни на что — это ограничение JPMS; чтобы добавить зависимость, нужно убрать `module-info.java`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именованный модуль может `requires` на другие named и на automatic modules; запрет действует только на unnamed module (classpath).",
+                "source_of_confusion": "Ошибка компиляции после `requires legacy.lib` создаёт впечатление, что весь подход неверен.",
+                "if_it_were_true": "Если бы named не мог `requires` ни на что, JPMS был бы непригоден — но named-модули массово зависят друг от друга.",
+                "how_it_should_be": "Проблема локальна: legacy-JAR нужно поднять с classpath на module path как automatic module, тогда `requires` сработает."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Перенести `legacy.lib.jar` на classpath и оставить `module-info.java` — JVM сама свяжет их через unnamed module.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: именованный модуль НЕ МОЖЕТ `requires` на классы из classpath (unnamed module); это «стена» JPMS ради воспроизводимости сборки.",
+                "source_of_confusion": "В classpath-мире JAR связывались независимо от расположения, и кажется, что module path это просто новая опция поверх.",
+                "if_it_were_true": "Если бы named видел classpath, не было бы смысла в automatic modules — но они существуют именно из-за этой стены.",
+                "how_it_should_be": "JAR нужно поднять на module path (automatic module); named-модуль с classpath работать не умеет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Положить `legacy.lib.jar` на module path — JVM превратит его в automatic module с именем из `Automatic-Module-Name` манифеста, либо выведет имя из имени JAR (с предупреждением о нестабильности). Тогда named-модуль может `requires` на него.",
+              "correct": true,
+              "sections": {
+                "explanation": "Положить `legacy.lib.jar` на module path — JVM превратит его в automatic module с именем из `Automatic-Module-Name` манифеста, либо выведет имя из имени JAR (с предупреждением о нестабильности). Тогда named-модуль может `requires` на него.",
+                "example": "Принцип: named не может `requires` на unnamed (classpath), но может на automatic; поэтому automatic module — мост между модульным миром и legacy classpath.",
+                "when_to_apply": "Применяй при миграции bottom-up, использовании SDK невендоров без module-info и старых версий тест-библиотек (JUnit/Mockito).",
+                "edge_cases": "Опасность derived-имени: переименование JAR (`legacy-2.0.jar` вместо `legacy-lib-1.2.jar`) меняет имя с `legacy.lib` на `legacy` и ломает `requires`; лучше задать `Automatic-Module-Name`.",
+                "related": "[[java-modules-interview#Q4]] module path против classpath; [[java-modules-interview#Q15]] automatic module и его имя; [[java-modules-interview#Q16]] сравнение трёх типов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Скомпилировать `legacy.lib` с флагом `--add-exports legacy.lib/*=ALL-UNNAMED` — это превратит обычный JAR в named module.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--add-exports` — флаг для уже named-модулей, открывающий их пакеты; он НЕ превращает JAR в named и не работает на JAR без `module-info.class`.",
+                "source_of_confusion": "Флаги `--add-exports`/`--add-opens` описывают как «способ преодолеть модульные ограничения», и возникает соблазн применить их к любой проблеме.",
+                "if_it_were_true": "Если бы флаг превращал JAR в named, не нужны были бы automatic modules и `jdeps --generate-module-info`.",
+                "how_it_should_be": "Превратить JAR в named можно только пересборкой с `module-info.java` или `jdeps --generate-module-info`; флаг тут не помогает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`Split packages`: почему запрещены в `JPMS` и как их устранить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Игнорировать ошибку через JVM-флаг `--ignore-module-conflict` — split package не критичен и допустим в проде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такого флага не существует: module resolution — обязательный этап загрузки, и `ResolutionException` фатальна; JVM просто не запустит приложение.",
+                "source_of_confusion": "В classpath-мире многие ошибки «приглушались» опциями, и хочется найти аналогичный флаг для JPMS.",
+                "if_it_were_true": "Если бы флаг существовал, терялась бы детерминированность загрузки классов — главная цель запрета split package.",
+                "how_it_should_be": "Опции «продолжать с предупреждением» в JPMS нет; split package устраняют exclusion-ом или `--patch-module`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поместить оба конфликтующих JAR в один общий uber-jar — JVM сольёт пакеты сама и конфликт исчезнет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Uber-jar — просто архив со всеми классами; на module path он остаётся automatic module со всеми пакетами зависимостей, и split package сохраняется.",
+                "source_of_confusion": "«Положить в один архив» интуитивно кажется решением «один пакет — один источник».",
+                "if_it_were_true": "Если бы fat jar решал split, любой Spring Boot fat jar чинил бы проблему автоматически — но на module path он не работает напрямую.",
+                "how_it_should_be": "Реальное слияние делает `relocate` (Shade/Shadow), а не fat jar; JVM смотрит на manifest и module-info, не на физический архив."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Объявить оба пакета как `requires` в `module-info.java` — это явно разрешит split package для потребителя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`requires` — объявление зависимости, а не разрешение split; если A и B оба экспортируют `javax.annotation`, resolver выбросит `ResolutionException` до выполнения кода.",
+                "source_of_confusion": "В большинстве проблем с модулями виноваты `requires`/`exports`, и кажется, что и split лечится ими.",
+                "if_it_were_true": "Если бы это работало, существовала бы директива `requires X | Y` (выбор реализации), но её нет.",
+                "how_it_should_be": "Никакая комбинация `requires` не разрешает конфликт — он архитектурный; пакет должен быть уникален."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Исключить конфликтующую зависимость (Maven `<exclusion>` / Gradle `exclude`) или применить `--patch-module java.xml.ws.annotation=javax.annotation-api.jar` для слияния пакетов; альтернативы — `relocate`, переход на Jakarta EE, вынос общего пакета в свой модуль.",
+              "correct": true,
+              "sections": {
+                "explanation": "Исключить конфликтующую зависимость (Maven `<exclusion>` / Gradle `exclude`) или применить `--patch-module java.xml.ws.annotation=javax.annotation-api.jar` для слияния пакетов; альтернативы — `relocate`, переход на Jakarta EE, вынос общего пакета в свой модуль.",
+                "example": "Split package — два модуля экспортируют один пакет (`javax.annotation`); загрузчик не может выбрать владельца, и JPMS запрещает это с `ResolutionException`.",
+                "when_to_apply": "Применяй при миграции Java 8 → 11+ (многие `javax.*` стали split с JDK-модулями), при дублях `javax.annotation`/`javax.xml.bind`, при сборке плагина с `relocate`.",
+                "edge_cases": "Транзитивные split packages не видны сразу (`library A` и `B` тянут `javax.activation`); `mvn dependency:tree` + `jdeps --check` обязательны; `--patch-module` не работает с jlink.",
+                "related": "[[java-modules-interview#Q17]] split package как понятие; [[java-modules-interview#Q22]] миграция Maven/Gradle; [[java-modules-interview#Q35]] jdeps для диагностики."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`--add-opens` и `--add-exports`: когда и как использовать для рефлексии с `JPMS`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`--add-exports` даёт compile-time/runtime доступ к public API пакета (аналог `exports pkg to M`); `--add-opens` дополнительно разрешает рефлексию через `setAccessible(true)` (аналог `opens pkg to M`); `ALL-UNNAMED` означает «все классы classpath».",
+              "correct": true,
+              "sections": {
+                "explanation": "`--add-exports` даёт compile-time/runtime доступ к public API пакета (аналог `exports pkg to M`); `--add-opens` дополнительно разрешает рефлексию через `setAccessible(true)` (аналог `opens pkg to M`); `ALL-UNNAMED` означает «все классы classpath».",
+                "example": "Синтаксис обоих: `<module>/<package>=<target-module>`. Для compile-time нужен `--add-exports` (компилятору рефлексия не нужна); на runtime — тот, что требует фреймворк.",
+                "when_to_apply": "Применяй для Spring Boot/Hibernate/Mockito/Lombok с runtime-рефлексией к JDK internals: например `--add-opens java.base/java.lang=ALL-UNNAMED`.",
+                "edge_cases": "`--add-exports` к `sun.*` постепенно убирается (JEP «Strongly Encapsulate JDK Internals»); долгосрочно лучше `opens` в module-info или фреймворк без рефлексии (ASM/Byte Buddy).",
+                "related": "[[java-modules-interview#Q5]] exports против opens; [[java-modules-interview#Q12]] рефлексия в JPMS; [[java-modules-interview#Q13]] JVM-флаги обхода."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`--add-exports` и `--add-opens` — синонимы: оба дают полный доступ к пакету, разница только в синтаксисе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два РАЗНЫХ уровня: `--add-exports` даёт доступ к public типам/членам (как `exports`); `--add-opens` дополнительно разрешает рефлексию через `setAccessible` (как `opens`).",
+                "source_of_confusion": "Оба флага имеют одинаковый синтаксис `<module>/<package>=<target>` и оба «открывают» пакет, поэтому их легко спутать.",
+                "if_it_were_true": "Если бы они были синонимами, не было бы смысла в двух флагах, как и в паре `exports`/`opens` в module-info.",
+                "how_it_should_be": "`--add-exports` — для public-доступа, `--add-opens` — для рефлексии к private; это две разные оси."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`--add-opens` использовать только при компиляции, а `--add-exports` — только в runtime.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба флага можно передавать и `javac`, и `java`; разница не во времени применения, а в виде доступа: types-and-members против рефлексии.",
+                "source_of_confusion": "На практике `--add-opens` часто указывают только в `java`-команде Spring Boot, отсюда ассоциация «opens=runtime».",
+                "if_it_were_true": "Если бы так, не было бы compile-time сценариев с `--add-exports` к internal API для статического анализа.",
+                "how_it_should_be": "Время применения не привязано к флагу; рефлексия — runtime-явление, поэтому `--add-opens` обычно на runtime, но не из-за ограничения флага."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`--add-opens` работает только для модулей JDK; для пользовательских модулей нужно `--enable-native-access`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--add-opens` работает для ЛЮБЫХ модулей (JDK, named, automatic); `--enable-native-access` относится к Foreign Function & Memory API, а не к рефлексии.",
+                "source_of_confusion": "В туториалах примеры почти всегда про `java.base`, и кажется, что флаг ограничен JDK.",
+                "if_it_were_true": "Если бы это было правдой, нельзя было бы подружить custom-фреймворк с custom-entity без правки module-info обоих.",
+                "how_it_should_be": "`--add-opens com.example.app/com.example.entity=org.hibernate.orm.core` работает для пользовательских модулей; native-access тут ни при чём."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`jlink`: создание custom minimal JRE — практическое руководство",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`jlink` не поддерживает Java 17+ — для упаковки приложения нужно использовать `jpackage` вместо него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`jlink` активно поддерживается во всех современных Java (8+) и улучшается (Java 21 добавил CDS); `jpackage` решает другую задачу — native installer (`.dmg`/`.msi`/`.deb`).",
+                "source_of_confusion": "Java tooling быстро меняется, и легко предположить deprecation jlink.",
+                "if_it_were_true": "Если бы jlink не поддерживался, его не было бы в `jdk-21/bin/` — но он там есть и работает.",
+                "how_it_should_be": "jlink — стабильный production-инструмент с 2017 года; jpackage часто использует его под капотом, но не заменяет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все модули в `--module-path` должны быть named (с `module-info.class`). Решение для automatic-зависимости: запросить module-info у автора, сгенерировать через `moditect`/`jdeps --generate-module-info`, либо заменить library на модуляризованную альтернативу.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все модули в `--module-path` должны быть named (с `module-info.class`). Решение для automatic-зависимости: запросить module-info у автора, сгенерировать через `moditect`/`jdeps --generate-module-info`, либо заменить library на модуляризованную альтернативу.",
+                "example": "Workflow: `jdeps --print-module-deps app.jar` → `jar --describe-module` (выявить automatic) → обновить/сгенерировать module-info → собрать `jlink`.",
+                "when_to_apply": "Применяй для Docker-образов serverless (каждый MB = миллисекунды cold start), раздачи приложения с собственным JRE (как Eclipse) и high-density Kubernetes.",
+                "edge_cases": "Spring Boot не jlink-friendly из-за обилия automatic modules; `--strip-debug` ломает stack traces; cross-platform сборка возможна с JDK 19+ через `--target-platform`.",
+                "related": "[[java-modules-interview#Q19]] что такое jlink; [[java-modules-interview#Q20]] плагины jlink; [[java-modules-interview#Q35]] jdeps для анализа зависимостей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Объединить все JAR в один fat-jar через Maven Shade Plugin и передать его в `jlink` как один модуль.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fat-jar всё ещё не имеет `module-info.class` (это automatic module со всеми пакетами зависимостей); jlink отклонит его так же, как любой automatic module, плюс split packages.",
+                "source_of_confusion": "Shade-plugin часто упоминают как «решение всех проблем сборки», что верно для classpath, но не для модулей.",
+                "if_it_were_true": "Если бы fat-jar работал с jlink, Spring Boot repackage собирался бы под jlink из коробки — но этого нет.",
+                "how_it_should_be": "Для jlink нужны named-модули; fat-jar не делает JAR named и часто добавляет split packages."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Запустить `jlink` с флагом `--ignore-signing-info` — это позволит включить automatic modules в образ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такого флага у jlink нет: jlink фундаментально требует named-модули, потому что у automatic нет `module-info.class` с описанием exports и зависимостей.",
+                "source_of_confusion": "Существуют `--ignore-missing-deps` (у jdeps) и `--ignore-signing-information` (у jar), что звучит правдоподобно.",
+                "if_it_were_true": "Если бы такой флаг был, не нужны были бы инструменты вроде `moditect` для генерации module-info automatic-модулям.",
+                "how_it_should_be": "Automatic module в jlink включить нельзя; его сначала превращают в named через module-info."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`jdeps`: анализ зависимостей модулей перед миграцией",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Предупреждение `jdeps` про `sun.misc.Unsafe` можно игнорировать — этот класс поддерживается во всех версиях Java одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sun.misc.Unsafe` — JDK internal API: JEP «Strongly Encapsulate JDK Internals» (Java 17) закрыл internals по умолчанию; на Java 17+ доступ без `--add-exports java.base/sun.misc=ALL-UNNAMED` падает.",
+                "source_of_confusion": "`Unsafe` широко используется (Netty, Lucene), и многие версии Java его «терпят».",
+                "if_it_were_true": "Если бы он был стабилен, не было бы JEP про deprecation memory-access методов `sun.misc.Unsafe` и замены через `java.lang.foreign`.",
+                "how_it_should_be": "`Unsafe` находится в `sun.*` и помечен deprecated-for-removal; перед миграцией его обращения надо устранять."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это compile-time предупреждение `jdeps`, в runtime ничего не сломается — программа отработает как раньше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`jdeps` — статический анализатор bytecode, и его предупреждения часто превращаются в `IllegalAccessError`/`NoClassDefFoundError` в runtime; на Java 17+ это уже отказ доступа.",
+                "source_of_confusion": "До Java 17 default `--illegal-access=permit` разрешал доступ к internals с warning, и многие привыкли, что warnings не критичны.",
+                "if_it_were_true": "Если бы runtime не ломался, не было бы JEP, делающего строгую инкапсуляцию default.",
+                "how_it_should_be": "Код упадёт при первом `sun.misc.Unsafe.getUnsafe()` на Java 17+; это уже не безобидный warning."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это критический сигнал: нужно либо заменить на supported API (`MethodHandles`, `VarHandle`, `java.lang.foreign`), либо временно добавить `--add-exports java.base/sun.misc=ALL-UNNAMED`, либо обновить зависимость на версию без `Unsafe`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это критический сигнал: нужно либо заменить на supported API (`MethodHandles`, `VarHandle`, `java.lang.foreign`), либо временно добавить `--add-exports java.base/sun.misc=ALL-UNNAMED`, либо обновить зависимость на версию без `Unsafe`.",
+                "example": "`jdeps --jdk-internals` сканирует bytecode на `sun.*`, `jdk.internal.*`, `com.sun.*`; эти классы могут исчезнуть или быть запечатаны в любом релизе JDK.",
+                "when_to_apply": "Применяй при подготовке миграции Java 8/11 → 17/21, при анализе third-party библиотек на легальность с JEP 403 и compliance-аудите.",
+                "edge_cases": "`jdeps --jdk-internals` видит только compile-time обращения; runtime-рефлексия к `sun.*` через `Class.forName` не обнаруживается; версия jdeps должна совпадать с target Java.",
+                "related": "[[java-modules-interview#Q22]] миграция проектов; [[java-modules-interview#Q32]] split packages; [[java-modules-interview#Q34]] jlink требует named modules."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`jdeps` ошибся — `sun.misc.Unsafe` это публичный API, доступный через `Unsafe.getUnsafe()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хотя `Unsafe` доступен через `getUnsafe()` рефлексией-хаком, он в пакете `sun.*` — JDK internals по определению; JEP 260 классифицировал его как deprecated for removal.",
+                "source_of_confusion": "`Unsafe.getUnsafe()` — public static метод, и кажется, что и класс публичный.",
+                "if_it_were_true": "Если бы `Unsafe` был публичным API, он лежал бы в `java.*`, а не в `sun.*`.",
+                "how_it_should_be": "Расположение в `sun.*` — формальная граница API; `jdeps` правильно его флагирует как internal."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`ServiceLoader` с `JPMS`: директивы `uses` и `provides...with` в деталях",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно положить `META-INF/services/com.example.spi.PaymentProvider` в JAR с реализацией — `module-info.java` в named-модулях не нужен для SPI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для named-модулей обязательно использовать `provides...with` в `module-info.java`; `META-INF/services` игнорируется для named-модулей в module-path-режиме и работает только для automatic/unnamed.",
+                "source_of_confusion": "До Java 9 механизм через `META-INF/services` был единственным, и его универсальность кажется сохранившейся.",
+                "if_it_were_true": "Если бы `META-INF/services` хватало, не было бы директив `provides`/`uses` в module-info.",
+                "how_it_should_be": "Named-модули регистрируют сервис через `provides...with`; `META-INF/services` — для legacy automatic/unnamed."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`provides` нужен только в модуле-потребителе; модуль-реализация ничего не объявляет, а consumer указывает реализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `provides X with Y` объявляется в модуле-реализации (Y — provider), `uses X` — в модуле-потребителе. Перепутать = ServiceLoader не найдёт реализаций.",
+                "source_of_confusion": "В декларативных DSL часто путают направление, а ServiceLoader двунаправлен по сути (consumer ищет provider).",
+                "if_it_were_true": "Если бы consumer объявлял реализации, он всегда знал бы конкретный класс (Stripe), что разрушает смысл SPI.",
+                "how_it_should_be": "Provider объявляет `provides...with`, consumer — `uses`; роли строго разделены."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Реализацию `StripeProvider` нужно экспортировать через `exports com.example.stripe;`, чтобы ServiceLoader её увидел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот — экспорт реализации это анти-паттерн: SPI должен скрывать реализацию, потребитель знает только интерфейс `PaymentProvider`; `provides` даёт доступ в обход exports.",
+                "source_of_confusion": "«Если что-то нужно показать наружу — экспортируем» — общее правило, и кажется, что provider должен быть виден.",
+                "if_it_were_true": "Если бы реализацию экспортировали, `provides...with` была бы избыточной — consumer видел бы класс напрямую через exports.",
+                "how_it_should_be": "Реализацию не экспортируют; ServiceLoader получает к ней доступ через `provides`, сохраняя инкапсуляцию SPI."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Модуль-провайдер: `provides com.example.spi.PaymentProvider with com.example.stripe.StripeProvider`; потребитель: `uses com.example.spi.PaymentProvider`; обоим нужен `requires com.example.spi`; реализация НЕ экспортируется.",
+              "correct": true,
+              "sections": {
+                "explanation": "Модуль-провайдер: `provides com.example.spi.PaymentProvider with com.example.stripe.StripeProvider`; потребитель: `uses com.example.spi.PaymentProvider`; обоим нужен `requires com.example.spi`; реализация НЕ экспортируется.",
+                "example": "JPMS заменяет classpath-механизм (`META-INF/services`) декларативными директивами с проверкой на этапе module graph resolution и скрытием реализации от потребителя.",
+                "when_to_apply": "Применяй для plugin-систем (JDBC-драйверы, charsets), multi-vendor SDK (`PaymentProvider` для Stripe/Adyen) и hexagonal-архитектуры (порты как SPI, адаптеры как providers).",
+                "edge_cases": "`uses` без `provides` → пустой поток (compile-time не отловится, нужны интеграционные тесты); `ServiceLoader` не гарантирует порядок реализаций — для приоритета нужна своя аннотация и ручная сортировка.",
+                "related": "[[java-modules-interview#Q10]] базовое определение provides/uses; [[java-modules-interview#Q11]] ServiceLoader classpath против JPMS; [[java-modules-interview#Q28]] хорошие практики дизайна."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Совместимость `Spring`, `Hibernate` и `Jackson` с `JPMS`: типичные проблемы",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Точечно открыть три пакета: `opens com.example.app.entity to org.hibernate.orm.core; opens com.example.app.dto to com.fasterxml.jackson.databind; opens com.example.app.service to spring.core, spring.beans;` — каждый фреймворк получает доступ только к своим пакетам.",
+              "correct": true,
+              "sections": {
+                "explanation": "Точечно открыть три пакета: `opens com.example.app.entity to org.hibernate.orm.core; opens com.example.app.dto to com.fasterxml.jackson.databind; opens com.example.app.service to spring.core, spring.beans;` — каждый фреймворк получает доступ только к своим пакетам.",
+                "example": "Принцип least privilege: каждому фреймворку открыть РОВНО нужные пакеты, сохраняя инкапсуляцию и разрешая легитимную рефлексию.",
+                "when_to_apply": "Применяй для production Spring Boot, мигрирующего на JPMS, библиотек, совместимых с JPMS-потребителями, и микросервисов на Quarkus/Helidon.",
+                "edge_cases": "Reflection cascade: `@Embeddable` внутри entity тоже требует `opens`; Spring AOP CGLIB-прокси для `@Transactional`-класса требует `opens` на пакет; GraalVM native-image нужен ещё и `reflect-config.json`.",
+                "related": "[[java-modules-interview#Q5]] exports против opens; [[java-modules-interview#Q26]] Spring и JPMS; [[java-modules-interview#Q27]] Hibernate и JPMS."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Перевести все DTO/entity/services в один общий пакет `com.example.app.shared` и сделать `exports com.example.app.shared;` — тогда рефлексия заработает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`exports` даёт доступ к public-членам, но НЕ разрешает рефлексию (`setAccessible`); Jackson, Hibernate и Spring используют именно её к private-полям. Плюс это разрушает архитектуру.",
+                "source_of_confusion": "«Открыть пакет» интуитивно ассоциируется с одной директивой, хотя осей две: `exports` и `opens`.",
+                "if_it_were_true": "Если бы `exports` открывал рефлексию, в module-info не было бы отдельной директивы `opens`.",
+                "how_it_should_be": "Для рефлексии нужен `opens` к каждому пакету; объединять домены в один пакет не следует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Добавить `open module com.example.app { ... }` — это лучшее долгосрочное решение, упрощающее работу со всеми фреймворками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`open module` действительно чинит проблему, но это анти-практика: модуль становится эквивалентен JAR на classpath по рефлексии; долгосрочно — точечные `opens pkg to framework`.",
+                "source_of_confusion": "При первой миграции `open module` экономит часы отладки `InaccessibleObjectException`, и соблазн оставить так велик.",
+                "if_it_were_true": "Если бы это было лучшей практикой, гайды по JPMS не рекомендовали бы избегать `open module`.",
+                "how_it_should_be": "`open module` оправдан лишь как временный шаг; долгосрочное решение — точечные `opens` для каждого фреймворка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Запустить с `--add-opens java.base/java.lang=ALL-UNNAMED` — этого одного флага хватит для Spring, Hibernate и Jackson.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Этот флаг нужен Spring (доступ к JDK internals), но не открывает ВАШИ entity/DTO; нужны свои `opens com.example.entity to org.hibernate.orm.core` и `opens com.example.dto to com.fasterxml.jackson.databind`.",
+                "source_of_confusion": "`--add-opens java.base/java.lang=ALL-UNNAMED` часто подают как «магическую» строку для Spring Boot.",
+                "if_it_were_true": "Если бы хватало одного флага, Spring Boot на Java 17+ не требовал бы каскада из 5-7 разных `--add-opens`.",
+                "how_it_should_be": "Один JDK-флаг не открывает доступ фреймворкам к вашим доменным пакетам; нужны отдельные `opens` для entity, dto, service."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Стратегии миграции legacy-кода: `Bottom-Up` vs `Top-Down` в деталях",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Top-Down: первым делом написать `module-info.java` для `app.jar`, объявить остальные модули как `requires automatic_name`, потом постепенно добавлять module-info в `service.jar`, `utils.jar`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Top-Down работает, но рискованно: дойдя до `service.jar`/`utils.jar`, обнаружишь split packages, internal API, нестабильные имена automatic-модулей — а уже написано много `requires automatic`, переписывать дорого.",
+                "source_of_confusion": "Top-Down звучит логично («главное — приложение») и часто рекомендуется в туториалах.",
+                "if_it_were_true": "Если бы Top-Down был лучше, не было бы рекомендации Bottom-Up как «better strategy» в официальном гайде Oracle.",
+                "how_it_should_be": "Top-Down оправдан лишь для быстрой оценки границ; production-миграцию надёжнее вести Bottom-Up."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Bottom-Up: начать с листьев графа (`utils.jar` без зависимостей на свой код), сделать named module, потом `service.jar`, потом `app.jar`. Внешние библиотеки временно как automatic modules, заменяются на named при поддержке upstream.",
+              "correct": true,
+              "sections": {
+                "explanation": "Bottom-Up: начать с листьев графа (`utils.jar` без зависимостей на свой код), сделать named module, потом `service.jar`, потом `app.jar`. Внешние библиотеки временно как automatic modules, заменяются на named при поддержке upstream.",
+                "example": "Bottom-Up даёт локальность ошибок, тестируемость каждого шага, раннее выявление split packages/internal API и малый откат при неудаче.",
+                "when_to_apply": "Применяй для production-миграции multi-module Spring Boot; именно так модуляризовались Jackson, Hibernate и сам JDK (`java.base` → `java.sql` → `java.xml`).",
+                "edge_cases": "Циклические зависимости в листьях блокируют Bottom-Up без рефакторинга; automatic-зависимости мешают jlink; иногда `app.jar` остаётся на classpath — hybrid-подход приемлем.",
+                "related": "[[java-modules-interview#Q21]] стратегии миграции overview; [[java-modules-interview#Q22]] Maven/Gradle и модули; [[java-modules-interview#Q35]] jdeps для подготовки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параллельная миграция: разработчики одновременно модуляризуют все JAR за один MR — это сэкономит время и снимет промежуточные риски.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Big Bang» — самый рискованный подход: все ошибки (split packages, transitive deps, циклы, internal API, рефлексия) всплывают разом, и причину невозможно изолировать.",
+                "source_of_confusion": "«Параллельность» звучит как «эффективность», хотя в системах с зависимостями она часто = хаос.",
+                "if_it_were_true": "Если бы Big Bang работал, не было бы концепции iterative refactoring (Fowler, Working Effectively with Legacy Code).",
+                "how_it_should_be": "Миграцию ведут малыми шагами (Bottom-Up); одновременная модуляризация всего превращает review и тесты в кошмар."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сразу перейти на GraalVM native-image — он автоматически решит все JPMS-проблемы за счёт AOT-компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GraalVM native-image имеет свой набор ограничений (reflection-config, dynamic proxies, classpath-scanning), требующих ещё более тщательной подготовки; он НЕ решает JPMS-проблемы — задача ортогональна.",
+                "source_of_confusion": "GraalVM подаётся как «решение всех runtime-проблем Java», и кажется, что архитектурные проблемы тоже лечатся им.",
+                "if_it_were_true": "Если бы native-image решал JPMS, Quarkus и Micronaut не нуждались бы в собственных модульных моделях — но они их имеют.",
+                "how_it_should_be": "Native-image решает runtime-вопросы (cold start, память), а не архитектурные; сочетание с JPMS часто увеличивает сложность."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
