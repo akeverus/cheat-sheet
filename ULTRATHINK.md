@@ -578,16 +578,16 @@ Pass: `OK FILE.md`.
 | 240 | `programming-languages/java` | `java-types` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 241 | `programming-languages/java` | `java-virtual-threads` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 242 | `programming-languages/kotlin` | `kotlin-collections` | 42 | 42 | ✅ | ❌ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 243 | `programming-languages/kotlin` | `kotlin-coroutines` | 19 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 243 | `programming-languages/kotlin` | `kotlin-coroutines` | 19 | 19 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 244 | `programming-languages/kotlin` | `kotlin-dsl` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 245 | `programming-languages/kotlin` | `kotlin-exceptions` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=7) |
 | 246 | `programming-languages/kotlin` | `kotlin-flow` | 17 | 17 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 247 | `programming-languages/kotlin` | `kotlin-interop-java` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 248 | `programming-languages/kotlin` | `kotlin` | 27 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 249 | `programming-languages/kotlin` | `kotlin-sealed-classes` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 247 | `programming-languages/kotlin` | `kotlin-interop-java` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 248 | `programming-languages/kotlin` | `kotlin` | 27 | 27 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 249 | `programming-languages/kotlin` | `kotlin-sealed-classes` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 250 | `programming-languages/kotlin` | `kotlin-serialization` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 251 | `programming-languages/kotlin` | `kotlin-spring` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 252 | `programming-languages/kotlin` | `kotlin-value-classes` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 251 | `programming-languages/kotlin` | `kotlin-spring` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 252 | `programming-languages/kotlin` | `kotlin-value-classes` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 253 | `programming-languages/scala` | `scala` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 254 | `reactive` | `project-reactor` | 47 | 47 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 255 | `reactive` | `reactive-patterns` | 26 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
