@@ -533,7 +533,7 @@ Pass: `OK FILE.md`.
 | 195 | `monitoring` | `loki-grafana` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 196 | `monitoring` | `metrics-tracing` | 6 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=6) |
 | 197 | `monitoring` | `micrometer` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 198 | `monitoring` | `observability` | 15 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 198 | `monitoring` | `observability` | 15 | 15 | ✅ | ❌ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 199 | `monitoring` | `opentelemetry` | 9 | 9 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 200 | `monitoring` | `prometheus-grafana` | 39 | 39 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 201 | `performance` | `application-profiling` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
