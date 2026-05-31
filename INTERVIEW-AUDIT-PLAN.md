@@ -104,7 +104,7 @@
 | 2 | `divide-and-conquer` | 21 | 0 | ✅ JSON | 21 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 3 | `dynamic-programming` | 33 | 0 | ✅ JSON | 33 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 4 | `greedy-algorithms` | 1 | 28 | ❌ нет JSON | 0 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 5 | `recursion` | 27 | 27 | ❌ нет JSON | 0 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 5 | `recursion` | 27 | 0 | ✅ | 27 | ✅ | ✅ | ✅ | ✅ |
 | 6 | `two-pointers-sliding-window` | 1 | 33 | ❌ нет JSON | 0 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 7 | `algorithms` | 16 | 0 | ✅ JSON | 16 | ⬜ | ⬜ | ⬜ | ⬜ |
 | 8 | `complexity-analysis` | 31 | 0 | ✅ JSON | 31 | ⬜ | ⬜ | ⬜ | ⬜ |
