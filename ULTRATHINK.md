@@ -572,7 +572,7 @@ Pass: `OK FILE.md`.
 | 234 | `programming-languages/java` | `java-pattern-matching` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 235 | `programming-languages/java` | `java-records` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 236 | `programming-languages/java` | `java-reflection` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 237 | `programming-languages/java` | `java-serialization` | 40 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 237 | `programming-languages/java` | `java-serialization` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 238 | `programming-languages/java` | `java-stream` | 42 | 6 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 239 | `programming-languages/java` | `java-string` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 240 | `programming-languages/java` | `java-types` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |

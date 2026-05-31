@@ -1,0 +1,2405 @@
+{
+  "topic_slug": "java-io-nio-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Java IO` и `Java NIO` и в чём их ключевое различие?",
+          "options": [
+            {
+              "text": "`Java IO` (`java.io`) работает с данными последовательно как с потоком (stream) байт за байтом, а `Java NIO` (`java.nio`, с Java 1.4) читает данные порциями в `Buffer`, который затем обрабатывает программа — потоковая модель против буферной.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное различие в модели данных: `IO` — forward-only поток (`InputStream`/`OutputStream`), `NIO` — двунаправленный `Channel` плюс `Buffer`, который держит данные и допускает произвольный порядок обработки.",
+                "example": "`Netty` и `Spring WebFlux` строят high-load серверы на `NIO`-модели (`Selector`, 10000+ соединений), а `Apache Kafka` использует `FileChannel` + mmap для zero-copy передачи логов.",
+                "when_to_apply": "Эту разницу важно осознавать при выборе технологии: для скриптов и простого файлового I/O берут `IO`, для масштабируемых серверов — `NIO`.",
+                "edge_cases": "На одном соединении `NIO` не быстрее `IO`: оверхед `Selector` и `flip()`/`clear()` может даже замедлить простое последовательное чтение, выигрыш появляется на масштабе или mmap.",
+                "related": "[[java-io-nio-interview#Q2]] потоковый vs буферный подход подробнее; [[java-io-nio-interview#Q3]] блокирующий и неблокирующий I/O; [[java-io-nio-interview#Q10]] связка Channel и Buffer."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Java IO` использует буферы и `ByteBuffer`, а `Java NIO` работает напрямую с сырым потоком байтов без промежуточных буферов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: именно `Java NIO` ввёл буферный подход с `ByteBuffer`, а `Java IO` — потоковый и читает байт за байтом.",
+                "source_of_confusion": "Слово «буфер» встречается в названии `BufferedInputStream` из `java.io`, поэтому буферизацию ошибочно приписывают `IO`-модели в целом.",
+                "if_it_were_true": "Если бы `NIO` работал без буферов напрямую с потоком, то не было бы `channel.read(buffer)` и всей семантики `flip`/`clear`, на которой держится API.",
+                "how_it_should_be": "`Java IO` — потоковая модель (байт за байтом), `Java NIO` — буферная: данные читаются в `Buffer`, который и обрабатывает программа."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Оба API блокирующие, и ключевое отличие `Java NIO` — лишь более широкий набор поддерживаемых кодировок текста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кодировки не ключевое отличие, а `NIO` поддерживает и неблокирующий режим; различие в модели данных (поток vs буфер) и возможности non-blocking.",
+                "source_of_confusion": "`NIO` действительно добавил `CharsetEncoder`/`CharsetDecoder`, поэтому кажется, что главное в нём — работа с кодировками.",
+                "if_it_were_true": "Если бы оба API были только блокирующими, то `Selector` и `configureBlocking(false)` не имели бы смысла, а они — основа масштабируемых серверов.",
+                "how_it_should_be": "Ключевое отличие — модель (stream vs buffer) и поддержка неблокирующего I/O, а не набор кодировок, доступных обоим API."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Java IO` поддерживает только работу с файлами, а `Java NIO` — только с сетевыми соединениями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба API умеют и файлы, и сеть: в `IO` есть `Socket`/`ServerSocket`, в `NIO` — `FileChannel`, `SocketChannel`, `DatagramChannel`.",
+                "source_of_confusion": "Сетевой `Selector` ярко ассоциируется с `NIO`, а файловые `FileInputStream` — с `IO`, отсюда ложное разделение по типу ресурса.",
+                "if_it_were_true": "Если бы разделение по ресурсу было реальным, то `FileChannel` и `Socket` не существовали бы, но оба класса есть в своих API.",
+                "how_it_should_be": "И `IO`, и `NIO` работают и с файлами, и с сетью; разделять их нужно по модели данных и блокировке, а не по типу ресурса."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между потоково-ориентированным и буферо-ориентированным подходом?",
+          "options": [
+            {
+              "text": "В потоково-ориентированном подходе данные читаются порциями в буфер с возможностью двигаться вперёд и назад по уже прочитанному.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание буферо-ориентированного `NIO`; в потоковом `Java IO` прочитанные байты недоступны повторно — поток forward-only.",
+                "source_of_confusion": "Оба подхода «читают данные», и буферизация `BufferedReader` создаёт иллюзию, что потоковая модель тоже допускает откат.",
+                "if_it_were_true": "Если бы потоковый `InputStream` позволял перематывать назад, не понадобились бы `mark()`/`reset()` у `ByteBuffer` как отдельная фича `NIO`.",
+                "how_it_should_be": "Двигаться вперёд-назад можно только в буфере `NIO`; потоковый `IO` читает последовательно и назад не возвращается."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "В потоково-ориентированном подходе (`Java IO`) нельзя вернуться к уже прочитанным данным — поток forward-only; в буферо-ориентированном (`Java NIO`) позицию контролируют `position`/`mark`/`reset`, и данные можно перечитывать в любом порядке.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Java IO` читает последовательно, прочитанные байты теряются; `ByteBuffer` хранит данные в памяти и допускает random-access — движение вперёд и назад внутри буфера.",
+                "example": "Парсеры `Kafka` wire protocol и `Cassandra` CQL frame используют `mark()`/`reset()` для look-ahead — заглянуть на N байт вперёд и откатиться к началу фрейма при несоответствии.",
+                "when_to_apply": "На это опираются при разборе бинарных протоколов: где нужен look-ahead и откат — буфер `NIO`, где достаточно линейного прохода — поток `IO`.",
+                "edge_cases": "Буферный подход требует следить, что в буфере есть все нужные данные: при частичном чтении из `SocketChannel` нужен `compact()`, иначе хвост сообщения теряется между итерациями.",
+                "related": "[[java-io-nio-interview#Q1]] IO vs NIO в целом; [[java-io-nio-interview#Q12]] атрибуты ByteBuffer (position/mark/limit); [[java-io-nio-interview#Q13]] методы flip/clear/compact/rewind."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "В буферо-ориентированном подходе компилятор сам автоматически выбирает оптимальный размер буфера под нагрузку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер задаётся явно через `ByteBuffer.allocate(1024)`; компилятор не влияет на runtime-выбор размера буфера.",
+                "source_of_confusion": "JIT-оптимизации создают впечатление «магии компилятора», и подбор размера буфера ошибочно перекладывают на него.",
+                "if_it_were_true": "Если бы размер выбирался автоматически, не было бы типовых багов вроде `allocate(1)` (syscall на байт) или `allocate(100MB)` direct → OOM.",
+                "how_it_should_be": "Размер буфера задаёт разработчик в коде; компилятор тут ни при чём, а неудачный размер бьёт по throughput или памяти."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "В потоково-ориентированном подходе доступны `scatter/gather`-операции, а буферо-ориентированный работает строго с одним буфером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `scatter/gather` — фича `Java NIO` (`GatheringByteChannel`, `read(ByteBuffer[])`), а потоковый `IO` их не поддерживает.",
+                "source_of_confusion": "Чтение «по частям» интуитивно ассоциируется с потоком, поэтому `scatter/gather` ошибочно относят к потоковой модели.",
+                "if_it_were_true": "Если бы потоковый `IO` умел `scatter`, существовал бы метод `InputStream.read(byte[][])`, но его нет — есть только `read(byte[])`.",
+                "how_it_should_be": "`scatter/gather` принадлежит буферной модели `NIO`; потоковый `IO` читает в один массив и таких операций не имеет."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое блокирующий и неблокирующий ввод-вывод?",
+          "options": [
+            {
+              "text": "`FileChannel` в `NIO` поддерживает неблокирующий режим точно так же, как `SocketChannel`, через `configureBlocking(false)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FileChannel` всегда блокирующий; неблокирующий режим доступен только сетевым каналам, а для async-файлов есть `AsynchronousFileChannel`.",
+                "source_of_confusion": "`FileChannel` и `SocketChannel` оба наследуют `Channel`, поэтому кажется, что и метод `configureBlocking` действует одинаково.",
+                "if_it_were_true": "Если бы `FileChannel` поддерживал non-blocking, вызов `fileChannel.configureBlocking(false)` работал бы, но он бросает `IllegalBlockingModeException`.",
+                "how_it_should_be": "Для асинхронной работы с файлами используют `AsynchronousFileChannel`; обычный `FileChannel` неблокирующий режим не поддерживает."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "При блокирующем I/O вызов `read()` возвращает `0`, если данных пока нет, и `-1` при закрытии потока.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При блокирующем I/O `read()` не возвращает `0` — он ждёт, пока данные появятся; возврат `0` характерен для неблокирующего режима.",
+                "source_of_confusion": "И блокирующий, и неблокирующий `read()` возвращают `-1` на EOF, поэтому семантику `0` ошибочно переносят и на блокирующий режим.",
+                "if_it_were_true": "Если бы блокирующий `read()` возвращал `0` без данных, цикл `while (in.read() == 0) retry();` итерировался бы, но он просто зависает.",
+                "how_it_should_be": "Возврат `0` — это неблокирующий режим; блокирующий `read()` приостанавливает поток до появления данных и `0` не отдаёт."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "При неблокирующем вызове `channel.read(buffer)` метод немедленно возвращает `0`, если данных ещё нет, не блокируя вызывающий поток; `-1` означает конец потока, `>0` — реально прочитанные байты.",
+              "correct": true,
+              "sections": {
+                "explanation": "Неблокирующий режим — основа `Selector`-модели: один поток опрашивает каналы и обрабатывает только готовые, а возврат `0` значит «данных нет сейчас, попробуй позже».",
+                "example": "`Netty` `EventLoop` использует именно эту модель — один поток обслуживает 10000+ соединений, реагируя только на готовые каналы вместо потока на каждое соединение.",
+                "when_to_apply": "Эту семантику применяют при написании event-loop серверов: цикл `select()` плюс неблокирующие `read()`, возвращающие `0` на «нет данных».",
+                "edge_cases": "Неблокирующий режим доступен только сетевым каналам (`SocketChannel`, `ServerSocketChannel`, `DatagramChannel`); `FileChannel` всегда блокирующий, для async-файлов нужен `AsynchronousFileChannel`.",
+                "related": "[[java-io-nio-interview#Q1]] IO vs NIO; [[java-io-nio-interview#Q11]] какие каналы поддерживают неблокирующий режим; [[java-io-nio-interview#Q16]] как Selector мультиплексирует каналы."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Один `Selector` может мониторить не более 10 каналов одновременно из-за ограничений операционной системы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ограничения в 10 каналов нет: `Selector` мониторит тысячи каналов, реальный предел — `ulimit -n` (file descriptors), часто 1M+.",
+                "source_of_confusion": "Маленькие примеры в учебниках с парой каналов создают впечатление, будто `Selector` рассчитан лишь на единицы соединений.",
+                "if_it_were_true": "Если бы лимит был 10, серверы вроде `Netflix` не держали бы десятки тысяч соединений на одном `Selector`, а они держат.",
+                "how_it_should_be": "`Selector` масштабируется до тысяч каналов; ограничивает не он, а лимит файловых дескрипторов ОС (`ulimit -n`)."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие преимущества и недостатки у `Java IO` и `Java NIO`?",
+          "options": [
+            {
+              "text": "`Java IO` рекомендуется именно для высоконагруженных серверов, потому что его проще отлаживать, чем `NIO`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Простота отладки не делает `IO` пригодным для нагрузок: модель «поток на соединение» плохо масштабируется и упирается в лимит потоков.",
+                "source_of_confusion": "`IO`-код действительно читается легче, и это удобство ошибочно принимают за пригодность под высокую нагрузку.",
+                "if_it_were_true": "Если бы `IO` подходил для high-load, thread-per-connection на 5000 RPS не давал бы 5000 платформенных потоков и 30% CPU на context switch.",
+                "how_it_should_be": "Для high-load серверов выбирают `NIO` (или virtual threads); `IO` хорош для скриптов и малого числа соединений."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Java NIO` всегда быстрее `Java IO` независимо от сценария — поэтому его стоит применять везде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для простых последовательных операций `IO` не медленнее; `NIO` выигрывает на тысячах соединений либо на mmap/direct buffers.",
+                "source_of_confusion": "Репутация `NIO` как «продвинутого» API создаёт ощущение, что он быстрее в любом случае.",
+                "if_it_were_true": "Если бы `NIO` всегда выигрывал, переписывание скрипт-копировщика с `BufferedReader` на `FileChannel` давало бы рост, а не +2% при 3× коде.",
+                "how_it_should_be": "`NIO` быстрее лишь на масштабе или специфике (mmap, zero-copy); для простых задач разница ничтожна, а код сложнее."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Java NIO` не поддерживает буферизацию символов и работает только с бинарными байтовыми потоками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NIO` имеет `CharBuffer`, `CharsetEncoder`/`CharsetDecoder`, а `Files.newBufferedReader()` построен поверх `NIO`-инфраструктуры.",
+                "source_of_confusion": "`ByteBuffer` на слуху как «бинарный», и из этого делают вывод, что текст в `NIO` не обрабатывается.",
+                "if_it_were_true": "Если бы `NIO` не умел текст, не существовало бы `MappedByteBuffer` для логов и `Files.lines()` для потоковой обработки строк.",
+                "how_it_should_be": "`NIO` полноценно работает с текстом через `CharBuffer` и `Charset*`; от него не нужно отказываться ради текстовых задач."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Java IO` хорош для простых файловых операций, работы с текстом и малого числа соединений; `Java NIO` — для high-load серверов с тысячами одновременных соединений, где `Selector` позволяет одному потоку обслужить тысячи каналов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главный недостаток `IO` — модель «поток на соединение», плохо масштабируемая; плюс `NIO` — мультиплексирование, минус — сложный API с частыми багами в `flip()`/`clear()`.",
+                "example": "CLI-утилиты используют `Files.readAllLines()` на `IO`, а high-load gateway строят на `Netty`/`Undertow` поверх `NIO`; `Spring WebFlux` на `NIO`, `Spring MVC` (servlet) на `IO`.",
+                "when_to_apply": "Этот выбор делают на старте проекта: оценивают число соединений и тип нагрузки, прежде чем тащить сложность `NIO`.",
+                "edge_cases": "Java 21 `Virtual Threads` сократили разрыв: миллионы виртуальных потоков на блокирующем `Socket.read()` дёшевы, но `NIO` незаменим для zero-copy (`transferTo`), mmap и async file I/O.",
+                "related": "[[java-io-nio-interview#Q1]] модели IO/NIO; [[java-io-nio-interview#Q3]] блокирующий и неблокирующий I/O; [[java-io-nio-interview#Q11]] реализации Channel."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные классы и интерфейсы используются в `Java IO`?",
+          "options": [
+            {
+              "text": "Байтовые потоки (`InputStream`/`OutputStream`) работают с сырыми байтами и подходят для бинарных данных, а символьные (`Reader`/`Writer`) работают с `Unicode char` и автоматически учитывают кодировку; мост между ними — `InputStreamReader`/`OutputStreamWriter` с явным `Charset`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Иерархия `Java IO` строится на четырёх абстрактных классах: `InputStream`/`OutputStream` для байтов и `Reader`/`Writer` для символов, плюс декораторы `Buffered*`, `Data*`, `Object*`.",
+                "example": "PDF/PNG/protobuf читают байтовыми потоками (`FileInputStream`), CSV/JSON/XML — символьными с явным `StandardCharsets.UTF_8`; `Spring` `MultipartFile.getInputStream()` отдаёт байтовый поток для любых файлов.",
+                "when_to_apply": "Эту классификацию используют при выборе потока под задачу: бинарь — байтовые классы, текст — символьные с явной кодировкой.",
+                "edge_cases": "`Scanner` и `RandomAccessFile` не входят в линейку `InputStream`/`Reader` напрямую: `Scanner` работает поверх потока через regex (медленнее `BufferedReader`), а `RandomAccessFile` даёт произвольный доступ.",
+                "related": "[[java-io-nio-interview#Q6]] разница байтовых и символьных потоков; [[java-io-nio-interview#Q7]] паттерн Decorator в иерархии IO; [[java-io-nio-interview#Q8]] классы для текстовых файлов."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`ObjectInputStream` относится к символьным потокам, потому что работает с Java-объектами и их полями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ObjectInputStream` — байтовый поток (наследует `InputStream`): объекты сериализуются в бинарный формат с magic-number `0xACED`, а не в символьный.",
+                "source_of_confusion": "«Объект» ассоциируется с высокоуровневыми данными, поэтому его поток ошибочно относят к символьным `Reader`/`Writer`.",
+                "if_it_were_true": "Если бы это был символьный поток, оборачивание в `InputStreamReader` для «правильной кодировки» работало бы, а оно даёт `invalid stream header`.",
+                "how_it_should_be": "`ObjectInputStream`/`ObjectOutputStream` — байтовые потоки сериализации; декодировать их как текст нельзя."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Scanner` — это байтовый поток, потому что он считывает данные посимвольно через `nextLine()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Scanner` вообще не входит в иерархию `InputStream`/`Reader`: он работает поверх любого источника и не относится ни к байтовым, ни к символьным потокам.",
+                "source_of_confusion": "`Scanner` часто используют там же, где `BufferedReader`, поэтому его ошибочно считают потоковым классом.",
+                "if_it_were_true": "Если бы `Scanner` был потоком, он наследовался бы от `InputStream` или `Reader`, но он наследует только `Object` и реализует `Closeable`.",
+                "how_it_should_be": "`Scanner` — утилита парсинга поверх потока (использует regex), а не байтовый или символьный поток сам по себе."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Символьные потоки умеют работать только с кодировкой `ASCII`, а многобайтовый `UTF-8` поддерживают лишь байтовые потоки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Символьные потоки поддерживают любую кодировку (`UTF-8`, `UTF-16`, `Windows-1251`) и именно они корректно обрабатывают многобайтовые символы.",
+                "source_of_confusion": "Байтовый поток буквально «видит все байты», поэтому кажется, что только он способен передать многобайтовый `UTF-8`.",
+                "if_it_were_true": "Если бы символьные потоки знали лишь `ASCII`, чтение кириллицы через `InputStreamReader(in, UTF_8)` ломалось бы, но оно работает корректно.",
+                "how_it_should_be": "Символьные потоки работают с любой кодировкой через `Charset`; байтовое чтение `UTF-8` как раз режет многобайтовые символы посередине."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между байтовыми и символьными потоками?",
+          "options": [
+            {
+              "text": "`FileReader` — это байтовый поток, поскольку он читает файл с диска побайтово.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FileReader` — символьный поток (наследует `Reader`): внутри `StreamDecoder` преобразует байты в символы с кодировкой платформы.",
+                "source_of_confusion": "Чтение файла «с диска» ассоциируется с байтами, поэтому `FileReader` ошибочно относят к байтовым потокам.",
+                "if_it_were_true": "Если бы `FileReader` был байтовым, он наследовал бы `InputStream` и не имел метода `read()`, возвращающего `char`, а он его имеет.",
+                "how_it_should_be": "`FileReader` — символьный поток; чтобы избежать багов с кодировкой, лучше `Files.newBufferedReader(path, UTF_8)`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`InputStreamReader` (и `OutputStreamWriter`) служит мостом между байтовыми и символьными потоками, позволяя явно указать `Charset` при преобразовании байтов в символы и обратно.",
+              "correct": true,
+              "sections": {
+                "explanation": "`InputStreamReader(InputStream, Charset)` декодирует байты в символы с указанной кодировкой, `OutputStreamWriter` делает обратное; без явного `Charset` берётся кодировка платформы, что ломается при переносе.",
+                "example": "HTTP-ответы оборачивают как `InputStreamReader(in, UTF_8)`, а вывод процесса под Windows-консоль — `new InputStreamReader(p.getInputStream(), Charset.forName(\"cp866\"))`.",
+                "when_to_apply": "Мост применяют всюду, где байтовый источник нужно читать как текст: HTTP-тело, вывод процесса, `System.in`.",
+                "edge_cases": "До Java 18 дефолтом был platform charset (Windows `cp1251`, Linux `UTF-8`), что давало классический баг «на Linux работает, на Windows кракозябры»; JEP 400 унифицировал дефолт на `UTF-8`.",
+                "related": "[[java-io-nio-interview#Q5]] основные классы IO; [[java-io-nio-interview#Q7]] паттерн Decorator; [[java-io-nio-interview#Q32]] работа с Charset при чтении и записи текста."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`InputStreamReader` работает только поверх `FileInputStream` и не поддерживает другие источники байтов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`InputStreamReader` принимает любой `InputStream`: `System.in`, `socket.getInputStream()`, `ByteArrayInputStream` — это универсальный мост байты→символы.",
+                "source_of_confusion": "Чаще всего в примерах `InputStreamReader` оборачивают именно файловый поток, отсюда вывод об ограниченности источника.",
+                "if_it_were_true": "Если бы он работал лишь с файлами, нельзя было бы читать `System.in` через `new InputStreamReader(System.in, UTF_8)`, а это стандартная практика.",
+                "how_it_should_be": "`InputStreamReader` оборачивает любой `InputStream`; источник байтов не ограничен файлом."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Символьные потоки (`Reader`/`Writer`) нельзя буферизировать через `BufferedReader`/`BufferedWriter`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Буферизация доступна любым символьным потокам: `BufferedReader` оборачивает любой `Reader`, включая `InputStreamReader`, добавляя `readLine()`.",
+                "source_of_confusion": "Кажется, что буферизация — фича только байтовых `BufferedInputStream`, поэтому её отказывают символьным потокам.",
+                "if_it_were_true": "Если бы символьные потоки нельзя было буферизировать, не существовало бы класса `BufferedReader` с методом `readLine()`, а он есть.",
+                "how_it_should_be": "`BufferedReader`/`BufferedWriter` буферизируют любой `Reader`/`Writer`; без буфера чтение идёт по syscall на символ и крайне медленно."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает паттерн `Decorator` в иерархии `Java IO`?",
+          "options": [
+            {
+              "text": "`BufferedInputStream` оборачивает `FileInputStream` и добавляет возможность читать строки через `readLine()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод `readLine()` есть у `BufferedReader`, а не у `BufferedInputStream`; последний работает с байтами и добавляет только буферизацию.",
+                "source_of_confusion": "Оба класса начинаются с `Buffered`, поэтому метод `readLine()` ошибочно переносят с символьного `BufferedReader` на байтовый.",
+                "if_it_were_true": "Если бы `BufferedInputStream.readLine()` существовал и был корректен, он правильно бы декодировал `UTF-8`, но deprecated-вариант читает как `ISO-8859-1`.",
+                "how_it_should_be": "Для построчного чтения текста нужен `new BufferedReader(new InputStreamReader(in, UTF_8))`; `BufferedInputStream` лишь буферизирует байты."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Паттерн `Decorator` в `Java IO` применяется только к байтовым потокам и не используется для символьных `Reader`/`Writer`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Decorator` применён и к символьным потокам: `FileReader` → `BufferedReader`, `OutputStreamWriter` → `BufferedWriter` — единообразно по всей иерархии.",
+                "source_of_confusion": "Байтовая ветка (`FileInputStream` → `Buffered` → `Data`) разбирается чаще, отсюда вывод, что символьная декорирование не использует.",
+                "if_it_were_true": "Если бы паттерн не работал для символьных потоков, не существовало бы `BufferedReader`, оборачивающего `Reader`, а он есть в JDK.",
+                "how_it_should_be": "`Decorator` одинаково применён к байтовым и символьным потокам; своего `BufferedCharReader` писать не нужно — есть `BufferedReader`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "В паттерне `Decorator` каждый класс-обёртка добавляет поведение базовому потоку, не меняя его интерфейс, что позволяет комбинировать слои без наследования: `FileInputStream` → `BufferedInputStream` → `DataInputStream`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый уровень добавляет функциональность (буферизацию, чтение примитивов), сохраняя контракт `InputStream`; это каноничный пример `Decorator` из GoF, применённый во всей иерархии `Java IO`.",
+                "example": "`Apache Commons` `IOUtils` и `Spring` `Resource.getInputStream()` отдают «голый» `InputStream`, а потребитель сам оборачивает: `new GZIPInputStream(new BufferedInputStream(raw))` для распаковки HTTP-ответов.",
+                "when_to_apply": "Паттерн используют, оборачивая потоки слоями по необходимости: raw → buffered → typed, не плодя наследников.",
+                "edge_cases": "Паттерн единообразен и для символьных потоков (`FileReader` → `BufferedReader`), но порядок обёрток важен: типизированный `DataInputStream` обычно ставят поверх `BufferedInputStream`.",
+                "related": "[[java-io-nio-interview#Q5]] классы IO и иерархия; [[java-io-nio-interview#Q6]] мост байты↔символы; [[java-io-nio-interview#Q8]] классы для текстовых файлов."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`DataInputStream` расширяет `FileInputStream`, поэтому может работать только с файлами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DataInputStream` оборачивает любой `InputStream` через декоратор, а не наследует `FileInputStream`; он работает поверх `SocketInputStream`, `ByteArrayInputStream` и любого источника.",
+                "source_of_confusion": "`DataInputStream` часто показывают поверх файлового потока, отсюда ложный вывод об ограничении источником-файлом.",
+                "if_it_were_true": "Если бы он наследовал `FileInputStream`, нельзя было бы парсить бинарный протокол поверх `Socket` через `dataIn.readInt()`, а это рабочий приём.",
+                "how_it_should_be": "`DataInputStream` — декоратор поверх любого `InputStream`; для бинарных протоколов его ставят и над `Socket`, не только над файлом."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие классы используются для чтения и записи текстовых файлов?",
+          "options": [
+            {
+              "text": "`Files.readAllLines()` читает файл лениво построчно, не загружая всё содержимое в память сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Files.readAllLines()` загружает все строки в `List<String>` целиком; ленивое потоковое чтение даёт `Files.lines()`, возвращающий `Stream<String>`.",
+                "source_of_confusion": "Оба метода начинаются с `lines`, поэтому ленивость `Files.lines()` ошибочно приписывают и `readAllLines()`.",
+                "if_it_were_true": "Если бы `readAllLines()` был ленивым, лог на 5GB не давал бы `OutOfMemoryError` на старте, но он падает мгновенно.",
+                "how_it_should_be": "Лениво читает только `Files.lines()`; `readAllLines()` грузит весь файл в `List` и не годится для больших данных."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Files.lines()` сам закрывает поток после завершения операции и не требует `try-with-resources`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Files.lines()` возвращает `Stream<String>`, удерживающий файловый дескриптор; для надёжного закрытия нужен `try-with-resources`.",
+                "source_of_confusion": "Привычка к `list.stream()`, который закрывать не надо, переносится на `Files.lines()`, у которого есть ресурс под капотом.",
+                "if_it_were_true": "Если бы поток закрывался сам, сервис с throughput 100 reads/sec не упирался бы в `Too many open files`, а он упирается.",
+                "how_it_should_be": "`Files.lines()` обязательно оборачивать в `try-with-resources`, иначе дескриптор течёт до GC, который может не наступить."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`FileReader` — рекомендуемый способ чтения текстовых файлов в новом коде, потому что это стандартный простой класс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FileReader(String)` до Java 18 использовал кодировку платформы, что ломает перенос; рекомендуется `Files.newBufferedReader(path, charset)` с явным `Charset`.",
+                "source_of_confusion": "`FileReader` короче в записи и кажется «стандартным», поэтому его выбирают для нового кода по привычке.",
+                "if_it_were_true": "Если бы `FileReader` был безопасен, легаси-код `new FileReader(\"data.txt\")` не ломал бы кириллицу при переносе Linux→Windows, а он ломает.",
+                "how_it_should_be": "В новом коде используют `Files.newBufferedReader(path, StandardCharsets.UTF_8)` с явной кодировкой, а не голый `FileReader`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Files.readAllLines()` читает все строки в `List<String>` сразу, а `Files.lines()` возвращает ленивый `Stream<String>`; для больших файлов предпочтительнее второй, так как читает строки по мере необходимости.",
+              "correct": true,
+              "sections": {
+                "explanation": "`readAllLines()` загружает весь файл в память, а `Files.lines()` тянет строки лениво через `Stream`, что позволяет обрабатывать файлы крупнее доступной оперативной памяти.",
+                "example": "Маленький конфиг (<10MB) удобно читать через `Files.readAllLines()`, а CSV в 1GB — `try (Stream<String> s = Files.lines(path)) { s.filter(...).map(...) }`.",
+                "when_to_apply": "Выбор делают по размеру файла: маленький конфиг — `readAllLines`, большой лог — ленивый `Files.lines`.",
+                "edge_cases": "`Files.lines()` держит файловый дескриптор, поэтому требует `try-with-resources`; забыть обернуть — значит словить `Too many open files` под нагрузкой.",
+                "related": "[[java-io-nio-interview#Q5]] классы IO; [[java-io-nio-interview#Q21]] операции класса Files; [[java-io-nio-interview#Q35]] корректное закрытие ресурсов и Stream от Files."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие классы используются для работы с сетевыми соединениями в `Java IO`?",
+          "options": [
+            {
+              "text": "В `Java IO`-сервере на каждое клиентское соединение создаётся отдельный поток, что не масштабируется при тысячах соединений; именно эту проблему решает `NIO` с `Selector`, мультиплексирующим тысячи каналов одним потоком.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый поток ест память (стек, метаданные) и даёт накладные расходы на context switch; `NIO` `Selector` позволяет одному потоку обслуживать тысячи каналов вместо потока на соединение.",
+                "example": "Для прототипа TCP-чата на 50 клиентов хватит `ExecutorService.newFixedThreadPool(50)` на `Java IO`, а для 50000 WebSocket-сессий берут `Netty`/`Vert.x` поверх `NIO`.",
+                "when_to_apply": "Эту модель учитывают при оценке масштабируемости: до сотни соединений хватит пула потоков, дальше нужен `NIO` или virtual threads.",
+                "edge_cases": "Java 21+ `Virtual Threads` дают альтернативу: `Thread.startVirtualThread(...)` поверх блокирующего `IO` делает миллион «потоков» дёшево, оживляя thread-per-connection.",
+                "related": "[[java-io-nio-interview#Q1]] модели IO и NIO; [[java-io-nio-interview#Q3]] блокирующий и неблокирующий I/O; [[java-io-nio-interview#Q11]] реализации Channel для сети."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`ServerSocket.accept()` — неблокирующий вызов, поэтому однопоточный сервер может принимать несколько соединений одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ServerSocket.accept()` блокирующий: он ждёт входящего соединения, блокируя поток; для параллелизма нужен поток на клиента или `NIO` `Selector`.",
+                "source_of_confusion": "Кажется, что раз сервер «слушает» порт, то `accept()` обслуживает много клиентов параллельно сам по себе.",
+                "if_it_were_true": "Если бы `accept()` был неблокирующим, single-threaded сервер обрабатывал бы всех клиентов, но остальные висят в TCP backlog и получают `Connection refused`.",
+                "how_it_should_be": "`accept()` блокирует поток до соединения; чтобы обслуживать многих клиентов, после `accept()` запускают поток или переходят на `NIO`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`DatagramSocket` используется для установки TCP-соединений, а `Socket` — для передачи UDP-датаграмм.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Socket`/`ServerSocket` — для TCP с установлением соединения, `DatagramSocket`/`DatagramPacket` — для UDP без соединения.",
+                "source_of_confusion": "Названия `Socket` и `DatagramSocket` похожи, поэтому их роли (TCP vs UDP) легко перепутать местами.",
+                "if_it_were_true": "Если бы `Socket` работал с UDP, отправка датаграмм через него не давала бы `Connection refused`, но именно это и происходит.",
+                "how_it_should_be": "`Socket` — это TCP, `DatagramSocket` — UDP; перепутать их значит выбрать неработающий транспорт для протокола."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "В `Java IO`-сервере один поток через `accept()` способен параллельно обслуживать тысячи соединений без `Selector`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один поток на блокирующем `accept()`/`read()` обрабатывает соединения строго по очереди; параллелизм даёт только пул потоков или `Selector`.",
+                "source_of_confusion": "Цикл `while (true) { accept(); handle(); }` выглядит «бесконечно принимающим», что создаёт иллюзию параллелизма.",
+                "if_it_were_true": "Если бы один поток тянул тысячи соединений, не понадобились бы ни пул потоков, ни `NIO`, но без них клиенты выстраиваются в очередь.",
+                "how_it_should_be": "Для масштабирования в `IO` нужен поток на соединение (или virtual threads), а в `NIO` — `Selector`; один блокирующий поток не параллелит."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Channel` и `Buffer` в `Java NIO` и как они связаны?",
+          "options": [
+            {
+              "text": "`Channel` однонаправленный (только чтение или только запись), аналогично `InputStream` и `OutputStream` в `Java IO`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Channel` двунаправленный: один и тот же `FileChannel` или `SocketChannel` может и читать, и писать — это и отличает каналы от потоков `IO`.",
+                "source_of_confusion": "Привычная картина из `IO`, где `InputStream` и `OutputStream` раздельны, переносится на каналы `NIO`.",
+                "if_it_were_true": "Если бы каналы были однонаправленными, два отдельных `FileChannel` на чтение и запись одного файла не давали бы `OverlappingFileLockException`, но они дают.",
+                "how_it_should_be": "Один `Channel` открывают с опциями `READ, WRITE` и двигают `position()`; разделять чтение и запись на разные каналы не нужно."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Channel` двунаправленный и работает только через `Buffer`: `channel.read(buffer)` помещает данные из канала в буфер, а `channel.write(buffer)` — из буфера в канал; `Buffer` — обязательный посредник.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поток данных «канал ↔ буфер ↔ программа» — основа `NIO`-модели; без `Buffer` операции чтения/записи через `Channel` невозможны, в отличие от прямого потока байт в `IO`.",
+                "example": "`Netty` `ByteBuf` (улучшенный `ByteBuffer`) — основа высоконагруженных Java-серверов, а `Apache Kafka` хранит сообщения в memory-mapped `MappedByteBuffer` поверх `FileChannel`.",
+                "when_to_apply": "Эту связку применяют в каждой `NIO`-операции: канал читает в буфер, программа берёт из буфера, затем буфер переиспользуют.",
+                "edge_cases": "Буфер изменяемый и переиспользуемый: создавать новый `ByteBuffer.allocate(8192)` на каждый цикл чтения — это лишний мусор в Eden, лучше `clear()` или пул буферов.",
+                "related": "[[java-io-nio-interview#Q1]] модели IO/NIO; [[java-io-nio-interview#Q11]] типы Channel; [[java-io-nio-interview#Q12]] устройство ByteBuffer."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Чтение из `FileChannel` идёт напрямую в программу, минуя `Buffer`, ради максимальной скорости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `NIO` данные всегда проходят через `Buffer`: `channel.read(buffer)` кладёт их в буфер, откуда программа берёт через `buffer.get()`.",
+                "source_of_confusion": "Желание «zero-copy без буфера» создаёт миф, что можно читать из канала прямо в переменные программы.",
+                "if_it_were_true": "Если бы чтение шло мимо буфера, не существовало бы сигнатуры `read(ByteBuffer)`, а реальный zero-copy (`transferTo`) копирует между каналами, не в программу.",
+                "how_it_should_be": "Данные всегда идут через `Buffer`; настоящий zero-copy — это `FileChannel.transferTo()` между двумя каналами, а не обход буфера."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Buffer` в `Java NIO` неизменяемый: после записи данных его нельзя перезаписать новыми.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Buffer` изменяемый: `clear()` и `compact()` сбрасывают его для повторной записи, а управление состоянием буфера — частый источник багов.",
+                "source_of_confusion": "Слово «контейнер фиксированного размера» наводит на мысль об immutability, хотя фиксирован лишь `capacity`, а не содержимое.",
+                "if_it_were_true": "Если бы буфер был неизменяемым, пришлось бы создавать `allocate(8192)` на каждый цикл, что и порождает мусор и GC-давление при таком заблуждении.",
+                "how_it_should_be": "Буфер переиспользуют через `clear()`/`compact()` или пул; фиксирован только `capacity`, данные перезаписываются свободно."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие реализации `Channel` существуют и для чего каждая?",
+          "options": [
+            {
+              "text": "`FileChannel` поддерживает неблокирующий режим точно так же, как `SocketChannel`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FileChannel` всегда блокирующий; для асинхронной работы с файлами существует отдельный `AsynchronousFileChannel`.",
+                "source_of_confusion": "Раз `FileChannel` — это канал `NIO`, кажется логичным, что и неблокирующий режим у него есть, как у сетевых каналов.",
+                "if_it_were_true": "Если бы `FileChannel` поддерживал non-blocking, `fileChannel.configureBlocking(false)` работал бы, но он бросает `IllegalBlockingModeException`.",
+                "how_it_should_be": "Неблокирующий режим — только у сетевых каналов; `FileChannel` блокирующий, а async-файлы делают через `AsynchronousFileChannel`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Pipe.SinkChannel` и `Pipe.SourceChannel` предназначены для межпроцессной коммуникации между разными JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Pipe` работает только внутри одной JVM между потоками; для межпроцессного обмена нужны сокеты, shared memory или mmap.",
+                "source_of_confusion": "Unix-pipe ассоциируется с IPC, и это переносится на `java.nio.channels.Pipe`, который на самом деле внутрипроцессный.",
+                "if_it_were_true": "Если бы `Pipe` связывал разные JVM, тест с одним процессом и прод с двумя процессами вели бы себя одинаково, но во втором случае данные не передаются.",
+                "how_it_should_be": "`Pipe` — внутрипроцессный канал между потоками одной JVM; для связи разных процессов используют сокеты или общую память."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`DatagramChannel` используется для UDP, а `SocketChannel`/`ServerSocketChannel` — для TCP, причём все три сетевых канала поддерживают и блокирующий, и неблокирующий режим через `configureBlocking(false)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`DatagramChannel` — UDP-сообщения без установления соединения; `SocketChannel` — TCP-клиент, `ServerSocketChannel` — TCP-приёмник; неблокирующий режим доступен всем сетевым каналам.",
+                "example": "Telemetry-агенты (`StatsD`, `Graphite`) шлют метрики через `DatagramChannel` — потеря пакетов не критична, важна скорость; `Netty` TCP-сервер строится на `ServerSocketChannel` + `Selector`.",
+                "when_to_apply": "Канал выбирают по протоколу и режиму: TCP — `SocketChannel`, UDP — `DatagramChannel`, файлы — `FileChannel`.",
+                "edge_cases": "`FileChannel` в этот список не входит как неблокирующий: он всегда блокирующий, а для асинхронной работы с файлами есть отдельный `AsynchronousFileChannel`.",
+                "related": "[[java-io-nio-interview#Q3]] блокирующий и неблокирующий режим; [[java-io-nio-interview#Q10]] связка Channel и Buffer; [[java-io-nio-interview#Q16]] Selector над каналами."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`AsynchronousFileChannel` поддерживает только асинхронную работу через `CompletableFuture`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AsynchronousFileChannel` поддерживает `Future<Integer>` и `CompletionHandler<V, A>`; `CompletableFuture` напрямую не возвращается, его оборачивают вручную.",
+                "source_of_confusion": "`CompletableFuture` — самый известный async-инструмент в Java, поэтому его ошибочно приписывают и async-каналам.",
+                "if_it_were_true": "Если бы метод возвращал `CompletableFuture`, не пришлось бы писать обёртку и не было бы выбора между `Future.get()` и callback.",
+                "how_it_should_be": "API даёт два варианта: `Future` (polling/blocking get) и `CompletionHandler` (callback); `CompletableFuture` нужно строить самому."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен `ByteBuffer`: `capacity`, `position`, `limit`, `mark`?",
+          "options": [
+            {
+              "text": "`clear()` физически очищает все байты в буфере, заполняя его нулями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`clear()` не стирает данные — лишь сбрасывает `position=0` и `limit=capacity`; старые байты остаются в памяти и перезапишутся новой записью.",
+                "source_of_confusion": "Название `clear` буквально звучит как «очистить содержимое», хотя метод чистит только указатели.",
+                "if_it_were_true": "Если бы `clear()` обнулял память, логирование «остатков» буфера после `clear()` не показывало бы токены прошлых запросов, но они там есть.",
+                "how_it_should_be": "`clear()` сбрасывает указатели, а не данные; для гарантии очистки чувствительных байт их затирают явно."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`capacity` можно изменить во время работы буфера через метод `setCapacity(int)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`capacity` фиксируется при создании и неизменна; чтобы «расширить» буфер, создают новый и копируют данные через `put(oldBuffer)`.",
+                "source_of_confusion": "Динамические коллекции вроде `ArrayList` умеют расти, и это ожидание переносят на `ByteBuffer`.",
+                "if_it_were_true": "Если бы `setCapacity` существовал, не пришлось бы пересоздавать буфер в горячей точке и плодить мусор в young gen, но метода нет.",
+                "how_it_should_be": "`capacity` неизменна; для большего размера создают новый буфер — менять ёмкость существующего нельзя."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`position` всегда совпадает с `limit` — это два названия одного и того же поля буфера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`position` и `limit` — разные атрибуты: `position` — текущий курсор, `limit` — граница допустимых операций; их совпадение значит «нечего читать/писать».",
+                "source_of_confusion": "В свежем буфере после `allocate` оба указывают близко к границам, что создаёт впечатление их тождественности.",
+                "if_it_were_true": "Если бы это было одно поле, выставление `buffer.position(buffer.limit())` перед записью не давало бы `BufferOverflowException`, но даёт.",
+                "how_it_should_be": "`position` и `limit` независимы и играют разные роли; путать их — прямой путь к `BufferOverflowException`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Действует инвариант `0 <= mark <= position <= limit <= capacity`; его нарушение даёт `InvalidMarkException` или `IllegalArgumentException`, а `position` указывает на следующий читаемый/пишемый байт.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это базовый контракт `ByteBuffer`: `mark` сохраняется через `mark()` и восстанавливается через `reset()`, а `flip()` инвалидирует `mark`, после чего `reset()` бросит `InvalidMarkException`.",
+                "example": "Парсеры протоколов (`Kafka` wire protocol, HTTP/2 frames) используют `mark()`/`reset()` для look-ahead — заглянуть на N байт вперёд и при несоответствии откатиться к началу фрейма.",
+                "when_to_apply": "Инвариант держат в голове при ручной работе с буфером, чтобы не словить `BufferOverflowException` или `InvalidMarkException`.",
+                "edge_cases": "`capacity` неизменяем после создания: чтобы «увеличить» буфер, создают новый и копируют данные через `put(oldBuffer)`; метода `setCapacity` не существует.",
+                "related": "[[java-io-nio-interview#Q10]] Channel и Buffer; [[java-io-nio-interview#Q13]] методы flip/clear/compact/rewind; [[java-io-nio-interview#Q14]] direct vs heap buffer."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делают методы `flip()`, `clear()`, `compact()`, `rewind()` в `ByteBuffer`?",
+          "options": [
+            {
+              "text": "`flip()` готовит буфер к чтению после записи (`limit=position`, `position=0`), а `compact()` переносит непрочитанный остаток в начало и оставляет режим записи, чтобы дописывать новые данные.",
+              "correct": true,
+              "sections": {
+                "explanation": "`flip` — переключение write→read; `compact` применяют, когда часть данных уже прочитана: оставшиеся байты сдвигаются в начало, и можно продолжать запись — типичный паттерн для socket I/O.",
+                "example": "NIO echo-сервер крутит цикл «read → flip → write часть → compact → продолжить read», и `compact()` гарантирует, что недописанные байты не теряются между select-итерациями.",
+                "when_to_apply": "Эти методы применяют в цикле socket I/O: `flip` перед чтением, `compact` после частичной записи, `clear` после полного слива.",
+                "edge_cases": "В отличие от них, `clear()` делает полный сброс к записи (`position=0`, `limit=capacity`) без сохранения хвоста, а `rewind()` лишь ставит `position=0`, не трогая `limit`.",
+                "related": "[[java-io-nio-interview#Q12]] атрибуты ByteBuffer; [[java-io-nio-interview#Q15]] scatter/gather операции; [[java-io-nio-interview#Q18]] неблокирующий сервер на NIO."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`clear()` очищает память буфера, поэтому после него ранее записанные байты прочитать уже нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`clear()` сбрасывает только указатели (`position=0`, `limit=capacity`); физически данные остаются, и чтение из «свежего» буфера вернёт старый мусор.",
+                "source_of_confusion": "Название `clear` намекает на стирание содержимого, хотя метод трогает только указатели.",
+                "if_it_were_true": "Если бы `clear()` стирал данные, дебаг-чтение `get(byte[])` после него не показывало бы остатки чужих TLS-пакетов, но показывает.",
+                "how_it_should_be": "`clear()` готовит к записи, не стирая байты; для безопасности чувствительные данные затирают вручную перед `clear()`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`rewind()` сбрасывает `position=0` и `limit=capacity`, что полностью эквивалентно `clear()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`rewind()` ставит только `position=0` и сбрасывает `mark`; `limit` он не трогает — это для повторного чтения тех же данных, а не подготовки к записи.",
+                "source_of_confusion": "Оба метода обнуляют `position`, поэтому их эффект кажется одинаковым.",
+                "if_it_were_true": "Если бы `rewind()` равнялся `clear()`, запись после него не упиралась бы в старый `limit`, но при достижении его прилетает `BufferOverflowException`.",
+                "how_it_should_be": "`rewind()` лишь перематывает `position` к нулю для перечтения; для подготовки к новой записи нужен `clear()`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`compact()` всегда копирует все байты буфера в начало, даже те, что уже были прочитаны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`compact()` копирует только непрочитанный остаток (`position..limit`) в начало; прочитанные байты отбрасываются.",
+                "source_of_confusion": "Слово «compact» наводит на мысль о копировании «всего содержимого», хотя сдвигается лишь хвост.",
+                "if_it_were_true": "Если бы он копировал всё, включая прочитанное, тесты на «полную копию» проходили бы, но реально остаются только непрочитанные байты.",
+                "how_it_should_be": "`compact()` сохраняет лишь непрочитанный хвост и сдвигает его в начало; уже прочитанные данные не копируются."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `direct buffer` и `heap buffer`?",
+          "options": [
+            {
+              "text": "`Direct buffer` всегда быстрее `heap buffer`, поэтому его стоит использовать везде по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Direct buffer медленный в создании (syscall) и не управляется обычным GC; для коротких и мелких операций heap buffer быстрее.",
+                "source_of_confusion": "Репутация direct buffer как «zero-copy» создаёт ощущение его универсального превосходства.",
+                "if_it_were_true": "Если бы он был быстрее везде, замена всех `allocate()` на `allocateDirect()` не давала бы `OOMError: Direct buffer memory` через час нагрузки, но даёт.",
+                "how_it_should_be": "Direct buffer выгоден для долгоживущего интенсивного I/O; для коротких операций берут heap buffer, чтобы не платить за дорогое создание."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Direct buffer` живёт в нативной памяти ОС вне Java heap, что устраняет копирование при native I/O, но создаётся медленнее и не учитывается в `-Xmx` (лимит задаёт `-XX:MaxDirectMemorySize`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`allocateDirect()` выделяет память через `Unsafe.allocateMemory()` напрямую у ОС, и JVM пишет/читает без промежуточной копии в kernel buffer; освобождение идёт через `Cleaner` при сборке обёртки.",
+                "example": "`Netty` `PooledByteBufAllocator` пулит direct buffers для долгоживущих TCP-соединений, а `Kafka` `RecordAccumulator` использует direct memory для сетевых батчей.",
+                "when_to_apply": "Тип буфера выбирают по времени жизни: долгоживущий интенсивный I/O — direct, короткие операции внутри JVM — heap.",
+                "edge_cases": "Direct memory имеет собственный лимит и асинхронное освобождение: в low-traffic сервисе GC может не сработать, direct memory накопится и даст `OOMError: Direct buffer memory` без падения heap.",
+                "related": "[[java-io-nio-interview#Q12]] атрибуты ByteBuffer; [[java-io-nio-interview#Q26]] memory-mapped files; [[java-io-nio-interview#Q38]] когда выбирать Channel/Buffer."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Heap buffer` хранится в нативной памяти, поэтому быстрее работает с native I/O, чем direct buffer.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: heap buffer лежит в куче JVM, и при I/O JVM копирует его данные во временный direct buffer для передачи в native код.",
+                "source_of_confusion": "Слово «buffer» ассоциируется с «быстрым I/O», и это смешивает роли heap и direct без учёта расположения памяти.",
+                "if_it_were_true": "Если бы heap buffer был в нативной памяти, не было бы лишнего копирования на каждый syscall, но именно оно режет throughput на 25% в Netty-приложении.",
+                "how_it_should_be": "В нативной памяти живёт direct buffer; heap buffer — в куче JVM и требует копирования при native I/O."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`MappedByteBuffer` — это разновидность heap buffer, который хранится в куче JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MappedByteBuffer` всегда direct — это отображение файла в нативную память через `mmap()`; в куче JVM memory-mapped операции невозможны.",
+                "source_of_confusion": "`MappedByteBuffer` наследует `ByteBuffer`, как и heap-вариант, поэтому его ошибочно относят к heap.",
+                "if_it_were_true": "Если бы он был heap buffer, вызов `mappedBuf.array()` возвращал бы backing-массив, но у direct buffer его нет — будет `UnsupportedOperationException`.",
+                "how_it_should_be": "`MappedByteBuffer` всегда direct (через `mmap`); у него нет backing-массива, и `array()` на нём бросает исключение."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `scatter/gather` операции в `NIO`?",
+          "options": [
+            {
+              "text": "`scatter` пишет один буфер параллельно сразу в несколько каналов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это противоположное направление и неверная семантика: scatter — это чтение из одного канала в несколько буферов, а не запись в каналы.",
+                "source_of_confusion": "Слово «разбросать» наводит на образ рассылки данных по многим каналам, хотя речь о распределении по буферам.",
+                "if_it_were_true": "Если бы scatter писал в несколько каналов, такая запись имела бы смысл, но реально попытка приведёт к `NonWritableChannelException` или порче данных.",
+                "how_it_should_be": "`scatter` читает один канал в массив буферов; запись из буферов в один канал — это `gather`, и оба работают с одним каналом."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`scatter` читает из одного канала параллельно во все буферы одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Заполнение буферов при scatter строго последовательное: сначала первый буфер до предела, затем второй, без параллелизма.",
+                "source_of_confusion": "Массив буферов `ByteBuffer[]` выглядит как набор «независимых приёмников», что наводит на мысль о параллельном заполнении.",
+                "if_it_were_true": "Если бы чтение шло параллельно, порядок байт в буферах был бы недетерминированным, но он строго определён порядком в массиве.",
+                "how_it_should_be": "`scatter` заполняет буферы по порядку, один за другим; ожидание параллелизма приведёт к гонкам в парсере."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`scatter` read читает из одного канала последовательно в массив `ByteBuffer[]`, заполняя буферы по порядку; `gather` write пишет в один канал из нескольких буферов — это и есть scatter/gather в `NIO`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каналы поддерживают `read(ByteBuffer[])` и `write(ByteBuffer[])`: при scatter данные заполняют первый буфер, затем второй и т.д., при gather — наоборот сливаются в канал.",
+                "example": "Применяют в протоколах с фиксированными заголовками (HTTP, custom binary): фиксированный header читают в один буфер, тело — в другой, разделяя парсинг без лишнего `memcpy`.",
+                "when_to_apply": "Scatter/gather применяют в протоколах с фиксированным заголовком, разделяя header и body по разным буферам одним вызовом.",
+                "edge_cases": "Заполнение строго последовательное, не параллельное: ожидать concurrency между буферами нельзя, иначе в логике парсера фрейма возникнут гонки.",
+                "related": "[[java-io-nio-interview#Q10]] Channel и Buffer; [[java-io-nio-interview#Q12]] устройство ByteBuffer; [[java-io-nio-interview#Q25]] FileChannel и его возможности."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`gather` объединяет несколько каналов в один общий `ByteBuffer`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`gather` — это запись из массива буферов в один канал, а не объединение каналов; работает он всегда с одним каналом.",
+                "source_of_confusion": "Слово «собрать» наводит на мысль о слиянии источников-каналов, хотя собираются именно буферы при записи.",
+                "if_it_were_true": "Если бы `gather` сливал каналы, существовал бы метод объединения каналов, но в API есть только `write(ByteBuffer[])` в один канал.",
+                "how_it_should_be": "`gather` пишет содержимое нескольких буферов в один канал по порядку; каналы он не объединяет."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает механизм `Selector` в `Java NIO`?",
+          "options": [
+            {
+              "text": "Канал должен быть в блокирующем режиме перед регистрацией в `Selector`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Регистрация требует строго неблокирующего режима: перед `register()` нужно вызвать `configureBlocking(false)`.",
+                "source_of_confusion": "Блокирующий режим — поведение по умолчанию у каналов, поэтому кажется, что и `Selector` работает с ним.",
+                "if_it_were_true": "Если бы блокирующий канал можно было регистрировать, не возникало бы исключения, но `register()` бросит `IllegalBlockingModeException`.",
+                "how_it_should_be": "Перед регистрацией в `Selector` канал переводят в неблокирующий режим через `configureBlocking(false)`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "После обработки ключ из `selectedKeys()` удаляется из набора автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Selector` не очищает `selectedKeys` сам — нужно вручную вызывать `it.remove()`, иначе ключ останется в наборе.",
+                "source_of_confusion": "Многие коллекции «сами управляют» состоянием, и это ожидание переносят на набор выбранных ключей.",
+                "if_it_were_true": "Если бы ключи удалялись автоматически, не было бы бесконечной обработки одного события и 100% CPU, но без `remove()` именно так и происходит.",
+                "how_it_should_be": "Обработанный ключ удаляют вручную через `it.remove()`; `Selector` сам набор выбранных ключей не чистит."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`selector.select()` возвращает все зарегистрированные каналы, даже те, что ещё не готовы к операциям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`select()` возвращает только каналы, готовые к указанным операциям; неготовые в `selectedKeys()` не попадают.",
+                "source_of_confusion": "Кажется, что `select()` отдаёт «всё, за чем следим», хотя он отдаёт лишь готовое подмножество.",
+                "if_it_were_true": "Если бы возвращались неготовые каналы, попытка `read` на них давала бы 0 байт и busy-loop, что и случается при неверном понимании семантики.",
+                "how_it_should_be": "`select()` отдаёт только готовые каналы; обрабатывать нужно лишь их, а не весь набор зарегистрированных."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Один поток обслуживает множество каналов через `Selector`, который является обёрткой над OS-механизмом мультиплексирования (`epoll` на Linux, `kqueue` на macOS/BSD), реагируя только на готовые каналы.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Selector` реализует паттерн `Reactor`: каналы регистрируют с интересующими операциями, `select()` блокируется до готовности хотя бы одного, затем обрабатываются ключи из `selectedKeys()`.",
+                "example": "Серверы на тысячи соединений (`Netty`, `Tomcat` NIO connector) держат десятки тысяч keep-alive соединений на небольшом числе потоков именно через `Selector`.",
+                "when_to_apply": "`Selector` применяют, когда одному потоку нужно обслуживать тысячи соединений вместо потока на каждое.",
+                "edge_cases": "Канал обязан быть в неблокирующем режиме (`configureBlocking(false)`) перед регистрацией, а обработанные ключи нужно вручную удалять через `it.remove()`, иначе будет повторная обработка событий.",
+                "related": "[[java-io-nio-interview#Q3]] блокирующий и неблокирующий I/O; [[java-io-nio-interview#Q17]] SelectionKey и операции; [[java-io-nio-interview#Q18]] неблокирующий сервер на NIO."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `SelectionKey` и какие операции он поддерживает?",
+          "options": [
+            {
+              "text": "Несколько интересующих операций регистрируют через побитовое ИЛИ: `register(selector, OP_READ | OP_WRITE)`, потому что `interestOps` — это битовая маска, а готовность проверяют через `isReadable()`/`isWritable()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`SelectionKey` связывает зарегистрированный канал с `Selector`, хранит готовые операции и произвольный attachment; интересующие операции задают битовой маской и меняют через `interestOps()`.",
+                "example": "Дуплексный сокет регистрируют как `register(selector, OP_READ | OP_WRITE)`, а состояние клиента (буфер) держат в attachment: `key.attach(buffer)` и `(ByteBuffer) key.attachment()`.",
+                "when_to_apply": "`SelectionKey` используют для регистрации интереса канала и хранения его состояния в attachment между итерациями цикла.",
+                "edge_cases": "Не каждая операция подходит любому каналу: `OP_ACCEPT` — только для `ServerSocketChannel`, `OP_CONNECT` — только для `SocketChannel`, иначе `IllegalArgumentException` при регистрации.",
+                "related": "[[java-io-nio-interview#Q16]] механизм Selector; [[java-io-nio-interview#Q18]] неблокирующий сервер на NIO; [[java-io-nio-interview#Q11]] какие каналы для каких операций."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`OP_ACCEPT` поддерживается у `SocketChannel` и используется для приёма входящих данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OP_ACCEPT` поддерживается только `ServerSocketChannel` — это сигнал о новом входящем соединении, а не о данных.",
+                "source_of_confusion": "`SocketChannel` тоже «принимает» данные, и слово «accept» путают с готовностью к чтению.",
+                "if_it_were_true": "Если бы `OP_ACCEPT` работал у `SocketChannel`, регистрация прошла бы, но она бросает `IllegalArgumentException` для неподдерживаемой операции.",
+                "how_it_should_be": "`OP_ACCEPT` — только для `ServerSocketChannel`; у `SocketChannel` готовность к данным проверяют через `OP_READ`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`attachment()` хранит данные глобально для всего `Selector`, общие для всех каналов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Attachment привязан к конкретному `SelectionKey` (и его каналу), а не к `Selector`; у каждого канала свой attachment.",
+                "source_of_confusion": "`Selector` управляет всеми ключами, поэтому attachment ошибочно считают общим хранилищем на уровне селектора.",
+                "if_it_were_true": "Если бы attachment был глобальным, буферы разных клиентов перезаписывали бы друг друга, и состояние соединений перепуталось бы.",
+                "how_it_should_be": "Attachment хранит состояние на уровне отдельного ключа/канала; общего хранилища у `Selector` нет."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`OP_CONNECT` используется для `ServerSocketChannel` при ожидании установления соединения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OP_CONNECT` — только для `SocketChannel` (клиентская сторона), он сигналит о завершении неблокирующего `connect()`.",
+                "source_of_confusion": "`ServerSocketChannel` тоже участвует в установлении соединений (через accept), что путают с событием connect.",
+                "if_it_were_true": "Если бы `OP_CONNECT` работал у `ServerSocketChannel`, событие приходило бы, но оно никогда не произойдёт — будет бесконечное ожидание.",
+                "how_it_should_be": "`OP_CONNECT` принадлежит `SocketChannel` (клиенту); серверный канал использует `OP_ACCEPT`."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать неблокирующий сервер на `NIO`?",
+          "options": [
+            {
+              "text": "Принимающий канал `ServerSocketChannel` может оставаться блокирующим при работе с `Selector`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все каналы в `Selector` обязаны быть неблокирующими, включая принимающий `ServerSocketChannel`.",
+                "source_of_confusion": "Серверный сокет «просто слушает», и кажется, что для него блокирующий режим допустим.",
+                "if_it_were_true": "Если бы блокирующий `ServerSocketChannel` регистрировался, ошибки бы не было, но `register()` бросит `IllegalBlockingModeException`.",
+                "how_it_should_be": "`ServerSocketChannel`, как и все каналы в `Selector`, переводят в неблокирующий режим перед регистрацией."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "После `selector.select()` обязательно вызывать `it.remove()` для каждого обработанного ключа, потому что `Selector` не очищает `selectedKeys` сам — иначе тот же ключ обработается повторно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каноничный цикл: `select()` → итерация по `selectedKeys()` → `it.next(); it.remove();` → обработка по типу (`isAcceptable`/`isReadable`), и удаление ключа обязательно в начале итерации.",
+                "example": "В echo-сервере на `Selector` после accept регистрируют клиентский `SocketChannel` с `OP_READ` и буфером в attachment, а в `handleRead` обработанный ключ всё равно удаляют из набора.",
+                "when_to_apply": "Эти правила соблюдают в любом ручном `NIO`-сервере; в готовых фреймворках (`Netty`) они уже инкапсулированы.",
+                "edge_cases": "Все каналы в `Selector` обязаны быть неблокирующими, при `bytesRead == -1` канал закрывают (`close()`), а в non-blocking `write()` может записать не всё — нужен цикл или `OP_WRITE`.",
+                "related": "[[java-io-nio-interview#Q16]] механизм Selector; [[java-io-nio-interview#Q17]] SelectionKey и операции; [[java-io-nio-interview#Q13]] flip/compact для socket I/O."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "При `bytesRead == -1` нужно продолжить чтение из канала без его закрытия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`-1` означает, что клиент закрыл соединение — канал нужно `close()`, иначе дескриптор течёт.",
+                "source_of_confusion": "По аналогии с временным отсутствием данных (`0`) значение `-1` ошибочно считают «попробуй ещё раз».",
+                "if_it_were_true": "Если бы при `-1` чтение можно было продолжать, не возникала бы утечка дескрипторов, но без `close()` через часы будет `Too many open files`.",
+                "how_it_should_be": "При `-1` (EOF/закрытие клиентом) канал закрывают через `close()`; продолжать чтение бессмысленно."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`client.write(buffer)` в неблокирующем режиме гарантированно запишет все байты за один вызов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В non-blocking режиме `write()` может записать меньше, чем `remaining()`; для дозаписи нужен цикл или регистрация `OP_WRITE`.",
+                "source_of_confusion": "В блокирующем `IO` запись обычно «уходит целиком», и это ожидание переносят на неблокирующий `NIO`.",
+                "if_it_were_true": "Если бы `write()` всегда писал всё, ответы не обрезались бы, но при заполненном TCP send-buffer часть данных не уходит.",
+                "how_it_should_be": "В non-blocking режиме недописанный буфер оставляют в attachment и дописывают по `OP_WRITE` после готовности канала."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `NIO.2` и чем он отличается от классического `NIO`?",
+          "options": [
+            {
+              "text": "`NIO.2` полностью заменяет классический `NIO` (`Channel`, `Buffer`, `Selector`) более удобным файловым API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NIO.2` дополняет классический `NIO`, а не заменяет: `Selector` и каналы остаются актуальными для сетевого мультиплексирования.",
+                "source_of_confusion": "«2» в названии воспринимается как «новая версия вместо старой», а не как дополнение.",
+                "if_it_were_true": "Если бы `NIO.2` заменял `Selector`, нельзя было бы строить high-load серверы, но `Files` API не умеет мультиплексировать сокеты.",
+                "how_it_should_be": "`NIO.2` добавляет файловый и async-слой поверх `NIO`; `Channel`/`Selector` он не отменяет."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`NIO.2` появился в `Java 1.4` вместе с первым `NIO`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NIO.2` (`java.nio.file`) — это Java 7; в Java 1.4 вышел только первый `NIO` (`Channel`/`Buffer`/`Selector`).",
+                "source_of_confusion": "Оба относятся к семейству `NIO`, поэтому даты их появления легко слить в одну.",
+                "if_it_were_true": "Если бы `NIO.2` был в Java 1.4, сборка под Java 6 находила бы `java.nio.file.Path`, но там будет `ClassNotFoundException`.",
+                "how_it_should_be": "Первый `NIO` — Java 1.4, `NIO.2` (`java.nio.file`) — Java 7; это разные релизы."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`NIO.2` (Java 7, пакет `java.nio.file`) добавляет `WatchService`, `FileVisitor`, `AsynchronousFileChannel` и высокоуровневый файловый API (`Path`, `Files`) поверх существующего классического `NIO`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`NIO.2` дополняет, а не заменяет каналы/буферы/селекторы: это высокоуровневый файловый API плюс асинхронные каналы, а `java.io.File` он делает устаревшим.",
+                "example": "Hot-reload конфигов делают через `WatchService`, обход дерева каталогов — через `Files.walk`/`FileVisitor`, а замену `new File(...)` — через `Path.of(...)` и `Files.exists(...)`.",
+                "when_to_apply": "`NIO.2` берут для файловых задач (обход дерева, watch, async-файлы), оставляя `Selector` для сетевого мультиплексирования.",
+                "edge_cases": "Важно не путать версии: классический `NIO` — это Java 1.4 (`java.nio`, `Channel`/`Selector`), а `NIO.2` — Java 7; `Path` и `File` — разные типы, кастовать одно к другому нельзя.",
+                "related": "[[java-io-nio-interview#Q20]] работа с Path и Paths; [[java-io-nio-interview#Q21]] операции класса Files; [[java-io-nio-interview#Q24]] WatchService и отслеживание изменений."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Path` и `File` — это один и тот же интерфейс с разными именами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Path` (`java.nio.file`) — современная замена `java.io.File`; это разные типы из разных пакетов.",
+                "source_of_confusion": "Оба представляют путь к файлу, поэтому их считают взаимозаменяемыми.",
+                "if_it_were_true": "Если бы это был один тип, кастование `Path` к `File` работало бы, но даёт `ClassCastException`; переход делают через `path.toFile()`.",
+                "how_it_should_be": "`Path` и `File` — разные типы; между ними конвертируют через `toFile()`/`File.toPath()`, а не кастом."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работать с `Path` и `Paths`?",
+          "options": [
+            {
+              "text": "`Path.of(...)` — рекомендуемый способ создания пути начиная с `Java 7`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Path.of()` появился в Java 11; в Java 7–10 использовали `Paths.get()`.",
+                "source_of_confusion": "И `Path.of`, и `Paths.get` создают `Path`, поэтому их даты появления путают.",
+                "if_it_were_true": "Если бы `Path.of()` был в Java 7, сборка под Java 8 находила бы метод, но даёт `NoSuchMethodError`.",
+                "how_it_should_be": "`Path.of()` — это Java 11+; в более ранних версиях создают путь через `Paths.get()`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`path.normalize()` гарантирует, что соответствующий файл существует на диске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`normalize()` — чисто синтаксическая операция (схлопывает `./` и `../`); существование файла она не проверяет.",
+                "source_of_confusion": "«Нормализованный» путь звучит как «проверенный и реальный», хотя проверяется только синтаксис.",
+                "if_it_were_true": "Если бы `normalize()` проверял ФС, доступ к несуществующему файлу не давал бы `NoSuchFileException`, но он его даёт.",
+                "how_it_should_be": "`normalize()` чистит путь синтаксически; проверять существование нужно через `Files.exists(path)`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Path` — это класс, а `Paths` — интерфейс, который `Path` реализует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Path` — интерфейс, а `Paths` — utility-класс со статическими фабричными методами.",
+                "source_of_confusion": "Имена `Path` и `Paths` похожи, поэтому их роли (интерфейс vs класс) меняют местами.",
+                "if_it_were_true": "Если бы `Path` был классом, вызов `new Path(...)` компилировался бы, но это ошибка компиляции — `Path` нельзя инстанцировать напрямую.",
+                "how_it_should_be": "`Path` — интерфейс, `Paths` — utility-класс; экземпляр пути получают через `Path.of()` или `Paths.get()`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`base.resolve(other)` склеивает пути с учётом абсолютности `other`: если `other` абсолютный — возвращается он сам, иначе результат склеивается относительно `base`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Path` — интерфейс, заменяющий `java.io.File`; ключевые операции — `getFileName()`, `getParent()`, `resolve()` (склейка), `relativize()` (относительный путь), `normalize()` (синтаксическая чистка).",
+                "example": "Строят пути так: `configDir.resolve(\"app.yml\")` даст путь внутри `configDir`, а `from.relativize(to)` вычислит относительный путь между двумя абсолютными.",
+                "when_to_apply": "`resolve`/`relativize`/`normalize` применяют при построении и нормализации путей вместо ручной склейки строк.",
+                "edge_cases": "`normalize()` — чисто синтаксическая операция (убирает `./` и `../`) и не проверяет существование файла на диске; `Path` — интерфейс, а `Paths` — utility-класс со статическими методами.",
+                "related": "[[java-io-nio-interview#Q19]] что такое NIO.2; [[java-io-nio-interview#Q21]] операции класса Files; [[java-io-nio-interview#Q22]] копирование, перемещение и удаление файлов."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные операции предоставляет класс `Files`?",
+          "options": [
+            {
+              "text": "`Files.lines(path)` возвращает ленивый `Stream<String>`, который держит открытый файловый дескриптор, поэтому его обязательно оборачивать в `try-with-resources`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Files` — утилитный класс со статическими методами: проверки (`exists`, `isDirectory`), чтение (`readAllBytes`, `readString`, `lines`), запись (`write`, `writeString`), создание и атрибуты.",
+                "example": "Ленивое чтение оформляют как `try (Stream<String> s = Files.lines(p)) { ... }`, потому что возвращаемый `Stream` — это ресурс, владеющий дескриптором.",
+                "when_to_apply": "Методы `Files` выбирают под задачу: проверки, чтение/запись, создание каталогов, чтение атрибутов — всё статикой.",
+                "edge_cases": "Не все операции безопасны для больших файлов: `readAllBytes` грузит весь файл в `byte[]` (OOM на 10GB), а `createDirectory` не создаёт промежуточные каталоги — для цепочки нужен `createDirectories`.",
+                "related": "[[java-io-nio-interview#Q8]] классы для текстовых файлов; [[java-io-nio-interview#Q22]] копирование/перемещение/удаление; [[java-io-nio-interview#Q35]] закрытие Stream от Files."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Files.lines(path)` загружает весь файл в память сразу, как `readAllLines`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Files.lines` — ленивый `Stream`, читающий файл построчно по требованию, а не целиком в память.",
+                "source_of_confusion": "Метод тоже относится к `Files` и работает со строками, поэтому его путают с eager `readAllLines`.",
+                "if_it_were_true": "Если бы `Files.lines` грузил всё сразу, не было бы смысла в его ленивости для больших файлов, но именно она позволяет обрабатывать файлы крупнее RAM.",
+                "how_it_should_be": "`Files.lines` читает лениво построчно; целиком в память грузит `readAllLines`/`readAllBytes`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Files.readAllBytes` безопасно работает с файлом 10 ГБ без риска нехватки памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Files.readAllBytes` грузит весь файл в `byte[]`, и на 10GB это `OutOfMemoryError`.",
+                "source_of_confusion": "Метод выглядит «простым и универсальным», поэтому его применяют и к огромным файлам.",
+                "if_it_were_true": "Если бы он был безопасен на больших файлах, чтение многогигабайтного лога не валило бы JVM, но оно валит.",
+                "how_it_should_be": "Для больших файлов используют потоковое чтение (`Files.lines`, `FileChannel`), а не `readAllBytes`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Files.createDirectory(\"a/b/c\")` создаст промежуточные каталоги `a` и `b`, если их нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только `createDirectories` создаёт всю цепочку; `createDirectory` бросит `NoSuchFileException`, если родителей нет.",
+                "source_of_confusion": "Имена методов почти совпадают (`createDirectory` vs `createDirectories`), отсюда путаница в поведении.",
+                "if_it_were_true": "Если бы `createDirectory` создавал цепочку, приложение не падало бы при первом запуске на чистой машине, но оно падает.",
+                "how_it_should_be": "Цепочку каталогов создаёт `createDirectories`; `createDirectory` создаёт лишь один уровень при существующем родителе."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как копировать, перемещать и удалять файлы через `NIO.2`?",
+          "options": [
+            {
+              "text": "`Files.delete(dir)` рекурсивно удаляет непустой каталог вместе со всем содержимым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Files.delete` для непустого каталога бросит `DirectoryNotEmptyException`; рекурсию пишут через `walkFileTree` и удаление файлов перед каталогами.",
+                "source_of_confusion": "В shell `rm -rf` удаляет рекурсивно, и это поведение ожидают от `Files.delete`.",
+                "if_it_were_true": "Если бы `delete` удалял рекурсивно, на проде не оставался бы мусор, но `DirectoryNotEmptyException` прерывает операцию и каталог остаётся.",
+                "how_it_should_be": "`Files.delete` удаляет только пустой каталог или файл; рекурсивное удаление реализуют обходом дерева."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`StandardCopyOption.ATOMIC_MOVE` гарантирует атомарность перемещения только в пределах одной файловой системы; на разные ФС ОС не может переименовать файл атомарно.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Files.move` с `ATOMIC_MOVE` атомарен лишь в одном томе; `Files.copy` по умолчанию бросает `FileAlreadyExistsException`, а `Files.delete` — `NoSuchFileException`, если файла нет.",
+                "example": "Для ротации файлов в одном томе применяют `Files.move(src, dst, ATOMIC_MOVE)`; рекурсивное удаление каталога делают через `Files.walkFileTree` с `SimpleFileVisitor`.",
+                "when_to_apply": "Эти опции выбирают по требованиям: атомарность ротации — `ATOMIC_MOVE`, перезапись — `REPLACE_EXISTING`.",
+                "edge_cases": "Поведение зависит от опций: без `REPLACE_EXISTING` копирование на существующую цель падает, `deleteIfExists` не бросает исключение (возвращает `false`), а удаление непустого каталога даёт `DirectoryNotEmptyException`.",
+                "related": "[[java-io-nio-interview#Q20]] работа с Path и resolve; [[java-io-nio-interview#Q21]] операции класса Files; [[java-io-nio-interview#Q23]] обход дерева каталогов через FileVisitor."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Без опции `REPLACE_EXISTING` метод `Files.copy` молча перезапишет существующую цель.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `Files.copy` бросит `FileAlreadyExistsException`, если цель существует; для перезаписи нужен `REPLACE_EXISTING`.",
+                "source_of_confusion": "Команда `cp` часто перезаписывает по умолчанию, и это ожидание переносят на `Files.copy`.",
+                "if_it_were_true": "Если бы `copy` молча перезаписывал, непойманное исключение не прерывало бы batch-копирование, но оно прерывает.",
+                "how_it_should_be": "Перезапись требует явного `StandardCopyOption.REPLACE_EXISTING`; без него существующая цель вызывает исключение."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Files.deleteIfExists` бросает `NoSuchFileException`, если файла нет на диске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В отличие от `delete`, `deleteIfExists` просто возвращает `false` при отсутствии файла, без исключения.",
+                "source_of_confusion": "Оба метода удаляют файл, поэтому семантику исключений `delete` переносят и на `deleteIfExists`.",
+                "if_it_were_true": "Если бы `deleteIfExists` бросал исключение, его суть («удали, если есть») терялась бы, и пришлось бы оборачивать каждый вызов в `try/catch`.",
+                "how_it_should_be": "`deleteIfExists` тихо возвращает `false` для отсутствующего файла; исключение бросает `delete`."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `FileVisitor` и как обходить дерево каталогов?",
+          "options": [
+            {
+              "text": "`Files.walk` по умолчанию обходит каталог только до глубины 1 (один уровень).",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `Files.walk` обходит до `Integer.MAX_VALUE` уровней; ограничить глубину можно перегрузкой с `maxDepth`.",
+                "source_of_confusion": "`WatchService` действительно следит за одним уровнем, и это ограничение ошибочно переносят на `Files.walk`.",
+                "if_it_were_true": "Если бы `walk` шёл лишь на уровень, поиск находил бы файлы только в корне, и файлы в подкаталогах терялись бы.",
+                "how_it_should_be": "`Files.walk` по умолчанию обходит всё дерево рекурсивно; глубину ограничивают явным `maxDepth`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Files.walk` автоматически закрывает возвращённый `Stream<Path>` после обхода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Stream` от `Files.walk` держит файловый дескриптор и требует `try-with-resources` для закрытия.",
+                "source_of_confusion": "Привычка к обычным стримам (`list.stream()`), которые закрывать не нужно, переносится на `Files.walk`.",
+                "if_it_were_true": "Если бы поток закрывался сам, на длинных циклах обхода не было бы утечки дескрипторов, но без `try-with-resources` она возникает.",
+                "how_it_should_be": "`Files.walk`/`Files.find`/`Files.list` возвращают ресурс-`Stream`, который оборачивают в `try-with-resources`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Для рекурсивного удаления коллбэки вызывают сначала `visitFile` (чистим файлы), затем `postVisitDirectory` (удаляем сам каталог) — то есть «снизу вверх», удаляя детей раньше родителей.",
+              "correct": true,
+              "sections": {
+                "explanation": "`FileVisitor<Path>` — интерфейс с коллбэками `preVisitDirectory`, `visitFile`, `visitFileFailed`, `postVisitDirectory`; `Files.walkFileTree` вызывает их при обходе дерева.",
+                "example": "Реализуют `rm -rf` через `SimpleFileVisitor`: в `visitFile` делают `Files.delete(file)`, а в `postVisitDirectory` — `Files.delete(dir)`, гарантируя удаление содержимого до каталога.",
+                "when_to_apply": "`FileVisitor` применяют для рекурсивных операций над деревом: поиск, подсчёт, удаление с правильным порядком обхода.",
+                "edge_cases": "Есть и стримовые альтернативы (`Files.walk`, `Files.find`), но возвращаемый `Stream<Path>` держит дескриптор и требует `try-with-resources`, а глубину обхода `walk` по умолчанию не ограничивает.",
+                "related": "[[java-io-nio-interview#Q21]] операции класса Files; [[java-io-nio-interview#Q22]] копирование/перемещение/удаление; [[java-io-nio-interview#Q24]] WatchService для отслеживания изменений."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`visitFileFailed` — это terminal-коллбэк, который останавливает весь обход дерева.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вернув `FileVisitResult.CONTINUE` из `visitFileFailed`, обход продолжают; остановить его можно `TERMINATE`.",
+                "source_of_confusion": "Слово «failed» наводит на мысль о фатальной остановке всего процесса.",
+                "if_it_were_true": "Если бы он был terminal, одна ошибка прав доступа ломала бы весь скан репозитория, но `CONTINUE` позволяет пропустить файл и идти дальше.",
+                "how_it_should_be": "`visitFileFailed` лишь обрабатывает ошибку конкретного файла; его результат (`CONTINUE`/`TERMINATE`) решает, продолжать ли обход."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `WatchService` и как отслеживать изменения файлов?",
+          "options": [
+            {
+              "text": "После обработки событий вызывать `key.reset()` необязательно — ключ продолжит работать сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `key.reset()` `WatchKey` становится недействительным, и последующие события теряются.",
+                "source_of_confusion": "Кажется, что ключ «живёт» постоянно после регистрации, без необходимости его переактивации.",
+                "if_it_were_true": "Если бы `reset()` был необязателен, мониторинг работал бы непрерывно, но без него он срабатывает один раз и «замолкает».",
+                "how_it_should_be": "После обработки событий ключ обязательно сбрасывают через `key.reset()`, иначе мониторинг прекращается."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`event.context()` возвращает абсолютный путь к изменённому файлу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`event.context()` возвращает относительный `Path` (имя файла), который нужно склеить с отслеживаемым каталогом через `dir.resolve(...)`.",
+                "source_of_confusion": "Логично ожидать «полный путь к файлу события», хотя API отдаёт лишь имя относительно каталога.",
+                "if_it_were_true": "Если бы путь был абсолютным, открытие файла из события работало бы напрямую, но даёт `NoSuchFileException` без склейки с `dir`.",
+                "how_it_should_be": "`event.context()` даёт относительное имя; абсолютный путь получают через `dir.resolve(event.context())`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`WatchService` реализован через polling каталога каждые 100 мс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WatchService` использует native-механизмы ОС (`inotify` на Linux, `kqueue` на macOS, `ReadDirectoryChangesW` на Windows), а не периодический опрос.",
+                "source_of_confusion": "Многие самописные «вотчеры» делают именно polling, и это поведение приписывают стандартному `WatchService`.",
+                "if_it_were_true": "Если бы он опрашивал каждые 100 мс, события приходили бы с фиксированной задержкой, но native-механизмы уведомляют почти мгновенно.",
+                "how_it_should_be": "`WatchService` опирается на событийные native-API ОС; фиксированного polling-интервала у него нет."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`WatchService` отслеживает только один уровень каталога — подкаталоги нужно регистрировать отдельно; рекурсия не встроена, её реализуют обходом дерева плюс `register` для каждого подкаталога.",
+              "correct": true,
+              "sections": {
+                "explanation": "`WatchService` (NIO.2, Java 7) наблюдает за событиями `ENTRY_CREATE`/`ENTRY_DELETE`/`ENTRY_MODIFY` в зарегистрированных каталогах, используя native-механизмы ОС (`inotify`/`kqueue`/`ReadDirectoryChangesW`).",
+                "example": "Применяют для hot-reload конфигов в одной папке: для рекурсивного наблюдения за деревом обходят его и регистрируют каждый подкаталог отдельным `register`.",
+                "when_to_apply": "`WatchService` применяют для hot-reload и обработки входящих файлов, регистрируя каждый нужный каталог отдельно.",
+                "edge_cases": "Важно правильно работать с ключом: после `pollEvents()` нужно вызвать `key.reset()` (иначе ключ инвалидируется), а `event.context()` возвращает относительный путь, который склеивают с каталогом.",
+                "related": "[[java-io-nio-interview#Q19]] что такое NIO.2 и его возможности; [[java-io-nio-interview#Q23]] обход дерева каталогов; [[java-io-nio-interview#Q21]] операции класса Files."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `FileChannel` и чем он отличается от потоков?",
+          "options": [
+            {
+              "text": "`FileChannel.force(true)` сбрасывает на диск и данные, и метаданные (`fsync`), а `force(false)` — только данные (`fdatasync`); это даёт durability в WAL/журналах БД.",
+              "correct": true,
+              "sections": {
+                "explanation": "`FileChannel` в отличие от `FileInputStream`/`FileOutputStream` поддерживает произвольный доступ (`position(long)`), memory-mapping (`map()`), блокировку файла (`lock()`) и zero-copy (`transferTo/From`).",
+                "example": "В журналах БД и WAL после записи вызывают `channel.force(true)`, чтобы гарантировать, что и данные, и метаданные физически попали на диск до подтверждения транзакции.",
+                "when_to_apply": "`FileChannel` берут, когда нужен произвольный доступ, mmap, file lock, zero-copy или scatter/gather по файлу.",
+                "edge_cases": "`channel.lock()` даёт OS-level lock между процессами, а не между потоками одной JVM; для потоков внутри JVM нужна `synchronized`/`ReentrantLock`.",
+                "related": "[[java-io-nio-interview#Q26]] memory-mapped files; [[java-io-nio-interview#Q27]] transferTo/transferFrom; [[java-io-nio-interview#Q35]] корректное закрытие ресурсов."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`FileInputStream` поддерживает произвольный доступ к файлу через метод `seek()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Произвольный доступ дают `FileChannel.position(long)` или `RandomAccessFile`; у `FileInputStream` метода `seek()` нет.",
+                "source_of_confusion": "В других языках/API у потоков бывает `seek`, и это ожидание переносят на `FileInputStream`.",
+                "if_it_were_true": "Если бы `FileInputStream` умел seek, работа с бинарными форматами не требовала бы перечитывания потока целиком, но без seek приходится именно так.",
+                "how_it_should_be": "Для произвольного доступа используют `FileChannel.position()` или `RandomAccessFile`; `FileInputStream` читает только последовательно."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`channel.lock()` блокирует файл внутри JVM, защищая его от других потоков того же процесса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`channel.lock()` — это OS-level блокировка между процессами; от потоков одной JVM она не защищает, для них нужна `synchronized`/`ReentrantLock`.",
+                "source_of_confusion": "Слово «lock» ассоциируется с внутрипроцессной синхронизацией потоков, как у `ReentrantLock`.",
+                "if_it_were_true": "Если бы `lock()` синхронизировал потоки JVM, не возникало бы гонок данных между ними, но они возникают — нужна Java-блокировка.",
+                "how_it_should_be": "`FileLock` координирует доступ между процессами на уровне ОС; потоки внутри JVM синхронизируют средствами `java.util.concurrent`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`FileChannel` не поддерживает scatter/gather-операции с массивами буферов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FileChannel` поддерживает scatter/gather: `read(ByteBuffer[])` и `write(ByteBuffer[])`.",
+                "source_of_confusion": "Scatter/gather ассоциируют только с сетевыми каналами, поэтому отказывают в них файловому.",
+                "if_it_were_true": "Если бы `FileChannel` не умел scatter/gather, нельзя было бы одним syscall читать заголовок и тело в разные буферы, но это работает.",
+                "how_it_should_be": "`FileChannel` поддерживает scatter/gather через `read(ByteBuffer[])`/`write(ByteBuffer[])`, позволяя разделять header и body."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `Memory-mapped` files (`MappedByteBuffer`)?",
+          "options": [
+            {
+              "text": "Размер mapping в `channel.map(...)` ограничен только размером самого файла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметр `size` имеет тип `long`, но фактический предел одного mapping — `Integer.MAX_VALUE` (~2 ГБ), так как индексация идёт через `int`.",
+                "source_of_confusion": "Сигнатура с `long`-параметром создаёт впечатление поддержки сколь угодно больших отображений.",
+                "if_it_were_true": "Если бы лимитом был только размер файла, отображение 10 ГБ одним вызовом работало бы, но даёт `IllegalArgumentException`.",
+                "how_it_should_be": "Один `map()` ограничен ~2 ГБ; большие файлы отображают окнами по `Integer.MAX_VALUE` либо через `MemorySegment` (Java 21+)."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`MappedByteBuffer` освобождается только при GC обёртки-`DirectByteBuffer`: публичного `unmap()` нет, поэтому память (и «занятость» файла) держится до сборки мусора.",
+              "correct": true,
+              "sections": {
+                "explanation": "`channel.map(mode, offset, size)` отображает файл (или его часть) в нативную память, а ОС подгружает страницы по требованию; явного освобождения нет — оно отложено до GC.",
+                "example": "На Windows это критично (нельзя удалить отображённый файл, пока mapping жив), поэтому большие файлы маппят кусками (chunks) и учитывают отложенное освобождение.",
+                "when_to_apply": "mmap применяют для больших файлов с частым произвольным доступом (индексы, БД), но не для мелких файлов.",
+                "edge_cases": "Один `map()` ограничен `Integer.MAX_VALUE` (~2 ГБ), запись через `put` идёт в page cache (для гарантии нужен `force()`), а `READ_ONLY` запрещает запись (`ReadOnlyBufferException`).",
+                "related": "[[java-io-nio-interview#Q14]] direct vs heap buffer; [[java-io-nio-interview#Q25]] FileChannel и его возможности; [[java-io-nio-interview#Q28]] обработка больших файлов окнами."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Запись через `mappedBuffer.put` мгновенно попадает на диск, как при синхронной записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запись идёт в page cache ОС; для гарантии попадания на диск нужен `mappedBuffer.force()`.",
+                "source_of_confusion": "Раз буфер «отображает файл», кажется, что любое изменение тут же физически записывается.",
+                "if_it_were_true": "Если бы запись была мгновенной, сбой питания не приводил бы к потере данных, но без `force()` несброшенные страницы теряются.",
+                "how_it_should_be": "Изменения через `put` сначала в page cache; для durability вызывают `force()` (аналог `msync`)."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Режим `READ_ONLY` позволяет модифицировать буфер для оптимизации, пока изменения не сбрасываются в файл.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Любая попытка `put` в `READ_ONLY`-отображении бросает `ReadOnlyBufferException`; модифицировать его нельзя вовсе.",
+                "source_of_confusion": "Кажется, что «только чтение» относится лишь к файлу, а сам буфер в памяти менять можно.",
+                "if_it_were_true": "Если бы `READ_ONLY` допускал запись в память, не было бы runtime-падения, но `put` сразу даёт `ReadOnlyBufferException`.",
+                "how_it_should_be": "`READ_ONLY` полностью запрещает запись в буфер; для изменений нужен `READ_WRITE` или `PRIVATE` (copy-on-write)."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `transferTo()` / `transferFrom()` в `FileChannel`?",
+          "options": [
+            {
+              "text": "`transferTo` копирует данные через user-space буфер, как обычная связка `read+write`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главное преимущество `transferTo` — обход user-space: на JVM он транслируется в `sendfile`, а JNI лишь пробрасывает дескрипторы каналов.",
+                "source_of_confusion": "Раз это «передача данных», кажется, что под капотом тот же `read` в буфер и `write` из него.",
+                "if_it_were_true": "Если бы он копировал через user-space, throughput не рос бы, но zero-copy даёт +30–65% именно за счёт отсутствия копий в user-space.",
+                "how_it_should_be": "`transferTo` обходит user-space через `sendfile`; обычный `read+write` через `ByteBuffer` копирует данные четырежды."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Zero-copy в `transferTo` полностью пропускает kernel buffer, передавая данные напрямую между файлами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Данные всё равно идут через kernel buffer (часто через DMA), но не копируются в user-space — отсюда название «zero-copy».",
+                "source_of_confusion": "«Zero-copy» буквально читается как «ноль копий вообще», хотя речь о нуле копий в user-space.",
+                "if_it_were_true": "Если бы kernel buffer пропускался, не работал бы механизм DMA-передачи, но именно через него ОС перемещает данные.",
+                "how_it_should_be": "`transferTo` исключает копии в user-space, но данные проходят через kernel buffer; «zero-copy» — про отсутствие user-space копий."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`transferTo` использует системный вызов `sendfile` (на Linux/macOS) или `TransmitFile` (на Windows) для zero-copy: данные не копируются в user-space, а передаются между дескрипторами в kernel-space.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обычный путь file→socket даёт 4 копирования и 2 context switch, а `sendfile` — kernel→kernel без копий в user-space; на больших файлах это +30–65% throughput и в разы меньше CPU.",
+                "example": "Применяют для отдачи статики, репликации файлов и `Kafka` log transfer: `src.transferTo(0, src.size(), socketChannel)` отдаёт файл в сокет одним zero-copy вызовом.",
+                "when_to_apply": "`transferTo` применяют для отдачи статики и репликации файлов, передавая данные file→socket одним zero-copy вызовом.",
+                "edge_cases": "Метод может передать меньше байт, чем запрошено (нужен цикл с обновлением offset), а целевым каналом бывает любой `WritableByteChannel`, включая `SocketChannel`.",
+                "related": "[[java-io-nio-interview#Q14]] direct buffer и zero-copy; [[java-io-nio-interview#Q25]] FileChannel и его возможности; [[java-io-nio-interview#Q26]] memory-mapped files."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`transferTo` работает только между двумя `FileChannel` и не поддерживает сетевые каналы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Целевым каналом может быть любой `WritableByteChannel`, включая `SocketChannel` — file→socket и есть основной use-case.",
+                "source_of_confusion": "Метод объявлен в `FileChannel`, поэтому кажется, что и приёмник обязан быть `FileChannel`.",
+                "if_it_were_true": "Если бы он не поддерживал сокеты, нельзя было бы отдавать статику через `sendfile`, но именно так работают веб-серверы.",
+                "how_it_should_be": "`transferTo` принимает любой `WritableByteChannel`; чаще всего его применяют для file→socket (HTTP file serving)."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать большие файлы, не загружая их целиком в память?",
+          "options": [
+            {
+              "text": "`Files.readAllLines` подходит для файлов любого размера, включая многогигабайтные логи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Files.readAllLines` грузит все строки в `List<String>` — на больших логах это `OutOfMemoryError`.",
+                "source_of_confusion": "Метод выглядит универсальным «прочитать все строки», поэтому его применяют и к огромным файлам.",
+                "if_it_were_true": "Если бы он подходил для любого размера, анализ многогигабайтного лога не валил бы JVM, но он валит.",
+                "how_it_should_be": "Для больших файлов используют ленивый `Files.lines`; `readAllLines` грузит всё в память и не масштабируется."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`BufferedReader.readLine()` загружает все строки файла сразу в память.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BufferedReader.readLine()` читает по одной строке из внутреннего буфера — потребление памяти O(1).",
+                "source_of_confusion": "Слово «Buffered» наводит на мысль, что весь файл кладётся в один большой буфер.",
+                "if_it_were_true": "Если бы он грузил всё сразу, классический построчный цикл не работал бы на больших файлах, но он работает.",
+                "how_it_should_be": "`readLine()` читает строки по одной из буфера фиксированного размера; весь файл в память не попадает."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`MappedByteBuffer` решает проблему файлов больше 10 ГБ одним вызовом `map`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один `map` ограничен `Integer.MAX_VALUE` (~2 ГБ); для больших файлов нужны окна (chunks) или `MemorySegment`.",
+                "source_of_confusion": "mmap позиционируют как способ работать с «большими файлами», что путают с «любым размером за один map».",
+                "if_it_were_true": "Если бы один `map` брал 10 ГБ, не нужны были бы окна, но попытка даёт `IllegalArgumentException`.",
+                "how_it_should_be": "Большой файл отображают окнами по ≤2 ГБ в цикле; один `map` весь файл не покрывает."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Files.lines` + `Stream` обрабатывает файл построчно лениво: `Stream<String>` тянет строки по требованию через `BufferedReader`, поэтому память остаётся O(1) даже на многогигабайтных логах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стратегии для больших файлов: `Files.lines` для текста, `BufferedReader.readLine()` (O(1) по памяти), `FileChannel` + `ByteBuffer` для бинарных порций, `MappedByteBuffer` окнами для произвольного доступа.",
+                "example": "Подсчёт `ERROR` в гигабайтном логе делают так: `try (Stream<String> s = Files.lines(path)) { s.filter(l -> l.contains(\"ERROR\")).count(); }` — без загрузки файла в память.",
+                "when_to_apply": "Стратегию выбирают по типу данных: текст — `Files.lines`, бинарь — `FileChannel`+буфер, произвольный доступ — mmap окнами.",
+                "edge_cases": "Опасные варианты: `Files.readAllLines`/`readAllBytes` грузят весь файл (OOM), а `MappedByteBuffer` не решает проблему файлов >2 ГБ одним `map` — нужны окна.",
+                "related": "[[java-io-nio-interview#Q21]] операции класса Files (lines); [[java-io-nio-interview#Q25]] FileChannel; [[java-io-nio-interview#Q26]] memory-mapped окна для больших файлов."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `AsynchronousFileChannel` и как он работает?",
+          "options": [
+            {
+              "text": "`AsynchronousFileChannel` поддерживает два API: polling-стиль через `Future<Integer>` (с блокирующим `get()`) и callback через `CompletionHandler`, который не блокирует вызывающий поток.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это асинхронный канал для файловых операций (NIO.2, Java 7): он не блокирует вызывающий поток, а результат получают либо через `Future.get()`, либо через коллбэк `completed`/`failed`.",
+                "example": "Для серверов выбирают `CompletionHandler` (не блокирует), для одноразовых задач удобнее `Future`; при этом `position` обязателен в каждом вызове, так как «текущей» позиции у async-канала нет.",
+                "when_to_apply": "`AsynchronousFileChannel` берут, когда файловый I/O не должен держать поток: callback для серверов, `Future` для разовых задач.",
+                "edge_cases": "Внутри он использует пул потоков `AsynchronousChannelGroup`, а не `Selector`; `Future.get()` всё же блокирует поток, поэтому это не «настоящая» асинхронность, как у callback.",
+                "related": "[[java-io-nio-interview#Q11]] реализации Channel; [[java-io-nio-interview#Q30]] асинхронные сетевые каналы; [[java-io-nio-interview#Q31]] разница Future и CompletionHandler."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Future.get()` у `AsynchronousFileChannel` не блокирует вызывающий поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Future.get()` блокируется до получения результата — это не настоящая асинхронность; неблокирующий вариант — `CompletionHandler`.",
+                "source_of_confusion": "Раз канал «асинхронный», кажется, что и `get()` на его `Future` тоже неблокирующий.",
+                "if_it_were_true": "Если бы `get()` не блокировал, не возникало бы thread starvation в reactive pipeline, но при блокировке оно как раз появляется.",
+                "how_it_should_be": "`Future.get()` блокирует поток до завершения; полностью неблокирующий путь — через `CompletionHandler`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`AsynchronousFileChannel` использует `Selector` под капотом для диспатчинга операций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он использует пул потоков `AsynchronousChannelGroup`, а не `Selector`; `Selector` — это про non-blocking сетевые каналы.",
+                "source_of_confusion": "`Selector` — главный механизм мультиплексирования в `NIO`, поэтому его ошибочно приписывают и async-каналам.",
+                "if_it_were_true": "Если бы внутри был `Selector`, конфигурировать пришлось бы его, но реально настраивают пул `AsynchronousChannelGroup`.",
+                "how_it_should_be": "Async-каналы диспатчат коллбэки через пул потоков `AsynchronousChannelGroup`; `Selector` они не используют."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Метод `read(buffer, position, ...)` начинает чтение с текущей позиции канала, игнорируя аргумент `position`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У async-канала нет «текущей» позиции — `position` обязателен в каждом вызове и определяет точку чтения.",
+                "source_of_confusion": "Привычка к `FileChannel`, у которого есть `position()`-курсор, переносится на асинхронный канал.",
+                "if_it_were_true": "Если бы канал хранил текущую позицию, можно было бы читать без offset, но без явного `position` все чтения шли бы с 0 и дублировали данные.",
+                "how_it_should_be": "У `AsynchronousFileChannel` нет внутреннего курсора; `position` указывают в каждом вызове `read`/`write`."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `AsynchronousSocketChannel` и `AsynchronousServerSocketChannel`?",
+          "options": [
+            {
+              "text": "Асинхронные сетевые каналы требуют явного `Selector` для диспатчинга событий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Async API сам управляет диспатчингом через `AsynchronousChannelGroup` (пул потоков) — `Selector` не нужен.",
+                "source_of_confusion": "`Selector` ассоциируется с non-blocking `NIO`-серверами в целом, и его ошибочно считают обязательным и для async.",
+                "if_it_were_true": "Если бы нужен был `Selector`, код дублировал бы инфраструктуру, но async-каналы как раз избавляют от ручного event-loop.",
+                "how_it_should_be": "Async-каналы диспатчат коллбэки сами через `AsynchronousChannelGroup`; явный `Selector` им не требуется."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "После принятия соединения нужно повторно вызвать `server.accept()` — async accept одноразовый, для следующего соединения требуется новый вызов (часто `this` из текущего callback).",
+              "correct": true,
+              "sections": {
+                "explanation": "Асинхронные сетевые каналы (NIO.2) строят серверы без `Selector` на callback-модели: `accept` и `read`/`write` принимают `CompletionHandler`, а диспатч идёт через пул потоков.",
+                "example": "Рекурсивно продолжают приём так: внутри `completed` вызывают `server.accept(null, this)`, чтобы принять следующее соединение, обрабатывая текущее тем же коллбэком.",
+                "when_to_apply": "Async-сетевые каналы применяют для серверов без ручного `Selector`-цикла, продолжая `accept` рекурсивно из callback.",
+                "edge_cases": "У модели есть риски: много вложенных `CompletionHandler` дают callback hell (лучше `CompletableFuture`), а блокирующая работа в callback подвешивает всех клиентов пула.",
+                "related": "[[java-io-nio-interview#Q18]] неблокирующий сервер на Selector; [[java-io-nio-interview#Q29]] AsynchronousFileChannel; [[java-io-nio-interview#Q31]] Future vs CompletionHandler."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Множественные вложенные `CompletionHandler` улучшают читаемость серверного кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вложенные коллбэки дают известный «callback hell»; читаемость лучше через `CompletableFuture` или реактивный код.",
+                "source_of_confusion": "Каждый коллбэк локально понятен, поэтому кажется, что и их вложенность остаётся читаемой.",
+                "if_it_were_true": "Если бы вложенность улучшала читаемость, callback hell не считался бы антипаттерном, но он именно им и является.",
+                "how_it_should_be": "Глубокая вложенность коллбэков ухудшает читаемость и отладку; её разворачивают через `CompletableFuture`/реактивные потоки."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Async-каналы используют один поток для обслуживания всех клиентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они используют `AsynchronousChannelGroup` — пул потоков для выполнения коллбэков, а не один поток.",
+                "source_of_confusion": "Callback-модель внешне похожа на однопоточный event-loop, отсюда вывод про единственный поток.",
+                "if_it_were_true": "Если бы поток был один, блокирующая работа в callback подвешивала бы лишь его, но на деле она подвешивает весь пул и всех клиентов.",
+                "how_it_should_be": "Коллбэки выполняются пулом потоков `AsynchronousChannelGroup`; блокировать их нельзя, чтобы не подвесить других клиентов."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `Future` и `CompletionHandler` в асинхронных каналах?",
+          "options": [
+            {
+              "text": "`Future.get()` — это неблокирующий способ получить результат асинхронной операции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Future.get()` блокирует поток до завершения операции; для неблокирующей проверки есть `isDone()`, а полностью async — `CompletionHandler`.",
+                "source_of_confusion": "Раз `Future` относится к асинхронному API, кажется, что и `get()` неблокирующий.",
+                "if_it_were_true": "Если бы `get()` не блокировал, не было бы потери throughput event-loop потока, но при блокировке она возникает.",
+                "how_it_should_be": "`get()` блокирует поток; неблокирующий результат дают `isDone()` (polling) или `CompletionHandler` (callback)."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Future` поддерживает встроенную композицию операций через `thenCompose`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `java.util.concurrent.Future` нет `thenCompose`; композиция есть только у `CompletableFuture`.",
+                "source_of_confusion": "`CompletableFuture` с его `thenCompose` на слуху, и его API ошибочно приписывают обычному `Future`.",
+                "if_it_were_true": "Если бы у `Future` был `thenCompose`, можно было бы связывать операции декларативно, но вызов несуществующего метода не скомпилируется.",
+                "how_it_should_be": "Композицию (`thenCompose`/`thenApply`) даёт `CompletableFuture`; обычный `Future` умеет лишь `get()`/`isDone()`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`CompletionHandler` — полностью асинхронный механизм: callback вызывается из пула потоков, и текущий поток никогда не блокируется в ожидании результата.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Future<Integer>` — полу-асинхронный (polling через `isDone()` или блокирующий `get()`), а `CompletionHandler<Integer, A>` — callback-стиль с методами `completed`/`failed`, не блокирующий поток.",
+                "example": "Для высоконагруженных серверов и тысяч соединений берут `CompletionHandler` (поток остаётся свободным), а `Future` оставляют для простых одноразовых операций.",
+                "when_to_apply": "Выбор делают по сценарию: серверы и тысячи соединений — `CompletionHandler`, простые разовые операции — `Future`.",
+                "edge_cases": "Ошибки в `CompletionHandler` приходят в отдельный метод `failed(Throwable, A)`, а у `Future` — как `ExecutionException` при `get()`; встроенной композиции у `Future` нет (она есть у `CompletableFuture`).",
+                "related": "[[java-io-nio-interview#Q29]] AsynchronousFileChannel; [[java-io-nio-interview#Q30]] асинхронные сетевые каналы; [[java-io-nio-interview#Q11]] реализации Channel."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Ошибки в `CompletionHandler` приходят в метод `completed()` через значение `null`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ошибки приходят в отдельный метод `failed(Throwable, A)`; `completed()` вызывается только при успехе.",
+                "source_of_confusion": "Кажется логичным, что один callback обрабатывает и успех, и ошибку, сигнализируя провал через `null`.",
+                "if_it_were_true": "Если бы ошибки шли в `completed()` как `null`, возникал бы NPE при обработке результата, а IO-ошибки терялись бы.",
+                "how_it_should_be": "Для ошибок есть отдельный `failed(Throwable, A)`; `completed()` получает только успешный результат."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает кодировка при чтении/записи текста (`Charset`)?",
+          "options": [
+            {
+              "text": "`new FileReader(\"file.txt\")` всегда читает файл в кодировке UTF-8 на любой версии Java.",
+              "correct": false,
+              "sections": {
+                "what_actually": "До Java 18 `FileReader(String)` использует platform default (`file.encoding`): Linux часто `UTF-8`, Windows — `Cp1251`/`Cp1252`.",
+                "source_of_confusion": "На Linux дефолт обычно `UTF-8`, и из локального опыта делают вывод «всегда UTF-8».",
+                "if_it_were_true": "Если бы он всегда читал в `UTF-8`, не было бы «кракозябров» при перевозке кода между ОС, но они появляются на Windows.",
+                "how_it_should_be": "До Java 18 кодировка зависит от платформы; читать нужно через `InputStreamReader(in, UTF_8)` с явным `Charset`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`String.getBytes()` без аргументов безопасен — он всегда кодирует строку в UTF-8.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`getBytes()` без аргумента до Java 18 использует platform default; стабильно `UTF-8` он стал лишь с JEP 400 (Java 18+).",
+                "source_of_confusion": "В современных JDK дефолт действительно `UTF-8`, и это переносят на все версии Java.",
+                "if_it_were_true": "Если бы он всегда давал `UTF-8`, не было бы silent corruption байтов в protocol-data, но на старых JDK она случается.",
+                "how_it_should_be": "Кодировку указывают явно: `str.getBytes(StandardCharsets.UTF_8)`; безаргументный вариант платформо-зависим до Java 18."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Charset.forName(\"UTF-8\")` полностью идентичен `StandardCharsets.UTF_8` во всех ситуациях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`forName` ищет charset по имени и может бросить `UnsupportedCharsetException`, тогда как `StandardCharsets.UTF_8` — гарантированная константа.",
+                "source_of_confusion": "Оба дают объект `Charset` для `UTF-8`, поэтому их считают взаимозаменяемыми без оговорок.",
+                "if_it_were_true": "Если бы они были идентичны во всём, `forName` не падал бы при необычной JVM-конфигурации, но он может бросить исключение.",
+                "how_it_should_be": "Предпочитают `StandardCharsets.UTF_8` (без проверяемых исключений); `Charset.forName` нужен лишь для кодировок вне `StandardCharsets`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Charset` всегда передавайте явно: `Files.readString(path, StandardCharsets.UTF_8)`, `new String(bytes, UTF_8)`, `new InputStreamReader(in, UTF_8)`; `StandardCharsets` не бросает `UnsupportedCharsetException` (в отличие от `Charset.forName(...)`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`Charset` задаёт соответствие байтов и символов; неправильная кодировка — частая причина «кракозябров», а явный `Charset` защищает от platform-зависимостей.",
+                "example": "Всегда при чтении/записи текста указывают кодировку: `StandardCharsets.UTF_8` для констант или `Charset.forName(\"Windows-1251\")` для гарантированно legacy-данных.",
+                "when_to_apply": "Явный `Charset` указывают при каждом чтении/записи текста, чтобы код не зависел от платформенной кодировки.",
+                "edge_cases": "До Java 18 `FileReader`/`FileWriter` и `String.getBytes()` без аргумента брали platform default (Windows `cp1251`), что давало баги при переносе; `Charset.forName(\"...\")` может бросить `UnsupportedCharsetException`, а `StandardCharsets` — нет.",
+                "related": "[[java-io-nio-interview#Q1]] IO vs NIO; [[java-io-nio-interview#Q6]] мост байты↔символы и Charset; [[java-io-nio-interview#Q35]] корректное закрытие ресурсов."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие классы используются для сериализации и десериализации объектов?",
+          "options": [
+            {
+              "text": "Java-сериализация (`ObjectInputStream`/`ObjectOutputStream`) считается устаревшей и небезопасной — RCE через gadget chains, фильтры JEP 290 обязательны; предпочтительные форматы — JSON (`Jackson`), Protobuf, Avro.",
+              "correct": true,
+              "sections": {
+                "explanation": "Класс должен реализовывать `Serializable`, `serialVersionUID` фиксирует версию, `transient` исключает поле; но современный стек обходит `java.io.Serializable` из-за рисков безопасности.",
+                "example": "В новом коде для обмена данными всегда берут JSON/Protobuf, а не `ObjectOutputStream`; стандартную Java-сериализацию оставляют разве что для legacy-совместимости.",
+                "when_to_apply": "Для нового обмена данными выбирают JSON/Protobuf; Java-сериализацию трогают лишь ради legacy-совместимости.",
+                "edge_cases": "Опасность реальна: десериализация недоверенных данных через gadget chains даёт удалённое выполнение кода, поэтому с Java 9 ввели фильтры (`ObjectInputFilter`, JEP 290).",
+                "related": "[[java-io-nio-interview#Q5]] классы IO (ObjectInputStream — байтовый поток); [[java-io-nio-interview#Q36]] типичные исключения IO; [[java-io-nio-interview#Q7]] паттерн Decorator при оборачивании потоков."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`transient`-поля сериализуются вместе с обычными полями объекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`transient` явно исключает поле из стандартной Java-сериализации — оно не попадает в выходной поток.",
+                "source_of_confusion": "Раз поле объявлено в классе, кажется, что оно сериализуется наравне с остальными.",
+                "if_it_were_true": "Если бы `transient` сериализовался, не было бы способа защитить пароли/секреты от попадания в файл, но он именно для этого.",
+                "how_it_should_be": "`transient` исключает поле из сериализации; чувствительные данные помечают им, чтобы они не утекали в поток."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`serialVersionUID` опционален — Java сама генерирует совместимый идентификатор при любых изменениях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java вычисляет UID по структуре класса, и малейшее изменение полей даёт `InvalidClassException` при десериализации старых данных.",
+                "source_of_confusion": "Автогенерация UID создаёт впечатление, что о версии можно не думать.",
+                "if_it_were_true": "Если бы автогенерация была совместимой, rolling deploy не ронял бы prod-данные, но смена полей меняет UID и ломает чтение.",
+                "how_it_should_be": "`serialVersionUID` лучше задавать явно (`private static final long`), иначе изменение класса инвалидирует сериализованные данные."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Externalizable` принципиально безопаснее `Serializable`, поэтому его и стоит выбирать для нового кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Externalizable` даёт полный контроль над форматом и часто быстрее, но обоих следует избегать в пользу Protobuf/JSON — он не безопаснее по сути.",
+                "source_of_confusion": "Ручной контроль `writeExternal`/`readExternal` создаёт ложное чувство большей безопасности.",
+                "if_it_were_true": "Если бы `Externalizable` был безопасен, его рекомендовали бы вместо JSON, но риски десериализации остаются для обоих.",
+                "how_it_should_be": "Для нового кода берут JSON/Protobuf; `Externalizable` лишь даёт контроль над форматом, не устраняя проблем сериализации."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие классы используются для работы с архивами (`ZIP`, `GZIP`)?",
+          "options": [
+            {
+              "text": "`ZipOutputStream.putNextEntry()` автоматически закрывает предыдущую entry перед открытием новой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перед следующей `putNextEntry()` нужно явно вызвать `closeEntry()`, иначе данные могут потеряться или смешаться.",
+                "source_of_confusion": "Кажется логичным, что открытие новой записи само завершает предыдущую.",
+                "if_it_were_true": "Если бы `putNextEntry` закрывал предыдущую сам, не возникало бы поврежденных архивов, но без `closeEntry()` ZIP бьётся.",
+                "how_it_should_be": "Каждую entry завершают `closeEntry()` перед открытием следующей `putNextEntry()`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`FileSystems.newFileSystem(Path.of(\"archive.zip\"))` открывает ZIP как `FileSystem` (NIO.2 ZIP provider), позволяя `Files.walk`, `Files.copy`, `Files.readString` оперировать содержимым архива по `Path`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для потоковой работы есть `ZipInputStream`/`ZipOutputStream` и `GZIPInputStream`/`GZIPOutputStream`, но NIO.2 даёт ещё и доступ к ZIP как к обычной файловой системе.",
+                "example": "Так удобно модифицировать JAR/ZIP без распаковки: `zipFs.getPath(\"/document.txt\")` плюс любые методы `Files` работают прямо внутри архива.",
+                "when_to_apply": "ZIP как `FileSystem` применяют, когда нужно править содержимое архива методами `Files` без полной распаковки.",
+                "edge_cases": "У потоковых классов свои правила: между `putNextEntry()` нужен `closeEntry()`, `GZIP` сжимает только один поток, а без `BufferedOutputStream` запись в архив крайне медленна.",
+                "related": "[[java-io-nio-interview#Q9]] сетевые и потоковые классы; [[java-io-nio-interview#Q11]] реализации Channel; [[java-io-nio-interview#Q19]] что такое NIO.2."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`GZIPOutputStream` поддерживает упаковку нескольких файлов в один архив.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GZIP` сжимает только ОДИН поток; для нескольких файлов нужен `tar+gzip` или формат `zip`.",
+                "source_of_confusion": "GZIP-файлы (`.tar.gz`) на практике содержат много файлов, но это заслуга `tar`, а не самого `GZIP`.",
+                "if_it_were_true": "Если бы `GZIPOutputStream` хранил несколько файлов, у него были бы entry-методы как у ZIP, но их нет.",
+                "how_it_should_be": "Для нескольких файлов берут `ZipOutputStream` или связку `tar+gzip`; `GZIP` сжимает один поток."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Для записи в ZIP-архив достаточно голого `OutputStream`, без обёртки `BufferedOutputStream`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без буферизации запись в `ZipOutputStream` идёт мелкими порциями и крайне медленна; буфер существенно ускоряет.",
+                "source_of_confusion": "ZIP сам по себе сжимает данные, поэтому кажется, что буферизация ничего не даёт.",
+                "if_it_were_true": "Если бы буфер был не нужен, не возникало бы таймаутов на больших архивах, но без него производительность падает.",
+                "how_it_should_be": "Поток оборачивают в `BufferedOutputStream` (`new ZipOutputStream(new BufferedOutputStream(...))`), иначе запись медленная."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно закрывать ресурсы (`try-with-resources`)?",
+          "options": [
+            {
+              "text": "Ресурсы в `try-with-resources` закрываются в порядке открытия (FIFO).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Закрытие идёт в обратном порядке (LIFO): последний открытый ресурс закрывается первым.",
+                "source_of_confusion": "Чтение слева направо создаёт интуицию, что и закрытие идёт в том же порядке.",
+                "if_it_were_true": "Если бы порядок был прямым, writer закрывался бы после нижележащего потока (уже мёртвого), что ломало бы flush.",
+                "how_it_should_be": "Ресурсы закрываются в обратном порядке (LIFO), чтобы обёртка освобождалась раньше того, что она оборачивает."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`try-with-resources` молча проглатывает исключение, брошенное из `close()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исключение из `close()` не теряется: оно добавляется как `suppressed` к основному, доступному через `getSuppressed()`.",
+                "source_of_confusion": "Раз основное исключение тела «важнее», кажется, что close-ошибку просто отбрасывают.",
+                "if_it_were_true": "Если бы close-ошибки терялись, их нельзя было бы диагностировать, но `getSuppressed()` как раз их сохраняет.",
+                "how_it_should_be": "Исключение из `close()` становится `suppressed` у основного, а не проглатывается; оно доступно для анализа."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Ресурсы должны реализовывать `AutoCloseable` (или `Closeable`) и закрываются в обратном порядке (LIFO); если в `try` бросается исключение A, а в `close()` — B, то B становится `suppressed` у A (доступ через `getSuppressed()`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`try-with-resources` (Java 7+) гарантирует освобождение дескрипторов и сохраняет все исключения; с Java 9 он принимает effectively final переменные в круглых скобках.",
+                "example": "Применяют всегда для I/O, JDBC, `Stream` из `Files.lines`, блокировок: ресурсы закрываются автоматически в порядке, обратном открытию.",
+                "when_to_apply": "`try-with-resources` применяют для всех `AutoCloseable`: потоки, каналы, `Stream` от `Files`, JDBC-коннекшены, локи.",
+                "edge_cases": "Закрытие в обратном порядке важно для зависимостей (writer закрывается раньше нижележащего потока), а исключение из `close()` не теряется — оно подавляется и доступно через `getSuppressed()`.",
+                "related": "[[java-io-nio-interview#Q21]] Stream от Files как ресурс; [[java-io-nio-interview#Q22]] операции с файлами; [[java-io-nio-interview#Q36]] типичные исключения IO/NIO."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`try-with-resources` работает только для `InputStream`/`OutputStream` и их наследников.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он работает с любым `AutoCloseable`: `Connection`, `Stream` из `Files.lines`, обёртки над блокировками и т.д.",
+                "source_of_confusion": "Чаще всего его показывают на потоках I/O, отсюда вывод об ограничении этим типом.",
+                "if_it_were_true": "Если бы он работал лишь с потоками, для JDBC-коннекшна писали бы ручной `finally`, что ведёт к утечкам соединений.",
+                "how_it_should_be": "`try-with-resources` применим к любому `AutoCloseable`, включая `Connection`, `Stream` и locks."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие исключения типичны для `Java IO/NIO` и как их обрабатывать?",
+          "options": [
+            {
+              "text": "`FileNotFoundException` и `NoSuchFileException` идентичны — обе из пакета `java.io`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`FileNotFoundException` — это старый IO (`java.io`), а `NoSuchFileException` — NIO.2 (`java.nio.file`) с дополнительной информацией (`getFile()`).",
+                "source_of_confusion": "Оба означают «файл не найден», поэтому их считают одним и тем же классом.",
+                "if_it_were_true": "Если бы они были идентичны, `catch` одного ловил бы другой, но это разные иерархии — нужно ловить оба.",
+                "how_it_should_be": "Это разные классы из разных пакетов; NIO.2-операции бросают `NoSuchFileException`, а legacy IO — `FileNotFoundException`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`BufferOverflowException` — checked-исключение, которое нужно объявлять и ловить явно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BufferOverflowException` — это `RuntimeException` (unchecked); компилятор не требует его обрабатывать.",
+                "source_of_confusion": "Слово «Exception» и связь с I/O наводят на мысль, что оно checked, как `IOException`.",
+                "if_it_were_true": "Если бы оно было checked, компилятор заставлял бы его ловить, но запись за пределы буфера незаметно роняет поток.",
+                "how_it_should_be": "`BufferOverflowException`/`BufferUnderflowException` — unchecked; их предотвращают корректной работой с `position`/`limit`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`EOFException` всегда означает ошибку при чтении файла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EOFException` — нормальный сигнал конца у `DataInputStream.readInt()`/`readUTF()`, который часто ожидаем.",
+                "source_of_confusion": "Слово «Exception» воспринимается как «всегда проблема», хотя тут это штатный конец данных.",
+                "if_it_were_true": "Если бы это всегда была ошибка, на каждое нормальное завершение чтения сыпались бы ложные алерты.",
+                "how_it_should_be": "`EOFException` может быть штатным концом потока при чтении примитивов; его не всегда трактуют как сбой."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Сначала ловят специфичные NIO.2-исключения (`NoSuchFileException`, `AccessDeniedException`, `FileAlreadyExistsException`) для точной диагностики и `e.getFile()`, а широкий `catch IOException` оставляют как fallback.",
+              "correct": true,
+              "sections": {
+                "explanation": "NIO.2 даёт более богатую иерархию, чем legacy `IOException`: его подклассы несут путь через `getFile()` и позволяют точнее реагировать (ретраи, сообщения пользователю).",
+                "example": "Так оформляют обработку: отдельные `catch` для `FileAlreadyExistsException`/`AccessDeniedException`, а в конце общий `catch (IOException e)` для всего остального.",
+                "when_to_apply": "Специфичные исключения ловят для точной диагностики и ретраев, а широкий `IOException` — как общий fallback.",
+                "edge_cases": "Важно помнить: `FileNotFoundException` (`java.io`) и `NoSuchFileException` (`java.nio.file`) — разные классы; `BufferOverflowException` — unchecked; `EOFException` иногда ожидаемый сигнал конца.",
+                "related": "[[java-io-nio-interview#Q35]] закрытие ресурсов и suppressed-исключения; [[java-io-nio-interview#Q37]] FileInputStream vs Files.newInputStream; [[java-io-nio-interview#Q22]] операции с файлами и их исключения."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `FileInputStream` и `Files.newInputStream`?",
+          "options": [
+            {
+              "text": "`Files.newInputStream(Path, OpenOption...)` рекомендуется в новом коде: гибкие опции (`READ`/`WRITE`/`APPEND`/`SYNC`), интеграция с `FileSystem` (zip/jrt/custom) и отсутствие `finalize()`, дающего давление на GC.",
+              "correct": true,
+              "sections": {
+                "explanation": "`FileInputStream` (`java.io`, Java 1.0) принимает `File`/`String` и имеет deprecated `finalize()`, а `Files.newInputStream` (NIO.2) работает с `Path` и опциями открытия без финализации.",
+                "example": "Вместо `new FileInputStream(\"path\")` в новом коде пишут `Files.newInputStream(Path.of(\"path\"), StandardOpenOption.READ)` — это современный путь с гибкими опциями.",
+                "when_to_apply": "`Files.newInputStream` выбирают для нового кода ради опций открытия, интеграции с `FileSystem` и отсутствия финализации.",
+                "edge_cases": "`FileInputStream` исторически имел `finalize()`, создававший давление на GC (в Java 18+ помечен deprecated for removal); `Files.newInputStream` финализацию не использует.",
+                "related": "[[java-io-nio-interview#Q4]] преимущества IO и NIO; [[java-io-nio-interview#Q34]] ZIP как FileSystem; [[java-io-nio-interview#Q36]] типичные исключения IO/NIO."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`FileInputStream` быстрее `Files.newInputStream` за счёт прямого native-вызова без обёрток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На чтение производительность одинакова; `FileInputStream` даже хуже из-за `finalize()` и давления на GC.",
+                "source_of_confusion": "Старый «низкоуровневый» класс кажется ближе к железу, отсюда вывод о большей скорости.",
+                "if_it_were_true": "Если бы он был быстрее, его рекомендовали бы для hot path, но реально выбор устаревшего API ничего не даёт по скорости.",
+                "how_it_should_be": "Скорость чтения сопоставима; `Files.newInputStream` предпочтительнее из-за отсутствия `finalize()` и гибких опций."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`FileInputStream` поддерживает `FileSystem`-интеграцию для чтения из ZIP/JAR по `Path`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только `java.nio.file.Files` умеет работать с custom `FileSystem` (zip/jrt); `FileInputStream` принимает лишь `File`/`String`.",
+                "source_of_confusion": "Раз оба читают файлы, кажется, что и работа с архивами как с ФС доступна обоим.",
+                "if_it_were_true": "Если бы `FileInputStream` умел `FileSystem`, чтение файла из ZIP старым API работало бы, но оно падает.",
+                "how_it_should_be": "С custom `FileSystem` (ZIP/JAR) работает `Files` API через `Path`; `FileInputStream` этого не умеет."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Files.newInputStream` всегда выделяет direct buffer под капотом для ускорения чтения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он возвращает обычный stream поверх `FileChannel` и не выделяет `ByteBuffer`/direct buffer сам по себе.",
+                "source_of_confusion": "Связь NIO с `ByteBuffer` создаёт впечатление, что и этот метод оперирует буферами.",
+                "if_it_were_true": "Если бы он всегда брал direct buffer, это влияло бы на лимит direct memory, но никаких таких аллокаций он не делает.",
+                "how_it_should_be": "`Files.newInputStream` отдаёт обычный поток поверх `FileChannel` без неявного выделения буферов."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда предпочесть `InputStream`/`OutputStream`, а когда `Channel`/`ByteBuffer`?",
+          "options": [
+            {
+              "text": "`Channel`/`ByteBuffer` всегда быстрее `InputStream`/`OutputStream`, поэтому новый код стоит писать только на них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для простых текстовых задач разница ничтожна, а API сложнее (`flip`/`clear`/`compact`); выигрыш NIO проявляется лишь на масштабе или mmap.",
+                "source_of_confusion": "Репутация NIO как «продвинутого» API создаёт ощущение его универсального превосходства по скорости.",
+                "if_it_were_true": "Если бы NIO всегда выигрывал, перевод чтения конфига на `ByteBuffer` имел бы смысл, но это over-engineering без выгоды.",
+                "how_it_should_be": "Выбор по сценарию: NIO — для non-blocking/zero-copy/mmap, IO — для простого blocking-чтения и текста."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Channel` + `ByteBuffer` берут для non-blocking сетевых операций (тысячи коннектов через `Selector`), zero-copy (`FileChannel.transferTo`) и mmap (`MappedByteBuffer`); `InputStream`/`OutputStream` — для последовательного blocking I/O, текста и небольших файлов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор делают по сценарию, а не по «новизне» API: NIO даёт мультиплексирование и специфику (mmap, sendfile), IO — простоту для линейного чтения.",
+                "example": "На практике: NIO — для high-throughput серверов и спецопераций с файлами, IO — для CLI-утилит, чтения конфигов и простого TCP-клиента (`Socket` + потоки).",
+                "when_to_apply": "API выбирают по требованию: non-blocking/zero-copy/mmap — `Channel`+буфер, простое линейное чтение — потоки `IO`.",
+                "edge_cases": "Не стоит усложнять простое: для чтения конфига `Channel`/`ByteBuffer` — over-engineering, а `Selector` работает только поверх `SelectableChannel`, не поверх `InputStream`.",
+                "related": "[[java-io-nio-interview#Q14]] direct vs heap buffer; [[java-io-nio-interview#Q27]] zero-copy transferTo; [[java-io-nio-interview#Q40]] HttpClient для HTTP-сценариев."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Selector` способен работать поверх обычного `InputStream`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Selector` требует `SelectableChannel`; `InputStream` блокирующий и не selectable, мультиплексировать его нельзя.",
+                "source_of_confusion": "Раз и потоки, и каналы «читают данные», кажется, что `Selector` может опрашивать и поток тоже.",
+                "if_it_were_true": "Если бы `Selector` работал поверх `InputStream`, не нужна была бы вся модель каналов, но потоки в него не регистрируются.",
+                "how_it_should_be": "`Selector` мультиплексирует только `SelectableChannel` (`SocketChannel` и др.); блокирующие потоки `IO` не подходят."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`AsynchronousFileChannel` — это callback-only API, без поддержки `Future`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AsynchronousFileChannel` поддерживает оба варианта: `CompletionHandler` (callback) и `Future<Integer>` (polling/blocking get).",
+                "source_of_confusion": "Слово «Asynchronous» наводит на мысль, что доступны только коллбэки, без `Future`.",
+                "if_it_were_true": "Если бы `Future` не поддерживался, нельзя было бы делать `result.get()`, но именно так работает простой async-вариант.",
+                "how_it_should_be": "Async-канал даёт и `Future`, и `CompletionHandler`; выбор зависит от стиля кода, а не ограничен callback-ами."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Pipe` в `NIO` и для чего он используется?",
+          "options": [
+            {
+              "text": "`Pipe` в `NIO` — это межпроцессный канал, аналог Unix-pipe между разными процессами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Pipe` внутрипроцессный — он связывает потоки одной JVM и не имеет дела с OS-pipe между процессами.",
+                "source_of_confusion": "Название `Pipe` напрямую ассоциируется с Unix-pipe и межпроцессным обменом.",
+                "if_it_were_true": "Если бы `Pipe` был межпроцессным, через него можно было бы связать два сервиса, но данные между разными JVM не пойдут.",
+                "how_it_should_be": "Для межпроцессного обмена используют сокеты или shared memory; `Pipe` работает только внутри одной JVM."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Pipe` двунаправленный — и `SinkChannel`, и `SourceChannel` умеют и читать, и писать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Pipe` однонаправленный: `sink` — только запись, `source` — только чтение.",
+                "source_of_confusion": "Раз это «канал» (а каналы `NIO` обычно двунаправленные), `Pipe` ошибочно считают таким же.",
+                "if_it_were_true": "Если бы он был двунаправленным, `source.write` работал бы, но он бросает `NonWritableChannelException`.",
+                "how_it_should_be": "`Pipe` однонаправленный: пишут в `SinkChannel`, читают из `SourceChannel`; роли каналов фиксированы."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Pipe` — однонаправленный канал между потоками одной JVM (`SinkChannel` пишет, `SourceChannel` читает); на практике используется редко, обычно предпочтительнее `BlockingQueue` из `java.util.concurrent`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это узкая ниша «producer→consumer» внутри процесса без аллокации очереди: `Pipe.open()` даёт пару каналов, через которые один поток пишет, другой читает.",
+                "example": "Применяют в основном, когда производителя-потребителя нужно встроить в `Selector`-цикл; в остальных случаях берут `BlockingQueue`.",
+                "when_to_apply": "`Pipe` берут редко — только когда producer/consumer нужно встроить в `Selector`; иначе предпочитают `BlockingQueue`.",
+                "edge_cases": "`Pipe` строго внутрипроцессный и однонаправленный: `source.write` даст `NonWritableChannelException`, а связать через него две разные JVM нельзя.",
+                "related": "[[java-io-nio-interview#Q11]] реализации Channel (Pipe.Source/Sink); [[java-io-nio-interview#Q14]] direct vs heap buffer; [[java-io-nio-interview#Q26]] memory-mapped files."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Pipe.open()` гарантирует thread-safety без дополнительной синхронизации при любом числе потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он безопасен для одного producer и одного consumer; при множественных readers/writers нужна внешняя синхронизация.",
+                "source_of_confusion": "Раз `Pipe` создан для передачи между потоками, кажется, что он thread-safe в любой конфигурации.",
+                "if_it_were_true": "Если бы он был безопасен при многих потоках, не возникало бы гонок при нескольких потребителях, но они возникают.",
+                "how_it_should_be": "`Pipe` рассчитан на схему один-к-одному; для нескольких потоков синхронизацию обеспечивают отдельно (или берут `BlockingQueue`)."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `HttpClient` (`Java` 11+) и когда его использовать?",
+          "options": [
+            {
+              "text": "`HttpClient` поддерживает только синхронные вызовы через `send()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HttpClient` поддерживает и sync (`client.send(...)`), и async (`client.sendAsync(...)` → `CompletableFuture<HttpResponse<T>>`).",
+                "source_of_confusion": "Простейший пример обычно показывают с синхронным `send`, отсюда вывод об отсутствии async.",
+                "if_it_were_true": "Если бы async не было, не существовало бы метода `sendAsync`, но он есть и возвращает `CompletableFuture`.",
+                "how_it_should_be": "`HttpClient` умеет и синхронные, и асинхронные вызовы; для async есть `sendAsync` с `CompletableFuture`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`HttpClient` thread-unsafe, поэтому его нужно создавать заново на каждый запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HttpClient` thread-safe и переиспользуем; рекомендуется один singleton-инстанс на приложение.",
+                "source_of_confusion": "Многие старые HTTP-клиенты требовали per-request экземпляров, и это ожидание переносят на новый API.",
+                "if_it_were_true": "Если бы он был thread-unsafe, не было бы рекомендации держать singleton, но создание клиента в hot path лишь жжёт CPU и соединения.",
+                "how_it_should_be": "Один `HttpClient` создают на приложение и переиспользуют между потоками; он потокобезопасен."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`HttpURLConnection` остаётся рекомендованным API для нового кода в JDK 21.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HttpURLConnection` — legacy для нового кода; стандартом с Java 11 стал `HttpClient`.",
+                "source_of_confusion": "`HttpURLConnection` всё ещё присутствует в JDK, поэтому кажется по-прежнему рекомендуемым.",
+                "if_it_were_true": "Если бы он оставался рекомендованным, не появился бы `HttpClient` как современная замена, но именно он теперь стандарт.",
+                "how_it_should_be": "Новый код пишут на `HttpClient`; `HttpURLConnection` оставляют лишь для совместимости со старым кодом."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`HttpClient` (Java 11+) поддерживает HTTP/1.1 и HTTP/2, синхронные (`send`) и асинхронные (`sendAsync` → `CompletableFuture`) вызовы, `BodyHandlers` (`ofString`/`ofByteArray`/`ofFile`/`ofInputStream`) и `WebSocket`; настраивается через builder (timeout, redirects, version).",
+              "correct": true,
+              "sections": {
+                "explanation": "Это современный стандартный HTTP-стек JDK (`java.net.http`), заменяющий устаревший `HttpURLConnection`, с богатым набором обработчиков тела ответа.",
+                "example": "Его выбирают для не-Spring приложений и lightweight-сервисов; в Spring чаще предпочитают `WebClient`/`RestClient`, а сам клиент создают как переиспользуемый singleton.",
+                "when_to_apply": "`HttpClient` применяют для HTTP-запросов в не-Spring приложениях; в Spring чаще берут `WebClient`/`RestClient`.",
+                "edge_cases": "Клиент thread-safe и переиспользуем (один инстанс на приложение), а ответы обрабатывают через `BodyHandlers` — например, `ofFile(Path)` для скачивания файла напрямую на диск.",
+                "related": "[[java-io-nio-interview#Q26]] memory-mapped files; [[java-io-nio-interview#Q38]] выбор между IO и NIO API; [[java-io-nio-interview#Q9]] сетевые классы Java IO."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
