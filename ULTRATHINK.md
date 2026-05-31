@@ -417,9 +417,9 @@ Pass: `OK FILE.md`.
 | 79 | `behavioral` | `failure-stories` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 80 | `behavioral` | `leadership-stories` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 81 | `behavioral` | `star-method` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
-| 82 | `cicd` | `deployment-strategies` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 83 | `cicd` | `pipeline-design` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 84 | `cloud` | `aws` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 82 | `cicd` | `deployment-strategies` | 39 | 39 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 83 | `cicd` | `pipeline-design` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 84 | `cloud` | `aws` | 16 | 16 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 85 | `cloud` | `aws-lambda` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 86 | `cloud` | `azure` | 25 | 25 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 87 | `cloud` | `cloud-native-patterns` | 14 | 14 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
@@ -519,13 +519,13 @@ Pass: `OK FILE.md`.
 | 181 | `leadership` | `team-leadership` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 182 | `leadership` | `teching` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 183 | `leadership` | `technical-decisions` | 1 | 22 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ STUB |
-| 184 | `logging` | `logging` | 9 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 184 | `logging` | `logging` | 9 | 9 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 185 | `messaging` | `aws-sqs-sns` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 186 | `messaging` | `kafka` | 50 | 50 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 187 | `messaging` | `message-brokers-comparison` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 188 | `messaging` | `nats` | 8 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 188 | `messaging` | `nats` | 8 | 8 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 189 | `messaging` | `pulsar` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 190 | `messaging` | `rabbitmq` | 41 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 190 | `messaging` | `rabbitmq` | 41 | 41 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 191 | `messaging` | `redpanda` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 192 | `monitoring` | `elk-stack` | 5 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=5) |
 | 193 | `monitoring` | `jaeger-zipkin` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
@@ -534,8 +534,8 @@ Pass: `OK FILE.md`.
 | 196 | `monitoring` | `metrics-tracing` | 6 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=6) |
 | 197 | `monitoring` | `micrometer` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 198 | `monitoring` | `observability` | 15 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 199 | `monitoring` | `opentelemetry` | 9 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 200 | `monitoring` | `prometheus-grafana` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 199 | `monitoring` | `opentelemetry` | 9 | 9 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 200 | `monitoring` | `prometheus-grafana` | 39 | 39 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 201 | `performance` | `application-profiling` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 202 | `performance` | `caching-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 203 | `performance` | `database-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
