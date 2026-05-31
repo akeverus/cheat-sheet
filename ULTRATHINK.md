@@ -577,7 +577,7 @@ Pass: `OK FILE.md`.
 | 239 | `programming-languages/java` | `java-string` | 39 | 39 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 240 | `programming-languages/java` | `java-types` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 241 | `programming-languages/java` | `java-virtual-threads` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 242 | `programming-languages/kotlin` | `kotlin-collections` | 42 | — | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 242 | `programming-languages/kotlin` | `kotlin-collections` | 42 | 42 | ✅ | ❌ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 243 | `programming-languages/kotlin` | `kotlin-coroutines` | 19 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 244 | `programming-languages/kotlin` | `kotlin-dsl` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 245 | `programming-languages/kotlin` | `kotlin-exceptions` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=7) |
