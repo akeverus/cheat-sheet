@@ -552,7 +552,7 @@ Pass: `OK FILE.md`.
 | 214 | `programming-languages/go` | `go-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 215 | `programming-languages/java` | `java-17-21` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 216 | `programming-languages/java` | `java-8` | 41 | 31 | ✅ | ❌ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
-| 217 | `programming-languages/java` | `java-annotations` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 217 | `programming-languages/java` | `java-annotations` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 218 | `programming-languages/java` | `java-collections` | 46 | 34 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 219 | `programming-languages/java` | `java-completable-future` | 13 | 13 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ THIN |
 | 220 | `programming-languages/java` | `java-concurrency` | 56 | 56 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
@@ -562,7 +562,7 @@ Pass: `OK FILE.md`.
 | 224 | `programming-languages/java` | `java-functional-interface` | 14 | 14 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 225 | `programming-languages/java` | `java-generics` | 40 | 7 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 226 | `programming-languages/java` | `java-initialization` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 227 | `programming-languages/java` | `java-io-nio` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 227 | `programming-languages/java` | `java-io-nio` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 228 | `programming-languages/java` | `java-jackson` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 229 | `programming-languages/java` | `java-lombok` | 5 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=5) |
 | 230 | `programming-languages/java` | `java-mapstruct` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
