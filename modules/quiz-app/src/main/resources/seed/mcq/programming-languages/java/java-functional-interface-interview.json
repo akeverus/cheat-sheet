@@ -1,0 +1,845 @@
+{
+  "topic_slug": "java-functional-interface-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое функциональный интерфейс в Java?",
+          "options": [
+            {
+              "text": "Функциональный интерфейс — интерфейс ровно с одним абстрактным методом (Single Abstract Method, SAM). При этом он может содержать сколько угодно `default` и `static` методов — они не нарушают контракт. Именно SAM позволяет реализовать интерфейс лямбдой: `Transformer<String> toUpper = s -> s.toUpperCase();`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Контракт «ровно один абстрактный метод» даёт компилятору однозначную цель для лямбды: тело лямбды становится реализацией этого единственного метода. `default` и `static` методы имеют реализацию, поэтому не считаются абстрактными и не ломают SAM-свойство.",
+                "example": "`@FunctionalInterface interface Transformer<T> { T transform(T input); default Transformer<T> andThen(...) {...} }` — один абстрактный `transform` и любое число `default`-методов; лямбда `s -> s.toUpperCase()` реализует именно `transform`.",
+                "when_to_apply": "Понимание SAM нужно везде, где используются лямбды и method references: `Stream`, `Optional`, `Comparator`, колбэки. Любой такой интерфейс под капотом — функциональный с единственным абстрактным методом.",
+                "edge_cases": "Методы, переопределяющие публичные методы `Object` (`equals`, `hashCode`, `toString`), не считаются абстрактными для SAM-проверки, поэтому их объявление не нарушает функциональность интерфейса.",
+                "related": "[[java-functional-interface-interview#Q2]] зачем нужна `@FunctionalInterface`; [[java-functional-interface-interview#Q4]] встроенные интерфейсы; [[java-functional-interface-interview#Q14]] свой функциональный интерфейс."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Функциональный интерфейс — это любой интерфейс, у которого нет ни одного `default`-метода, только абстрактные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Решающее свойство — ровно один абстрактный метод, а число `default`-методов не ограничено: их может быть много или ноль.",
+                "source_of_confusion": "`default`-методы появились в Java 8 вместе с лямбдами, поэтому их ошибочно противопоставляют функциональным интерфейсам.",
+                "if_it_were_true": "Тогда `Function` с её `andThen`/`compose` не была бы функциональным интерфейсом, хотя именно она — канонический пример.",
+                "how_it_should_be": "Функциональность определяется числом абстрактных методов (ровно один), а `default`-методов может быть сколько угодно."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Функциональный интерфейс — это интерфейс, помеченный аннотацией `@FunctionalInterface`; без аннотации интерфейс функциональным быть не может.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотация необязательна: интерфейс с одним абстрактным методом функционален и без неё, например `Runnable` работал как SAM ещё до Java 8.",
+                "source_of_confusion": "Аннотация и понятие выглядят синонимами, поэтому кажется, что без неё интерфейс «не настоящий» функциональный.",
+                "if_it_were_true": "Тогда лямбду нельзя было бы присвоить интерфейсу без аннотации, но компилятор спокойно принимает любой SAM-интерфейс.",
+                "how_it_should_be": "Функциональность определяется наличием единственного абстрактного метода, а аннотация лишь документирует и проверяет намерение."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Функциональный интерфейс обязан иметь ровно два метода: один абстрактный для логики и один `default` для композиции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Требуется ровно один абстрактный метод; `default`-методов может не быть совсем, как у `Runnable` или `Supplier`.",
+                "source_of_confusion": "Многие примеры (`Function`, `Predicate`) действительно несут `default`-методы композиции, отсюда ложное правило про «два метода».",
+                "if_it_were_true": "Тогда `Supplier<T>` с единственным `get()` не был бы функциональным, хотя он один из базовых интерфейсов.",
+                "how_it_should_be": "Достаточно одного абстрактного метода; наличие `default`-методов — приятная опция, а не обязательное требование."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужна аннотация @FunctionalInterface?",
+          "options": [
+            {
+              "text": "Без `@FunctionalInterface` интерфейс с одним абстрактным методом нельзя реализовать лямбдой — аннотация технически обязательна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотация необязательна: любой SAM-интерфейс принимает лямбду и без неё, например `Comparator` использовался лямбдами и до явной пометки.",
+                "source_of_confusion": "Кажется логичным, что «функциональность» включается именно аннотацией, как `@Override` якобы «включает» переопределение.",
+                "if_it_were_true": "Тогда тысячи старых интерфейсов без аннотации не работали бы с лямбдами в Java 8, но они работают.",
+                "how_it_should_be": "Лямбда применима к любому интерфейсу с одним абстрактным методом; аннотация лишь включает проверку компилятором."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@FunctionalInterface` — маркер намерения, который заставляет компилятор проверить, что интерфейс содержит ровно один абстрактный метод; иначе будет compile error. Технически она необязательна (SAM-интерфейс работает и без неё), но это best practice: документирует назначение, защищает от случайного второго абстрактного метода и помогает IDE.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотация переводит «функциональность» из неявного свойства в проверяемый компилятором контракт. Если кто-то добавит второй абстрактный метод, сборка упадёт с `Multiple non-overriding abstract methods`, а не молча сломает лямбды у пользователей интерфейса.",
+                "example": "`@FunctionalInterface interface Bad { void first(); void second(); }` не компилируется. Без аннотации тот же интерфейс собрался бы, но перестал бы быть пригодным для лямбды, и ошибку увидели бы только в местах вызова.",
+                "when_to_apply": "Ставить на каждый интерфейс, который вы намеренно проектируете под лямбды и method references, особенно в публичном API библиотеки, где случайная поломка SAM-контракта дорога.",
+                "edge_cases": "Аннотация не мешает добавлять `default`/`static`-методы и переопределения методов `Object` — она ругается только на появление второго по-настоящему абстрактного метода.",
+                "related": "[[java-functional-interface-interview#Q1]] что такое функциональный интерфейс; [[java-functional-interface-interview#Q14]] свой функциональный интерфейс; [[java-functional-interface-interview#Q4]] встроенные интерфейсы."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@FunctionalInterface` во время выполнения генерирует за вас реализацию единственного метода через рефлексию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотация не генерирует никакого кода и не участвует в рантайме — это compile-time проверка с `@Retention(RUNTIME)`, но без поведения.",
+                "source_of_confusion": "Некоторые аннотования (`@Autowired`, `@Transactional`) и правда влияют на рантайм, отсюда ожидание «магии» и здесь.",
+                "if_it_were_true": "Тогда лямбду писать было бы не нужно, но именно лямбда и поставляет реализацию абстрактного метода.",
+                "how_it_should_be": "Реализацию даёт лямбда или method reference; аннотация только статически проверяет SAM-контракт."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@FunctionalInterface` запрещает добавлять в интерфейс любые `default`- и `static`-методы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотация разрешает сколько угодно `default`/`static`-методов; она ругается только на появление второго абстрактного метода.",
+                "source_of_confusion": "Слово «functional» звучит как «только функция, ничего лишнего», отсюда ложный запрет на вспомогательные методы.",
+                "if_it_were_true": "Тогда `Function` с её `andThen`/`compose` не могла бы нести аннотацию, хотя она помечена `@FunctionalInterface`.",
+                "how_it_should_be": "Ограничен только один абстрактный метод; `default`- и `static`-методов может быть сколько угодно."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем лямбда отличается от анонимного класса?",
+          "options": [
+            {
+              "text": "Различий нет: лямбда — это просто синтаксический сахар, компилятор разворачивает её ровно в анонимный класс с тем же поведением `this`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лямбда компилируется в `invokedynamic`, а не в `Outer$1.class`, и её `this` указывает на внешний класс, а не на новый объект.",
+                "source_of_confusion": "Обе конструкции реализуют один интерфейс и выглядят взаимозаменяемо, отсюда вывод о полной эквивалентности.",
+                "if_it_were_true": "Тогда `this` в лямбде ссылался бы на сам функциональный объект, но он ссылается на окружающий экземпляр.",
+                "how_it_should_be": "Это разные механизмы: разное поведение `this`, разное число объектов и разный байт-код (`invokedynamic` vs отдельный класс)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Лямбда может расширять любой класс и реализовывать несколько интерфейсов, а анонимный класс ограничен ровно одним функциональным интерфейсом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: лямбда работает только с одним функциональным интерфейсом, а анонимный класс может расширять класс и реализовывать произвольный интерфейс.",
+                "source_of_confusion": "Лямбды кажутся «более мощными и современными», поэтому им приписывают и большую гибкость по типам.",
+                "if_it_were_true": "Тогда можно было бы написать лямбду для абстрактного класса с двумя методами, но компилятор это запрещает.",
+                "how_it_should_be": "Лямбда ограничена SAM-интерфейсом; именно анонимный класс гибче по тому, что он наследует и реализует."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Главные отличия: в лямбде `this` ссылается на внешний класс, а в анонимном классе — на сам объект анонимного класса; лямбда не создаёт отдельный объект при каждом вызове (JVM использует `invokedynamic`), а анонимный класс порождает новый объект; лямбда не может иметь собственных полей и реализует только функциональный интерфейс, тогда как анонимный класс может иметь поля и расширять любой класс/интерфейс.",
+              "correct": true,
+              "sections": {
+                "explanation": "Лямбда — это не синтаксический сахар над анонимным классом: компилятор не генерирует `Outer$1.class`, а оставляет `invokedynamic`, который связывается через `LambdaMetafactory`. Поэтому `this` в лямбде — это `this` окружающего метода, а захват `this` анонимного класса указывает на новый объект.",
+                "example": "`Runnable r2 = () -> System.out.println(this);` печатает внешний объект, а `new Runnable(){ public void run(){ System.out.println(this); } }` печатает сам анонимный экземпляр.",
+                "when_to_apply": "Различие важно при отладке (у анонимного класса есть имя `Outer$1`, у лямбды — синтетический метод), при работе с `this` внутри колбэков и при заботе о числе создаваемых объектов в горячем коде.",
+                "edge_cases": "Анонимный класс можно сериализовать, лямбду — формально тоже (если интерфейс `Serializable`), но это не рекомендуется: имена синтетических методов нестабильны между компиляциями и версиями.",
+                "related": "[[java-functional-interface-interview#Q1]] SAM-контракт под лямбду; [[java-functional-interface-interview#Q12]] effectively final при захвате; [[java-functional-interface-interview#Q8]] method references как альтернатива."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В лямбде `this` ссылается на сам функциональный объект, а в анонимном классе — на внешний класс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: в лямбде `this` — внешний класс, в анонимном классе `this` — сам анонимный объект.",
+                "source_of_confusion": "По аналогии с обычным методом кажется, что `this` всегда указывает «на текущую конструкцию», то есть на лямбду.",
+                "if_it_were_true": "Тогда из лямбды нельзя было бы обратиться к полям окружающего объекта через `this.field`, но это работает.",
+                "how_it_should_be": "Лямбда не вводит свой `this` и берёт его у окружающего метода; собственный `this` есть только у анонимного класса."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные функциональные интерфейсы есть в java.util.function?",
+          "options": [
+            {
+              "text": "Сигнатура `Function<T,R>` — это `void apply(T t)`: функция принимает аргумент, но ничего не возвращает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Function<T,R>` возвращает результат: `R apply(T t)`. Интерфейс с `void accept(T)` без возврата — это `Consumer<T>`.",
+                "source_of_confusion": "Слово «функция» в обиходе иногда значит «процедура», отсюда ожидание побочного эффекта без результата.",
+                "if_it_were_true": "Тогда `stream.map(Function)` не мог бы преобразовывать элементы, ведь преобразование требует возвращаемого значения.",
+                "how_it_should_be": "`Function` возвращает `R`; для действия без результата существует `Consumer<T>` с `void accept`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Supplier<T>` принимает аргумент типа `T` и возвращает `boolean`, работая как проверка значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Supplier<T>` не принимает аргументов и возвращает `T` через `T get()`. Проверка с возвратом `boolean` — это `Predicate<T>`.",
+                "source_of_confusion": "Названия `Supplier` и `Predicate` оба звучат «служебно», и их роли легко перепутать без сигнатур.",
+                "if_it_were_true": "Тогда `Optional.orElseGet(Supplier)` ждал бы на входе значение, но он, наоборот, лениво его производит без аргументов.",
+                "how_it_should_be": "`Supplier` производит значение без входа (`T get()`); булеву проверку с аргументом даёт `Predicate<T>`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Consumer<T>` возвращает новое значение типа `T`, поэтому его удобно использовать в `map()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Consumer<T>` ничего не возвращает (`void accept(T)`); для преобразования с возвратом в `map()` нужна `Function<T,R>`.",
+                "source_of_confusion": "`Consumer` часто стоит рядом с `Function` в примерах `Stream`, отсюда смешение их ролей.",
+                "if_it_were_true": "Тогда `forEach(Consumer)` мог бы собирать результаты, но он применяется ради побочного эффекта и ничего не отдаёт.",
+                "how_it_should_be": "`Consumer` выполняет действие без возврата; преобразование с результатом — задача `Function`, которую и принимает `map`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Базовые интерфейсы пакета: `Function<T,R>` (`R apply(T)`), `BiFunction<T,U,R>`, `UnaryOperator<T>` (`T apply(T)`), `BinaryOperator<T>`, `Predicate<T>` (`boolean test(T)`), `BiPredicate<T,U>`, `Consumer<T>` (`void accept(T)`), `BiConsumer<T,U>`, `Supplier<T>` (`T get()`). Плюс `Runnable` и `Callable<T>` из других пакетов. Они покрывают все комбинации «есть/нет входа» и «есть/нет выхода».",
+              "correct": true,
+              "sections": {
+                "explanation": "Интерфейсы различают по числу аргументов и наличию результата: `Supplier` — нет входа, есть выход; `Consumer` — есть вход, нет выхода; `Function` — вход и выход; `Predicate` — вход и `boolean`. Это покрывает почти все сигнатуры колбэков в `Stream` и `Optional`.",
+                "example": "`Function<String,Integer> length = String::length; Predicate<String> isEmpty = String::isEmpty; Consumer<String> print = System.out::println; Supplier<List<String>> newList = ArrayList::new;` — по одному примеру на каждый базовый тип.",
+                "when_to_apply": "Выбирать интерфейс по форме лямбды: возвращает `boolean` — `Predicate`; ничего не возвращает — `Consumer`; берёт два аргумента — `Bi*`-вариант. Это словарь, на котором построены `map`, `filter`, `forEach`, `reduce`.",
+                "edge_cases": "`Runnable` и `Callable` живут в `java.lang` и `java.util.concurrent`, а не в `java.util.function`; `Callable.call()` объявляет `throws Exception`, в отличие от `Supplier.get()`.",
+                "related": "[[java-functional-interface-interview#Q5]] `Consumer` vs `Supplier`; [[java-functional-interface-interview#Q6]] `Function` vs `UnaryOperator`; [[java-functional-interface-interview#Q7]] `Runnable`/`Callable`/`Supplier`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Consumer отличается от Supplier?",
+          "options": [
+            {
+              "text": "`Consumer<T>` принимает значение типа `T` и ничего не возвращает (`void accept(T)`) — он потребляет данные ради побочного эффекта (логирование, `forEach`). `Supplier<T>` наоборот: не принимает входных данных и возвращает значение типа `T` (`T get()`) — он производит/поставляет значение (фабрика, ленивая инициализация в `orElseGet`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Это зеркальные интерфейсы по направлению данных: у `Consumer` данные втекают и теряются (нет возврата), у `Supplier` данные вытекают наружу (нет входа). Один — приёмник, другой — источник.",
+                "example": "`Consumer<String> logger = msg -> log.info(\"Event: {}\", msg); List.of(\"a\",\"b\").forEach(logger);` против `Supplier<LocalDate> today = LocalDate::now; opt.orElseGet(today);` — лог потребляет, фабрика поставляет.",
+                "when_to_apply": "`Consumer` брать для действий-без-результата: `forEach`, `ifPresent`, обработчики событий. `Supplier` — для ленивого вычисления и фабрик: `orElseGet`, `requireNonNullElseGet`, дефолты, которые не хочется считать заранее.",
+                "edge_cases": "`Supplier` обеспечивает ленивость: `orElseGet(expensive())` вызовет `expensive` только если `Optional` пуст, тогда как `orElse(expensive())` вычислит его всегда — частая ошибка производительности.",
+                "related": "[[java-functional-interface-interview#Q4]] обзор встроенных интерфейсов; [[java-functional-interface-interview#Q7]] `Supplier` vs `Callable`; [[java-functional-interface-interview#Q6]] другие специализации."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Consumer` и `Supplier` идентичны по сигнатуре: оба принимают `T` и возвращают `T`, различаясь только названием.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сигнатуры противоположны: `Consumer` — `void accept(T)` (вход есть, выхода нет), `Supplier` — `T get()` (входа нет, выход есть).",
+                "source_of_confusion": "Оба интерфейса параметризованы одним `T`, что создаёт иллюзию одинаковой формы.",
+                "if_it_were_true": "Тогда их можно было бы свободно подставлять друг за друга, но `forEach` принимает только `Consumer`, а `orElseGet` — только `Supplier`.",
+                "how_it_should_be": "`Consumer` потребляет вход без возврата, `Supplier` производит выход без входа — это зеркальные роли."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Supplier<T>` принимает значение и логирует его, а `Consumer<T>` создаёт новое значение по запросу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: потребляет и логирует `Consumer`, а создаёт значение по запросу `Supplier`.",
+                "source_of_confusion": "По-английски «supply» можно прочитать и как «поставить на вход», что переворачивает смысл.",
+                "if_it_were_true": "Тогда `orElseGet(Supplier)` ждал бы данные на входе, но он, напротив, лениво генерирует дефолт без аргументов.",
+                "how_it_should_be": "`Supplier` поставляет значение наружу (`get`), `Consumer` принимает его внутрь (`accept`) ради побочного эффекта."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Оба интерфейса возвращают `boolean`: `Consumer` — успех потребления, `Supplier` — доступность значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ни один не возвращает `boolean`: `Consumer` возвращает `void`, `Supplier` — значение типа `T`. Булев результат даёт `Predicate`.",
+                "source_of_confusion": "Кажется естественным, что метод должен сигнализировать об успехе флагом, как многие API в стиле C.",
+                "if_it_were_true": "Тогда `forEach` мог бы прерываться по `false`, но `Consumer.accept` ничего не возвращает и поток не останавливает.",
+                "how_it_should_be": "`Consumer` отдаёт `void`, `Supplier` отдаёт `T`; для булева ответа существует `Predicate<T>`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Function отличается от UnaryOperator?",
+          "options": [
+            {
+              "text": "`UnaryOperator<T>` принимает два аргумента типа `T` и возвращает один `T`, объединяя их.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Два аргумента типа `T` с результатом `T` — это `BinaryOperator<T>`; `UnaryOperator` принимает ровно один аргумент.",
+                "source_of_confusion": "Приставки «unary» и «binary» легко перепутать, особенно если помнить только про «оператор над T».",
+                "if_it_were_true": "Тогда `list.replaceAll(UnaryOperator)` требовал бы пару значений на элемент, но он передаёт один текущий элемент.",
+                "how_it_should_be": "`UnaryOperator` — один вход и один выход (`T → T`); пара `T, T → T` — это `BinaryOperator`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`UnaryOperator<T>` расширяет `Function<T,T>` — это частный случай, когда тип входа и выхода совпадает. `Function<T,R>` допускает разные типы (`String → Integer`), а `UnaryOperator<T>` требует одинаковых (`String → String`). По аналогии `BinaryOperator<T>` — частный случай `BiFunction<T,T,T>`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`UnaryOperator` не добавляет новой логики, а лишь сужает сигнатуру `Function` до `T → T`. Это даёт более точный тип в API, где результат обязан совпадать с входом, и улучшает читаемость намерения.",
+                "example": "`Function<String,Integer> parser = Integer::parseInt;` против `UnaryOperator<String> trim = String::trim;`. Метод `List.replaceAll` принимает именно `UnaryOperator<E>`: `names.replaceAll(String::trim);` заменяет элементы значениями того же типа.",
+                "when_to_apply": "Брать `UnaryOperator`, когда метод обязан вернуть тот же тип, что принял (`replaceAll`, `compute`-подобные трансформации на месте). `Function` — когда тип результата может отличаться от входного.",
+                "edge_cases": "Поскольку `UnaryOperator<T>` — подтип `Function<T,T>`, его можно передать всюду, где ждут `Function<T,T>`, но не наоборот: `Function<String,Integer>` не является `UnaryOperator`.",
+                "related": "[[java-functional-interface-interview#Q4]] обзор `Function`/операторов; [[java-functional-interface-interview#Q9]] `compose`/`andThen` у `Function`; [[java-functional-interface-interview#Q11]] примитивные `UnaryOperator`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Function<T,R>` обязана иметь одинаковые входной и выходной типы, а `UnaryOperator<T>` позволяет их различать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: ограничение «одинаковые типы» накладывает `UnaryOperator<T>`, а `Function<T,R>` как раз допускает разные `T` и `R`.",
+                "source_of_confusion": "Имя `UnaryOperator` звучит «гибче», поэтому ему ошибочно приписывают свободу по типам.",
+                "if_it_were_true": "Тогда `Function<String,Integer> parser = Integer::parseInt;` не компилировался бы, но это валидный код.",
+                "how_it_should_be": "`Function<T,R>` свободна по типам; именно `UnaryOperator<T>` фиксирует `T → T`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`UnaryOperator<T>` и `Function<T,R>` никак не связаны наследованием — это два независимых интерфейса без общего родителя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Связь прямая: `UnaryOperator<T>` объявлен как `extends Function<T,T>`, то есть является его подтипом-специализацией.",
+                "source_of_confusion": "Разные имена создают впечатление двух самостоятельных интерфейсов без иерархии.",
+                "if_it_were_true": "Тогда `UnaryOperator<String>` нельзя было бы передать туда, где ждут `Function<String,String>`, но это допустимо.",
+                "how_it_should_be": "`UnaryOperator<T> extends Function<T,T>`, поэтому он подставляется всюду, где принимают `Function<T,T>`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Runnable отличается от Callable и Supplier?",
+          "options": [
+            {
+              "text": "`Runnable.run()` возвращает результат типа `T` и поэтому используется в `ExecutorService.submit` для получения `Future<T>`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Runnable.run()` возвращает `void`; результат через `Future` даёт `Callable<T>`. `submit(Runnable)` возвращает `Future<?>`, разрешающийся в `null`.",
+                "source_of_confusion": "И `Runnable`, и `Callable` запускаются в `Executor`, поэтому их способности по возврату смешивают.",
+                "if_it_were_true": "Тогда не понадобился бы `Callable`, но он введён именно для задач с результатом и checked-исключениями.",
+                "how_it_should_be": "`Runnable` ничего не возвращает; для результата из задачи нужен `Callable<T>` с `call()`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Supplier<T>.get()` объявляет `throws Exception`, поэтому из него удобно бросать checked-исключения, как `IOException`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Supplier.get()` не объявляет checked-исключений; бросать checked умеет только `Callable.call() throws Exception`.",
+                "source_of_confusion": "`Supplier` и `Callable` оба возвращают `T`, отсюда ложный перенос сигнатуры исключений с одного на другой.",
+                "if_it_were_true": "Тогда `Files::readAllBytes` подошёл бы как `Supplier`, но компилятор требует обернуть `IOException` или взять `Callable`.",
+                "how_it_should_be": "`Supplier` не пробрасывает checked-исключения; для них существует `Callable` или собственный интерфейс с `throws`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Runnable.run()` ничего не возвращает (`void`) и не объявляет checked-исключений, лежит в `java.lang`. `Callable<T>.call()` возвращает `T` и объявляет `throws Exception`, лежит в `java.util.concurrent`. `Supplier<T>.get()` возвращает `T`, но checked-исключений не объявляет, лежит в `java.util.function`. Ключ: `Callable` умеет бросать checked exception, `Supplier` — нет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три интерфейса различают по возврату и обработке checked-исключений. `Runnable` — действие без результата для `Thread`/`Executor`. `Callable` и `Supplier` оба возвращают `T`, но только `Callable.call()` объявляет `throws Exception`, что делает его удобным для задач в `ExecutorService.submit`, возвращающих `Future`.",
+                "example": "`Runnable r = () -> System.out.println(\"fire and forget\");`, `Callable<Integer> c = () -> { Thread.sleep(100); return 42; };` (sleep бросает checked `InterruptedException` — компилируется), `Supplier<String> s = () -> \"lazy value\";`.",
+                "when_to_apply": "`Runnable` — когда не нужен результат (задача в потоке). `Callable` — когда нужен результат И возможны checked-исключения (`Future<T> f = executor.submit(c)`). `Supplier` — ленивое получение значения в `Optional`/`orElseGet` без проброса checked-исключений.",
+                "edge_cases": "Лямбду `() -> 42` компилятор может вывести и как `Callable`, и как `Supplier` — выбор зависит от целевого типа; но тело с `throws IOException` подойдёт только `Callable`, не `Supplier`.",
+                "related": "[[java-functional-interface-interview#Q5]] `Supplier` как источник значения; [[java-functional-interface-interview#Q13]] checked exceptions в лямбде; [[java-functional-interface-interview#Q4]] обзор встроенных интерфейсов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Все три интерфейса лежат в одном пакете `java.util.function` и полностью взаимозаменяемы по типу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пакеты разные: `Runnable` — `java.lang`, `Callable` — `java.util.concurrent`, `Supplier` — `java.util.function`; по типу они невзаимозаменяемы.",
+                "source_of_confusion": "Все три — простые SAM-интерфейсы из мира лямбд, что создаёт впечатление общего «функционального» пакета.",
+                "if_it_were_true": "Тогда `executor.submit(supplier)` компилировался бы, но `submit` принимает только `Runnable` или `Callable`.",
+                "how_it_should_be": "Интерфейсы живут в трёх разных пакетах, и подставлять один вместо другого нельзя — у методов фиксированы целевые типы."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие 4 вида method references существуют?",
+          "options": [
+            {
+              "text": "Существует только один вид method reference — ссылка на статический метод `ClassName::staticMethod`; для методов экземпляра и конструкторов синтаксиса `::` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Видов четыре: статический, на объекте, на типе и на конструктор. `instance::method`, `Type::method` и `Type::new` — валидные method references.",
+                "source_of_confusion": "Первым обычно показывают `Integer::parseInt`, поэтому статический вид запоминается как единственный.",
+                "if_it_were_true": "Тогда `ArrayList::new` и `System.out::println` не компилировались бы, но это повседневный корректный код.",
+                "how_it_should_be": "Method reference покрывает статические методы, методы объекта, методы по типу и конструкторы — всего четыре вида."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`ClassName::new` ссылается на статический метод класса с именем `new`, а не на конструктор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClassName::new` — это ссылка именно на конструктор; метода с именем `new` в Java не существует, `new` — ключевое слово.",
+                "source_of_confusion": "Синтаксис `Class::name` обычно означает метод, поэтому `new` ошибочно читают как имя метода.",
+                "if_it_were_true": "Тогда без статического метода `new` ссылка не компилировалась бы, но `ArrayList::new` создаёт объект через конструктор.",
+                "how_it_should_be": "`ClassName::new` — отдельный вид method reference на конструктор, создающий новый экземпляр."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`String::toUpperCase` — это ссылка на статический метод класса `String`, выполняемая без объекта-receiver.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`String::toUpperCase` — ссылка на метод экземпляра по типу: первый аргумент лямбды становится receiver, то есть `s -> s.toUpperCase()`.",
+                "source_of_confusion": "Запись `Type::method` совпадает по форме со ссылкой на статический метод, отсюда путаница вида.",
+                "if_it_were_true": "Тогда вызов шёл бы как `String.toUpperCase(x)`, но `toUpperCase` — нестатический метод, требующий объект-receiver.",
+                "how_it_should_be": "Это method reference на метод экземпляра по типу; receiver берётся из первого аргумента функционального интерфейса."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Четыре вида: 1) ссылка на статический метод `ClassName::staticMethod` (≈ `x -> ClassName.staticMethod(x)`); 2) ссылка на метод конкретного объекта `instance::method` (≈ `x -> instance.method(x)`); 3) ссылка на метод экземпляра по типу `ClassName::instanceMethod`, где первый аргумент становится receiver (≈ `x -> x.method()`); 4) ссылка на конструктор `ClassName::new` (≈ `x -> new ClassName(x)`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Method reference — компактная замена лямбды, которая только перенаправляет аргументы в существующий метод. Виды различаются тем, откуда берётся объект-receiver: класс (статический), фиксированный объект, сам аргумент (тип) или конструктор, создающий новый объект.",
+                "example": "`Function<String,Integer> p = Integer::parseInt;` (1 статический), `Function<String,String> g = prefix::concat;` (2 на объекте), `Function<String,String> u = String::toUpperCase;` (3 на типе), `Supplier<ArrayList<String>> f = ArrayList::new;` (4 конструктор).",
+                "when_to_apply": "Использовать, когда тело лямбды — это просто вызов одного существующего метода без дополнительной логики: `String::toUpperCase` читается яснее, чем `s -> s.toUpperCase()`, и не плодит лишних параметров.",
+                "edge_cases": "Третий вид (`ClassName::instanceMethod`) неоднозначен с первым по виду записи: `String::compareTo` — это `(a,b) -> a.compareTo(b)`, где первый аргумент стал receiver, а не статический вызов; компилятор различает их по целевой сигнатуре.",
+                "related": "[[java-functional-interface-interview#Q3]] лямбда vs анонимный класс; [[java-functional-interface-interview#Q1]] SAM как цель ссылки; [[java-functional-interface-interview#Q4]] интерфейсы под method references."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают compose() и andThen() в Function?",
+          "options": [
+            {
+              "text": "Оба объединяют функции в цепочку, но порядок выполнения обратный. `f.andThen(g)` — сначала `f`, потом `g` (`g(f(x))`): `times2.andThen(plus3).apply(5)` = `(5*2)+3 = 13`. `f.compose(g)` — сначала `g`, потом `f` (`f(g(x))`): `times2.compose(plus3).apply(5)` = `(5+3)*2 = 16`. Мнемоника: в `andThen` аргумент выполняется после `this`, в `compose` — до.",
+              "correct": true,
+              "sections": {
+                "explanation": "Различие — в том, чей результат подаётся первым. `andThen` читается слева направо (сначала текущая функция, затем переданная), `compose` — справа налево (переданная функция вычисляется первой и её результат идёт в текущую).",
+                "example": "`Function<Integer,Integer> times2 = x -> x*2; Function<Integer,Integer> plus3 = x -> x+3;` — `times2.andThen(plus3).apply(5)` даёт 13, а `times2.compose(plus3).apply(5)` даёт 16. Те же функции, разный порядок — разный результат.",
+                "when_to_apply": "Брать `andThen`, когда удобно описывать конвейер в естественном порядке шагов (сначала это, затем то). `compose` — когда хочется выразить математическую композицию `f∘g`, где правая функция применяется первой.",
+                "edge_cases": "`Consumer` имеет только `andThen`, но не `compose`: у `Consumer` нет возвращаемого значения, которое можно было бы передать следующей функции, поэтому композиция «справа налево» для него бессмысленна.",
+                "related": "[[java-functional-interface-interview#Q10]] `and`/`or`/`negate` у `Predicate`; [[java-functional-interface-interview#Q6]] `Function` vs `UnaryOperator`; [[java-functional-interface-interview#Q4]] обзор интерфейсов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`andThen` и `compose` полностью эквивалентны: оба выполняют функции слева направо и всегда дают одинаковый результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок противоположен: `andThen` выполняет `this` первой, `compose` — переданную функцию первой; на некоммутативных операциях результаты различаются (13 против 16).",
+                "source_of_confusion": "Оба метода «склеивают» две функции, поэтому кажется, что разница лишь в названии.",
+                "if_it_were_true": "Тогда `times2.andThen(plus3)` и `times2.compose(plus3)` давали бы одно число, но это 13 и 16 соответственно.",
+                "how_it_should_be": "`andThen` идёт слева направо, `compose` — справа налево; для некоммутативных шагов результаты разные."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`f.andThen(g)` означает «сначала `g`, потом `f`», то есть вычисляет `f(g(x))`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`f.andThen(g)` означает «сначала `f`, потом `g`», то есть `g(f(x))`. Порядок `f(g(x))` даёт как раз `compose`.",
+                "source_of_confusion": "Названия `andThen` и `compose` легко перепутать, и их семантику запоминают наоборот.",
+                "if_it_were_true": "Тогда `times2.andThen(plus3).apply(5)` дало бы 16, но фактический результат — 13.",
+                "how_it_should_be": "`andThen(g)` применяет `this` первой и передаёт результат в `g`: получается `g(f(x))`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "У `Consumer` есть оба метода — `andThen` и `compose`, так как он, как и `Function`, поддерживает полную композицию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Consumer` имеет только `andThen`: без возвращаемого значения нечего передавать дальше, поэтому `compose` для него не определён.",
+                "source_of_confusion": "`Consumer` тоже комбинируется через `andThen`, отсюда ожидание полного набора методов как у `Function`.",
+                "if_it_were_true": "Тогда `consumer.compose(...)` компилировался бы, но такого метода в `Consumer` нет.",
+                "how_it_should_be": "`Consumer` поддерживает только `andThen` (последовательные побочные эффекты); `compose` есть лишь у возвращающих значение `Function`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают and(), or(), negate() в Predicate?",
+          "options": [
+            {
+              "text": "`and`, `or`, `negate` мутируют исходный предикат на месте и возвращают `void`, поэтому цепочки `a.and(b).or(c)` невозможны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Методы не мутируют исходный предикат, а возвращают новый `Predicate`, поэтому цепочки `a.and(b).or(c)` как раз и работают.",
+                "source_of_confusion": "По аналогии с мутирующими сеттерами кажется, что комбинаторы меняют объект на месте.",
+                "if_it_were_true": "Тогда `filter(notEmpty.and(startsWithA))` не компилировался бы из-за `void`, но это типовой рабочий код.",
+                "how_it_should_be": "Каждый метод возвращает новый `Predicate`, что и позволяет строить fluent-цепочки условий."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Это `default`-методы композиции предикатов. `and` — оба условия истинны (логическое И), `or` — хотя бы одно истинно (логическое ИЛИ), `negate` — инверсия результата. Они возвращают новый `Predicate`, удобный в `filter`: `names.stream().filter(notEmpty.and(startsWithA).and(longEnough))`. Плюс статический `Predicate.not(...)` (Java 11+) для инверсии method reference.",
+              "correct": true,
+              "sections": {
+                "explanation": "Методы позволяют собирать сложные условия из простых, не теряя ленивости короткого замыкания: `and` не вычисляет второй предикат, если первый дал `false`; `or` — если первый дал `true`. Результат — новый `Predicate`, исходные не мутируются.",
+                "example": "`Predicate<String> notEmpty = s -> !s.isEmpty(); Predicate<String> startsWithA = s -> s.startsWith(\"A\");` — `notEmpty.and(startsWithA).test(\"Alice\")` = `true`, `.test(\"Bob\")` = `false`; `notEmpty.negate().test(\"\")` = `true`.",
+                "when_to_apply": "Применять, когда фильтрация требует нескольких условий: вместо одной громоздкой лямбды собирать читаемую цепочку `valid = notEmpty.and(startsWithA)`. `Predicate.not(String::isEmpty)` удобен, чтобы инвертировать method reference без лямбды.",
+                "edge_cases": "`negate()` и статический `Predicate.not()` делают одно и то же, но `not()` (Java 11+) применим прямо к method reference: `filter(Predicate.not(String::isEmpty))`, где `negate` потребовал бы сначала сослаться на переменную-предикат.",
+                "related": "[[java-functional-interface-interview#Q9]] `compose`/`andThen` у `Function`; [[java-functional-interface-interview#Q4]] обзор интерфейсов; [[java-functional-interface-interview#Q14]] свои `and`/`or`/`negate` в кастомном интерфейсе."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`negate()` возвращает `boolean` — результат инверсии текущего теста, а не новый предикат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`negate()` возвращает новый `Predicate<T>`, а не `boolean`; сам тест выполняется позже вызовом `.test(value)`.",
+                "source_of_confusion": "Слово «negate» звучит как немедленное действие над значением, отсюда ожидание булева результата.",
+                "if_it_were_true": "Тогда `filter(notEmpty.negate())` получил бы `boolean` вместо предиката и не скомпилировался бы.",
+                "how_it_should_be": "`negate()` строит предикат-инверсию; булев результат появляется только при вызове `test` у полученного предиката."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`and()` всегда вычисляет оба предиката независимо от результата первого, потому что короткого замыкания у `Predicate` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`and()` использует короткое замыкание: если первый предикат вернул `false`, второй не вычисляется (он реализован через `&&`).",
+                "source_of_confusion": "Кажется, что комбинатор обязан опросить оба условия, как при сборе всех результатов.",
+                "if_it_were_true": "Тогда `expensive.and(cheap)` зря гонял бы дорогой второй тест даже при `false` в первом, но `&&` это предотвращает.",
+                "how_it_should_be": "`and` короткозамкнут через `&&` (как и `or` через `||`), и второй предикат вычисляется не всегда."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое примитивные специализации функциональных интерфейсов?",
+          "options": [
+            {
+              "text": "Примитивные специализации — это интерфейсы, которые наоборот всегда упаковывают примитив в обёртку для единообразия с `Object`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл специализаций обратный: они устраняют boxing, работая с примитивом напрямую, а не упаковывают его.",
+                "source_of_confusion": "Слово «специализация» звучит как «добавочный слой», отсюда мысль о дополнительной обёртке.",
+                "if_it_were_true": "Тогда `IntStream.map(IntUnaryOperator)` не давал бы выигрыша, но он как раз убирает аллокации `Integer`.",
+                "how_it_should_be": "Специализации избегают boxing/unboxing, работая с `int`/`long`/`double` напрямую ради производительности."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Примитивные специализации существуют только для `Predicate` (`IntPredicate`, `LongPredicate`), а для `Function`, `Consumer`, `Supplier` их нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Специализации есть у большинства семейств: `IntFunction`, `ToIntFunction`, `IntConsumer`, `IntSupplier`, `IntUnaryOperator` и аналогичные для `long`/`double`.",
+                "source_of_confusion": "`IntPredicate` встречается в примерах фильтрации чаще других, отсюда вывод о его исключительности.",
+                "if_it_were_true": "Тогда `IntStream.mapToObj(IntFunction)` не существовал бы, но этот метод есть и принимает `IntFunction`.",
+                "how_it_should_be": "Примитивные версии покрывают `Function`, `Consumer`, `Supplier`, `UnaryOperator` и др., а не только `Predicate`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Это варианты стандартных интерфейсов, работающие напрямую с примитивами (`int`, `long`, `double`) без boxing/unboxing. Например: `IntUnaryOperator`, `ToIntFunction<T>`, `IntPredicate`, `IntConsumer`, `IntSupplier`, `IntToDoubleFunction`. Они избегают накладных расходов на упаковку: `IntUnaryOperator square = x -> x*x;` не создаёт объектов `Integer`, в отличие от `Function<Integer,Integer>`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обобщённые интерфейсы параметризуются только ссылочными типами, поэтому `Function<Integer,Integer>` на каждом шаге упаковывает `int` в `Integer` и распаковывает обратно. Примитивные специализации фиксируют примитив в сигнатуре и убирают эти накладные расходы в горячих циклах и стримах.",
+                "example": "`Function<Integer,Integer> sq = x -> x*x;` (boxing на каждом элементе) против `IntUnaryOperator sqInt = x -> x*x; IntStream.range(0,1000).map(sqInt).sum();` — второй вариант не создаёт ни одного `Integer`.",
+                "when_to_apply": "Использовать в производительном числовом коде и при работе с `IntStream`/`LongStream`/`DoubleStream`, где boxing на больших объёмах данных заметно бьёт по GC и скорости. Шаблоны: `IntFunction`, `ToIntFunction`, `IntPredicate`, `IntUnaryOperator` и т.п.",
+                "edge_cases": "Названия следуют шаблонам: `XxxFunction<R>` — примитив на входе и объект на выходе; `ToXxxFunction<T>` — объект на входе и примитив на выходе; `XxxToYyyFunction` — примитив в примитив. Перепутать их легко, но сигнатура однозначна.",
+                "related": "[[java-functional-interface-interview#Q4]] базовые интерфейсы без специализаций; [[java-functional-interface-interview#Q6]] `UnaryOperator` и его примитивные версии; [[java-functional-interface-interview#Q5]] `Supplier` и `IntSupplier`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`ToIntFunction<T>` принимает примитив `int` и возвращает объект `T`, то есть распаковывает значение в ссылочный тип.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ToIntFunction<T>` наоборот: принимает объект `T` и возвращает примитив `int` (`int applyAsInt(T)`); примитив на входе — это `IntFunction<R>`.",
+                "source_of_confusion": "Приставка «To Int» и параметр `T` сбивают: непонятно, что именно `T`, а что `int` — вход или выход.",
+                "if_it_were_true": "Тогда `stream.mapToInt(ToIntFunction)` ждал бы поток примитивов, но он применяется к потоку объектов и даёт `IntStream`.",
+                "how_it_should_be": "`ToXxxFunction<T>` — объект на входе, примитив на выходе; примитив на входе обозначает шаблон `XxxFunction<R>`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что значит effectively final для переменных в лямбде?",
+          "options": [
+            {
+              "text": "Effectively final означает, что переменную нужно обязательно объявить со словом `final`, иначе лямбда её не захватит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключевое слово `final` писать не обязательно: достаточно, чтобы переменная фактически не переприсваивалась — компилятор сам признаёт её effectively final.",
+                "source_of_confusion": "Слово «final» в термине наводит на мысль, что модификатор обязан стоять в коде явно.",
+                "if_it_were_true": "Тогда `String prefix = \"Hello\";` без `final` нельзя было бы использовать в лямбде, но такой захват компилируется.",
+                "how_it_should_be": "Достаточно фактической неизменяемости после инициализации; явный `final` не требуется, хотя и допустим."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Внутри лямбды можно свободно переприсваивать захваченные локальные переменные — ограничение касается только полей класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: захваченные локальные переменные менять нельзя (нужна effectively final), а поля класса (`this.field`) изменять как раз можно.",
+                "source_of_confusion": "Поля и локальные переменные читаются в лямбде одинаково, поэтому правила их изменяемости смешивают.",
+                "if_it_were_true": "Тогда `counter++` на локальной переменной внутри `forEach` компилировался бы, но он даёт ошибку effectively final.",
+                "how_it_should_be": "Локальные захваченные переменные неизменяемы; менять можно только поля объекта, живущие в куче."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Захваченную локальную переменную можно безопасно менять в параллельном стриме через `int[] counter = {0}`, и это потокобезопасно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Трюк с массивом обходит компилятор, но НЕ потокобезопасен: при параллельном стриме `counter[0]++` создаёт гонку; нужен `AtomicInteger`.",
+                "source_of_confusion": "Раз компилятор пропускает `counter[0]++`, кажется, что и в многопоточности он безопасен.",
+                "if_it_were_true": "Тогда параллельный `forEach` с `counter[0]++` давал бы корректную сумму, но из-за гонки результат недосчитывается.",
+                "how_it_should_be": "Массив-обёртка снимает только запрет компилятора; для параллелизма нужен `AtomicInteger` или иной потокобезопасный счётчик."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Переменные из внешней области видимости, используемые внутри лямбды, должны быть `final` или effectively final — то есть фактически не меняться после инициализации, хотя слово `final` явно не написано. Если переменную переприсвоить (`mutable = \"Changed\";`), она перестаёт быть effectively final и захват в лямбде даёт compile error. Поля класса (`this.field`) при этом менять можно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Лямбда захватывает значение локальной переменной, а не ссылку на стек-слот: к моменту выполнения лямбды стек метода может уже не существовать. Поэтому Java требует, чтобы захваченная локальная переменная не менялась — иначе значение в лямбде и в методе разошлись бы.",
+                "example": "`String prefix = \"Hello\"; Consumer<String> g = name -> System.out.println(prefix + name);` компилируется. Но если добавить `prefix = \"Changed\";`, переменная перестаёт быть effectively final и захват в лямбде даст ошибку компиляции.",
+                "when_to_apply": "Помнить при захвате локальных переменных в колбэках и стримах. Если нужно изменяемое состояние — выносить его в поле объекта, в массив-обёртку `int[] c = {0}` или в `AtomicInteger` (последнее обязательно для многопоточности).",
+                "edge_cases": "Трюк `int[] counter = {0}; list.forEach(x -> counter[0]++);` обходит ограничение, потому что сама ссылка на массив effectively final, а меняется его элемент. Но это НЕ потокобезопасно — в параллельном стриме нужен `AtomicInteger`.",
+                "related": "[[java-functional-interface-interview#Q3]] захват `this` в лямбде vs анонимном классе; [[java-functional-interface-interview#Q13]] исключения в лямбде; [[java-functional-interface-interview#Q1]] лямбда как реализация SAM."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Можно ли выбросить checked exception из лямбды?",
+          "options": [
+            {
+              "text": "Нет, если функциональный интерфейс не объявляет `throws`. Стандартные интерфейсы (`Function`, `Predicate`, `Consumer` и т.д.) checked-исключений не объявляют, поэтому `path -> Files.readAllBytes(Path.of(path))` не компилируется. Обходы: обернуть в unchecked (`UncheckedIOException`) внутри лямбды или объявить собственный интерфейс с `throws` (`ThrowingFunction<T,R> { R apply(T) throws Exception; }`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Тело лямбды должно соответствовать сигнатуре абстрактного метода целевого интерфейса, включая объявленные исключения. Раз `Function.apply` не объявляет `throws`, любое checked-исключение в теле лямбды обязано быть обработано или обёрнуто — иначе compile error.",
+                "example": "`Function<String,byte[]> r = path -> Files.readAllBytes(Path.of(path));` не компилируется (checked `IOException`). Решение 1 — `try/catch` с `throw new UncheckedIOException(e);` внутри лямбды; решение 2 — кастомный `ThrowingFunction` с `throws Exception`.",
+                "when_to_apply": "Учитывать при работе с I/O, рефлексией, JDBC в стримах, где API бросает checked-исключения. Чаще всего оборачивают в unchecked прямо в лямбде; для библиотек делают собственные throwing-интерфейсы или используют утилиты-врапперы.",
+                "edge_cases": "В JDK нет встроенных «throwing»-версий стандартных интерфейсов. Но некоторые интерфейсы сами объявляют исключения — например, `Callable.call() throws Exception`, поэтому из `Callable` checked-исключение бросить можно.",
+                "related": "[[java-functional-interface-interview#Q7]] `Callable` с `throws Exception`; [[java-functional-interface-interview#Q14]] свой интерфейс с `throws`; [[java-functional-interface-interview#Q4]] стандартные интерфейсы без `throws`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Да, всегда: лямбда может бросать любое checked-исключение, потому что компилятор автоматически добавляет `throws` к абстрактному методу интерфейса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компилятор не дописывает `throws`: тело лямбды обязано укладываться в существующую сигнатуру, а `Function.apply` checked-исключений не объявляет.",
+                "source_of_confusion": "В обычных методах добавить `throws` легко, отсюда ожидание такой же свободы внутри лямбды.",
+                "if_it_were_true": "Тогда `path -> Files.readAllBytes(...)` компилировался бы как `Function`, но он даёт ошибку из-за `IOException`.",
+                "how_it_should_be": "Бросать checked можно лишь если интерфейс сам объявляет `throws`; иначе исключение надо обернуть в unchecked."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В JDK есть готовые throwing-версии стандартных интерфейсов, например `ThrowingFunction`, поэтому свой интерфейс писать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В стандартной библиотеке таких интерфейсов нет: `ThrowingFunction` приходится писать самому или брать из сторонних утилит.",
+                "source_of_confusion": "Потребность очевидна и встречается часто, отсюда ложное убеждение, что JDK её уже закрыл.",
+                "if_it_were_true": "Тогда `import java.util.function.ThrowingFunction;` компилировался бы, но такого класса в пакете нет.",
+                "how_it_should_be": "Throwing-интерфейс пишется вручную (`R apply(T) throws Exception`) либо берётся из библиотек вроде Vavr."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Обернуть checked в unchecked внутри лямбды невозможно — `try/catch` в теле лямбды запрещён синтаксисом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В теле лямбды-блока `try/catch` разрешён: именно так checked оборачивают в `UncheckedIOException` или `RuntimeException`.",
+                "source_of_confusion": "Однострочные лямбды без фигурных скобок не имеют места под `try`, отсюда вывод о полном запрете.",
+                "if_it_were_true": "Тогда нельзя было бы написать блочную лямбду с `try { ... } catch (...) { throw ... }`, но это валидный код.",
+                "how_it_should_be": "Лямбда с телом `{ ... }` поддерживает `try/catch`, что и используют для обёртки checked в unchecked."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как создать собственный функциональный интерфейс?",
+          "options": [
+            {
+              "text": "Собственный функциональный интерфейс должен наследовать `java.util.function.Function`, иначе лямбда к нему неприменима.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наследовать `Function` не требуется: достаточно объявить независимый интерфейс с одним абстрактным методом, и лямбда к нему применима.",
+                "source_of_confusion": "`Function` — самый известный функциональный интерфейс, отсюда мысль, что он базовый для всех остальных.",
+                "if_it_were_true": "Тогда `Runnable` и `Comparator` не работали бы с лямбдами, ведь они не наследуют `Function`, но они работают.",
+                "how_it_should_be": "Любой интерфейс с единственным абстрактным методом функционален сам по себе, без наследования `Function`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Объявить интерфейс с одним абстрактным методом и пометить `@FunctionalInterface`, при необходимости добавив `default`-методы композиции: `@FunctionalInterface interface Validator<T> { boolean validate(T value); default Validator<T> and(Validator<T> o) { return v -> this.validate(v) && o.validate(v); } }`. Создавать кастомный интерфейс стоит ради семантической ясности, когда нужен `throws` или доменные `default`-методы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Кастомный функциональный интерфейс ничем не отличается по механике от встроенных: один абстрактный метод делает его пригодным для лямбды, а `default`-методы (`and`, `or`, `negate`) добавляют доменную композицию. `@FunctionalInterface` фиксирует SAM-контракт на этапе компиляции.",
+                "example": "`Validator<String> notEmpty = s -> !s.isEmpty(); Validator<String> hasAt = s -> s.contains(\"@\"); Validator<String> all = notEmpty.and(hasAt); all.validate(\"user@example.com\");` возвращает `true`, читаясь яснее, чем цепочка `Predicate`.",
+                "when_to_apply": "Создавать, когда: нужна семантическая ясность (`Validator`/`Transformer` понятнее, чем `Predicate`/`Function`); нужен абстрактный метод с `throws`; нужны доменные `default`-методы. В остальных случаях достаточно встроенных интерфейсов.",
+                "edge_cases": "Имя абстрактного метода произвольно (`validate`, `transform`), но он должен быть ровно один; `default`- и `static`-методов можно добавлять сколько угодно, а методы из `Object` (`equals`/`hashCode`) не считаются нарушением SAM.",
+                "related": "[[java-functional-interface-interview#Q2]] роль `@FunctionalInterface`; [[java-functional-interface-interview#Q1]] что такое функциональный интерфейс; [[java-functional-interface-interview#Q13]] кастомный интерфейс с `throws`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В собственном функциональном интерфейсе можно объявить только один абстрактный метод, но добавлять `default`-методы (`and`, `or`) запрещено.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`default`-методы добавлять можно и нужно: именно они дают доменную композицию (`and`, `or`, `negate`), не нарушая SAM-контракт.",
+                "source_of_confusion": "Раз абстрактный метод должен быть один, кажется, что и любых других методов быть не должно.",
+                "if_it_were_true": "Тогда нельзя было бы написать `Validator` с `default and(...)`, но такой интерфейс компилируется и широко используется.",
+                "how_it_should_be": "Абстрактный метод ровно один, а `default`- и `static`-методов может быть сколько угодно для удобной композиции."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Чтобы интерфейс стал функциональным, его абстрактный метод обязан называться именно `apply`, как в `Function`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя метода произвольно: `validate`, `transform`, `run`, `test` — всё подходит; важно лишь, что абстрактный метод один.",
+                "source_of_confusion": "У `Function` метод называется `apply`, и это имя ошибочно принимают за обязательное соглашение.",
+                "if_it_were_true": "Тогда `Predicate.test` и `Supplier.get` не делали бы интерфейсы функциональными, но они функциональны.",
+                "how_it_should_be": "Имя единственного абстрактного метода может быть любым; функциональность определяется их количеством, а не названием."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

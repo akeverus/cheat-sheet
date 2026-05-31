@@ -559,7 +559,7 @@ Pass: `OK FILE.md`.
 | 221 | `programming-languages/java` | `java-conditional-statements` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 222 | `programming-languages/java` | `java-core` | 39 | 28 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 223 | `programming-languages/java` | `java-exceptions` | 42 | 7 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
-| 224 | `programming-languages/java` | `java-functional-interface` | 14 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 224 | `programming-languages/java` | `java-functional-interface` | 14 | 14 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 225 | `programming-languages/java` | `java-generics` | 40 | 7 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 226 | `programming-languages/java` | `java-initialization` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 227 | `programming-languages/java` | `java-io-nio` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
