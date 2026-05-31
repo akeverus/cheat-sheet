@@ -381,7 +381,7 @@ Pass: `OK FILE.md`.
 | 43 | `algorithms/sorting-searching` | `sorting-algorithms` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 44 | `api` | `api-design-best-practices` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 45 | `api` | `api-versioning` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
-| 46 | `api` | `graphql` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 46 | `api` | `graphql` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 47 | `api` | `grpc` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 48 | `api` | `http-rest` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 49 | `api` | `openapi-swagger` | 33 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
@@ -430,7 +430,7 @@ Pass: `OK FILE.md`.
 | 92 | `code-quality` | `code-review` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 93 | `code-quality` | `code-smells` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 94 | `code-quality` | `refactoring-patterns` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 95 | `code-quality` | `static-analysis` | 6 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 95 | `code-quality` | `static-analysis` | 6 | 6 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 96 | `code-quality` | `technical-debt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 97 | `data-engineering` | `apache-airflow` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 98 | `data-engineering` | `apache-flink` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
