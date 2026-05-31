@@ -1,0 +1,905 @@
+{
+  "topic_slug": "java-pattern-matching-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные формы Pattern Matching уже введены в Java по состоянию на Java 21 (LTS)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`instanceof` patterns (JEP 394, Java 16), pattern matching для `switch` (JEP 441, Java 21) и record patterns (JEP 440, Java 21) — все три финализированы как стандарт, без флага `--enable-preview`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pattern Matching развивался поэтапно: `instanceof` с binding-переменной (Java 16), а затем в Java 21 финализировались сразу и `switch` pattern matching, и record patterns — `preview`-статус с них сняли. До Java 21 они проходили через preview в Java 19-20.",
+                "example": "На Java 21 можно писать `if (o instanceof Shape sh)`, затем `switch (sh) { case Circle(double r) -> Math.PI*r*r; case Square(double s) -> s*s; }` без каких-либо preview-флагов компилятора.",
+                "when_to_apply": "Применимо при миграции legacy-цепочек `if-instanceof-cast` на Java 21 и при обработке ADT-иерархий (`DomainEvent`, `Result<T>`) в DDD-доменах.",
+                "edge_cases": "На Java 17 LTS эти `switch`-patterns доступны только с `--enable-preview` (JEP 420); IntelliJ до 2023.2 подсвечивал record patterns как ошибку, хотя `javac` их принимал.",
+                "related": "[[java-pattern-matching-interview#Q2]] детали `instanceof` patterns и flow scoping; [[java-pattern-matching-interview#Q3]] switch expressions; [[java-pattern-matching-interview#Q4]] record patterns."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только `instanceof` patterns (Java 16) — стандарт; `switch` pattern matching и record patterns в Java 21 всё ещё в статусе preview и требуют флага.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Java 21 и `switch` pattern matching (JEP 441), и record patterns (JEP 440) стали финальными — preview сняли; preview они были в Java 19-20.",
+                "source_of_confusion": "Многие команды сидят на Java 17 LTS, где `switch`-patterns действительно были preview (JEP 406/420/427), и эта ассоциация переносится на Java 21.",
+                "if_it_were_true": "Тогда в `Spring Boot 3.2+` record patterns пришлось бы включать через `--enable-preview`, но они работают из коробки без флагов.",
+                "how_it_should_be": "В Java 21 все три формы — стандарт; preview касается только более поздних JEP вроде unnamed patterns (JEP 456) и primitive patterns (JEP 488)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`instanceof` patterns, switch expressions из Java 14 и деконструкция record прямо в заголовке `for`-цикла — вот три введённые формы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Switch expressions (JEP 361, Java 14) — это просто стрелочный синтаксис с `yield`, без pattern matching; деконструкция record в `for` (JEP 432) до сих пор preview.",
+                "source_of_confusion": "Switch expressions (Java 14) и switch pattern matching (Java 21) — разные JEP с похожим синтаксисом `->`, поэтому их смешивают в один пункт.",
+                "if_it_were_true": "Тогда `for (Point(int x, int y) : list)` компилировался бы в Java 21 без флага, но `javac` выдаёт `pattern matching in for is a preview feature`.",
+                "how_it_should_be": "Корректный набор — `instanceof` (JEP 394), `switch` pattern matching (JEP 441) и record patterns (JEP 440); switch expressions Java 14 — отдельная фича."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Pattern Matching в Java — это не часть JDK; он доступен только через сторонние библиотеки вроде `Vavr` или `Apache Commons`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pattern Matching — нативная фича JDK на уровне `javac` и байткода; `Vavr` лишь эмулирует его через `Match.of(...).of(Case(...))` на лямбдах, медленнее в десятки раз.",
+                "source_of_confusion": "До Java 16 единственным способом получить pattern matching действительно были библиотеки (`Vavr`, `jOOL`), и эта привычка осталась у части разработчиков.",
+                "if_it_were_true": "Тогда были бы невозможны sealed types и exhaustiveness check, ведь компилятор не валидирует `Vavr`-`Match` и не ловит пропущенный subtype.",
+                "how_it_should_be": "Pattern matching встроен в JDK; библиотеки можно использовать как DSL, но настоящая проверка полноты и binding — на уровне компилятора."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Где доступна binding-переменная `s` в `if (!(obj instanceof String s)) { throw ...; } use(s);` и почему?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`s` доступна только внутри блока `if`; после `throw` компилятор сбрасывает binding и снаружи `s` уже не видна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При negated-`instanceof` с безусловным выходом (`throw`/`return`) компилятор расширяет scope binding ПОСЛЕ блока — это и есть flow scoping, поэтому `use(s)` валиден.",
+                "source_of_confusion": "До Java 16 scope переменной всегда ограничивался фигурными скобками enclosing-блока, и эта интуиция переносится на pattern binding.",
+                "if_it_were_true": "Тогда идиома guard-clause `if (!(o instanceof T t)) throw ...; useT(t);` не работала бы и пришлось бы дублировать проверку или вкладывать всю логику в `if-else`.",
+                "how_it_should_be": "Scope binding определяется анализом control-flow: безусловный `throw` доказывает, что после `if` `obj` точно `String`, поэтому `s` видна снаружи."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`s` доступна ПОСЛЕ `if`, потому что компилятор видит безусловный `throw` внутри блока — это flow scoping; убери `throw`, и scope `s` сузится только до тела `if`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Flow scoping (JEP 394) расширяет область видимости binding на основе анализа потока: при negated-pattern с безусловным выходом компилятор доказывает, что код после `if` достижим только когда паттерн сматчился, поэтому `s` там определена.",
+                "example": "В `safeLength` с `if (!(obj instanceof String s)) { throw new IllegalArgumentException(); } return s.length();` строка `return s.length()` компилируется; без `throw` тот же код даёт `cannot find symbol s`.",
+                "when_to_apply": "Применимо для guard-clauses в начале методов (валидация DTO в Spring-контроллерах) и early-return стиля вместо вложенных `if-else`.",
+                "edge_cases": "Если в блоке нет безусловного выхода (`System.out.println` вместо `throw`), scope не расширяется; в `else`-ветке negated-pattern binding недоступен, а `||` не пропагирует binding.",
+                "related": "[[java-pattern-matching-interview#Q1]] обзор форм pattern matching; [[java-pattern-matching-interview#Q3]] switch и pattern matching; [[java-pattern-matching-interview#Q7]] обработка null."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`s` доступна везде в методе после объявления — её scope равен scope обычной локальной переменной независимо от потока.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scope binding строго привязан к flow-анализу: без безусловного выхода после `if` переменная `s` снаружи недоступна, компилятор должен доказать определённость на каждом пути.",
+                "source_of_confusion": "Локальные переменные имеют block scope, но это не «от объявления до конца метода» — Java не делает var-hoisting как JavaScript.",
+                "if_it_were_true": "Тогда `s` можно было бы использовать после `if`, завершающегося normal-flow, и в runtime прилетел бы `NullPointerException`/`ClassCastException`, когда `obj` не `String`.",
+                "how_it_should_be": "Видимость binding-переменной определяется потоком: только при доказанном безусловном выходе из ветки `s` живёт за пределами блока."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`s` доступна, потому что Java 21 ввела implicit casting: компилятор сам приводит `obj` к `String` после `instanceof` независимо от ветки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого implicit casting нет: binding `s` — новая переменная, создаваемая только при матче; `obj` остаётся `Object`, а cast по-прежнему выполняется `instanceof` атомарно с binding.",
+                "source_of_confusion": "В Kotlin есть smart-cast (`if (obj is String) obj.length`), и его путают с поведением Java, где оригинальная переменная тип не меняет.",
+                "if_it_were_true": "Тогда после `if (o instanceof String s)` компилировалось бы `o.length()`, но в Java это ошибка — `o` остаётся `Object`, а длину можно взять только у `s`.",
+                "how_it_should_be": "Pattern matching делает type-test + binding одной операцией без смены типа исходной переменной; flow scoping управляет лишь видимостью новой `s`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём концептуальное отличие switch expression (JEP 361, Java 14) от классического switch statement и как это связано с pattern matching (JEP 441)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Switch expression — это просто сокращённый синтаксис с `->` вместо `:`; семантически он идентичен statement, отличие только в форме записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Switch expression — это выражение, возвращающее значение и подлежащее definite-assignment-анализу: компилятор требует exhaustiveness и запрещает fallthrough, чего нет у statement.",
+                "source_of_confusion": "Стрелочная форма `case X -> result` действительно появилась вместе с expression, поэтому arrow-синтаксис ошибочно отождествляют с expression-семантикой.",
+                "if_it_were_true": "Тогда нельзя было бы писать `int x = switch(...) { ... };` с exhaustiveness-проверкой, а pattern matching (JEP 441) лишился бы смысла `case null` и проверки полноты.",
+                "how_it_should_be": "Различие семантическое: expression возвращает значение и требует полноты, а arrow-форма работает и в statement (`switch(x){ case 1 -> doSomething(); }`)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Switch expression требует обязательного `default` — даже когда все варианты sealed-типа уже покрыты явными case.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Expression требует exhaustiveness, но при полном покрытии sealed-типа или enum `default` не нужен — компилятор сам докажет полноту, а лишний `default` снимает проверку на новые подтипы.",
+                "source_of_confusion": "До Java 14 в switch statement `default` добавляли «на всякий случай», и эта привычка ошибочно переносится на expression.",
+                "if_it_were_true": "Тогда главный профит sealed + switch — обнаружение пропущенного обработчика при добавлении подтипа — терялся бы, как в Knight-Capital-сценарии с забытым `OrderType`.",
+                "how_it_should_be": "Для полностью покрытой sealed-иерархии `default` избыточен и даже вреден; exhaustiveness доказывается без него."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Switch expression возвращает значение и требует exhaustiveness (definite assignment); pattern matching (JEP 441) добавил type-patterns, guards и `case null` поверх этой expression-семантики — без exhaustiveness pattern matching не имел бы смысла.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эволюция switch — три взаимно усиливающих JEP: switch expressions (JEP 361, Java 14) с проверкой полноты и `yield`, sealed classes (JEP 409, Java 17) и pattern matching for switch (JEP 441, Java 21); pattern matching опирается на expression-семантику.",
+                "example": "Для `sealed interface PaymentStatus permits Pending, Approved, Declined` можно написать `switch(s){ case Pending(var since)->...; case Approved(var tx)->...; case Declined(var r)->...; }` без `default` — добавишь новый record, и будет ошибка компиляции.",
+                "when_to_apply": "Применимо для DTO/event-mapping в Spring-контроллерах, Result-типов в стиле Rust (`Success`/`Failure`) и финансовых доменов с sealed `OrderEvent`.",
+                "edge_cases": "Не добавляйте `default` к sealed switch — теряется exhaustiveness; switch statement без присваивания полноты не требует; guard `when` не участвует в exhaustiveness и нуждается в unconditional-fallback.",
+                "related": "[[java-pattern-matching-interview#Q5]] sealed classes и exhaustiveness; [[java-pattern-matching-interview#Q9]] yield в блочной форме; [[java-pattern-matching-interview#Q10]] детали exhaustiveness check."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В switch expression каждый `case` обязан использовать `yield`, иначе значение не возвращается, даже в однострочной стрелочной форме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`yield` нужен только в блочной форме `case X -> { ... yield value; }`; однострочная `case X -> value;` возвращает значение автоматически без `yield`.",
+                "source_of_confusion": "В Scala `match` возвращает последнее выражение без ключевого слова, и выбор Java в пользу явного `yield` создаёт впечатление, что он нужен всегда.",
+                "if_it_were_true": "Тогда `int x = switch(y){ case 1 -> 100; default -> 0; };` не компилировался бы, но он прекрасно работает с Java 14+.",
+                "how_it_should_be": "`yield` введён именно для multi-statement блоков; для однострочных стрелок он избыточен, а значение возвращается напрямую."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает паттерн `case Rectangle(Point(int x1, int y1), Point(int x2, int y2)) -> ...` и какие ограничения на типы и значения он накладывает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Он деконструирует `Rectangle` через рефлексию: компилятор генерирует вызовы `Field.get()` для каждого поля точки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Record patterns используют аксессоры record-а (`r.topLeft()`, `p.x()`), сгенерированные при компиляции — это обычные `invokevirtual`-вызовы в байткоде, без рефлексии и `setAccessible`.",
+                "source_of_confusion": "Многие считают «магию» pattern matching рефлексией, ведь рефлексия в Java медленная и казалась бы естественным механизмом доступа.",
+                "if_it_were_true": "Тогда pattern matching был бы в 10-100x медленнее ручного cast + getter, и его никто не использовал бы в hot path.",
+                "how_it_should_be": "JIT инлайнит record-деконструкцию так же, как `instanceof + cast + getter`; используются аксессоры, не `Field.get()`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Он деконструирует `Rectangle`, но компонент-`Point` обязан иметь `equals(...)` по содержимому — для проверки равенства точек при матче.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Record pattern проверяет тип и привязывает компоненты к переменным, но НЕ вызывает `equals()` — это тестирование структуры, а не значений.",
+                "source_of_confusion": "В Scala `case Point(0, 0) -> \"origin\"` сравнивает литералы, и эта семантика литеральных patterns переносится на Java, которая их пока не поддерживает.",
+                "if_it_were_true": "Тогда `case Rectangle(Point(0,0), Point(10,10))` компилировался бы, но в Java 21 он не компилируется — нужны `when x1==0 && ...`.",
+                "how_it_should_be": "Java поддерживает только type-patterns и binding; для проверки значений используйте guard `when`, а не `equals` в самом паттерне."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Он деконструирует `Rectangle`, но требует, чтобы ВСЕ компоненты были примитивных типов (`int`, `long`); деконструкция объектных компонентов недоступна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Деконструкция работает для record с любыми типами компонентов — объектами, дженериками, коллекциями, вложенными record; нужна лишь совместимость типа паттерна с типом компонента.",
+                "source_of_confusion": "Во вложенных patterns примитивы встречаются чаще (`int x`, `double d`), и это создаёт впечатление, будто объектные компоненты не поддерживаются.",
+                "if_it_were_true": "Тогда `record Order(Customer c, List<Item> items)` нельзя было бы матчить, и половина реальных доменов выпала бы из pattern matching.",
+                "how_it_should_be": "`case Order(Customer c, List<Item> items) -> ...` — валидный record pattern; примитивные компоненты — лишь частный случай."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Он деконструирует `Rectangle` на два `Point`, а каждый `Point` — на координаты; матчится только когда вложенные record-компоненты не null (иначе NPE), а вложенность record patterns поддерживается произвольной глубины.",
+              "correct": true,
+              "sections": {
+                "explanation": "Record pattern (JEP 440) атомарно делает три шага: type-check (объект — `Rectangle`), доступ к компонентам через аксессоры и привязку к binding-переменным; для вложенного record-компонента он должен быть non-null, чтобы вложенный паттерн сматчился.",
+                "example": "`switch(o){ case Rectangle(Point(int x1,int y1), Point(int x2,int y2)) -> Math.abs((x2-x1)*(y2-y1)); case Rectangle(Point tl, Point br) -> tl.x()+br.x(); default -> -1; }` — менее глубокий паттерн ловит остальные прямоугольники.",
+                "when_to_apply": "Применимо для парсинга JSON/AST (sealed `JsonValue` с record-узлами), event-handlers в DDD (`case OrderShipped(var id, var addr) -> ...`) и functional-pipelines в стиле Scala/Kotlin.",
+                "edge_cases": "Если `topLeft == null`, попытка деконструировать вложенный `Point(x1, y1)` бросает `NullPointerException` (Java 21 не делает skip); `var tl` выведет тип `Point`, а generic-record требует `<?>` или явный тип.",
+                "related": "[[java-pattern-matching-interview#Q1]] обзор форм pattern matching; [[java-pattern-matching-interview#Q11]] generic-типы в record patterns; [[java-pattern-matching-interview#Q14]] взаимодействие с unboxing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевое требование sealed-иерархии для exhaustiveness-check switch и что произойдёт, если добавить `record Oval(double w, double h) implements Shape {}` к `sealed interface Shape permits Circle, Square, Triangle`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Oval` не скомпилируется без добавления в `permits Shape` (нужно править sealed-интерфейс); а после исправления все существующие `switch (Shape)` без `default` сломаются на compile-time с ошибкой «not exhaustive» — это и есть главный профит sealed + pattern matching.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sealed types + pattern matching дают safe ADT: компилятор знает все подтипы и доказывает покрытие, поэтому добавление нового подтипа ломает компиляцию во всех switch без `default` — это feature refactoring-safety, а не баг.",
+                "example": "После расширения `sealed interface Shape permits Circle, Square, Triangle, Oval` метод `area(Shape)` с `case Circle(double r) -> ...; case Square(double a) -> ...; case Triangle(double b,double h) -> ...;` без `default` перестаёт компилироваться, пока не добавишь `case Oval`.",
+                "when_to_apply": "Применимо для domain-events в DDD (`sealed interface OrderEvent`), Result-типов в стиле Rust (`sealed interface Result<T> permits Success, Failure`) и AST/IR в парсерах.",
+                "edge_cases": "`non-sealed`-подкласс снова открывает иерархию и ломает exhaustiveness на этой ветке; permits-классы должны быть в том же модуле; лишний `default` молча убирает compile-time проверку.",
+                "related": "[[java-pattern-matching-interview#Q3]] switch expressions и exhaustiveness; [[java-pattern-matching-interview#Q4]] record patterns с sealed; [[java-pattern-matching-interview#Q10]] детали exhaustiveness check."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Oval` будет автоматически принят как новый subtype — `permits` не обязателен, sealed работает через рефлексию пакета.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`permits` — обязательная часть sealed-иерархии: подкласс должен быть явно перечислен, иначе `implements Shape` не компилируется; sealed реализован через ClassFile-атрибут `PermittedSubclasses`, не рефлексию.",
+                "source_of_confusion": "В Scala `sealed trait` ищет подклассы в том же файле без явного permit-списка, и эта модель ошибочно переносится на Java.",
+                "if_it_were_true": "Тогда любой добавленный в проект класс ломал бы exhaustiveness существующих switch, и stable API с sealed-типами из библиотек было бы невозможно.",
+                "how_it_should_be": "Подтип обязан быть в `permits` явно; sealed контролируется компилятором и JVM через атрибут, а не сканированием пакета."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Oval` скомпилируется, но `switch` тихо начнёт возвращать `null` для `Oval` — runtime-fallback без `default`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Switch expression по sealed без exhaustiveness не компилируется вовсе; а если pattern-matching switch встречает непокрытое значение, бросается `MatchException`, а не `null`.",
+                "source_of_confusion": "В Kotlin `when` без полноты возвращает `Unit`, в JavaScript switch без default — `undefined`, и эта семантика «тихого null» путается с Java.",
+                "if_it_were_true": "Тогда все sealed switch стали бы источниками NPE, что прямо противоречит цели sealed-типов давать compile-time гарантии.",
+                "how_it_should_be": "Непокрытый случай в exhaustive switch даёт `MatchException` как runtime safety-net, а основная защита — отказ компиляции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Oval` скомпилируется сам по себе, и старые switch продолжат работать — `Oval` просто попадёт в обязательную `default`-ветку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`default` НЕ обязателен для sealed switch — в этом и профит; в исходном switch `default` отсутствует, компилятор доказал полноту, и добавление `Oval` ломает compile-time.",
+                "source_of_confusion": "Привычка из switch statement до Java 14 («всегда добавляй default на всякий случай») переносится на sealed switch.",
+                "if_it_were_true": "Тогда, как Knight Capital потерял $440M на забытом обработчике, silent-fallback в `default` скрыл бы новый `Oval` и расчёты площади стали бы неверными.",
+                "how_it_should_be": "Для sealed switch `default` избыточен; добавление подтипа должно ломать компиляцию, а не уходить в скрытую ветку."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Если в switch указать `case Integer i -> \"positive\";` ПЕРЕД `case Integer i when i == 0 -> \"zero\";` — что произойдёт и почему?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Компилятор автоматически переупорядочит case — сначала более специфичные (с guard), потом общие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компилятор НЕ переупорядочивает case: pattern matching работает по принципу «first match wins», как `if-else-if`, и порядок написания определяет приоритет.",
+                "source_of_confusion": "В Haskell/Scala matching проверяет более специфичные patterns первыми через иерархию типов, и эта модель ошибочно переносится на Java.",
+                "if_it_were_true": "Тогда о порядке не нужно было бы думать, но runtime-поведение зависело бы от версии `javac`, что трудно дебажить.",
+                "how_it_should_be": "Java следует синтаксическому порядку ради предсказуемости; недостижимый guarded-case ловится отдельной compile-проверкой dominance."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это compile-time error: компилятор обнаруживает, что `case Integer i when i == 0` затенён (dominated) предыдущим `case Integer i`, и сообщает «label is dominated by a preceding case label».",
+              "correct": true,
+              "sections": {
+                "explanation": "Pattern dominance — это compile-time проверка недостижимых case: unconditional-pattern (`case Integer i`) доминирует все последующие patterns того же или более узкого типа, включая guarded; поэтому специфичные guards идут СНАЧАЛА, а unconditional-fallback — В КОНЦЕ.",
+                "example": "`switch(o){ case Integer i -> \"any int\"; case Integer i when i == 0 -> \"zero\"; default -> \"other\"; }` не компилируется; правильный порядок — `case Integer i when i==0`, затем `when i<0`, `when i>100`, и в конце unconditional `case Integer i`.",
+                "when_to_apply": "Применимо для разделения edge-cases (null, empty, boundary) и happy-path в валидации DTO, для state-machine (`case State s when s.isFinal() -> archive(s)`) и pricing-правил.",
+                "edge_cases": "Между ДВУМЯ guarded-patterns одного типа компилятор логическое затенение не ловит: `when i>0` перед `when i>100` оба компилируются, но второй недостижим — это runtime-баг; `default` доминирует все последующие case.",
+                "related": "[[java-pattern-matching-interview#Q3]] switch expressions; [[java-pattern-matching-interview#Q10]] exhaustiveness check; [[java-pattern-matching-interview#Q15]] когда стоит/не стоит использовать pattern matching."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Runtime будет вызывать `case Integer i -> \"positive\"` для всех `Integer`, включая 0, потому что корректный синтаксис guard — это `case Integer i if (i == 0)`, а не `when`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Синтаксис guard в Java — `case Integer i when i == 0`, не `if`; и до runtime дело не доходит — компилятор отклоняет недостижимый guarded-case как dominated.",
+                "source_of_confusion": "В Kotlin guard в `when` пишется через `if` (`is Integer -> if (it == 0) ...`), и этот синтаксис ошибочно переносится на Java.",
+                "if_it_were_true": "Тогда существовали бы два синтаксиса guard для одного и того же, но Java выбрала ровно один — `when`.",
+                "how_it_should_be": "Корректный guard — `when`; проблема не в синтаксисе, а в порядке: unconditional `case Integer i` затеняет guarded-вариант на этапе компиляции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Runtime будет вызывать оба case по очереди — это fallthrough, унаследованный от классического switch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В arrow-style switch (`case X -> result;`) fallthrough НЕТ: каждый case изолирован — это design choice JEP 361, устраняющий ошибку забытого `break`.",
+                "source_of_confusion": "Старый C-style switch до Java 14 имел fallthrough по умолчанию (`case 1: case 2: ...; break;`), и новички переносят эту модель на стрелочный синтаксис.",
+                "if_it_were_true": "Тогда switch expression вернул бы два значения подряд, что невозможно для expression-семантики и ломало бы её основу.",
+                "how_it_should_be": "Arrow-форма исключает fallthrough; недостижимый guarded-case к тому же отлавливается compile-проверкой dominance ещё до запуска."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как ведёт себя `switch(obj) { case String s -> ...; default -> ...; }` если `obj == null` в Java 21 без `case null` и почему это design choice?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Возвращает значение из `default`-ветки — null покрывается как «всё прочее».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `case null` switch бросает `NullPointerException` на входе; `default` НЕ покрывает null автоматически — это сделано ради backward-compatibility со старым switch.",
+                "source_of_confusion": "В JavaScript `switch(null) { default: ... }` заходит в default, и эта семантика переносится на Java, где switch исторически падал на null.",
+                "if_it_were_true": "Тогда обновление JDK с 17 на 21 ломало бы тысячи sealed switch: legacy ждёт NPE, а новый код тихо возвращал бы default-значение.",
+                "how_it_should_be": "Null покрывается только явным `case null` (или `case null, default`); без него switch падает с NPE, как и до Java 21."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Возвращает `null` — компилятор автоматически добавляет `case null -> null` к каждому pattern-matching switch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой автоматической вставки `case null` нет: без него switch бросает NPE; Java 21 сознательно не добавила implicit null-handling, следуя принципу explicit-over-implicit.",
+                "source_of_confusion": "Optional chaining в Kotlin (`?.`) и null-safety в Swift приучают к «невидимой» обработке null, что путается с поведением Java.",
+                "if_it_were_true": "Тогда передача null туда, где он не ожидался, маскировалась бы, и баг откладывался бы до места, где null уже критичен — особенно опасно в финансовых расчётах.",
+                "how_it_should_be": "Обработку null нужно писать явно через `case null`; компилятор ничего не подставляет, и без этого switch бросает NPE."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Бросает `NullPointerException` на входе в switch — это backward-compatibility со старым switch; для обработки null без исключения нужен явный `case null`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Null-handling в pattern-matching switch (JEP 441): без `case null` switch кидает NPE так же, как `switch(enumValue)` в Java 1-20; type-pattern `case String s` не матчит null, потому что `null instanceof String == false`.",
+                "example": "`switch(obj){ case String s -> \"str\"; default -> \"other\"; }` падает с NPE при `obj == null`, а `switch(obj){ case null -> \"got null\"; case String s -> \"str\"; default -> \"other\"; }` обрабатывает null безопасно.",
+                "when_to_apply": "Применимо для DTO от внешних API (Jackson может вернуть null-поля), sealed event-иерархий из Kafka/RabbitMQ и миграции legacy-кода через `case null, default`.",
+                "edge_cases": "`case null` для sealed-типов не покрывает exhaustiveness — нужен ИЛИ `default`, ИЛИ `case null` плюс все подтипы; внутри record-pattern null-компонент даёт NPE; нельзя комбинировать `case null` с type-pattern.",
+                "related": "[[java-pattern-matching-interview#Q4]] record patterns и NPE на null-компонентах; [[java-pattern-matching-interview#Q6]] guarded patterns; [[java-pattern-matching-interview#Q10]] exhaustiveness и null."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Возвращает значение из `case String s` — null trivially является `String`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Java `null` не имеет типа и не является экземпляром ни одного типа: `null instanceof String` всегда `false`, поэтому type-pattern `String s` на null не матчится.",
+                "source_of_confusion": "В обычном `if (x instanceof String s)` null даёт `false` без проблем, и многие думают, что в switch будет такой же тихий skip — но switch бросает исключение.",
+                "if_it_were_true": "Тогда в then-ветке оказался бы `String s = null`, и любой вызов метода `s` дал бы NPE — замаскированный баг.",
+                "how_it_should_be": "Null не матчится type-pattern и без `case null` приводит к NPE на входе в switch, а не к попаданию в ветку `String`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Pattern matching заменяет Visitor — но какой важный архитектурный trade-off вы делаете, выбирая pattern matching вместо `accept(Visitor v)`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pattern matching работает быстрее Visitor: нет виртуального вызова, JIT инлайнит всё.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pattern matching на switch с type-patterns компилируется в bytecode-интринсик `typeSwitch` (JDK 21+), который использует таблицу переходов; производительность СОПОСТАВИМА с virtual dispatch (тоже table-lookup), разница на уровне шума.",
+                "source_of_confusion": "Микро-оптимизаторы любят искать «быстрые» альтернативы, хотя для 3-10 case JIT справляется с обоими подходами одинаково.",
+                "if_it_were_true": "Тогда все production-системы переписывали бы на pattern matching, но JMH-бенчмарки показывают разницу <5%, не оправдывающую архитектурные изменения.",
+                "how_it_should_be": "Выбор между pattern matching и Visitor — про расширяемость (expression problem), а не про скорость; производительность практически одинакова."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pattern matching и Visitor полностью взаимозаменяемы — никакого trade-off нет, выбирайте по вкусу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Trade-off реален: pattern matching «открыт для операций, закрыт для типов», Visitor — «открыт для типов, закрыт для операций»; это разные оси расширяемости.",
+                "source_of_confusion": "В простых примерах с тремя типами оба паттерна выглядят одинаково, и разница проявляется только при эволюции системы за 6-12 месяцев.",
+                "if_it_were_true": "Тогда не было бы 25-летней академической дискуссии (Expression Problem, Wadler 1998), но trade-off фундаментален и обсуждался в Haskell, Scala, OCaml, F#, Kotlin.",
+                "how_it_should_be": "Выбор зависит от того, что чаще меняется — типы или операции; это осознанный архитектурный компромисс, а не вопрос вкуса."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pattern matching отменяет Visitor для всех случаев — Visitor устарел с появлением Java 21.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Visitor остаётся уместен, когда типов больше, чем операций; когда типы добавляются часто; когда внешний клиент должен реализовать visitor без модификации иерархии — pattern matching эти случаи не покрывает.",
+                "source_of_confusion": "Hype-driven development («новое = лучше») создаёт впечатление, что старые паттерны устарели.",
+                "if_it_were_true": "Тогда пришлось бы переписывать существующие visitor-API (`BeanPostProcessor` в Spring, Tree API в `com.sun.source.util.SimpleTreeVisitor`), но они работают в Java 21 без изменений.",
+                "how_it_should_be": "Visitor и pattern matching дополняют друг друга; выбор делается по тому, какая ось расширяемости важнее в конкретной задаче."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Pattern matching выносит логику ИЗ иерархии классов в место использования — это expression-problem trade-off: легко добавить операцию (новый switch), но трудно добавить тип (расширить `permits` + обновить все switch); Visitor — наоборот: легко добавить тип, трудно добавить операцию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Expression problem (Wadler, 1998) — фундаментальный trade-off: OOP/Visitor фиксирует типы и легко добавляет операции (новый интерфейс Visitor), а FP/pattern matching фиксирует операции в switch и легко добавляет новые операции; Java добавила к FP-подходу compile-time safety через sealed.",
+                "example": "Добавив `area()` и `perimeter()` как два отдельных switch над `sealed interface Shape permits Circle, Square`, операции расширяешь без правки `Shape`; добавив же `record Triangle`, оба switch перестают компилироваться, пока не добавишь `case Triangle`.",
+                "when_to_apply": "Применимо для закрытых ADT с редко меняющимися типами и часто меняющимися операциями: JSON-узлы, AST, expression-trees, domain-events, Result/Either типы.",
+                "edge_cases": "Если домен растёт «новыми типами» — pattern matching становится антипаттерном, лучше полиморфизм; pattern matching без sealed теряет exhaustiveness; бизнес-логику из case выносите в методы, чтобы избежать дублирования.",
+                "related": "[[java-pattern-matching-interview#Q5]] sealed classes для exhaustiveness; [[java-pattern-matching-interview#Q12]] практические применения; [[java-pattern-matching-interview#Q15]] когда стоит/не стоит использовать pattern matching."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что вернёт `switch (1) { case 1 -> { int r = 5; r + 10; } default -> 0; }` и почему?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это compile-error: блочный case с `{ }` обязан использовать `yield`, иначе компилятор пишет «case label cannot complete normally»; правильно — `case 1 -> { int r = 5; yield r + 10; }`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`yield` возвращает значение из блочной формы case в switch expression: однострочная `case X -> expr;` отдаёт `expr` автоматически, а блочная `case X -> { ... }` обязана завершиться явным `yield value;`, иначе блок «не завершается нормально».",
+                "example": "`switch(t){ case GOLD -> 1000; case SILVER -> { int base=500; int bonus=rnd(); yield base+bonus; } }` компилируется, а `case SILVER -> { int r=5; r+10; }` даёт «case label cannot complete normally».",
+                "when_to_apply": "Применимо когда внутри case нужна сложная логика: вычисление с логированием, conditional-yield через `if-else`, try-catch с default-значением.",
+                "edge_cases": "`yield` нельзя использовать в обычном switch statement; несколько `yield` в одном case должны возвращать совместимый тип; `throw` валиден вместо `yield`, так как тоже «не завершается нормально».",
+                "related": "[[java-pattern-matching-interview#Q3]] switch expressions overview; [[java-pattern-matching-interview#Q6]] guarded patterns с блочной формой; [[java-pattern-matching-interview#Q12]] практические применения со сложной логикой."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Вернёт `15` — последнее выражение в блоке автоматически становится результатом, как в Scala/Kotlin.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Switch expression в Java НЕ выводит значение из последнего выражения автоматически: в блочной форме обязателен явный `yield`, иначе compile-error «case label cannot complete normally».",
+                "source_of_confusion": "В Scala `match { case 1 => { val r = 5; r + 10 } }` возвращает последнее выражение, и эта семантика переносится на Java.",
+                "if_it_were_true": "Тогда не было бы compile-проверки, что блок case действительно возвращает значение, и забытый `return` стал бы тихим багом.",
+                "how_it_should_be": "Java чётко разделяет statements и expressions; чтобы вернуть значение из блока, нужен явный `yield`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Вернёт `0` — блок без явного return уходит в `default`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Switch expression НЕ переходит в `default` при отсутствии `yield` — это не fallthrough; каждый case независим, а блок без `yield` даёт compile-error, не runtime-fallback.",
+                "source_of_confusion": "Аналогия с try-catch-finally («если в try не дошли до return, идём в finally») ошибочно переносится на switch-case.",
+                "if_it_were_true": "Тогда любой блочный case без `yield` тихо уходил бы в `default` — катастрофа для бизнес-логики вроде расчёта бонусов.",
+                "how_it_should_be": "Отсутствие `yield` в блоке — ошибка компиляции; перехода в `default` не происходит, каждый case изолирован."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Вернёт `5` — `yield` подразумевается на первой переменной блока (`r`), а последующие выражения игнорируются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого implicit-yield нет: `int r = 5` — это declaration-statement, не выражение и не `yield`; без явного `yield` блок не компилируется.",
+                "source_of_confusion": "Языки Lisp-семейства возвращают значение последнего выражения блока, и эта модель ошибочно переносится на Java.",
+                "if_it_were_true": "Тогда нельзя было бы вычислять промежуточные значения в case, ведь каждое объявление «возвращало бы» себя, делая switch expressions бесполезными.",
+                "how_it_should_be": "Значение возвращается только явным `yield`; объявление переменной ничего не возвращает, и блок без `yield` — ошибка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что произойдёт в runtime, если sealed switch без `default` обработает значение, для которого compile-time exhaustiveness был доказан, но при загрузке `Square.class` был заменён на обновлённую версию sealed-иерархии?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Загрузка класса не пройдёт — JVM проверяет sealed-permits на этапе ClassLoader и не допустит несоответствия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JVM проверяет атрибут `PermittedSubclasses` при загрузке самого sealed-класса, но не контролирует «целостность» switch-блоков в зависимых классах: switch продолжит работать, пока не встретит непокрытый case.",
+                "source_of_confusion": "Compile-time exhaustiveness создаёт ощущение «всё проверено», но separate-compilation может ломать эти предположения в runtime.",
+                "if_it_were_true": "Тогда были бы невозможны hot-reload и class-swapping — техники Spring DevTools и JRebel сломались бы для любого sealed-кода.",
+                "how_it_should_be": "Несоответствие проявляется не при загрузке, а при матче непокрытого значения — там бросается `MatchException`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Бросается `MatchException` в runtime — это safety-net для случая, когда compile-time exhaustiveness нарушен из-за separate-compilation (binary incompatibility); это специальное исключение, введённое в Java 21.",
+              "correct": true,
+              "sections": {
+                "explanation": "Exhaustiveness-check имеет два слоя: compile-time (sealed/enum/Object) ловит пропуски рано, а runtime safety-net `MatchException` срабатывает, если из-за раздельной компиляции ни один case не сматчился, давая явный сбой вместо тихой порчи данных.",
+                "example": "Скомпилировали `area()` с `permits {Circle, Square}`, заменили `Shape.class` на `permits {Circle, Square, Triangle}` без рекомпиляции и передали `new Triangle()` — получаем `java.lang.MatchException`.",
+                "when_to_apply": "Применимо для финансовых расчётов (лучше fail-fast, чем тихая ошибка), event-handlers в распределённых системах (отсутствие handler-а → DLQ) и state-machine с пропущенным переходом.",
+                "edge_cases": "`MatchException` — `RuntimeException`, его легко «потерять» в общем catch; в Spring-контроллере он по умолчанию даёт HTTP 500; если бизнес-критично «никогда не падать», добавьте `default` явно ценой compile-time проверки.",
+                "related": "[[java-pattern-matching-interview#Q3]] switch expressions требуют exhaustiveness; [[java-pattern-matching-interview#Q5]] sealed classes; [[java-pattern-matching-interview#Q7]] обработка null."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Switch вернёт `null` или дефолтное значение типа — это silent fallback на непокрытый случай.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Switch бросает `MatchException` (JEP 441), а не возвращает `null`: pattern-matching switch специально исключает тихий skip, который был у legacy-switch без default.",
+                "source_of_confusion": "В старом switch без default тихое «ничего не выбрано» приводило к skip, и эта модель переносится на pattern matching.",
+                "if_it_were_true": "Тогда это был бы Knight-Capital-сценарий: silent-fallback на пропущенный case привёл бы к ошибкам масштаба $440M.",
+                "how_it_should_be": "Непокрытое значение даёт явный `MatchException`; тихого возврата `null` или дефолта не происходит."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Square` будет приведён к `Object` и попадёт в имплицитный `default`-case.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого имплицитного `default` нет: если switch объявлен exhaustive (без default) и собран для closed sealed-set, runtime не создаёт fallback на лету, а бросает `MatchException`.",
+                "source_of_confusion": "В Groovy/Ruby switch имеет implicit-default, возвращающий nil, и эта семантика ошибочно ожидается в Java.",
+                "if_it_were_true": "Тогда type-system-гарантий не было бы: exhaustive sealed switch без default стал бы тождественен switch с default, и compile-time проверка теряла бы смысл.",
+                "how_it_should_be": "Непокрытый подтип не уходит в скрытый `default`, а вызывает `MatchException` — runtime-дополнение к compile-time проверке."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что произойдёт при `if (obj instanceof Box<String> b) { ... }`, где `Box<T>` — generic record, `obj` имеет тип `Object` и фактически содержит `Box<Integer>`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cast пройдёт благополучно — JVM проверяет фактический type-parameter (`String` vs `Integer`) в runtime.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java использует type erasure: generic-параметры стираются, `Box<String>` и `Box<Integer>` имеют один class `Box` в байткоде, и pattern `Box<String>` фактический type-parameter в runtime не проверяет.",
+                "source_of_confusion": "В Kotlin есть `reified`-параметры в `inline fun` с частичной runtime-type-info, и это переносится на Java, где reified-generics нет.",
+                "if_it_were_true": "Тогда поведение Java-generics было бы радикально иным — все `ClassCastException` на generics-mismatch исчезли бы, что требует переделки байткода JVM.",
+                "how_it_should_be": "Runtime знает только `Box`; несоответствие `String`/`Integer` всплывает позже, при доступе к компоненту через bridge-cast."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это compile-error — компилятор требует `Box<?>` или явный raw-type, generic-type pattern запрещён.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Generic-type pattern `Box<String>` РАЗРЕШЁН в Java 21 для record-patterns: компилятор проверяет совместимость target-типа (`Object`) с `Box<String>` и выдаёт unchecked-warning, если статически доказать нельзя.",
+                "source_of_confusion": "В чистом `instanceof` до Java 16 нельзя было писать `obj instanceof List<String>` — нужен был raw-type или wildcard, и это правило ошибочно распространяют на record-patterns.",
+                "if_it_were_true": "Тогда record-patterns с generic-record (`record Result<T>(T value)`) были бы непригодны — всюду пришлось бы писать `Result<?>`, теряя type-safety binding.",
+                "how_it_should_be": "Generic-type pattern компилируется (с unchecked-warning); запрет касался только старого `instanceof` без record-pattern."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pattern компилируется с unchecked-warning, runtime-cast к `Box` пройдёт (тот же `Box.class` после erasure), но при использовании binding как `String` (например `String s = b.value()`) бросится `ClassCastException` — это феномен heap pollution.",
+              "correct": true,
+              "sections": {
+                "explanation": "Из-за type erasure `Box<T>` в байткоде — просто `Box`: type-test проходит для любого `Box`; компилятор предупреждает unchecked-warning, а реальный `(String)`-cast вставляется при доступе к компоненту — там и взрывается, если внутри `Integer`.",
+                "example": "Для `Object obj = new Box<Integer>(42)` строка `if (obj instanceof Box<String> b)` сматчится (`Box.class == Box.class`), а следующая `String s = b.value();` бросит `ClassCastException`; безопаснее `if (obj instanceof Box<?>(String s))`.",
+                "when_to_apply": "Применимо: используйте `Box<?>(String s)` для безопасного матча по содержимому, `Box<?> b` + повторный `instanceof` для defensive-проверки, а точный `Box<String>` — только при гарантии через upstream-check.",
+                "edge_cases": "Unchecked-warning часто игнорируют, хотя именно он маркирует потенциальный `ClassCastException`; в `case Box<?>(Object o)` тип `o` — `Object`, не `T`; binding по `Box<?>` возвращает capture-type.",
+                "related": "[[java-pattern-matching-interview#Q4]] record patterns; [[java-pattern-matching-interview#Q14]] типы и unboxing в patterns; [[java-pattern-matching-interview#Q1]] обзор форм pattern matching."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Runtime бросит `ClassCastException` сразу на входе, при выполнении `instanceof Box<String> b` — компилятор делает наивный cast к точному типу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На входе `instanceof Box<String>` к `Box<Integer>` проходит (cast по стёртому `Box`), потому что type-parameter не проверяется; `ClassCastException` возникает только позже — при доступе к компоненту через скрытый bridge-cast.",
+                "source_of_confusion": "Многие думают, что cast в pattern matching — это cast к `Box<String>`, тогда как фактически после erasure это cast к `Box`.",
+                "if_it_were_true": "Тогда ошибка убивала бы весь pipeline на entry, не давая обработать ничего; на практике она отложенная — хуже для дебага, но не «на каждой строке».",
+                "how_it_should_be": "Сбой происходит не на `instanceof`, а на использовании binding как `String`; type-test сам по себе для любого `Box` успешен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каком сценарии pattern matching даёт наибольшую ценность над polymorphic-dispatch (virtual method) и почему?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Простые арифметические операции на shapes — `area()`, `perimeter()`, `name()` — pattern matching короче и потому предпочтительнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Простые операции, относящиеся к самому типу (`area` именно для `Circle`), идеально ложатся в полиморфизм: `record Circle(double r) implements Shape { double area(){return Math.PI*r*r;} }`; pattern matching тут нарушает инкапсуляцию и OCP.",
+                "source_of_confusion": "Pattern matching выглядит «модно», и почти каждый туториал показывает его на shape-area, создавая впечатление, что это его сильная сторона.",
+                "if_it_were_true": "Тогда использование pattern matching для тривиальных методов усложняло бы код — пропадал бы single-source-of-truth для «как считать area Circle».",
+                "how_it_should_be": "Сила pattern matching — во внешней логике над закрытой иерархией, а не в операциях, естественно принадлежащих типу."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Performance-критичный hot path, где dispatcher должен быть максимально быстрым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Virtual dispatch на современной JVM (JIT, inline caches) не медленнее pattern-matching switch; интринсик `typeSwitch` из JEP 441 сопоставим по скорости, а не радикально быстрее.",
+                "source_of_confusion": "В C++ виртуальные вызовы дороги (vtable indirect call), и компилируемые языки выигрывают от static-dispatch — это переносится на Java.",
+                "if_it_were_true": "Тогда микро-бенчмарки показывали бы 10x разницу, но JMH-тесты дают <5%.",
+                "how_it_should_be": "Выбор pattern matching мотивируется расширяемостью и читаемостью, а не скоростью — производительность практически равна."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Любой код, использующий switch — pattern matching универсально лучше классического switch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Switch на `int`, `enum`, `String` не нуждается в pattern matching — эти классические формы остаются идиоматичными; pattern matching нужен для type-based dispatch и деконструкции record.",
+                "source_of_confusion": "Tool-в-руках syndrome («есть новый молоток — всё похоже на гвоздь») создаёт иллюзию универсальности.",
+                "if_it_were_true": "Тогда простой `switch(day){ case MONDAY -> ... }` пришлось бы перегружать типизацией, теряя читаемость.",
+                "how_it_should_be": "Pattern matching уместен для дискриминации по типу/структуре; для перечислений и констант лучше обычный switch."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Domain-events с разной структурой данных и операциями, живущими ВНЕ event-классов (handlers, logging, projections) — pattern matching группирует операцию в одном месте, а virtual-dispatch потребовал бы `handle(...)` в каждом event, нарушая separation of concerns.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pattern matching выигрывает, когда операции внешние к иерархии, структура подтипов различна (record-patterns извлекают нужные поля), иерархия типов стабильна, а операции часто меняются — это «closed type, open operations» из expression problem с compile-time exhaustiveness.",
+                "example": "В `OrderEventHandler.handle(OrderEvent e)` один switch с `case OrderCreated(var id,var cust,var total) -> {...}`, `case OrderShipped(...) -> ...`, `case OrderCancelled(...) -> {...}`; добавишь `record OrderRefunded`, и `handle()` не скомпилируется без нового case.",
+                "when_to_apply": "Применимо для event-sourced систем (handlers, projections, aggregates), парсеров JSON/XML/Protobuf (sealed-дерево узлов), state-machine с внешней transition-логикой и DTO-трансформаций.",
+                "edge_cases": "Если handler-логика растёт — выносите её в отдельные методы, а не в case; cross-cutting concerns (logging, tracing) лучше через аспект; при тысячах событий sealed-иерархия раздувается, и стоит рассмотреть hybrid-подход.",
+                "related": "[[java-pattern-matching-interview#Q4]] record patterns; [[java-pattern-matching-interview#Q5]] sealed classes; [[java-pattern-matching-interview#Q8]] pattern matching vs Visitor."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая возможность Scala pattern matching ОТСУТСТВУЕТ в Java 21 и почему её сложно добавить из-за erasure?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "List/sequence patterns (`case List(first, rest @ _*)` в Scala) и literal patterns (`case 0 => \"zero\"`) — нельзя матчить содержимое коллекции или конкретный литерал; Scala также имеет extractor-объекты (`unapply`) для произвольных типов, а в Java — только record-patterns.",
+              "correct": true,
+              "sections": {
+                "explanation": "Java 21 беднее Scala: нет list/array-patterns (`case List(a,b,_*)`), нет интеграции literal-patterns с type-patterns в одном switch, нет произвольных extractor-ов (только record с автоаксессорами); из-за erasure runtime-проверка содержимого коллекции эрозировала бы type-safety.",
+                "example": "Scala-`list match { case List(0, _*) => \"starts with zero\"; case List(_,_,_) => \"three\"; case Nil => \"empty\" }` в Java приходится разворачивать в guards: `switch(list){ case List<Integer> l when l.isEmpty() -> \"empty\"; case List<Integer> l when l.size()==3 -> \"three\"; default -> \"other\"; }`.",
+                "when_to_apply": "Применимо для обоснования выбора Java/Kotlin/Scala на интервью и в смешанных Java/Scala-проектах (Spark), где Scala-часть может использовать list-patterns, а Java — нет.",
+                "edge_cases": "Миграция Scala→Java требует разворачивать list-patterns в guards; Kotlin `when` без exhaustiveness в statement-форме легче ломается, чем Java sealed switch; Scala-extractor чаще ловит NPE, чем record-patterns.",
+                "related": "[[java-pattern-matching-interview#Q1]] обзор форм pattern matching в Java; [[java-pattern-matching-interview#Q4]] record patterns как замена tuple/list; [[java-pattern-matching-interview#Q11]] generics и erasure."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Тип-проверяющие `case`-ветки (`case Circle => ...`) — в Java их нет вовсе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Type-patterns с binding (`case Circle c -> ...`) — это и есть базовая фича Java 21: pattern matching for switch (JEP 441) полностью покрывает type-checking case.",
+                "source_of_confusion": "Привычка к pre-Java-21 синтаксису у тех, кто сидит на Java 17 LTS и не сталкивался с этими фичами в production.",
+                "if_it_were_true": "Тогда pattern matching в Java был бы радикально беднее Scala, но базовый type-checking case в обоих языках работает идиоматично.",
+                "how_it_should_be": "Отсутствуют именно list/literal-patterns и произвольные extractor-ы; type-checking case в Java есть."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sealed-типы — Scala был первым и единственным, в Java их нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sealed classes/interfaces (JEP 409, Java 17) — реальная фича Java, эквивалентная Scala `sealed`: оба языка дают exhaustive pattern matching через sealed.",
+                "source_of_confusion": "Java позаимствовала много из Scala/Haskell, и sealed добавились поздно (Java 17), что создаёт впечатление их отсутствия.",
+                "if_it_were_true": "Тогда pattern matching в Java был бы непригоден для real-world ADT, но sealed + records + patterns образуют полноценный ADT-тулкит.",
+                "how_it_should_be": "Sealed в Java есть; отсутствуют list/literal-patterns и extractor-объекты для произвольных типов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Guards (`if` после pattern) — в Java guard использовать невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Guards в Java реализованы через `when`-clause: `case Integer i when i > 0 -> ...`, семантически эквивалентно Scala `case Integer(i) if i > 0`.",
+                "source_of_confusion": "Синтаксис разный (Scala `if`, Java `when`), и разное ключевое слово ошибочно принимают за разную семантику.",
+                "if_it_were_true": "Тогда guard-pattern был бы серьёзным гэпом, но в Java 21 он есть (JEP 441).",
+                "how_it_should_be": "Guard в Java доступен через `when`; не хватает именно list/literal-patterns и произвольных extractor-ов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Дано `record Box(int value) {}` и `Object obj = new Box(42);`. Что компилируется и как ведёт себя `if (obj instanceof Box(int v))`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Компилируется; `v` имеет тип `Integer` — в record-pattern всегда используется wrapper-тип.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В record-pattern тип binding точно соответствует объявленному компоненту: `record Box(int value)` даёт `v: int` (primitive); wrapper `Integer` появился бы, только если компонент объявлен как `Integer`.",
+                "source_of_confusion": "В обычном `instanceof Integer i` (без record) `i` — wrapper `Integer`, и эта интуиция переносится на record-patterns.",
+                "if_it_were_true": "Тогда каждое разыменование record-компонента сопровождалось бы (un)boxing — ощутимая penalty в hot path.",
+                "how_it_should_be": "Тип binding в record-pattern зеркалит объявление компонента: для `int` это `int`, без автобоксинга."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Компилируется; `v` имеет тип `int` (primitive) — record-pattern точно соответствует объявленному типу компонента, никакого autoboxing.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pattern matching и type-conversion: type-pattern (`case Integer i`) даёт wrapper, а record-pattern (`case Box(int v)`) — тип ровно как у компонента; autoboxing в паттерне не выполняется, а `var` выводит тот же тип (`int` для `int`-компонента).",
+                "example": "`if (obj1 instanceof IntBox(int v)) { int doubled = v*2; }` компилируется без боксинга, а `if (obj1 instanceof IntBox(Integer v))` для `record IntBox(int value)` даёт «type Integer is not a subtype of int».",
+                "when_to_apply": "Применимо в performance-критичном numerical-коде (`record Vec3(double x,double y,double z)` + `case Vec3(double x,double y,double z) -> Math.sqrt(...)`), геометрии и финансах с точным контрактом на тип.",
+                "edge_cases": "Смешение primitive и wrapper в record даёт compile-error при mismatch; `var` скрывает тип и может маскировать неожиданный autoboxing; generic-record не может иметь primitive type-parameter; null-компонент с примитивом даёт NPE на unbox.",
+                "related": "[[java-pattern-matching-interview#Q4]] record patterns deep dive; [[java-pattern-matching-interview#Q11]] generics и type erasure; [[java-pattern-matching-interview#Q1]] формы pattern matching."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "НЕ компилируется — `int` нельзя использовать как pattern, нужен `Integer`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Record-pattern с primitive-типом допустим и идиоматичен в Java 21: `case Box(int v)` извлекает `v` как `int` без autoboxing — это сделано ради performance.",
+                "source_of_confusion": "В type-patterns `case int i` (без record) действительно запрещён — primitive type-patterns пока preview (JEP 488), и это путают с record-pattern.",
+                "if_it_were_true": "Тогда record-patterns с примитивными компонентами были бы непригодны, хотя именно они — ключевая фича для performance.",
+                "how_it_should_be": "Primitive-компонент в record-pattern — стандарт Java 21; ограничение касается только type-patterns вне record."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Компилируется, но runtime бросает `ClassCastException` — primitive `int` нельзя cast от `Integer`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `new Box(42)` значение хранится как primitive `int` в record; pattern `Box(int v)` берёт его через аксессор `value()` (возвращает `int`) — никакого cast `Integer -> int` нет.",
+                "source_of_confusion": "В generic-коде (`List<Integer>`) цикл autobox/unbox может давать неожиданный `ClassCastException` при mismatch, и это переносится на record, где тип компонента жёстко фиксирован.",
+                "if_it_were_true": "Тогда каждое использование record-pattern с primitive-компонентом было бы потенциальным runtime-крашем, делая фичу непригодной.",
+                "how_it_should_be": "Тип компонента в record зафиксирован при компиляции; деконструкция возвращает `int` напрямую, без cast и исключений."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каком из сценариев pattern matching — НЕправильный выбор, и polymorphism через override-методы лучше?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Парсинг JSON в `Jackson 2.16+`: `sealed interface JsonValue permits JsonNull, JsonNumber, JsonString, JsonArray, JsonObject` с операциями `render`, `validate`, `transform` через switch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Парсинг JSON — каноничный кейс pattern matching: типов мало и они стабильны (5-7 узлов), операций много и они внешние (rendering, validation, traversal), а sealed гарантирует exhaustiveness — это правильное применение.",
+                "source_of_confusion": "Привычка из OOP-учебников («полиморфизм всегда лучше») создаёт впечатление, что switch здесь плох.",
+                "if_it_were_true": "Тогда `Jackson 2.16+` пришлось бы переписать на классический Visitor с лишним boilerplate, но реальная реализация использует pattern matching.",
+                "how_it_should_be": "Для closed-типов с open-операциями pattern matching оптимален; это не тот случай, где нужен полиморфизм."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Вычисление `area()` и `perimeter()` для иерархии `Circle`/`Square`/`Triangle` через `switch` в сервисе `ShapeCalculator`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если `area()` — внутреннее поведение типа (зависит только от его полей), полиморфизм через `record Circle(double r) implements Shape { double area(){return Math.PI*r*r;} }` лучше; но при cross-cutting concerns (logging, units) pattern matching тоже ок — это grey-area.",
+                "source_of_confusion": "Простые примеры pattern matching на shape-area создают впечатление, что это всегда плохо.",
+                "if_it_were_true": "Тогда все примеры из туториалов по pattern matching были бы антипаттернами, но они работают как обучающие с правильным контекстом.",
+                "how_it_should_be": "Это пограничный случай, зависящий от внутренней/внешней логики, а не однозначно «неправильный выбор» pattern matching."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Большая полиморфная иерархия БЕЗ sealed, где типы добавляются часто (третьими сторонами через plugin SPI), поведение тесно связано с типом (у каждого подтипа своя реализация `process()`), и владелец хочет, чтобы новые типы добавлялись БЕЗ модификации существующего dispatch-кода.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pattern matching проигрывает полиморфизму при open-иерархии (типы добавляют внешние клиенты через plugin/SPI), при поведении, жёстко связанном с типом, при редких новых операциях и при больших иерархиях (50+ типов) — это «open type, closed operations» сторона expression problem.",
+                "example": "Для `abstract class JobProcessor { abstract void process(JobContext ctx); }` с плагинными `EmailProcessor`/`SmsProcessor`/`WebhookProcessor` `runPoly(jp,ctx){ jp.process(ctx); }` открыт для расширения, а switch по типу пришлось бы править на каждый новый плагин в чужом jar.",
+                "when_to_apply": "Применимо для Spring `BeanPostProcessor`/`HandlerInterceptor`, JDBC-драйверов (`Connection`/`Statement`), Servlet API (`HttpServlet` + `doGet/doPost`) и любой plugin-архитектуры (IntelliJ, VSCode).",
+                "edge_cases": "Возможен hybrid: sealed для closed-ядра + extension-point (`UserDefined`) для open-части; полиморфизм может маскировать бизнес-логику в data-классах (нарушение SRP); pattern matching не заменяет хороший OOP-дизайн, а дополняет его.",
+                "related": "[[java-pattern-matching-interview#Q5]] sealed types для closed-иерархий; [[java-pattern-matching-interview#Q8]] pattern matching vs Visitor; [[java-pattern-matching-interview#Q12]] практические применения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Domain-events в Wolt order pipeline: `OrderCreated`, `OrderShipped`, `OrderCancelled` с handlers, вынесенными в отдельный сервис.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Domain-events с внешними handlers — классический кейс для pattern matching: events — это data (record-структура), handlers — внешний код, который не должен знать «куда event послать»; полиморфизм тут нарушил бы SRP.",
+                "source_of_confusion": "Тезис «pattern matching заменяет dispatch» ошибочно разворачивают в «заменяемый dispatch = плохо».",
+                "if_it_were_true": "Тогда event-sourced системы (Booking, Wolt) переписали бы handler-сервисы, но они используют именно pattern matching с sealed-events.",
+                "how_it_should_be": "Это правильное применение pattern matching; неправильный выбор — открытая plugin-иерархия с поведением, привязанным к типу."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
