@@ -421,8 +421,8 @@ Pass: `OK FILE.md`.
 | 83 | `cicd` | `pipeline-design` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 84 | `cloud` | `aws` | 16 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 85 | `cloud` | `aws-lambda` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 86 | `cloud` | `azure` | 25 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 87 | `cloud` | `cloud-native-patterns` | 14 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 86 | `cloud` | `azure` | 25 | 25 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 87 | `cloud` | `cloud-native-patterns` | 14 | 14 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 88 | `cloud` | `gcp` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 89 | `cloud` | `serverless` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 90 | `code-quality` | `clean-code-practices` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
@@ -432,11 +432,11 @@ Pass: `OK FILE.md`.
 | 94 | `code-quality` | `refactoring-patterns` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 95 | `code-quality` | `static-analysis` | 6 | 6 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 96 | `code-quality` | `technical-debt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 97 | `data-engineering` | `apache-airflow` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 97 | `data-engineering` | `apache-airflow` | 28 | 28 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 98 | `data-engineering` | `apache-flink` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 99 | `data-engineering` | `apache-spark` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 100 | `data-engineering` | `data-lake-lakehouse` | 28 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 101 | `data-engineering` | `data-warehousing` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 100 | `data-engineering` | `data-lake-lakehouse` | 28 | 28 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 101 | `data-engineering` | `data-warehousing` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 102 | `data-engineering` | `dbt` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 103 | `data-engineering` | `kafka-streams` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 104 | `data-engineering` | `stream-processing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
