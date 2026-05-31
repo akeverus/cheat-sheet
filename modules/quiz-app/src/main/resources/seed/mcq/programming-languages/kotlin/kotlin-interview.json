@@ -1,0 +1,1625 @@
+{
+  "topic_slug": "kotlin-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Kotlin` и почему он стал популярен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Kotlin` — статически типизированный JVM-язык от `JetBrains`: компилируется в стандартный байткод, даёт null-safety на уровне типов, корутины и 100% interop с `Java`; с 2019 года это preferred language для Android по рекомендации Google.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Kotlin` работает на `JVM`, `JS` и `Native`; классы `Kotlin` и `Java` живут в одном classpath. Null-safety разделяет `String` и `String?` на уровне типов и снимает целый класс `NullPointerException`.",
+                "example": "`data class User(val name: String, val age: Int)` заменяет ~50 строк `Java`-boilerplate, а `suspend`-функции убирают callback-hell на `CompletableFuture`.",
+                "when_to_apply": "Применяют при выборе языка для нового backend на `Spring Boot`/`Ktor` и при постепенной миграции `Java`-проекта: модули можно подключать по одному.",
+                "edge_cases": "На сервере корутины конкурируют с Virtual Threads (`Java 21+`); популярность не означает, что `Kotlin` нужен только для Android — `IntelliJ IDEA` написана на нём.",
+                "related": "[[kotlin-interview#Q2]] ключевые отличия от Java; [[kotlin-interview#Q4]] null-safety."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Kotlin` — это полностью отдельная виртуальная машина, несовместимая с `Java`-байткодом, поэтому смешивать классы в одном проекте нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kotlin` компилируется в стандартный `JVM`-байткод, и его классы живут в одном classpath с `Java`-классами; своей VM у языка нет.",
+                "source_of_confusion": "Звучит как «отдельный язык — значит отдельная платформа», и новички переносят это на рантайм, путая компилятор с виртуальной машиной.",
+                "if_it_were_true": "Тогда нельзя было бы вызывать `Spring`/`Hibernate` из `Kotlin`, но именно interop — одна из главных причин популярности языка.",
+                "how_it_should_be": "Это `JVM`-язык поверх той же VM; смешанные `Kotlin`/`Java`-модули собираются и работают вместе без обёрток."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Kotlin` нужен исключительно для Android-разработки, на сервере его использовать бессмысленно и невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На сервере `Kotlin` активно используют в `Spring Boot`, `Ktor`, `Micronaut`; backend — полноценная область применения, а не только Android.",
+                "source_of_confusion": "Google объявила `Kotlin` preferred для Android, и этот громкий факт ошибочно сужают до «только мобильная разработка».",
+                "if_it_were_true": "Тогда не существовало бы серверных фреймворков с first-class поддержкой `Kotlin`, но `Spring` официально поддерживает его с версии 5.",
+                "how_it_should_be": "Это универсальный `JVM`-язык: тот же код-стиль работает и на backend, и на Android, и в Multiplatform."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Kotlin` исполняется через transpile в `Java`-исходник, который потом компилирует `javac`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компилятор `kotlinc` генерирует `.class`-файлы напрямую, минуя стадию генерации `.java`-исходника.",
+                "source_of_confusion": "Похоже на `TypeScript`→`JS`, и эту модель ошибочно переносят на `Kotlin`, ожидая промежуточный `Java`-код.",
+                "if_it_were_true": "Тогда в `build/` лежали бы сгенерированные `.java`-файлы, но их там нет — есть сразу байткод.",
+                "how_it_should_be": "Это прямая компиляция в `JVM`-байткод; искать «сгенерированный Java» бесполезно, нужно смотреть декомпилированный байткод."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевые отличия `Kotlin` от `Java`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Единственное отличие — более короткий синтаксис; семантика типов, наследования и многопоточности у `Kotlin` и `Java` полностью совпадает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отличий по семантике много: null-safety в типах, `final`-by-default, extension functions, корутины и smart casts меняют поведение, а не только запись.",
+                "source_of_confusion": "`Kotlin`-код выглядит как «`Java` покороче», и поверхностное сходство принимают за идентичную семантику.",
+                "if_it_were_true": "Тогда `data class` с `var` вёл бы себя как `record`, но он mutable и считает `equals` только по primary constructor.",
+                "how_it_should_be": "Это разные системы типов и дефолтов; синтаксис — лишь верхушка, под ней другая модель null и наследования."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Kotlin` добавляет к `Java` null-safety в типах (`String?`), `data class`, extension functions, корутины и smart casts; классы и свойства по умолчанию `final`/`val`.",
+              "correct": true,
+              "sections": {
+                "explanation": "На уровне типов `Kotlin` разделяет `T` и `T?`, авто-генерирует `equals`/`hashCode`/`copy` у `data class`, поддерживает функции-расширения без наследования и `suspend`-функции.",
+                "example": "`data class User(val name: String, val age: Int)` — одна строка против ~50 в `Java` без `record`/Lombok; smart cast после `if (x != null)` сужает тип до non-null.",
+                "when_to_apply": "Знание этих отличий нужно при миграции `Java`→`Kotlin` и на собеседовании, чтобы не свести разницу к «синтаксическому сахару».",
+                "edge_cases": "Корутины — не обёртка над `Thread`: миллионы корутин живут на одном потоке, тогда как `Thread` стоит ~1MB стека.",
+                "related": "[[kotlin-interview#Q4]] null-safety; [[kotlin-interview#Q9]] extension functions; [[kotlin-interview#Q13]] data class."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`data class` в `Kotlin` полностью эквивалентен `record` в `Java`: оба всегда immutable и считают `equals` по всем полям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`data class` может содержать `var` и mutable-свойства, а `equals`/`hashCode` считаются ТОЛЬКО по полям primary constructor, тогда как `record` всегда immutable.",
+                "source_of_confusion": "Оба компактно описывают носители данных, поэтому их приравнивают, не замечая разницы в иммутабельности.",
+                "if_it_were_true": "Тогда `var name` в `data class` входил бы в `equals`, но свойства в теле класса в нём не участвуют — частый источник багов в `Set`/`Map`.",
+                "how_it_should_be": "`record` — строго immutable, а `data class` — гибче и опаснее: mutable-поле после `Set.add()` ломает поиск по `contains()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Корутины `Kotlin` — это просто тонкая обёртка над `Thread`, поэтому каждый `launch{}` создаёт новый поток ОС.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корутины — это suspend-функции уровня компилятора: миллионы корутин выполняются на одном потоке, в отличие от ~1MB стека на каждый `Thread`.",
+                "source_of_confusion": "Слово «легковесные потоки» наводит на мысль о реальных потоках, и `launch` принимают за `new Thread`.",
+                "if_it_were_true": "Тогда 10K `launch{}` исчерпали бы потоки ОС, но приложение спокойно работает, а `Thread.currentThread()` остаётся тем же.",
+                "how_it_should_be": "Это кооперативная многозадачность с suspend/resume в user-space; поток ОС лишь исполняет код между точками приостановки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова система типов в `Kotlin`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Any` — это полный аналог `Object` со всеми методами, включая `wait()`, `notify()` и `getClass()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Any` содержит только `equals`/`hashCode`/`toString`; методов `wait()`/`notify()`/`getClass()` у него нет.",
+                "source_of_confusion": "`Any` называют «корнем иерархии как `Object`», и из аналогии ошибочно выводят полный набор методов `Object`.",
+                "if_it_were_true": "Тогда `obj.wait()` компилировался бы, но он не компилируется — синхронизацию делают через `synchronized` или `Mutex`.",
+                "how_it_should_be": "Это урезанный корень без потоковых методов; для монитора используют явные конструкции, а не методы `Any`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Unit` и `Nothing` — синонимы: оба означают «функция ничего не возвращает» и взаимозаменяемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Unit` — singleton-тип со значением `Unit` (аналог `void`), а `Nothing` — подтип всех типов: функция с `Nothing` не возвращается нормально.",
+                "source_of_confusion": "Оба связаны с «отсутствием результата», и поверхностно их объединяют, игнорируя разницу в семантике.",
+                "if_it_were_true": "Тогда `fun fail(): Unit = throw ...` давал бы smart cast в Elvis, но без `Nothing` компилятор его не выводит.",
+                "how_it_should_be": "`Unit` — это полноценное значение, `Nothing` — никогда-не-возврат для `throw`/бесконечного цикла; их роли противоположны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Any` — корень иерархии без `wait`/`notify`; `Unit` — singleton-аналог `void`; `Nothing` — подтип всех типов для never-returning функций; nullable-типы отделены от non-null на уровне типов.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `Kotlin` всё — объект (нет языковых примитивов, они оптимизируются в JVM-примитивы). Система типов отделяет `T` от `T?` и вводит `Nothing` для функций без нормального возврата.",
+                "example": "`fun fail(message: String): Nothing = throw IllegalArgumentException(message)` позволяет писать `val x: String = input ?: fail(\"null\")` — компилируется благодаря `Nothing`.",
+                "when_to_apply": "Понимание иерархии нужно при работе с Elvis-`throw`, `error()`/`TODO()` и при проектировании sealed-моделей результата.",
+                "edge_cases": "`String` и `String?` — два разных типа; передача `String?` туда, где ждут `String`, — ошибка компиляции, а не runtime.",
+                "related": "[[kotlin-interview#Q4]] null-safety; [[kotlin-interview#Q5]] safe call и !!."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все типы в `Kotlin` nullable по умолчанию, поэтому `String` и `String?` равнозначны и взаимозаменяемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`String` не может быть `null`, а `String?` — может; это два разных типа на уровне компиляции, non-null по умолчанию.",
+                "source_of_confusion": "В `Java` любая ссылка nullable, и эту привычку переносят на `Kotlin`, считая `null` допустимым везде.",
+                "if_it_were_true": "Тогда `val s: String = null` компилировался бы, но это ошибка компиляции — `null` запрещён для non-null типа.",
+                "how_it_should_be": "По умолчанию типы non-null; nullable нужно явно пометить `?`, и обойти проверку через `!!` означает вернуть `NPE`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализована null-safety в `Kotlin`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Использовать `!!` везде, где компилятор требует non-null тип — это стандартный способ удовлетворить систему типов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`!!` бросает `NullPointerException` при `null` и фактически переносит `Java`-проблему в `Kotlin`, а не решает её.",
+                "source_of_confusion": "Компилятор «требует non-null», и `!!` выглядит как быстрый способ его «успокоить», что и закрепляется как привычка.",
+                "if_it_were_true": "Тогда `response.body()!!` всегда был бы безопасен, но на edge case `body == null` сервис падает в production.",
+                "how_it_should_be": "Правильно — `?.`, `?:`, `let` и smart cast; `!!` допустим только когда `null` логически невозможен и нужен fail-fast."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Java`-типы из библиотек считаются non-null по умолчанию, поэтому проверять их на `null` не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Java`-типы — это platform types (`String!`): компилятор НЕ знает, nullable они или нет, и ответственность за проверку на разработчике.",
+                "source_of_confusion": "Отсутствие `?` в сигнатуре `Java`-метода принимают за гарантию non-null, хотя её там нет.",
+                "if_it_were_true": "Тогда `getName()` без `@Nullable` всегда возвращал бы non-null, но на практике это даёт `NPE` в runtime спустя дни.",
+                "how_it_should_be": "Platform-типы требуют осознанной проверки: оборачивать в `String?` или валидировать перед использованием."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно вручную писать `if (x == null) throw ...` в начале каждой функции — встроенные средства не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это работает, но игнорирует встроенные `requireNotNull`/`?:` и не даёт smart cast там, где он естественен по типу.",
+                "source_of_confusion": "Ручная проверка кажется «явной и надёжной», поэтому ей предпочитают идиоматичные операторы.",
+                "if_it_were_true": "Тогда добавление нового метода никогда не приводило бы к `NPE`, но забытая проверка в одном методе как раз и роняет код.",
+                "how_it_should_be": "Идиоматично — разделение `T`/`T?` плюс `?.`/`?:`/`requireNotNull`; ручные проверки дублируют то, что даёт система типов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Через разделение типов на `T` и `T?` плюс операторы `?.`, `?:`, `let`, smart cast и `as?`; для `Java`-кода действуют platform types.",
+              "correct": true,
+              "sections": {
+                "explanation": "Компилятор запрещает `null` для non-null типа; safe call `?.` возвращает `null`, Elvis `?:` даёт fallback, smart cast после `if (x != null)` сужает тип, `as?` даёт `null` вместо `ClassCastException`.",
+                "example": "`val displayName: String = user?.name ?: \"Anonymous\"` и `user?.let { println(it.name) }` — типичные идиомы безопасной работы с nullable.",
+                "when_to_apply": "Применяют во всех DTO и сервисах: опциональные поля помечают `String?`, а `!!` оставляют только для случаев, где `null` исключён.",
+                "edge_cases": "`Java`-типы приходят как platform types (`String!`) — компилятор не знает их nullability, поэтому проверку делает разработчик.",
+                "related": "[[kotlin-interview#Q5]] разница ?. и !!; [[kotlin-interview#Q6]] Elvis и let."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `?.` и `!!`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`?.` — safe call (возвращает `null`, если объект `null`); `!!` — not-null assertion (бросает `NullPointerException`), допустим только когда `null` логически невозможен.",
+              "correct": true,
+              "sections": {
+                "explanation": "Безопасный вызов сохраняет null-прозрачность всей цепочки и не бросает исключений, а `!!` гарантирует non-null ценой риска падения.",
+                "example": "`name?.length` вернёт `null` при `name == null`, а `name!!.length` на том же значении выбросит `KotlinNullPointerException`.",
+                "when_to_apply": "`?.` применяют по умолчанию для опциональных значений; `!!` — лишь в тестах/интеграционном коде, где crash предпочтительнее тихого `null`.",
+                "edge_cases": "`!!` в production — анти-паттерн и lint-warning; его наличие требует обоснования, потому что он отменяет гарантии типов.",
+                "related": "[[kotlin-interview#Q4]] механизмы null-safety; [[kotlin-interview#Q6]] Elvis и let."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`?.` и `!!` ведут себя при `null` одинаково и отличаются только синтаксисом записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`?.` возвращает `null` без исключения, а `!!` бросает `KotlinNullPointerException` — поведение при `null` противоположное.",
+                "source_of_confusion": "Оба оператора связаны с nullable-значениями, и их ошибочно считают взаимозаменяемыми «стилями».",
+                "if_it_were_true": "Тогда замена `?.` на `!!` «для единообразия» была бы безопасной, но на первом же `null` даёт падение в production.",
+                "how_it_should_be": "Это разные операторы: один спрашивает и продолжает, другой настаивает и роняет приложение при `null`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`!!` безопасно использовать в production, если код покрыт юнит-тестами happy-path.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тесты не покрывают все edge cases (race condition, десериализация, кривой JSON), а `!!` — явный отказ от null-safety.",
+                "source_of_confusion": "100%-покрытие happy-path создаёт ложное чувство защищённости, и `!!` кажется «проверенным».",
+                "if_it_were_true": "Тогда невалидный JSON с `null`-полем обрабатывался бы корректно, но `!!` на нём падает, а сообщение зацикливается в DLQ.",
+                "how_it_should_be": "Покрытие тестами не делает `!!` безопасным; для опциональных значений нужны `?.`/`?:`, а не ассерт."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`?.` и `!!` работают только на `var`; для `val` вместо них обязателен Elvis `?:`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба оператора работают и на `val`, и на `var` — они зависят от nullability типа, а не от изменяемости ссылки.",
+                "source_of_confusion": "Изменяемость и nullability путают, и из «`val` неизменяем» делают вывод «к нему другие операторы».",
+                "if_it_were_true": "Тогда переписывание `val` в `var` «включало» бы `?.`, но реально проблема была в типе `T?`, и так появляются mutable-state баги.",
+                "how_it_should_be": "Выбор оператора определяется типом (`T?` против `T`); `val`/`var` на это не влияют."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое оператор Элвис `?:` и `let` для работы с null?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`?:` срабатывает как тернарный оператор по `false`: возвращает правый операнд, если левый — `false`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Elvis `?:` срабатывает на `null`, а не на `false`; для boolean-логики используют `if`/`when`, а не Elvis.",
+                "source_of_confusion": "По форме `?:` напоминает тернарный `?:` из C/Java, и его семантику ошибочно привязывают к boolean.",
+                "if_it_were_true": "Тогда `flag ?: default` подменял бы `false` на `default`, но при `flag = false` Elvis вернёт именно `false`.",
+                "how_it_should_be": "Это null-coalescing: левый операнд возвращается, если он не `null`; к `false`/`true` оператор отношения не имеет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`?:` возвращает левый операнд, если он не `null`, иначе правый; `?.let { }` выполняет блок только если объект не `null`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Elvis даёт fallback или раннее завершение (`?: return`, `?: throw`), а `?.let` идиоматично оборачивает работу с nullable без явных `if`-проверок.",
+                "example": "`val displayName = name ?: \"Unknown\"` подставляет дефолт, а `email?.let { send(it) }` вызывает `send` только при non-null `email`.",
+                "when_to_apply": "`?:` применяют для значений по умолчанию и guard-выходов, `?.let` — для действия над non-null значением.",
+                "edge_cases": "Без `?.` блок `let` выполняется всегда (даже если внутри `it` окажется `null`), поэтому именно `?.let` обеспечивает null-guard.",
+                "related": "[[kotlin-interview#Q5]] safe call и !!; [[kotlin-interview#Q12]] scope-функции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Блок `let` выполняется всегда, даже когда объект `null` — это его главное отличие от Elvis.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На nullable `let` вызывают через `?.let`, и тогда блок выполняется только при non-null; без `?.` блок и правда выполнится, но получит `it` исходного типа.",
+                "source_of_confusion": "Запись `email.let { ... }` без `?.` создаёт впечатление, что `let` сам отсекает `null`, чего он не делает.",
+                "if_it_were_true": "Тогда `email.let { send(it) }` пропускал бы `null`, но при типе `String?` `it` останется nullable и `send` упадёт.",
+                "how_it_should_be": "Null-guard обеспечивает именно `?.` перед `let`; сам `let` лишь передаёт объект в блок."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`?:` и `?.let` полностью взаимозаменяемы — оба обрабатывают `null` одинаково и возвращают одно и то же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Elvis возвращает значение операнда, а `let` выполняет блок и возвращает его результат (или `null`, если объект был `null`).",
+                "source_of_confusion": "Оба связаны с обработкой `null`, и из этого делают вывод об их эквивалентности.",
+                "if_it_were_true": "Тогда `name ?: log(\"null name\")` выполнял бы логирование при `null`, но Elvis вернёт результат `log()` как значение, а не как действие.",
+                "how_it_should_be": "Это разные инструменты: `?:` подставляет дефолт-значение, `?.let` запускает действие над non-null объектом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое лямбда-выражения и функциональные типы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Лямбда — это чисто compile-time оптимизация: в runtime от неё ничего не остаётся, это обычный метод без аллокаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лямбда без `inline` компилируется в объект `Function0`/`Function1`/... с методом `invoke()`, то есть это аллокация в куче.",
+                "source_of_confusion": "Кажется, что компилятор «растворяет» лямбду в коде, и про объект-обёртку забывают.",
+                "if_it_were_true": "Тогда лямбды в hot path были бы бесплатны, но на 10K событий/сек они дают мегабайты аллокаций и GC-паузы.",
+                "how_it_should_be": "Стоимость снимается через `inline`; без него каждая лямбда — это объект `Function`, создаваемый в рантайме."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`it` — это ключевое слово языка, обозначающее текущий объект в любой функции, а не только в лямбде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`it` — это implicit-имя единственного параметра ТОЛЬКО внутри лямбды; в обычной функции `it` — обычный идентификатор.",
+                "source_of_confusion": "`it` встречается во многих лямбдах, и его принимают за зарезервированное «магическое» слово уровня языка.",
+                "if_it_were_true": "Тогда `fun process(it: User)` имел бы особый смысл, но `it` там — рядовое имя параметра, которое теневает лямбда.",
+                "how_it_should_be": "Это всего лишь дефолтное имя одного параметра лямбды; вне лямбды никакой специальной семантики у `it` нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Лямбда — анонимная функция как значение; функциональный тип `(Int, Int) -> Int` — полноценный first-class тип, а лямбда с receiver (`String.() -> Unit`) — основа DSL.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `Kotlin` функции — граждане первого класса: их хранят в переменных и передают как аргументы. Лямбда без `inline` компилируется в `Function`-объект.",
+                "example": "`val sum: (Int, Int) -> Int = { a, b -> a + b }`, а `listOf(1,2,3).filter { it % 2 == 0 }` использует trailing-lambda и `it`.",
+                "when_to_apply": "Функциональные типы применяют для callback'ов, HOF и type-safe builder'ов; receiver-лямбда лежит в основе `Gradle Kotlin DSL` и `Ktor` routing.",
+                "edge_cases": "В JVM функциональные типы реализуют `kotlin.jvm.functions.Function0..N` и через SAM-конверсию интероперабельны с `Java` functional interfaces.",
+                "related": "[[kotlin-interview#Q8]] функции высшего порядка; [[kotlin-interview#Q10]] inline; [[kotlin-interview#Q12]] scope-функции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Функциональный тип `(Int) -> Int` несовместим с `Java`-интерфейсом `Function<Integer, Integer>`, для интеропа нужны ручные обёртки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В JVM `Kotlin`-функциональные типы реализуют интерфейсы `Function0..N` и через SAM-конверсию совместимы с `Java` functional interfaces напрямую.",
+                "source_of_confusion": "`Kotlin`- и `Java`-функциональные интерфейсы выглядят по-разному, и из этого делают вывод о несовместимости.",
+                "if_it_were_true": "Тогда передать `Kotlin`-лямбду в `Java`-API было бы нельзя, но SAM-конверсия делает это без обёрток.",
+                "how_it_should_be": "Достаточно передать лямбду напрямую: компилятор сам выполнит SAM-конверсию к нужному `Java`-интерфейсу."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое функции высшего порядка (higher-order functions)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "HOF может только принимать функцию-параметр, но не может возвращать функцию как результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HOF может и принимать, и возвращать функции: `fun multiplier(f: Int): (Int) -> Int = { it * f }` возвращает лямбду.",
+                "source_of_confusion": "Чаще показывают приём функции-параметра (`map`/`filter`), и про второй вариант — возврат функции — забывают.",
+                "if_it_were_true": "Тогда для каждого преобразования писали бы отдельный класс-фабрику, раздувая код десятками классов.",
+                "how_it_should_be": "Возврат функции — такой же HOF; фабрики поведения удобно делать именно через возвращаемые лямбды."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "HOF доступны только в stdlib (`map`, `filter`); свои функции высшего порядка писать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Любая функция, принимающая или возвращающая функцию, — это HOF; пользовательские HOF пишут как обычные функции с функциональным типом параметра.",
+                "source_of_confusion": "Stdlib-функции на слуху, и HOF ошибочно считают «привилегией» стандартной библиотеки.",
+                "if_it_were_true": "Тогда пришлось бы городить «универсальные» дженерик-классы вместо лямбд, усложняя код и тесты.",
+                "how_it_should_be": "Свой HOF — это просто `fun calculate(a: Int, b: Int, op: (Int, Int) -> Int) = op(a, b)`; писать их можно свободно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "HOF создают runtime-overhead из-за reflection, поэтому в горячем коде их лучше избегать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HOF не используют reflection — они компилируются в обычные `Function`-вызовы; единственная стоимость — аллокация лямбды, снимаемая через `inline`.",
+                "source_of_confusion": "Любую «динамику» по привычке связывают с reflection, и HOF ошибочно записывают в дорогие конструкции.",
+                "if_it_were_true": "Тогда отказ от HOF улучшал бы производительность, но даёт лишь цепочки `if/else` и потерю идиоматичности.",
+                "how_it_should_be": "Накладные расходы HOF — это объект лямбды, а не reflection; `inline` убирает и его."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "HOF — функция, которая принимает или возвращает другую функцию как значение; stdlib (`map`, `filter`, `reduce`) и свои пайплайны/DSL строятся на HOF.",
+              "correct": true,
+              "sections": {
+                "explanation": "Функция высшего порядка работает с функциями как с данными: `fun calculate(a: Int, b: Int, op: (Int, Int) -> Int) = op(a, b)` принимает поведение параметром.",
+                "example": "`listOf(-1, 2, -3).filter(::isPositive)` и `multiplier(3)(5) == 15` — приём функции-параметра и возврат функции соответственно.",
+                "when_to_apply": "HOF применяют для пайплайнов обработки коллекций, DSL и стратегий поведения; они делают код декларативным.",
+                "edge_cases": "`Spring` `TransactionTemplate.execute { }` и `Resilience4j` `Retry.executeSupplier { }` — практические HOF, принимающие лямбду.",
+                "related": "[[kotlin-interview#Q7]] лямбды и функциональные типы; [[kotlin-interview#Q10]] inline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое функции расширения (extension functions) и как они работают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Extension добавляет функцию к существующему классу через статический метод — БЕЗ модификации класса и БЕЗ наследования; разрешается статически по типу переменной.",
+              "correct": true,
+              "sections": {
+                "explanation": "`fun String.foo()` компилируется в `static foo(String $this)` и разрешается по compile-time типу переменной, не по runtime-типу; доступа к `private`-членам у extension нет.",
+                "example": "`fun String.wordCount() = split(\"\\\\s+\".toRegex()).size`; при этом `val shape: Shape = Circle()` с `fun Shape.name()`/`fun Circle.name()` вызовет `Shape.name()`.",
+                "when_to_apply": "Extension'ы применяют вместо utility-классов со static-методами и для расширения чужих типов из библиотек.",
+                "edge_cases": "Член класса имеет приоритет над extension с тем же именем; extension не полиморфен и виден только в файле, где импортирован.",
+                "related": "[[kotlin-interview#Q25]] reified в extension; [[kotlin-interview#Q8]] что такое функции высшего порядка."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Extension function разрешается полиморфно — по runtime-типу объекта, как обычный виртуальный метод.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Extension разрешается СТАТИЧЕСКИ — по объявленному типу переменной, а не по фактическому runtime-типу объекта.",
+                "source_of_confusion": "Синтаксис вызова `obj.foo()` выглядит как у обычного метода, и от него ждут виртуального поведения.",
+                "if_it_were_true": "Тогда `Circle` в переменной типа `Shape` вызывал бы `Circle.name()`, но вызовется `Shape.name()` — частый баг рендеринга.",
+                "how_it_should_be": "Это статический диспатч по compile-time типу; для полиморфизма нужен обычный `open`/`override`-метод класса."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Extension function имеет доступ к `private`/`protected` членам класса, как метод внутри него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Extension — это статический метод снаружи класса; он видит только `public`/`internal` API и не имеет доступа к `private`/`protected`.",
+                "source_of_confusion": "Синтаксис `this` внутри extension создаёт иллюзию, что код «внутри» класса.",
+                "if_it_were_true": "Тогда `User.normalize()` читал бы `private val rawData`, но компиляция упадёт, толкая к ослаблению инкапсуляции.",
+                "how_it_should_be": "Extension работает только с открытым API; приватное состояние ему недоступно по дизайну."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Extension functions нельзя экспортировать из библиотеки — они видны только внутри своего модуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Extension экспортируется как обычная функция; чтобы вызвать её в другом модуле, достаточно её импортировать.",
+                "source_of_confusion": "`this`-receiver наводит на мысль о «привязке» к классу и модулю, и про обычный импорт забывают.",
+                "if_it_were_true": "Тогда `String.toSnakeCase()` приходилось бы копировать в каждый модуль, плодя расходящиеся версии.",
+                "how_it_should_be": "Это обычная функция верхнего уровня; её импортируют там, где используют, без дублирования."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `inline` функции и зачем они нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`inline` всегда улучшает производительность, поэтому его стоит ставить на каждую функцию проекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`inline` имеет смысл только для функций С ЛЯМБДА-параметрами; на обычных функциях он лишь раздувает байткод без выигрыша.",
+                "source_of_confusion": "Слово «inline» ассоциируется с ускорением, и его применяют огульно ко всему подряд.",
+                "if_it_were_true": "Тогда тотальный `inline` уменьшал бы JAR и время старта, но на деле JAR растёт, а старт замедляется.",
+                "how_it_should_be": "`inline` ставят на HOF, чтобы убрать аллокацию лямбды; на функциях без лямбд он вреден."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`inline` подставляет тело функции и тело лямбды в место вызова, избегая аллокации `Function`-объекта; `noinline` и `crossinline` управляют отдельными лямбдами.",
+              "correct": true,
+              "sections": {
+                "explanation": "При компиляции тело `inline`-функции и переданных лямбд встраивается в caller, убирая создание `Function`-объекта и лишний stack frame.",
+                "example": "`inline fun <T> measureTime(block: () -> T): T { ... }` — тело подставляется, а стандартные `let`/`run`/`apply`/`also`/`with` все `inline`.",
+                "when_to_apply": "Применяют для HOF в горячем коде и для scope-функций; так избегают аллокаций лямбд при частых вызовах.",
+                "edge_cases": "`noinline` запрещает инлайнинг конкретной лямбды, `crossinline` запрещает нелокальный `return` из лямбды (нужен для `Thread`/callback).",
+                "related": "[[kotlin-interview#Q7]] лямбды; [[kotlin-interview#Q12]] scope-функции; [[kotlin-interview#Q25]] reified."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`noinline` отключает инлайнинг функции целиком, превращая `inline fun` обратно в обычную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`noinline` относится к КОНКРЕТНОМУ лямбда-параметру, а не ко всей функции; остальные лямбды функции продолжают инлайниться.",
+                "source_of_confusion": "`noinline` и снятие модификатора `inline` путают, считая их одним и тем же.",
+                "if_it_were_true": "Тогда `noinline` на всех параметрах «выключал» бы inline, но функция остаётся `inline`, а debug-опыт не меняется.",
+                "how_it_should_be": "Чтобы убрать инлайнинг целиком, удаляют модификатор `inline`; `noinline` лишь исключает одну лямбду."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`crossinline` разрешает нелокальный `return` из лямбды, переданной в другой контекст.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`crossinline`, наоборот, ЗАПРЕЩАЕТ нелокальный `return` из лямбды — он нужен, когда лямбда уходит в другой контекст (`Thread`, callback).",
+                "source_of_confusion": "Семантику путают: ждут «разрешения» там, где модификатор накладывает ограничение.",
+                "if_it_were_true": "Тогда `return` из `crossinline`-лямбды компилировался бы, но компилятор его запретит, ломая ожидания.",
+                "how_it_should_be": "`crossinline` гарантирует отсутствие non-local return, что и позволяет безопасно передать лямбду в `Thread { }`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `infix` функции?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`infix` можно поставить на любую функцию, у которой есть параметры, независимо от их количества.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`infix` требует РОВНО ОДНОГО параметра, а сама функция должна быть member или extension.",
+                "source_of_confusion": "Видя `a power b`, делают вывод, что `infix` — общий модификатор «без точки» для любых функций.",
+                "if_it_were_true": "Тогда `infix fun add(a: Int, b: Int)` компилировался бы, но компилятор его отвергнет из-за двух параметров.",
+                "how_it_should_be": "Для `infix` нужен один параметр и receiver; функции с несколькими аргументами вызывают обычным образом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`infix` функции медленнее обычных из-за дополнительного парсинга инфиксной записи в рантайме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`infix` — это синтаксический сахар; в байткоде инфиксный вызов идентичен обычному `a.f(b)` без какого-либо overhead.",
+                "source_of_confusion": "Необычный синтаксис принимают за «дорогую» конструкцию, добавляющую работу в рантайме.",
+                "if_it_were_true": "Тогда в hot path `infix` стоило бы избегать, но отказ от него лишь добавляет boilerplate без выигрыша.",
+                "how_it_should_be": "Инфиксная запись разрешается на этапе компиляции; производительность вызова та же, что у точечной формы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`infix` позволяет вызывать функцию без точки и скобок (`2 power 10` вместо `2.power(10)`); требует ровно один параметр и быть member/extension.",
+              "correct": true,
+              "sections": {
+                "explanation": "Инфиксная форма убирает точку и скобки и улучшает читаемость DSL; функция при этом обязана иметь один параметр и быть member либо extension.",
+                "example": "`\"key\" to \"value\"` создаёт `Pair` через `infix to`, а `5 in 1..10` использует `infix contains`.",
+                "when_to_apply": "Применяют в DSL и тестовых матчерах: `result shouldBe expected` в `Kotest` читается как предложение.",
+                "edge_cases": "В байткоде инфиксный вызов идентичен обычному; receiver может быть любым типом, включая generic и custom-классы.",
+                "related": "[[kotlin-interview#Q7]] лямбды для DSL; [[kotlin-interview#Q10]] что такое inline функции и зачем они нужны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`infix` применим только к типам `Int` и `String`, к пользовательским классам его поставить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`infix` работает с любым receiver-типом, включая generic и пользовательские классы, а не только с `Int`/`String`.",
+                "source_of_confusion": "Стандартные примеры `infix` показывают на числах и строках, и из этого выводят ограничение по типам.",
+                "if_it_were_true": "Тогда нельзя было бы строить DSL на своих типах, но именно там `infix` особенно полезен.",
+                "how_it_should_be": "Ограничение только одно — один параметр и member/extension; тип receiver произвольный."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое scope-функции (`let`, `run`, `with`, `apply`, `also`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все пять scope-функций (`let`, `run`, `with`, `apply`, `also`) возвращают сам объект-контекст.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`apply` и `also` возвращают сам объект, а `let`, `run`, `with` возвращают результат лямбды — это две разные группы.",
+                "source_of_confusion": "Все пять функций «оборачивают» объект, и из этого ошибочно выводят единое возвращаемое значение.",
+                "if_it_were_true": "Тогда `HttpClient().let { ... }` возвращал бы клиент, но `let` вернёт результат лямбды (часто `Unit`), и конфигурация теряется.",
+                "how_it_should_be": "Возврат различается по функции: `apply`/`also` отдают объект, `let`/`run`/`with` — результат блока."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`let` и `apply` идентичны: оба передают объект как `it` и возвращают результат лямбды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`let` передаёт `it` и возвращает результат лямбды, а `apply` передаёт `this` и возвращает сам объект — различия и в контексте, и в возврате.",
+                "source_of_confusion": "Обе функции часто используют для настройки объекта, и их семантику смешивают.",
+                "if_it_were_true": "Тогда замена `let`↔`apply` была бы безопасной, но даёт то `Unit` вместо объекта, то наоборот, ломая конфигурацию.",
+                "how_it_should_be": "`let`: `it` + результат лямбды; `apply`: `this` + сам объект — это две оси выбора scope-функции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Scope-функции — это макросы компилятора, которых в runtime не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они реализованы как обычные `inline`-функции в stdlib (`Standard.kt`); это функции, а не макросы, просто их тело встраивается.",
+                "source_of_confusion": "`inline`-подстановку принимают за «макрос» и делают вывод, что в рантайме функций нет.",
+                "if_it_were_true": "Тогда в декомпилированном байткоде не нашлось бы ничего, но там виден встроенный код inline-функции.",
+                "how_it_should_be": "Это `inline`-функции stdlib; «макросов» в `Kotlin` нет, а подстановка — стандартный механизм `inline`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`let`/`also` дают объект как `it`, `run`/`with`/`apply` — как `this`; `apply`/`also` возвращают объект, остальные — результат лямбды.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор идёт по двум осям: контекст (`it` против `this`) и возврат (сам объект против результата лямбды); по ним и подбирают нужную функцию.",
+                "example": "`config = HttpClient().apply { timeout = 30_000 }` настраивает объект и возвращает его, а `name?.let { println(it.length) }` делает null-check.",
+                "when_to_apply": "`apply` применяют для конфигурации (builder), `let` — для null-check и преобразований, `also` — для логирования и побочных эффектов.",
+                "edge_cases": "Все пять — `inline`-функции stdlib; ключевая ошибка на собеседовании — перепутать возвращаемое значение при вложенности.",
+                "related": "[[kotlin-interview#Q6]] Elvis и let; [[kotlin-interview#Q10]] inline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `data class`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`data class` авто-генерирует `equals`, `hashCode`, `toString`, `copy`, `componentN` и учитывает в равенстве ТОЛЬКО свойства primary constructor.",
+              "correct": true,
+              "sections": {
+                "explanation": "Компилятор генерирует пять методов; `equals`/`hashCode` считаются только по полям primary constructor, а свойства в теле класса в них не участвуют.",
+                "example": "`data class User(val name: String, val email: String, val age: Int = 0)` даёт `user1.copy(name = \"Bob\")` и деструктуризацию `val (name, email, age) = user1`.",
+                "when_to_apply": "Применяют для DTO и value-object'ов, где нужны равенство по значению и удобное копирование без boilerplate.",
+                "edge_cases": "`data class Tricky(val id: Int) { var name = \"\" }`: `name` невидим для `equals`, и в `HashMap<Tricky, X>` ключи «сливаются»; `copy()` к тому же поверхностный.",
+                "related": "[[kotlin-interview#Q14]] sealed class; [[kotlin-interview#Q12]] что такое scope-функции (let, run, with,."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`equals`/`hashCode` у `data class` учитывают ВСЕ свойства, включая `var` в теле класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Учитываются ТОЛЬКО свойства из primary constructor; `var name` в теле класса в `equals`/`hashCode` не входит.",
+                "source_of_confusion": "Кажется логичным, что «все поля объекта» формируют равенство, и про правило primary constructor забывают.",
+                "if_it_were_true": "Тогда два `Tricky` с одинаковым `id`, но разным `name` были бы различны, но они равны — и значения в `HashMap` теряются.",
+                "how_it_should_be": "Равенство строится строго по primary constructor; поля в теле класса нужно либо вынести в конструктор, либо учитывать вручную."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`data class` может быть `abstract`, `open` или `sealed`, если это требуется иерархией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`data class` НЕ может быть `abstract`, `open`, `sealed` или `inner` — это запрещено языком.",
+                "source_of_confusion": "`data class` часто используют внутри sealed-иерархий как подклассы, и отсюда вывод, что он сам бывает sealed.",
+                "if_it_were_true": "Тогда `sealed data class` компилировался бы, но даёт ошибку, заставляя писать `equals`/`hashCode` вручную.",
+                "how_it_should_be": "Сам `data class` всегда `final`; sealed-иерархию строят из обычного sealed-родителя с `data class`-наследниками."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`copy()` у `data class` создаёт глубокую копию со всеми вложенными объектами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`copy()` делает поверхностную (shallow) копию: вложенные mutable-объекты остаются общими между оригиналом и копией.",
+                "source_of_confusion": "Слово «копия» воспринимают как полное дублирование графа объектов.",
+                "if_it_were_true": "Тогда правка `user.address.city` не затрагивала бы копию, но при shallow-копии изменение видно в обеих.",
+                "how_it_should_be": "`copy()` копирует только верхний уровень полей; для независимости вложенные объекты копируют явно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `sealed class` и `sealed interface`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`sealed class` работает идентично `enum class`: фиксированный набор singleton-экземпляров одного типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`enum` — это фиксированные синглтоны одного типа, а `sealed` — иерархия классов с РАЗНЫМ состоянием и полями.",
+                "source_of_confusion": "И `enum`, и `sealed` дают exhaustive `when`, и из общей проверки выводят идентичность конструкций.",
+                "if_it_were_true": "Тогда `NetworkResult` на `enum` хранил бы `data` без проблем, но пришлось бы тащить nullable-поля во все члены, ломая null-safety.",
+                "how_it_should_be": "`sealed` моделирует разнородные варианты с разными полями; `enum` — однотипные константы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`sealed class`/`interface` — иерархия с известным компилятору набором подклассов в том же пакете и модуле; `when` по ней exhaustive без `else`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый подкласс имеет своё состояние и поля; компилятор знает их все и проверяет покрытие вариантов в `when`-выражении без `else`.",
+                "example": "`sealed class NetworkResult<out T>` с `Success`/`Error`/`Loading` обрабатывается `when`, где `else` не нужен, потому что все ветви покрыты.",
+                "when_to_apply": "Применяют для моделирования результатов и состояний (UI-state, `Either`), где важно явно и безопасно обработать все случаи.",
+                "edge_cases": "С `Kotlin 1.5+` подклассы должны быть в том же пакете+модуле (раньше — в том же файле); `sealed interface` допускает множественную реализацию.",
+                "related": "[[kotlin-interview#Q13]] data class как подкласс; [[kotlin-interview#Q17]] enum vs sealed."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подклассы `sealed class` можно объявлять в любом модуле проекта, лишь бы они наследовали родителя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `Kotlin 1.5+` подклассы sealed должны быть в том же пакете и модуле; раньше — в том же файле.",
+                "source_of_confusion": "Обычное наследование не ограничено модулем, и это правило по инерции переносят на sealed.",
+                "if_it_were_true": "Тогда подкласс `Result` в другом модуле компилировался бы, но компилятор его отвергнет, требуя перенос файлов.",
+                "how_it_should_be": "Ограничение по пакету+модулю — это то, что даёт компилятору полный список наследников для exhaustive-проверки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`when` по `sealed class` всегда требует ветку `else`, как и обычный `when`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`when`-ВЫРАЖЕНИЕ по `sealed` exhaustive — `else` не нужен, потому что компилятор знает все подклассы.",
+                "source_of_confusion": "Привычный `when`-STATEMENT часто требует `else`, и это правило ошибочно распространяют на sealed-выражение.",
+                "if_it_were_true": "Тогда `else -> error(\"?\")` был бы обязателен, но он как раз скрывает добавление нового подкласса от компилятора.",
+                "how_it_should_be": "Без `else` компилятор заставит обработать новый вариант при расширении иерархии — в этом ценность exhaustive-проверки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `class`, `object` и `companion object`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`object` создаёт обычный класс, как `class`, только с более коротким синтаксисом объявления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`object` — это синглтон с единственным экземпляром на процесс, с lazy-инициализацией и потокобезопасным созданием.",
+                "source_of_confusion": "Похожий синтаксис на `class` создаёт впечатление, что `object` — просто «короткий класс».",
+                "if_it_were_true": "Тогда `object DatabaseConfig` давал бы по экземпляру на стенд, но все обращения получают один и тот же объект — конфликт в multi-tenant.",
+                "how_it_should_be": "Это singleton, а не обычный класс; для нескольких экземпляров нужен `class` с конструктором."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`companion object` — это просто синтаксис для `static`-методов класса, без собственного объекта в рантайме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`companion object` компилируется во вложенный класс `Companion` — это реальный объект, который может реализовывать интерфейсы и наследоваться.",
+                "source_of_confusion": "По роли он заменяет `static`, и из этого делают вывод об отсутствии настоящего объекта.",
+                "if_it_were_true": "Тогда из `Java` был бы прямой `static`-доступ, но без `@JvmStatic` приходится писать `User.Companion.create()`.",
+                "how_it_should_be": "Это полноценный объект-компаньон; «настоящую» статику для `Java` включает аннотация `@JvmStatic`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`class` — обычный класс со множеством экземпляров; `object` — глобальный синглтон с lazy-init; `companion object` — «статика» класса как реальный вложенный объект.",
+              "correct": true,
+              "sections": {
+                "explanation": "`class` инстанцируют сколько угодно раз; `object` — один экземпляр на процесс с потокобезопасной ленивой инициализацией; `companion object` привязан к классу и в JVM живёт во вложенном классе `Companion`.",
+                "example": "`object DatabaseConfig { fun connect() {} }` вызывают через имя объекта, а `companion object { fun create(name: String) = User(name) }` даёт `User.create(\"Alice\")`.",
+                "when_to_apply": "`object` берут для синглтонов и утилит, `companion object` — для factory-методов и констант, привязанных к классу.",
+                "edge_cases": "`companion object` может реализовывать интерфейсы; для прямого `static`-доступа из `Java` нужен `@JvmStatic`, иначе путь идёт через `Companion`.",
+                "related": "[[kotlin-interview#Q22]] open и final; [[kotlin-interview#Q14]] что такое sealed class и sealed interface."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Хранить общее изменяемое состояние в `object` — нормальная практика, например для счётчика в тестах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Shared mutable state в `object` приводит к утечкам состояния между вызовами и тестами, потому что экземпляр один на весь процесс.",
+                "source_of_confusion": "`object` удобно держать «глобально доступные» данные, и это путают с безопасным хранением состояния.",
+                "if_it_were_true": "Тогда `object Counter { var count = 0 }` сбрасывался бы между тестами, но `count` сохраняется, давая флакающие падения.",
+                "how_it_should_be": "Состояние тестов держат в инстансах с пересозданием (`@BeforeEach`), а не в singleton-`object`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы конструкторов есть в `Kotlin`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`secondary constructor` не обязан делегировать к `primary constructor` и может инициализировать объект самостоятельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если у класса есть primary constructor, каждый secondary ОБЯЗАН делегировать к нему через `: this(...)`.",
+                "source_of_confusion": "В `Java` конструкторы независимы, и эту модель переносят на `Kotlin`, ожидая автономный secondary.",
+                "if_it_were_true": "Тогда secondary без `: this()` компилировался бы, но компилятор выдаёт ошибку, и DI через него невозможен.",
+                "how_it_should_be": "Secondary всегда проходит через primary; общая инициализация идёт в primary и `init`-блоках."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`init`-блок выполняется ПОСЛЕ тела `secondary constructor`, завершая инициализацию объекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`init`-блок — часть primary constructor и выполняется ДО тела secondary constructor.",
+                "source_of_confusion": "Тело secondary пишут визуально «после» класса, и из этого выводят более поздний запуск `init`.",
+                "if_it_were_true": "Тогда валидация в `init` видела бы мутации из secondary body, но `init` уже отработал к этому моменту.",
+                "how_it_should_be": "Порядок строгий: параметры primary → свойства и `init` сверху вниз → тело secondary."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параметры `primary constructor` без `val`/`var` всё равно автоматически становятся полями класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметр primary без `val`/`var` доступен только в `init` и инициализаторах свойств, но полем класса НЕ становится.",
+                "source_of_confusion": "Запись `class User(val name)` создаёт поле, и `val` ошибочно считают необязательным для этого.",
+                "if_it_were_true": "Тогда `class User(name: String)` давал бы доступ к `name` снаружи, но получится `Unresolved reference: name`.",
+                "how_it_should_be": "Чтобы параметр стал полем, перед ним пишут `val`/`var`; иначе это обычный параметр конструктора."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`primary constructor` объявляется в заголовке класса; `secondary` — в теле с делегированием `: this()`; `init`-блок выполняется как часть primary до тела secondary.",
+              "correct": true,
+              "sections": {
+                "explanation": "Primary живёт в заголовке (`class User(val name: String)`); secondary объявляют в теле и обязаны вызвать primary через `: this(...)`; `init`-блок — часть primary и идёт до тела secondary.",
+                "example": "`constructor(name: String, email: String) : this(name) { this.email = email }` делегирует к primary, а `init { require(name.isNotBlank()) }` валидирует при создании.",
+                "when_to_apply": "Эту модель используют для DI (инъекция через primary) и для JPA-сущностей с noArg-плагином.",
+                "edge_cases": "Порядок инициализации: параметры primary → свойства и `init`-блоки сверху вниз → тело secondary; нарушать его нельзя.",
+                "related": "[[kotlin-interview#Q20]] lazy и lateinit; [[kotlin-interview#Q15]] в чём разница между class, object и."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `enum class` и чем он отличается от `sealed class`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`enum` — фиксированные синглтоны одного типа с одинаковым набором полей; `sealed` — иерархия классов с разным состоянием, а `when` по `sealed` exhaustive без `else`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`enum` задаёт конечный набор однотипных констант (общие поля и методы), а `sealed` — разнородные подклассы с собственными полями; компилятор знает все варианты обоих.",
+                "example": "`enum class HttpStatus(val code: Int) { OK(200), NOT_FOUND(404); fun isSuccess() = code in 200..299 }` против `sealed` `Result` с `Success(data)`/`Error(code)`.",
+                "when_to_apply": "`enum` берут для конечных констант-статусов, `sealed` — для `Result<T>` и UI-state, где варианты несут разные данные.",
+                "edge_cases": "`HttpStatus.entries` и `valueOf(\"OK\")` доступны у enum; для sealed `when`-выражение exhaustive без `else`.",
+                "related": "[[kotlin-interview#Q14]] sealed class; [[kotlin-interview#Q16]] какие типы конструкторов есть в kotlin."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`enum class` позволяет каждому члену иметь свой набор полей, как подклассам `sealed class`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У всех членов `enum` одинаковая структура полей; разное состояние по варианту — это про `sealed`, а не про `enum`.",
+                "source_of_confusion": "Возможность задать конструктор enum (`OK(200)`) принимают за «разные поля у разных членов».",
+                "if_it_were_true": "Тогда хранить `data` в одном члене и не хранить в другом было бы естественно, но пришлось бы делать поля nullable во всех, ломая null-safety.",
+                "how_it_should_be": "Для разных полей по варианту используют `sealed class` с подклассами; `enum` — для однотипных констант."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подклассы `sealed class` можно объявить в любом файле проекта без ограничений по пакету.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `Kotlin 1.5+` наследники sealed обязаны быть в том же пакете и модуле (раньше — в том же файле).",
+                "source_of_confusion": "Свобода размещения обычных классов переносится на sealed, и про ограничение забывают.",
+                "if_it_were_true": "Тогда подкласс в другом модуле компилировался бы, но компилятор выдаст `Inheritor of sealed class can only be declared in the same package`.",
+                "how_it_should_be": "Ограничение по пакету+модулю гарантирует компилятору полный список наследников для exhaustive `when`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`when` по `sealed class` всегда требует ветку `else`, иначе код не скомпилируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`when`-выражение по `sealed` exhaustive, и `else` не нужен; добавление лишнего `else` снижает безопасность.",
+                "source_of_confusion": "Привычка ставить `else` в обычном `when` переносится на sealed-выражение.",
+                "if_it_were_true": "Тогда `else -> error(\"impossible\")` повышал бы надёжность, но при новом подклассе компилятор промолчит, и ветка не обработается.",
+                "how_it_should_be": "Без `else` компилятор заставит обработать новый вариант, что и есть цель exhaustive-проверки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `value class` (inline class)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`value class` работает без аннотации `@JvmInline` начиная с `Kotlin 1.5` — модификатора `value` достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На JVM `value class` требует аннотации `@JvmInline`; без неё компилятор выдаёт ошибку или не инлайнит обёртку.",
+                "source_of_confusion": "Модификатор `value` кажется самодостаточным, и про обязательную `@JvmInline` на JVM забывают.",
+                "if_it_were_true": "Тогда `value class Email(val value: String)` без `@JvmInline` инлайнился бы, но создаётся объект на каждое использование — смысл оптимизации теряется.",
+                "how_it_should_be": "На JVM пишут `@JvmInline value class ...`; только так обёртка заменяется на обёрнутое значение без аллокаций."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@JvmInline value class Email(val value: String)` — обёртка без runtime-аллокаций: компилятор заменяет тип обёрнутым значением; ровно один параметр в primary constructor.",
+              "correct": true,
+              "sections": {
+                "explanation": "Компилятор подставляет обёрнутое значение вместо обёртки, поэтому объект в куче не создаётся; в primary constructor допускается ровно один параметр.",
+                "example": "`@JvmInline value class UserId(val id: Long)` — `fun findUser(id: UserId)` использует `Long` напрямую; `init { require(value.contains(\"@\")) }` валидирует `Email`.",
+                "when_to_apply": "Применяют для type-safe wrapper'ов: `UserId(Long)`, `Email(String)`, `Temperature(Double)` — там, где важна типобезопасность без overhead.",
+                "edge_cases": "`fun send(to: Email, from: Email)` нельзя перепутать в отличие от `String`-версии; но в `List<Email>` происходит боксинг, и преимущество исчезает.",
+                "related": "[[kotlin-interview#Q19]] var/val/const; [[kotlin-interview#Q17]] что такое enum class и чем он отличается от."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`value class` может содержать несколько свойств в primary constructor для большей гибкости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`value class` допускает РОВНО ОДИН параметр в primary constructor; несколько свойств запрещены.",
+                "source_of_confusion": "От обычного класса ждут произвольного числа полей, и это ожидание переносят на `value class`.",
+                "if_it_were_true": "Тогда `value class Point(val x: Int, val y: Int)` компилировался бы, но даёт `Value class must have exactly one primary constructor parameter`.",
+                "how_it_should_be": "Для нескольких полей используют обычный `class`/`data class`; `value class` оборачивает единственное значение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`value class` нельзя передавать как обобщённый тип `T` — только как конкретный тип.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`value class` можно использовать в дженериках, но при этом происходит боксинг: значение хранится как объект, и инлайнинг теряется.",
+                "source_of_confusion": "Боксинг в `List<Email>` принимают за полный запрет дженериков для value class.",
+                "if_it_were_true": "Тогда `List<Email>` вообще не компилировался бы, но он компилируется — просто без выигрыша по аллокациям.",
+                "how_it_should_be": "Технически дженерики разрешены; ограничение в том, что в обобщённом контексте теряется оптимизация без аллокаций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `var`, `val` и `const val`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`val` — это константа, как `const val`; оба значения вычисляются один раз и больше не меняются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`val` — это read-only ссылка, а не константа: custom getter может возвращать разные значения при каждом обращении.",
+                "source_of_confusion": "Слово «неизменяемый» применяют и к `val`, и к `const`, стирая разницу между read-only ссылкой и compile-time литералом.",
+                "if_it_were_true": "Тогда `val time get() = System.currentTimeMillis()` кэшировался бы, но он вычисляется каждый раз.",
+                "how_it_should_be": "`const val` подставляется как литерал при компиляции; `val` лишь запрещает переприсваивание ссылки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`const val` можно объявить внутри функции для локальных констант времени компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`const val` разрешён только на top-level, в `object` и в `companion object`; внутри функции его объявить нельзя.",
+                "source_of_confusion": "Локальная `val`-переменная привычна, и `const` ошибочно считают её усиленной версией для любого места.",
+                "if_it_were_true": "Тогда `const val X = 1` внутри функции компилировался бы, но даёт `Const 'val' are only allowed on top level, in named objects, or in companion objects`.",
+                "how_it_should_be": "Для локальной константы используют обычный `val`; `const` живёт только в перечисленных областях."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`var` — mutable; `val` — read-only ссылка (содержимое объекта может меняться); `const val` — compile-time константа для примитивов/`String` на top-level или в `object`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`var` допускает переприсваивание, `val` запрещает менять ссылку (но не содержимое объекта), `const val` известен на этапе компиляции и подставляется как литерал.",
+                "example": "`val list = mutableListOf(1,2,3)` — `list = other` запрещено, но `list.add(4)` работает; `const val MAX_SIZE = 100` встраивается как литерал.",
+                "when_to_apply": "`val` берут по умолчанию для всего иммутабельного, `var` — только при необходимости мутаций, `const val` — для compile-time констант.",
+                "edge_cases": "`val cache = mutableMapOf<...>()` не потокобезопасен: ссылка `val`, но содержимое мутабельно, и concurrent-правки дают `ConcurrentModificationException`.",
+                "related": "[[kotlin-interview#Q20]] lazy и lateinit; [[kotlin-interview#Q22]] open и final."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`val` гарантирует, что объект не изменится, поэтому его можно безопасно шарить между потоками без синхронизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`val` фиксирует только ссылку; содержимое объекта по ней может меняться, поэтому потокобезопасности `val` не даёт.",
+                "source_of_confusion": "Из «val неизменяем» делают вывод о неизменности всего объекта и его безопасности в конкуренции.",
+                "if_it_were_true": "Тогда `val cache = mutableMapOf<String, User>()` был бы потокобезопасен, но concurrent-модификации роняют его исключением.",
+                "how_it_should_be": "Для shared-доступа нужна настоящая иммутабельность или синхронизация; `val` сам по себе их не обеспечивает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `lazy` и `lateinit`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`lateinit` поддерживает примитивные типы (`Int`, `Boolean`), инициализируемые позже по месту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`lateinit` работает только с non-primitive типами; для `Int`/`Boolean` он запрещён.",
+                "source_of_confusion": "`lateinit` кажется универсальной заменой инициализации, и ограничение по примитивам упускают.",
+                "if_it_were_true": "Тогда `lateinit var count: Int` компилировался бы, но даёт `'lateinit' modifier is not allowed on properties of primitive types`.",
+                "how_it_should_be": "Для примитивов используют `var count: Int = 0` или `var count: Int? = null`; `lateinit` — для ссылочных типов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`lazy` пересчитывает значение при каждом обращении, как custom getter.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`lazy` вычисляет значение ОДИН раз при первом обращении и кэширует его; пересчёта при последующих обращениях нет.",
+                "source_of_confusion": "`lazy` и computed-property (`get()`) оба «считают по требованию», и их поведение смешивают.",
+                "if_it_were_true": "Тогда `val service by lazy { expensiveOp() }` создавал бы инстанс на каждое обращение, но он создаётся однократно.",
+                "how_it_should_be": "Каждое обращение возвращает закэшированное значение; пересчёт каждый раз — это про custom getter, а не про `lazy`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`lateinit var` потокобезопасен по умолчанию, так же как `lazy`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`lateinit var` НЕ потокобезопасен; синхронизацию инициализации обеспечивает разработчик, а дефолтный `lazy` — потокобезопасен (`SYNCHRONIZED`).",
+                "source_of_confusion": "Обе фичи про «отложенную инициализацию», и потокобезопасность `lazy` ошибочно приписывают и `lateinit`.",
+                "if_it_were_true": "Тогда `lateinit var shared` можно было бы инициализировать из разных потоков, но это даёт race condition и флакающие тесты.",
+                "how_it_should_be": "Потокобезопасность из коробки даёт только `lazy`; для `lateinit` синхронизацию нужно обеспечивать вручную."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`lazy { }` — для `val`, вычисляется один раз при первом обращении и потокобезопасно; `lateinit var` — для non-null `var`, инициализируется позже (DI/setUp) без null-обёртки.",
+              "correct": true,
+              "sections": {
+                "explanation": "`lazy` применяют к `val` любого типа: значение считается лениво и кэшируется, по умолчанию потокобезопасно (`LazyThreadSafetyMode.SYNCHRONIZED`). `lateinit var` — для non-null non-primitive типа, инициализируемого позже.",
+                "example": "`val heavyObject by lazy { ExpensiveService() }` создаёт сервис один раз; `lateinit var service: UserService` инициализируют в `@BeforeEach` и проверяют `::service.isInitialized`.",
+                "when_to_apply": "`lazy` берут для дорогих ленивых объектов, `lateinit` — для DI-инжектируемых зависимостей и тестовых mock'ов.",
+                "edge_cases": "Доступ к `lateinit` до инициализации даёт `UninitializedPropertyAccessException`; `lazy` всегда инициализирован к моменту чтения.",
+                "related": "[[kotlin-interview#Q16]] конструкторы; [[kotlin-interview#Q19]] var/val/const."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Visibility Modifiers` в `Kotlin`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`public` (по умолчанию) — виден везде; `internal` — в пределах модуля; `protected` — в классе и подклассах; `private` — в классе/файле; `package-private` из `Java` ОТСУТСТВУЕТ.",
+              "correct": true,
+              "sections": {
+                "explanation": "По умолчанию всё `public`; `internal` ограничивает видимость модулем, `protected` — классом и наследниками, `private` — классом или файлом; package-private в `Kotlin` нет.",
+                "example": "`internal class` скрывает API внутри модуля, а `var count: Int = 0; private set` даёт публичный геттер и приватный сеттер.",
+                "when_to_apply": "`internal` применяют для модульного API в мультимодульных проектах — он удобнее `package-private` при миграции с `Java`.",
+                "edge_cases": "`private` на top-level ограничивает видимость файлом, а не пакетом; реальная модульная инкапсуляция — это `internal`.",
+                "related": "[[kotlin-interview#Q15]] class/object; [[kotlin-interview#Q22]] open и final."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `Kotlin` есть модификатор `package-private`, работающий так же, как дефолтная видимость в `Java`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Kotlin` нет `package-private`; вместо пакетной видимости используется `internal` (видимость в пределах модуля), а по умолчанию всё `public`.",
+                "source_of_confusion": "Привычка к `Java`-дефолту package-private переносится на `Kotlin`, где дефолт другой.",
+                "if_it_were_true": "Тогда член без модификатора был бы виден только в пакете, но в `Kotlin` он `public` и виден везде.",
+                "how_it_should_be": "Аналог package-private — `internal` по модулю; пакетной видимости в языке нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`protected` в `Kotlin` виден всем классам того же пакета, как `protected` в `Java`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`protected` в `Kotlin` виден только в самом классе и его подклассах, но НЕ в произвольных классах того же пакета.",
+                "source_of_confusion": "`Java`-семантика `protected` (класс + пакет + наследники) переносится на `Kotlin`, где пакетной части нет.",
+                "if_it_were_true": "Тогда доступ к `protected`-методу из другого класса пакета компилировался бы, но даёт `it is protected in ...`.",
+                "how_it_should_be": "Для класса и наследников — `protected`; для модульного доступа — `internal`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`private` на top-level классе делает его невидимым даже внутри того же файла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`private` на top-level ограничивает видимость ФАЙЛОМ: внутри того же файла класс остаётся доступен другим объявлениям.",
+                "source_of_confusion": "`private` ассоциируется с «никому не видно», и про file-scope для top-level забывают.",
+                "if_it_were_true": "Тогда helper-класс был бы недоступен функциям того же файла, но он им виден; скрыть от других модулей помогает `internal`.",
+                "how_it_should_be": "Top-level `private` = видимость в пределах файла; межмодульную инкапсуляцию даёт `internal`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ключевое слово `open` и почему классы по умолчанию `final`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`open` применяется только к методам; классы наследуются и без `open`, по умолчанию они открыты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Kotlin` `final` по умолчанию и классы, и методы; чтобы наследовать класс или переопределить метод, нужен `open`.",
+                "source_of_confusion": "`open` чаще показывают на методах, и из этого выводят, что к классам он не относится.",
+                "if_it_were_true": "Тогда `@Service`-класс наследовался бы прокси без `kotlin-allopen`, но он `final`, AOP-прокси не создаётся и `@Transactional` не работает.",
+                "how_it_should_be": "`open` нужен и на классе, и на методе; для Spring классы открывает плагин `kotlin-allopen`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Классы и методы в `Kotlin` `final` по умолчанию; `open` явно разрешает наследование/переопределение; для Spring AOP нужен плагин `kotlin-allopen`.",
+              "correct": true,
+              "sections": {
+                "explanation": "По умолчанию всё `final` — наследовать класс и переопределять метод можно только после явного `open`; это реализует принцип «Design for inheritance or prohibit it».",
+                "example": "`open class Animal { open fun speak() = \"...\" }` позволяет `override fun speak()` в `Dog`, тогда как `fun breathe()` переопределить нельзя.",
+                "when_to_apply": "`open` ставят на методы-хуки в template method; для Spring подключают `kotlin(\"plugin.allopen\")`, чтобы `@Service`/`@Component` стали `open`.",
+                "edge_cases": "`override fun` тоже `final` по умолчанию — для дальнейшего переопределения нужен `open override fun`; конкретные методы абстрактного класса без `open` не переопределяются.",
+                "related": "[[kotlin-interview#Q14]] sealed class; [[kotlin-interview#Q21]] что такое visibility modifiers в kotlin."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Метод, помеченный `override`, можно переопределять дальше в подклассах без дополнительных модификаторов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`override fun` по умолчанию `final`; чтобы разрешить дальнейшее переопределение, нужен `open override fun`.",
+                "source_of_confusion": "`override` воспринимают как «метод открыт для наследников», но он, наоборот, закрывает дальнейшее переопределение.",
+                "if_it_were_true": "Тогда подкласс свободно переопределял бы метод снова, но без `open` получит ошибку компиляции.",
+                "how_it_should_be": "Цепочку переопределений продолжают через `open override fun`; иначе метод закрыт на текущем уровне."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Абстрактному классу не нужен `open` ни на каких методах — все его методы открыты для переопределения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только `abstract`-методы открыты неявно; конкретные (реализованные) методы абстрактного класса по умолчанию `final`.",
+                "source_of_confusion": "Из «абстрактный класс предназначен для наследования» делают вывод об открытости всех его методов.",
+                "if_it_were_true": "Тогда конкретный метод абстрактного класса переопределялся бы свободно, но без `open` это ошибка компиляции.",
+                "how_it_should_be": "Для переопределения конкретного метода даже в `abstract`-классе нужен явный `open`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают пользовательские геттеры и сеттеры?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`field` в геттере/сеттере — это обычная переменная, которую можно свободно переименовать в любое имя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`field` — зарезервированный идентификатор для backing field, доступный ТОЛЬКО внутри `get`/`set`; переименовать его нельзя.",
+                "source_of_confusion": "`field` выглядит как локальная переменная, и его принимают за обычное переименовываемое имя.",
+                "if_it_were_true": "Тогда обращение к свойству по его имени внутри сеттера работало бы, но даёт рекурсивный вызов аксессора и `StackOverflowError`.",
+                "how_it_should_be": "Для доступа к хранимому значению пишут именно `field`; любое другое имя внутри аксессора зацикливает вызов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Computed property (без `field`) кэширует результат после первого вычисления, как `lazy`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Computed property без `field` не имеет backing field и вычисляется при КАЖДОМ обращении, без кэширования.",
+                "source_of_confusion": "Отложенное вычисление computed-property путают с кэширующим поведением `lazy`.",
+                "if_it_were_true": "Тогда `val currentTime get() = System.currentTimeMillis()` возвращал бы одно значение, но даёт разное при каждом чтении.",
+                "how_it_should_be": "Для кэширования используют `by lazy`; computed property каждый раз пересчитывает результат геттером."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`field` — backing field, доступный только внутри `get`/`set`; computed property без `field` не создаёт поле; `private set` даёт публичный геттер с приватным сеттером.",
+              "correct": true,
+              "sections": {
+                "explanation": "`field` ссылается на хранимое значение внутри аксессора; если `field` в `get`/`set` не используется, backing field не создаётся — это computed property.",
+                "example": "`var celsius = 0.0; set(value) { require(value >= -273.15); field = value }` валидирует запись, а `val fahrenheit get() = celsius * 9 / 5 + 32` ничего не хранит.",
+                "when_to_apply": "Custom-сеттеры применяют для валидации, `private set` — для счётчиков и stateful-свойств, computed property — для производных значений.",
+                "edge_cases": "`var updateCount: Int = 0; private set` запрещает запись извне, но чтение остаётся публичным; внутри класса значение меняют свободно.",
+                "related": "[[kotlin-interview#Q19]] var/val/const; [[kotlin-interview#Q22]] open и final."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`private set` запрещает читать свойство извне класса, оставляя приватным и геттер, и сеттер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`private set` ограничивает только ЗАПИСЬ; геттер остаётся публичным, и свойство доступно для чтения снаружи.",
+                "source_of_confusion": "Слово `private` в `private set` распространяют на всё свойство, включая чтение.",
+                "if_it_were_true": "Тогда `updateCount` был бы недоступен для чтения извне, но он читается публично — приватен лишь сеттер.",
+                "how_it_should_be": "Чтобы запретить и чтение, используют `private val`; `private set` закрывает только присваивание."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Generics` и как работает вариантность (`in`, `out`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`out T` означает, что `T` используется только как параметр функции, то есть тип-потребитель (consumer).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`out T` — это producer: `T` стоит только в out-позиции (возвращаемый тип); consumer с `T` только в параметре — это `in T`.",
+                "source_of_confusion": "Мнемонику PECS путают, меняя местами producer и consumer для `out`/`in`.",
+                "if_it_were_true": "Тогда `interface Sink<out T> { fun put(item: T) }` компилировался бы, но `T` в параметре с `out` даёт ошибку компиляции.",
+                "how_it_should_be": "`out` = produce (return), `in` = consume (parameter); это и есть declaration-site variance."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Инвариантный `MutableList<String>` можно присвоить переменной `MutableList<Any>`, как raw types в `Java`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MutableList<String>` нельзя присвоить `MutableList<Any>` — это type mismatch; ковариантно работает только `List<out Any>`.",
+                "source_of_confusion": "Гибкость `Java`-raw types и use-site wildcard'ов переносят на инвариантные `Kotlin`-коллекции.",
+                "if_it_were_true": "Тогда в `MutableList<Any>` можно было бы класть что угодно поверх `List<String>`, нарушая типобезопасность.",
+                "how_it_should_be": "Присваивание разрешено только для ковариантного `List<out T>` (read-only); mutable-коллекции инвариантны, raw types в `Kotlin` запрещены."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Star projection `List<*>` позволяет добавлять в список элементы любого типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`List<*>` доступен только для чтения с типом элементов `Any?`; добавлять элементы нельзя, потому что точный тип неизвестен.",
+                "source_of_confusion": "`*` воспринимают как «любой тип подходит», и из этого выводят возможность записи.",
+                "if_it_were_true": "Тогда `list.add(x)` в `List<*>` компилировался бы, но запись запрещена — иначе нарушится типобезопасность.",
+                "how_it_should_be": "Star projection годится для чтения как `Any?`; для типобезопасной записи нужен конкретный или `in`-проецированный тип."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`out T` (ковариантность, producer) — `T` только в return; `in T` (контравариантность, consumer) — `T` только как параметр; `Kotlin` использует declaration-site variance вместо use-site.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вариантность объявляют на месте определения типа: `out T` разрешает `T` лишь в out-позициях, `in T` — лишь в in-позициях, в отличие от use-site wildcard'ов `Java`.",
+                "example": "`interface Source<out T> { fun next(): T }` ковариантен (аналог `? extends T`), `interface Sink<in T> { fun put(item: T) }` контравариантен (аналог `? super T`).",
+                "when_to_apply": "`out` применяют для фабрик и поставщиков, `in` — для обработчиков и потребителей; star projection `List<*>` читается как `Any?`.",
+                "edge_cases": "Мнемоника PECS в терминах `Kotlin`: `out` = extends = Producer, `in` = super = Consumer; `List<out T>` уже есть в stdlib.",
+                "related": "[[kotlin-interview#Q9]] extension functions; [[kotlin-interview#Q25]] reified."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `reified` type parameters?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`reified` в `inline fun` сохраняет тип `T` в runtime: `T::class`, `value is T` и `T::class.java` работают без передачи `Class<T>` параметром.",
+              "correct": true,
+              "sections": {
+                "explanation": "`reified` доступен только в `inline`-функциях: компилятор подставляет конкретный тип в место вызова, поэтому `T::class` и `value is T` становятся возможны несмотря на стирание типов.",
+                "example": "`inline fun <reified T> fromJson(json: String): T = mapper.readValue(json, T::class.java)` вызывают как `fromJson<User>(...)` без передачи класса.",
+                "when_to_apply": "Применяют для десериализации, проверки типа (`isInstance<T>`) и удобных обёрток над reflection-API без аргумента `Class<T>`.",
+                "edge_cases": "Без `reified` тип стирается (erasure), и `value is T`/`T::class` не компилируются; создать `T()` через конструктор `reified` всё равно не даёт.",
+                "related": "[[kotlin-interview#Q10]] inline; [[kotlin-interview#Q24]] generics и вариантность."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`reified` доступен в обычных функциях — достаточно добавить это ключевое слово к параметру типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`reified` работает ТОЛЬКО с `inline fun`; без `inline` компилятор отклоняет использование `reified`.",
+                "source_of_confusion": "`reified` выглядит как самостоятельный модификатор параметра типа, и связь с `inline` упускают.",
+                "if_it_were_true": "Тогда `fun <reified T> ...` компилировался бы, но даёт ошибку: reified-параметры допустимы лишь в inline-функциях.",
+                "how_it_should_be": "Чтобы получить тип в runtime, функцию делают `inline` с `reified T`; обычная generic-функция стирает тип."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "С `reified` можно создавать экземпляры типа `T` напрямую через вызов конструктора `T()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`reified T` даёт доступ к `T::class`, `value is T` и `T::class.java`, но НЕ к конструктору `T()`.",
+                "source_of_confusion": "Из доступа к `T::class` ошибочно выводят возможность инстанцировать тип через `T()`.",
+                "if_it_were_true": "Тогда `inline fun <reified T> create(): T = T()` компилировался бы, но конструктор так не вызвать — нужна фабрика или reflection.",
+                "how_it_should_be": "Для создания экземпляра используют `T::class.java.getConstructor()...` или переданную фабрику; `reified` сам объект не создаёт."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`reified` работает и с обычными (non-inline) лямбдами, переданными как аргументы функции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип параметра обычной лямбды стирается, поэтому внутри неё `T::class` недоступен; нужна именно `inline fun` с `reified T`.",
+                "source_of_confusion": "Лямбду путают с inline-функцией и ждут, что reified «проникнет» внутрь любой переданной лямбды.",
+                "if_it_were_true": "Тогда внутри non-inline лямбды можно было бы написать `value is T`, но компилятор это запретит из-за erasure.",
+                "how_it_should_be": "Сохранение типа работает только через inline-функцию с reified-параметром, а не через произвольную лямбду."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Type Inference` (вывод типов)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Компилятор всегда выводит тип, поэтому указывать тип явно не нужно нигде, даже в публичном API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для public API явный тип рекомендован: при выводе изменение реализации может неявно поменять тип API и сломать бинарную совместимость.",
+                "source_of_confusion": "Удобство вывода для локальных переменных распространяют на весь код, включая публичные сигнатуры.",
+                "if_it_were_true": "Тогда `fun createService() = UserServiceImpl()` всегда был бы стабилен, но рефакторинг реализации тихо меняет возвращаемый тип.",
+                "how_it_should_be": "Локальные переменные можно оставлять на выводе, а у public API тип указывают явно ради стабильности контракта."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Компилятор выводит типы из контекста инициализации; явный тип рекомендован для public API, рекурсивных функций и когда вывод неочевиден.",
+              "correct": true,
+              "sections": {
+                "explanation": "Тип определяется по правой части инициализации или по телу функции; для public API, рекурсии и сложных выражений тип указывают явно ради читаемости и стабильности.",
+                "example": "`val name = \"Kotlin\"` выводится как `String`, `listOf(1,2,3)` — `List<Int>`, а `fun createService(): UserService = UserServiceImpl()` фиксирует тип явно.",
+                "when_to_apply": "Явный тип ставят на публичных сигнатурах и рекурсивных функциях; локальные переменные с очевидным типом оставляют на выводе.",
+                "edge_cases": "Рекурсивной функции без явного return type компилятор выдаёт `Return type must be explicitly specified`; сложные цепочки с SAM иногда тоже требуют аннотации.",
+                "related": "[[kotlin-interview#Q7]] лямбды и функциональные типы; [[kotlin-interview#Q24]] generics."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Type inference корректно работает для рекурсивных функций без явно указанного возвращаемого типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для рекурсивной функции компилятор не может вывести return type и требует указать его явно.",
+                "source_of_confusion": "Из того, что обычные функции выводят тип возврата, делают вывод, что и рекурсивные тоже.",
+                "if_it_were_true": "Тогда `fun factorial(n: Int) = if (n <= 1) 1 else n * factorial(n - 1)` выводился бы, но даёт `Return type must be explicitly specified`.",
+                "how_it_should_be": "Рекурсии нужен явный тип, например `fun factorial(n: Int): Long`, чтобы разорвать циклическую зависимость вывода."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Type inference работает через любые цепочки вызовов автоматически и никогда не требует явной аннотации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В сложных цепочках с SAM-конверсиями вывод иногда не справляется и требует явной аннотации типа.",
+                "source_of_confusion": "Удачные простые случаи вывода создают впечатление, что он работает абсолютно везде.",
+                "if_it_were_true": "Тогда `val fn = { it.length }` всегда выводился бы корректно, но без типа `it` неизвестен — нужен `val fn: (String) -> Int = { it.length }`.",
+                "how_it_should_be": "Иногда тип приходится указывать явно — особенно для лямбд без контекста и сложных generic-цепочек."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое делегирование классов и свойств в `Kotlin`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Делегирование возможно только для свойств через `by lazy`; делегировать реализацию интерфейса другому объекту в `Kotlin` нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Kotlin` поддерживает и делегирование класса (`class A : I by impl`), и делегирование свойств (`val x by delegate`) — оба через `by`.",
+                "source_of_confusion": "Чаще всего встречают `by lazy`, и делегирование сводят только к свойствам.",
+                "if_it_were_true": "Тогда `class UserService(logger: Logger) : Logger by logger` был бы невозможен, но это валидная и распространённая конструкция.",
+                "how_it_should_be": "`by` работает на двух уровнях: класс делегирует реализацию интерфейса, свойство — свои `get`/`set`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`by lazy`, `Delegates.observable` и map-делегат — это разные синтаксисы одного и того же стандартного делегата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные делегаты с разной семантикой: `lazy` кэширует первое значение, `observable` уведомляет об изменениях, map-делегат читает значение из `Map` по имени свойства.",
+                "source_of_confusion": "Общий синтаксис `by` создаёт впечатление, что за ним стоит один универсальный механизм.",
+                "if_it_were_true": "Тогда `observable` тоже кэшировал бы значение как `lazy`, но он, наоборот, реагирует на каждое присваивание.",
+                "how_it_should_be": "Каждый делегат реализует свои `getValue`/`setValue`; общий лишь синтаксис `by`, а поведение различается."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Делегирование класса — реализация интерфейса передаётся другому объекту (`class A : I by impl`); делегирование свойств — `get`/`set` передаются делегату (`val x by lazy { }`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Через `by` класс может реализовать интерфейс, перенаправляя его методы в объект-делегат, а свойство — отдать свои `get`/`set` делегату с методами `getValue`/`setValue`.",
+                "example": "`class UserService(private val logger: Logger) : Logger by logger` перенаправляет `log()`; `var observed by Delegates.observable(\"init\") { _, old, new -> ... }` логирует изменения.",
+                "when_to_apply": "Делегирование класса применяют для композиции вместо наследования, делегирование свойств — для `lazy`, observable/vetoable, map-backed и кастомных делегатов.",
+                "edge_cases": "Кастомный делегат реализует `ReadWriteProperty` (`getValue`/`setValue`); map-делегат `val host: String by map` берёт значение по имени свойства.",
+                "related": "[[kotlin-interview#Q20]] lazy и lateinit; [[kotlin-interview#Q23]] геттеры и сеттеры."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Делегирование класса означает наследование от делегата, поэтому методы делегата можно переопределять как у суперкласса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Делегирование класса — это композиция, а не наследование: класс реализует интерфейс, перенаправляя вызовы в объект-делегат, и суперкласса тут нет.",
+                "source_of_confusion": "Слово «делегирование интерфейса» путают с наследованием реализации.",
+                "if_it_were_true": "Тогда можно было бы вызвать `super.log()` к делегату, но делегат — обычное поле, а не родительский класс.",
+                "how_it_should_be": "Это паттерн «favor composition over inheritance» на уровне языка; переопределение идёт через явные методы класса-обёртки, а не через `super`."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
