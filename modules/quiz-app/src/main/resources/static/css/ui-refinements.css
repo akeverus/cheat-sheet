@@ -130,3 +130,98 @@ html {
 .stats-page main h2 {
     font-size: 1.17em;
 }
+
+/* ===================================================================
+   POST-REVIEW ALIGNMENT FIXES (design-review, 2026-05-31)
+   Три бага, подтверждённые замером в браузере (а не на глаз):
+   ровность на 375px и на сверхшироких карточках. Лежат здесь (а не в
+   styles.css), потому что грузятся последними → перебивают каскад без
+   правки WIP-файла пользователя.
+   =================================================================== */
+
+/* --- Bug B: глобальная шапка переполняет вьюпорт на 375px --------------
+   Замер: <header> = flex; flex-wrap:nowrap. h1 (231px) + .header-actions
+   (368px: nav-пилюли + переключатель темы) не влезают в 329px и НЕ
+   переносятся → страница уезжает до scrollWidth 380 (overflow +29 на
+   /stats @375). Раньше это списывали на широкие таблицы — на деле виновата
+   именно шапка. Чиним точечно: на узких ширинах шапка переносит свои две
+   группы, header-actions встаёт во всю ширину под заголовком, а nav-пилюли
+   могут переноситься. Проверено: overflow 29 → 0. */
+@media (max-width: 640px) {
+    header {
+        flex-wrap: wrap;
+        gap: 8px 12px;
+    }
+    header > .header-actions {
+        width: 100%;
+        margin-left: 0;
+        justify-content: flex-start;
+    }
+    header nav {
+        flex-wrap: wrap;
+    }
+}
+
+/* --- Bug A: форма настроек обрезается справа на 375px ------------------
+   Замер: .filters-fields / .filters-toggles держат max-width:460px и сидят
+   в форме шириной 299px → блок вылезает на ~161px вправо и обрезается
+   («Ошибк», «Слабые т…», дропдауны без правой границы). Существующий сброс
+   в одну колонку нацелен на `.sidebar`, а settings размечен через
+   `.compact-sidebar` / `#left-sidebar-*` → не срабатывал. Сбрасываем ширину
+   на 100% и складываем тумблеры в один столбец на узком экране — больше
+   ничего не обрезается. Cross-validated обеими темами в ревью. */
+@media (max-width: 640px) {
+    .settings-page .filters-form,
+    .settings-page .session-form,
+    .settings-page .filters-fields,
+    .settings-page .filters-toggles {
+        max-width: 100%;
+    }
+    .settings-page .filters-toggles {
+        grid-template-columns: 1fr;
+    }
+    .settings-page .field,
+    .settings-page .filters-form select,
+    .settings-page .session-form select,
+    .settings-page .filters-form input[type="text"] {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+/* --- Bug C: кнопка «Свернуть панель» во всю ширину карточки -----------
+   Замер: .sidebar-toggle-btn { width:100% }. На широких экранах карточка
+   настроек центрирована корректно (l=480 r=1440 на 1920 — НЕ «прижата в
+   угол», вопреки одному из ревьюеров), но кнопка растягивалась до 906px
+   (и до ~2480px на 2560) — абсурдная тонкая пилюля, читается как пустой
+   input. Делаем width:auto (кнопка обнимает текст) + шеврон-аффорданс,
+   чтобы было ясно: это тоггл-аккордеон, а не поле ввода. Шеврон
+   поворачивается по .is-collapsed на родителе. */
+.settings-page .sidebar-toggle-btn {
+    /* родитель .compact-sidebar — flex-колонка, поэтому кнопка-флекс-айтем
+       по умолчанию растягивается (align-self:stretch) на всю ширину карточки
+       вне зависимости от width:auto. align-self:flex-start снимает растяжение
+       → кнопка обнимает текст (замер: 906px → ~по контенту). */
+    align-self: flex-start;
+    width: auto;
+    max-width: 100%;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    padding-right: 32px;
+}
+.settings-page .sidebar-toggle-btn::after {
+    content: "\25BE";                 /* ▾ */
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    opacity: 0.65;
+    transition: transform 0.2s var(--ease);
+}
+.settings-page .compact-sidebar.is-collapsed .sidebar-toggle-btn::after {
+    transform: translateY(-50%) rotate(-90deg);
+}
