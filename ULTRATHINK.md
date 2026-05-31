@@ -566,7 +566,7 @@ Pass: `OK FILE.md`.
 | 228 | `programming-languages/java` | `java-jackson` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 229 | `programming-languages/java` | `java-lombok` | 5 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=5) |
 | 230 | `programming-languages/java` | `java-mapstruct` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 231 | `programming-languages/java` | `java-modules` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 231 | `programming-languages/java` | `java-modules` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 232 | `programming-languages/java` | `java-oop` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 233 | `programming-languages/java` | `java-optional` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ THIN |
 | 234 | `programming-languages/java` | `java-pattern-matching` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
@@ -574,14 +574,14 @@ Pass: `OK FILE.md`.
 | 236 | `programming-languages/java` | `java-reflection` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 237 | `programming-languages/java` | `java-serialization` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 238 | `programming-languages/java` | `java-stream` | 42 | 6 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
-| 239 | `programming-languages/java` | `java-string` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 239 | `programming-languages/java` | `java-string` | 39 | 39 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 240 | `programming-languages/java` | `java-types` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 241 | `programming-languages/java` | `java-virtual-threads` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 242 | `programming-languages/kotlin` | `kotlin-collections` | 42 | — | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 243 | `programming-languages/kotlin` | `kotlin-coroutines` | 19 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 244 | `programming-languages/kotlin` | `kotlin-dsl` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 245 | `programming-languages/kotlin` | `kotlin-exceptions` | 7 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=7) |
-| 246 | `programming-languages/kotlin` | `kotlin-flow` | 17 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 246 | `programming-languages/kotlin` | `kotlin-flow` | 17 | 17 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 247 | `programming-languages/kotlin` | `kotlin-interop-java` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 248 | `programming-languages/kotlin` | `kotlin` | 27 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 249 | `programming-languages/kotlin` | `kotlin-sealed-classes` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
