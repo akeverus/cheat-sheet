@@ -384,7 +384,7 @@ Pass: `OK FILE.md`.
 | 46 | `api` | `graphql` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 47 | `api` | `grpc` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 48 | `api` | `http-rest` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 49 | `api` | `openapi-swagger` | 33 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 49 | `api` | `openapi-swagger` | 33 | 33 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 50 | `api` | `rest-maturity` | 17 | 17 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ THIN |
 | 51 | `api` | `websocket` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 52 | `architecture` | `api-gateway` | 38 | 38 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
@@ -550,7 +550,7 @@ Pass: `OK FILE.md`.
 | 212 | `programming-languages/go` | `go-modules` | 27 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 213 | `programming-languages/go` | `go-stdlib` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 214 | `programming-languages/go` | `go-testing` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 215 | `programming-languages/java` | `java-17-21` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 215 | `programming-languages/java` | `java-17-21` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 216 | `programming-languages/java` | `java-8` | 41 | 31 | ✅ | ❌ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 217 | `programming-languages/java` | `java-annotations` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 218 | `programming-languages/java` | `java-collections` | 46 | 34 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
@@ -567,7 +567,7 @@ Pass: `OK FILE.md`.
 | 229 | `programming-languages/java` | `java-lombok` | 5 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=5) |
 | 230 | `programming-languages/java` | `java-mapstruct` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 231 | `programming-languages/java` | `java-modules` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 232 | `programming-languages/java` | `java-oop` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 232 | `programming-languages/java` | `java-oop` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 233 | `programming-languages/java` | `java-optional` | 15 | 15 | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ THIN |
 | 234 | `programming-languages/java` | `java-pattern-matching` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 235 | `programming-languages/java` | `java-records` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
@@ -575,7 +575,7 @@ Pass: `OK FILE.md`.
 | 237 | `programming-languages/java` | `java-serialization` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 238 | `programming-languages/java` | `java-stream` | 42 | 6 | ✅ | ✅ | ✅ | ✅ | ❌ | ⚠️ JSON-ISSUES |
 | 239 | `programming-languages/java` | `java-string` | 39 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 240 | `programming-languages/java` | `java-types` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 240 | `programming-languages/java` | `java-types` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 241 | `programming-languages/java` | `java-virtual-threads` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 242 | `programming-languages/kotlin` | `kotlin-collections` | 42 | — | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 243 | `programming-languages/kotlin` | `kotlin-coroutines` | 19 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
