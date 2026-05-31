@@ -379,14 +379,14 @@ Pass: `OK FILE.md`.
 | 41 | `algorithms/data-structures` | `tries` | 28 | 28 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 42 | `algorithms/sorting-searching` | `searching-algorithms` | 8 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
 | 43 | `algorithms/sorting-searching` | `sorting-algorithms` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 44 | `api` | `api-design-best-practices` | 30 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 44 | `api` | `api-design-best-practices` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 45 | `api` | `api-versioning` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 46 | `api` | `graphql` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 47 | `api` | `grpc` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
-| 48 | `api` | `http-rest` | 43 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 47 | `api` | `grpc` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 48 | `api` | `http-rest` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 49 | `api` | `openapi-swagger` | 33 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
 | 50 | `api` | `rest-maturity` | 17 | 17 | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ THIN |
-| 51 | `api` | `websocket` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 51 | `api` | `websocket` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 52 | `architecture` | `api-gateway` | 38 | 38 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 53 | `architecture` | `bff-pattern` | 17 | 17 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 54 | `architecture` | `caching-strategies` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
