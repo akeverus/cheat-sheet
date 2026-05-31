@@ -1,0 +1,965 @@
+{
+  "topic_slug": "aws-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что верно характеризует `AWS` как cloud-платформу и как устроены её основные категории сервисов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AWS` — облачная платформа от `Amazon` (с 2006, доля рынка ~32% в 2025), 200+ сервисов, сгруппированных по функциональным категориям: Compute (`EC2`, `Lambda`), Storage (`S3`, `EBS`), Databases (`RDS`, `DynamoDB`), Networking (`VPC`, `CloudFront`), Security (`IAM`, `KMS`), Analytics и AI/ML.",
+              "correct": true,
+              "sections": {
+                "explanation": "Категоризация официальная: она используется в консоли, документации и сертификациях. Большинству бэкендеров хватает знания ~20 core-сервисов из 200+, остальное подключается под конкретные задачи.",
+                "example": "Типичный web-app: `ALB` (Networking) → `EC2` ASG (Compute) → `RDS PostgreSQL` (Databases) → `S3` для статики (Storage) → IAM-роли (Security) → `CloudWatch` для метрик (Management).",
+                "when_to_apply": "Если нужна managed-инфраструктура с глобальным присутствием (30+ regions), широким набором сервисов и pay-as-you-go биллингом — `AWS` обычно выбор по умолчанию для enterprise и SaaS.",
+                "edge_cases": "Минусы: vendor lock-in усложняет миграцию, pricing запутанный (особенно data transfer out — частая причина «неожиданных» счетов), а огромная поверхность `IAM` требует дисциплины.",
+                "related": "[[aws-interview#Q2]] regions, AZ и edge locations; [[aws-interview#Q3]] pricing model; [[aws-interview#Q4]] EC2 instance types."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`AWS` — это исключительно IaaS-платформа: она предоставляет только виртуальные машины и сеть, а managed-сервисы (`RDS`, `DynamoDB`, `Lambda`) к ней не относятся и поставляются партнёрами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AWS` покрывает все уровни: IaaS (`EC2`, `VPC`, `EBS`), PaaS (`Elastic Beanstalk`, `App Runner`, `RDS`) и managed-сервисы (`Lambda`, `DynamoDB`, `SageMaker`). Это multi-tier платформа от самого `Amazon`, а не от партнёров.",
+                "source_of_confusion": "Исторически `AWS` начинался с IaaS (`EC2`, `S3` в 2006), и старые учебники описывают его именно так, хотя сейчас большую часть выручки даёт portfolio managed-сервисов.",
+                "if_it_were_true": "Тогда у `Amazon` не было бы `Aurora`, `DynamoDB`, `Bedrock` и `Lambda`, а serverless-архитектуры на `AWS` было бы невозможно строить — что противоречит реальности.",
+                "how_it_should_be": "Правильнее: `AWS` — это полноценная платформа всех уровней (IaaS/PaaS/managed), целиком принадлежащая `Amazon`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`AWS` — это open-source-проект под управлением `Apache Foundation`, а `Amazon` лишь предоставляет хостинг по модели community edition.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AWS` — проприетарный коммерческий сервис, на 100% принадлежащий `Amazon.com Inc`. `Apache Foundation` курирует другие проекты (`Kafka`, `Spark`, `Cassandra`), но не облачные платформы.",
+                "source_of_confusion": "`Amazon` активно использует open-source (Linux, `Kubernetes` в `EKS`, `PostgreSQL` в `RDS`) и контрибьютит обратно, поэтому возникает иллюзия, что и сама платформа открыта.",
+                "if_it_were_true": "Тогда `AWS` можно было бы развернуть в своём дата-центре по аналогии с `OpenStack`, но такой возможности нет (есть лишь `Outposts` как managed-railout от `Amazon`).",
+                "how_it_should_be": "Правильнее: `AWS` — closed-source коммерческая платформа `Amazon`, использующая open-source внутри, но не являющаяся им."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Основные категории `AWS` — это «Бесплатные сервисы» и «Платные сервисы»; деления по функциональности (Compute, Storage) нет, оно используется только в маркетинге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Категоризация по функциональности официальна и применяется в консоли, документации и сертификациях. Free Tier — это pricing-модель (12 месяцев + always-free), а не категория сервиса.",
+                "source_of_confusion": "Новички при первом знакомстве фокусируются на Free Tier и воспринимают «бесплатное/платное» как главное деление платформы.",
+                "if_it_were_true": "Тогда в консоли `AWS` не было бы навигационных групп «Compute», «Storage», «Databases», но они там есть и используются ежедневно.",
+                "how_it_should_be": "Правильнее: сервисы делятся по функциональности (Compute/Storage/Databases/...), а Free Tier — отдельный pricing-аспект."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как соотносятся `Region`, `Availability Zone` и `Edge Location` в `AWS`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Region` и `Availability Zone` — синонимы (один дата-центр в одном городе); `Edge Location` — это резервный `AZ`, который активируется только при failover основного.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Region` содержит 3+ изолированных `AZ` (каждый — отдельный дата-центр или кластер). `Edge Location` — точка CDN (`CloudFront`), не имеющая отношения к failover между `AZ`.",
+                "source_of_confusion": "В маленьких регионах кажется, что «всё в одном городе», хотя даже там `AZ` физически разнесены с отдельным питанием и сетью.",
+                "if_it_were_true": "Тогда Multi-AZ deployment в `RDS` не имел бы смысла, но это краеугольная практика high availability в `AWS`.",
+                "how_it_should_be": "Правильнее: `Region` ⊃ несколько изолированных `AZ`, а `Edge Location` — отдельная CDN-точка, не связанная с failover."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Region` — географическая зона (`us-east-1`, `eu-central-1`) с 3+ изолированными `Availability Zones` (физическими дата-центрами с отдельным питанием, сетью и охлаждением); `Edge Location` — точка CDN (`CloudFront`, 600+ globally) для low-latency доставки контента, не связанная с compute-инфраструктурой региона.",
+              "correct": true,
+              "sections": {
+                "explanation": "Иерархия: `Region` → `AZ` → конкретные ресурсы. `AZ` изолированы по power/network, но соединены low-latency сетью (<1ms) внутри региона. `Edge Location` работает отдельно — кэширует статику и терминирует HTTPS ближе к пользователю.",
+                "example": "Web-app в `eu-central-1`: `EC2`/`RDS` Multi-AZ across `eu-central-1a/1b/1c` для отказоустойчивости + `CloudFront` с edge-локациями в Москве/Стамбуле для быстрой доставки статики.",
+                "when_to_apply": "Multi-AZ — для production-баз (`RDS`, `Aurora`) и stateful-сервисов; ASG across AZs — для stateless web-tier; `CloudFront` — для статики, API-кэширования и DDoS-защиты.",
+                "edge_cases": "Cross-AZ data transfer стоит денег ($0.01–0.02/GB) — chatty workloads между AZ дорожают. `Edge Location` не хранит данные постоянно, это кэш с TTL, не замена `S3` cross-region replication.",
+                "related": "[[aws-interview#Q1]] категории сервисов AWS; [[aws-interview#Q13]] RDS Multi-AZ; [[aws-interview#Q3]] cross-AZ transfer costs."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Edge Location` — это специальный тип `AZ` с GPU-инстансами для ML-нагрузок; `Region` включает только обычные `AZ` для CPU-задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GPU-инстансы (`P`-, `G`-семейства `EC2`) живут в обычных `AZ` внутри `Region`, а не в `Edge Location`. `Edge Location` — сетевая точка `CloudFront`/`Route53` без EC2-плоскости.",
+                "source_of_confusion": "Появился `Lambda@Edge` — запуск кода в edge-локациях, что создаёт иллюзию полноценного compute «на краях».",
+                "if_it_were_true": "Тогда можно было бы запросить `g5.xlarge` в `Edge Location`, но консоль `AWS` такой опции не даёт — instance types доступны только в `AZ` внутри `Region`.",
+                "how_it_should_be": "Правильнее: GPU живёт в `AZ` внутри `Region`; `Edge Location` — сетевая CDN-точка с очень ограниченным runtime."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Availability Zone` — виртуальный конструкт без физической изоляции: `AWS` просто маркирует логические разделы одного дата-центра как «AZ-a», «AZ-b» для совместимости со старыми API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AZ` — физически изолированные дата-центры (или кластеры зданий) с отдельным power, cooling и networking. Это публикуется в whitepapers и SLA, а Multi-AZ даёт реальную защиту от outage одного DC.",
+                "source_of_confusion": "Идентификаторы `AZ` маппятся per-account (`us-east-1a` у вас и у соседа — разные физические зоны), что воспринимается как «виртуальность».",
+                "if_it_were_true": "Тогда Multi-AZ `RDS` не давал бы отказоустойчивости (все `AZ` падали бы вместе), но история outage-ов `AWS` показывает обратное — обычно падает один `AZ`.",
+                "how_it_should_be": "Правильнее: `AZ` — физически изолированные дата-центры, и Multi-AZ реально защищает от отказа одной зоны."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроено ценообразование `AWS` и что чаще всего оказывается «дороже, чем ожидаешь»?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AWS` использует исключительно flat monthly subscription (как `Netflix`): фиксированная плата за account, после которой все сервисы доступны без доплат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Основная модель — pay-as-you-go: оплата по факту (`EC2` per-second, `S3` per-GB, `Lambda` per-invocation). Subscription-плана с unlimited-доступом ко всему не существует.",
+                "source_of_confusion": "Есть Support Plans (Developer/Business/Enterprise) с фиксированной ценой, но это плата за поддержку, а не за инфраструктуру.",
+                "if_it_were_true": "Тогда не было бы кейсов «accidental $50,000 bill» из-за неправильно настроенного `S3` или `Lambda`, но они регулярно случаются у новичков.",
+                "how_it_should_be": "Правильнее: базовая модель — pay-as-you-go по факту использования, без flat-subscription на инфраструктуру."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Data transfer внутри одного региона (между `AZ`) всегда полностью бесплатен, а outbound к internet бесплатен в рамках Free Tier неограниченно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cross-AZ transfer стоит $0.01–0.02/GB в обе стороны, outbound к internet — $0.05–0.09/GB после 100GB free, и Free Tier здесь ограниченный, а не unlimited.",
+                "source_of_confusion": "В пределах одного `AZ` data transfer действительно бесплатен, и новички экстраполируют это на «весь регион».",
+                "if_it_were_true": "Тогда не существовало бы оптимизаций cross-AZ-трафика (AZ-aware routing в `Kafka`/`Cassandra` ради удешевления), а они применяются.",
+                "how_it_should_be": "Правильнее: cross-AZ и outbound к internet платные, а Free Tier на transfer ограничен лимитом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`AWS` использует pay-as-you-go (`EC2` per-hour/second, `S3` per-GB + per-request, `Lambda` per-invocation + per-GB-second) с модификаторами: Reserved Instances/Savings Plans (до 72% скидка за commitment), Spot (до 90% за interruptibility), Free Tier. Самая частая «неожиданность» — data transfer out к internet и между регионами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Биллинг гранулярный — платишь за фактическое использование. Скидки достигаются commitment-ом (RI/SP на 1–3 года) или принятием риска прерывания (Spot). Data transfer считается отдельно от compute/storage и поэтому коварен.",
+                "example": "Web-app: `EC2 t3.medium` On-Demand ($30/мес) + `RDS db.t3.medium` ($55/мес) + `S3` 100GB ($2.3/мес) + 500GB transfer out ($45/мес) — внезапно transfer = 35% счёта.",
+                "when_to_apply": "Predictable steady workload → Savings Plans (3 года ≈ 60% скидка); fault-tolerant batch/ML → Spot Fleet; spiky или dev → On-Demand; прототипирование → Free Tier.",
+                "edge_cases": "`NAT Gateway` тарифицируется за GB трафика ($0.045/GB) + $0.045/час — может стоить больше, чем `EC2` за ним. `CloudWatch Logs` ingestion ($0.50/GB) дорожает при verbose logging; inter-region transfer дороже cross-AZ.",
+                "related": "[[aws-interview#Q5]] Reserved/Spot/Savings Plans; [[aws-interview#Q4]] EC2 families и цена; [[aws-interview#Q16]] ElastiCache как кэш."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Цена `EC2` рассчитывается только по CPU-часам; storage (`EBS`), networking и ОС (Windows-лицензия) включены бесплатно во все instance types.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hourly rate `EC2` включает compute и базовый network, но `EBS`-тома, public IPv4 (платный с 2024), data transfer и Windows-лицензия — отдельные line items в счёте.",
+                "source_of_confusion": "Linux on-demand цена выглядит как «всё включено», хотя на практике 30–50% счёта — это `EBS` + transfer + прочие add-ons.",
+                "if_it_were_true": "Тогда у `RDS` не было бы отдельных строк «Storage (GB-month)» и «IOPS» в pricing, но они там есть и часто превышают cost самого инстанса.",
+                "how_it_should_be": "Правильнее: `EC2`-час покрывает compute, а storage, transfer, public IPv4 и лицензии тарифицируются отдельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как читать имя EC2-инстанса `c7g.2xlarge` и зачем нужны разные families (`T/M/C/R/X/I/G`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`c7g` означает «cloud generation 7», буква в конце — произвольный маркетинговый суффикс; families (`T/M/C/R/X/I/G`) — просто ценовые тиры одного железа, поэтому безопаснее всегда брать самую большую букву `X`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `c7g`: `c` — семейство (Compute-optimized), `7` — поколение, `g` — архитектура (`Graviton`). Families аппаратно-разные: `C` — CPU-bound, `R` — память, `I` — NVMe, `G` — GPU. Брать `X` для веб-сервера — это 10×+ переплата за ненужную память.",
+                "source_of_confusion": "Новички видят «больше букв = круче» и не различают поколение, family и архитектуру, а маркетинг `AWS` усложняет (m5, m5a, m6i, m6g, m7g).",
+                "if_it_were_true": "Тогда на `x1.32xlarge` (4 TB RAM) можно было бы крутить `t3.micro`-нагрузки за разумные деньги, но час `x1.32xlarge` стоит ~$13 против ~$0.01 у `t3.micro`.",
+                "how_it_should_be": "Правильнее: буквы кодируют семейство/поколение/архитектуру, и `X` берут только под огромный объём памяти."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главное правило выбора — всегда брать burstable `T`-family (`t3`, `t4g`), потому что они «умные» и автоматически разгоняются под любую нагрузку; `M`/`C`/`R` устарели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`T`-family — bursty инстансы с CPU credits: ~20% baseline CPU и burst до 100% за счёт кредитов. Когда кредиты кончаются (sustained CPU), `T` деградирует до baseline. `M`/`C`/`R` — current-generation для постоянной нагрузки.",
+                "source_of_confusion": "Default в консоли часто `t3.micro` (Free Tier), и новички экстраполируют: «раз `Amazon` советует — значит универсальный выбор».",
+                "if_it_were_true": "Тогда `PostgreSQL` под нагрузкой на `t3.medium` не упирался бы в baseline, но через пару часов он начинает отвечать с latency в секунды.",
+                "how_it_should_be": "Правильнее: `T`-family — для bursty-нагрузок, а sustained prod лучше держать на `M`/`C`/`R`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Suffix `g` означает «green/energy-efficient» — метка углеродно-нейтральных регионов; на x86-нагрузках `Graviton` работает идентично Intel/AMD без изменений в коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`g` — это `Graviton`, ARM64-процессоры `AWS`: на ~20% дешевле и на 10–40% производительнее x86 за ту же цену, но это другая ISA. x86-бинарники на `Graviton` не запустятся; нативные зависимости (`psycopg2`, `librdkafka`) надо пересобирать.",
+                "source_of_confusion": "`AWS` продвигает `Graviton` как «sustainable choice», и в маркетинге фигурируют carbon-savings — отсюда ассоциация с «green».",
+                "if_it_were_true": "Тогда amd64-образы запускались бы на `Graviton` без проблем, но без `--platform=linux/arm64` вы получите `exec format error`.",
+                "how_it_should_be": "Правильнее: `g` = `Graviton` ARM64; это другая архитектура, требующая ARM-сборок, а не «зелёная метка»."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`c7g.2xlarge` декодируется так: `c` — семейство Compute-optimized (высокий CPU/RAM ratio), `7` — седьмое поколение (новее = быстрее и дешевле per perf), `g` — `Graviton` ARM64 (≈20% дешевле x86 при сопоставимой/лучшей производительности), `2xlarge` — размер (8 vCPU, 16 GB). Families нужны, чтобы подобрать профиль ресурсов под нагрузку: `C` — CPU, `R`/`X` — RAM, `I` — NVMe, `G`/`P` — GPU.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждое семейство оптимизировано под класс задач: ошибка выбора либо ведёт к переплате (взяли `R` вместо `C` для CPU-bound), либо к упору в ресурс. Suffix кодирует процессор: `g` — `Graviton`, `a` — AMD, `i` — Intel.",
+                "example": "CPU-bound микросервис на `Spring Boot`: `c7g.large` (2 vCPU, 4 GB, ~$0.07/час) вместо `m5.large` (2 vCPU, 8 GB, ~$0.10/час) — экономия 30% и +20% перф. Для `Redis`-кэша 64 GB — `r7g.2xlarge`, а не `c7g.16xlarge`.",
+                "when_to_apply": "Перед запуском prod-нагрузки в `EC2`/`EKS`/`ECS`: профилируйте CPU vs RAM vs IO, выберите family под bottleneck, берите последнее поколение и `g`-вариант, если стек ARM-совместим.",
+                "edge_cases": "`Graviton` требует ARM-сборок Docker-образов (multi-arch или явный `--platform`). `T`-family непригоден для sustained-нагрузки из-за CPU credits. Размеров меньше large (nano/micro) на `M`/`C`/`R` нет — только на `T`.",
+                "related": "[[aws-interview#Q5]] Reserved/Spot/Savings Plans для цены; [[aws-interview#Q7]] Auto Scaling Groups; [[aws-interview#Q3]] AWS pricing model."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются On-Demand, Spot, Reserved Instances и Savings Plans и что выбирать для production-БД vs batch ML-training?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "On-Demand — pay-per-second без обязательств (0% скидки) для непредсказуемых dev-нагрузок. Spot — биржевые излишки `AWS` со скидкой до 90%, но инстанс могут забрать за 2 минуты, поэтому он для fault-tolerant batch (ML training, CI/CD). Reserved Instances — commitment на 1/3 года в конкретной family/AZ, до 72% скидки, для predictable production (БД). Savings Plans — то же, но commitment по $/час, гибче перекомпоновывается. Для prod-БД — RI/Savings Plans, для batch ML-training — Spot.",
+              "correct": true,
+              "sections": {
+                "explanation": "Модели — это trade-off между гибкостью и ценой: больше обязательств (длительность + специфичность) = больше скидка. Spot особый — вы платите за capacity, которую `AWS` может забрать. Savings Plans (2019) — «улучшенный RI» с commitment по $/час, а не по конкретному типу.",
+                "example": "Production `PostgreSQL` на `db.r6g.2xlarge` 24/7 — 3-year Compute Savings Plan: ~$880/мес → ~$370/мес (58% off). ML training на 200× `p3.2xlarge` 4 часа на Spot: ~$735 вместо ~$2450 on-demand.",
+                "when_to_apply": "RI/SP — для всего, что running 24/7 (БД, baseline ASG min-capacity). Spot — для прерываемых задач (batch, ML, CI-runners, stateless workers за `SQS`). On-Demand — для пиков поверх RI baseline и dev/test.",
+                "edge_cases": "RI привязывает к family/AZ — переезд на новое поколение скидку не переносит (Savings Plans гибче). Spot interruption rate в среднем ~5%, но в популярных типах 20%+ — нужна диверсификация по типам/AZ.",
+                "related": "[[aws-interview#Q3]] AWS pricing model; [[aws-interview#Q7]] Auto Scaling mixed instances policy; [[aws-interview#Q4]] EC2 families."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spot — это просто «дешёвый On-Demand»: цена ниже на 30–50% за счёт более старого оборудования; прерываний не бывает, поэтому Spot безопасно использовать для production-БД и stateful-нагрузок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spot — биржевой механизм для излишков capacity, а не старое железо. Аппаратно Spot и On-Demand идентичны; ключевое свойство Spot — interruption (за 2 минуты), и скидка до 90% компенсирует именно этот риск.",
+                "source_of_confusion": "Маркетинг подчёркивает «save up to 90%», и новички упускают разницу между «можно сэкономить» и «можно потерять инстанс посреди транзакции».",
+                "if_it_were_true": "Тогда Spot стоил бы как RI по фиксированному дисконту и не было бы spot-price истории (`describe-spot-price-history`), но цена там скачет.",
+                "how_it_should_be": "Правильнее: Spot — прерываемая capacity для fault-tolerant batch, а для prod-БД нужны RI/Savings Plans."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Reserved Instances и Savings Plans — это одно и то же, просто SP — переименованный RI после ребрендинга; оба заставляют выбрать конкретный instance type и `AZ` на 1/3 года.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные продукты. RI коммитит к конкретному (family, size, region/AZ, OS). Savings Plans коммитят к $/час общих compute-расходов и applicable к `EC2`, `Fargate`, `Lambda`; Compute SP можно перекидывать между регионами/family.",
+                "source_of_confusion": "Оба дают скидку ~72% за commitment 3 года и со стороны выглядят похоже, хотя SP создавались как ответ на жёсткость RI.",
+                "if_it_were_true": "Тогда `AWS` не выпустил бы Savings Plans в 2019 и не вёл бы отдельную страницу сравнения «RI vs SP», но он рекомендует SP как default.",
+                "how_it_should_be": "Правильнее: RI привязан к конкретному типу/AZ, а Savings Plans коммитят $/час расходов и гораздо гибче."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для production-БД 24/7 оптимальная модель — Spot, потому что любая БД должна быть отказоустойчивой (Multi-AZ, snapshots), а прерывания Spot покрываются стандартным DR-планом; RI устарели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spot interruptions регулярны (5–20% в месяц на популярных типах). DR-план рассчитан на редкие failure-events, а не на еженедельные форс-рестарты primary. Каждое прерывание = failover, latency и риск split-brain. Для prod-БД — RI/SP, не Spot.",
+                "source_of_confusion": "В блогах есть success-stories «we run Cassandra on Spot», но это специфичные peer-to-peer-БД с бесшовной потерей узла, не `PostgreSQL`/`MySQL` primary.",
+                "if_it_were_true": "Тогда `RDS` поддерживал бы Spot для primary, но `RDS` предлагает только On-Demand/RI/SP — прямой сигнал, что Spot не для prod-БД.",
+                "how_it_should_be": "Правильнее: prod-БД держат на RI/Savings Plans, а Spot годится для прерываемых batch-задач."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `AMI`, `EBS` и instance store и где будет жить база `PostgreSQL` на `EC2`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AMI` и `EBS` — одно и то же: оба «диски» в `AWS`, разница только в названии (`AMI` для Windows, `EBS` для Linux); instance store — это бэкап-механизм, автоматически реплицирующий данные между `AZ`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AMI` — шаблон (snapshot OS + софт), используется для запуска инстансов, это не работающий диск. `EBS` — persistent block storage. Instance store — локальный NVMe, теряется при stop, никакой репликации между `AZ`. Базу — на `EBS`.",
+                "source_of_confusion": "Новички видят `AMI` в списке storage-сервисов консоли и принимают его за disk, хотя физически он хранится в `S3` или как набор EBS-snapshots.",
+                "if_it_were_true": "Тогда нельзя было бы создать `AMI` из running-инстанса (а это базовая операция) и не существовало бы EBS-backed `AMI` как отдельной категории.",
+                "how_it_should_be": "Правильнее: `AMI` — шаблон, `EBS` — persistent сетевой диск, instance store — эфемерный локальный диск без репликации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`AMI` (Amazon Machine Image) — шаблон (snapshot OS + софт + конфиги) для запуска новых инстансов, сам по себе не «работает». `EBS` (Elastic Block Store) — persistent сетевой диск, attached по сети, сохраняется при stop/start/terminate (если не Delete-on-Termination), поддерживает snapshots в `S3`. Instance store — локальный NVMe SSD в шасси хоста, очень быстрый, но теряется при stop/terminate/hardware failure. Базу `PostgreSQL` — однозначно на `EBS` (gp3 или io2); instance store — только для эфемерных данных.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это три разных абстракции: `AMI` — образ/шаблон, `EBS` — сетевой диск (durability ~99.999%, snapshots), instance store — локальный диск (нулевая durability, максимальная скорость). Для stateful — `EBS`; для stateless с эфемерным кэшем — instance store.",
+                "example": "`PostgreSQL` prod: `r6g.2xlarge` + 2× `io2` 500 GB (10 000 IOPS), Multi-AZ через streaming replication. `Elasticsearch` с реплицируемыми shards: `i4i.2xlarge` (NVMe instance store) — при потере узла кластер ребалансит из реплик.",
+                "when_to_apply": "`AMI` — для immutable infrastructure (golden image → ASG launch template). `EBS` — для всего stateful (БД, persistent volumes). Instance store — для distributed stores с собственной репликацией (`Cassandra`, `Kafka` на NVMe) и scratch-space.",
+                "edge_cases": "`EBS` привязан к `AZ` — нельзя attach к инстансу в другой `AZ` (нужно snapshot → restore). Default `DeleteOnTermination=true` для root-тома. Instance store на `T`-instances вообще нет — только на `M`/`C`/`R`/`I`.",
+                "related": "[[aws-interview#Q4]] EC2 families, I-family = instance store; [[aws-interview#Q7]] Auto Scaling, AMI в launch template; [[aws-interview#Q11]] EBS vs EFS vs S3."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`EBS` — локальный диск на физическом хосте, а instance store — сетевой block storage в `S3`; поэтому `EBS` быстрее, но теряется при перезагрузке, а instance store медленнее, но переживает рестарт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `EBS` — сетевой диск (выживает при reboot/stop/terminate), instance store — локальный NVMe (теряется при stop). `EBS` медленнее по latency (~1ms из-за сети), instance store быстрее (~50μs); в `S3` `EBS` не хранится (только его snapshots).",
+                "source_of_confusion": "Названия запутывают: «Elastic Block Store» звучит как локальный диск, «instance store» — как сетевой, привязанный к инстансу. На деле аналогия обратная.",
+                "if_it_were_true": "Тогда нельзя было бы detach `EBS` от одного инстанса и attach к другому, но `aws ec2 attach-volume` делает это ежедневно.",
+                "how_it_should_be": "Правильнее: `EBS` — сетевой persistent диск, instance store — локальный эфемерный NVMe, и durability у них противоположная."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`AMI` — это runtime VM-инстанс с уже загруженным приложением (готовый контейнер на уровне VM), `EBS` — лог изменений `AMI`, instance store — кэш для быстрого доступа к `EBS`; все три обязательны для запуска `EC2`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AMI` — статический template (не running VM), используется в `RunInstances` для создания нового инстанса. `EBS` — независимый сервис block storage, не «лог `AMI`». Instance store — отдельный локальный диск, не кэш `EBS`. `EC2` можно запустить вообще без `EBS`.",
+                "source_of_confusion": "Концепция «golden AMI» иногда подаётся как «запакованный микросервис», и новички экстраполируют до «AMI это контейнер».",
+                "if_it_were_true": "Тогда нельзя было бы обновлять running `EC2` без замены `AMI` (но `apt upgrade` работает) и не было бы отдельного billing для `EBS` (а в счёте `EBS` — отдельная строка).",
+                "how_it_should_be": "Правильнее: `AMI` — шаблон для запуска, `EBS` и instance store — независимые виды дисков, не производные от `AMI`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `Auto Scaling Group` с target tracking policy и зачем нужны параметры `min`/`max`/`desired`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`ASG` поднимает фиксированное число инстансов из `desired`, а `min`/`max` нужны только для красоты в консоли.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`desired` — текущая уставка, которую ASG активно меняет в ответ на scaling policies. `min` — жёсткий пол (группа не опустится ниже даже при нулевой нагрузке), `max` — потолок (защита от cost-blowup и runaway scaling при DDoS/баге).",
+                "source_of_confusion": "В простых сценариях `min=desired=max`, там действительно ничего не меняется, и кажется, что границы декоративны.",
+                "if_it_were_true": "Тогда не было бы смысла отделять `PutScalingPolicy` от `UpdateAutoScalingGroup`, но они разделены именно потому, что границы статичные, а `desired` динамический.",
+                "how_it_should_be": "Правильнее: `desired` меняется политиками, а `min`/`max` — жёсткие границы диапазона масштабирования."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Target tracking — это cron-расписание, которое каждый час пересчитывает число инстансов по времени суток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Target tracking — реактивная политика по `CloudWatch`-метрике (CPU, `RequestCountPerTarget`, custom): ASG поддерживает заданное значение, добавляя/убирая инстансы по отклонению. Cron-логика — это отдельная `Scheduled scaling`.",
+                "source_of_confusion": "Target tracking и scheduled scaling часто комбинируют (расписание под прогнозируемые пики + target tracking под непредсказуемые), и их функции склеиваются.",
+                "if_it_were_true": "Тогда ASG не реагировал бы на внезапный всплеск трафика между «cron-тиками», но реальный target tracking масштабирует за минуты после превышения порога.",
+                "how_it_should_be": "Правильнее: target tracking — реактивная политика по метрике, а расписание — это отдельная scheduled-политика."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ASG` автоматически меняет число `EC2`-инстансов между `min` и `max`; target tracking держит выбранную метрику (например CPU 50%) близко к цели, добавляя или убирая инстансы по `CloudWatch`-алармам. `min` — жёсткий пол, `max` — потолок (защита от runaway scaling и cost-blowup), `desired` — текущая уставка, которую ASG динамически меняет.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ASG` — control plane для группы одинаковых `EC2` за `Launch Template`. Scaling policies (target tracking, step, scheduled, predictive) автоматически меняют `desired` по метрикам. Target tracking сам создаёт `CloudWatch alarms` под заданную метрику и target value.",
+                "example": "`web-asg` с `min=2, max=10, desired=4` и target tracking по `ASGAverageCPUUtilization=50%`: при CPU 80% ASG добавляет инстансы (до 10), при CPU 20% — убирает (до 2). За `ALB` это даёт автоматический horizontal scale-out.",
+                "when_to_apply": "Stateless workloads с переменной нагрузкой (web, API, воркеры), batch с предсказуемыми пиками (scheduled), ML-инференс (target tracking по `RequestCountPerTarget`). Для stateful (БД, брокеры) ASG обычно не подходит.",
+                "edge_cases": "Cold start новых инстансов (boot + warmup 2–5 мин) — нужны warm pools и lifecycle hooks. Target tracking по CPU плохо работает для I/O-bound — берите `RequestCountPerTarget`. `max` без cost-alert опасен — cascade failure разгоняет группу до потолка.",
+                "related": "[[aws-interview#Q4]] EC2 instance types в Launch Template; [[aws-interview#Q5]] Spot в ASG через mixed instances policy; [[aws-interview#Q8]] Lambda как serverless-альтернатива."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Auto Scaling Group` — это vertical scaling: `AWS` меняет размер инстанса (с `t3.small` на `t3.large`) при росте нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ASG делает только horizontal scaling — добавляет/убирает одинаковые инстансы по `Launch Template`. Vertical scaling требует stop → resize → start вручную и на уровне ASG не автоматизирован.",
+                "source_of_confusion": "Оба механизма — это «scaling», и новички часто не различают horizontal и vertical в облаке.",
+                "if_it_were_true": "Тогда `Launch Template` не задавал бы фиксированный `InstanceType`, но он обязателен, а смена типа — это новая версия template и rolling replacement.",
+                "how_it_should_be": "Правильнее: ASG масштабирует горизонтально (число инстансов), а изменение размера — это отдельная ручная операция."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `AWS Lambda` и когда её выбирать вместо `EC2`/контейнеров?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Lambda` — это виртуальная машина, которая постоянно работает и её нужно явно останавливать, чтобы не платить за idle.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Lambda` — serverless event-driven runtime: экземпляр поднимается на время обработки события и засыпает после idle timeout. Платите только за invocations + GB-seconds фактического выполнения; никаких start/stop у функции нет.",
+                "source_of_confusion": "Новички переносят EC2-модель «инстанс работает, пока не остановлю» на `Lambda` и боятся забыть «выключить» функцию.",
+                "if_it_were_true": "Тогда счёт за функцию, обрабатывающую 100 событий в сутки по 200 мс, был бы как за `t3.micro` 24/7 (~$8/мес), а реальный счёт ~$0.00 (Free Tier).",
+                "how_it_should_be": "Правильнее: `Lambda` платится за фактическое выполнение и масштабируется до нуля, останавливать её вручную не нужно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Lambda` подходит только для синхронных HTTP-запросов через `API Gateway`; никакие другие источники событий она не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Lambda` интегрирована с десятками источников: `S3`, `DynamoDB Streams`, `SQS`/`SNS`, `Kinesis`, `EventBridge` (cron + custom), `Cognito`, `Step Functions`, `IoT`. `API Gateway` — лишь один из триггеров.",
+                "source_of_confusion": "Первые туториалы по `Lambda` — обычно «hello world REST API через API Gateway», и эта связка запоминается как единственный сценарий.",
+                "if_it_were_true": "Тогда не существовало бы паттернов `S3`-event → image resize, `DynamoDB` Stream → search index, `SQS` → batch processing, а они базовые для serverless.",
+                "how_it_should_be": "Правильнее: `Lambda` запускается множеством источников событий, а `API Gateway` — лишь один из них."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Lambda` держит state между вызовами в локальной `/tmp`, и на этот state можно полагаться как на надёжное хранилище.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`/tmp` (512 MB по умолчанию, до 10 GB) — эфемерный, очищается при cold start и не разделяется между инстансами. Для persistence используют `S3`, `DynamoDB`, `EFS`, `RDS`. `Lambda` stateless по дизайну.",
+                "source_of_confusion": "Между warm invocations контейнер переиспользуется, и временные файлы в `/tmp` живут — это иногда используют как локальный кэш, но не как primary storage.",
+                "if_it_were_true": "Тогда не понадобились бы интеграции `Lambda` с `EFS`/`S3`/`DynamoDB`, но они стандарт для любой нетривиальной функции.",
+                "how_it_should_be": "Правильнее: `Lambda` stateless, а `/tmp` — эфемерный кэш; для persistence нужны внешние хранилища."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`AWS Lambda` — serverless compute, запускающий код в ответ на события (HTTP через `API Gateway`, `S3`, `DynamoDB Streams`, `SQS`, schedule); pricing «per invocation + per ms × memory», масштабируется до нуля и до тысяч параллельных инстансов автоматически.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Lambda` — event-driven function-as-a-service: вы загружаете код и handler, а `AWS` управляет инфраструктурой. На каждое событие поднимается изолированный экземпляр (Firecracker microVM), обрабатывает событие и засыпает. Платите за число запусков × длительность × память.",
+                "example": "`def handler(event, context): return {\"statusCode\": 200, \"body\": \"Hello\"}` за `API Gateway`. Триггер из `S3`: при загрузке `s3://uploads/photo.jpg` Lambda генерирует thumbnail. Cost: 1M invocations × 200 ms × 128 MB ≈ $0.20.",
+                "when_to_apply": "Event-driven workloads (`S3` events, `DynamoDB Streams`, `SQS`), low-traffic API с непредсказуемой нагрузкой, scheduled jobs вместо cron+EC2, glue-логика, короткие batch-задачи. Дешевле `EC2` при низком/неравномерном RPS.",
+                "edge_cases": "Cold start (100 мс–1 с для Python/Node, до 5–10 с для Java/.NET) — критично для low-latency API; помогает Provisioned Concurrency. 15-минутный timeout на выполнение — для длинных задач нужны Step Functions/Fargate. При высоком устойчивом RPS дороже `EC2`.",
+                "related": "[[aws-interview#Q7]] Auto Scaling Groups как EC2-альтернатива; [[aws-interview#Q9]] S3 как источник событий для Lambda; [[aws-interview#Q15]] DynamoDB Streams как триггер."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена адресация объектов в `S3` и почему имя bucket должно быть уникальным глобально, а не в пределах аккаунта?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `S3` объект адресуется парой `bucket + key`; bucket — это namespace в пределах региона, но его имя должно быть уникальным глобально, потому что bucket доступен по virtual-hosted URL `https://<bucket>.s3.<region>.amazonaws.com/<key>`, и `AWS` DNS должен резолвить его однозначно.",
+              "correct": true,
+              "sections": {
+                "explanation": "`S3` — object storage, где объект идентифицируется тройкой `(region, bucket, key)`. Имя bucket — глобальный DNS-неймспейс, поэтому два разных аккаунта в разных регионах не могут иметь bucket с одинаковым именем. Key (`path/to/file.json`) — просто строка; «папки» в консоли — иллюзия, иерархии нет.",
+                "example": "`s3://my-company-prod-uploads/users/123/avatar.png`: bucket `my-company-prod-uploads` (имя уникально на весь мир), key `users/123/avatar.png`. Объекты до 5 TB, durability 11 nines, доступность 99.99%, strong read-after-write consistency (с 2020).",
+                "when_to_apply": "Хранение статики (картинки, видео, бэкапы), data lake (Parquet/CSV для `Athena`), артефакты CI/CD, hosting статических сайтов, источник событий для `Lambda`. Default-выбор для любого «положить blob в облако».",
+                "edge_cases": "Глобальные имена ведут к enumeration: существование bucket `my-company-backups` узнаётся через DNS без доступа — используйте непредсказуемые префиксы. `LIST` на bucket с миллионами объектов медленный — берите `Inventory`. Public access блокируется по умолчанию.",
+                "related": "[[aws-interview#Q10]] S3 storage classes; [[aws-interview#Q11]] EBS vs EFS vs S3; [[aws-interview#Q12]] versioning и lifecycle policies."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Объект в `S3` адресуется только числовым `object_id`, который `AWS` назначает автоматически; имя bucket — просто человекочитаемая метка для UI и в API роли не играет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Key задаётся клиентом при `PUT`, это произвольная строка до 1024 байт (`users/123/photo.jpg`). Никакого числового ID `S3` не присваивает. Bucket name — обязательная часть запроса (`Host: bucket.s3.amazonaws.com`), без него вызов невозможен.",
+                "source_of_confusion": "В традиционных object stores (`Swift`, `Ceph`) объект иногда адресуется внутренним ID, и эту модель ошибочно переносят на `S3`.",
+                "if_it_were_true": "Тогда не существовало бы паттерна `s3://bucket/year=2026/month=05/file.parquet` для Hive-партиционирования в data lake, но это стандарт для `Athena`/`Spark`.",
+                "how_it_should_be": "Правильнее: объект адресуется парой `bucket + key`, где key — клиентская строка, а не автогенерируемый числовой ID."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Имена bucket уникальны только в пределах AWS-аккаунта; два разных аккаунта могут спокойно иметь bucket `my-bucket`, потому что аккаунты изолированы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя bucket — глобальный namespace на весь `AWS`. Если bucket `my-bucket` создан в любом аккаунте мира, в вашем создать его уже нельзя — получите `BucketAlreadyExists`. Это следствие DNS-based addressing.",
+                "source_of_confusion": "Для большинства ресурсов `AWS` (`EC2`, `RDS`, IAM role) имена изолированы аккаунтом, и эту модель ошибочно расширяют на `S3`.",
+                "if_it_were_true": "Тогда можно было бы взять имя `aws-logs` или `backup` для своего bucket, но обе попытки немедленно вернут `BucketAlreadyExists`, потому что они давно заняты.",
+                "how_it_should_be": "Правильнее: имя bucket уникально глобально на весь `AWS`, а не в пределах аккаунта."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`S3` хранит каждый файл только в одном дата-центре и не реплицирует автоматически; для durability нужно вручную включать репликацию между регионами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Standard storage class реплицирует объект между минимум 3 `AZ` в регионе — это и даёт durability 11 nines из коробки. Cross-region replication (CRR) — отдельная опциональная фича для DR, но базовая внутрирегиональная репликация уже включена.",
+                "source_of_confusion": "`One Zone-IA` storage class действительно хранит данные только в одной `AZ` (за это дешевле), и этот частный случай экстраполируют на весь `S3`.",
+                "if_it_were_true": "Тогда при падении одной `AZ` Standard-bucket терял бы доступ к части объектов, но за всю историю `S3` такого не случалось именно благодаря multi-AZ replication.",
+                "how_it_should_be": "Правильнее: Standard `S3` реплицирует данные по 3+ `AZ` автоматически, обеспечивая 11 nines durability."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Команда хранит 50 TB сырых логов в `S3`: доступ несколько раз в год, retrieval допустим за минуты-часы, durability должна оставаться 11 девяток. Какой storage class даст минимальный счёт без потери практичности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`S3 Standard`, чтобы всегда был миллисекундный доступ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это hot-storage класс с ценой ≈ $0.023/GB-month — на 50 TB это ≈ $1150 в месяц, тогда как кейс «несколько раз в год» использует <1% возможностей класса.",
+                "source_of_confusion": "Standard — это default при создании объекта, и кажется «безопасным выбором» без анализа access pattern.",
+                "if_it_were_true": "Тогда tiered storage не имел бы смысла, но переплата в десятки раз для архивных логов полностью обесценивает идею storage classes.",
+                "how_it_should_be": "Правильнее: для редкого доступа берут Glacier Flexible, а Standard — для горячих данных с миллисекундным доступом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`S3 Glacier Flexible Retrieval` с lifecycle policy на финальное expiration: стоит ≈ $0.0036/GB-month (×6.4 дешевле Standard-IA, ×64 дешевле Standard) и допускает retrieval за минуты-часы — ровно то, что описано в кейсе, сохраняя 11 девяток durability.",
+              "correct": true,
+              "sections": {
+                "explanation": "Storage class выбирается по паре «частота доступа × допустимая latency retrieval». Раз обращаемся раз в квартал и можно подождать минуты — Glacier Flexible выигрывает по TCO с большим отрывом. Lifecycle policy автоматизирует transition и финальное expiration.",
+                "example": "50 TB на Glacier Flexible ≈ $180/мес против ≈ $1150/мес на Standard. Lifecycle: `transition to GLACIER after 0 days` для bucket `s3://logs-archive/`, плюс `expiration after 2555 days`, чтобы логи не жили вечно после retention.",
+                "when_to_apply": "Когда данные холодные (доступ редкий), latency retrieval в минуты-часы приемлема, а durability нужна полная (11 девяток) — Glacier Flexible идеален для архивов логов, бэкапов и compliance-данных с нечастым доступом.",
+                "edge_cases": "Retrieval из Glacier тарифицируется отдельно (per-GB + per-request) — частый доступ обнулит экономию. Минимальный срок хранения в Glacier — 90 дней: ранний delete штрафуется. Для миллисекундного доступа Glacier Flexible не подходит.",
+                "related": "[[aws-interview#Q9]] S3 основные понятия; [[aws-interview#Q12]] lifecycle policies; [[aws-interview#Q11]] EBS vs EFS vs S3."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`One Zone-IA`, потому что он дешевле Standard-IA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`One Zone-IA` хранит данные только в одной `AZ` — durability падает до уровня одной зоны (теряется при её отказе), и требование «11 девяток» нарушается.",
+                "source_of_confusion": "Слово «IA» (Infrequent Access) совпадает у `One Zone-IA` и `Standard-IA`, и разница в durability ускользает.",
+                "if_it_were_true": "Тогда при отказе `AZ` часть логов восстановить было бы нечем, а экономия в $0.0025/GB не оправдывает этот риск.",
+                "how_it_should_be": "Правильнее: при требовании 11 девяток `One Zone-IA` исключён, нужен multi-AZ класс вроде Glacier Flexible."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Glacier Deep Archive` без оценки retrieval-времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Deep Archive самый дешёвый (≈ $0.00099/GB), но retrieval идёт до 12 часов; «несколько раз в год за минуты» в этот SLA не укладывается.",
+                "source_of_confusion": "Deep Archive выглядит как «самый дешёвый = самый выгодный», если не смотреть на retrieval-latency.",
+                "if_it_were_true": "Тогда первый же запрос на логи укладывался бы в минуты, но реально это инцидент длиной полсуток плюс неожиданный счёт за retrieval-запросы.",
+                "how_it_should_be": "Правильнее: Deep Archive — для compliance-данных с retrieval за часы, а под «минуты» нужен Glacier Flexible."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "CI-ферма из 200 EC2-инстансов компилирует общий монорепозиторий: воркерам нужен один writable workspace одновременно, latency как у локального диска, файлы POSIX (chmod, symlink). Что выбрать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подключить `EBS`-том с multi-attach ко всем 200 инстансам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-attach у `EBS io2` поддерживает максимум 16 одновременных подключений в одной `AZ` и требует кластерной FS (`GFS2`/`OCFS2`), которой `EC2` «из коробки» не имеет.",
+                "source_of_confusion": "Существование `EBS` multi-attach создаёт впечатление, что один том можно «расшарить» на любое число нод.",
+                "if_it_were_true": "Тогда 200 нод подключились бы без проблем, но без кластерной FS параллельные writes повредили бы block-устройство, и workspace стал бы corrupted.",
+                "how_it_should_be": "Правильнее: для shared writable доступа множества нод нужен `EFS`, а не `EBS` multi-attach."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Положить workspace в `S3` и читать через `S3` API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`S3` — object storage без mount-семантики: нет POSIX (chmod/rename/symlink), нет partial-write, latency запроса в десятки мс против субмиллисекундных у NFS.",
+                "source_of_confusion": "`S3` подаётся как «универсальное хранилище в облаке», и кажется, что он подойдёт и под workspace.",
+                "if_it_were_true": "Тогда компилятор и линкер, ожидающие обычную ФС, работали бы поверх `S3`, но они ломаются на отсутствии rename/lock или тормозят в десятки раз.",
+                "how_it_should_be": "Правильнее: под POSIX-workspace для множества нод нужен `EFS`, а `S3` — для blob-объектов без mount-семантики."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Смонтировать `EFS` на все 200 инстансов как общий NFS-том: `EFS` — fully managed NFSv4 file system, монтируется одновременно на тысячи `EC2` в нескольких `AZ`, поддерживает полный POSIX (права, locks, symlink) и автоматически масштабирует throughput. Это ровно сценарий «shared writable filesystem для большого пула воркеров».",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор между `EBS`/`EFS`/`S3` — это две оси: «block vs file vs object» и «один EC2 vs много EC2». «Много EC2 + writable + POSIX» однозначно ведёт в `EFS` (или `FSx`, если нужна Lustre/Windows-специфика).",
+                "example": "200 CI-воркеров монтируют один `EFS` как `/mnt/workspace`: общий cache артефактов, кросс-нодные temp-файлы, общий workspace. Компилятор и линкер видят обычную POSIX-ФС с rename/lock/symlink.",
+                "when_to_apply": "Когда нужен общий writable filesystem для множества инстансов (CI-фермы, content-management, ML-датасеты, lift-and-shift legacy-приложений с file-зависимостью) — `EFS`. Для HPC/Lustre или Windows-специфики — `FSx`.",
+                "edge_cases": "`EFS` дороже `EBS` per-GB и имеет более высокую latency (сетевой NFS). Throughput-режим (bursting vs provisioned) надо подбирать под нагрузку. Для single-instance БД `EFS` избыточен — там `EBS`.",
+                "related": "[[aws-interview#Q6]] AMI/EBS/instance store; [[aws-interview#Q9]] S3 основные понятия; [[aws-interview#Q13]] RDS на EBS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Создать на одном инстансе `EBS`-том и раздавать его остальным по SSH/SCP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это превращает один `EC2` в bottleneck и SPOF: его сеть, диск и CPU становятся пределом для всей фермы, а consistency между копиями придётся гарантировать вручную.",
+                "source_of_confusion": "Кажется, что «просто раздать файлы по сети» дешевле управляемого `EFS`.",
+                "if_it_were_true": "Тогда CI-ферма работала бы стабильно, но при падении «мастер»-ноды она встаёт, а синхронизация через SCP добавляет минуты к каждому build-у и расходится.",
+                "how_it_should_be": "Правильнее: shared-доступ обеспечивает `EFS` без SPOF, а раздача через SCP создаёт узкое место и рассинхрон."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "На bucket с критическими документами включили `S3 versioning`, но счёт за storage вырос в 4 раза, а листинг забит «удалёнными» файлами. Что нужно понимать про versioning + lifecycle, чтобы починить правильно?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто выключить versioning — все старые версии исчезнут и счёт упадёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Suspend versioning останавливает создание новых noncurrent-версий, но уже накопленные версии и delete markers остаются на диске и продолжают тарифицироваться.",
+                "source_of_confusion": "Кажется, что «выключить функцию» автоматически удалит всё, что она наплодила.",
+                "if_it_were_true": "Тогда счёт падал бы мгновенно, но реально придётся отдельно чистить старые версии, а bucket после suspend становится «полу-versioned» с противоречивым поведением.",
+                "how_it_should_be": "Правильнее: чистят накопленные версии lifecycle-политикой (`NoncurrentVersionExpiration`), а не suspend-ом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Удалить файлы через консоль — delete сам сотрёт все версии и снизит cost.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В versioned bucket обычный DELETE кладёт delete marker, а сами objects и их предыдущие версии остаются в storage и продолжают платиться.",
+                "source_of_confusion": "В non-versioned bucket DELETE действительно удаляет объект, и это поведение ошибочно переносят на versioned.",
+                "if_it_were_true": "Тогда storage уменьшался бы после delete, но реально он не падает, а листинг ещё и заполняется delete markers, которые тоже считаются объектами.",
+                "how_it_should_be": "Правильнее: в versioned bucket физическое удаление версий делает lifecycle, а DELETE лишь добавляет delete marker."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Включить MFA Delete и забыть про lifecycle — это решит проблему cost.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MFA Delete — security-механизм против случайного удаления версий, он никак не влияет на стоимость хранения и не транзитит версии в дешёвые классы.",
+                "source_of_confusion": "MFA Delete звучит как «контроль над удалением версий», и его путают с управлением их жизненным циклом.",
+                "if_it_were_true": "Тогда cost-проблема решалась бы включением MFA Delete, но реально она не трогается, а любое легитимное удаление версии теперь требует MFA-токена root.",
+                "how_it_should_be": "Правильнее: cost управляется lifecycle-политикой, а MFA Delete — это про безопасность, а не про деньги."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Добавить lifecycle с `NoncurrentVersionTransition` в Glacier/IA и `NoncurrentVersionExpiration`, плюс `Expiration.ExpiredObjectDeleteMarker`: транзит старых версий в дешёвые классы по возрасту, физическое удаление noncurrent после retention и чистка «висящих» delete markers, которые захламляют листинг.",
+              "correct": true,
+              "sections": {
+                "explanation": "В versioned bucket объект — это цепочка версий + опциональный delete marker, и каждая сущность платится. Lifecycle policy — единственный штатный способ управлять cost: транзит noncurrent в архив, удаление старых noncurrent, чистка delete markers, плюс `AbortIncompleteMultipartUpload`.",
+                "example": "Lifecycle для `s3://docs/`: `NoncurrentVersionTransition` в `STANDARD_IA` после 30 дней и в `GLACIER` после 90, `NoncurrentVersionExpiration` после 365, `Expiration.ExpiredObjectDeleteMarker: true`. Счёт падает, листинг очищается.",
+                "when_to_apply": "Когда versioning включён для защиты от accidental deletes/ransomware, lifecycle обязателен с самого начала: без управления noncurrent-версиями versioning превращается в утечку storage и захламление листинга.",
+                "edge_cases": "`ExpiredObjectDeleteMarker` чистит только delete markers без noncurrent-версий под ними. Suspend versioning не удаляет уже накопленные версии. MFA Delete — security-механизм, на cost он не влияет.",
+                "related": "[[aws-interview#Q9]] S3 основные понятия; [[aws-interview#Q10]] S3 storage classes; [[aws-interview#Q11]] EBS vs EFS vs S3."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что `RDS` делает managed-ом, а что остаётся ответственностью команды?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AWS` управляет backup, patching, failover, репликами; схема, индексы и запросы — на команде. `RDS` снимает операционку (автобэкапы с PITR до 35 дней, patching по maintenance window, Multi-AZ failover за 60–120 сек, до 5 read replicas), но логическая модель данных (денормализация, индексы, `EXPLAIN`, vacuum, partitioning) — ваша работа.",
+              "correct": true,
+              "sections": {
+                "explanation": "`RDS` закрывает infrastructure-lifecycle, но не подскажет, что у вас seq scan по 50 млн строк. Multi-AZ ≠ read replica: standby недоступен для чтения, это горячий резерв. Snapshot восстанавливается в новый instance — старый endpoint не переедет.",
+                "example": "`Postgres RDS db.r6g.xlarge`, Multi-AZ. Без индекса на `orders.user_id` p99 запроса 4 секунды. Patching и backup `AWS` делает, но запрос тормозит. Добавили индекс → 12 мс. `RDS` не виноват.",
+                "when_to_apply": "Стандартные OLTP-нагрузки, где нужна реляционная БД без DBA в штате. Для максимальной производительности — `Aurora`. Для полного контроля над движком (custom extensions, кастомный `postgresql.conf`) — `EC2` self-managed.",
+                "edge_cases": "Storage autoscaling включается отдельно. Major version upgrade требует downtime даже на Multi-AZ. Parameter groups дают подмножество настроек движка, нет superuser в чистом виде; для root-доступа есть отдельный продукт `RDS Custom`.",
+                "related": "[[aws-interview#Q14]] Aurora vs RDS; [[aws-interview#Q15]] DynamoDB как NoSQL-альтернатива; [[aws-interview#Q6]] EBS под RDS storage."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RDS` — это просто `EC2` с предустановленной БД, `AWS` ничего не автоматизирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RDS` — полноценный managed-сервис: автоматические снапшоты, PITR, Multi-AZ failover, patching по расписанию. Это ключевое value над «EC2 + apt install postgresql».",
+                "source_of_confusion": "Под капотом `RDS` действительно крутится `EC2`, и кажется, что это «просто VM с БД».",
+                "if_it_were_true": "Тогда не было бы смысла платить +30% к цене `EC2`: команды продолжали бы ставить `Postgres` вручную и писать cron на `pg_dump`.",
+                "how_it_should_be": "Правильнее: `RDS` автоматизирует backup/patching/failover, закрывая SSH и отдавая только endpoint."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`RDS` поддерживает только `MySQL` и `PostgreSQL` — для `Oracle`/`SQL Server` нужен `EC2`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RDS` поддерживает 6 движков: `MySQL`, `MariaDB`, `PostgreSQL`, `Oracle`, `SQL Server` и `Aurora` (PG/MySQL-compatible). `Oracle` и `SQL Server` идут с BYOL-моделью лицензирования.",
+                "source_of_confusion": "В community-туториалах обычно фигурируют `MySQL`/`PostgreSQL`, потому что они open-source и дешевле.",
+                "if_it_were_true": "Тогда enterprise-миграции с on-prem `Oracle` делались бы только через `EC2`, а сервиса `RDS for Oracle` с license-included опцией не существовало.",
+                "how_it_should_be": "Правильнее: `RDS` поддерживает 6 движков, включая `Oracle` и `SQL Server` с BYOL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `RDS` можно делать произвольные DDL и тюнить любой параметр `postgresql.conf`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RDS` даёт parameter groups — подмножество настроек движка. Часть параметров ограничена whitelist-ом, нет доступа к файловой системе и superuser-роли в чистом виде. DDL внутри БД работает, но операционные ручки урезаны.",
+                "source_of_confusion": "На обычной БД команда привыкла менять `postgresql.conf` руками и делать `ALTER SYSTEM`, и ждёт того же от `RDS`.",
+                "if_it_were_true": "Тогда не было бы продукта `RDS Custom`, созданного именно для случаев, когда нужен root-доступ к ОС и движку.",
+                "how_it_should_be": "Правильнее: `RDS` ограничивает низкоуровневый тюнинг parameter groups, а полный контроль даёт `RDS Custom` или self-managed."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `Aurora` принципиально отличается от `RDS PostgreSQL`/`MySQL`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Aurora` — это просто `RDS` с улучшенным железом (NVMe, больше CPU), движок и архитектура хранения те же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Aurora` — отдельный движок с переписанным storage-layer: distributed cluster volume реплицирует данные 6-way по 3 `AZ` и масштабируется автоматически от 10 GB до 128 TB.",
+                "source_of_confusion": "В консоли `Aurora` живёт «внутри» `RDS` как тип движка, и кажется, что это просто пресет.",
+                "if_it_were_true": "Тогда failover `Aurora` не укладывался бы в <30 сек, replica lag не был бы суб-100 мс, и не существовало бы `Aurora Serverless v2`.",
+                "how_it_should_be": "Правильнее: у `Aurora` принципиально другой storage (6-way distributed log), а не просто железо помощнее."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "У `Aurora` переписан storage: log-structured 6-way репликация по 3 `AZ`, автоскейл диска (10 GB → 128 TB) без downtime и до 15 low-lag read replicas. `Aurora` совместима с `PostgreSQL`/`MySQL` по протоколу и диалекту, но storage-layer полностью другой.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Aurora` не пишет страницы данных как обычный `Postgres`, а отправляет redo-log записи в распределённое хранилище, которое само применяет их к 6 копиям. Отсюда failover <30 сек, реплики с лагом в единицы мс (общее хранилище), автоскейл диска и PITR до секунды.",
+                "example": "API 50k RPS read и 5k RPS write: на `RDS PostgreSQL` Multi-AZ failover 90 сек, 5 реплик с лагом 200–500 мс. На `Aurora PG` — failover 12 сек, 8 реплик с лагом 8 мс, p99 чтения с 40 мс до 14 мс. Стоимость +22%, но bottleneck исчез.",
+                "when_to_apply": "OLTP с высоким read:write ratio и требованием низкого RPO/RTO. Multi-region active-passive через `Aurora Global Database`. Burst-нагрузки с непредсказуемым паттерном — `Aurora Serverless v2` (auto-scale ACU).",
+                "edge_cases": "Не все `Postgres` extensions поддерживаются (нет `TimescaleDB`, ограничен `pg_cron`). I/O-billing в стандартной `Aurora` съедает бюджет на write-heavy — нужна `Aurora I/O-Optimized`. Major version upgrade требует blue/green deployment.",
+                "related": "[[aws-interview#Q13]] базовый RDS; [[aws-interview#Q15]] DynamoDB как NoSQL-альтернатива; [[aws-interview#Q6]] EBS как storage под БД."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Aurora` работает только с `MySQL`, для `PostgreSQL` нужен обычный `RDS`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Aurora` изначально (2014) запускалась как MySQL-compatible, но `Aurora PostgreSQL` вышла в 2017 и сегодня является default-рекомендацией `AWS` для новых нагрузок.",
+                "source_of_confusion": "Старые статьи и презентации `re:Invent` до 2017 года описывают только MySQL-вариант.",
+                "if_it_were_true": "Тогда команды на `Postgres` не получали бы преимуществ `Aurora` и оставались бы на `RDS PG`, но это самый быстрорастущий сегмент `Aurora`.",
+                "how_it_should_be": "Правильнее: `Aurora` поддерживает и `MySQL`, и `PostgreSQL`, причём PG — рекомендуемый default."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Aurora` дешевле `RDS`, потому что `AWS` оптимизировала storage и снизила цену.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Aurora` стоит примерно на 20% дороже эквивалентного `RDS` по compute, плюс отдельная плата за storage (~$0.10/GB-month) и I/O. Цена — это плата за архитектурные преимущества, а не дисконт.",
+                "source_of_confusion": "`Aurora` может быть дешевле в TCO на write-heavy с I/O-Optimized или на serverless, и это обобщают до «дешевле всегда».",
+                "if_it_were_true": "Тогда `AWS` не продвигала бы `Aurora I/O-Optimized` как отдельный pricing-режим для случаев, когда I/O — главный cost-driver.",
+                "how_it_should_be": "Правильнее: базовая цена `Aurora` выше `RDS` (~20% + storage/IO), а выигрыш — в производительности и доступности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что важнее всего понимать про `DynamoDB` при проектировании схемы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Можно сначала залить данные, а индексы и partition key добавить потом, как в RDBMS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `DynamoDB` partition key выбирается ЗАРАНЕЕ и определяет физическое распределение по партициям. GSI можно добавить позже (online), но изменить primary key существующей таблицы нельзя — только пересоздать.",
+                "source_of_confusion": "Опыт с `Postgres`/`MySQL` приучает к «сначала данные, потом индексы», а `DynamoDB` переворачивает это: схема следует за access patterns.",
+                "if_it_were_true": "Тогда не существовало бы практики single-table design и «pre-computing access patterns», но именно это `AWS` пропагандирует в каждом DynamoDB-talk на `re:Invent`.",
+                "how_it_should_be": "Правильнее: схема проектируется ОТ access patterns заранее, а primary key менять у готовой таблицы нельзя."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`DynamoDB` автомасштабируется бесшовно, hot partition — миф из старых версий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hot partition реален в 2025: лимит ~3000 RCU и 1000 WCU на партицию. Если 80% запросов идёт по одному `userId=admin`, будет throttling даже на on-demand. Adaptive Capacity помогает, но не лечит плохую схему.",
+                "source_of_confusion": "`AWS` улучшила adaptive capacity и instant scaling, и кажется, что теперь всё «просто работает».",
+                "if_it_were_true": "Тогда не было бы паттернов write-sharding (искусственный суффикс к partition key) и post-mortems с hot partition в 2024–2025.",
+                "how_it_should_be": "Правильнее: hot partition остаётся реальным ограничением, и его решает грамотный выбор partition key + write-sharding."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Схема проектируется ОТ access patterns: partition key обеспечивает равномерное распределение, GSI закрывает остальные запросы. Сначала выписываете все запросы (по каким полям, с какой селективностью), затем подбираете partition key, чтобы нагрузка размазывалась, а горячие запросы шли по PK; single-table design объединяет сущности через композитный sort key.",
+              "correct": true,
+              "sections": {
+                "explanation": "`DynamoDB` — не «NoSQL Postgres», а другая модель. Partition key выбирается ЗАРАНЕЕ и определяет физическое распределение по партициям. GSI можно добавить online, но изменить primary key существующей таблицы нельзя — только пересоздать.",
+                "example": "E-commerce: таблица `Items` с PK=`USER#123`, SK=`ORDER#2026-05-15#001` или `PROFILE`. Query `PK=USER#123, SK begins_with ORDER#` — все заказы пользователя за один запрос, 5–10 мс p99. GSI `GSI1PK=STATUS#PENDING` — все pending-заказы для админки.",
+                "when_to_apply": "Известные access patterns с предсказуемой кардинальностью. Serverless (`DynamoDB` + `Lambda` — нативная пара). High-scale key-value (session store, feature flags, leaderboards). Multi-region active-active через Global Tables.",
+                "edge_cases": "Hot partition реален: лимит ~3000 RCU и 1000 WCU на партицию — нужен write-sharding. Scan дорогой и медленный. Transactions ограничены 100 items / 4 MB. Streams хранят события 24 часа — для durability нужен `Kinesis`/`EventBridge`.",
+                "related": "[[aws-interview#Q13]] реляционные RDS; [[aws-interview#Q14]] Aurora когда нужен SQL; [[aws-interview#Q8]] Lambda + DynamoDB serverless-пара."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`DynamoDB` поддерживает полноценный SQL и ACID-транзакции через `PartiQL`, поэтому миграция с `Postgres` тривиальна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PartiQL` — SQL-подобный синтаксис поверх API `DynamoDB`, но это синтаксический сахар, а не реляционный движок: JOIN-ов нет, агрегаций нет, транзакции ограничены 100 items. Миграция с `Postgres` почти всегда требует переписывания модели данных.",
+                "source_of_confusion": "`AWS` маркетит `PartiQL` как «SQL для DynamoDB», что создаёт ложное впечатление эквивалентности с реляционной БД.",
+                "if_it_were_true": "Тогда не было бы индустрии консультантов по data modeling и книги «The DynamoDB Book», посвящённой именно тому, что миграция требует переосмысления.",
+                "how_it_should_be": "Правильнее: `PartiQL` — синтаксический сахар без JOIN/агрегаций, и миграция с `Postgres` требует переработки модели."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `ElastiCache for Redis` отличается от `Memcached` и когда что выбирать в 2025?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Memcached` в `ElastiCache` поддерживает persistence (RDB/AOF) и репликацию между нодами, поэтому он надёжнее `Redis` для критичных данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Memcached` — простой in-memory key-value без persistence и без репликации: при рестарте или потере ноды её данные исчезают. Persistence (RDB/AOF) и репликацию даёт именно `Redis`.",
+                "source_of_confusion": "Оба — кэши в `ElastiCache`, и их durability-свойства смешивают, считая взаимозаменяемыми.",
+                "if_it_were_true": "Тогда `Memcached` можно было бы использовать как durable store, но при первом же рестарте ноды данные пропадут.",
+                "how_it_should_be": "Правильнее: persistence и репликацию обеспечивает `Redis`, а `Memcached` — эфемерный кэш без durability."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Redis` и `Memcached` функционально идентичны, отличается только название; в 2025 `AWS` рекомендует `Memcached` как default из-за multi-threading.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Redis` богаче: structures (sorted sets, hashes, streams), Pub/Sub, Lua, persistence, репликация, cluster mode. `Memcached` — простой key-value. В 2025 default почти всегда `Redis` именно из-за богатства фич.",
+                "source_of_confusion": "`Memcached` многопоточный и на простом GET/SET быстрее на одной ноде, что подаётся как «универсальное преимущество».",
+                "if_it_were_true": "Тогда не существовало бы паттернов leaderboard/rate-limiter/Pub-Sub на `Redis`, но они базовые и на `Memcached` не реализуются нативно.",
+                "how_it_should_be": "Правильнее: `Redis` функционально богаче и является default, а `Memcached` — нишевый выбор под простой кэш."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `ElastiCache` `Redis` нельзя масштабировать горизонтально — он всегда одна нода, а для шардинга нужно переходить на `DynamoDB`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Redis` в `ElastiCache` поддерживает cluster mode — горизонтальный шардинг данных по слотам между несколькими нодами с репликами. Переход на `DynamoDB` для шардинга кэша не требуется.",
+                "source_of_confusion": "Single-threaded природа `Redis` на ядро создаёт впечатление, что он не масштабируется за пределы одной ноды.",
+                "if_it_were_true": "Тогда крупные кэши на сотни GB были бы невозможны на `Redis`, но cluster mode именно для этого и существует.",
+                "how_it_should_be": "Правильнее: `Redis` cluster mode шардирует данные горизонтально, а не ограничивает кэш одной нодой."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ElastiCache` — managed `Redis` или `Memcached`. `Redis` богаче: persistence (RDB/AOF), репликация и cluster mode, Pub/Sub и streams, Lua-скрипты, TTL, структуры данных (sorted sets, hashes). `Memcached` проще — multi-threaded key-value без persistence. В 2025 почти всегда `Redis`; `Memcached` — для простого кэширования с максимальным throughput.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Redis` single-threaded на ядро, но даёт богатую модель данных и durability-опции; `Memcached` многопоточный и быстрее на простом GET/SET, но теряет данные при рестарте. Для durable Redis-совместимости есть отдельный `MemoryDB`.",
+                "example": "Leaderboard через `Redis` sorted set: `ZADD scores 1500 user:123`, `ZREVRANGE scores 0 9` — топ-10 за один запрос. Session store с TTL: `SET session:abc {...} EX 3600`. На `Memcached` такие структуры пришлось бы эмулировать вручную.",
+                "when_to_apply": "`Redis` — когда нужны структуры данных, Pub/Sub, persistence, репликация, atomic-операции (rate limiting, leaderboards, очереди). `Memcached` — простой объектный кэш, где важен только max throughput и multi-thread на больших инстансах.",
+                "edge_cases": "`Redis` cluster mode шардирует по слотам, но multi-key операции работают только в пределах слота (hash tags). `Memcached` не реплицирует — потеря ноды = потеря её данных. `MemoryDB` durable, но дороже `ElastiCache Redis`.",
+                "related": "[[aws-interview#Q15]] DynamoDB как persistent store; [[aws-interview#Q13]] RDS как backing store за кэшем; [[aws-interview#Q14]] Aurora под высокой read-нагрузкой."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

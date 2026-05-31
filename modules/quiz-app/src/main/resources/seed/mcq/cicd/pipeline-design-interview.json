@@ -1,0 +1,2285 @@
+{
+  "topic_slug": "pipeline-design-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `CI/CD` pipeline и из каких этапов он обычно состоит?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CI/CD pipeline` — автоматизированная цепочка шагов от изменения кода до развёртывания в продакшен: `checkout`, `build` (`Gradle`/`Maven`), `unit`-тесты, `integration`-тесты, статический анализ, сборка и публикация `Docker`-образа, деплой по окружениям и `smoke/health check`. Каждый этап решает свою задачу и передаёт результат следующему.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pipeline превращает ручные шаги в воспроизводимую автоматику: при каждом коммите запускается сборка, тесты и проверки, а артефакт продвигается dev → staging → prod. Дополнительно подключают security scan (`Trivy`, `OWASP`) и approval gates.",
+                "example": "Типичный поток `Java`-сервиса: `./gradlew assemble` → `./gradlew test` → `integrationTest` с `Testcontainers` → `SonarQube` → `docker build` → push в `Harbor`/`ECR` → деплой и `GET /actuator/health`.",
+                "when_to_apply": "Pipeline нужен любой команде с регулярными изменениями кода: он даёт быструю обратную связь и убирает ручные ошибки выкатки. Чем чаще релизы, тем критичнее автоматизация всех этапов.",
+                "edge_cases": "Этапы можно сокращать для `PR` (только сборка + `unit` + lint) и расширять для main (полные тесты + деплой). Тяжёлые e2e обычно выносят на staging, чтобы не тормозить общий поток.",
+                "related": "[[pipeline-design-interview#Q2]] разница CI и CD; [[pipeline-design-interview#Q3]] последовательные vs параллельные этапы; [[pipeline-design-interview#Q5]] fail fast и порядок этапов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CI/CD pipeline` — это исключительно процесс компиляции кода в `jar`-файл; тесты, анализ и деплой к pipeline не относятся и выполняются вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pipeline охватывает всю цепочку — сборку, тесты, анализ, образ и деплой; компиляция лишь один из этапов.",
+                "source_of_confusion": "Build — самый заметный шаг, поэтому его иногда принимают за весь pipeline целиком.",
+                "if_it_were_true": "Тогда тесты и деплой не давали бы обратной связи автоматически, и смысл `CI/CD` терялся бы.",
+                "how_it_should_be": "Pipeline — это вся автоматизированная цепочка от `checkout` до деплоя, а не только компиляция."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CI/CD pipeline` — это инструмент мониторинга продакшена, который собирает метрики и логи уже работающего приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pipeline доставляет код в прод, а мониторинг метрик и логов — отдельная задача `observability`-стека.",
+                "source_of_confusion": "И pipeline, и мониторинг относятся к `DevOps`, поэтому их функции смешивают.",
+                "if_it_were_true": "Тогда pipeline не запускал бы сборку и тесты, но именно они — его суть.",
+                "how_it_should_be": "Pipeline автоматизирует путь кода до прода; сбор метрик и логов делают `Prometheus`/`Grafana`/`ELK`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CI/CD pipeline` — это всегда один монолитный shell-скрипт, который запускается вручную инженером перед каждым релизом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pipeline описывается как код (`Jenkinsfile`, `.gitlab-ci.yml`, workflow) и запускается автоматически по триггеру, а не вручную одним скриптом.",
+                "source_of_confusion": "Раньше деплой действительно делали скриптами вручную, и эта картинка осталась в памяти.",
+                "if_it_were_true": "Тогда не было бы автоматического запуска при коммите и параллельных этапов, ради которых pipeline и создан.",
+                "how_it_should_be": "Pipeline — это декларативно описанная цепочка этапов, запускаемая `CI`-системой по событию."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличается `CI` от `CD` в значениях `continuous delivery` и `continuous deployment`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Continuous Delivery` и `Continuous Deployment` — это полные синонимы: оба означают автоматический деплой в prod без участия человека.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Continuous Delivery` деплой в prod управляемый (approval), а полностью автоматический деплой — это уже `Continuous Deployment`.",
+                "source_of_confusion": "Обе аббревиатуры — `CD`, поэтому их трактуют как одно и то же.",
+                "if_it_were_true": "Тогда не существовало бы практик с `manual approval` перед prod, но именно так работает большинство enterprise-команд.",
+                "how_it_should_be": "Delivery оставляет ручную точку перед prod, deployment её убирает — это разные практики."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CI` (Continuous Integration) — при каждом коммите автоматически идут сборка и тесты для быстрой обратной связи. `Continuous Delivery` — код всегда готов к релизу, но деплой в prod требует ручного подтверждения (`approval`). `Continuous Deployment` — деплой в prod полностью автоматический после прохождения всех этапов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевая разница — между двумя `CD`: в delivery деплой в prod управляемый (кнопка/approval), в deployment — без человека. `CI` же только про сборку и тесты, без деплоя в prod.",
+                "example": "Enterprise-команда чаще выбирает `Continuous Delivery`: pipeline доводит образ до staging автоматически, а на prod стоит `manual approval` для тех-лида. Команда с feature flags и canary может позволить себе full `Continuous Deployment`.",
+                "when_to_apply": "Continuous Deployment уместен при зрелом тестировании, canary и автоматическом откате; Continuous Delivery — когда есть регуляторные требования или нужна точка ручного контроля перед prod.",
+                "edge_cases": "Можно сочетать: deployment до staging автоматический, а prod — delivery с approval. Сам термин `CD` без уточнения двусмысленен, поэтому на собеседовании важно проговорить, какой именно `CD` имеется в виду.",
+                "related": "[[pipeline-design-interview#Q1]] из чего состоит pipeline; [[pipeline-design-interview#Q20]] manual approval перед prod; [[pipeline-design-interview#Q38]] DORA: deployment frequency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`CI` — это автоматический деплой в продакшен при каждом merge, а `CD` — только запуск тестов в ветке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `CI` — сборка и тесты при коммите, а деплой в prod — это `CD` (delivery/deployment).",
+                "source_of_confusion": "Буквы `CI` и `CD` легко перепутать местами, особенно под стрессом интервью.",
+                "if_it_were_true": "Тогда `CI` означало бы деплой в prod, и тесты вообще не относились бы к интеграции.",
+                "how_it_should_be": "`CI` отвечает за интеграцию и проверку кода, `CD` — за доставку/деплой готового артефакта."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Разница между `CI` и `CD` только в используемом инструменте: `CI` — это `Jenkins`, а `CD` — это `GitHub Actions`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CI` и `CD` — это практики, а не инструменты; и `Jenkins`, и `GitHub Actions` умеют делать оба процесса.",
+                "source_of_confusion": "Разные команды используют разные инструменты, отсюда ложная привязка практики к названию.",
+                "if_it_were_true": "Тогда нельзя было бы делать `CI` в `GitHub Actions`, хотя именно это распространённый сценарий.",
+                "how_it_should_be": "`CI`/`CD` — это методология; любой современный инструмент покрывает обе части цепочки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать этапы pipeline — последовательно или параллельно?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все этапы pipeline всегда нужно выполнять строго последовательно, потому что параллельный запуск делает результаты сборки недетерминированными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параллельный запуск независимых этапов детерминирован: `lint` и `unit`-тесты не влияют друг на друга и ускоряют pipeline без потери надёжности.",
+                "source_of_confusion": "Параллелизм ассоциируется с гонками данных, хотя независимые job не разделяют состояние.",
+                "if_it_were_true": "Тогда `failFast` и `matrix`-сборки были бы бессмысленны, но они штатно используются в CI.",
+                "how_it_should_be": "Последовательно идут только зависимые этапы; независимые безопасно параллелить."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все этапы pipeline всегда нужно выполнять параллельно, включая сборку и тесты, чтобы получить максимальную скорость.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тесты нельзя запустить параллельно со сборкой — им нужен собранный артефакт; зависимые шаги обязаны идти последовательно.",
+                "source_of_confusion": "Желание ускорить pipeline толкает параллелить всё подряд, игнорируя зависимости.",
+                "if_it_were_true": "Тогда тесты стартовали бы на несуществующих классах и падали бы с ошибками компиляции.",
+                "how_it_should_be": "Параллелить можно только независимые этапы; сборка остаётся предусловием для тестов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Последовательно выполняют только зависимые этапы (сборка → тесты → образ), где следующий шаг требует артефакт предыдущего. Всё независимое (`unit`-тесты, `lint`, `SpotBugs`) запускают параллельно — это ускоряет pipeline в 2-3 раза. Правило: параллелить всё, что не зависит друг от друга.",
+              "correct": true,
+              "sections": {
+                "explanation": "Граф зависимостей определяет порядок: `build` обязателен первым, а `unit`-тесты, `checkstyle` и `SpotBugs` зависят только от него и идут одновременно. `Integration`-тесты ждут все параллельные проверки.",
+                "example": "В `GitHub Actions` это выражается через `needs`: job `lint` и `unit-tests` оба имеют `needs: build` и бегут параллельно, а `integration-tests` имеет `needs: [unit-tests, lint]` и стартует после обоих.",
+                "when_to_apply": "Параллелизм применяют, когда этапы независимы и есть свободные runner; последовательность — когда шаг физически нуждается в результате предыдущего (нельзя тестировать то, что не собрано).",
+                "edge_cases": "Чрезмерный параллелизм упирается в лимит runner и стоимость; иногда выгоднее сгруппировать мелкие проверки в один job, чем плодить десятки коротких параллельных задач.",
+                "related": "[[pipeline-design-interview#Q5]] fail fast и быстрые этапы первыми; [[pipeline-design-interview#Q9]] parallel в Jenkins; [[pipeline-design-interview#Q36]] оптимизация времени pipeline."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Выбор между последовательным и параллельным выполнением зависит только от `CI`-системы: `Jenkins` умеет только последовательно, а `GitHub Actions` — только параллельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обе системы поддерживают и последовательность, и параллелизм: `Jenkins` через `parallel {}`, `GitHub Actions` через `needs`.",
+                "source_of_confusion": "Разный синтаксис создаёт впечатление, что возможности систем принципиально различаются.",
+                "if_it_were_true": "Тогда директивы `parallel` в `Jenkinsfile` не существовало бы, но она есть и широко применяется.",
+                "how_it_should_be": "Порядок определяется графом зависимостей этапов, а не выбором конкретного инструмента."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `pipeline as code` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Pipeline as code` означает, что приложение само генерирует свой pipeline во время выполнения из аннотаций в коде классов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pipeline описывается отдельным конфиг-файлом в репозитории, а не генерируется приложением из аннотаций в рантайме.",
+                "source_of_confusion": "Слово «code» наводит на мысль о связи с бизнес-кодом приложения, хотя речь о конфигурации сборки.",
+                "if_it_were_true": "Тогда без запущенного приложения pipeline нельзя было бы определить, но он нужен ещё до сборки.",
+                "how_it_should_be": "Pipeline as code — это статический файл (`Jenkinsfile`/`yml`), читаемый `CI`-системой при триггере."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Pipeline as code` — это практика хранить конфигурацию pipeline в базе данных `CI`-сервера для централизованного доступа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть подхода как раз в отказе от хранения в `UI`/БД сервера в пользу файла в репозитории под версионным контролем.",
+                "source_of_confusion": "Централизация звучит как улучшение, но БД-хранилище лишает pipeline ревью и истории в `Git`.",
+                "if_it_were_true": "Тогда откат кода не откатывал бы pipeline, и единого источника правды не было бы.",
+                "how_it_should_be": "Конфигурация хранится в `Git` рядом с кодом, а не во внутренней БД `CI`-сервера."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Pipeline as code` — это требование писать все этапы pipeline исключительно на языке `Python`, без `YAML` и `Groovy`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Язык описания зависит от системы: `Groovy` в `Jenkinsfile`, `YAML` в `GitLab CI` и `GitHub Actions`; жёсткой привязки к `Python` нет.",
+                "source_of_confusion": "«As code» воспринимают как обязательный полноценный язык программирования вместо декларативного файла.",
+                "if_it_were_true": "Тогда `YAML`-workflow `GitHub Actions` не считались бы pipeline as code, хотя это классический пример.",
+                "how_it_should_be": "Ключевое — описание в версионируемом файле репозитория, а конкретный синтаксис задаёт `CI`-система."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Pipeline as code` — описание pipeline в файле внутри репозитория (`Jenkinsfile`, `.gitlab-ci.yml`, `.github/workflows/*.yml`), а не через `UI` `CI`-системы. Это даёт версионирование через `code review`, воспроизводимость (откат кода откатывает и pipeline), аудит истории в `Git` и единый источник правды без рассинхронизации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Конфигурация pipeline живёт рядом с кодом, проходит `PR` и хранит историю в `Git`. Изменение процесса сборки становится обычным изменением кода — с ревью, blame и откатом.",
+                "example": "`Jenkinsfile` в стиле Declarative описывает stages `Build`, `Test`, `Docker` и блок `post` с `junit` и `slackSend`; при откате коммита к старой версии откатывается и сам pipeline.",
+                "when_to_apply": "Pipeline as code — стандарт для любого проекта: как только настройка усложняется, держать её в `UI` становится опасно (нет ревью, нет истории, легко сломать незаметно).",
+                "edge_cases": "У каждой `CI`-системы свой файл и синтаксис, поэтому миграция между ними требует переписывания; общую логику выносят в `Shared Libraries` или reusable workflows.",
+                "related": "[[pipeline-design-interview#Q7]] Declarative vs Scripted Jenkinsfile; [[pipeline-design-interview#Q8]] Jenkins Shared Libraries; [[pipeline-design-interview#Q10]] workflow в GitHub Actions."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить быструю обратную связь в pipeline (принцип `fail fast`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Fail fast` достигается за счёт: быстрых этапов первыми (`lint`, `compile`, `unit` — секунды; перед `integration` и `e2e` — минуты), остановки pipeline при первом падении, параллельности независимых проверок, кэширования зависимостей и инкрементальной сборки только изменённого.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея — узнать о поломке как можно раньше и дешевле: дешёвые проверки идут в начале, тяжёлые — потом. При падении ранних этапов поздние не запускаются и не тратят ресурсы.",
+                "example": "Порядок `lint (10s) → compile (30s) → unit (1m) → integration (5m) → e2e (15m)`: если упал `lint`, инженер узнаёт об ошибке через 10 секунд, а не через 20 минут. В `GitHub Actions` `fail-fast: true` отменяет остальные jobs матрицы.",
+                "when_to_apply": "Fail fast применяют всегда, особенно в `PR pipeline`, где автор ждёт результата: целевые метрики — `lint`+`compile` < 1 мин, `unit` < 3 мин, полный pipeline < 15 мин.",
+                "edge_cases": "Иногда нужно наоборот — собрать все ошибки за один прогон (`fail-fast: false` в матрице), чтобы не чинить их по одной; это компромисс между скоростью и полнотой отчёта.",
+                "related": "[[pipeline-design-interview#Q3]] параллельность независимых этапов; [[pipeline-design-interview#Q6]] quality gates как точки остановки; [[pipeline-design-interview#Q22]] PR pipeline должен быть быстрым."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтобы обеспечить быструю обратную связь, нужно ставить самые медленные `e2e`-тесты в начало pipeline, а быстрые `unit`-тесты — в конец.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок обратный: быстрые этапы идут первыми, чтобы дешёвая ошибка ловилась за секунды до запуска тяжёлых `e2e`.",
+                "source_of_confusion": "Кажется логичным «сначала самое важное», и `e2e` ошибочно считают важнее `unit`.",
+                "if_it_were_true": "Тогда ошибка компиляции обнаруживалась бы только после 15 минут `e2e`, что противоречит `fail fast`.",
+                "how_it_should_be": "Сначала `lint` и `unit` (секунды), затем `integration` и `e2e` (минуты) — по возрастанию стоимости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Быстрая обратная связь достигается тем, что pipeline никогда не останавливается на ошибках и всегда проходит все этапы до конца.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fail fast — это как раз остановка при первом падении, чтобы не тратить ресурсы на заведомо нерелевантные этапы.",
+                "source_of_confusion": "«Пройти всё до конца» путают с полнотой отчёта, но это замедляет реакцию на поломку.",
+                "if_it_were_true": "Тогда сломанная сборка всё равно гоняла бы `e2e`, расходуя минуты runner впустую.",
+                "how_it_should_be": "При падении ранних этапов поздние пропускаются — обратная связь приходит быстрее."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственный способ ускорить обратную связь — купить более мощные runner; порядок и параллельность этапов на скорость не влияют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок этапов, параллельность и кэширование дают основной выигрыш; железо — лишь один из факторов.",
+                "source_of_confusion": "Мощное железо кажется универсальным решением, но не устраняет последовательное ожидание тяжёлых этапов.",
+                "if_it_were_true": "Тогда кэширование зависимостей и `fail-fast` не давали бы экономии, хотя они экономят минуты.",
+                "how_it_should_be": "Fail fast — это в первую очередь порядок, параллельность и кэш, а runner — вспомогательный рычаг."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `quality gates` и как их реализовать в pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Quality gate` — это физический сервер в дата-центре, через который проходит весь сетевой трафик pipeline для проверки безопасности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quality gate — это логический набор критериев качества кода в pipeline, а не сетевое устройство.",
+                "source_of_confusion": "Слово «gate» вызывает ассоциацию с сетевым шлюзом/firewall.",
+                "if_it_were_true": "Тогда настройка покрытия `JaCoCo` не имела бы отношения к gate, но именно она его задаёт.",
+                "how_it_should_be": "Quality gate — это правила (покрытие, issues, `CVE`), проверяемые pipeline, а не аппаратура."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Quality gate` — набор критериев, которые код должен пройти перед продвижением на следующий этап; если хотя бы один не выполнен, pipeline падает. Типичные критерии: покрытие тестами >= 80% (`JaCoCo`), 0 критических issues в `SonarQube`, зелёные тесты, отсутствие критических `CVE` (`OWASP`), пройденное сканирование образа (`Trivy`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Gate автоматизирует требования к качеству: вместо «договорились следить за покрытием» pipeline жёстко проверяет порог и блокирует продвижение. Это объективная, неотменяемая вручную проверка.",
+                "example": "В `Gradle` `jacocoTestCoverageVerification` с `minimum = 0.80` и `check.dependsOn` падает, если покрытие ниже порога. В `SonarQube` gate проверяется через `waitForQualityGate()` в `Jenkins` или `sonar-quality-gate-check` action.",
+                "when_to_apply": "Quality gates ставят на критичных переходах: перед merge в main, перед публикацией артефакта, перед деплоем в prod — там, где цена пропущенного дефекта высока.",
+                "edge_cases": "Слишком жёсткие пороги (например, 100% покрытия) провоцируют гейминг метрик и фиктивные тесты; пороги задают реалистичными и исключают из покрытия `dto`/`config`-пакеты.",
+                "related": "[[pipeline-design-interview#Q5]] gate как точка fail fast; [[pipeline-design-interview#Q27]] security gates: SAST, image scan; [[pipeline-design-interview#Q23]] тесты как часть gate."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Quality gate` — это ручная проверка кода ревьюером, которая всегда выполняется вместо автоматических тестов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quality gate автоматизирован (`JaCoCo`, `SonarQube`); code review — отдельная практика и gate его не заменяет.",
+                "source_of_confusion": "И gate, и review служат качеству, поэтому их роли смешивают.",
+                "if_it_were_true": "Тогда нельзя было бы настроить порог покрытия в `Gradle`, но это штатная автоматика.",
+                "how_it_should_be": "Quality gate — это автоматические критерии в pipeline; ревью человеком дополняет, но не подменяет их."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Quality gate` срабатывает только постфактум, уже после деплоя в prod, и лишь записывает нарушения в лог без блокировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gate блокирует продвижение до деплоя: при нарушении критерия pipeline падает, и артефакт не публикуется.",
+                "source_of_confusion": "Gate путают с пассивным мониторингом качества в проде.",
+                "if_it_were_true": "Тогда плохой код всё равно попадал бы в prod, и смысл gate как барьера исчезал бы.",
+                "how_it_should_be": "Gate — это барьер до продвижения; при провале pipeline останавливается, а не просто логирует."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличается `Declarative Pipeline` от `Scripted Pipeline` в `Jenkins`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Declarative Pipeline` пишется на `Python`, а `Scripted Pipeline` — на `Bash`; это два разных языка описания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба варианта основаны на `Groovy`: Declarative — структурированный DSL, Scripted — произвольный `Groovy`-код.",
+                "source_of_confusion": "Разный вид синтаксиса создаёт впечатление разных языков.",
+                "if_it_were_true": "Тогда `sh './gradlew ...'` в `Groovy`-блоках не работал бы, но он одинаков для обоих стилей.",
+                "how_it_should_be": "И Declarative, и Scripted — это `Groovy`; различается лишь степень структурированности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Scripted Pipeline` валидируется на этапе парсинга и ловит синтаксические ошибки до запуска, а `Declarative` — только во время исполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: ранняя валидация при парсинге — преимущество `Declarative`; `Scripted` падает только при исполнении.",
+                "source_of_confusion": "Свойства двух стилей легко перепутать местами, так как оба про `Jenkins`.",
+                "if_it_were_true": "Тогда `Declarative` не имел бы преимущества раннего обнаружения ошибок, хотя именно оно его отличает.",
+                "how_it_should_be": "Declarative валидируется при парсинге, Scripted — при исполнении; это плюс декларативного стиля."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Declarative` — структурированный синтаксис (`pipeline {}`) с валидацией на этапе парсинга, обработкой ошибок через блок `post {}` и полной поддержкой Blue Ocean; покрывает ~90% случаев и рекомендуется по умолчанию. `Scripted` — произвольный `Groovy` (`node {}`) с `try/catch/finally`, валидацией только при исполнении и полной гибкостью для нетривиальной логики.",
+              "correct": true,
+              "sections": {
+                "explanation": "Declarative ограничивает свободу ради читаемости, ранней валидации и единообразия; Scripted даёт полный `Groovy` для случаев, которые нельзя выразить декларативно (сложные циклы, динамические стадии).",
+                "example": "Declarative `pipeline { agent any; stages { stage('Build & Test'){ steps { sh './gradlew clean build' } } } }` с блоком `post { failure { slackSend ... } }`. Scripted — `node { try { stage('Build'){...} } catch(e){ slackSend ...; throw e } finally { junit ... } }`.",
+                "when_to_apply": "Declarative — для большинства проектов: проще, безопаснее, лучше поддержан UI. Scripted — когда нужна логика, которую декларативный синтаксис не выражает (например, генерация стадий в цикле).",
+                "edge_cases": "Внутри Declarative можно встраивать `script {}`-блоки с `Groovy` для точечной гибкости — гибридный подход, не переходя полностью на Scripted.",
+                "related": "[[pipeline-design-interview#Q4]] pipeline as code и Jenkinsfile; [[pipeline-design-interview#Q8]] Shared Libraries для переиспользования; [[pipeline-design-interview#Q9]] parallel-стадии в Jenkins."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Declarative Pipeline` рекомендуется только для legacy-проектов, а все новые проекты `Jenkins` обязаны использовать `Scripted`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендация обратная: `Declarative` — выбор по умолчанию для большинства новых проектов, `Scripted` — для редких сложных случаев.",
+                "source_of_confusion": "«Полная гибкость» Scripted ошибочно воспринимают как признак «более современного» подхода.",
+                "if_it_were_true": "Тогда документация `Jenkins` не продвигала бы Declarative как предпочтительный, но она именно это делает.",
+                "how_it_should_be": "Declarative покрывает ~90% случаев и рекомендуется; Scripted берут под нетривиальную логику."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Jenkins Shared Libraries` и когда их использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Jenkins Shared Libraries` — это плагины `Jenkins`, устанавливаемые через Plugin Manager из центрального маркетплейса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Shared Libraries — это `Groovy`-код в `Git`-репозитории, подключаемый через `@Library`, а не плагины из Plugin Manager.",
+                "source_of_confusion": "И плагины, и библиотеки расширяют `Jenkins`, поэтому их путают.",
+                "if_it_were_true": "Тогда нельзя было бы держать общую логику в собственном `Git`-репо команды, но именно для этого они и нужны.",
+                "how_it_should_be": "Shared Library — это ваш `Groovy`-репозиторий с `vars/` и `src/`, а не устанавливаемый плагин."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Shared Libraries` хранят результаты сборки и тестов между запусками pipeline, выступая кэшем артефактов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хранение результатов сборки — это задача build cache и артефактного репозитория; библиотеки же хранят переиспользуемый код pipeline.",
+                "source_of_confusion": "Слово «shared» наводит на мысль об общем хранилище данных, а не общем коде.",
+                "if_it_were_true": "Тогда `vars/buildJavaApp.groovy` содержал бы артефакты, но он содержит функции pipeline.",
+                "how_it_should_be": "Shared Libraries переиспользуют логику pipeline; кэш артефактов — это `Nexus`/build cache."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Shared Libraries` имеет смысл заводить даже для единственного проекта с простым `Jenkinsfile` из трёх строк ради «правильной» архитектуры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для одного простого проекта библиотека — лишний overhead; выгода появляется при переиспользовании в нескольких проектах.",
+                "source_of_confusion": "Стремление к «чистой архитектуре» провоцирует преждевременную абстракцию.",
+                "if_it_were_true": "Тогда каждый pet-проект требовал бы отдельного репозитория библиотеки, что усложняет без пользы.",
+                "how_it_should_be": "Библиотеку вводят, когда общая логика дублируется в 3-5+ проектах, а не ради единственного."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Shared Libraries` — переиспользуемые `Groovy`-библиотеки в отдельном `Git`-репозитории, подключаемые к `Jenkinsfile` через `@Library`. Они выносят общую логику pipeline (сборка, деплой, нотификации) в глобальные функции (`vars/`) и классы (`src/`), чтобы использовать её в десятках проектов. Применяют при 3-5+ проектах с одинаковой структурой и для стандартизации CI/CD в организации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместо копирования одного и того же `Jenkinsfile` по репозиториям логика описывается один раз в библиотеке, а проекты вызывают готовую функцию. Изменение в библиотеке централизованно обновляет все pipeline.",
+                "example": "`vars/buildJavaApp.groovy` определяет `def call(Map config){ pipeline { ... stages { Build/Test/Publish } } }`, а в проекте `Jenkinsfile` сводится к `@Library('my-shared-lib') _` и `buildJavaApp(jdkImage: 'eclipse-temurin:21-jdk')`.",
+                "when_to_apply": "Когда несколько проектов делят одинаковый процесс CI/CD, нужна стандартизация и централизованный credentials management — библиотека убирает дублирование и упрощает аудит.",
+                "edge_cases": "Для одного-двух проектов библиотека избыточна (overhead на отдельный репозиторий и версионирование); версию библиотеки стоит пинить (`@Library('lib@v1.2')`), иначе изменение сломает все pipeline разом.",
+                "related": "[[pipeline-design-interview#Q4]] pipeline as code; [[pipeline-design-interview#Q7]] Declarative pipeline внутри библиотеки; [[pipeline-design-interview#Q33]] стандартизация pipeline для микросервисов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать параллельные стадии в `Jenkins Pipeline`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Параллельные стадии задаются директивой `parallel {}` внутри `stage`: несколько вложенных `stage` (например, `Unit Tests`, `Checkstyle`, `SpotBugs`) выполняются одновременно. Флаг `failFast true` останавливает все ветки при падении любой, экономя ресурсы; при нескольких нодах `Jenkins` распределяет ветки по разным агентам.",
+              "correct": true,
+              "sections": {
+                "explanation": "Директива `parallel` оборачивает группу независимых проверок, которые не зависят друг от друга, но все зависят от предыдущей стадии (`Build`). Это сокращает суммарное время на длительность самой долгой ветки.",
+                "example": "`stage('Parallel Checks'){ parallel { stage('Unit Tests'){ steps { sh './gradlew test' } } stage('Checkstyle'){ steps { sh './gradlew checkstyleMain' } } stage('SpotBugs'){ steps { sh './gradlew spotbugsMain' } } } failFast true }`.",
+                "when_to_apply": "Применяют, когда несколько проверок независимы и нужно сократить время; при наличии нескольких агентов выигрыш максимален, так как ветки идут на разном железе.",
+                "edge_cases": "`failFast true` экономит время, но прячет часть ошибок — если нужно увидеть все провалы за один прогон, его отключают. Параллельные ветки конкурируют за ресурсы агента, если нод мало.",
+                "related": "[[pipeline-design-interview#Q3]] параллельность как общий принцип; [[pipeline-design-interview#Q5]] fail fast; [[pipeline-design-interview#Q7]] Declarative pipeline синтаксис."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Параллельные стадии в `Jenkins` задаются ключевым словом `async` перед каждым `stage`, как в `JavaScript`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Jenkins` используется директива `parallel {}` с вложенными `stage`, а ключевого слова `async` в `Groovy`-DSL нет.",
+                "source_of_confusion": "Опыт async/await из JS переносят на синтаксис `Jenkinsfile`.",
+                "if_it_were_true": "Тогда `parallel`-блок был бы не нужен, но именно он — штатный механизм `Jenkins`.",
+                "how_it_should_be": "Параллелизм описывается блоком `parallel { stage{...} stage{...} }`, а не модификатором `async`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Параллельные стадии возможны только если у `Jenkins` ровно один агент, иначе ветки конфликтуют и сборка падает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: несколько агентов позволяют `Jenkins` распределить параллельные ветки по разным нодам и ускорить выполнение.",
+                "source_of_confusion": "Параллелизм путают с гонкой за один ресурс, хотя ветки независимы.",
+                "if_it_were_true": "Тогда масштабирование `Jenkins` агентами было бы бессмысленно, но именно оно ускоряет параллельные стадии.",
+                "how_it_should_be": "Чем больше агентов, тем лучше распределяются параллельные ветки; один агент — лишь нижняя граница."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Флаг `failFast true` в `parallel`-блоке означает, что упавшие ветки автоматически перезапускаются до успеха.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`failFast true` останавливает остальные ветки при первом падении, а не перезапускает упавшие.",
+                "source_of_confusion": "«Fast» ассоциируют с быстрым повтором, хотя речь о быстрой остановке.",
+                "if_it_were_true": "Тогда сломанный код бесконечно ретраился бы, маскируя реальную ошибку.",
+                "how_it_should_be": "`failFast` прерывает параллельные ветки при первом провале, экономя ресурсы, без автоповтора."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен `workflow` в `GitHub Actions`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Workflow` в `GitHub Actions` — это один большой shell-скрипт без структуры job/step, выполняемый последовательно сверху вниз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Workflow имеет чёткую иерархию `jobs → steps → actions`, а не является плоским shell-скриптом.",
+                "source_of_confusion": "Финальные `run:`-шаги действительно содержат shell-команды, что создаёт ложное обобщение.",
+                "if_it_were_true": "Тогда нельзя было бы запускать job-ы параллельно и связывать через `needs`, но это базовая возможность.",
+                "how_it_should_be": "Workflow структурирован на job-ы и step-ы; параллелизм и зависимости задаются декларативно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Workflow` — `YAML`-файл в `.github/workflows/`, запускаемый по триггеру (`push`, `pull_request`). Он состоит из `job`-ов (набор шагов на одном runner), каждый job — из `step`-ов (команда или `action`), а `action` — переиспользуемый компонент (аналог `Jenkins Shared Library`). Job-ы связываются через `needs` и могут использовать `environment` для approval-gate.",
+              "correct": true,
+              "sections": {
+                "explanation": "Иерархия чёткая: workflow → jobs → steps → actions. Job-ы по умолчанию идут параллельно, а `needs` задаёт зависимости; `environment` с reviewers создаёт ручной approval перед деплоем.",
+                "example": "Workflow `on: [push, pull_request]` с job-ами `build` (`./gradlew assemble` + `upload-artifact`), `test` (`needs: build`, сервис `postgres:16`), `docker` (`needs: test`, `if: github.ref == 'refs/heads/main'`), `deploy-prod` с `environment: production`.",
+                "when_to_apply": "GitHub Actions выбирают для проектов на `GitHub`: нативная интеграция, marketplace готовых actions, бесплатные runner для open source и простой `YAML`-синтаксис.",
+                "edge_cases": "Каждый job стартует на чистом runner — артефакты между job-ами передаются через `upload-artifact`/`download-artifact`, а не через файловую систему. `secrets.GITHUB_TOKEN` ограничен правами текущего репозитория.",
+                "related": "[[pipeline-design-interview#Q4]] workflow как pipeline as code; [[pipeline-design-interview#Q11]] matrix build; [[pipeline-design-interview#Q12]] сравнение с GitLab CI."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `GitHub Actions` все job одного workflow выполняются строго последовательно и на одном и том же runner с общей файловой системой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Job-ы по умолчанию параллельны и каждый запускается на отдельном чистом runner; артефакты передаются через upload/download.",
+                "source_of_confusion": "Внутри одного job шаги действительно делят файловую систему, и это переносят на весь workflow.",
+                "if_it_were_true": "Тогда `needs` и `upload-artifact` были бы не нужны, но они существуют именно из-за изоляции job-ов.",
+                "how_it_should_be": "Каждый job изолирован на своём runner и параллелен; порядок задаётся через `needs`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Action` в `GitHub Actions` — это синоним `job`: оба термина обозначают набор шагов на одном runner.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Action` — это переиспользуемый компонент внутри step (`uses:`), а `job` — набор step-ов на runner; это разные уровни иерархии.",
+                "source_of_confusion": "Название платформы «Actions» путают с конкретным элементом `action`.",
+                "if_it_were_true": "Тогда `uses: actions/checkout@v4` был бы job-ом, но это action внутри step.",
+                "how_it_should_be": "Action — переиспользуемый блок шага; job — контейнер из шагов; термины не взаимозаменяемы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `matrix build` и когда его применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Matrix build` — это сборка, при которой все артефакты складываются в общую матричную таблицу в `Nexus` для удобного поиска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Matrix build — это запуск workflow с комбинациями параметров (`Java`/ОС/СУБД), а не способ хранения артефактов в таблице.",
+                "source_of_confusion": "Слово «matrix» ассоциируют с табличным хранилищем данных.",
+                "if_it_were_true": "Тогда `strategy: matrix` в `YAML` не порождал бы отдельные job-ы, но именно это его суть.",
+                "how_it_should_be": "Matrix build разворачивает комбинации параметров в параллельные job-ы прогонов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Matrix build` всегда создаёт ровно один job независимо от числа комбинаций параметров, объединяя их в общий прогон.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждая комбинация матрицы — отдельный job; `2×2` даёт 4 независимых job-а, а не один.",
+                "source_of_confusion": "Один блок `matrix` в `YAML` выглядит как одна задача, хотя разворачивается во множество.",
+                "if_it_were_true": "Тогда нельзя было бы тестировать `Java 17` и `21` параллельно, но матрица именно это и делает.",
+                "how_it_should_be": "Число job-ов равно числу комбинаций; на это нужно закладывать лимиты runner."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Matrix build` — запуск одного workflow с разными комбинациями параметров (версия `Java`, ОС, СУБД): `matrix: { java: [17, 21], os: [ubuntu-latest, windows-latest] }` порождает по job-у на каждую комбинацию (`2×2 = 4`). Применяют для библиотек с поддержкой нескольких версий `Java`, кроссплатформенных проектов и тестов с разными СУБД.",
+              "correct": true,
+              "sections": {
+                "explanation": "Матрица разворачивает декартово произведение параметров в отдельные job-ы, проверяя совместимость кода со всеми комбинациями за один workflow. `fail-fast: true` останавливает все при первом падении.",
+                "example": "`strategy: { matrix: { java: [17, 21], os: [ubuntu-latest, windows-latest] } }`, `runs-on: ${{ matrix.os }}`, и в `setup-java` — `java-version: ${{ matrix.java }}`; итог — четыре независимых прогона `./gradlew test`.",
+                "when_to_apply": "Матрицу применяют для библиотек, обязанных работать на нескольких `Java`/ОС/СУБД, чтобы не дублировать workflow вручную для каждой комбинации.",
+                "edge_cases": "Каждая комбинация — отдельный job, поэтому матрица легко раздувается (`3×3×2 = 18` job-ов) и съедает лимиты runner; её держат минимальной и осмысленной.",
+                "related": "[[pipeline-design-interview#Q10]] job и runner в workflow; [[pipeline-design-interview#Q5]] fail-fast в матрице; [[pipeline-design-interview#Q25]] тесты с разными СУБД через Testcontainers."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Применять `matrix build` следует для каждого проекта по умолчанию, даже если он поддерживает единственную версию `Java` и одну ОС.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для одной версии `Java` и одной ОС матрица избыточна — она оправдана только при реальном множестве целевых комбинаций.",
+                "source_of_confusion": "Матрицу воспринимают как «лучшую практику на все случаи», игнорируя стоимость лишних job-ов.",
+                "if_it_were_true": "Тогда простой сервис плодил бы пустые комбинации без пользы, тратя runner-минуты.",
+                "how_it_should_be": "Матрицу вводят при необходимости проверять несколько версий/платформ, а не повсеместно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `CI/CD` pipeline в `GitLab CI`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `GitLab CI` pipeline настраивается через web-UI в разделе Settings, а файл `.gitlab-ci.yml` используется только для документации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.gitlab-ci.yml` — это и есть исполняемое описание pipeline (pipeline as code), а не документация; UI лишь отображает результат.",
+                "source_of_confusion": "Наличие богатого UI создаёт впечатление, что конфигурация хранится там.",
+                "if_it_were_true": "Тогда `GitLab CI` не был бы pipeline as code, но он именно файловый и версионируемый.",
+                "how_it_should_be": "Конфигурация целиком живёт в `.gitlab-ci.yml` под версионным контролем."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`GitLab CI` не умеет запускать sidecar-контейнеры вроде `PostgreSQL` для тестов — для этого нужен только `GitHub Actions`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GitLab CI` поддерживает `services:` для sidecar-контейнеров (`postgres:16`, `docker:24-dind`) — это его штатная возможность.",
+                "source_of_confusion": "Ключевые слова отличаются (`services` vs `services`), и возможности кажутся эксклюзивом одной платформы.",
+                "if_it_were_true": "Тогда интеграционные тесты с БД в `GitLab CI` были бы невозможны, но они работают через `services`.",
+                "how_it_should_be": "`services:` в `GitLab CI` поднимает sidecar-контейнеры так же, как `services` в `GitHub Actions`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `GitLab CI` нет понятия ручного этапа: любой job обязательно запускается автоматически при срабатывании pipeline.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ручные этапы задаются `when: manual` — job ждёт нажатия кнопки в UI, что типично для деплоя в prod.",
+                "source_of_confusion": "Автоматизм CI воспринимают как «всё всегда автоматом», забывая про ручные gate.",
+                "if_it_were_true": "Тогда нельзя было бы сделать manual approval перед prod, но `when: manual` это обеспечивает.",
+                "how_it_should_be": "`when: manual` превращает job в ручной этап с подтверждением — аналог approval gate."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`GitLab CI` использует `.gitlab-ci.yml` в корне репозитория: глобальные `stages`, `variables`, `cache` и job-ы с привязкой к stage через `stage:`. Ключевые отличия от `GitHub Actions` — встроенный container registry, `services` для sidecar-контейнеров (`postgres:16`), `rules` вместо `if`, `when: manual` для ручных этапов и `artifacts:reports:junit` для отображения тестов в MR.",
+              "correct": true,
+              "sections": {
+                "explanation": "Job-ы группируются по `stages` (`build`, `test`, `analyze`, `docker`, `deploy`); внутри stage идут параллельно, между stage — последовательно. `rules` управляют запуском (например, только для MR или ветки main).",
+                "example": "`deploy-prod: { stage: deploy, script: ['kubectl set image ...'], when: manual, rules: [{ if: '$CI_COMMIT_BRANCH == \"main\"' }] }` — ручной деплой в prod только с ветки main; `docker-build` использует `docker:24-dind` как service.",
+                "when_to_apply": "GitLab CI выбирают команды на `GitLab`: единая платформа (repo + CI + registry), удобные `rules` и `services`, автоматическое отображение `junit`-отчётов в merge request.",
+                "edge_cases": "`services` поднимают sidecar-контейнеры рядом с job (`docker:24-dind` для сборки образов); кэш привязывают к ветке через `key: ${CI_COMMIT_REF_SLUG}`, иначе ветки перетирают кэш друг друга.",
+                "related": "[[pipeline-design-interview#Q10]] сравнение с GitHub Actions; [[pipeline-design-interview#Q20]] when: manual как approval; [[pipeline-design-interview#Q14]] cache в GitLab CI."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое артефакты pipeline и как их версионировать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Артефакты — результат сборки (`jar`, `war`, `Docker`-образ), передаваемый между этапами или в registry. Версионируют по стратегиям: `Semver` (`1.2.3`) для релизов, Git `SHA` (`abc1234`) для dev/staging, semver+build (`1.2.3-rc.5`) для release candidate, branch+SHA (`main-abc1234`) для feature-веток. Правила: один тег — одна версия (не перезаписывать), в prod никогда не `latest`, при откате деплоить старый артефакт без пересборки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Артефакт связывает код с тем, что реально работает в проде. Стабильная схема версий обеспечивает трассируемость (по тегу видно коммит) и безопасный откат (старая версия лежит готовой).",
+                "example": "`jar` публикуется в `Nexus`/`Artifactory` через `Gradle publishing` (`version = project.version`, repo `maven-releases`), а образ — в container registry с тегом по git `SHA`; prod получает `myapp:1.2.3`, а не `myapp:latest`.",
+                "when_to_apply": "Версионирование артефактов нужно везде, где есть деплой: оно делает откаты предсказуемыми и позволяет точно сказать, какой код сейчас в проде.",
+                "edge_cases": "Перезапись уже опубликованного тега (особенно `latest`) ломает воспроизводимость и откат: разные сборки начинают означать один тег. Поэтому релизные репозитории `Nexus` запрещают redeploy.",
+                "related": "[[pipeline-design-interview#Q15]] интеграция с Nexus/Artifactory; [[pipeline-design-interview#Q16]] воспроизводимость и тег по коммиту; [[pipeline-design-interview#Q31]] откат через старый артефакт."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Артефакты pipeline — это логи сборки и тестов, которые хранятся в `CI`-системе для последующего анализа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Артефакт — это результат сборки (`jar`, образ), продвигаемый в registry; логи — это отдельный вид вывода, а не деплоимый артефакт.",
+                "source_of_confusion": "`CI`-системы называют «artifacts» и загружаемые отчёты/логи, отсюда смешение.",
+                "if_it_were_true": "Тогда нельзя было бы задеплоить артефакт в prod, но именно `jar`/образ туда и едут.",
+                "how_it_should_be": "Артефакт — это собранный деплоимый бинарь/образ; логи и отчёты — вспомогательный вывод."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Лучшая практика версионирования — всегда тегировать prod-образ как `latest`, чтобы деплой всегда брал самую свежую версию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В prod `latest` запрещён: он непредсказуем и ломает откат; используют явную версию (`1.2.3` или git `SHA`).",
+                "source_of_confusion": "`latest` кажется удобным «всегда актуальным» тегом, но он скрывает, что именно развёрнуто.",
+                "if_it_were_true": "Тогда откат к конкретной версии был бы невозможен, ведь `latest` указывает на меняющийся образ.",
+                "how_it_should_be": "Prod деплоят по явной неизменяемой версии; `latest` допустим лишь для локальной разработки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При откате правильнее пересобрать предыдущую версию из исходников заново, чем деплоить уже опубликованный старый артефакт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Откат деплоит уже готовый старый артефакт — это быстрее и надёжнее, чем пересборка, которая может дать иной результат.",
+                "source_of_confusion": "Кажется, что «пересобрать из тех же исходников» безопасно, но воспроизводимость не гарантирована без жёстких мер.",
+                "if_it_were_true": "Тогда откат занимал бы минуты сборки вместо секунд и риск нового бага рос бы.",
+                "how_it_should_be": "Откат — это деплой ранее опубликованного артефакта по его версии, без пересборки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как кэшировать зависимости в pipeline (`Gradle`, `Maven`, `npm`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Чтобы кэшировать зависимости, нужно закоммитить папку `build/` в `Git` — тогда pipeline возьмёт готовые классы оттуда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэшируют каталог зависимостей (`~/.gradle`, `~/.m2`), а не `build/`; коммитить артефакты сборки в `Git` — антипаттерн.",
+                "source_of_confusion": "`build/` содержит результаты, и его ошибочно считают тем, что стоит сохранять между запусками.",
+                "if_it_were_true": "Тогда репозиторий распухал бы от бинарей, а инкрементальная сборка ломалась бы на устаревших классах.",
+                "how_it_should_be": "В кэш кладут скачанные зависимости; `build/` пересоздаётся каждой сборкой и в `Git` не хранится."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Кэширование зависимостей ускоряет pipeline на 2-5 минут, исключая повторное скачивание. В `GitHub Actions` для `Gradle` — `cache: gradle` в `setup-java`; для `Maven` — `actions/cache` с ключом `hashFiles('/pom.xml')`. В `GitLab CI` — блок `cache` с `key.files` по lock-файлам. Ключ кэша = хэш lock-файла; `restore-keys` даёт fallback; кэшируют только зависимости, не `build/`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Кэш переиспользует скачанные зависимости между запусками. Привязка ключа к хэшу lock-файла гарантирует инвалидацию при изменении зависимостей: новые версии → новый ключ → пересоздание кэша.",
+                "example": "`uses: actions/cache@v4` с `key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}` и `restore-keys: ${{ runner.os }}-m2-`: при совпадении хэша берётся точный кэш, иначе — ближайший частичный.",
+                "when_to_apply": "Кэш зависимостей применяют в каждом проекте с внешними библиотеками; выигрыш тем больше, чем тяжелее граф зависимостей и чаще запускается pipeline.",
+                "edge_cases": "Кэшировать `build/` нельзя — это путает инкрементальную сборку и тянет за собой устаревшие классы. `TTL` кэша ограничен (`GitHub Actions` — 7 дней), поэтому редкие проекты всё равно иногда качают всё заново.",
+                "related": "[[pipeline-design-interview#Q5]] кэш как часть fail fast; [[pipeline-design-interview#Q16]] lock-файлы и воспроизводимость; [[pipeline-design-interview#Q18]] Gradle Build Cache против кэша зависимостей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ключ кэша зависимостей должен быть статичной строкой, например `cache-v1`, и никогда не меняться при обновлении зависимостей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключ привязывают к хэшу lock-файла, чтобы при смене зависимостей кэш инвалидировался; статичный ключ отдаст устаревший кэш.",
+                "source_of_confusion": "Статичный ключ кажется проще и стабильнее, но он перестаёт отражать реальный набор зависимостей.",
+                "if_it_were_true": "Тогда после добавления новой библиотеки pipeline брал бы старый кэш без неё и падал бы.",
+                "how_it_should_be": "Ключ = хэш `pom.xml`/`build.gradle.kts`; изменение зависимостей пересоздаёт кэш автоматически."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кэширование зависимостей доступно только в `Jenkins` и невозможно в `GitHub Actions` или `GitLab CI`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "И `GitHub Actions` (`cache: gradle`, `actions/cache`), и `GitLab CI` (`cache:`) штатно поддерживают кэш зависимостей.",
+                "source_of_confusion": "Разный синтаксис кэша в системах создаёт впечатление, что фича где-то отсутствует.",
+                "if_it_were_true": "Тогда `actions/cache@v4` не существовал бы, но это популярный официальный action.",
+                "how_it_should_be": "Кэш зависимостей есть во всех основных `CI`-системах, отличается лишь синтаксис."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как pipeline интегрируется с артефактным репозиторием (`Nexus`, `Artifactory`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pipeline должен публиковать артефакт в репозиторий до запуска тестов, чтобы версия зафиксировалась как можно раньше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Публикация идёт после успешной сборки и тестов — иначе в репозиторий попадёт непроверенный или сломанный артефакт.",
+                "source_of_confusion": "«Зафиксировать раньше» путают с корректным порядком этапов pipeline.",
+                "if_it_were_true": "Тогда в `Nexus` оседали бы непротестированные `jar`, и downstream-потребители тянули бы битьё.",
+                "how_it_should_be": "Сначала сборка и зелёные тесты, затем `publish` проверенного артефакта."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Credentials для `Nexus` правильнее всего хранить прямо в `build.gradle.kts` как литералы, чтобы сборка работала на любом агенте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Креды берут из переменных окружения/секретов (`System.getenv`), а не из исходников; литералы в `build.gradle` — утечка секрета в `Git`.",
+                "source_of_confusion": "Хардкод кажется надёжным («всегда под рукой»), но он публикует секрет в репозитории.",
+                "if_it_were_true": "Тогда любой с доступом к коду получил бы пароль от `Nexus`, что недопустимо.",
+                "how_it_should_be": "Логин/пароль читаются из env или credentials store `CI`, а в коде — только ссылки на них."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Артефактный репозиторий — единое место хранения и версионирования артефактов; pipeline публикует их после успешной сборки и тестов. `Gradle` настраивают через `publishing.repositories.maven` с URL и `credentials` из env (`NEXUS_USER`/`NEXUS_PASSWORD`), выбирая releases или snapshots по версии. В `Jenkinsfile` — `withCredentials` + `./gradlew publish`. Promotion: `Artifactory` перемещает артефакт dev→release без пересборки, `Nexus` — через staging-репозитории.",
+              "correct": true,
+              "sections": {
+                "explanation": "Репозиторий отделяет хранение артефактов от `CI`: pipeline только публикует, а потребители тянут версии оттуда. Снапшоты и релизы разводят по разным репозиториям, чтобы релизный тег был неизменяем.",
+                "example": "`url = if (version.endsWith(\"SNAPSHOT\")) snapshotsUrl else releasesUrl` в `build.gradle.kts`; в `Jenkinsfile` — `withCredentials([usernamePassword(credentialsId: 'nexus-creds', ...)]) { sh './gradlew publish' }`.",
+                "when_to_apply": "Артефактный репозиторий нужен, когда артефакты переиспользуются другими сервисами/командами или требуется аудит и хранение релизов отдельно от `CI`-системы.",
+                "edge_cases": "`Nexus` не умеет нативный promotion (перенос dev→release без пересборки), поэтому используют staging-репозитории; `Artifactory` поддерживает promotion напрямую. Креды кладут только в секреты, не в `build.gradle`.",
+                "related": "[[pipeline-design-interview#Q13]] версионирование артефактов; [[pipeline-design-interview#Q26]] хранение credentials в pipeline; [[pipeline-design-interview#Q16]] snapshot vs release и воспроизводимость."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Nexus` и `Artifactory` одинаково поддерживают нативный promotion артефакта из dev в release без каких-либо обходных решений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Artifactory` умеет promotion нативно, а `Nexus` — нет; в `Nexus` для этого используют staging-репозитории.",
+                "source_of_confusion": "Оба продукта — артефактные репозитории, поэтому их возможности считают идентичными.",
+                "if_it_were_true": "Тогда staging-репозитории в `Nexus` были бы не нужны, но именно ими и обходят отсутствие promotion.",
+                "how_it_should_be": "Promotion без пересборки есть у `Artifactory`; в `Nexus` его эмулируют через staging."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить воспроизводимость сборки в pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для воспроизводимости достаточно всегда использовать самые свежие версии зависимостей через диапазоны вроде `1.+`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Диапазоны (`1.+`) как раз ломают воспроизводимость — версия плавает между сборками; нужны зафиксированные версии и lock-файлы.",
+                "source_of_confusion": "«Всегда свежее» путают со стабильностью, хотя свежесть и недетерминирует сборку.",
+                "if_it_were_true": "Тогда два прогона одного коммита могли бы подтянуть разные версии библиотеки и разойтись.",
+                "how_it_should_be": "Версии фиксируют точными значениями и lock-файлами, а не открытыми диапазонами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Воспроизводимость обеспечивается тем, что базовый образ сборки всегда указывают как `latest`, чтобы получать актуальные патчи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`latest` плавает и нарушает воспроизводимость; используют конкретный тег вроде `eclipse-temurin:21.0.2-jdk`.",
+                "source_of_confusion": "Желание свежих патчей безопасности толкает к `latest`, но ценой недетерминизма.",
+                "if_it_were_true": "Тогда обновление базового образа меняло бы артефакт без изменения кода, ломая откат.",
+                "how_it_should_be": "Базовый образ пинуют конкретным тегом; патчи накатывают осознанным обновлением тега."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Воспроизводимость зависит только от хэша коммита: если коммит один и тот же, артефакт всегда идентичен независимо от окружения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один коммит не гарантирует идентичность: плавающие зависимости, базовый образ и версия `Gradle` влияют на результат, поэтому их тоже фиксируют.",
+                "source_of_confusion": "Кажется, что код полностью определяет сборку, но окружение и зависимости — её неявные входы.",
+                "if_it_were_true": "Тогда dependency locking и пиннинг образа были бы лишними, но без них сборки расходятся.",
+                "how_it_should_be": "Воспроизводимость требует фиксации всех входов: код, зависимости, образ и инструмент сборки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Воспроизводимость — повторная сборка из того же коммита даёт идентичный артефакт. Меры: фиксированные версии зависимостей (`Gradle` dependency locking, `Maven` explicit versions, npm `package-lock.json`), фиксированный образ сборки (`eclipse-temurin:21.0.2-jdk`, не `latest`), `Gradle Wrapper` с пинованной версией, тегирование артефакта по коммиту. В `CI` — `./gradlew build --no-daemon` для стабильности.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без фиксации входов сборка зависит от «плавающих» версий зависимостей и базовых образов, и два прогона одного коммита расходятся. Locking и пинованные образы убирают этот недетерминизм.",
+                "example": "`dependencyLocking { lockAllConfigurations() }` в `build.gradle.kts`, генерация `./gradlew dependencies --write-locks` и коммит `gradle/dependency-locks/*.lockfile`; образ сборки — конкретный тег, не `latest`.",
+                "when_to_apply": "Воспроизводимость критична для безопасных откатов, аудита и расследований инцидентов: нужно гарантировать, что артефакт в проде ровно тот, что собран из конкретного коммита.",
+                "edge_cases": "Полная bit-for-bit воспроизводимость сложна (таймстемпы в архивах, порядок файлов), поэтому часто ограничиваются «практической» — стабильным набором зависимостей и образа. `latest` в базовом образе незаметно ломает её.",
+                "related": "[[pipeline-design-interview#Q13]] тегирование артефакта по коммиту; [[pipeline-design-interview#Q14]] lock-файлы и кэш зависимостей; [[pipeline-design-interview#Q17]] флаги Gradle для CI."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить `Gradle` для `CI/CD` pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для `CI` настраивают `Gradle`: toolchain с фиксированной версией `Java` (21), `useJUnitPlatform()`, `maxParallelForks` для параллельных тестов, `jacocoTestReport` с `xml.required` для `SonarQube`, `jacocoTestCoverageVerification` с порогом и `check.dependsOn`. Запускают с флагами `--no-daemon` (daemon не переиспользуется между запусками), `--parallel` (модули параллельно), `--build-cache` (переиспользование результатов задач).",
+              "correct": true,
+              "sections": {
+                "explanation": "В `CI` важны детерминизм и скорость: `--no-daemon` экономит RAM и убирает зависимость от состояния daemon, `--parallel` ускоряет multi-module сборку, `--build-cache` переиспользует неизменные задачи.",
+                "example": "`./gradlew build --no-daemon --parallel --build-cache -Dorg.gradle.workers.max=4`; в `build.gradle.kts` — `tasks.test { useJUnitPlatform(); finalizedBy(tasks.jacocoTestReport) }` и `tasks.check { dependsOn(jacocoTestCoverageVerification) }`.",
+                "when_to_apply": "Эта настройка нужна любому `Java`-проекту в `CI`: она напрямую влияет на время сборки и стабильность тестов на эфемерных runner.",
+                "edge_cases": "`maxParallelForks` слишком большим перегружает агент и делает тесты flaky из-за конкуренции за ресурсы; его привязывают к числу CPU (`availableProcessors() / 2`). `--no-daemon` чуть медленнее на первом запуске, но безопаснее в `CI`.",
+                "related": "[[pipeline-design-interview#Q16]] воспроизводимость и фиксация Gradle; [[pipeline-design-interview#Q18]] Gradle Build Cache; [[pipeline-design-interview#Q6]] quality gate через JaCoCo."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `CI` рекомендуется всегда запускать `Gradle` с включённым daemon (`--daemon`), потому что он переиспользуется между запусками runner и ускоряет сборку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `CI` рекомендуют `--no-daemon`: эфемерные runner не переиспользуют daemon, а он лишь тратит RAM и добавляет нестабильность.",
+                "source_of_confusion": "На локальной машине daemon действительно ускоряет повторные сборки, и это переносят на `CI`.",
+                "if_it_were_true": "Тогда документация `Gradle` не советовала бы `--no-daemon` для `CI`, но она именно это рекомендует.",
+                "how_it_should_be": "В `CI` daemon отключают (`--no-daemon`); его выгода проявляется только при долгоживущей машине разработчика."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для `SonarQube` отчёт `JaCoCo` нужно генерировать только в формате `HTML`, так как `Sonar` парсит именно HTML-страницы покрытия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SonarQube` потребляет `XML`-отчёт `JaCoCo` (`xml.required.set(true)`); `HTML` — для людей, а не для импорта в `Sonar`.",
+                "source_of_confusion": "HTML-отчёт нагляден и виден глазами, поэтому его считают основным для всех потребителей.",
+                "if_it_were_true": "Тогда `xml.required.set(true)` был бы не нужен для `Sonar`, но именно его требует интеграция.",
+                "how_it_should_be": "Для `SonarQube` включают `XML`-отчёт; `HTML` оставляют как человекочитаемое дополнение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Флаг `--parallel` в `Gradle` распараллеливает выполнение отдельных тестовых методов внутри одного класса, а не сборку модулей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--parallel` параллелит выполнение задач независимых проектов/модулей; параллельность тестов задаётся `maxParallelForks`, а не этим флагом.",
+                "source_of_confusion": "Слово «parallel» обобщают на любой параллелизм, включая тесты.",
+                "if_it_were_true": "Тогда `maxParallelForks` был бы избыточен, но он существует именно для распараллеливания тестов.",
+                "how_it_should_be": "`--parallel` ускоряет multi-module сборку; параллельный запуск тестов — это `maxParallelForks`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать `Gradle Build Cache` в `CI`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Gradle Build Cache` кэширует только скачанные `jar`-зависимости из `Maven Central`, не затрагивая результаты задач компиляции и тестов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Build cache кэширует именно выходы задач (`compile`, `test`); кэш зависимостей — это отдельный механизм (`~/.gradle/caches/modules`).",
+                "source_of_confusion": "Оба механизма про кэш в `~/.gradle`, поэтому их путают.",
+                "if_it_were_true": "Тогда build cache не давал бы экономии при изменении одного файла кода, но он переиспользует незатронутые задачи.",
+                "how_it_should_be": "Build cache хранит результаты задач; зависимости кэшируются параллельно другим механизмом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Gradle Build Cache` сохраняет результаты задач (`compile`, `test`) и переиспользует их при повторных сборках, если входные данные не изменились. Локальный кэш — `~/.gradle/caches/build-cache-*`; удалённый (`remote<HttpBuildCache>`) — общее хранилище для всех агентов `CI` с `isPush = System.getenv(\"CI\") != null`. Экономия на крупных проектах — 50-70% времени при инкрементальных изменениях.",
+              "correct": true,
+              "sections": {
+                "explanation": "Build cache кэширует выходы задач по хэшу входов: при изменении одного файла `Gradle` пересобирает только затронутые задачи, а остальные берёт из кэша. Удалённый кэш делит результаты между всеми runner.",
+                "example": "В `settings.gradle.kts` — `buildCache { local { isEnabled = true }; remote<HttpBuildCache> { url = uri(\"https://gradle-cache.example.com/cache/\"); isPush = System.getenv(\"CI\") != null } }`; в `GitHub Actions` — `gradle/actions/setup-gradle@v3` с `cache-read-only` для PR.",
+                "when_to_apply": "Удалённый build cache применяют на крупных multi-module проектах с частыми сборками: он переиспользует результаты задач между ветками и агентами, а не только зависимости.",
+                "edge_cases": "Push в кэш разрешают только из доверенных сборок (`main`), иначе отравленный кэш из PR-а попадёт ко всем; PR обычно делают `cache-read-only`. Кэш чувствителен к нестабильным (non-cacheable) задачам.",
+                "related": "[[pipeline-design-interview#Q14]] кэш зависимостей vs build cache; [[pipeline-design-interview#Q17]] флаг --build-cache; [[pipeline-design-interview#Q36]] оптимизация времени pipeline."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Право записи (`push`) в удалённый build cache следует давать всем сборкам, включая PR из форков, чтобы максимально наполнить кэш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Push разрешают только доверенным сборкам (`main`); запись из произвольных PR позволяет отравить общий кэш некорректными результатами.",
+                "source_of_confusion": "«Чем больше пишем, тем полнее кэш» игнорирует риск компрометации кэша.",
+                "if_it_were_true": "Тогда вредоносный PR мог бы подменить закэшированный результат задачи для всех, что небезопасно.",
+                "how_it_should_be": "PR читают кэш (`read-only`), а push делает только доверенная ветка вроде `main`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Удалённый build cache бесполезен в `CI`, потому что каждый runner всё равно собирает проект с нуля и не может делиться результатами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл удалённого кэша как раз в обмене результатами между runner: один собрал задачу — остальные берут готовый выход.",
+                "source_of_confusion": "Изоляция runner создаёт впечатление, что обмен данными между ними невозможен.",
+                "if_it_were_true": "Тогда `remote<HttpBuildCache>` не существовал бы, но это штатная конфигурация для `CI`.",
+                "how_it_should_be": "Удалённый кэш — общее хранилище: результаты задач переиспользуются всеми агентами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать pipeline для нескольких окружений (dev, staging, prod)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для каждого окружения (dev, staging, prod) нужно собирать отдельный `Docker`-образ из исходников, чтобы окружения были полностью независимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Образ собирают один раз и промотируют по окружениям; пересборка под каждое окружение ломает гарантию, что в prod едет протестированный бинарь.",
+                "source_of_confusion": "«Независимость окружений» путают с независимостью сборок, хотя различаться должна лишь конфигурация.",
+                "if_it_were_true": "Тогда staging тестировал бы не тот артефакт, что попадёт в prod, и проверки теряли бы ценность.",
+                "how_it_should_be": "Один образ + разная конфигурация per environment; тег образа неизменен при промоушене."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Различия между окружениями нужно зашивать прямо в `Docker`-образ на этапе сборки, создавая образы `myapp-dev`, `myapp-staging`, `myapp-prod`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конфигурацию выносят наружу (`ConfigMap`/`Secret`, `application-{profile}.yml`), а образ остаётся одним; отдельные образы под окружения — антипаттерн.",
+                "source_of_confusion": "Кажется удобным иметь «готовый под окружение» образ, но это размножает артефакты и ломает промоушен.",
+                "if_it_were_true": "Тогда нельзя было бы продвинуть один проверенный образ из staging в prod без пересборки.",
+                "how_it_should_be": "Образ один; параметры окружения подставляются конфигурацией при деплое."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Принцип: один образ собирается один раз и промотируется по окружениям (dev→staging→prod), меняется только конфигурация. Подходы: один pipeline с этапами (dev автоматически, staging после тестов, prod после approval) или `GitOps` (`ArgoCD`/`Flux` синхронизирует кластер с `Git`). Конфигурация по окружению: `ConfigMap`/`Secret` per namespace, `application-{profile}.yml`, environment-specific variables.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главное правило — не пересобирать образ для каждого окружения: тестировали на staging ровно тот бинарь, что поедет в prod. Различия выносят в конфигурацию, а не в новую сборку.",
+                "example": "В `GitHub Actions` `deploy-prod` с `environment: { name: production, url: ... }` и `required_reviewers` автоматически создаёт approval gate; деплой — `helm upgrade myapp ./chart --set image.tag=${{ github.sha }} --values values-prod.yaml`.",
+                "when_to_apply": "Многоокруженческий pipeline нужен при наличии стадий проверки перед prod (dev для разработчиков, staging для интеграции/QA), что типично для большинства продуктовых команд.",
+                "edge_cases": "Если для prod пересобрать образ заново, теряется гарантия «тестировали то же, что деплоим» — появляется риск рассинхронизации. Поэтому отличается только конфиг, а тег образа неизменен между окружениями.",
+                "related": "[[pipeline-design-interview#Q13]] промоушен одного артефакта; [[pipeline-design-interview#Q20]] manual approval перед prod; [[pipeline-design-interview#Q37]] GitOps с config-репозиторием."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Деплой во все три окружения должен быть полностью автоматическим без каких-либо точек ручного контроля, включая prod.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dev/staging обычно автоматические, а prod часто закрывают `manual approval` (`environment` с reviewers) — особенно при Continuous Delivery.",
+                "source_of_confusion": "Автоматизацию `CD` доводят до абсолюта, забывая про управляемый деплой в prod.",
+                "if_it_were_true": "Тогда approval-gate перед prod был бы лишним, но он штатно используется в enterprise.",
+                "how_it_should_be": "Ранние окружения автоматизируют, а перед prod при необходимости ставят ручной approval."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `manual approval` и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Manual approval` означает, что инженер вручную пишет и запускает скрипт деплоя на проде, минуя pipeline.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Approval — это кнопка подтверждения внутри pipeline, а не ручной запуск скрипта в обход автоматизации.",
+                "source_of_confusion": "Слово «manual» воспринимают как «руками вне pipeline», хотя речь о ручном подтверждении внутри него.",
+                "if_it_were_true": "Тогда деплой терял бы воспроизводимость и аудит, но approval как раз сохраняет их в pipeline.",
+                "how_it_should_be": "Approval — это шаг pipeline (`input`/protection rule), требующий подтверждения человека."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Manual approval` следует ставить на каждый этап pipeline, включая сборку и unit-тесты, для максимального контроля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Approval ставят точечно перед рискованными шагами (prod-деплой); на сборку и тесты он лишь тормозит автоматику без пользы.",
+                "source_of_confusion": "Желание «контролировать всё» приводит к избыточным ручным gate.",
+                "if_it_were_true": "Тогда быстрая обратная связь `CI` исчезла бы — каждый коммит ждал бы человека на каждом шаге.",
+                "how_it_should_be": "Ручной gate ставят перед необратимыми операциями, а не на быстрые автоматические этапы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Manual approval` особенно полезен при 20+ деплоях в день, так как помогает контролировать высокочастотный поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При высокой частоте деплоев approval тормозит поток; там полагаются на автотесты и автооткат, а не на ручное подтверждение.",
+                "source_of_confusion": "Контроль ассоциируют с безопасностью, но при высокой частоте ручной gate становится узким местом.",
+                "if_it_were_true": "Тогда elite-команды с десятками деплоев в день держали бы человека на каждом, но они автоматизируют контроль.",
+                "how_it_should_be": "Для высокочастотных деплоев approval убирают в пользу canary/blue-green и автоматического отката."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Manual approval` — ручное подтверждение перехода к следующему этапу (обычно деплой в prod): `input` step в `Jenkins`, `when: manual` в `GitLab CI`, environment protection rules в `GitHub Actions`. Использовать для деплоя в prod при Continuous Delivery, изменений схемы БД, инфраструктурных правок (`Terraform apply` на prod) и регуляторных требований (SOX, PCI DSS). НЕ использовать при высокочастотных деплоях и автоматическом откате по метрикам.",
+              "correct": true,
+              "sections": {
+                "explanation": "Approval — это осознанная точка контроля человеком перед рискованным действием. Он повышает безопасность, но снижает скорость потока, поэтому его ставят точечно, а не на каждый этап.",
+                "example": "В `Jenkins` — `stage('Approve Prod Deploy'){ steps { input message: 'Deploy to production?', submitter: 'tech-lead,devops' } }`; в `GitHub Actions` — `environment: production` с `required_reviewers`.",
+                "when_to_apply": "Approval уместен перед необратимыми/рискованными шагами: prod-деплой при Continuous Delivery, миграции схемы, `Terraform apply` на prod, требования комплаенса.",
+                "edge_cases": "При 10+ деплоях в день approval тормозит поток и теряет смысл; при наличии canary с автооткатом (`Argo Rollouts`, `Flagger`) ручной gate избыточен — система откатывается сама по метрикам.",
+                "related": "[[pipeline-design-interview#Q2]] Continuous Delivery vs Deployment; [[pipeline-design-interview#Q19]] approval перед prod-окружением; [[pipeline-design-interview#Q12]] when: manual в GitLab CI."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как pipeline связан с ветками `Git` (`trunk-based`, `GitFlow`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В `trunk-based` основная ветка — `main`, feature-ветки короткоживущие (1-2 дня), на PR — сборка + unit-тесты, на main — полный pipeline и деплой; релизы по каждому merge, feature flags обязательны. В `GitFlow` — `develop` + `main`, долгоживущие feature-ветки, релизы через `release/*`-ветку. В pipeline условия по ветке задают набор этапов: `if: github.ref == 'refs/heads/main'` или `rules: if: $CI_COMMIT_BRANCH == \"main\"`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Модель ветвления определяет, что и когда запускает pipeline: PR получает лёгкий набор проверок, а защищённая ветка (`main`/`develop`) — полный pipeline с деплоем. Trunk-based упрощает частые деплои, GitFlow — строгий релизный цикл.",
+                "example": "Условие по ветке: `docker-build` с `rules: [{ if: '$CI_COMMIT_BRANCH == \"main\"' }]` собирает образ только на main, а PR-pipeline ограничивается `./gradlew build` + unit-тестами без публикации.",
+                "when_to_apply": "Trunk-based выбирают команды с feature flags и частыми деплоями; GitFlow — проекты со строгим релизным циклом и длинными стабилизационными фазами (например, коробочный продукт).",
+                "edge_cases": "Trunk-based без feature flags опасен: незавершённая фича в `main` может попасть в prod; GitFlow с долгоживущими ветками копит merge-конфликты и замедляет интеграцию. Выбор модели — это компромисс.",
+                "related": "[[pipeline-design-interview#Q22]] PR pipeline; [[pipeline-design-interview#Q2]] Continuous Delivery и деплой по веткам; [[pipeline-design-interview#Q38]] trunk-based и deployment frequency."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `trunk-based` и `GitFlow` pipeline запускает один и тот же полный набор этапов с деплоем в prod для любой ветки, включая feature-ветки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Набор этапов зависит от ветки: feature/PR получают лёгкие проверки, а полный pipeline с деплоем идёт на защищённой ветке (`main`/`release`).",
+                "source_of_confusion": "Кажется, что «pipeline один на репозиторий», поэтому его считают одинаковым для всех веток.",
+                "if_it_were_true": "Тогда каждая feature-ветка деплоилась бы в prod, что недопустимо и опасно.",
+                "how_it_should_be": "Условия по ветке (`if`/`rules`) задают разный набор этапов; деплой в prod — только с релизных веток."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Trunk-based development` предполагает долгоживущие feature-ветки на недели, тогда как `GitFlow` использует короткоживущие ветки на 1-2 дня.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: короткоживущие ветки (1-2 дня) — признак trunk-based; долгоживущие ветки характерны для `GitFlow`.",
+                "source_of_confusion": "Две модели ветвления легко перепутать характеристиками местами.",
+                "if_it_were_true": "Тогда trunk-based не давал бы частой интеграции в `main`, ради которой он и существует.",
+                "how_it_should_be": "Trunk-based — короткие ветки и частый merge в main; GitFlow — длинные ветки и release-цикл."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Условие запуска этапов по ветке в pipeline невозможно задать — pipeline всегда выполняет все стадии независимо от ветки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ветка проверяется условиями: `if: github.ref == 'refs/heads/main'` или `rules: if: $CI_COMMIT_BRANCH`; стадии включают/выключают по ветке.",
+                "source_of_confusion": "Линейное представление о pipeline («сверху вниз всё подряд») игнорирует условную логику.",
+                "if_it_were_true": "Тогда нельзя было бы ограничить деплой только веткой main, но это базовый приём.",
+                "how_it_should_be": "Условия по ветке штатно управляют набором этапов в `GitHub Actions` и `GitLab CI`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое pipeline для pull request (`PR pipeline`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`PR pipeline` должен включать полный набор e2e-тестов, деплой в staging и публикацию артефактов, чтобы максимально проверить изменение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PR pipeline намеренно лёгкий (сборка + unit + lint); e2e, деплой и публикацию выносят на post-merge, чтобы PR был быстрым.",
+                "source_of_confusion": "«Чем больше проверок, тем лучше» игнорирует требование быстрой обратной связи на PR.",
+                "if_it_were_true": "Тогда PR pipeline шёл бы 20+ минут, и авторы ждали бы фидбэк недопустимо долго.",
+                "how_it_should_be": "На PR — быстрые проверки (< 5 мин); тяжёлое тестирование переносят на ветку main."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`PR pipeline` — сокращённый pipeline, запускаемый при создании/обновлении pull request, чтобы проверить, что изменение не ломает сборку до merge. Типичный состав: сборка, `unit`-тесты, линтер, `SonarQube` analysis. Без деплоя, тяжёлых e2e и публикации артефактов. Результат отображается в PR как status check; merge возможен только при зелёном статусе (branch protection rules). Должен быть быстрым (< 5 мин).",
+              "correct": true,
+              "sections": {
+                "explanation": "Цель PR pipeline — дать автору быструю обратную связь и защитить основную ветку: до merge код проходит лёгкие, но значимые проверки, а тяжёлое (e2e, деплой) откладывается на push в main.",
+                "example": "`on: pull_request: { branches: [main] }`, job `pr-check`: `./gradlew build` + `SonarQube` с `SONAR_TOKEN`; branch protection требует зелёный status check перед кнопкой merge.",
+                "when_to_apply": "PR pipeline нужен в любой команде с code review через PR: он ловит поломки до попадания в `main` и не даёт смержить красный код.",
+                "edge_cases": "Если PR pipeline тяжёлый (>5 мин), авторы теряют фокус и копят незамерженные ветки; e2e и публикацию артефактов специально выносят на post-merge, чтобы PR оставался быстрым.",
+                "related": "[[pipeline-design-interview#Q21]] PR в trunk-based и GitFlow; [[pipeline-design-interview#Q5]] fail fast и быстрый feedback; [[pipeline-design-interview#Q23]] только unit+lint на PR."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`PR pipeline` запускается только после merge изменения в `main`, проверяя уже влитый код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PR pipeline срабатывает на событие `pull_request` ещё до merge — его смысл в защите ветки до влития.",
+                "source_of_confusion": "Post-merge проверки путают с PR-проверками, хотя они на разных стадиях.",
+                "if_it_were_true": "Тогда сломанный код успевал бы попасть в `main` до проверки, и branch protection терял бы смысл.",
+                "how_it_should_be": "PR pipeline идёт до merge; результат — обязательный status check для разблокировки кнопки merge."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Результат `PR pipeline` никак не влияет на возможность merge — это просто информационный отчёт без блокировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С branch protection rules merge блокируется, пока PR pipeline не зелёный — это обязательный gate, а не справка.",
+                "source_of_confusion": "Status check выглядит как уведомление, и его роль барьера недооценивают.",
+                "if_it_were_true": "Тогда красный PR можно было бы смержить в `main`, что подрывает защиту ветки.",
+                "how_it_should_be": "Зелёный PR pipeline — условие merge; красный статус не даёт влить изменение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать тесты в pipeline (`unit`, `integration`, `e2e`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Правильная пирамида тестов — это много `e2e`-тестов в основании и мало `unit`-тестов на вершине, ради максимального покрытия сценариев.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пирамида обратная: основание — много быстрых `unit`, вершина — мало медленных `e2e`; перевёрнутая пирамида делает pipeline медленным и хрупким.",
+                "source_of_confusion": "`E2e` кажутся «более настоящими», поэтому их хочется сделать основой.",
+                "if_it_were_true": "Тогда pipeline шёл бы десятки минут и был flaky из-за массы медленных `e2e`.",
+                "how_it_should_be": "Много `unit` снизу, умеренно `integration`, немного `e2e` сверху — классическая пирамида."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`E2e`-тесты следует запускать на каждом PR до деплоя, потому что они быстрее и надёжнее `unit`-тестов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`E2e` медленные (5-15 мин) и требуют развёрнутого окружения, поэтому их запускают после деплоя в staging, а не на каждом PR.",
+                "source_of_confusion": "Достоверность `e2e` ошибочно приравнивают к скорости и стабильности.",
+                "if_it_were_true": "Тогда PR pipeline разбухал бы до 15+ минут и зависел от внешнего окружения.",
+                "how_it_should_be": "На PR — `unit` + lint; `e2e` гоняют на развёрнутом staging после деплоя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Тесты строят по пирамиде: много быстрых `unit` (< 1 мин), меньше `integration` (2-5 мин), мало медленных `e2e` (5-15 мин). Порядок в pipeline: `unit` первыми (fail fast), `integration` с БД через `Testcontainers` после `unit`, `e2e` на развёрнутом окружении после деплоя в staging. В `Gradle` тесты разделяют по source sets (`integrationTest` с `shouldRunAfter(tasks.test)`). Для PR — только `unit` + lint; полные integration + e2e — на push в main.",
+              "correct": true,
+              "sections": {
+                "explanation": "Пирамида балансирует скорость и достоверность: дешёвые `unit` ловят большинство ошибок мгновенно, дорогие `e2e` проверяют систему целиком, но их держат мало. Порядок обеспечивает fail fast.",
+                "example": "В `Gradle` отдельный source set `integrationTest` с задачей `tasks.register<Test>(\"integrationTest\")` и `shouldRunAfter(tasks.test)`; в `GitHub Actions` job `e2e` имеет `needs: [deploy-staging]`, а `unit-tests` и `integration-tests` — `needs: build`.",
+                "when_to_apply": "Такую организацию применяют в любом сервисе с тремя уровнями тестов: она минимизирует время до первого сигнала об ошибке и не гоняет дорогие e2e впустую.",
+                "edge_cases": "Перевёрнутая пирамида (много e2e, мало unit) делает pipeline медленным и flaky; e2e зависят от развёрнутого окружения, поэтому их не запускают на каждом PR, а только после деплоя в staging.",
+                "related": "[[pipeline-design-interview#Q5]] fail fast и порядок тестов; [[pipeline-design-interview#Q24]] smoke test после деплоя; [[pipeline-design-interview#Q25]] integration с Testcontainers."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Разделить `unit` и `integration` тесты в `Gradle` невозможно — все тесты обязаны лежать в одном source set и запускаться задачей `test`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Gradle` создают отдельный source set `integrationTest` и задачу с `shouldRunAfter(tasks.test)`, разделяя уровни тестов.",
+                "source_of_confusion": "Дефолтный source set `test` создаёт впечатление единственно возможного.",
+                "if_it_were_true": "Тогда нельзя было бы гонять integration отдельно от unit, но это штатная практика.",
+                "how_it_should_be": "Отдельный source set и задача `integrationTest` разводят уровни тестов в `Gradle`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `smoke test` после деплоя и когда его запускать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Smoke test` — это полный набор end-to-end сценариев, покрывающий все бизнес-процессы приложения, запускаемый перед каждым деплоем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Smoke — это минимальная проверка живости (health, пара эндпоинтов) ~30 секунд; полные сценарии — это e2e, идущие минутами.",
+                "source_of_confusion": "И smoke, и e2e — пост-деплойные проверки, поэтому их объём путают.",
+                "if_it_were_true": "Тогда smoke занимал бы 15 минут, теряя смысл быстрой проверки сразу после деплоя.",
+                "how_it_should_be": "Smoke проверяет, что приложение поднялось и базовые эндпоинты живы; бизнес-логику покрывает e2e."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Smoke test` нужно запускать только локально на машине разработчика перед коммитом, но не в pipeline после деплоя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Smoke запускают именно после деплоя в окружение, чтобы убедиться, что развёрнутый билд ожил; локальный прогон этого не подтверждает.",
+                "source_of_confusion": "Любую проверку тянет «сдвинуть влево», но smoke по определению проверяет уже задеплоенный экземпляр.",
+                "if_it_were_true": "Тогда нерабочий деплой в prod не был бы пойман автоматикой, и автооткат не сработал бы.",
+                "how_it_should_be": "Smoke выполняется после деплоя против реального окружения как gate/триггер отката."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Smoke test` должен делать ровно один запрос без ретраев: если приложение не ответило мгновенно, деплой сразу считается провальным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приложение поднимается не мгновенно, поэтому smoke делают с ретраями и таймаутом, а не одним мгновенным запросом.",
+                "source_of_confusion": "Кажется, что «здоровое приложение отвечает сразу», но старт занимает секунды.",
+                "if_it_were_true": "Тогда каждый нормальный деплой ложно падал бы из-за прогрева, и автооткат срабатывал бы зря.",
+                "how_it_should_be": "Smoke ретраит health с интервалом и лимитом попыток, давая приложению время прогреться."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Smoke test` — минимальный набор проверок сразу после деплоя: приложение поднялось и ключевые эндпоинты отвечают. Проверяют `GET /actuator/health` (200, `status: UP`), `GET /actuator/readiness` (готовность к трафику), один-два критичных `API`. Запускают сразу после деплоя в окружение; при падении — автоматический rollback (если настроен) или алерт. Отличие от e2e: smoke — ~30 секунд, e2e — 15 минут.",
+              "correct": true,
+              "sections": {
+                "explanation": "Smoke test отвечает на вопрос «деплой вообще ожил?» дёшево и быстро, не подменяя полное e2e. Это страховка от выкатки нерабочего билда: если health не отвечает — откат, а не часы расследования.",
+                "example": "Скрипт с ретраями: `for i in $(seq 1 10); do STATUS=$(curl -s -o /dev/null -w \"%{http_code}\" \"$BASE_URL/actuator/health\"); [ \"$STATUS\" = \"200\" ] && break; sleep 5; done`, затем проверка `curl -sf \"$BASE_URL/api/v1/version\"`.",
+                "when_to_apply": "Smoke test запускают после каждого деплоя (dev, staging, prod) как gate перед переключением трафика или как триггер автоотката при провале.",
+                "edge_cases": "Smoke с ретраями нужен, потому что приложение поднимается не мгновенно; без таймаута/лимита попыток он может зависнуть. Smoke не заменяет e2e — он лишь подтверждает базовую живость, не бизнес-логику.",
+                "related": "[[pipeline-design-interview#Q23]] smoke vs e2e в пирамиде; [[pipeline-design-interview#Q31]] rollback при провале smoke; [[pipeline-design-interview#Q1]] health check как этап pipeline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как запускать интеграционные тесты с `Testcontainers` в `CI`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Testcontainers` поднимает реальные зависимости (`PostgreSQL`, `Kafka`, `Redis`) в `Docker`-контейнерах для тестов, поэтому в `CI` нужен доступ к `Docker daemon`. В тесте — `@Testcontainers`, `@Container static PostgreSQLContainer<>(\"postgres:16\")` и `@DynamicPropertySource` для проброса `jdbcUrl`. В `GitHub Actions` `Docker` доступен на `ubuntu-latest` из коробки; для ускорения можно заменить на `services`. В `Jenkins` нужен agent с `Docker`/`DinD` или примонтированный `/var/run/docker.sock`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Testcontainers` даёт тестам настоящую БД вместо моков/H2, ловя реальные различия диалектов и миграций. Платой за реализм является требование доступного `Docker daemon` на runner.",
+                "example": "`@DynamicPropertySource static void cfg(DynamicPropertyRegistry r){ r.add(\"spring.datasource.url\", postgres::getJdbcUrl); r.add(\"spring.datasource.username\", postgres::getUsername); }` — Spring подхватывает координаты поднятого контейнера.",
+                "when_to_apply": "Testcontainers применяют для интеграционных тестов, где важна реальная БД/брокер: проверка SQL, миграций `Flyway`, специфики `PostgreSQL`, которую `H2` не воспроизводит.",
+                "edge_cases": "В `Jenkins` без `Docker` на агенте тесты не запустятся — нужен `DinD` или сокет; в нём же важна изоляция и очистка контейнеров. Если реализм БД не нужен, `services` в `GitHub Actions` быстрее, чем `Docker-in-Docker`.",
+                "related": "[[pipeline-design-interview#Q23]] integration-тесты в пирамиде; [[pipeline-design-interview#Q1]] integration как этап pipeline; [[pipeline-design-interview#Q11]] matrix с разными СУБД."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Testcontainers` поднимает зависимости как моки в памяти JVM, поэтому `Docker` в `CI` для них не требуется вовсе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Testcontainers` запускает настоящие контейнеры через `Docker daemon`, а не моки в памяти; доступ к `Docker` обязателен.",
+                "source_of_confusion": "`Testcontainers` сравнивают с in-memory `H2`/моками, отсюда вывод об отсутствии `Docker`.",
+                "if_it_were_true": "Тогда на `Jenkins`-агенте без `Docker` тесты работали бы, но они там падают без daemon.",
+                "how_it_should_be": "`Testcontainers` нужен доступный `Docker`; он поднимает реальные `PostgreSQL`/`Kafka` в контейнерах."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Координаты поднятого контейнера (`jdbcUrl`, порт) нужно жёстко прописать в `application.yml` заранее, так как `Testcontainers` всегда использует фиксированный порт 5432.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Testcontainers` назначает случайный порт, и координаты пробрасывают динамически через `@DynamicPropertySource`, а не хардкодят.",
+                "source_of_confusion": "Дефолтный порт `PostgreSQL` 5432 создаёт иллюзию фиксированного маппинга.",
+                "if_it_were_true": "Тогда параллельные тесты конфликтовали бы за один порт, но `Testcontainers` именно поэтому рандомизирует его.",
+                "how_it_should_be": "`@DynamicPropertySource` подставляет реальный `jdbcUrl`/порт контейнера в рантайме."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В `Jenkins` интеграционные тесты с `Testcontainers` работают на любом агенте без настройки, так как `Jenkins` сам предоставляет `Docker`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jenkins` не даёт `Docker` по умолчанию: нужен агент с `Docker`/`DinD` или примонтированный `/var/run/docker.sock`.",
+                "source_of_confusion": "Опыт `GitHub Actions`, где `Docker` есть из коробки на `ubuntu-latest`, переносят на `Jenkins`.",
+                "if_it_were_true": "Тогда любой `Jenkins`-агент запускал бы контейнеры, но без `Docker` тесты падают.",
+                "how_it_should_be": "Для `Testcontainers` в `Jenkins` агент должен иметь доступ к `Docker daemon` (DinD или сокет)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое секреты в pipeline и как их хранить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Секреты удобнее всего хранить прямо в `Jenkinsfile` или `.gitlab-ci.yml` в виде открытого текста, чтобы pipeline всегда имел к ним доступ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Секреты в коде/конфиге pipeline — это утечка в `Git`; их держат в secret store и подставляют через переменные.",
+                "source_of_confusion": "Хардкод кажется надёжным («всегда под рукой»), но он публикует секрет в истории репозитория.",
+                "if_it_were_true": "Тогда любой с доступом к репозиторию получил бы пароли от prod, что недопустимо.",
+                "how_it_should_be": "Секреты хранят в `GitHub Secrets`/`Vault`/credentials store и ссылаются на них, не вписывая значения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Секреты — пароли, токены, ключи для доступа к registry, БД, облаку; их никогда не хранят в коде или открытом виде в конфиге. Варианты: встроенные в `CI` (`GitHub Secrets`, `GitLab CI Variables`, `Jenkins Credentials`) — просто, но ограниченная ротация; внешнее хранилище (`HashiCorp Vault`, AWS `Secrets Manager`) — ротация, аудит, централизация; `OIDC` federation (`GitHub OIDC` → AWS/GCP) — без долгоживущих секретов. Правила: маскировать в логах, ограничивать доступ по ролям, не делать `echo $SECRET`, регулярно ротировать.",
+              "correct": true,
+              "sections": {
+                "explanation": "Секрет — это ключ к чувствительному ресурсу, поэтому его держат вне исходников и маскируют в выводе. Чем выше требования к безопасности, тем дальше движутся от встроенных переменных к `Vault` и `OIDC`.",
+                "example": "В `Jenkins` — `withCredentials([usernamePassword(credentialsId: 'nexus', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS'), string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) { sh './gradlew publish sonar' }`.",
+                "when_to_apply": "Управление секретами нужно в каждом pipeline, который куда-то аутентифицируется; `OIDC`/`Vault` выбирают при строгих требованиях к ротации и аудиту.",
+                "edge_cases": "`echo $SECRET` или печать в лог раскрывает значение, даже если хранилище безопасно; маскирование работает, только если секрет действительно пришёл из secret store. `OIDC` убирает долгоживущие ключи, но требует настройки доверия у provider.",
+                "related": "[[pipeline-design-interview#Q15]] credentials для Nexus; [[pipeline-design-interview#Q27]] secret scanning gitleaks; [[pipeline-design-interview#Q35]] OIDC для облака в IaC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтобы проверить, что секрет передался, полезно вывести его в лог через `echo $SECRET` на отладочном этапе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`echo $SECRET` печатает значение в лог и компрометирует его; для проверки используют факт успешной аутентификации, а не вывод значения.",
+                "source_of_confusion": "Привычка дебажить переменные через `echo` опасна именно для секретов.",
+                "if_it_were_true": "Тогда секрет осел бы в логах сборки, доступных многим, сводя на нет хранилище.",
+                "how_it_should_be": "Секреты никогда не печатают; их наличие проверяют косвенно (успешный `publish`/login)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`OIDC` federation — это способ хранить долгоживущие ключи доступа к облаку прямо в `CI`-переменных для удобства.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл `OIDC` как раз в отказе от долгоживущих ключей: `CI` получает короткоживущий токен по доверию provider.",
+                "source_of_confusion": "`OIDC` относят к хранению секретов, тогда как он их устраняет.",
+                "if_it_were_true": "Тогда `OIDC` не давал бы преимущества «без долгоживущих секретов», ради которого его внедряют.",
+                "how_it_should_be": "`OIDC` федерация выдаёт временные токены без постоянных ключей в `CI`-переменных."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить безопасность pipeline (`SAST`, `DAST`, сканирование образов)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SAST` и `DAST` — это одно и то же: оба анализируют исходный код статически на этапе сборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SAST` анализирует исходники статически при сборке, а `DAST` атакует уже запущенное приложение после деплоя — это разные подходы.",
+                "source_of_confusion": "Похожие аббревиатуры (`SAST`/`DAST`) и общая цель «безопасность» провоцируют смешение.",
+                "if_it_were_true": "Тогда `DAST` не требовал бы развёрнутого приложения, но `OWASP ZAP` атакует именно работающий сервис.",
+                "how_it_should_be": "`SAST` — статика по коду при сборке; `DAST` — динамика по запущенному приложению после деплоя."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сканирование `Docker`-образа (`Trivy`) нужно выполнять до сборки образа, на этапе компиляции `jar`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Image scan возможен только после `docker build` — сканировать нечего, пока образ не собран.",
+                "source_of_confusion": "Желание «проверить раньше» игнорирует, что объект проверки (образ) ещё не существует.",
+                "if_it_were_true": "Тогда `Trivy` сканировал бы несуществующий образ, но он работает с готовым `image-ref`.",
+                "how_it_should_be": "Image scan идёт после сборки образа и до его публикации/деплоя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Security gates встраивают в pipeline: `SAST` (`SonarQube`, `SpotBugs`, `Semgrep`) при сборке, dependency scan (`OWASP Dependency Check`, `Snyk`) при сборке, image scan (`Trivy`, `Grype`, `Clair`) после docker build, `DAST` (`OWASP ZAP`) после деплоя в staging, secret scan (`gitleaks`, `trufflehog`) при каждом коммите. При критических уязвимостях pipeline падает — артефакт не публикуется и не деплоится.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый тип проверки бьёт по своему слою: `SAST` анализирует исходники статически, dependency scan ищет уязвимые библиотеки, image scan — уязвимости в слоях образа, `DAST` атакует запущенное приложение. Gate блокирует продвижение при критике.",
+                "example": "`Trivy` в `GitHub Actions`: `aquasecurity/trivy-action@master` с `image-ref`, `exit-code: 1`, `severity: CRITICAL,HIGH` валит сборку при найденных уязвимостях; `OWASP Dependency Check` в `Gradle` — `failBuildOnCVSS = 7.0f`.",
+                "when_to_apply": "Security gates ставят в любой pipeline, доставляющий код в prod; набор инструментов подбирают под слои (код, зависимости, образ, runtime) и требования комплаенса.",
+                "edge_cases": "`SAST` и `DAST` запускают на разных стадиях: `SAST` статичен и идёт при сборке, а `DAST` требует развёрнутого приложения и идёт после деплоя в staging. Слишком строгий порог по `CVSS` плодит ложные блокировки и требует whitelisting.",
+                "related": "[[pipeline-design-interview#Q6]] security как quality gate; [[pipeline-design-interview#Q26]] secret scanning и хранение секретов; [[pipeline-design-interview#Q28]] сборка образа перед image scan."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При обнаружении критической уязвимости pipeline должен лишь записать предупреждение в лог и продолжить публикацию артефакта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Security gate валит pipeline при критике (`exit-code: 1`, `failBuildOnCVSS`), и уязвимый артефакт не публикуется и не деплоится.",
+                "source_of_confusion": "Сканеры умеют и просто репортить, поэтому их роль как блокирующего gate недооценивают.",
+                "if_it_were_true": "Тогда уязвимый образ всё равно попадал бы в prod, и смысл проверки терялся бы.",
+                "how_it_should_be": "Критическая находка останавливает pipeline; продвижение разблокируется только после устранения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать сборку `Docker`-образа в pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Docker`-образ правильнее запускать от пользователя root внутри контейнера, чтобы приложение имело полный доступ к файловой системе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Образ запускают от непривилегированного пользователя (`USER appuser`); root увеличивает attack surface при компрометации контейнера.",
+                "source_of_confusion": "Root «решает проблемы с правами», поэтому к нему тянутся ради простоты.",
+                "if_it_were_true": "Тогда `addgroup/adduser` и `USER appuser` в `Dockerfile` были бы лишними, но это рекомендованная практика.",
+                "how_it_should_be": "В runtime-стадии создают и используют непривилегированного пользователя, минимизируя риски."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сборку `Docker`-образа следует выполнять до запуска тестов, чтобы тесты прогонялись уже внутри готового образа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Образ собирают после зелёных тестов; паковать непротестированный код в образ — значит тратить ресурсы на заведомо негодный артефакт.",
+                "source_of_confusion": "«Тестировать в проде-подобной среде» путают с порядком этапов pipeline.",
+                "if_it_were_true": "Тогда сломанный код всё равно превращался бы в образ, нарушая fail fast.",
+                "how_it_should_be": "Сначала сборка и тесты, затем сборка образа из проверенного кода."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для prod-окружения образ нужно тегировать как `latest`, чтобы кластер всегда подтягивал самую новую сборку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В prod `latest` запрещён: тег плавает и ломает откат; используют явную версию (`1.2.3` или git `SHA`).",
+                "source_of_confusion": "`latest` кажется удобным «всегда актуальным» указателем, но скрывает, что реально развёрнуто.",
+                "if_it_were_true": "Тогда нельзя было бы откатиться к конкретной версии, ведь `latest` указывает на меняющийся образ.",
+                "how_it_should_be": "Prod деплоят по неизменяемому тегу; dev/staging — по `main-abc1234`, release — по semver."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сборка образа — этап после успешных тестов. Используют multi-stage `Dockerfile`: stage `builder` (`eclipse-temurin:21-jdk`) собирает `bootJar`, runtime-stage (`eclipse-temurin:21-jre`) копирует только `jar`, создаёт непривилегированного пользователя (`USER appuser`) и задаёт `ENTRYPOINT`. В `GitHub Actions` — `docker/build-push-action@v5` с `cache-from/cache-to: type=gha`. Теги: dev — `main-abc1234`, release — `1.2.3`, prod — никогда `latest`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Образ собирают из протестированного кода и сразу тегируют по коммиту для трассируемости. Multi-stage и непривилегированный пользователь уменьшают размер и attack surface; кэш слоёв ускоряет повторные сборки.",
+                "example": "`docker/build-push-action@v5` с `tags: ghcr.io/${{ github.repository }}:${{ github.sha }}`, `push: true`, `cache-from: type=gha`, `cache-to: type=gha,mode=max`; вход — `docker/login-action@v3` с `secrets.GITHUB_TOKEN`.",
+                "when_to_apply": "Этап сборки образа нужен любому контейнеризированному сервису; его ставят после зелёных тестов, чтобы не паковать сломанный код.",
+                "edge_cases": "Запуск контейнера от root и `latest` в prod — частые ошибки: первый увеличивает attack surface, второй ломает откат. Сборку образа делают на ветке main/release, а не на каждом PR, чтобы не плодить мусорные теги.",
+                "related": "[[pipeline-design-interview#Q13]] тегирование образов; [[pipeline-design-interview#Q27]] image scan после сборки; [[pipeline-design-interview#Q29]] multi-stage build."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `multi-stage build` и как он ускоряет pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Multi-stage build` — `Dockerfile` с несколькими `FROM`: одна стадия для сборки (`JDK` + `Gradle` + исходники), другая для runtime (только `JRE` + `jar`). Итоговый образ не содержит `JDK`, `Gradle` и исходников. Преимущества: размер ~800 MB → ~300 MB, меньше attack surface, кэширование редко меняющихся слоёв (`COPY gradle/`). `Spring Boot` layered jar — доп. оптимизация: слои dependencies/loader кэшируются, при изменении кода пересобирается только слой application (экономия 2-3 мин).",
+              "correct": true,
+              "sections": {
+                "explanation": "Multi-stage разделяет тяжёлую сборку и лёгкий runtime: в финальный образ попадает только результат, а инструменты сборки отбрасываются. Кэш слоёв `Docker` экономит время, пока редко меняющиеся слои стабильны.",
+                "example": "Layered jar: `RUN java -Djarmode=layertools -jar build/libs/*.jar extract`, затем `COPY --from=builder /app/dependencies/`, `/app/spring-boot-loader/`, `/app/application/` по отдельности — слой `application` пересобирается при изменении кода, остальные берутся из кэша.",
+                "when_to_apply": "Multi-stage применяют для любого контейнеризированного `Java`-сервиса: он уменьшает образ и ускоряет сборку за счёт кэша слоёв на каждом push.",
+                "edge_cases": "Порядок `COPY` важен для кэша: сначала редко меняющиеся зависимости, потом код — иначе изменение одного файла инвалидирует всю цепочку слоёв. Без layered jar изменение кода пересобирает один большой слой целиком.",
+                "related": "[[pipeline-design-interview#Q28]] сборка образа в pipeline; [[pipeline-design-interview#Q14]] кэш зависимостей; [[pipeline-design-interview#Q36]] Docker layer caching как оптимизация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Multi-stage build` — это `Dockerfile` с одной стадией `FROM`, в которой и собирается, и запускается приложение вместе с `JDK` и `Gradle`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-stage имеет несколько `FROM`: сборочную и runtime; финальный образ содержит только `JRE` и `jar`, без `JDK`/`Gradle`.",
+                "source_of_confusion": "Привычный однослойный `Dockerfile` ошибочно отождествляют с multi-stage.",
+                "if_it_were_true": "Тогда образ оставался бы ~800 MB с инструментами сборки, а экономии размера не было бы.",
+                "how_it_should_be": "Multi-stage разделяет stage `builder` и runtime; в итог попадает только `JRE` + артефакт."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Multi-stage build` увеличивает итоговый размер образа, потому что хранит все промежуточные стадии внутри финального образа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Финальный образ содержит только последнюю runtime-стадию; промежуточные стадии в него не попадают, поэтому размер падает (~800 → ~300 MB).",
+                "source_of_confusion": "Наличие нескольких `FROM` создаёт впечатление, что всё складывается в один образ.",
+                "if_it_were_true": "Тогда multi-stage не давал бы уменьшения размера, ради которого его и применяют.",
+                "how_it_should_be": "В образ попадает лишь финальная стадия; сборочная отбрасывается, размер уменьшается."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Порядок инструкций `COPY` в `Dockerfile` не влияет на кэширование: `Docker` пересобирает все слои при любом изменении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Docker` кэширует слои по порядку; изменение раннего слоя инвалидирует все последующие, поэтому редко меняющиеся зависимости копируют раньше кода.",
+                "source_of_confusion": "Слойную модель кэша `Docker` недооценивают, считая сборку «всё или ничего».",
+                "if_it_were_true": "Тогда `COPY gradle/` перед `COPY src/` не давал бы выгоды, но именно так кэшируют зависимости.",
+                "how_it_should_be": "Сначала копируют стабильные слои (зависимости), потом изменчивые (код) — для эффективного кэша."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать `blue-green` и `canary` деплой в pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Blue-green` деплой держит только одну версию приложения в кластере и переключает трафик, обновляя её прямо на месте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Blue-green держит две версии (`blue` и `green`) одновременно и переключает `Service` между ними; обновление «на месте» — это rolling update, а не blue-green.",
+                "source_of_confusion": "Blue-green путают с in-place обновлением единственного деплоя.",
+                "if_it_were_true": "Тогда мгновенный откат переключением selector был бы невозможен, но он — суть blue-green.",
+                "how_it_should_be": "Существуют два полных `Deployment`; `Service` переключает selector между blue и green."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Blue-Green`: два `Deployment` (`blue` и `green`); pipeline деплоит в green, прогоняет smoke test, при успехе переключает `Service` selector с blue на green, при провале — rollback. `Canary`: новая версия получает малую долю трафика (`setWeight: 5`), затем постепенно растёт (`25`, `75`) с паузами; `Argo Rollouts` управляет переключением и автоматическим откатом при деградации метрик. Pipeline вызывает `kubectl apply` для `Rollout`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обе стратегии снижают риск выкатки: blue-green переключает трафик мгновенно между двумя полными версиями, canary вливает новую версию постепенно, наблюдая метрики. Pipeline лишь триггерит, а оркестрацией трафика занимается `Service`/`Argo Rollouts`.",
+                "example": "`Argo Rollouts` canary: `strategy.canary.steps: [{ setWeight: 5 }, { pause: { duration: 5m } }, { setWeight: 25 }, { pause: { duration: 10m } }, { setWeight: 75 }]` — трафик растёт по шагам с паузами для анализа.",
+                "when_to_apply": "Blue-green выбирают при необходимости мгновенного переключения и простого отката; canary — когда нужно ловить регрессии на малой доле пользователей до полного раскатывания.",
+                "edge_cases": "Blue-green требует двойных ресурсов (две полные версии одновременно); canary сложнее в анализе метрик и медленнее раскатывается. Без автоматического анализа метрик canary вырождается в ручное наблюдение за дашбордами.",
+                "related": "[[pipeline-design-interview#Q24]] smoke test перед переключением трафика; [[pipeline-design-interview#Q31]] rollback при провале; [[pipeline-design-interview#Q38]] canary и change failure rate."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Canary` деплой сразу направляет 100% трафика на новую версию, а старую держит в резерве на случай отката.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Canary вливает трафик постепенно (5% → 25% → 75%) с паузами для анализа метрик, а не переключает сразу 100%.",
+                "source_of_confusion": "Canary смешивают с blue-green, где переключение трафика более резкое.",
+                "if_it_were_true": "Тогда регрессию увидели бы все пользователи сразу, и смысл «канарейки» терялся бы.",
+                "how_it_should_be": "Canary поднимает долю трафика на новую версию ступенчато, наблюдая метрики на каждом шаге."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В обоих случаях pipeline сам вручную мониторит метрики и принимает решение об откате на каждом шаге через цикл `sleep` и `curl`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Анализом метрик и автооткатом занимается `Argo Rollouts`/`Flagger`; pipeline лишь вызывает `kubectl apply` для `Rollout`, а не крутит ручной цикл.",
+                "source_of_confusion": "Кажется, что вся логика деплоя должна жить в самом pipeline-скрипте.",
+                "if_it_were_true": "Тогда `Argo Rollouts` был бы не нужен, но именно он управляет постепенным трафиком и откатом.",
+                "how_it_should_be": "Pipeline триггерит `Rollout`; контроллер прогрессии и автооткат — на стороне `Argo Rollouts`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать откат (`rollback`) в pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Самый быстрый и правильный способ отката — заново пересобрать предыдущую версию из исходников и задеплоить свежий артефакт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Откат опирается на уже готовый старый артефакт/ревизию (`kubectl rollout undo`); пересборка медленнее и может дать иной результат.",
+                "source_of_confusion": "«Откатиться к коду» путают с пересборкой, хотя нужный артефакт уже существует.",
+                "if_it_were_true": "Тогда откат занимал бы минуты сборки вместо секунд, увеличивая time to restore.",
+                "how_it_should_be": "Откат — это деплой существующей предыдущей ревизии одной командой, без пересборки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Откат невозможно автоматизировать в pipeline — его всегда выполняет инженер вручную через консоль после получения алерта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Откат автоматизируют: `post { failure { ... } }` в `Jenkins` или `if: failure() → kubectl rollout undo` в `GitHub Actions` срабатывают при провале.",
+                "source_of_confusion": "Откат ассоциируют с экстренным ручным вмешательством, упуская автоматические хуки.",
+                "if_it_were_true": "Тогда time to restore зависел бы от скорости реакции дежурного, но автооткат это устраняет.",
+                "how_it_should_be": "Провал деплоя/smoke триггерит автоматический `rollout undo` без ручного участия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Стратегии отката: `kubectl rollout undo` (секунды, высокая надёжность), деплой предыдущего образа (1-2 мин), revert commit + pipeline (5-15 мин, средняя надёжность), `Argo Rollouts` auto-rollback (автоматически). Автоматический откат настраивают через `post { failure { sh 'kubectl rollout undo ...' } }` в `Jenkins` или `if: failure() → kubectl rollout undo` в `GitHub Actions`. Ключевой принцип: откат — это одна команда / одно нажатие, а не «пересобрать предыдущую версию».",
+              "correct": true,
+              "sections": {
+                "explanation": "Откат должен быть быстрым и предсказуемым, поэтому опираются на уже готовый предыдущий артефакт/ревизию, а не на новую сборку. Автоматический откат связывают с провалом smoke test или деградацией метрик.",
+                "example": "В `GitHub Actions`: `Deploy → Wait for rollout (kubectl rollout status --timeout=5m) → Smoke test → Rollback on failure (if: failure() → kubectl rollout undo deployment/myapp)` — связка деплоя, проверки и автоотката.",
+                "when_to_apply": "Механизм отката нужен в каждом prod-pipeline: он сокращает time to restore при инциденте и снижает страх частых деплоев.",
+                "edge_cases": "Revert commit + полный pipeline (5-15 мин) — самый медленный откат и потому крайний вариант; миграции БД часто необратимы, поэтому откат кода не всегда откатывает схему — нужны совместимые миграции.",
+                "related": "[[pipeline-design-interview#Q13]] откат через старый артефакт; [[pipeline-design-interview#Q24]] smoke test как триггер отката; [[pipeline-design-interview#Q38]] time to restore в DORA."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После отката кода в pipeline схема базы данных автоматически откатывается вместе с ним без каких-либо дополнительных мер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Миграции БД часто необратимы; откат кода не откатывает схему сам — нужны обратно-совместимые миграции и продуманная стратегия.",
+                "source_of_confusion": "Код и БД воспринимают как единое целое, забывая, что состояние данных отдельно.",
+                "if_it_were_true": "Тогда `DROP COLUMN` в миграции откатывался бы сам, но данные уже были бы потеряны.",
+                "how_it_should_be": "Схему делают совместимой вперёд/назад; откат кода планируют отдельно от миграций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обеспечить идемпотентность этапов pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Идемпотентность этапа означает, что этап обязательно зависит от глобального состояния, накопленного предыдущими запусками pipeline.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Идемпотентность — это как раз независимость от накопленного состояния: повтор даёт тот же результат, поэтому глобальное состояние избегают.",
+                "source_of_confusion": "Сложный термин путают с противоположным свойством — зависимостью от истории.",
+                "if_it_were_true": "Тогда перезапуск упавшего этапа ломал бы окружение, но идемпотентность это предотвращает.",
+                "how_it_should_be": "Идемпотентный этап не опирается на состояние прошлых запусков и безопасно повторяется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Хороший способ обеспечить идемпотентность деплоя — тегировать образ как `latest` и перезаписывать его при каждом push.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`docker tag latest` с перезаписью — антипаттерн идемпотентности: один тег начинает означать разные сборки.",
+                "source_of_confusion": "`latest` кажется «стабильным указателем», но он меняется при каждом push.",
+                "if_it_were_true": "Тогда повторный деплой `latest` мог бы поднять другой образ, нарушая воспроизводимость.",
+                "how_it_should_be": "Используют неизменяемые версионированные теги; повторный деплой версии даёт тот же образ."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Миграцию `DROP TABLE IF EXISTS` в начале каждой миграции стоит ставить специально, чтобы гарантировать идемпотентность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DROP TABLE IF EXISTS` при повторном применении теряет данные — это нарушение идемпотентности, а не её обеспечение; `Flyway` и так применяет каждую миграцию один раз.",
+                "source_of_confusion": "Конструкция `IF EXISTS` выглядит «безопасной для повтора», но она разрушает данные.",
+                "if_it_were_true": "Тогда повторный прогон миграции был бы безвреден, но он уничтожил бы таблицу с данными.",
+                "how_it_should_be": "`Flyway` версионирует миграции и применяет однократно; деструктивный `DROP` в каждой — антипаттерн."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Идемпотентность — повторный запуск этапа даёт тот же результат и не ломает состояние. Меры: чистая среда (эфемерные runner, новый контейнер на запуск), `./gradlew clean build`, версионированные артефакты (не перезаписывать тег), `kubectl apply` (идемпотентен по дизайну), миграции `Flyway` (каждая применяется один раз). Антипаттерны: зависимость от глобального состояния, `docker tag latest` (перезаписывается), `DROP TABLE IF EXISTS` в миграциях (теряет данные при повторе).",
+              "correct": true,
+              "sections": {
+                "explanation": "Идемпотентность позволяет безопасно перезапускать упавший pipeline: повтор этапа не должен ломать окружение или копить побочные эффекты. Эфемерные runner и декларативный `kubectl apply` — естественные союзники.",
+                "example": "`kubectl apply -f deployment.yaml` приводит кластер к описанному состоянию независимо от числа применений; `Flyway` помечает применённые миграции в таблице истории и не накатывает их повторно.",
+                "when_to_apply": "Идемпотентность важна для всех этапов, которые могут перезапускаться (ретраи, ручной re-run): сборка, деплой, миграции. Особенно критично для prod-деплоя.",
+                "edge_cases": "Неидемпотентные шаги (отправка email, инкремент счётчика) защищают guard-условием или выносят в отдельный процесс; `DROP TABLE IF EXISTS` и `docker tag latest` нарушают идемпотентность, теряя данные или перетирая теги.",
+                "related": "[[pipeline-design-interview#Q13]] версионированные артефакты; [[pipeline-design-interview#Q31]] повтор деплоя и откат; [[pipeline-design-interview#Q35]] идемпотентность terraform apply."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое pipeline для монолита vs микросервисов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Монолит: один репозиторий и один pipeline; собирается всё приложение, гоняются все тесты, деплоится весь артефакт — дольше, но координация простая. Микросервисы: один pipeline per service; собирается и деплоится только изменённый сервис, плюс контрактные тесты; быстрее, но координация сложнее (версии, зависимости). В repo-per-service изменение общей библиотеки триггерит downstream-pipeline или `Dependabot`/`Renovate` создаёт `PR`; в monorepo — path filters определяют, что пересобирать.",
+              "correct": true,
+              "sections": {
+                "explanation": "Гранулярность сборки и деплоя зависит от архитектуры: монолит выкатывается целиком, микросервисы — поштучно. Это даёт микросервисам скорость отдельного деплоя ценой координации совместимости между сервисами.",
+                "example": "Монолит — один `Jenkinsfile`: сборка → тесты → образ → деплой. Микросервисы (monorepo) — path filters пересобирают только затронутый сервис, а контрактные тесты (`Spring Cloud Contract`, `Pact`) проверяют совместимость API между сервисами.",
+                "when_to_apply": "Отдельные pipeline per service применяют при зрелой микросервисной архитектуре с независимым деплоем; единый pipeline монолита — когда приложение деплоится одним артефактом.",
+                "edge_cases": "Неверные границы дают distributed monolith — формально сервисы, но требуют совместного деплоя, и преимущество независимых pipeline теряется. Изменение shared-библиотеки в repo-per-service легко забыть прокатить по потребителям.",
+                "related": "[[pipeline-design-interview#Q34]] monorepo и path filters; [[pipeline-design-interview#Q8]] Shared Libraries для стандартизации; [[pipeline-design-interview#Q1]] этапы pipeline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pipeline для монолита и для микросервисов идентичны: в обоих случаях при любом изменении пересобирается и деплоится вся система целиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Микросервисный pipeline собирает и деплоит только изменённый сервис, а монолитный — всё приложение; гранулярность принципиально разная.",
+                "source_of_confusion": "И там, и там есть «сборка → тесты → деплой», что создаёт иллюзию идентичности.",
+                "if_it_were_true": "Тогда независимый деплой одного микросервиса был бы невозможен, но он — ключевое преимущество.",
+                "how_it_should_be": "Монолит деплоят целиком; микросервисы — поштучно, пересобирая лишь затронутый сервис."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В микросервисной архитектуре всегда обязателен ровно один общий pipeline на все сервисы, иначе нарушается независимость деплоя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: каждый сервис обычно имеет свой pipeline (repo-per-service) либо path-filtered job в monorepo — это и обеспечивает независимый деплой.",
+                "source_of_confusion": "«Единый процесс CI/CD» путают с единственным общим pipeline на всё.",
+                "if_it_were_true": "Тогда деплой одного сервиса тянул бы за собой все остальные, что противоречит независимости.",
+                "how_it_should_be": "Pipeline на сервис (или path-filtered job) даёт независимую сборку и деплой каждого."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Контрактные тесты (`Pact`, `Spring Cloud Contract`) нужны только в монолите, а в микросервисах совместимость проверяется автоматически на уровне сети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контрактные тесты особенно нужны в микросервисах — они проверяют совместимость API между независимо деплоящимися сервисами; сеть сама совместимость не гарантирует.",
+                "source_of_confusion": "Кажется, что раз сервисы общаются по сети, протокол уже всё проверяет.",
+                "if_it_were_true": "Тогда изменение API одного сервиса не ломало бы потребителей, но без контрактов именно это и происходит.",
+                "how_it_should_be": "Контрактные тесты применяют между микросервисами; в монолите вызовы внутрипроцессные и проверяются компилятором."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организовать pipeline для монорепозитория?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В монорепо при любом изменении нужно всегда пересобирать и передеплоивать все сервисы сразу, чтобы гарантировать консистентность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл pipeline для монорепо — собирать только затронутое через path filters/граф зависимостей, а не всё подряд.",
+                "source_of_confusion": "«Один репозиторий» воспринимают как «один монолитный деплой всего».",
+                "if_it_were_true": "Тогда pipeline монорепо был бы медленным и дорогим, что обесценивало бы сам подход.",
+                "how_it_should_be": "Path filters/`Nx`/`affected`-логика определяют изменённые проекты и собирают только их."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В монорепо несколько проектов/сервисов в одном репозитории, и pipeline должен собирать только изменённое. В `GitHub Actions` — `on.push.paths` (например, `services/order-service/`, `libs/common/`); в `GitLab CI` — `rules:changes`. Инструменты: `Nx`/`Turborepo` (затронутые проекты по графу зависимостей), `Gradle` multi-project (`./gradlew :affected-module:build`), `Bazel` (инкрементальная сборка с кэшем). Правило: при изменении shared-библиотеки пересобирать все зависимые сервисы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Path filters и графы зависимостей отвечают на вопрос «что реально затронуто этим коммитом?», чтобы не пересобирать весь монорепо на каждое изменение одного сервиса. Это сохраняет скорость pipeline при росте кодовой базы.",
+                "example": "`GitHub Actions`: `on: { push: { paths: ['services/order-service/**', 'libs/common/**'] } }`, job собирает `./gradlew :order-service:build`; `GitLab CI` — `rules: [{ changes: ['services/order-service/**', 'libs/common/**'] }]`.",
+                "when_to_apply": "Path-based сборку применяют в монорепо с несколькими сервисами/модулями, где пересборка всего на каждый коммит была бы слишком медленной и дорогой.",
+                "edge_cases": "Path filters легко настроить так, что изменение shared-библиотеки не триггерит зависимые сервисы — тогда сломанная совместимость проскочит; граф зависимостей (`./gradlew dependencies`, `Nx`) надёжнее голых путей.",
+                "related": "[[pipeline-design-interview#Q33]] monorepo как вариант микросервисов; [[pipeline-design-interview#Q18]] build cache в монорепо; [[pipeline-design-interview#Q16]] воспроизводимость сборки модулей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Path filters в монорепо невозможны: ни `GitHub Actions`, ни `GitLab CI` не умеют ограничивать запуск job по изменённым путям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GitHub Actions` поддерживает `on.push.paths`, а `GitLab CI` — `rules:changes`; ограничение по путям — штатная возможность обеих систем.",
+                "source_of_confusion": "Разный синтаксис фильтров создаёт впечатление, что фичи нет.",
+                "if_it_were_true": "Тогда монорепо всегда собирался бы целиком, но именно фильтры путей это предотвращают.",
+                "how_it_should_be": "`paths` и `rules:changes` ограничивают запуск job изменёнными путями в монорепо."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При изменении общей shared-библиотеки в монорепо достаточно пересобрать только саму библиотеку, не трогая зависимые сервисы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Изменение shared-библиотеки требует пересборки всех зависимых сервисов — иначе они продолжат использовать старую несовместимую версию.",
+                "source_of_confusion": "Кажется, что «поменяли только библиотеку — собрали только её».",
+                "if_it_were_true": "Тогда сломанное изменение API библиотеки не проявилось бы в потребителях до прода.",
+                "how_it_should_be": "При изменении shared-кода пересобирают все зависимые модули (граф зависимостей подсказывает какие)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое pipeline для инфраструктуры (`IaC`, `Terraform`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`IaC`-pipeline должен сразу выполнять `terraform apply` без стадии `plan`, чтобы изменения применялись максимально быстро.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`plan` обязателен: он показывает предстоящие изменения для ревью/approval до `apply`; пропуск `plan` лишает контроля над инфраструктурой.",
+                "source_of_confusion": "Скорость ставят выше безопасности, считая `plan` лишним шагом.",
+                "if_it_were_true": "Тогда деструктивное изменение применилось бы без проверки человеком, что крайне опасно для prod-инфраструктуры.",
+                "how_it_should_be": "Сначала `plan` (и часто approval), затем `apply` подтверждённого плана."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Terraform state` правильнее хранить локально на runner `CI`, потому что так он всегда доступен текущему запуску.",
+              "correct": false,
+              "sections": {
+                "what_actually": "State хранят в удалённом backend (`S3` + `DynamoDB` lock); локальный state на эфемерном runner теряется и не разделяется между запусками.",
+                "source_of_confusion": "«Доступность текущему запуску» путают с корректным хранением общего state.",
+                "if_it_were_true": "Тогда следующий запуск не видел бы актуального состояния, и `Terraform` пересоздавал бы ресурсы.",
+                "how_it_should_be": "State — в удалённом хранилище с блокировкой, общий для всех запусков pipeline."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pipeline для `IaC` применяет изменения инфраструктуры через `CI/CD`. Этапы: `terraform init` → `validate` → `plan` (в артефакт) → manual approval → `apply` → verify. В `GitHub Actions` job `plan` сохраняет `plan.tfplan` через `upload-artifact`, а job `apply` (`environment: production`, требует approval) применяет именно сохранённый plan. Безопасность: state в удалённом хранилище (`S3` + `DynamoDB` lock), блокировка state при параллельном запуске, секреты облака из `OIDC` federation.",
+              "correct": true,
+              "sections": {
+                "explanation": "IaC-pipeline отделяет планирование от применения: `plan` показывает, что изменится, человек подтверждает, и `apply` применяет ровно этот plan. Удалённый state с блокировкой предотвращает гонки параллельных запусков.",
+                "example": "`plan`: `terraform plan -out=plan.tfplan` + `upload-artifact`; `apply` (`needs: plan`, `environment: production`): `download-artifact` + `terraform apply plan.tfplan` — применяется зафиксированный план, а не пересчитанный.",
+                "when_to_apply": "IaC-pipeline применяют, когда инфраструктура описана кодом (`Terraform`) и изменения должны проходить ревью, plan-подтверждение и аудит так же, как код приложения.",
+                "edge_cases": "Без блокировки state два параллельных `apply` повреждают state; `plan` без сохранения в артефакт (`apply` пересчитывает заново) может применить не то, что ревьюили. Долгоживущие облачные ключи в `CI` заменяют `OIDC`.",
+                "related": "[[pipeline-design-interview#Q20]] manual approval перед apply; [[pipeline-design-interview#Q26]] OIDC и секреты облака; [[pipeline-design-interview#Q32]] идемпотентность terraform apply."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Блокировка state при параллельном запуске не нужна: два одновременных `terraform apply` безопасно объединят свои изменения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без блокировки два параллельных `apply` повреждают state и инфраструктуру; именно поэтому используют `DynamoDB` lock.",
+                "source_of_confusion": "Кажется, что `Terraform` сам мерджит конкурентные изменения, но он этого не делает.",
+                "if_it_were_true": "Тогда `DynamoDB`-блокировка была бы избыточна, но она штатно защищает state от гонок.",
+                "how_it_should_be": "State блокируют на время операции; параллельный `apply` ждёт освобождения lock."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как мониторить и оптимизировать время выполнения pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Оптимизировать pipeline нужно вслепую, применяя все приёмы сразу без измерения времени этапов, — так быстрее достигается результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сначала измеряют bottleneck (Stage View, `gh run list`), затем оптимизируют узкое место; вслепую усилия уходят не на то.",
+                "source_of_confusion": "«Применить всё сразу» кажется эффективнее, но без данных это пальба по площадям.",
+                "if_it_were_true": "Тогда метрики времени этапов были бы не нужны, но именно они указывают, что чинить.",
+                "how_it_should_be": "Измерить → найти bottleneck → применить точечную оптимизацию → перемерить."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Покупка более мощных runner ускоряет абсолютно любой pipeline, включая этапы ожидания внешних сервисов и I/O-bound задачи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Мощный runner помогает CPU-bound задачам (−20-40%), но не ускоряет ожидание внешних сервисов и I/O-bound шаги.",
+                "source_of_confusion": "Железо считают универсальным ускорителем, игнорируя природу узкого места.",
+                "if_it_were_true": "Тогда ожидание ответа внешнего API сокращалось бы от мощного CPU, но это не так.",
+                "how_it_should_be": "Мощнее runner — для CPU-bound; для I/O и ожиданий помогают кэш, параллелизм и устранение лишних шагов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Flaky-тесты лучше всего «оптимизировать», просто автоматически перезапуская их до зелёного результата, не разбираясь в причинах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Авторетрай flaky-тестов раздувает время pipeline и маскирует реальные дефекты; их причину чинят, а не прячут повторами.",
+                "source_of_confusion": "Ретрай выглядит как быстрый способ «починить» нестабильный тест.",
+                "if_it_were_true": "Тогда flaky-тесты не входили бы в метрики качества pipeline, но их частоту специально мониторят.",
+                "how_it_should_be": "Flaky-тесты диагностируют и стабилизируют; ретрай — временный костыль, а не оптимизация."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Метрики: среднее время pipeline (lead time), время каждого этапа (bottleneck analysis), процент успешных/неуспешных запусков, queue time, частота flaky-тестов. Инструменты: `Jenkins` Stage View/Blue Ocean, `GitHub Actions` Actions tab/`gh run list`, `GitLab CI` Analytics, `Datadog CI Visibility`. Оптимизация по приоритету: кэш зависимостей (−2-5 мин), параллельные этапы (−30-50%), `Gradle Build Cache` (−50-70% при инкрементах), `Docker layer caching` (−2-3 мин), мощнее runner, выборочные тесты на PR. Цели: PR < 5 мин, до staging < 15 мин, до prod < 30 мин.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сначала измеряют, где время теряется (обычно тесты или сборка образа), затем применяют точечные оптимизации. Без bottleneck-анализа ускоряют не то и тратят усилия впустую.",
+                "example": "`gh run list --workflow=deploy-prod.yml --json createdAt,conclusion` даёт данные по длительности и успешности; Stage View `Jenkins` показывает, какой stage — bottleneck (часто integration-тесты).",
+                "when_to_apply": "Мониторинг и оптимизацию запускают, когда pipeline систематически превышает целевые пороги (PR > 5 мин, полный > 30 мин) и замедляет поток команды.",
+                "edge_cases": "Мощнее runner помогает только CPU-bound задачам (−20-40%); для I/O-bound или ожидания внешних сервисов это не работает. Flaky-тесты раздувают время ретраями — их чинят отдельно, не маскируя повторными прогонами.",
+                "related": "[[pipeline-design-interview#Q5]] fail fast и быстрый feedback; [[pipeline-design-interview#Q18]] Gradle Build Cache как оптимизация; [[pipeline-design-interview#Q38]] lead time в DORA."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выглядит GitOps-pipeline с разделением `app` и `config` репозиториев?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "GitOps-pipeline разделяет CI (сборка и тесты) и CD (деплой через Git): `CI` собирает образ, пушит его и фиксирует новый тег в отдельном `config`-репозитории (через `PR`), а `Argo CD`/`Flux` синхронизирует `config`-репо с кластером. Два репозитория дают разные права (CI-бот пишет только в config), аудит деплоев (история config = история деплоев с review), rollback через `git revert` в config и drift detection. Структура config-репо — `Kustomize` base/overlays + `argocd/` Application CRD.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение app и config делает деплой декларативным и аудируемым: желаемое состояние кластера хранится в `Git`, а `Argo CD` приводит кластер к нему. CI не имеет прямого доступа к кластеру — только меняет тег в config-репо.",
+                "example": "CI-шаг: `yq e \".image.tag = \\\"${GITHUB_SHA::8}\\\"\" -i apps/myapp/overlays/staging/values.yaml`, затем `git commit` и `git push` в `config`-репо; `Argo CD` ловит изменение (poll/webhook) и применяет манифесты в кластер.",
+                "when_to_apply": "GitOps с двумя репозиториями применяют для аудируемого, декларативного деплоя в `Kubernetes`, где важны разделение прав, история деплоев и простой rollback через `git revert`.",
+                "edge_cases": "В prod `Argo CD` настраивают без `automated.prune` (удаление ресурсов вручную) и с `selfHeal: true` (восстановление drift от ручных `kubectl` правок). `Flux` с image automation умеет сам обновлять тег без CI-шага.",
+                "related": "[[pipeline-design-interview#Q19]] промоушен по окружениям; [[pipeline-design-interview#Q13]] тег образа в config-репо; [[pipeline-design-interview#Q31]] rollback через git revert."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В GitOps-pipeline CI напрямую выполняет `kubectl apply` в кластер, а отдельный config-репозиторий не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть GitOps — деплой через Git: CI меняет тег в config-репо, а `Argo CD`/`Flux` применяет манифесты; прямой `kubectl apply` из CI — это push-модель, а не GitOps.",
+                "source_of_confusion": "Любую автоматизацию деплоя называют GitOps, упуская декларативный pull-механизм.",
+                "if_it_were_true": "Тогда аудит деплоев через историю config-репо и `git revert`-откат были бы невозможны.",
+                "how_it_should_be": "CI обновляет config-репо; контроллер (`Argo CD`/`Flux`) синхронизирует кластер с Git."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Разделение на app и config репозитории нужно исключительно для уменьшения размера каждого репозитория, без влияния на права и аудит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главные причины — разные права (CI-бот пишет только в config), аудит деплоев и rollback через `git revert`; размер репозитория тут вторичен.",
+                "source_of_confusion": "Разделение трактуют как чисто организационное удобство, упуская модель безопасности и аудита.",
+                "if_it_were_true": "Тогда хватило бы одного репозитория с подпапками, но разнесение даёт именно изоляцию прав и историю деплоев.",
+                "how_it_should_be": "Два репо разделяют права записи, дают аудит деплоев и drift detection — не только уменьшают размер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В prod `Argo CD` всегда настраивают с `automated.prune` и без `selfHeal`, чтобы лишние ресурсы удалялись автоматически, а ручные правки сохранялись.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для prod чаще наоборот: `prune` отключают (удаление ресурсов вручную) и включают `selfHeal: true`, чтобы восстанавливать drift от ручных правок.",
+                "source_of_confusion": "Параметры `Argo CD` легко перепутать местами по их назначению.",
+                "if_it_were_true": "Тогда случайно удалённый из манифеста ресурс снёс бы prod автоматически, а ручной drift оставался бы.",
+                "how_it_should_be": "В prod `prune` обычно ручной, а `selfHeal: true` возвращает кластер к состоянию из Git."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое DORA-метрики и как их улучшить через pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DORA-метрики — это набор из десяти показателей нагрузки на CPU и память серверов CI, измеряющих потребление ресурсов runner.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DORA — это четыре метрики зрелости DevOps (Deployment Frequency, Lead Time, Change Failure Rate, Time to Restore), а не показатели потребления ресурсов.",
+                "source_of_confusion": "Слово «метрики» ассоциируют с инфраструктурным мониторингом CPU/RAM.",
+                "if_it_were_true": "Тогда улучшение DORA сводилось бы к апгрейду железа, но оно достигается практиками CI/CD.",
+                "how_it_should_be": "DORA — четыре показателя потока поставки ПО, улучшаемые изменениями в pipeline и процессе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DORA metrics — четыре показателя зрелости DevOps: Deployment Frequency (как часто деплоим — улучшают trunk-based dev, feature flags, маленькие PR), Lead Time for Changes (время от коммита до prod — параллельные этапы, кэш, выборочные тесты), Change Failure Rate (% деплоев с инцидентом — canary/blue-green, quality gates, smoke-тесты), Time to Restore (время восстановления — автоматический rollback, on-call, feature flags). Уровни: Low → Medium → High → Elite.",
+              "correct": true,
+              "sections": {
+                "explanation": "DORA связывает практики pipeline с измеримыми бизнес-результатами: каждая метрика улучшается конкретными изменениями в CI/CD. Это переводит «улучшить процесс» в управляемые цифры.",
+                "example": "Lead Time режут параллельными job-ами (`lint` и `unit-tests` параллельно, `integration-tests` с `needs: [lint, unit-tests]`); Change Failure Rate — canary-деплоем с автоанализом (`Argo Rollouts` сам откатит при деградации метрик).",
+                "when_to_apply": "DORA-метрики используют для оценки зрелости CI/CD и приоритизации улучшений; начинать обычно советуют с Lead Time как самой управляемой через pipeline.",
+                "edge_cases": "Метрики можно гейминговать (деплоить чаще пустыми коммитами ради Deployment Frequency), поэтому их смотрят в связке — рост частоты без контроля Change Failure Rate опасен. Долгий ревью бьёт по Lead Time, но это процесс, а не pipeline.",
+                "related": "[[pipeline-design-interview#Q2]] deployment frequency и Continuous Deployment; [[pipeline-design-interview#Q30]] canary против change failure rate; [[pipeline-design-interview#Q31]] автооткат и time to restore."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Time to Restore улучшают, отключая автоматический rollback: пусть дежурный инженер вручную и подольше разбирается в каждом инциденте, зато тщательнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Time to Restore снижают именно автоматическим rollback, on-call и feature flags; ручной разбор без автоотката только удлиняет восстановление.",
+                "source_of_confusion": "«Тщательнее вручную» путают со скоростью восстановления, хотя метрика измеряет время до восстановления.",
+                "if_it_were_true": "Тогда elite-команды восстанавливались бы дольше из-за ручного разбора, но они опираются на автооткат и держат восстановление < 1 часа.",
+                "how_it_should_be": "Time to Restore режут автоматическим откатом и быстрым выключением фичи флагом, а не отказом от автоматики."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Change Failure Rate улучшают, просто деплоя как можно реже: чем меньше деплоев, тем меньше инцидентов и ниже метрика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Change Failure Rate — это доля (%) проблемных деплоев, а не их число; редкие деплои не снижают долю, а часто повышают риск каждого крупного релиза.",
+                "source_of_confusion": "Абсолютное число инцидентов путают с их долей от всех деплоев.",
+                "if_it_were_true": "Тогда elite-команды деплоили бы редко, но они деплоят часто и держат низкий процент сбоев через canary и gate.",
+                "how_it_should_be": "Долю сбоев снижают canary/blue-green, quality gates и smoke-тестами, а не уменьшением частоты деплоев."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

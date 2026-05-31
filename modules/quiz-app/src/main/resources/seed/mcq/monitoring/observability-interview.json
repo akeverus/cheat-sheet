@@ -1,0 +1,905 @@
+{
+  "topic_slug": "observability-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как коротко объяснить observability и в чём её отличие от мониторинга?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Monitoring` отвечает на заранее известные вопросы (known-unknowns) по заданным метрикам, а `observability` позволяет задавать ad-hoc вопросы о внутреннем состоянии системы без редеплоя кода.",
+              "correct": true,
+              "sections": {
+                "explanation": "Термин пришёл из теории управления: систему называют `observable`, если по её выходам можно восстановить внутреннее состояние. Короткая формула — «monitoring = detection, observability = detection + diagnosis».",
+                "example": "`Honeycomb` (Charity Majors) построила бизнес именно на ad-hoc query по high-cardinality событиям, когда нужно расследовать неизвестный заранее сценарий деградации.",
+                "when_to_apply": "Различие проговаривают на собеседовании, когда интервьюер хочет понять, отличает ли кандидат набор дашбордов от реальной диагностической способности системы.",
+                "edge_cases": "Observability нужна не только в Kubernetes с микросервисами: монолит с нетривиальными failure modes тоже выигрывает от ad-hoc вопросов к своему состоянию.",
+                "related": "[[observability-interview#Q30]] observability в инциденте; [[observability-interview#Q32]] частые anti-patterns."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Observability` — это просто красивое название для `monitoring` с дашбордами в `Grafana`, добавил дашборды — получил observability.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дашборды поверх monitoring не дают ad-hoc диагностики неизвестных заранее сценариев — это лишь визуализация заданных метрик.",
+                "source_of_confusion": "Вендоры маркетингово подменяют термины, поэтому покупку красивого UI принимают за переход к observability.",
+                "if_it_were_true": "Тогда покупка `Datadog` гарантировала бы падение MTTR, но при инциденте команда всё равно «не видит» причину.",
+                "how_it_should_be": "Observability — способность задавать произвольные вопросы о состоянии без редеплоя, а не набор готовых графиков."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Observability` = `metrics` + `logs` + `traces`: любые три инструмента автоматически дают наблюдаемость.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Три столпа — это сигналы, а не сама observability; без корреляции через `traceId` они изолированы и не отвечают на «почему».",
+                "source_of_confusion": "Удобная формула «три столпа» создаёт иллюзию, что достаточно купить три инструмента.",
+                "if_it_were_true": "Тогда `Prometheus` + `ELK` + `Jaeger` без общего контекста давали бы быструю диагностику, но инцидент ищут часами.",
+                "how_it_should_be": "Сигналы нужно связать единым контекстом (`traceId`) и уметь задавать по ним ad-hoc вопросы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Observability` нужна только в Kubernetes-окружениях с микросервисами, монолиту она не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это узкое vendor-определение: монолиту с нетривиальными failure modes observability нужна не меньше.",
+                "source_of_confusion": "Тему observability часто продают вместе с микросервисами и k8s, отсюда ложная привязка.",
+                "if_it_were_true": "Тогда монолит банка мог бы падать незаметно, но и там error budget сгорает, и нужен ранний сигнал.",
+                "how_it_should_be": "Observability определяется способностью восстанавливать состояние по выходам, а не типом инфраструктуры."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как управлять стоимостью логов и трейсов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Хранить все логи и трейсы в hot-storage (SSD) 90 дней — иначе при инциденте недостаточно данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "90 дней hot экономически разорительны: 100 GB/день — это ~9 TB на SSD; реально 95% расследований используют первые 24-72 часа.",
+                "source_of_confusion": "Страх «недостаточно данных при инциденте» толкает хранить всё в hot.",
+                "if_it_were_true": "Тогда полнота окупалась бы, но observability-бюджет = 30-50% инфраструктуры и приходится резко резать retention.",
+                "how_it_should_be": "Используют tiered retention: hot — дни, warm — десятки дней, cold — архив в Glacier."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Снизить retention до 1 дня для всех логов — это самый дешёвый вариант.",
+              "correct": false,
+              "sections": {
+                "what_actually": "1 день ломает базовые workflow: weekly trends, recurring incidents, compliance (часто 90+ дней), post-mortem через 2-3 дня.",
+                "source_of_confusion": "При выходе из бюджета первая мысль — резать retention равномерно.",
+                "if_it_were_true": "Тогда экономия была бы безопасной, но в понедельник нет данных за пятницу и recurring patterns не видны.",
+                "how_it_should_be": "Retention снижают селективно по уровням, а не равномерно до 1 дня."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Tiered retention (hot/warm/cold) + фильтрация на уровне агента + sampling + cardinality control + видимость стоимости рядом с SLO.",
+              "correct": true,
+              "sections": {
+                "explanation": "Многоуровневая стратегия — единственный устойчивый подход: hot 3-7 дней (SSD), warm 30 дней (HDD/object storage), cold 90-365 дней (S3 Glacier для compliance), плюс drop health-checks и DEBUG в production.",
+                "example": "В `Loki` это `retention_period: 168h` + lifecycle policy перехода в Glacier через 30 дней; эталон зрелости — observability = 5-15% от стоимости инфраструктуры.",
+                "when_to_apply": "Рычаги применяют, когда observability-bill стал заметен в FinOps-отчёте (обычно >$10k/мес) и нужно резать стоимость без потери диагностики.",
+                "edge_cases": "Cold storage retrieval в S3 Glacier дорогой при выборке (~$0.03/GB) — если инциденты часто требуют warm-данные, лучше HDD; а drop health-checks ломает uptime monitoring по логам.",
+                "related": "[[observability-interview#Q39]] FinOps и sampling; [[observability-interview#Q28]] observability без перегруза."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Перейти полностью на managed-решение (Datadog) — vendor оптимизирует стоимость за нас.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Managed дороже self-hosted при том же volume (Datadog Logs ~$1.27/GB vs Loki ~$0.10/GB); vendor не оптимизирует, а биллит по тарифу.",
+                "source_of_confusion": "«Managed = меньше операционных забот» путают с «managed = дешевле».",
+                "if_it_were_true": "Тогда Netflix/Uber/Shopify не строили бы свои стеки на open-source, но они делают это именно ради cost control.",
+                "how_it_should_be": "Стоимость режут tiered retention, фильтрацией, sampling и cardinality control, а не сменой на managed."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как запускать observability в production без перегруза самой системы?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Использовать synchronous экспорт телеметрии — это даёт максимальную целостность данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Блокирующий экспорт добавляет network round-trip к каждой операции (5-50ms на span) и при недоступности backend вешает поток приложения.",
+                "source_of_confusion": "В туториалах для простоты часто показывают synchronous-экспорт.",
+                "if_it_were_true": "Тогда целостность окупала бы блокировку, но при сбое Collector все pods замирают — cascading failure.",
+                "how_it_should_be": "Телеметрию отправляют асинхронно через batch processor с отдельным thread pool."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Логировать всё на DEBUG в production — данных будет много, можно потом отфильтровать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DEBUG в production даёт I/O bottleneck, рост volume в 10-100x и latency от synchronous appenders.",
+                "source_of_confusion": "«Больше данных = легче расследовать» путают с production-реальностью.",
+                "if_it_were_true": "Тогда DEBUG на всём помогал бы, но `p99` растёт в 3-5x, а диск заполняется за часы.",
+                "how_it_should_be": "По умолчанию INFO/WARN, DEBUG включают временно через dynamic log level."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Отключить трейсы и оставить только метрики — метрики лёгкие и достаточны для всего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метрики дешевле, но не заменяют трейсы для cross-service диагностики — они не показывают, где в цепочке ошибка.",
+                "source_of_confusion": "Трейсы дорого хранить, и реакция «удалим вообще».",
+                "if_it_were_true": "Тогда метрик хватало бы, но при «50% запросов медленные» не видно, какой сервис в цепочке тормозит.",
+                "how_it_should_be": "Трейсы оставляют, но удешевляют через sampling, а не отключают."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Async export + sampling + контроль cardinality + dynamic log levels + circuit breaker на telemetry pipeline.",
+              "correct": true,
+              "sections": {
+                "explanation": "Защитный стек: батч-процессор с in-memory queue и отдельным thread pool, sampling трейсов, запрет high-cardinality лейблов, динамические уровни логов и дроп телеметрии при недоступности backend (а не накопление в очереди).",
+                "example": "`OTel SDK` `BatchSpanProcessor` с `setMaxQueueSize(2048)` (drop при переполнении) + dynamic log level через `POST /actuator/loggers/...` с `{\"configuredLevel\": \"DEBUG\"}` на 10-30 минут.",
+                "when_to_apply": "Практики применяют в любой production-системе с SLO на latency, особенно при high-throughput (>10k RPS) и low-latency (<100ms p99).",
+                "edge_cases": "Дроп при переполнении queue теряет данные в момент перегрузки — нужен алерт на `otel_exporter_dropped_spans_total`; а dynamic log level не работает для loggers из static init до Spring context.",
+                "related": "[[observability-interview#Q32]] anti-patterns (cardinality); [[observability-interview#Q39]] FinOps и sampling."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать стек observability под небольшую команду и ограниченный бюджет?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для k8s-команды из 5 разработчиков без SRE и бюджетом ~$500/мес — `Grafana LGTM` (Loki + Grafana + Tempo + Mimir) + `OTel Collector`, развёрнутые через Helm в том же кластере (или Grafana Cloud Free).",
+              "correct": true,
+              "sections": {
+                "explanation": "`Loki` и `Tempo` хранят данные в S3 без полной индексации (дёшево), `Mimir` — масштабируемый Prometheus, `Grafana` — единый UI; стоимость ~$100/мес на S3 + compute в существующем кластере.",
+                "example": "Деплой через `kube-prometheus-stack` + `loki-stack` + `tempo-distributed` Helm charts с бакетами в S3; альтернатива — Grafana Cloud Free (10k series, 50 GB logs/traces).",
+                "when_to_apply": "Выбор подходит Kubernetes-native стартапам/scale-ups (5-50 инженеров) с open-source культурой и навыками Helm/k8s.",
+                "edge_cases": "`Loki` не для full-text search (индексирует только лейблы), а `Tempo` ищет по `traceID` — «найти все медленные трейсы за час» без external index ограничено (частично решает `TraceQL`).",
+                "related": "[[observability-interview#Q27]] управление стоимостью; [[observability-interview#Q34]] `OTel Collector`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Datadog Enterprise — стандарт индустрии, всё в одном вендоре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Datadog Enterprise стоит $15-23/host + per-GB логи + per-trace billing — легко $2k-5k/мес, в 10x выше бюджета.",
+                "source_of_confusion": "«Стандарт индустрии» — маркетинговое заявление, не привязанное к бюджету.",
+                "if_it_were_true": "Тогда Datadog подошёл бы стартапу, но observability-bill съел бы весь инфраструктурный бюджет.",
+                "how_it_should_be": "Для $500/мес выбирают self-hosted LGTM или Grafana Cloud Free."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Self-hosted ELK (Elasticsearch + Logstash + Kibana) + Jaeger — open-source, всё бесплатно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ELK на production-нагрузке требует кластер ≥3 nodes (16 GB RAM) + 0.5-1 FTE на поддержку — дороже managed.",
+                "source_of_confusion": "«Open-source = бесплатно» забывает про TCO (operating cost = FTE × salary).",
+                "if_it_were_true": "Тогда ELK был бы дёшев, но команда тратит 2-3 дня в месяц на «починку Elasticsearch» вместо фич.",
+                "how_it_should_be": "Для команды без SRE берут лёгкий LGTM на object storage, а не тяжёлый ELK."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только Prometheus + Grafana — метрик хватит на всё, логи смотреть в `kubectl logs`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метрики без логов и трейсов дают только detection, но не diagnosis; `kubectl logs` теряет данные после restart pod.",
+                "source_of_confusion": "В учебных туториалах часто показывают только Prometheus — он самый известный.",
+                "if_it_were_true": "Тогда метрик хватало бы, но при OOMKilled pod логи теряются с рестартом — root cause не понять.",
+                "how_it_should_be": "Минимум — метрики + persistent logs (хотя бы Loki) + трейсы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как observability помогает в инциденте и постмортеме?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главное в post-mortem — найти виновников, применить дисциплинарные меры и приказ «больше не ломать».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Blame culture — главный антипаттерн: команда скрывает инциденты, реальные причины не устраняются.",
+                "source_of_confusion": "В традиционных корпорациях руководство ожидает «найти виноватого».",
+                "if_it_were_true": "Тогда наказания улучшали бы надёжность, но инциденты замалчиваются и паттерны повторяются через месяц.",
+                "how_it_should_be": "Post-mortem пишут blameless: улучшают систему, а не наказывают людей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Качественный post-mortem включает точный timeline на основе observability, root cause analysis, impact assessment, action items с дедлайнами и owner, contributing factors — и пишется blameless.",
+              "correct": true,
+              "sections": {
+                "explanation": "Во время инцидента observability фиксирует impact по SLI, локализует деградацию по trace/service map и подтверждает причину логами; в постмортеме данные формируют timeline и preventative actions.",
+                "example": "Формат Google SRE Book: timeline с timestamps (Alert → p99 → trace timeout → лог `Connection refused` → root cause `cert expired`), impact (failed payments, revenue), action items `@alice — add cert_expiry alert (2026-04-22)`.",
+                "when_to_apply": "Полный post-mortem обязателен после P1/P2 инцидентов и проводится в течение 3 рабочих дней, пока данные ещё свежие.",
+                "edge_cases": "Action items без дедлайнов — главная причина повторения инцидентов; нужен tracker (Jira label `post-mortem`) и «Five Whys» до системной причины (cron silent failure под cert expired).",
+                "related": "[[observability-interview#Q31]] observability в CI/CD; [[observability-interview#Q38]] Runbook."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно текстового описания «что произошло» без timeline и метрик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без точного timeline с timestamps и metric snapshots нельзя установить корреляции и причинно-следственную цепочку.",
+                "source_of_confusion": "Под пресс «быстрее закрыть тикет» команды пишут краткие отчёты.",
+                "if_it_were_true": "Тогда «сервис упал, мы починили» был бы достаточным, но через 3 месяца деталей никто не помнит.",
+                "how_it_should_be": "Post-mortem строят на timeline из observability с метриками до/после."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Записать в Confluence «всё работает, инцидент закрыт» — это формальность для compliance.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Минимальный отчёт без анализа создаёт ложное чувство «процесс есть», но не помогает учиться на инцидентах.",
+                "source_of_confusion": "ISO/SOC2 требует «incident reports», и это воспринимают как paperwork.",
+                "if_it_were_true": "Тогда галочки хватало бы, но через 6 месяцев timeline не восстановить и action items не созданы.",
+                "how_it_should_be": "Документ должен содержать анализ, timeline и action items, а не отписку."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как внедрять observability в CI/CD и релизный процесс?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Деплоить сразу 100% и руками проверять Grafana в течение часа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Big-bang + ручная проверка не масштабируется: при плохом релизе сразу страдают 100% пользователей и нет автоматического rollback.",
+                "source_of_confusion": "В небольших проектах легче деплоить «как раньше».",
+                "if_it_were_true": "Тогда ручной контроль был бы достаточным, но MTTR = время на человеческий детект + rollback — это часы.",
+                "how_it_should_be": "Используют progressive delivery (canary) с automated guardrails и auto-rollback."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Покрыть unit-тестами 100% кода — этого достаточно перед deploy в production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unit-тесты проверяют код в изоляции, но не ловят integration-баги: prod-конфиг, реальная latency, breaking changes партнёров.",
+                "source_of_confusion": "«Больше тестов = надёжнее» — частично правда, но тесты не заменяют observability.",
+                "if_it_were_true": "Тогда Netflix/Google/Amazon не нуждались бы в canary, но они активно их используют.",
+                "how_it_should_be": "Observability в pipeline — независимый слой защиты поверх тестов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Canary deployment + automated guardrails (SLI comparison new vs old) + auto-rollback по метрикам + связь release→trace→dashboard.",
+              "correct": true,
+              "sections": {
+                "explanation": "Новую версию катят на 5-10% трафика, `AnalysisTemplate` каждые 60с сравнивает error_rate и latency новой и старой версии, и при ухудшении на 1% — автоматический rollback без человека.",
+                "example": "`Argo Rollouts` `AnalysisTemplate` с `successCondition: result[0] < 0.01` и `failureLimit: 2` на PromQL-запросе error_rate новой версии — guardrail на canary.",
+                "when_to_apply": "Подход обязателен для сервисов с SLO и high-traffic API, особенно финансовых/payment, где минута деградации = большие потери.",
+                "edge_cases": "Low-traffic canary (5% от 100 RPS = 5 RPS) даёт мало статистики за 60с — нужен window 5-10 минут или synthetic load; а первые 30с после старта pod дают спайки от JVM warmup.",
+                "related": "[[observability-interview#Q30]] инцидент и постмортем; [[observability-interview#Q33]] maturity model."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно полных нагрузочных тестов перед каждым релизом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Load testing в staging не репродуцирует prod: реальный traffic pattern, данные и external dependencies.",
+                "source_of_confusion": "Load testing видим (есть отчёт), а canary — процесс без одного артефакта.",
+                "if_it_were_true": "Тогда canary был бы не нужен, но Amazon/Google/Netflix используют его именно из-за недостаточности load testing.",
+                "how_it_should_be": "Load testing дополняют canary + observability в pipeline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой подход является фундаментальным anti-pattern в observability с самыми тяжёлыми последствиями?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Использовать Grafana вместо самописных HTML-дашбордов — это и есть anti-pattern.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Использование Grafana — это best practice; anti-pattern — самописные HTML/JS-дашборды (drift, нет versioning).",
+                "source_of_confusion": "Логика перевёрнута: реальный anti-pattern — copy-paste и dashboard-as-art, а не выбор Grafana.",
+                "if_it_were_true": "Тогда Grafana вредила бы, но она — стандарт в LGTM/Datadog/New Relic.",
+                "how_it_should_be": "Grafana — правильный инструмент; anti-pattern — отказ от него ради самописных дашбордов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Хранить логи в Elasticsearch вместо plain text — это anti-pattern.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Elasticsearch для логов — обоснованное решение (ELK); anti-pattern — это plain text и `tail -f` на файлы.",
+                "source_of_confusion": "Elasticsearch дорогой, поэтому кто-то называет его «лишним».",
+                "if_it_were_true": "Тогда SRE использовали бы `grep` по файлам, но это работает лишь для single-host.",
+                "how_it_should_be": "Логи хранят структурированно в indexed store (Elasticsearch/Loki), а не в plain text."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Добавлять traceId во все логи — это лишняя нагрузка на logger и anti-pattern.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`traceId` в логах — обязательное требование для корреляции трёх pillars; overhead — несколько байт на сообщение.",
+                "source_of_confusion": "Иногда оптимизируют log size, не понимая ROI traceId на расследовании.",
+                "if_it_were_true": "Тогда удаление traceId экономило бы ресурсы, но без него логи изолированы от трейсов — диагностика часами.",
+                "how_it_should_be": "`traceId` обязателен в логах; его overhead ничтожен против пользы корреляции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "High-cardinality labels (`userId`, `requestId`, `sessionId` в `Prometheus` labels) — фундаментальный anti-pattern: катастрофические последствия, частая встречаемость и сложность отката.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Prometheus` хранит одну time series на каждую уникальную комбинацию лейблов: 1M users × 100 endpoints × 5 статусов = 500M series ≈ 100+ GB RAM и OOM, что останавливает весь мониторинг.",
+                "example": "Плохо: `Counter.tag(\"user_id\", userId)`; хорошо: `tag(\"method\")` × `tag(\"status\")` × `tag(\"endpoint\")` = 10×20×100 = 20 000 — manageable; high-cardinality данные кладут в traces (Tempo) и logs (Loki).",
+                "when_to_apply": "Правило enforced всегда на любом `Prometheus`-based мониторинге, особенно критично для multi-tenant сервисов.",
+                "edge_cases": "Auto-instrumentation (`Spring Boot Actuator`) иногда добавляет `uri` label с path variables — нужна URI normalization, иначе `uri` сам становится high-cardinality.",
+                "related": "[[observability-interview#Q39]] FinOps (cardinality cleanup); [[observability-interview#Q33]] зрелость observability."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как объективно оценить зрелость observability в команде?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Многоуровневая модель: L1 базовый мониторинг → L2 SLO-driven → L3 корреляция трёх pillars → L4 встроенная в SDLC → L5 проактивная (anomaly detection, chaos), плюс измерение MTTD/MTTR.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главный критерий — MTTD и MTTR снижаются или хотя бы держатся постоянными при росте сложности системы; если они растут, observability отстаёт от роста системы.",
+                "example": "Checklist для L3+: все сервисы экспортируют RED, structured JSON logging с traceId, tracing на 100% inter-service вызовов, MTTD < 5 min для P1, % инцидентов обнаруженных monitoring > 90%.",
+                "when_to_apply": "Модель применяют ежеквартально (observability review), при онбординге нового сервиса и при росте команды > 20 разработчиков.",
+                "edge_cases": "L5 без L1-L4 — команда покупает AI-anomaly detection без structured logs («решение в поисках проблемы»); развитие должно быть последовательным.",
+                "related": "[[observability-interview#Q30]] инцидент и постмортем; [[observability-interview#Q32]] anti-patterns."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Зрелость измеряется только количеством метрик в Prometheus и числом дашбордов в Grafana.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vanity-метрики (число дашбордов) не отражают зрелость: 500 дашбордов и ноль actionable алертов — «шум без сигнала».",
+                "source_of_confusion": "Руководству легко продать «1000 метрик» как достижение.",
+                "if_it_were_true": "Тогда «больше графиков = зрелее», но это вход, а не результат; actionable nature игнорируется.",
+                "how_it_should_be": "Зрелость измеряют MTTD/MTTR и долей инцидентов, обнаруженных мониторингом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточным критерием зрелости является наличие 24/7 on-call rotation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "On-call — это operational практика, а не observability maturity; можно иметь on-call без хорошей observability.",
+                "source_of_confusion": "On-call часто упоминается рядом с observability, но это разные дисциплины.",
+                "if_it_were_true": "Тогда стартапы без 24/7 не имели бы зрелой observability, но многие её имеют.",
+                "how_it_should_be": "Зрелость оценивают по maturity-модели L1-L5 и MTTD/MTTR, не по факту on-call."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сертификация по ISO/SOC2 — это объективная мера зрелости observability.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Compliance проверяет наличие процессов (logging, retention есть), но не качество диагностики; SOC2 проходят и с L1.",
+                "source_of_confusion": "Compliance audits дают «галочку» руководству.",
+                "if_it_were_true": "Тогда SOC2-certified компании не имели бы громких outage, но Cloudflare/AWS/Google имеют их регулярно.",
+                "how_it_should_be": "Зрелость измеряют maturity-моделью и MTTD/MTTR, а не сертификатом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевая роль OpenTelemetry Collector и какой режим деплоя нужен для большого Kubernetes-кластера?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "OTel Collector — это только агент для отправки данных в один backend (например, Jaeger).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Collector — vendor-neutral pipeline с fan-out: один Collector шлёт в Prometheus, Loki, Tempo, Datadog, S3 одновременно.",
+                "source_of_confusion": "В туториалах часто показывают один экспортёр для простоты.",
+                "if_it_were_true": "Тогда vendor lock-in был бы неизбежен, и переход с Jaeger на Tempo требовал бы пересборки приложений.",
+                "how_it_should_be": "Collector — fan-out abstraction, миграция backend меняется только в exporter config."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Vendor-neutral pipeline для приёма/обработки/экспорта телеметрии; в большом k8s — комбинированный режим: Agent (DaemonSet/sidecar) → Gateway (Deployment), где Agent делает local collection, Gateway — tail-sampling и forwarding в backend.",
+              "correct": true,
+              "sections": {
+                "explanation": "Архитектура `Receivers → Processors → Exporters`. Agent даёт buffering и resilience при сбое Gateway, Gateway — global view трейсов для tail-sampling; между ними `loadbalancing exporter` с `routing_key: traceID`.",
+                "example": "Agent (DaemonSet) с `batch` + `memory_limiter` экспортирует через `loadbalancing` в `otel-gateway.observability`, а Gateway применяет `tail_sampling` и шлёт в backend.",
+                "when_to_apply": "Combined-режим — production-стандарт для k8s с >1000 подов; для одного сервиса достаточно Gateway или sidecar.",
+                "edge_cases": "Tail-sampling требует, чтобы все спаны одного трейса попали на один Gateway instance — без `loadbalancing exporter` Gateway видит фрагменты и принимает неверные решения.",
+                "related": "[[observability-interview#Q39]] FinOps и tail-sampling; [[observability-interview#Q35]] continuous profiling pipeline."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "OTel Collector — это просто proxy без обработки данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это stateful pipeline с processors: `batch`, `memory_limiter`, `tail_sampling`, `filter`, `resource`, `transform`.",
+                "source_of_confusion": "Слово «collector» намекает на пассивную пересылку.",
+                "if_it_were_true": "Тогда не было бы tail-sampling и cost optimization, и приложение слало бы 100% сырых данных в backend.",
+                "how_it_should_be": "Collector активно обрабатывает данные через pipeline processors."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для большого кластера достаточно одного Agent-режима (sidecar в каждом pod), Gateway не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sidecar-Agent не имеет global view трейса, поэтому корректный tail-sampling по полному трейсу невозможен.",
+                "source_of_confusion": "Sidecar даёт низкую задержку и изоляцию, что кажется достаточным.",
+                "if_it_were_true": "Тогда tail-sampling работал бы из sidecar, но решения принимаются по фрагментам трейса — данные теряются.",
+                "how_it_should_be": "Для >1000 подов используют combined: Agent для сбора + Gateway для tail-sampling."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем continuous profiling принципиально отличается от distributed tracing и почему это «четвёртый столп»?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Continuous profiling — это просто более частая версия traditional CPU profiling (jstack, async-profiler).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это постоянный low-overhead (<1% CPU) сбор в production с persistent storage и корреляцией с traces, а не разовый запуск.",
+                "source_of_confusion": "Инструменты похожи (async-profiler в обоих случаях), но режим работы и хранение разные.",
+                "if_it_were_true": "Тогда не было бы отдельной категории (Pyroscope, Phlare, Polar Signals) — все запускали бы async-profiler руками.",
+                "how_it_should_be": "Continuous profiling работает непрерывно в prod и хранит профили как time series."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Continuous profiling показывает только CPU usage — для memory нужны другие инструменты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современный profiling покрывает CPU, Heap Allocation, Lock Contention, Wall Clock; Pyroscope через JFR собирает `cpu,alloc,lock` одновременно.",
+                "source_of_confusion": "CPU profiling — самый известный тип, поэтому profiling упрощают до «CPU».",
+                "if_it_were_true": "Тогда нельзя было бы диагностировать GC-проблемы и lock contention через profiling, но это базовая функция Pyroscope.",
+                "how_it_should_be": "Profiling собирает несколько типов профилей, включая heap и lock."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Постоянный low-overhead сбор профилей CPU/heap/lock на уровне функций кода в production, корреляция с traces через `profileID`, ретроспективный анализ деградации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tracing показывает, какой span медленный (`payment.charge` = 500ms), но не что внутри (sleep? CPU-loop? lock wait?); profiling даёт flame graph до строки кода с overhead ~1% CPU.",
+                "example": "`Pyroscope` (Grafana Pyroscope) для Java через JFR собирает `cpu,alloc,lock`; при интеграции с `Tempo` каждый span получает `profileID`, и из trace один клик ведёт в профиль.",
+                "when_to_apply": "Continuous profiling обязателен для performance-critical сервисов (payment, search, recommendation); use case — diff flame graph между v1 и v2 при росте CPU.",
+                "edge_cases": "JFR overhead не всегда 1% — при `alloc`-profiling на allocation-heavy сервисах вырастает до 3-5%; а eBPF-profiling требует privileged container или `CAP_BPF`.",
+                "related": "[[observability-interview#Q34]] `OTel Collector` и pipeline; [[observability-interview#Q36]] chaos engineering."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Profiling нужен только для local development; в production это слишком дорого.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современный continuous profiling спроектирован для production: low-overhead, low-storage, корреляция с traces.",
+                "source_of_confusion": "Старые инструменты (JProfiler в interactive mode) действительно давали серьёзный overhead.",
+                "if_it_were_true": "Тогда Grafana не приобретала бы Pyroscope, но profiling-сегмент растёт именно для production.",
+                "how_it_should_be": "Continuous profiling — production-практика с overhead около 1% CPU."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 36,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему chaos engineering без observability бесполезен и как они дополняют друг друга?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Chaos engineering — про резилиентность, observability — про мониторинг; они независимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chaos без observability — «стрельба вслепую»: без неё нельзя подтвердить или опровергнуть гипотезу эксперимента.",
+                "source_of_confusion": "Дисциплины развивались параллельно, поэтому кажутся независимыми.",
+                "if_it_were_true": "Тогда Chaos Monkey запускали бы без мониторинга, но даже в первой статье Netflix (2011) observability была частью протокола.",
+                "how_it_should_be": "Chaos предоставляет controlled failure, observability — инструменты измерения; они связаны."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Chaos engineering можно применять только в staging — в production это слишком опасно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chaos в production — industry-standard (Netflix, Amazon, Google) при blast radius, hypothesis-driven и auto-abort.",
+                "source_of_confusion": "«Production = опасно» — естественная осторожность.",
+                "if_it_were_true": "Тогда Netflix не запускал бы Chaos Monkey в production, но он работает там более 10 лет.",
+                "how_it_should_be": "Chaos применяют и в production с ограниченным blast radius и автостопом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Chaos engineering = Chaos Monkey, то есть random instance termination, и больше ничего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современный chaos шире: latency injection, CPU/memory stress, network partitions, disk failures, time skew, cert expiry.",
+                "source_of_confusion": "Chaos Monkey — самый известный инструмент, отсюда упрощение.",
+                "if_it_were_true": "Тогда не было бы LitmusChaos, Gremlin, Chaos Mesh, но эти платформы активно развиваются.",
+                "how_it_should_be": "Chaos — целая дисциплина с hypothesis-driven подходом, а не только random kill."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Chaos engineering без observability невозможен: observability даёт измерение гипотезы, а chaos выявляет gaps в observability (что не видно при сбое) — это циклическая взаимозависимость.",
+              "correct": true,
+              "sections": {
+                "explanation": "Цикл: hypothesize → define metrics → run experiment → observe через три pillars → validate → discover blind spots → iterate; типичный результат — «нет метрик для компонента X».",
+                "example": "`LitmusChaos` вносит `pod-network-loss` 30%, а `promProbe` проверяет error_rate < 5% и автоматически останавливает эксперимент при превышении — Gremlin/Chaos Monkey работают аналогично.",
+                "when_to_apply": "Связку применяют на GameDays (квартально), в regular chaos (еженедельно автоматизированно) и pre-release chaos; начинают со staging, затем prod с blast radius.",
+                "edge_cases": "Chaos в peak hours может вызвать реальную деградацию — нужен chaos calendar и интеграция с alerting, чтобы не алертить во время запланированного эксперимента.",
+                "related": "[[observability-interview#Q33]] maturity model (L5 = proactive); [[observability-interview#Q37]] alert fatigue."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 37,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Команда жалуется на alert fatigue (50+ алертов в день). Какая комбинация изменений даёт устойчивый эффект?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Переход с threshold на SLO/burn-rate alerting + severity levels с runbooks + дедупликация в `Alertmanager` + monthly alert review + silencing maintenance windows + удаление dead alerts.",
+              "correct": true,
+              "sections": {
+                "explanation": "Системное решение multi-pronged: вместо «CPU > 80%» — burn rate (бюджет сгорает 14.4x → page); severity P1-P4 с runbooks; `group_by` и `repeat_interval` против спама; dependency silencing.",
+                "example": "`Alertmanager` с `group_by: [alertname, cluster, service]`, `repeat_interval: 4h`, time interval `work-hours` (P3 не будит ночью) и dependency-silence при `DatabaseDown`.",
+                "when_to_apply": "Подход обязателен при >20 алертах в день на команду; alert review проводят каждый месяц для здоровья on-call rotation.",
+                "edge_cases": "Silence-all-the-things опасен — заглушить можно важное; нужен TTL (max 1 неделя) и justification, а burn rate alerts требуют определённых SLO.",
+                "related": "[[observability-interview#Q38]] Runbook для page-алертов; [[observability-interview#Q30]] инцидент и постмортем."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Просто отключить половину алертов — оставить только самые громкие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Случайное отключение «громких» — это игнорирование проблем: алерт либо чинят, либо удаляют осознанно после анализа.",
+                "source_of_confusion": "Под давлением «снизить число алертов» команды делают именно это.",
+                "if_it_were_true": "Тогда тишина означала бы решение, но через 3 месяца отключили алерт на реальную проблему — outage у пользователей.",
+                "how_it_should_be": "Частые алерты анализируют: чинят источник или удаляют осознанно, не глушат вслепую."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Купить более дорогую alerting platform (PagerDuty Enterprise) — она «умнее».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tool не решает проблему плохих алертов: при threshold без контекста и без runbook ML-grouping не поможет.",
+                "source_of_confusion": "Vendor-маркетинг продаёт «AI-powered noise reduction» как silver bullet.",
+                "if_it_were_true": "Тогда покупка платформы убирала бы fatigue, но проблема остаётся даже с лучшими tools.",
+                "how_it_should_be": "Сначала чинят сами алерты (SLO-based, runbooks), потом улучшают routing."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Слать все алерты в один Slack-канал, дежурный сам решает, на что реагировать — это самый гибкий подход.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без severity и routing «всё в один канал» — рецепт alert fatigue: 100+ сообщений за смену, P1 теряется.",
+                "source_of_confusion": "Маленькие команды действительно используют только Slack — до определённого scale.",
+                "if_it_were_true": "Тогда гибкость окупалась бы, но не существовало бы PagerDuty с миллиардной валуацией.",
+                "how_it_should_be": "P1/P2 идут через phone call (PagerDuty/OpsGenie), Slack — для P3/P4."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что отличает качественный actionable runbook от формального документа «для галочки»?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главное в runbook — общее описание проблемы и кому звонить в случае непонимания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описание и эскалация — часть runbook, но не суть: дежурный должен сам выполнить базовую диагностику и mitigation.",
+                "source_of_confusion": "Runbook часто пишут как теоретический документ, а не операционный инструмент.",
+                "if_it_were_true": "Тогда хватило бы «звони @db-team», но MTTR растягивается на час ожидания эксперта.",
+                "how_it_should_be": "Runbook содержит конкретные команды диагностики и mitigation, доступные дежурному."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Severity + impact + конкретные команды диагностики (kubectl, queries, dashboard URL) + actionable mitigation шаги + ссылки на observability + signs of recovery + время эскалации + дата последнего обновления.",
+              "correct": true,
+              "sections": {
+                "explanation": "Качественный runbook — operational tool, позволяющий дежурному без знания системы за 5-15 минут локализовать и mitigate проблему; команды конкретные, не абстрактные.",
+                "example": "В runbook: `kubectl rollout undo deployment/orders-service` для отката, `kubectl set env ... HIKARI_MAXIMUM_POOL_SIZE=20` для пула, signs of recovery — `error_rate < 0.1%`, эскалация через 15 минут.",
+                "when_to_apply": "Runbook обязателен для каждого page-алерта; без runbook алерт не должен быть P1/P2.",
+                "edge_cases": "Runbook drift — система меняется, runbook устаревает; нужны `Updated date`, monthly review и тестирование в GameDays; hardcoded URLs ломаются при миграции кластера.",
+                "related": "[[observability-interview#Q30]] инцидент и постмортем; [[observability-interview#Q37]] alert fatigue."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно описать severity и владельца — детали в коде и документации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Детали в коде» означают чтение кодовой базы в 3 ночи; runbook должен быть самодостаточным для базовой диагностики.",
+                "source_of_confusion": "Разработчики, знающие код, думают «всё понятно», и не пишут runbook.",
+                "if_it_were_true": "Тогда новые дежурные реагировали бы на инциденты, но без runbook это и есть случай провала.",
+                "how_it_should_be": "Runbook самодостаточен: конкретные шаги, не отсылки к коду."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно текстового описания архитектуры — это даёт контекст для диагностики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Архитектурное описание полезно для онбординга, но не для on-call: дежурному нужны actionable шаги, а не теория.",
+                "source_of_confusion": "Разработчики любят писать про архитектуру и воспринимают runbook как «расширенную архитектуру».",
+                "if_it_were_true": "Тогда 10 страниц теории помогали бы, но их никто не читает в момент инцидента.",
+                "how_it_should_be": "Архитектура — в отдельной wiki, runbook ссылается на неё опционально и содержит команды."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Observability bill вырос до $50k/мес, FinOps требует -50%. Как сократить затраты без потери диагностической ценности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Снизить retention всех данных до 7 дней — простое и предсказуемое решение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Равномерное снижение теряет ценность непропорционально стоимости; многие use-cases требуют 30+ дней, а cost driver часто ingest, не retention.",
+                "source_of_confusion": "Retention — самый видимый параметр (один slider).",
+                "if_it_were_true": "Тогда снижение давало бы пропорциональную экономию, но «нет данных за прошлый понедельник» убивает recurring patterns.",
+                "how_it_should_be": "Retention режут селективно через tiered подход, а основная экономия — на sampling и cardinality."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Перейти на head-based sampling 1% всех трейсов — резко снижает trace cost.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Head-based 1% теряет 99% данных равномерно, включая редкие ошибки; при error rate 0.1% сохранится 0.001% запросов.",
+                "source_of_confusion": "Head-based — самый простой sampler (SDK config), tail-based требует Collector setup.",
+                "if_it_were_true": "Тогда 1% хватало бы, но при «p99 = 5s» в Tempo находишь 2 случайных трейса вместо паттерна.",
+                "how_it_should_be": "Используют tail-based: 100% ошибок и медленных + 5-10% baseline."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cost analytics per service → tail-sampling (100% errors + 10% baseline) + cardinality cleanup + log level optimization (drop DEBUG) + tiered retention + drop high-volume low-value events (health checks) + per-service spending caps.",
+              "correct": true,
+              "sections": {
+                "explanation": "Системный FinOps-подход: dashboard «$/month per service» (top-3 дают 70% bill), tail-sampling сохраняет 95% диагностической ценности при общем 5-15%, cardinality cleanup убирает 80% лишних series.",
+                "example": "`OTel Collector` с `filter/healthchecks` (drop `/healthz`), `tail_sampling` (errors + slow + 10%), `transform/cardinality` (delete `user_id`), `filter/loglevels` (drop DEBUG/TRACE).",
+                "when_to_apply": "Подход применяют при observability bill > 5-10% от total infra cost, росте на 30%+ MoM или FinOps audit; review — раз в квартал.",
+                "edge_cases": "Per-service caps при exceeded дропают телеметрию и инцидент не диагностируется — caps делают с alerting, не hard stop; а drop health-checks ломает uptime monitoring по логам.",
+                "related": "[[observability-interview#Q27]] управление стоимостью логов; [[observability-interview#Q32]] anti-patterns (cardinality)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Перейти на полностью managed-решение (Datadog) — оно дешевле open-source.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Managed дороже self-hosted при том же volume (Datadog Logs $1.27/GB vs Loki ~$0.10/GB).",
+                "source_of_confusion": "Managed экономит operational time (FTE × salary), что путают с monetary cost.",
+                "if_it_were_true": "Тогда Netflix/Uber/Shopify использовали бы Datadog, но они инвестируют в свои стеки ради cost control.",
+                "how_it_should_be": "Стоимость режут sampling, cardinality cleanup и tiered retention, а не сменой на managed."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 40,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда synthetic monitoring критично необходимо в дополнение к RUM и стандартным метрикам?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Synthetic monitoring заменяет RUM — оно «лучше», потому что контролируемо.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Synthetic и RUM complementary: synthetic — proactive с заданным сценарием, RUM — реальное поведение пользователей.",
+                "source_of_confusion": "Маркетинг synthetic-инструментов иногда подаёт его как «полную замену».",
+                "if_it_were_true": "Тогда synthetic хватало бы, но реальный пользователь с конкретным promo code получает ошибку — RUM видит, synthetic нет.",
+                "how_it_should_be": "Synthetic дополняет RUM, а не заменяет: нужны оба."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Synthetic — это только uptime monitoring (ping/HTTP check), ничего больше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современный synthetic включает multi-step transactions, API monitoring, multi-region checks и performance baseline.",
+                "source_of_confusion": "Простейшие use-cases — uptime, отсюда упрощённое восприятие.",
+                "if_it_were_true": "Тогда не существовало бы Checkly и Datadog Synthetics с их сложным scenario language.",
+                "how_it_should_be": "Synthetic покрывает сложные пользовательские сценарии, а не только ping."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Synthetic monitoring нужен только для веб-сайтов с пользовательским UI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Synthetic применим к любым сервисам: REST APIs, gRPC, Kafka producers/consumers, даже database connectivity.",
+                "source_of_confusion": "Playwright/Selenium ассоциируются с UI testing.",
+                "if_it_were_true": "Тогда API-only сервисы не имели бы synthetic, но они активно используют его через API probes.",
+                "how_it_should_be": "Synthetic применяют к API и backend-сервисам, не только к web-UI."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Critical user journeys monitoring 24/7 (включая low-traffic окна) + multi-region проверки + API contract testing + SLO baseline в staging — обязательно для critical user-facing сервисов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Synthetic — proactive мониторинг с предсказуемым сценарием: в 3 AM нет пользователей, но сервис должен работать; RUM этого не покажет, synthetic — да; обнаруживает проблемы раньше (60s intervals).",
+                "example": "`Playwright`-сценарий checkout (login → add-to-cart → checkout) каждые 5 минут из 5 регионов через `Grafana Synthetic Monitoring`; `Blackbox Exporter` для простого HTTP-probe.",
+                "when_to_apply": "Synthetic обязателен для user-facing critical paths (login, checkout, payment), SLA-bound сервисов и public APIs с contract guarantees; минимум — health check каждые 60с.",
+                "edge_cases": "Synthetic scripts ломаются при изменении UI/API (false alerts) — это код, нужен review; multi-region даёт false positives от network jitter, нужен `for: 2m` и quorum (3 из 5).",
+                "related": "[[observability-interview#Q37]] alert fatigue и false positives; [[observability-interview#Q31]] CI/CD observability."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
