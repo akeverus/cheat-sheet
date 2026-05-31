@@ -366,7 +366,7 @@ Pass: `OK FILE.md`.
 | 28 | `algorithms/algorithmic-paradigms` | `divide-and-conquer` | 21 | 21 | ✅ | ❌ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 29 | `algorithms/algorithmic-paradigms` | `dynamic-programming` | 33 | 33 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 30 | `algorithms/algorithmic-paradigms` | `greedy-algorithms` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 31 | `algorithms/algorithmic-paradigms` | `recursion` | 27 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 31 | `algorithms/algorithmic-paradigms` | `recursion` | 27 | 27 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 32 | `algorithms/algorithmic-paradigms` | `two-pointers-sliding-window` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 33 | `algorithms/complexity` | `complexity-analysis` | 31 | 31 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 34 | `algorithms/data-structures` | `arrays-strings` | 36 | 36 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
@@ -411,7 +411,7 @@ Pass: `OK FILE.md`.
 | 73 | `architecture` | `scalability-patterns` | 41 | 41 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 74 | `architecture` | `service-discovery` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 75 | `architecture` | `strangler-fig` | 18 | 18 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 76 | `behavioral` | `behavioral` | 38 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 76 | `behavioral` | `behavioral` | 38 | 38 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 77 | `behavioral` | `conflict-stories` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 78 | `behavioral` | `culture-fit` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ JSON-ISSUES |
 | 79 | `behavioral` | `failure-stories` | 22 | 22 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
@@ -426,7 +426,7 @@ Pass: `OK FILE.md`.
 | 88 | `cloud` | `gcp` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 89 | `cloud` | `serverless` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 90 | `code-quality` | `clean-code-practices` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
-| 91 | `code-quality` | `code-coverage` | 25 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 91 | `code-quality` | `code-coverage` | 25 | 25 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 92 | `code-quality` | `code-review` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 93 | `code-quality` | `code-smells` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 94 | `code-quality` | `refactoring-patterns` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
@@ -510,8 +510,8 @@ Pass: `OK FILE.md`.
 | 172 | `frameworks/spring` | `spring-validation` | 16 | 16 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 173 | `frameworks/spring` | `spring-vault` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 174 | `frameworks/spring` | `spring-webflux` | 43 | 43 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 175 | `jvm` | `graalvm-native` | 15 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
-| 176 | `jvm` | `jvm` | 40 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 175 | `jvm` | `graalvm-native` | 15 | 15 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
+| 176 | `jvm` | `jvm` | 40 | 40 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 177 | `leadership` | `code-review-practices` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 178 | `leadership` | `conflict-resolution` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 179 | `leadership` | `estimations-planning` | 20 | 20 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
@@ -536,7 +536,7 @@ Pass: `OK FILE.md`.
 | 198 | `monitoring` | `observability` | 15 | 15 | ✅ | ❌ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 199 | `monitoring` | `opentelemetry` | 9 | 9 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 200 | `monitoring` | `prometheus-grafana` | 39 | 39 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
-| 201 | `performance` | `application-profiling` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 201 | `performance` | `application-profiling` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 202 | `performance` | `caching-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 203 | `performance` | `database-performance` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 204 | `performance` | `jvm-performance-tuning` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
@@ -605,7 +605,7 @@ Pass: `OK FILE.md`.
 | 267 | `security` | `supply-chain-security` | 24 | 24 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 268 | `security` | `tls-ssl` | 45 | 45 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
 | 269 | `security` | `zero-trust` | 19 | 19 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 270 | `system-design` | `design-chat-system` | 21 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ NO-JSON |
+| 270 | `system-design` | `design-chat-system` | 21 | 21 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 271 | `system-design` | `design-dropbox` | 30 | 30 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 272 | `system-design` | `design-elevator-oo` | 26 | 26 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
 | 273 | `system-design` | `design-feed-system` | 30 | 30 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 STRUCT-PASS |
