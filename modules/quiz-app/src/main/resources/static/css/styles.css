@@ -2790,3 +2790,64 @@ body.result-page {
 /* ☀ в тёмной теме (клик → светлая); ☾ в светлой (клик → тёмная) */
 .theme-toggle-icon::before { content: "\2600"; }
 :root[data-theme="light"] .theme-toggle-icon::before { content: "\263E"; }
+
+/* ===================================================================
+   SETTINGS — centered single-column layout (Phase 6 / B4, MUST-FIX)
+   Было: .settings-page .app-layout { display:flex } клало панель управления
+   и карточку «Управление данными» в РЯД; «sidebar»-ширина панели сжимала её
+   в ~230px рельс, справа зияла пустота (перекос). Стало: вертикальная
+   центрированная колонка — обе карточки на всю ширину, data-management ПОД
+   формой, без наездов. Scoped на .settings-page, фокус-страницу не трогает.
+   Появляется последним в каскаде → перебивает .settings-page .app-layout. */
+.settings-page .app-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--gap);
+    width: 100%;
+    max-width: var(--content-max);
+    margin-inline: auto;
+}
+.settings-page .app-layout > .main-content.settings-content,
+.settings-page .app-layout > .card {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding-inline: 0;
+}
+.settings-page .app-layout > .card {           /* «Управление данными» */
+    padding: var(--pad);
+}
+.settings-page .compact-sidebar,
+.settings-page .compact-sidebar.control-card {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+}
+/* Внутри панели: фильтры и форма сессии не растягиваются на всю ширину
+   колонки до нечитаемости — оставляем удобный предел, но центрируем. */
+.settings-page .filters-form,
+.settings-page .session-form,
+.settings-page .filters-fields,
+.settings-page .filters-toggles { max-width: 460px; }
+/* На широких экранах (≥960px) панель управления — сбалансированные 2 колонки:
+   Фильтры | (Сессия + Прогресс), чтобы не было длинной узкой простыни и
+   пустоты по бокам. Секции — прямые дети #left-sidebar-content. */
+@media (min-width: 960px) {
+    .settings-page #left-sidebar-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(20px, 2.4vw, 36px);
+        align-items: start;
+    }
+    .settings-page #left-sidebar-filters { grid-column: 1; grid-row: 1 / span 2; }
+    .settings-page #left-sidebar-session { grid-column: 2; grid-row: 1; }
+    .settings-page #left-sidebar-progress { grid-column: 2; grid-row: 2; }
+    .settings-page #left-sidebar-tips { grid-column: 1 / -1; grid-row: 3; }
+    .settings-page .app-layout { max-width: var(--content-max-wide); }
+    /* в 2-кол раскладке форма может занять свою колонку целиком */
+    .settings-page .filters-form,
+    .settings-page .session-form,
+    .settings-page .filters-fields,
+    .settings-page .filters-toggles { max-width: 100%; }
+}
