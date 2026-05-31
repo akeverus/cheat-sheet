@@ -4,7 +4,7 @@ description: "Полный план аудита всех 304 interview-файл
 updated: "2026-05-29"
 status: "active"
 audit_version: 5
-progress: "MCQ-сидеры: 194/306 .md имеют выровненный JSON; 112 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17), testing 12/14 (только property-based+test-automation DEFER-md), databases 12/12 ✓, devops 11/12 (vault ✓, только terraform осталось). Дальше: terraform + java SEVERE-regen, databases (12), api (6), monitoring (9), cloud (6), programming-languages (36)."
+progress: "MCQ-сидеры: 195/306 .md имеют выровненный JSON; 111 NO-JSON в работе (Phase 2). Готовы кластеры: Spring (28), Security (10/10), Architecture (17/17), testing 12/14 (только property-based+test-automation DEFER-md), databases 12/12 ✓, devops 12/12 ✓ (vault+terraform ✓). Дальше: java SEVERE-regen + programming-languages, api (6), monitoring (9), cloud (6)."
 ---
 
 # ULTRATHINK v5 — exhaustive per-file audit plan
@@ -472,7 +472,7 @@ Pass: `OK FILE.md`.
 | 134 | `devops` | `kubernetes` | 45 | 45 | ✅ | ✅ | ✅ | ❌ | ✅ | ⚠️ PARTIAL |
 | 135 | `devops` | `linkerd` | 20 | 20 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 136 | `devops` | `linux` | 33 | 33 | ✅ | ✅ | ✅ | ❌ | ✅ | 🟢 ALIGNED |
-| 137 | `devops` | `terraform` | 42 | — | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ NO-JSON |
+| 137 | `devops` | `terraform` | 42 | 42 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 138 | `devops` | `vault` | 26 | 26 | ✅ | ✅ | ✅ | ✅ | ✅ | 🟢 ALIGNED |
 | 139 | `frameworks/jvm-alternatives` | `ktor` | 1 | — | ✅ | ✅ | ✅ | ❌ | ❌ | ⏸ DEFER-md (h=1) |
 | 140 | `frameworks/jvm-alternatives` | `micronaut` | 25 | — | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ NO-JSON |
