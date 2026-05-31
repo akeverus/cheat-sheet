@@ -1,0 +1,545 @@
+{
+  "topic_slug": "opentelemetry-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `OpenTelemetry` и какую задачу он решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`OpenTelemetry (OTel)` — vendor-neutral CNCF-стандарт (graduated в 2024) для сбора и экспорта телеметрии: traces, metrics, logs. Один SDK инструментирует приложение, а данные через config уходят в любой backend (`Jaeger`, `Tempo`, `Datadog`, `Honeycomb`), без привязки к конкретному вендору.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная цель — standardize instrumentation: инструментируешь код один раз, отправляешь куда угодно. `OTel` это API/SDK для инструментации, а не сам backend хранения и визуализации.",
+                "example": "Spring Boot-сервис с `opentelemetry-javaagent.jar` шлёт OTLP в Collector, тот раскидывает traces в `Jaeger`, metrics в `Prometheus` — переключение backend меняет только config Collector.",
+                "when_to_apply": "Подходит для новых проектов, где боятся vendor lock-in, и для миграции между APM-системами без переписывания инструментации.",
+                "edge_cases": "`OTel` определяет формат и протокол, но хранение и UI остаются за backend — без `Jaeger`/`Tempo`/`Datadog` сами по себе данные негде смотреть.",
+                "related": "[[opentelemetry-interview#Q2]] зачем OTel вместо vendor SDK; [[opentelemetry-interview#Q3]] три столпа телеметрии; [[opentelemetry-interview#Q5]] компоненты API/SDK/Collector."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`OpenTelemetry` — это APM-инструмент со своим хранилищем и дашбордами, как `Datadog` или `New Relic`, заменяющий backend целиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OTel` — это стандарт API/SDK для инструментации, а не backend; хранение и визуализацию дают `Jaeger`, `Tempo`, `Datadog` и прочие системы.",
+                "source_of_confusion": "`OTel` часто упоминают рядом с APM-вендорами, поэтому его принимают за ещё один такой же законченный продукт.",
+                "if_it_were_true": "Тогда не было бы смысла в exporters и выборе backend через config — но именно это ключевая ценность `OTel`.",
+                "how_it_should_be": "`OTel` собирает и экспортирует телеметрию, а смотреть её надо в подключённом backend; это разные слои стека."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`OpenTelemetry` поддерживает только `Java` и `Go`; для `Python` и `Node.js` официальных SDK нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `OTel` есть официальные SDK для 11+ языков: `Java`, `Go`, `Python`, `Node.js`, `.NET`, `Ruby`, `PHP`, `Rust` и других.",
+                "source_of_confusion": "`Java` и `Go` появились раньше и звучат чаще, отсюда впечатление об ограниченной поддержке языков.",
+                "if_it_were_true": "Тогда polyglot-команды не смогли бы стандартизировать observability, но `OTel` как раз про единый стандарт across languages.",
+                "how_it_should_be": "Стек можно выбирать свободно: SDK покрывает большинство популярных языков с auto-instrumentation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`OpenTelemetry` — проприетарный продукт `Google`, не open source, и требует лицензии для production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OTel` — CNCF graduated проект (vendor-neutral, open source); `Google` лишь один из множества контрибьюторов.",
+                "source_of_confusion": "Корни в `OpenCensus` от `Google` создают ложное впечатление, что проект принадлежит `Google`.",
+                "if_it_were_true": "Тогда `Datadog`, `Splunk`, `AWS` не вкладывались бы в развитие, но они активные участники коалиции CNCF.",
+                "how_it_should_be": "`OTel` развивается сообществом под CNCF, лицензия открытая, adoption ничем не блокируется."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем использовать `OTel` вместо vendor-specific SDK (например, `Datadog`/`New Relic`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Vendor SDK всегда быстрее в разработке, поэтому правильно выбирать именно его, а `OTel` избыточен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При смене вендора (`Datadog`→`Grafana stack`) vendor SDK заставляет переписать всю инструментацию; `OTel` переключается через config.",
+                "source_of_confusion": "Готовые vendor-интеграции выглядят как быстрый старт, и долгосрочная цена lock-in недооценивается.",
+                "if_it_were_true": "Тогда не возникало бы дорогих миграций инструментации, но именно они и стали причиной появления `OTel`.",
+                "how_it_should_be": "`OTel` = write once, send anywhere; разовая стоимость окупается свободой смены backend."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`OTel` даёт single instrumentation на несколько backends: переключение вендора делается через config Collector без изменений кода. Стандартный API across languages, open source, нет vendor lock-in, можно слать в несколько backends параллельно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Vendor SDK жёстко связан с вендором — смена `Datadog` на `Grafana stack` означает переписывание всей инструментации. `OTel` развязывает приложение и backend.",
+                "example": "Чтобы добавить второй backend для эксперимента, достаточно дописать exporter в config Collector — код приложения и его deps не трогаются вообще.",
+                "when_to_apply": "Актуально для multi-cloud, для компаний в процессе миграции APM или ещё не определившихся с вендором.",
+                "edge_cases": "В 2025 даже сами вендоры (`Datadog`, `New Relic`, `Splunk`, `Honeycomb`) принимают OTLP input — `OTel` фактически выиграл standards war.",
+                "related": "[[opentelemetry-interview#Q1]] что такое OTel."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`OTel` требует переписать приложение с нуля для интеграции, поэтому проще остаться на vendor SDK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Auto-instrumentation (`Java agent`, Python instrumentation libraries) подключается без изменения кода приложения.",
+                "source_of_confusion": "Слово 'инструментация' звучит как масштабная переделка, хотя для типового стека агент работает из коробки.",
+                "if_it_were_true": "Тогда adoption был бы крайне дорогим, но именно low-friction старт через агент сделал `OTel` популярным.",
+                "how_it_should_be": "Базовая интеграция — это подключение агента и пара env-переменных, а не переписывание кода."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`OTel` не поддерживается крупными вендорами вроде `Datadog`, поэтому в enterprise он бесполезен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В 2025 `Datadog`, `New Relic`, `Splunk`, `Honeycomb` принимают OTLP input — поддержка повсеместная.",
+                "source_of_confusion": "Раньше вендоры продвигали свои SDK, и устаревшее представление о слабой поддержке OTLP сохранилось.",
+                "if_it_were_true": "Тогда нельзя было бы отправлять `OTel`-данные в их UI, но OTLP-ingest у них штатно работает.",
+                "how_it_should_be": "Практически все observability-вендоры принимают OTLP, так что enterprise-сценарии полностью покрыты."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое три столпа телеметрии (traces, metrics, logs) в `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`OTel` поддерживает только traces, а metrics и logs нужно реализовывать отдельными сторонними инструментами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три столпа (traces + metrics + logs) — часть `OTel`; logs стали stable в 2024 и входят в тот же SDK.",
+                "source_of_confusion": "Исторически `OTel` вырос из tracing (`OpenTracing`), поэтому traces ассоциируются как единственная сильная сторона.",
+                "if_it_were_true": "Тогда пришлось бы держать дублирующие инструменты под metrics и logs, что противоречит идее единого SDK.",
+                "how_it_should_be": "Один `OTel` SDK покрывает все три сигнала, обеспечивая унифицированную observability."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Метрики в `OTel` — это только counters; histogram и gauge не поддерживаются, поэтому percentiles недоступны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OTel` поддерживает `Counter`, `UpDownCounter`, `Gauge`, `Histogram`, `ObservableCounter` — полный набор инструментов.",
+                "source_of_confusion": "Counter — самый простой и частый пример, отсюда ложное обобщение про единственный тип метрик.",
+                "if_it_were_true": "Тогда нельзя было бы считать p95/p99 latency, но именно `Histogram` даёт распределение значений.",
+                "how_it_should_be": "Histogram и gauge доступны штатно, и percentiles считаются на стороне backend."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Три столпа: `Traces` (пути запросов через сервисы), `Metrics` (числовые агрегаты — Counter/Gauge/Histogram) и `Logs` (дискретные события). Все три — часть одного `OTel` SDK; traces и metrics давно stable, logs стали stable в 2024.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вместе три сигнала дают полную картину: traces показывают где запрос провёл время, metrics — тренды и percentiles, logs — детальный контекст конкретного события.",
+                "example": "p99 latency растёт (metric) → открываешь медленный trace того запроса → читаешь связанный log с trace_id, чтобы понять причину.",
+                "when_to_apply": "Когда нужен полноценный observability-стек на едином SDK без разрозненных vendor-инструментов под каждый сигнал.",
+                "edge_cases": "Logs — самый молодой столп: stable с 2024, adoption растёт, но зрелость экосистемы пока ниже, чем у traces/metrics.",
+                "related": "[[opentelemetry-interview#Q1]] что такое OTel."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Logs в `OTel` всё ещё experimental, использовать их в production нельзя, нужны только traces и metrics.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OTel` logs stable с 2024; в production они уже применимы, хоть экосистема и моложе.",
+                "source_of_confusion": "Logs действительно были самым поздним столпом, и устаревшее знание о их статусе сохранилось.",
+                "if_it_were_true": "Тогда нельзя было бы унифицировать observability, но stable-статус как раз снял этот барьер.",
+                "how_it_should_be": "Logs можно включать в production-стек, понимая, что зрелость пока чуть ниже traces/metrics."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова история `OTel` (слияние `OpenTracing` + `OpenCensus`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`OpenTracing` и `OpenCensus` до сих пор активно развиваются параллельно с `OTel`, можно выбирать любой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба deprecated к 2025; старт нового проекта на них — технический долг с первого дня.",
+                "source_of_confusion": "Старые статьи и гайды всё ещё упоминают эти стандарты как живые, создавая иллюзию выбора.",
+                "if_it_were_true": "Тогда не было бы смысла в слиянии, но именно прекращение конкуренции и было целью `OTel`.",
+                "how_it_should_be": "Оба предшественника deprecated; единственный mainstream-стандарт сегодня — `OTel`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`OpenTelemetry` — это просто rebranding `OpenTracing` без изменений, поэтому API полностью совместим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OTel` = merge `OpenTracing` + `OpenCensus` плюс новый SDK; API напрямую несовместим, миграция требует переписывания.",
+                "source_of_confusion": "Преемственность в названии и идее tracing создаёт впечатление простого переименования.",
+                "if_it_were_true": "Тогда код на `OpenTracing` работал бы без правок на `OTel`, но на практике инструментацию переписывают.",
+                "how_it_should_be": "`OTel` — новый стандарт со своим API, объединивший оба проекта, а не косметический rebranding."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`OTel` создавали только `Google` и `Microsoft`, остальные вендоры не участвовали в проекте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OTel` поддержан широкой коалицией CNCF: `Datadog`, `Splunk`, `AWS`, `Honeycomb`, `New Relic` и другие.",
+                "source_of_confusion": "`Google` стоял за `OpenCensus`, поэтому его роль гиперболизируют до единственного автора.",
+                "if_it_were_true": "Тогда у проекта не было бы broad vendor adoption, но именно широкая коалиция обеспечила победу в standards war.",
+                "how_it_should_be": "`OTel` — результат CNCF-коалиции из многих вендоров, а не двух компаний."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`OTel` (2019) — слияние `OpenTracing` (2016, tracing API) и `OpenCensus` (2017, tracing + metrics от `Google`). Раньше эти два стандарта конкурировали и раскалывали сообщество. `OTel` поддержан CNCF и большинством вендоров, выиграл standards war; к 2025 `OpenTracing`/`OpenCensus` deprecated.",
+              "correct": true,
+              "sections": {
+                "explanation": "Слияние устранило раскол: вместо двух несовместимых API community получило единый стандарт под эгидой CNCF. `OTel` добавил ещё и logs поверх tracing/metrics.",
+                "example": "Legacy-сервис на `OpenTracing` мигрируют на `OTel`: API несовместим напрямую, поэтому инструментацию переписывают на новый SDK, но взамен получают единый стандарт.",
+                "when_to_apply": "При миграции старых проектов с `OpenTracing`/`OpenCensus` и при старте новых — сразу на `OTel`, без legacy-стандартов.",
+                "edge_cases": "Начинать новый проект на `OpenTracing`/`OpenCensus` в 2025 — технический долг с первого дня: оба deprecated.",
+                "related": "[[opentelemetry-interview#Q1]] что такое OTel; [[opentelemetry-interview#Q2]] зачем OTel вместо vendor SDK; [[opentelemetry-interview#Q3]] три столпа."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Из каких компонентов состоит `OTel`: API, SDK, Collector?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`API` определяет интерфейс инструментации (`Tracer.startSpan(...)`). `SDK` — реализация: создаёт spans, батчит, экспортирует. `Collector` — отдельный процесс, который принимает, обрабатывает и экспортирует телеметрию. Поток: `[App + API] → [SDK] → [Collector] → [Backend(s)]`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение API и SDK даёт app зависеть только от стабильного API (минимальная dependency), а SDK можно swap — поменять sampling или способ экспорта без правок кода приложения.",
+                "example": "Библиотека инструментируется только через `OTel API`; конечное приложение подключает SDK и решает, как и куда экспортировать, не затрагивая код библиотеки.",
+                "when_to_apply": "Когда нужно отделить инструментацию (API) от конфигурации экспорта (SDK) и централизовать обработку через опциональный Collector.",
+                "edge_cases": "Collector опционален: SDK может слать напрямую в backend (Direct Export). Collector нужен для batching, multi-backend fanout и central config.",
+                "related": "[[opentelemetry-interview#Q6]] OTel Collector — что и зачем; [[opentelemetry-interview#Q7]] receiver/processor/exporter."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`API` и `SDK` — это одна сущность, разделение на компоненты бессмысленно и только усложняет картину.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разделение позволяет app зависеть только от `API` (минимальная dependency), а `SDK` можно swap без изменения кода.",
+                "source_of_confusion": "В коде их используют вместе, поэтому граница между интерфейсом и реализацией стирается.",
+                "if_it_were_true": "Тогда смена sampling/export требовала бы правки app code, но именно swap SDK это и устраняет.",
+                "how_it_should_be": "`API` — стабильный интерфейс, `SDK` — заменяемая реализация; это намеренное разделение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Collector обязателен: без него `OTel` вообще не работает и телеметрию некуда отправить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Collector опционален: SDK умеет Direct Export прямо в backend; Collector нужен для batching, fanout и central config.",
+                "source_of_confusion": "В production Collector используют почти всегда, отсюда вывод об его обязательности.",
+                "if_it_were_true": "Тогда невозможен был бы режим прямого экспорта, но он штатно поддерживается SDK.",
+                "how_it_should_be": "Collector — опциональный централизатор; для простых случаев SDK шлёт напрямую в backend."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Collector — это просто прозрачный прокси без какой-либо обработки данных, лишь пересылающий пакеты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Collector делает sampling, filtering, batching, transformation и multi-backend fanout — это полноценный pipeline.",
+                "source_of_confusion": "Роль 'посередине' между app и backend наводит на мысль о простом прокси.",
+                "if_it_were_true": "Тогда tail sampling и attribute-processing были бы невозможны в Collector, но они там и реализованы.",
+                "how_it_should_be": "Collector активно обрабатывает данные через processors, а не только пересылает их."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `OTel Collector` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Collector используется только в Kubernetes — на обычных VM или bare metal он не запускается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Collector — обычный binary; работает на VM, bare metal, в контейнерах и Lambda, не привязан к Kubernetes.",
+                "source_of_confusion": "DaemonSet и sidecar-паттерны популярны в K8s, отсюда ложная привязка именно к нему.",
+                "if_it_were_true": "Тогда observability была бы недоступна вне K8s, но Collector — платформонезависимый процесс.",
+                "how_it_should_be": "Collector ставят где угодно: миф про K8s-only необоснованно сужает архитектурный выбор."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`OTel Collector` — процесс, который receives телеметрию от приложений, processes её (filter, sample, transform) и exports в backends. Decouples apps от backends, централизует sampling/filter/batch. Modes: `Agent` (sidecar/DaemonSet) или `Gateway` (centralized cluster); комбинация обоих — best practice.",
+              "correct": true,
+              "sections": {
+                "explanation": "Приложения не знают про конкретные backends — это снижает их связанность. Тяжёлая работа (batching, fanout) выносится в Collector, разгружая app, а config sampling/filtering живёт в одном месте.",
+                "example": "Три app шлют OTLP в один Collector, который fanout-ит traces в `Jaeger`, metrics в `Prometheus`, logs в `Loki` — смена backend меняет только config Collector.",
+                "when_to_apply": "В production с multi-backend и потребностью в централизованной конфигурации sampling/filtering.",
+                "edge_cases": "Collector — обычный binary: работает на VM, bare metal, в контейнерах и Lambda, не только в Kubernetes.",
+                "related": "[[opentelemetry-interview#Q5]] компоненты API/SDK/Collector; [[opentelemetry-interview#Q7]] receiver/processor/exporter; [[opentelemetry-interview#Q8]] Agent vs Gateway."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Прямая отправка телеметрии в backend всегда лучше Collector, поэтому Collector — лишнее звено.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без Collector каждое app должно знать про каждый backend; смена backend = редеплой всех сервисов. Collector это устраняет.",
+                "source_of_confusion": "Direct Export проще на старте, и кажется, что лишний компонент только добавляет latency.",
+                "if_it_were_true": "Тогда централизованные sampling и fanout были бы невозможны, но именно их даёт Collector.",
+                "how_it_should_be": "Collector decouples app от backend; для масштаба это снижает связанность и стоимость изменений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Collector работает только в режиме `Agent` (sidecar) — режим `Gateway` для него невозможен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Collector поддерживает `Agent` (per-app sidecar/DaemonSet) и `Gateway` (centralized cluster) modes одновременно.",
+                "source_of_confusion": "Sidecar-режим нагляднее и упоминается чаще, поэтому Gateway упускают из виду.",
+                "if_it_were_true": "Тогда централизованная обработка на cluster-уровне была бы недоступна, но Gateway именно для неё.",
+                "how_it_should_be": "Доступны оба режима; ограничение одним снижает гибкость архитектуры."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Receiver, Processor и Exporter в `OTel Collector`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Receiver` и `Exporter` — синонимы, разделение искусственное, оба просто передают данные в одну сторону.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Receiver` принимает (server-side: OTLP-сервер), `Exporter` отправляет (client-side: к Jaeger) — это разные концы pipeline.",
+                "source_of_confusion": "Оба компонента про передачу данных, поэтому направление input/output путают.",
+                "if_it_were_true": "Тогда нельзя было бы описать, откуда данные приходят и куда уходят, но pipeline именно это разделяет.",
+                "how_it_should_be": "Receiver — вход, Exporter — выход; их роли строго различаются в конфиге."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Processor` нельзя пропустить — он обязателен в каждом pipeline, иначе Collector не стартует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Processors опциональны (массив может быть пустым), хотя в production всегда добавляют `memory_limiter` + `batch`.",
+                "source_of_confusion": "Best practice всегда включать processors, отсюда вывод об их обязательности на уровне схемы.",
+                "if_it_were_true": "Тогда простейший passthrough-pipeline был бы невалиден, но он допустим без processors.",
+                "how_it_should_be": "Processors желательны для надёжности, но формально их можно опустить."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Receiver` принимает данные (вход: OTLP, Jaeger, Prometheus). `Processor` обрабатывает (batch, filter, attributes, sampling). `Exporter` отправляет в backend (выход: Jaeger, Prometheus, Loki). `Pipelines` в `service.pipelines` связывают цепочку receivers → processors → exporters.",
+              "correct": true,
+              "sections": {
+                "explanation": "Receiver — server-side (поднимает OTLP-сервер), Exporter — client-side (шлёт в Jaeger). Между ними processors преобразуют поток. Один Collector может иметь отдельные pipelines для traces, metrics и logs.",
+                "example": "В YAML: `receivers: [otlp]` → `processors: [memory_limiter, batch]` → `exporters: [otlp/jaeger]` для traces; для metrics — свой pipeline с `prometheusremotewrite`.",
+                "when_to_apply": "При настройке Collector, когда нужно описать, откуда данные приходят, как преобразуются и куда уходят.",
+                "edge_cases": "Processors опциональны (массив может быть пустым), но в production почти всегда нужны `memory_limiter` + `batch` для надёжности.",
+                "related": "[[opentelemetry-interview#Q6]] OTel Collector — что и зачем."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Один pipeline может обрабатывать только один signal type — либо traces, либо metrics, но не оба сразу в Collector.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Collector разрешает несколько pipelines (traces, metrics, logs) одновременно с разными receivers/exporters.",
+                "source_of_confusion": "Каждый pipeline действительно типизирован по сигналу, и это переносят на весь Collector.",
+                "if_it_were_true": "Тогда пришлось бы запускать отдельный Collector под каждый сигнал, но они сосуществуют в одном.",
+                "how_it_should_be": "Один Collector держит несколько pipelines под разные сигналы параллельно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `Agent` и `Gateway` deployment Collector?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Agent` всегда лучше `Gateway`, поэтому в production нужно выбирать только Agent и отказаться от Gateway.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agent даёт low-latency локально, но не централизует sampling/processing; на масштабе нужна комбинация Agent + Gateway.",
+                "source_of_confusion": "Локальность Agent кажется однозначным плюсом, и про централизованную обработку забывают.",
+                "if_it_were_true": "Тогда tail sampling и центральный fanout были бы недостижимы, но их обеспечивает Gateway.",
+                "how_it_should_be": "Agent для local, Gateway для central; в production используют оба слоя."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Gateway` — единственный современный паттерн, а `Agent` (sidecar/DaemonSet) устарел и не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agent даёт local buffering и низкую latency; чисто Gateway создаёт single point of failure.",
+                "source_of_confusion": "Централизация выглядит 'правильнее', и Agent ошибочно считают наследием.",
+                "if_it_were_true": "Тогда локальная буферизация при недоступности Gateway была бы невозможна, но Agent её и даёт.",
+                "how_it_should_be": "Agent остаётся актуальным для local-слоя; оба паттерна дополняют друг друга."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sidecar-Collector в Kubernetes сильно увеличивает overhead, поэтому его использовать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sidecar — стандартный для `OTel` паттерн; overhead минимален, миф ведёт к direct export без буферизации.",
+                "source_of_confusion": "Дополнительный контейнер на pod кажется дорогим, хотя ресурсы Collector невелики.",
+                "if_it_were_true": "Тогда от sidecar-паттерна давно бы отказались, но он остаётся рекомендованным.",
+                "how_it_should_be": "Sidecar-Collector применять можно и нужно; overhead приемлем ради буферизации и обработки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Agent` (per-host): DaemonSet или sidecar рядом с apps, low latency, local buffering, меньше сетевых вызовов. `Gateway` (centralized): отдельный кластер коллекторов, централизованная обработка (sampling, filtering), проще ops, больше буфера. Best practice — `Agent + Gateway` вместе: Agent для local, Gateway для central и fanout.",
+              "correct": true,
+              "sections": {
+                "explanation": "Agent даёт локальную буферизацию и низкую latency, но не централизует sampling; Gateway централизует тяжёлую обработку и fanout в backends, но без Agent становится single point of failure.",
+                "example": "В K8s с тысячами pods: DaemonSet-Agent на каждой node делает базовый batching, дальше шлёт в Gateway-кластер, который применяет tail sampling и fanout в backends.",
+                "when_to_apply": "В production K8s с большим числом pods, где нужны и низкая latency локально, и централизованная политика обработки.",
+                "edge_cases": "Только Agent не централизует sampling; только Gateway — single point of failure без local buffering. Комбинация снимает обе проблемы.",
+                "related": "[[opentelemetry-interview#Q6]] OTel Collector; [[opentelemetry-interview#Q7]] receiver/processor/exporter."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между auto- и manual instrumentation в `OTel`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Auto-instrumentation автоматически инструментирует популярные библиотеки (HTTP, DB, gRPC) без правок кода — например, `Java javaagent` или `opentelemetry-instrument` для Python. Manual instrumentation — явные span'ы в коде бизнес-логики. Best practice: auto для инфраструктуры (HTTP, DB), manual для ключевых business-операций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Auto закрывает рутину (входящие/исходящие HTTP, JDBC, очереди) без усилий, а manual добавляет смысловые span'ы вокруг доменных операций, которые агент не знает.",
+                "example": "`java -javaagent:opentelemetry-javaagent.jar -jar app.jar` инструментирует Spring-контроллеры автоматически; внутри `processOrder()` разработчик руками заводит span `processOrder` с атрибутом `order.id`.",
+                "when_to_apply": "Auto — для стандартных фреймворков и клиентов; manual — для бизнес-логики, где важны доменные имена операций и атрибуты.",
+                "edge_cases": "Несколько auto-агентов могут конфликтовать; manual span без `try-finally` рискует не закрыться и исказить trace.",
+                "related": "[[opentelemetry-interview#Q8]] agent vs gateway deployment."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Auto-instrumentation требует ручного добавления span'ов в каждый HTTP-обработчик, иначе не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Auto как раз инструментирует HTTP/DB/gRPC без правок кода — ручные span'ы нужны для manual-инструментации бизнес-логики.",
+                "source_of_confusion": "Термины auto и manual путают, перенося требование ручного кода на автоматический режим.",
+                "if_it_were_true": "Тогда auto не давал бы выигрыша над manual, но его суть — нулевые правки для типовых библиотек.",
+                "how_it_should_be": "Auto работает без кода для популярных библиотек; ручные span'ы — это отдельный manual-подход."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Manual instrumentation полностью заменяет auto, поэтому в production достаточно только ручных span'ов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Best practice — комбинировать: auto для инфраструктуры, manual для бизнес-логики; одни ручные span'ы упустят HTTP/DB.",
+                "source_of_confusion": "Manual даёт полный контроль, и кажется, что он покрывает всё сам.",
+                "if_it_were_true": "Тогда пришлось бы вручную инструментировать каждый HTTP-клиент и JDBC, что огромный объём работы.",
+                "how_it_should_be": "Auto закрывает рутину, manual дополняет доменными span'ами — они работают вместе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Auto и manual instrumentation несовместимы и не могут использоваться в одном приложении одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они штатно сочетаются: агент инструментирует библиотеки, а ручные span'ы добавляются поверх в том же trace.",
+                "source_of_confusion": "Кажется, что подключение агента 'захватывает' трассировку и ручной код в неё не впишется.",
+                "if_it_were_true": "Тогда best practice 'auto + manual' был бы невозможен, но он повсеместно рекомендуется.",
+                "how_it_should_be": "Ручные span'ы встраиваются в auto-trace через общий контекст; комбинация — норма."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
