@@ -1,0 +1,2105 @@
+{
+  "topic_slug": "go-concurrency-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое goroutine в Go?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Goroutine — легковесный поток исполнения в user-space, управляемый Go scheduler, а не ядром ОС. Начальный стек 2KB и растёт динамически, создание стоит наносекунды, поэтому одновременно можно держать сотни тысяч goroutines.",
+              "correct": true,
+              "sections": {
+                "explanation": "Goroutine запускается ключевым словом `go` перед вызовом функции и мультиплексируется планировщиком на ограниченное число OS threads (N:M-модель), что делает создание дешёвым.",
+                "example": "Запуск `go say(\"hello\")` стартует функцию в отдельной goroutine, а `say(\"world\")` продолжает в текущей (main) goroutine параллельно.",
+                "when_to_apply": "Применяется как дёшево создаваемый исполнитель для любой асинхронной работы: обработка запроса в отдельной goroutine, фоновые задачи, параллельные I/O-операции.",
+                "edge_cases": "Запущенная как `go f()` goroutine не имеет адреса для прямого `kill`: остановить её можно только кооперативно через `context` или done-channel.",
+                "related": "[[go-concurrency-interview#Q2]] отличие от OS thread; [[go-concurrency-interview#Q3]] как scheduler их мультиплексирует; [[go-concurrency-interview#Q4]] запуск и остановка."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Goroutine — это OS-поток, который Go runtime создаёт через `syscall` для каждого вызова `go f()`, давая ровно 1:1-соответствие между goroutine и потоком ядра.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Goroutine — это user-space поток; Go scheduler мультиплексирует множество goroutines на небольшое число OS threads (обычно `NumCPU`), а не выделяет поток на каждую.",
+                "source_of_confusion": "Слова «поток исполнения» и `go` создают впечатление, что под капотом всегда вызывается создание OS thread.",
+                "if_it_were_true": "Тогда 100K goroutines требовали бы 100K OS threads и съели бы всю память, но реальный код спокойно держит их при ~`NumCPU` потоках.",
+                "how_it_should_be": "Goroutine управляется планировщиком Go в user-space; OS threads создаются отдельно и в куда меньшем количестве."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Goroutine — это функция, помеченная ключевым словом `async`, которая исполняется асинхронно через event loop, как в JavaScript.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Go нет `async`/`await` и event loop: параллелизмом управляет планировщик, а goroutine запускается обычным `go f()`.",
+                "source_of_confusion": "Асинхронность из других языков переносят на Go, ожидая знакомую модель `async`/`await` и Promise.",
+                "if_it_were_true": "Тогда нужно было бы писать `await` для ожидания результата, но синхронизация в Go идёт через channels и `sync`, а не через promise.",
+                "how_it_should_be": "Goroutine — это поток исполнения под управлением scheduler, а не синтаксическая обёртка над event loop."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Goroutine — это корутина с явными точками `suspend`/`resume`, где исполнение продолжается только после ручного вызова `yield`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С Go 1.14 планировщик preemptive: он сам прерывает долго работающую goroutine, ручной `yield` не требуется.",
+                "source_of_confusion": "Кооперативные корутины из других языков заставляют думать, что goroutine тоже обязана явно уступать процессор.",
+                "if_it_were_true": "Тогда CPU-bound цикл без `yield` навсегда занял бы поток, но preemptive scheduling прерывает такую goroutine по сигналу таймера.",
+                "how_it_should_be": "Goroutine переключается планировщиком автоматически (preemptive), без обязательных явных `suspend`/`resume`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем goroutine отличается от OS thread?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Goroutine и OS thread идентичны и отличаются только синтаксисом запуска: `go f()` против `new Thread`, а стоимость и модель планирования у них совпадают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Goroutine начинается с 2KB стека и создаётся за наносекунды, тогда как OS thread занимает 1-8MB и создаётся за микросекунды — стоимость отличается на порядки.",
+                "source_of_confusion": "Оба называются «потоком», поэтому кажется, что разница чисто в ключевом слове запуска.",
+                "if_it_were_true": "Тогда можно было бы запустить 1M OS threads так же дёшево, как 1M goroutines, но это привело бы к OOM из-за гигантских стеков.",
+                "how_it_should_be": "Goroutine — лёгкий user-space исполнитель, а OS thread — тяжёлая сущность ядра; стоимость и модель планирования у них принципиально разные."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Goroutine — user-space лёгкий поток (~2KB стека, растёт динамически), который Go scheduler мультиплексирует на N OS threads по M:N-модели; переключение между goroutines идёт без syscall, в отличие от OS thread.",
+              "correct": true,
+              "sections": {
+                "explanation": "OS thread стоит ~1MB стека и управляется ядром (1:1), а множество goroutines (M>>N) живут поверх немногих потоков и переключаются дешевле, потому что не уходят в kernel.",
+                "example": "На практике 1K OS threads по ~1MB стека съедят около 1GB RAM, тогда как 100K goroutines по ~2KB живут в той же программе без проблем.",
+                "when_to_apply": "Применяется правило свободно создавать goroutines для I/O-bound и конкурентных задач, не боясь стоимости, в отличие от OS threads.",
+                "edge_cases": "При системном вызове, который реально блокирует поток, scheduler может вытащить P и отдать его другому M — goroutine не «прибита» к конкретному потоку навсегда.",
+                "related": "[[go-concurrency-interview#Q1]] что такое goroutine; [[go-concurrency-interview#Q3]] устройство M:N scheduler; [[go-concurrency-interview#Q34]] сравнение с Java threads."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Goroutine удерживает выделенный OS thread на всё время своей жизни (1:1-модель), как классические потоки в Java или Python до виртуальных потоков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Go использует M:N: одна goroutine не закреплена за потоком, scheduler перекидывает её между M по мере необходимости.",
+                "source_of_confusion": "Опыт языков с 1:1-моделью переносят на Go, считая, что под каждой goroutine стоит свой поток.",
+                "if_it_were_true": "Тогда 100K goroutines требовали бы 100K OS threads, но Go спокойно мультиплексирует их на ~`NumCPU` потоков.",
+                "how_it_should_be": "Goroutine не привязана к одному потоку: планировщик мультиплексирует множество goroutines на немного потоков."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Goroutine не может выполняться параллельно на нескольких ядрах — она лишь concurrent (логически параллельна), но физически всё работает в одном потоке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `GOMAXPROCS>1` goroutines выполняются по-настоящему параллельно на нескольких ядрах, а не только конкурентно.",
+                "source_of_confusion": "Термины concurrency и parallelism смешивают, делая вывод, что goroutines всегда однопоточны.",
+                "if_it_were_true": "Тогда CPU-bound задачи никогда не ускорялись бы на многоядерной машине, но Go даёт реальный параллелизм через несколько P/M.",
+                "how_it_should_be": "Goroutines дают истинный параллелизм на нескольких ядрах, когда `GOMAXPROCS` больше единицы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Go scheduler (M:N-модель, триада G/M/P)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Go scheduler кооперативный: goroutine обязана сама вызвать `runtime.Gosched()`, чтобы уступить процессор, иначе CPU-bound цикл навсегда блокирует поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С Go 1.14 планировщик preemptive (через сигналы): он прерывает долго работающую goroutine без явного `Gosched()`.",
+                "source_of_confusion": "Старые туториалы (до Go 1.14) описывали именно кооперативную модель, и это знание устарело.",
+                "if_it_were_true": "Тогда один бесконечный CPU-bound цикл вешал бы весь scheduler, но preemption прерывает его по таймеру в ~10ms.",
+                "how_it_should_be": "Современный Go scheduler вытесняющий: ручной `Gosched()` для отдачи процессора не требуется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "M:N означает M goroutines на N процессах ОС: каждый процесс представляет одну goroutine и изолирован, как после `fork()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "N в M:N — это OS threads (потоки одного процесса), а не отдельные процессы; goroutines делят общую память.",
+                "source_of_confusion": "Букву N трактуют как processes, путая потоки и процессы операционной системы.",
+                "if_it_were_true": "Тогда goroutines не могли бы делить память напрямую и общались бы только через IPC, но они спокойно используют общие переменные и channels.",
+                "how_it_should_be": "M:N — это M goroutines поверх N OS threads внутри одного процесса, с общим адресным пространством."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Scheduler использует триаду G/M/P: G — goroutine, M — OS thread (machine), P — logical processor с локальной очередью runnable-goroutines. Число P = `GOMAXPROCS`; при простое P применяется work stealing — забирает goroutines из чужой очереди.",
+              "correct": true,
+              "sections": {
+                "explanation": "Network poller снимает goroutine, заблокированную на сетевом I/O, с M, освобождая поток для другой G, а preemptive scheduling прерывает долго работающие goroutines.",
+                "example": "При `GOMAXPROCS=4` создаётся 4 P; если P0 опустошил свою очередь, он украдёт goroutine из очереди P1 (work stealing) и продолжит работу без простоя ядра.",
+                "when_to_apply": "Понимание триады нужно при тюнинге `GOMAXPROCS` для CPU-bound нагрузок и при объяснении, почему I/O-bound goroutines не занимают потоки.",
+                "edge_cases": "Если все P заняты блокирующими syscalls, runtime может создать дополнительный M, поэтому реальное число потоков иногда превышает `GOMAXPROCS`.",
+                "related": "[[go-concurrency-interview#Q2]] goroutine против OS thread; [[go-concurrency-interview#Q5]] что задаёт GOMAXPROCS; [[go-concurrency-interview#Q1]] базовое понятие goroutine."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Go каждая goroutine получает собственный OS thread, а scheduler лишь следит за их приоритетами и не занимается мультиплексированием.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это 1:1-модель (как Java threads до Loom); Go мультиплексирует множество goroutines на немного потоков по M:N.",
+                "source_of_confusion": "Знакомая 1:1-модель из других рантаймов кажется применимой и к Go.",
+                "if_it_were_true": "Тогда 100K goroutines означали бы 100K OS threads, но Go держит их на ~`NumCPU` потоках.",
+                "how_it_should_be": "Go scheduler мультиплексирует goroutines на ограниченное число потоков, а не выделяет поток на каждую."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как запустить и как корректно остановить goroutine?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Goroutine запускается синтаксисом `goroutine func(){}`, а останавливается вызовом метода `goroutine.Stop()` у возвращённого объекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Go нет ни `goroutine` как ключевого слова, ни объекта с `Stop()`: запуск идёт через `go`, и убить goroutine извне нельзя.",
+                "source_of_confusion": "По аналогии с Thread-объектами в других языках ожидают, что у goroutine есть управляемый объект с методом остановки.",
+                "if_it_were_true": "Тогда любую goroutine можно было бы прервать одной строкой, но такого API нет — компилятор просто не знает `goroutine.Stop()`.",
+                "how_it_should_be": "Запуск — `go f()`, а остановка — кооперативная через `context` или channel; объекта с `Stop()` не существует."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Goroutine запускается через `go`, а остановить её можно вызовом `runtime.KillGoroutine(id)` по идентификатору goroutine.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В runtime нет функции `KillGoroutine` и нет стабильного публичного goroutine ID: Go намеренно не даёт принудительного kill.",
+                "source_of_confusion": "Из управления потоками в ОС переносят идею «убить по id», предполагая такой же API в Go.",
+                "if_it_were_true": "Тогда зависшую goroutine можно было бы прибить по id, но Go требует кооперативной отмены через `context`/channel.",
+                "how_it_should_be": "Остановка возможна только кооперативно (через сигнал отмены), функции kill-по-id в Go нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Goroutine запускается через `go func(){}()`, а остановить её нельзя — единственный способ дождаться завершения через `sync.WaitGroup`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо ожидания через `WaitGroup`, goroutine можно попросить завершиться раньше через done-channel или отмену `context`.",
+                "source_of_confusion": "`WaitGroup` действительно ждёт завершения, и отсюда вывод, что других механизмов нет.",
+                "if_it_were_true": "Тогда долгоживущую goroutine невозможно было бы прервать досрочно, и при потере интереса к результату она бы текла (goroutine leak).",
+                "how_it_should_be": "Кроме ожидания через `WaitGroup`, есть кооперативная отмена через `context`/done-channel для досрочного выхода."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Goroutine запускается через `go f()`, а останавливается кооперативно: либо `context.WithCancel` и вызов `cancel()`, либо done-channel, который проверяется в `select`. Принудительного `kill` в Go нет — goroutine должна сама увидеть сигнал и вернуться.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идиома — передавать `context.Context` в долгоживущие goroutines и в цикле читать `ctx.Done()` через `select`, выходя по сигналу отмены.",
+                "example": "Идиома: `ctx, cancel := context.WithCancel(...)`, в goroutine — `for { select { case <-ctx.Done(): return; default: /* работа */ } }`, а снаружи `cancel()` останавливает её.",
+                "when_to_apply": "Применяется в любом сервисе с фоновыми задачами: при остановке или таймауте запроса `cancel()` каскадно сигналит всем дочерним goroutines завершиться.",
+                "edge_cases": "Если goroutine между итерациями надолго блокируется на работе и не доходит до `select`, сигнал отмены она увидит только после возврата управления — отмена не мгновенная.",
+                "related": "[[go-concurrency-interview#Q24]] WithCancel/WithTimeout/WithDeadline; [[go-concurrency-interview#Q32]] goroutine leak без exit-пути; [[go-concurrency-interview#Q1]] что такое goroutine."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое GOMAXPROCS и почему он важен в контейнерах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "GOMAXPROCS — максимальное число OS threads, которые scheduler использует для параллельного исполнения goroutines. По умолчанию равен `runtime.NumCPU()`. В контейнере с CPU-limit `NumCPU()` может вернуть число всех ядер хоста, поэтому ставят больше P, чем реально доступно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Лишние P создают overhead на планирование и context switch, поэтому в Kubernetes-поде с CPU-лимитом значение приводят к лимиту через `uber-go/automaxprocs` или авто-детект из cgroups (Go 1.21+).",
+                "example": "В Kubernetes-поде с лимитом 2 CPU на 64-ядерном узле `NumCPU()` вернёт 64, поэтому подключают `uber-go/automaxprocs`, чтобы GOMAXPROCS стал равен 2.",
+                "when_to_apply": "Применяется при деплое Go-сервиса в Docker/Kubernetes с CPU-квотой: добавляют `automaxprocs`, чтобы GOMAXPROCS совпал с лимитом, а не с числом ядер хоста.",
+                "edge_cases": "GOMAXPROCS ограничивает только OS threads для исполнения, но не число goroutines: их по-прежнему могут быть сотни тысяч поверх немногих потоков.",
+                "related": "[[go-concurrency-interview#Q3]] роль P в M:N scheduler; [[go-concurrency-interview#Q2]] goroutine против OS thread; [[go-concurrency-interview#Q22]] параллелизм и производительность."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GOMAXPROCS — максимальное число goroutines, которые могут существовать или работать одновременно в программе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GOMAXPROCS ограничивает OS threads для параллельного исполнения, а goroutines не ограничены — их могут быть сотни тысяч.",
+                "source_of_confusion": "Слово «procs» ассоциируется с числом запускаемых единиц работы, то есть с goroutines.",
+                "if_it_were_true": "Тогда нельзя было бы создать 100K goroutines при GOMAXPROCS=8, но это абсолютно штатная ситуация.",
+                "how_it_should_be": "GOMAXPROCS задаёт число параллельно работающих потоков, а количество goroutines им не лимитируется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "GOMAXPROCS влияет только на I/O-операции; CPU-bound goroutines полностью игнорируют это значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно CPU-bound goroutines зависят от GOMAXPROCS для истинного параллелизма; I/O-bound используют network poller вне этого лимита.",
+                "source_of_confusion": "Раз I/O-bound goroutines часто паркуются на poller, кажется, что GOMAXPROCS относится только к ним.",
+                "if_it_were_true": "Тогда установка GOMAXPROCS=1 не замедлила бы CPU-bound вычисления, но на деле они выполнялись бы строго последовательно.",
+                "how_it_should_be": "GOMAXPROCS определяет параллелизм именно CPU-bound goroutines; I/O-bound управляются отдельно через poller."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "GOMAXPROCS по умолчанию равен 1, поэтому для параллелизма всегда нужно явно вызвать `runtime.GOMAXPROCS(runtime.NumCPU())`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С Go 1.5 значение по умолчанию равно `NumCPU()`; явная установка не нужна, наоборот, установка в 1 деградирует до однопоточности.",
+                "source_of_confusion": "Поведение очень старых версий Go (до 1.5) с default=1 запомнилось как актуальное.",
+                "if_it_were_true": "Тогда без ручной настройки все программы работали бы в один поток, но современный Go параллелит по числу ядер из коробки.",
+                "how_it_should_be": "По умолчанию GOMAXPROCS = NumCPU; ручная установка в 1 наоборот отключает параллелизм."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое channel в Go?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Channel — это глобальная переменная, доступная всем goroutines без передачи, через которую они синхронизируются по общему имени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Channel — типизированный conduit, создаваемый через `make` и передаваемый явно как значение/параметр, а не глобальная переменная.",
+                "source_of_confusion": "Раз channel служит для общей синхронизации, его представляют как глобально видимое состояние.",
+                "if_it_were_true": "Тогда любая goroutine «видела» бы channel по имени без передачи, но в Go его нужно явно передать в функцию или замкнуть в замыкании.",
+                "how_it_should_be": "Channel — это явно создаваемая и передаваемая типизированная труба между goroutines, а не глобальная переменная."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Channel — типизированный канал передачи значений между goroutines. `make(chan T)` создаёт unbuffered, `make(chan T, N)` — buffered с ёмкостью N. Операции send (`ch <- v`) и receive (`v := <-ch`) встроенно синхронизированы, поэтому channel одновременно type-safe и thread-safe.",
+              "correct": true,
+              "sections": {
+                "explanation": "Channels воплощают идиому Go «Don't communicate by sharing memory; share memory by communicating»: координация идёт через передачу значений, а не через общий мьютекс над данными.",
+                "example": "`ch := make(chan int, 10)` создаёт buffered channel; `ch <- 42` отправляет, `v := <-ch` принимает, а `close(ch)` закрывает — синхронизация уже встроена.",
+                "when_to_apply": "Применяется для координации goroutines без явных мьютексов: передача задач воркерам, сбор результатов, сигналы завершения.",
+                "edge_cases": "Channel строго типизирован: `chan int` не примет string; `chan any` возможен, но требует type assertion и может дать panic при неверном приведении.",
+                "related": "[[go-concurrency-interview#Q7]] buffered против unbuffered; [[go-concurrency-interview#Q8]] семантика send/receive/close; [[go-concurrency-interview#Q11]] range над channel."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Channel может хранить значения любого типа без указания типа при создании — тип задаётся динамически при каждом send.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Channel строго типизирован при создании (`chan int`, `chan string`); единственный «универсальный» вариант — `chan any`, и он требует type assertion.",
+                "source_of_confusion": "Динамическая типизация из скриптовых языков переносится на channel, отсюда ожидание «любой тип без объявления».",
+                "if_it_were_true": "Тогда в один `chan` можно было бы класть и int, и string без `any`, но компилятор Go это отвергнет.",
+                "how_it_should_be": "Тип элемента фиксируется при создании channel; разнотипные значения — только через `chan any` с приведением."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Channel работает только внутри одной goroutine как механизм асинхронного кода и не предназначен для межгорутинного общения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Channels существуют именно для передачи данных МЕЖДУ goroutines; использование внутри одной goroutine на unbuffered channel приведёт к deadlock.",
+                "source_of_confusion": "Слово «асинхронность» уводит к мысли, что channel — локальный примитив одного потока исполнения.",
+                "if_it_were_true": "Тогда `ch <- 1; <-ch` в одной goroutine на unbuffered channel сработало бы, но это вызовет «all goroutines are asleep - deadlock».",
+                "how_it_should_be": "Channel — это средство связи между разными goroutines, а не внутригорутинный асинхронный примитив."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между buffered и unbuffered channels?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Buffered channel всегда быстрее unbuffered под любой нагрузкой, поэтому по умолчанию стоит выбирать buffered с большим буфером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Buffered без меры теряет сигнальную семантику и скрывает backpressure; при write-heavy и переполнении буфера это даёт рост памяти, а не ускорение.",
+                "source_of_confusion": "Буфер кажется чистым выигрышем «sender не ждёт», и отсюда вывод «всегда buffered».",
+                "if_it_were_true": "Тогда unbuffered не имел бы смысла, но он нужен именно для гарантированной синхронизации (rendezvous) sender и receiver.",
+                "how_it_should_be": "Выбор зависит от задачи: unbuffered — для синхронизации, buffered — для развязки; «всегда buffered» неверно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Unbuffered channel асинхронный: sender кладёт значение и продолжает работу, не дожидаясь receiver.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unbuffered channel синхронный (blocking): sender блокируется, пока receiver не заберёт значение (rendezvous).",
+                "source_of_confusion": "Свойства buffered (sender не ждёт) ошибочно приписывают unbuffered, путая sync и async.",
+                "if_it_were_true": "Тогда `ch <- 1` в одной goroutine без получателя на unbuffered channel прошёл бы, но он заблокируется и даст deadlock.",
+                "how_it_should_be": "Unbuffered channel синхронный: send и receive встречаются в одной точке (rendezvous)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Unbuffered (`make(chan int)`) блокирует sender до тех пор, пока receiver не заберёт значение — это rendezvous, точка синхронизации. Buffered (`make(chan int, N)`) не блокирует sender, пока в буфере есть место; при заполнении буфера sender тоже блокируется.",
+              "correct": true,
+              "sections": {
+                "explanation": "Unbuffered используют для синхронизации goroutines (передал — значит другой принял именно сейчас), buffered — для развязанного producer-consumer с очередью сообщений.",
+                "example": "На unbuffered channel `go func(){ ch <- 1 }()` блокирует отправителя до `v := <-ch`; на `make(chan int, 3)` три `ch <- i` пройдут без ожидания, а четвёртый заблокируется.",
+                "when_to_apply": "Применяется unbuffered, когда важен факт «handoff состоялся»; buffered — когда producer должен продолжать работу, не дожидаясь каждого consumer.",
+                "edge_cases": "Оба блокируются на границах: unbuffered — при отсутствии receiver, buffered — при полном буфере на send и при пустом на receive.",
+                "related": "[[go-concurrency-interview#Q6]] что такое channel; [[go-concurrency-interview#Q8]] семантика send/receive/close; [[go-concurrency-interview#Q26]] buffered jobs в worker pool."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Buffered channel с ёмкостью 1 полностью эквивалентен unbuffered — разницы в поведении нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Buffered(1) позволяет sender отправить одно значение без ожидающего receiver, тогда как unbuffered требует встречи sender и receiver.",
+                "source_of_confusion": "Минимальная ёмкость 1 кажется «почти нулём», и отсюда вывод об эквивалентности с unbuffered.",
+                "if_it_were_true": "Тогда timing у обоих совпал бы, но buffered(1) разрывает rendezvous и меняет порядок happens-before между sender и receiver.",
+                "how_it_should_be": "Buffered(1) и unbuffered различаются: первый принимает значение без получателя, второй требует синхронной встречи."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова семантика операций send, receive и close на channel?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Receiver может вызвать `close(ch)`, чтобы сигнализировать sender, что данные больше не нужны и можно прекращать отправку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Закрытие из receiver — антипаттерн: если sender затем напишет в закрытый channel, будет panic; сигнал «стоп» дают отдельным done-channel.",
+                "source_of_confusion": "`close` интуитивно кажется удобным способом сказать «хватит», поэтому его зовут со стороны получателя.",
+                "if_it_were_true": "Тогда receiver безопасно завершал бы поток через `close`, но последующий `ch <- v` в sender вызвал бы «send on closed channel».",
+                "how_it_should_be": "Закрывать channel должен только sender; чтобы остановить отправку, receiver использует отдельный done-channel."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запись в `nil` channel возвращает ошибку, а чтение из `nil` channel немедленно возвращает zero value.",
+              "correct": false,
+              "sections": {
+                "what_actually": "И send, и receive на `nil` channel блокируются навсегда (а не возвращают ошибку или zero); это используют для динамического отключения case в `select`.",
+                "source_of_confusion": "От других API ждут, что операция с «пустым» объектом вернёт ошибку или нулевое значение.",
+                "if_it_were_true": "Тогда `var ch chan int; <-ch` сразу вернул бы 0, но реально goroutine зависнет навсегда на этой строке.",
+                "how_it_should_be": "Операции на `nil` channel вечно блокируются; ошибки или мгновенного zero они не возвращают."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Вызов `close(ch)` освобождает память channel, и после закрытия переменная channel становится равной `nil`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`close` не освобождает память и не превращает channel в `nil`: закрытый channel остаётся не-nil, читать из него можно (zero + ok=false).",
+                "source_of_confusion": "Закрытие путают с обнулением/освобождением ресурса, как `free()` в C.",
+                "if_it_were_true": "Тогда после `close(ch)` проверка `ch == nil` была бы true, но она остаётся false, а память освободит GC по достижимости.",
+                "how_it_should_be": "`close` лишь помечает channel закрытым; он не nil и не освобождён вручную — этим занимается GC."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Закрывать channel должен только sender (обычно один). Запись в закрытый channel — panic «send on closed channel». Чтение из закрытого и пустого channel возвращает zero value и `ok=false`. Передача по `nil` channel блокируется навсегда — это удобно для отключения case в `select`.",
+              "correct": true,
+              "sections": {
+                "explanation": "При нескольких senders `close` синхронизируют через `sync.Once`, чтобы не закрыть channel дважды; форма `v, ok := <-ch` отличает закрытие (ok=false) от валидного значения.",
+                "example": "`v, ok := <-ch` вернёт `ok=false` после `close(ch)`; запись `ch <- 1` в закрытый channel даст panic, а отправка по `nil` channel зависнет навсегда.",
+                "when_to_apply": "Применяется когда sender завершил поток данных: он закрывает channel, а получатели через `range` или проверку `ok` корректно завершают чтение.",
+                "edge_cases": "Если в буфере остались значения до `close`, они сначала вычитываются, и только потом чтение начинает отдавать zero + ok=false.",
+                "related": "[[go-concurrency-interview#Q9]] чтение из закрытого channel; [[go-concurrency-interview#Q10]] запись в закрытый channel; [[go-concurrency-interview#Q18]] sync.Once для однократного close."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что происходит при чтении из закрытого channel?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сначала вычитываются оставшиеся в буфере значения по очереди, затем чтение возвращает zero value и `ok=false`. Цикл `for v := range ch` корректно завершается, как только буфер опустошён и channel закрыт.",
+              "correct": true,
+              "sections": {
+                "explanation": "Форма `v, ok := <-ch` даёт `ok=false` именно когда channel закрыт И пуст, что отличает реальное значение от сигнала «данных больше не будет».",
+                "example": "После `close(ch)` цикл `for v := range ch` сначала вычитает оставшиеся `1, 2` из буфера, а затем штатно завершается без явной проверки `ok`.",
+                "when_to_apply": "Применяется когда sender закрывает channel как сигнал конца потока: получатель через `range` дочитывает остаток и выходит без лишних проверок.",
+                "edge_cases": "Если channel был buffered и в нём оставались элементы, `range` сначала отдаст их все и лишь потом завершится — close не выбрасывает накопленные значения.",
+                "related": "[[go-concurrency-interview#Q10]] запись в закрытый channel; [[go-concurrency-interview#Q8]] семантика send/receive/close; [[go-concurrency-interview#Q11]] завершение range при close."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Чтение из закрытого channel вызывает panic, поэтому перед каждым receive нужно проверять, не закрыт ли он.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Panic возникает при ЗАПИСИ в закрытый channel; чтение безопасно и отдаёт zero value + ok=false.",
+                "source_of_confusion": "Опасность закрытого channel есть, но её ошибочно переносят с записи на чтение.",
+                "if_it_were_true": "Тогда `range ch` после `close(ch)` падал бы с panic, но он, наоборот, штатно и без паники завершает цикл.",
+                "how_it_should_be": "Чтение из закрытого channel безопасно (zero + ok=false); panic даёт только запись в него."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чтение из закрытого channel блокируется навсегда, пока кто-нибудь снова не откроет его и не положит значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Навсегда блокируется чтение из `nil` channel; закрытый channel немедленно возвращает zero + ok=false, не блокируясь.",
+                "source_of_confusion": "Поведение `nil` channel (вечная блокировка) путают с поведением закрытого.",
+                "if_it_were_true": "Тогда `range` по закрытому channel зависал бы, но он сразу завершается — иначе любой паттерн «sender closes» был бы сломан.",
+                "how_it_should_be": "Закрытый channel читается мгновенно (zero + ok=false); вечная блокировка — свойство nil channel."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтение из закрытого channel возвращает специальную ошибку `ErrChannelClosed`, которую нужно сравнивать в коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Go нет `ErrChannelClosed`: факт закрытия передаётся вторым булевым значением `ok=false`, а не error-типом.",
+                "source_of_confusion": "Привычка к `err != nil` заставляет искать sentinel-ошибку и для закрытого channel.",
+                "if_it_were_true": "Тогда читали бы `v, err := <-ch`, но синтаксис receive даёт `v, ok := <-ch`, и никакого error там нет.",
+                "how_it_should_be": "Закрытие сигнализируется булевым `ok=false`, а не отдельным значением ошибки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что происходит при записи в закрытый channel?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Запись в закрытый channel возвращает `ok=false` по аналогии с чтением, и значение просто не доставляется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У операции send нет `ok`-семантики: запись в закрытый channel вызывает panic, а не возвращает флаг.",
+                "source_of_confusion": "Симметрию с чтением `v, ok := <-ch` ошибочно переносят на send.",
+                "if_it_were_true": "Тогда `ch <- v` после close молча провалился бы с ok=false, но реально это «send on closed channel» panic.",
+                "how_it_should_be": "Запись в закрытый channel паникует; никакого булева флага у send нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запись в закрытый channel вызывает panic: «send on closed channel». Это намеренный дизайн Go, чтобы ошибка обнаруживалась громко. При нескольких senders закрытие синхронизируют через `sync.Once`, гарантируя ровно один `close`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Именно поэтому `close` доверяют только sender'у (обычно одному); `recover()` вокруг send используют лишь как крайнюю меру, а не как штатный паттерн.",
+                "example": "`close(ch); ch <- 1` падает с «panic: send on closed channel»; при нескольких senders пишут `var once sync.Once; once.Do(func(){ close(ch) })`.",
+                "when_to_apply": "Применяется правило: владелец-sender закрывает channel после последнего значения, а получатели реагируют через `range`/проверку `ok`, не закрывая его сами.",
+                "edge_cases": "Если senders несколько и каждый может попытаться закрыть, без координации возможен повторный `close` — он сам по себе тоже panic «close of closed channel».",
+                "related": "[[go-concurrency-interview#Q8]] кто и когда вызывает close; [[go-concurrency-interview#Q9]] чтение из закрытого channel; [[go-concurrency-interview#Q18]] sync.Once для безопасного close."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Запись в закрытый channel блокируется, пока channel не будет открыт заново и не появится получатель.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Channel нельзя открыть повторно — закрытие необратимо; запись в закрытый channel не блокируется, а немедленно паникует.",
+                "source_of_confusion": "Представление о «временно закрытом» канале, который можно вновь открыть, переносят на Go.",
+                "if_it_were_true": "Тогда заблокированный send дождался бы повторного открытия, но такого механизма нет, и происходит мгновенная panic.",
+                "how_it_should_be": "Закрытие необратимо; запись в закрытый channel сразу паникует, а не ждёт."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Запись в закрытый channel молча игнорируется: значение теряется, но программа продолжает работать без ошибки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Silent discard скрыл бы программную ошибку, поэтому Go выбрал panic как явный сигнал неправильного дизайна.",
+                "source_of_confusion": "Поведение «no-op при недоступном получателе» из некоторых очередей переносят на закрытый channel.",
+                "if_it_were_true": "Тогда баги с записью после close оставались бы незамеченными, но Go намеренно делает их фатальными через panic.",
+                "how_it_should_be": "Запись в закрытый channel не игнорируется — она вызывает panic, чтобы ошибка не прошла тихо."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает range над channel?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`range` над channel итерирует ровно N раз, где N — ёмкость, указанная в `make(chan int, N)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "N в `make` — это capacity буфера, а не число итераций; `range` читает до тех пор, пока channel не будет закрыт.",
+                "source_of_confusion": "Число в `make` принимают за «сколько значений будет», смешивая ёмкость и длину потока.",
+                "if_it_were_true": "Тогда `range` по `make(chan int, 3)` всегда делал бы 3 шага, но он обработает столько значений, сколько отправили до close.",
+                "how_it_should_be": "`range` итерирует до `close`, а не фиксированное число раз; N задаёт лишь размер буфера."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`range` над channel автоматически закрывает channel по завершении цикла, поэтому отдельный `close` не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`range` НЕ закрывает channel — это обязанность sender; без явного `close` цикл `range` зависнет навсегда.",
+                "source_of_confusion": "Раз `range` завершается при закрытии, кажется логичным, что он же channel и закрывает.",
+                "if_it_were_true": "Тогда забытый `close` не приводил бы к проблемам, но именно его отсутствие даёт goroutine leak на `range`.",
+                "how_it_should_be": "Закрывать channel должен sender; `range` лишь читает и завершается при чужом `close`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`range ch` блокируется при пустом channel и завершается, когда channel закрыт и опустошён. Если sender забывает вызвать `close`, цикл `range` ждёт навсегда — это классический goroutine leak.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идиома — sender отправляет все значения и затем `close(ch)` (часто `defer close(out)`), после чего получатель спокойно дочитывает channel через `range`.",
+                "example": "Sender делает `for i := 1; i <= 5; i++ { ch <- i }; close(ch)`, после чего получатель `for v := range ch` выводит `1..5` и завершается; забытый `close` повесил бы цикл.",
+                "when_to_apply": "Применяется для потребления потока значений: воркер читает задачи `for j := range jobs`, и когда producer закрывает `jobs`, цикл естественно завершается.",
+                "edge_cases": "`range` работает одинаково для buffered и unbuffered channels; ограничение «только для buffered» — миф, отдельный `for ... ok` не нужен.",
+                "related": "[[go-concurrency-interview#Q9]] завершение range при close; [[go-concurrency-interview#Q32]] goroutine leak без close; [[go-concurrency-interview#Q26]] range над jobs в worker pool."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`range` над channel работает только для buffered channels; для unbuffered нужен цикл `for` с проверкой `v, ok := <-ch`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`range` корректно работает с обоими типами channels; ручной `for ... ok` просто более многословен без преимуществ.",
+                "source_of_confusion": "Кажется, что без буфера «итерировать нечего», и отсюда ограничение на buffered.",
+                "if_it_were_true": "Тогда `for v := range unbufferedCh` был бы недопустим, но это совершенно рабочий идиоматичный код.",
+                "how_it_should_be": "`range` применим и к unbuffered, и к buffered channels; отдельный `for`+`ok` не обязателен."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое select и как он работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`select` выбирает первый готовый case в порядке их объявления (priority-based), как `if`-цепочка сверху вниз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При нескольких готовых case Go выбирает один случайно, а не первый по порядку; порядок объявления роли не играет.",
+                "source_of_confusion": "Привычка к `switch`/`if` сверху вниз заставляет ждать приоритета по позиции.",
+                "if_it_were_true": "Тогда верхний case всегда «голодал» бы остальные, но случайный выбор как раз предотвращает starvation одних channels.",
+                "how_it_should_be": "`select` при нескольких готовых case выбирает случайно, обеспечивая fairness, а не по порядку объявления."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`select` умеет работать только с receive-операциями (`<-ch`); отправку (`ch <- v`) в case писать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`select` поддерживает и send (`ch <- v`), и receive (`<-ch`) в качестве case.",
+                "source_of_confusion": "Receive в `select` встречается чаще, поэтому send-вариант забывают.",
+                "if_it_were_true": "Тогда чтобы сделать неблокирующую отправку, пришлось бы заводить отдельную goroutine, но `case ch <- v:` решает это в одном `select`.",
+                "how_it_should_be": "В case `select` допустимы и send, и receive операции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`select` работает как `switch`: если ни один case не готов, он переходит к следующему выражению и продолжает выполнение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `default` `select` блокируется, пока какой-то case не станет готов; fall-through к следующему выражению не происходит.",
+                "source_of_confusion": "Внешнее сходство с `switch` рождает ожидание fall-through-поведения.",
+                "if_it_were_true": "Тогда `select` без готовых case просто пропускался бы, но он заблокирует goroutine до готовности одного из case.",
+                "how_it_should_be": "`select` без `default` блокируется до готовности case, а не проваливается дальше как `switch`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`select` ждёт, пока хотя бы один из его channel-case станет готов (send или receive). Если готовы несколько — выбирается случайный, что даёт fairness. Без ветки `default` `select` блокируется, пока ни один case не готов.",
+              "correct": true,
+              "sections": {
+                "explanation": "По сути это `switch` для channel-операций: он мультиплексирует несколько channels в одной точке, позволяя реагировать на то, что произойдёт раньше.",
+                "example": "`select { case v := <-ch1: ...; case v := <-ch2: ...; case ch1 <- 42: ... }` ждёт первый готовый case; если готовы оба receive — выбор между ними случаен.",
+                "when_to_apply": "Применяется для мультиплексирования: одновременно ждать данные из нескольких источников, добавить timeout через `time.After` или отмену через `ctx.Done()`.",
+                "edge_cases": "Если все case на `nil` channels и нет `default`, `select` заблокируется навсегда; именно так динамически «отключают» отдельные ветви.",
+                "related": "[[go-concurrency-interview#Q13]] default-ветка в select; [[go-concurrency-interview#Q14]] timeout через select и time.After; [[go-concurrency-interview#Q4]] ctx.Done() в select для остановки."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужна ветка default в select?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "С веткой `default` `select` становится неблокирующим: если ни один channel-case не готов прямо сейчас, выполняется `default`. Это даёт try-семантику — попытку прочитать/записать без ожидания.",
+              "correct": true,
+              "sections": {
+                "explanation": "Применяется для non-blocking read/write: `select { case v := <-ch: ...; default: ... }` либо берёт значение, либо мгновенно идёт в default, не блокируя goroutine.",
+                "example": "`select { case v := <-ch: use(v); default: fmt.Println(\"no message\") }` не блокируется: при отсутствии данных сразу выполняется ветка `default`.",
+                "when_to_apply": "Используется для polling, health-check и попыток отправить значение без риска зависнуть, когда ожидание недопустимо.",
+                "edge_cases": "`default` влияет только на конкретный `select`-statement, в котором он написан; на другие `select` в программе он никак не действует.",
+                "related": "[[go-concurrency-interview#Q12]] базовое поведение select; [[go-concurrency-interview#Q14]] timeout вместо default; [[go-concurrency-interview#Q8]] неблокирующая запись и риск panic при close."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Ветка `default` выполняется только в случае, когда все channels в `select` закрыты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`default` срабатывает, когда НИ ОДИН case не готов прямо сейчас; закрытость channels тут ни при чём (закрытый channel как раз «готов» к чтению).",
+                "source_of_confusion": "Закрытие channel ассоциируют с «нечего делать», и отсюда привязка default к закрытым каналам.",
+                "if_it_were_true": "Тогда `default` использовали бы для cleanup при закрытии, но закрытый channel немедленно отдаёт case-чтение, и default не выполнится.",
+                "how_it_should_be": "`default` выполняется при отсутствии готовых case, а не при закрытии channels."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`default` делает неблокирующими все последующие вызовы `select` в программе, пока его не убрать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`default` влияет только на тот `select`, где он написан; каждый `select`-statement независим.",
+                "source_of_confusion": "Кажется, что `default` ставит некий глобальный флаг неблокирующего режима.",
+                "if_it_were_true": "Тогда один `select` с default снимал бы блокировку со всех остальных, но они остаются блокирующими, если в них нет своего default.",
+                "how_it_should_be": "Эффект `default` локален для одного `select`; глобального влияния он не имеет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`default` обязателен в каждом `select`: без него программа не скомпилируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`default` опционален; `select` без него — нормальный блокирующий `select`, и код компилируется.",
+                "source_of_confusion": "По аналогии с тем, что в `switch` иногда требуют ветку по умолчанию, ждут обязательности и здесь.",
+                "if_it_were_true": "Тогда любой блокирующий `select` был бы синтаксической ошибкой, но именно блокирующий `select` — самый частый случай.",
+                "how_it_should_be": "`default` не обязателен; без него `select` просто блокируется до готовности case."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать timeout через select и time.After?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`time.After(d)` блокирует текущую goroutine на длительность d, после чего возвращает управление.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Блокирует `time.Sleep`; `time.After` сразу возвращает channel, который получит значение через d, и сам по себе ничего не блокирует.",
+                "source_of_confusion": "`Sleep` и `After` оба связаны со временем, поэтому их поведение путают.",
+                "if_it_were_true": "Тогда `time.After(5*time.Second)` останавливал бы выполнение на 5 секунд, но он немедленно отдаёт channel для использования в `select`.",
+                "how_it_should_be": "`time.After` возвращает channel-таймер и не блокирует; блокирует именно `time.Sleep`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `select` добавляют case `<-time.After(d)`: `time.After` возвращает channel, который получит значение через d. Если основной channel не отдал данные за это время, срабатывает timeout-ветка. В горячем коде вместо `time.After` берут `time.NewTimer` с явным `Stop`, чтобы не текли таймеры.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый вызов `time.After` создаёт новый таймер, который не собирается GC до срабатывания, поэтому в цикле его заменяют на переиспользуемый `NewTimer` + `Stop`/`Reset`.",
+                "example": "`select { case v := <-ch: ...; case <-time.After(5*time.Second): fmt.Println(\"timeout\") }` ждёт значение не дольше пяти секунд, иначе срабатывает timeout-ветка.",
+                "when_to_apply": "Применяется для одноразового локального таймаута на ожидание ответа: `select { case v := <-ch: ...; case <-time.After(5*time.Second): timeout }`.",
+                "edge_cases": "При использовании `NewTimer` после получения значения по основному case таймер нужно `Stop()` и при необходимости дренировать `timer.C`, иначе можно поймать «лишний» сигнал.",
+                "related": "[[go-concurrency-interview#Q12]] устройство select; [[go-concurrency-interview#Q24]] альтернатива через context.WithTimeout; [[go-concurrency-interview#Q4]] таймеры и остановка goroutine."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Timeout в `select` можно делать только через `context.WithTimeout`; `time.After` для этого не рекомендован и считается ошибкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба подхода валидны: `context.WithTimeout` лучше для propagating cancellation вглубь, а `time.After` + `select` — для локального одноразового таймаута.",
+                "source_of_confusion": "Совет «используй context для отмены» абсолютизируют до запрета `time.After`.",
+                "if_it_were_true": "Тогда локальный `case <-time.After(d):` был бы антипаттерном, но для простого локального таймаута это идиоматичный приём.",
+                "how_it_should_be": "`time.After` в `select` — нормальный способ локального таймаута; `context` нужен, когда отмену надо пробросить дальше."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`time.After` с одним и тем же duration можно безопасно переиспользовать в цикле, повторно читая из одного channel.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый вызов `time.After` создаёт новый таймер; «переиспользовать» один channel не выйдет, а старые таймеры копятся до срабатывания.",
+                "source_of_confusion": "Стабильный duration наводит на мысль, что можно создать таймер один раз и читать его в каждой итерации.",
+                "if_it_were_true": "Тогда в tight-loop не было бы утечки, но именно повторные `time.After` в цикле дают накопление таймеров и рост памяти.",
+                "how_it_should_be": "В цикле нужен `time.NewTimer` с `Reset`/`Stop`; `time.After` каждый раз порождает новый таймер."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как правильно использовать sync.Mutex: Lock, Unlock, defer?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`sync.Mutex` реентерабельный: одна goroutine может вызвать `Lock()` дважды подряд без deadlock, как `ReentrantLock` в Java.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Go `Mutex` НЕ реентерабельный: повторный `Lock()` из той же goroutine приводит к deadlock.",
+                "source_of_confusion": "Опыт `ReentrantLock` в Java переносят на Go `Mutex`, ожидая рекурсивный захват.",
+                "if_it_were_true": "Тогда рекурсивная функция спокойно брала бы lock на каждом уровне, но второй `Lock()` навсегда заблокирует goroutine.",
+                "how_it_should_be": "Go `Mutex` нереентерабелен; рекурсию под мьютексом нужно рефакторить, а не полагаться на повторный Lock."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Unlock()` можно вызывать из любой goroutine, не обязательно из той, что вызвала `Lock()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Концептуально освобождать мьютекс должна та же goroutine, что его захватила; разблокировка из другой — ошибка дизайна и источник tricky races.",
+                "source_of_confusion": "Кажется, что мьютекс — глобальный флаг, который любой может снять.",
+                "if_it_were_true": "Тогда передача права Unlock другой goroutine была бы нормой, но это нарушает модель владения и ведёт к гонкам.",
+                "how_it_should_be": "Захват и освобождение мьютекса логически принадлежат одной goroutine; кросс-горутинный Unlock — антипаттерн."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Lock()` блокируется, если мьютекс уже захвачен; разблокировку всегда делают через `defer mu.Unlock()`, чтобы lock снялся даже при panic. Mutex нельзя копировать по значению — у него есть внутреннее состояние, и копия захваченного мьютекса даст deadlock.",
+              "correct": true,
+              "sections": {
+                "explanation": "Структуру с мьютексом передают по указателю (`*T`), а не по значению; `defer mu.Unlock()` сразу после `Lock()` гарантирует освобождение на всех путях выхода из функции.",
+                "example": "`func increment() { mu.Lock(); defer mu.Unlock(); counter++ }` — `defer` снимет lock даже при panic; а `var mu2 = mu` скопирует state и приведёт к deadlock.",
+                "when_to_apply": "Применяется для защиты разделяемых данных: счётчик, map, поля структуры — оборачивают `Lock`/`defer Unlock` вокруг критической секции.",
+                "edge_cases": "Mutex нереентерабельный: повторный `Lock()` из той же goroutine — deadlock; для read-heavy нагрузок берут `RWMutex` вместо обычного Mutex.",
+                "related": "[[go-concurrency-interview#Q16]] RWMutex для read-heavy; [[go-concurrency-interview#Q22]] atomic против Mutex; [[go-concurrency-interview#Q33]] двойной Lock как deadlock."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Копирование `sync.Mutex` через присваивание по значению — нормальная практика, чтобы получить независимые мьютексы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Копирование переносит и внутреннее состояние (locked/unlocked); если оригинал захвачен, копия тоже «захвачена», и `Lock` на ней зависнет.",
+                "source_of_confusion": "Кажется, что присваивание создаёт чистый новый мьютекс, как для обычной структуры.",
+                "if_it_were_true": "Тогда `mu2 := mu` давал бы свежий unlocked мьютекс, но `go vet` ругается на копирование, а поведение становится неопределённым.",
+                "how_it_should_be": "Mutex нельзя копировать по значению; структуру с ним передают по указателю, иначе возможен deadlock."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда стоит использовать sync.RWMutex?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`RWMutex` всегда быстрее обычного `Mutex`, поэтому стоит заменить все `Mutex` на `RWMutex`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RWMutex` медленнее `Mutex` при write-heavy или сбалансированной нагрузке из-за дополнительного bookkeeping; слепая замена деградирует производительность.",
+                "source_of_confusion": "Наличие отдельного режима для чтения создаёт впечатление универсального выигрыша.",
+                "if_it_were_true": "Тогда `Mutex` нигде не был бы нужен, но при частых записях именно простой `Mutex` оказывается быстрее.",
+                "how_it_should_be": "`RWMutex` выгоден только при read-heavy; в остальных случаях обычный `Mutex` быстрее и проще."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`RWMutex` позволяет нескольким writers работать одновременно, повышая пропускную способность записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RWMutex` допускает одновременно множество READERS; writer всегда эксклюзивен и блокирует и читателей, и других писателей.",
+                "source_of_confusion": "Из названия Read-Write делают вывод, что параллелятся обе операции.",
+                "if_it_were_true": "Тогда две goroutines писали бы в map параллельно, но это дало бы data race — writer держит lock единолично.",
+                "how_it_should_be": "Одновременность даёт только чтение; записи под `RWMutex` строго эксклюзивны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`RLock()` автоматически повышается до `Lock()`, как только goroutine решает, что нужно записать данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Go `RWMutex` нет auto-upgrade: попытка взять `Lock()`, удерживая `RLock()` в той же goroutine, приводит к deadlock — нужно сначала `RUnlock()`.",
+                "source_of_confusion": "Из других библиотек ждут lock-upgrade прямо из read-режима в write-режим.",
+                "if_it_were_true": "Тогда внутри read-секции можно было бы «дописать» данные одним `Lock`, но это навсегда заблокирует goroutine.",
+                "how_it_should_be": "Перед записью нужно явно `RUnlock()` и затем `Lock()`; автоматического повышения блокировки нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`RWMutex` оптимален при read-heavy нагрузке (примерно 10:1 и выше в пользу чтений): множество `RLock()` держатся одновременно, а `Lock()` writer'а эксклюзивен. При сбалансированной или write-heavy нагрузке overhead `RWMutex` выше, и обычный `Mutex` быстрее.",
+              "correct": true,
+              "sections": {
+                "explanation": "Подходит для часто читаемых и редко обновляемых структур: in-memory кеши, конфиги, маршрутные таблицы, где чтения сильно преобладают над записями.",
+                "example": "Под `RWMutex` чтение `mu.RLock(); defer mu.RUnlock(); return data[key]` идёт параллельно из многих goroutines, а запись `mu.Lock()` блокирует всех — это выгодно для кеша конфигов.",
+                "when_to_apply": "Применяется после замера соотношения read/write: если чтений на порядок больше — переходят на `RWMutex`, иначе оставляют `Mutex`.",
+                "edge_cases": "`RWMutex` нереентерабелен и не делает upgrade `RLock`→`Lock`: внутри read-секции нельзя «дозахватить» write-lock без предварительного `RUnlock`.",
+                "related": "[[go-concurrency-interview#Q15]] базовый Mutex и defer Unlock; [[go-concurrency-interview#Q19]] sync.Map как альтернатива для конкурентной map; [[go-concurrency-interview#Q22]] выбор примитива по нагрузке."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как sync.WaitGroup синхронизирует завершение нескольких goroutines?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Add(N)` вызывают ДО запуска goroutine, `Done()` — через `defer` внутри неё, а `Wait()` блокирует, пока счётчик не дойдёт до нуля. `WaitGroup` нельзя копировать после первого использования.",
+              "correct": true,
+              "sections": {
+                "explanation": "Типичный цикл: `wg.Add(1)` перед `go`, в goroutine — `defer wg.Done()`, в конце — `wg.Wait()`, который дождётся всех воркеров.",
+                "example": "`for i := 0; i < 5; i++ { wg.Add(1); go func(){ defer wg.Done(); work() }() }; wg.Wait()` запускает 5 воркеров и блокируется, пока все не вызовут `Done()`.",
+                "when_to_apply": "Применяется для запуска N задач с ожиданием их всех: параллельная обработка батча, прогрев кешей, веер однотипных операций перед продолжением.",
+                "edge_cases": "Лишний `Done()` уводит счётчик ниже нуля и даёт panic «negative WaitGroup counter»; `Add` после возможного `Wait` — race; баланс Add/Done должен быть строгим.",
+                "related": "[[go-concurrency-interview#Q29]] errgroup как WaitGroup с ошибками; [[go-concurrency-interview#Q27]] WaitGroup в fan-in merge; [[go-concurrency-interview#Q26]] синхронизация воркеров пула."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`wg.Add(1)` можно вызывать внутри самой goroutine сразу после её запуска — это эквивалентно вызову до `go`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Add` внутри goroutine — race: если main успеет дойти до `Wait()` раньше, чем выполнится `Add`, ожидание завершится преждевременно.",
+                "source_of_confusion": "Кажется естественным «регистрировать» goroutine изнутри неё самой.",
+                "if_it_were_true": "Тогда порядок `go`/`Add` не имел бы значения, но при `Add` внутри goroutine `Wait()` может не дождаться её вовсе.",
+                "how_it_should_be": "`Add` вызывают строго до `go`, чтобы `Wait()` гарантированно учитывал goroutine."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`WaitGroup` можно переиспользовать для нескольких волн goroutines, вызывая между ними `wg.Reset()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `sync.WaitGroup` нет метода `Reset()`; переиспользование допустимо только после полного завершения `Wait()`, иначе заводят новый `WaitGroup`.",
+                "source_of_confusion": "По аналогии с переиспользуемыми примитивами ждут метод сброса счётчика.",
+                "if_it_were_true": "Тогда `wg.Reset()` между волнами был бы штатным приёмом, но такого метода нет — код не скомпилируется.",
+                "how_it_should_be": "Для новой волны создают новый `WaitGroup` (или переиспользуют после завершённого Wait); метода Reset нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Вызывать `Done()` несколько раз безопасно: `WaitGroup` просто игнорирует лишние вызовы сверх числа `Add`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лишний `Done()` декрементирует счётчик ниже нуля и вызывает panic «sync: negative WaitGroup counter».",
+                "source_of_confusion": "Идемпотентность некоторых cleanup-операций переносят на `Done`.",
+                "if_it_were_true": "Тогда двойной `defer wg.Done()` был бы безвреден, но он уронит программу паникой об отрицательном счётчике.",
+                "how_it_should_be": "Каждому `Add(1)` должен соответствовать ровно один `Done()`; лишний вызов — panic."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Для чего нужен sync.Once и как он работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`sync.Once` можно сбросить и использовать повторно, вызвав `once.Reset()` перед новым `Do`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `sync.Once` нет метода `Reset()`: после первого `Do` функция больше никогда не выполнится — для повторной инициализации заводят новый `Once`.",
+                "source_of_confusion": "Ожидание переиспользуемого примитива заставляет искать метод сброса.",
+                "if_it_were_true": "Тогда «переинициализацию конфига» делали бы через `once.Reset()`, но такого метода нет, и компиляция упадёт.",
+                "how_it_should_be": "Once одноразовый по своей сути; для повторного запуска создают новый экземпляр Once."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`sync.Once` гарантирует, что переданная в `Do(f)` функция выполнится ровно один раз за всё время жизни программы, даже при конкурентных вызовах из многих goroutines. Идеально для lazy-инициализации синглтонов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все конкурентные вызывающие блокируются, пока первый `Do` не завершит `f`; после этого `Do` мгновенно возвращается, не вызывая функцию повторно.",
+                "example": "`func GetConfig() *Config { once.Do(func(){ cfg = loadConfigFromFile() }); return cfg }` — конфиг загрузится ровно один раз, даже если `GetConfig` вызовут параллельно.",
+                "when_to_apply": "Применяется для отложенной инициализации общих ресурсов: подключение к БД, чтение конфига, создание логгера при первом обращении.",
+                "edge_cases": "Если `f` внутри `Do` паникует, `Once` всё равно помечается выполненным и больше не вызовет `f` — инициализация останется незавершённой, а panic уйдёт вызывающему.",
+                "related": "[[go-concurrency-interview#Q15]] Mutex как более многословная альтернатива; [[go-concurrency-interview#Q10]] sync.Once для безопасного close; [[go-concurrency-interview#Q19]] потокобезопасные структуры из sync."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`sync.Once` предназначен только для однопоточных программ; в конкурентном коде вместо него нужен `Mutex`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Once` создан именно для конкурентного кода: он сам потокобезопасен; `Mutex` тоже сработает, но это многословнее и менее идиоматично.",
+                "source_of_confusion": "Слово «once» воспринимают как «нет параллелизма», а не как «ровно один раз при любом числе goroutines».",
+                "if_it_were_true": "Тогда в concurrent-коде `Once` был бы небезопасен, но он как раз гарантирует однократность при гонке вызовов.",
+                "how_it_should_be": "`Once` безопасен и предназначен для конкурентной однократной инициализации; ручной Mutex не требуется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Если функция в `once.Do` паникует, следующий вызов `once.Do` выполнит её снова, дав ещё одну попытку инициализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После panic в `Do` объект `Once` помечается завершённым, и `f` больше не вызовется; panic пробрасывается вызывающему.",
+                "source_of_confusion": "Логику retry-при-ошибке ожидают и от `Once`, считая, что неуспех «не считается».",
+                "if_it_were_true": "Тогда упавшая инициализация повторилась бы при следующем `Do`, но `Once` навсегда останется в состоянии «done».",
+                "how_it_should_be": "Panic в `Do` всё равно «расходует» Once: повторного вызова не будет, retry нужно делать иначе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда лучше использовать sync.Map вместо обычной map с Mutex?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`sync.Map` всегда превосходит по производительности связку `map` + `Mutex`, поэтому её стоит использовать по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sync.Map` оптимизирован под read-heavy со стабильным набором ключей; при write-heavy `map` + `Mutex` быстрее, а API `Load/Store` усложняет код.",
+                "source_of_confusion": "Специализированная concurrent-структура кажется безусловно быстрее ручной синхронизации.",
+                "if_it_were_true": "Тогда `map` + `Mutex` нигде не был бы нужен, но при частых записях он выигрывает у `sync.Map`.",
+                "how_it_should_be": "`sync.Map` выгоден лишь в read-heavy сценариях; в общем случае берут `map` + `Mutex`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`sync.Map` потокобезопасна за счёт обычного `RWMutex` под капотом, поэтому её модель производительности такая же, как у `map`+`RWMutex`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sync.Map` использует более сложный алгоритм с двумя картами (read и dirty) и атомиками; `RWMutex` там лишь часть механизма.",
+                "source_of_confusion": "Упрощённая модель «просто RWMutex внутри» прячет реальную сложность реализации.",
+                "if_it_were_true": "Тогда её стоимость совпадала бы с `map`+`RWMutex`, но promotion dirty→read добавляет неочевидный overhead при записях.",
+                "how_it_should_be": "Внутри `sync.Map` — пара read/dirty map с атомиками, а не один RWMutex; модель производительности другая."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`sync.Map` выгодна при read-heavy нагрузке с непересекающимися (стабильными) ключами — например, кеши, где пишут редко, а читают часто. Для write-heavy сценариев и там, где нужна типобезопасность, лучше обычная `map` + `Mutex`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`sync.Map` хранит значения как `any` и оптимизирована под чтение через внутренние read/dirty карты; `map` + `Mutex` остаётся типизированной и универсальной.",
+                "example": "`var m sync.Map; m.Store(\"alice\", 30); v, ok := m.Load(\"alice\")` подойдёт для кеша с редкими записями; для типизированного частообновляемого счётчика лучше `map[string]int` + `Mutex`.",
+                "when_to_apply": "Применяется, когда множество goroutines читают разные ключи и записи редки; в простых и write-heavy случаях берут `map` под `Mutex`.",
+                "edge_cases": "`sync.Map` не дженерик в stdlib (на Go 1.21): операции идут через `any`, требуют type assertion и могут дать panic при неверном типе.",
+                "related": "[[go-concurrency-interview#Q15]] map + Mutex как базовый вариант; [[go-concurrency-interview#Q16]] RWMutex для read-heavy данных; [[go-concurrency-interview#Q20]] sync.Pool для переиспользования объектов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`sync.Map` поддерживает типобезопасные дженерики вида `sync.Map[K comparable, V any]`, поэтому приведение типов не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sync.Map` не дженерик в стандартной библиотеке (на Go 1.21): все операции идут через `any` и требуют type assertion.",
+                "source_of_confusion": "Появление дженериков в Go 1.18 наводит на мысль, что и `sync.Map` стала типизированной.",
+                "if_it_were_true": "Тогда `var m sync.Map[string,int]` компилировался бы, но stdlib-версия таких параметров типа не принимает.",
+                "how_it_should_be": "Работа с `sync.Map` идёт через `any` с приведением; параметризованного типобезопасного API в stdlib нет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Для чего нужен sync.Pool и каковы его ограничения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`sync.Pool` гарантирует, что положенный через `Put` объект обязательно вернётся при следующем `Get`, поэтому на него можно полагаться для корректности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GC может очистить пул в любой момент, поэтому объекты из `sync.Pool` годятся только для оптимизации, но не для корректности.",
+                "source_of_confusion": "Слово «pool» вызывает ассоциацию с надёжным хранилищем, из которого ничего не пропадает.",
+                "if_it_were_true": "Тогда между `Put` и `Get` объект всегда сохранялся бы, но после GC `Get` вернёт свежесозданный через `New`, а не прежний.",
+                "how_it_should_be": "`sync.Pool` — оптимизация без гарантий хранения; полагаться на сохранность объекта между Put/Get нельзя."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`sync.Pool` — лучший способ реализовать connection pool (например, к БД или HTTP) в Go.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Connection pool требует управления жизненным циклом (keepalive, close), а `sync.Pool` очищается GC, из-за чего соединения могут потеряться; для этого есть специализированные пулы.",
+                "source_of_confusion": "Слово «pool» в названии наводит на мысль, что это и есть пул соединений.",
+                "if_it_were_true": "Тогда соединения хранились бы стабильно, но GC-очистка пула может выбросить открытое соединение без корректного закрытия.",
+                "how_it_should_be": "Для соединений берут специализированный пул (например, встроенный в `database/sql`); `sync.Pool` для этого не подходит."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`sync.Pool` автоматически вызывает `Reset()` у объекта при `Put()`, поэтому очищать состояние вручную не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Reset()` (или ручную очистку state) нужно делать самостоятельно перед `Put()`; иначе следующий `Get()` вернёт объект с грязными данными.",
+                "source_of_confusion": "Ожидание «умного» пула, который сам приводит объект в чистое состояние.",
+                "if_it_were_true": "Тогда буфер автоматически очищался бы при возврате, но без ручного `buf.Reset()` следующий пользователь получит чужие данные.",
+                "how_it_should_be": "Состояние объекта чистят вручную перед Put; `sync.Pool` сам Reset не вызывает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`sync.Pool` переиспользует короткоживущие объекты, снижая нагрузку на GC. GC может очистить пул в любой момент, поэтому он годится только как оптимизация производительности и не подходит для объектов с жизненным циклом (соединений).",
+              "correct": true,
+              "sections": {
+                "explanation": "Поле `New` задаёт фабрику на случай пустого пула; типичный паттерн — `Get`, использование, затем `Reset` и `Put` через `defer`.",
+                "example": "`buf := bufferPool.Get().(*bytes.Buffer); defer func(){ buf.Reset(); bufferPool.Put(buf) }()` переиспользует буфер в hot-path; после GC `Get` создаст новый через `New`.",
+                "when_to_apply": "Применяется в hot-path для тяжёлых часто создаваемых объектов: `bytes.Buffer`, encoder/decoder, когда аллокации заметны в профилировке.",
+                "edge_cases": "Объект перед `Put` нужно очистить вручную (`Reset`), а после очистки пула GC `Get` вернёт свежий объект через `New` — на сохранность полагаться нельзя.",
+                "related": "[[go-concurrency-interview#Q19]] sync.Map как другой sync-примитив; [[go-concurrency-interview#Q3]] GC и scheduler в рантайме; [[go-concurrency-interview#Q15]] Mutex для защиты разделяемого state."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда применять sync/atomic для счётчиков?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`sync/atomic` даёт lock-free операции для примитивов (`int32/64`, pointer, bool): `AddInt64`, `LoadInt64`, `StoreInt64`, `CompareAndSwapInt64`. Это быстрее `Mutex`, потому что работает как аппаратная инструкция без syscall. Для сложных операций над несколькими полями нужен `Mutex`.",
+              "correct": true,
+              "sections": {
+                "explanation": "С Go 1.19 есть типизированный API `atomic.Int64`, `atomic.Pointer[T]` с методами `Add`/`Load`/`Store`, что удобнее, чем функции с указателем на переменную.",
+                "example": "`atomic.AddInt64(&counter, 1)` атомарно инкрементирует; с Go 1.19 то же делает типизированный `var c atomic.Int64; c.Add(1)` без указателя на переменную.",
+                "when_to_apply": "Применяется для single-value счётчиков, флагов, атомарной подмены указателя: метрики, rate-limiter, статусные флаги в hot-path.",
+                "edge_cases": "Atomic защищает ровно одно значение: для согласованного обновления нескольких связанных полей одного atomic недостаточно — там нужен `Mutex` или lock-free алгоритм.",
+                "related": "[[go-concurrency-interview#Q22]] atomic против Mutex по скорости; [[go-concurrency-interview#Q30]] почему counter++ даёт race; [[go-concurrency-interview#Q15]] Mutex для compound-операций."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`atomic.AddInt64` безопасно применять к данным любого типа, включая структуры, чтобы атомарно обновлять их целиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Atomic работает только с примитивами (`int32/64`, pointer, bool); для структур нужен `Mutex` — atomic над struct не скомпилируется или даст UB.",
+                "source_of_confusion": "Кажется, что «атомарность» — универсальное свойство, применимое к любому значению.",
+                "if_it_were_true": "Тогда можно было бы `atomic.Add` целую структуру одним вызовом, но компилятор требует поддерживаемый примитивный тип.",
+                "how_it_should_be": "Atomic покрывает только примитивы; составные данные защищают `Mutex`'ом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`atomic.LoadInt64` не нужен, если goroutines только читают значение; atomic требуется лишь для записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `atomic.Load` читатель может увидеть устаревшее значение из кеша CPU; memory model требует atomic для всех конкурентных доступов, в том числе read-only.",
+                "source_of_confusion": "Интуитивно «чтение безопасно» — раз оно ничего не меняет.",
+                "if_it_were_true": "Тогда конкурентное чтение без atomic было бы корректным, но без правильного barrier reader увидит stale value.",
+                "how_it_should_be": "Конкурентные чтения тоже требуют atomic.Load (или иной синхронизации), не только записи."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Go автоматически делает операции над `int`-переменными атомарными при конкурентном доступе, поэтому `counter++` потокобезопасен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Go не автоматизирует атомарность: `counter++` — это три операции (load, increment, store) без атомарности, то есть data race.",
+                "source_of_confusion": "Простота записи `counter++` создаёт ложное ощущение неделимости операции.",
+                "if_it_were_true": "Тогда `go func(){counter++}()` в цикле давал бы корректную сумму, но без `atomic.AddInt64` результат окажется случайным.",
+                "how_it_should_be": "Атомарность нужно задавать явно через `atomic.AddInt64`; обычный `++` потокобезопасным не становится."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как соотносятся atomic и Mutex по производительности?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Mutex` всегда быстрее atomic за счёт оптимизаций на уровне ядра, поэтому для счётчиков предпочтительнее `Mutex`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: atomic — lock-free CPU-инструкция, а `Mutex` при contention уходит в kernel (futex); в hot-path счётчика atomic значительно быстрее.",
+                "source_of_confusion": "Слово «kernel» ассоциируют с «оптимизированным и быстрым», хотя syscall здесь — это overhead.",
+                "if_it_were_true": "Тогда `mu.Lock(); counter++; mu.Unlock()` обгонял бы `atomic.AddInt64`, но бенчмарки показывают обратное (~10ns против ~50ns).",
+                "how_it_should_be": "Atomic быстрее для одиночного примитива; `Mutex` нужен для согласованного изменения нескольких полей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Atomic примерно в 2-5 раз быстрее `Mutex` для операций над одним примитивом, потому что это lock-free аппаратная инструкция без syscall. `Mutex` нужен, когда требуется атомарно изменить несколько связанных полей одновременно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Грубо: `Mutex`-инкремент ~50ns на операцию, atomic-инкремент ~10ns; при contention `Mutex` ещё и может уходить в kernel через futex.",
+                "example": "Бенчмарк показывает ~50ns на `mu.Lock(); counter++; mu.Unlock()` против ~10ns на `atomic.AddInt64(&counter, 1)` — на rate-limiter с миллионами операций разница ощутима.",
+                "when_to_apply": "Применяется простое правило: счётчики и флаги — через atomic, несколько взаимосвязанных полей или сложные инварианты — под `Mutex`.",
+                "edge_cases": "На высоких throughput разница критична: при 10M операций/сек 50ns против 10ns — это ~400ms против ~100ms суммарных накладных расходов.",
+                "related": "[[go-concurrency-interview#Q21]] atomic для примитивов; [[go-concurrency-interview#Q15]] Mutex для compound-операций; [[go-concurrency-interview#Q30]] data race при незащищённом счётчике."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Разница между atomic и `Mutex` пренебрежимо мала; выбор определяется только удобством API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При больших объёмах разница ощутима: 50ns против 10ns на операцию при 10M ops/sec — это сотни миллисекунд накладных расходов.",
+                "source_of_confusion": "На единичном вызове разница незаметна, и её ошибочно обобщают на любую нагрузку.",
+                "if_it_were_true": "Тогда для метрик и rate-limiting было бы безразлично, что брать, но при high-throughput счётчиках atomic заметно выигрывает.",
+                "how_it_should_be": "На высоких частотах разница существенна; atomic ощутимо дешевле Mutex для одиночного примитива."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Atomic можно использовать для одновременной защиты набора полей структуры, выполнив atomic-операцию над каждым полем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Atomic защищает по одному значению; отдельные atomic на каждое поле не дают атомарного обновления всей структуры — между ними возможна несогласованность.",
+                "source_of_confusion": "Кажется, что несколько atomic-операций подряд эквивалентны одной транзакции над структурой.",
+                "if_it_were_true": "Тогда два atomic.Store по двум полям выглядели бы атомарно, но другая goroutine может увидеть промежуточное состояние между ними.",
+                "how_it_should_be": "Для согласованного изменения нескольких полей нужен `Mutex`; набор отдельных atomic атомарности структуры не даёт."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое context.Context и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`context.Context` нужен только для хранения request-scoped значений, как `ThreadLocal` в Java.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная функция context — распространение cancellation и deadline по цепочке вызовов; хранение значений вторично и не должно подменять отмену.",
+                "source_of_confusion": "Из Java переносят роль `ThreadLocal`, сводя context к key-value хранилищу.",
+                "if_it_were_true": "Тогда при отмене запроса операции не прерывались бы, но именно `ctx.Done()` позволяет остановить работу раньше времени.",
+                "how_it_should_be": "context — это прежде всего cancellation и deadline propagation, а значения — лишь одна из его возможностей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`context.Context` — это goroutine-local storage: каждая goroutine автоматически получает собственный context.",
+              "correct": false,
+              "sections": {
+                "what_actually": "context создаётся явно и передаётся вручную через параметры; никакого автоматического per-goroutine context нет.",
+                "source_of_confusion": "Аналогия с thread-local окружением заставляет ждать «магического» наследования context.",
+                "if_it_were_true": "Тогда дочерняя goroutine сама знала бы родительский context, но без явной передачи она не получит cancellation propagation.",
+                "how_it_should_be": "context передают вручную первым параметром; автоматического per-goroutine context не существует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`context.Context` передаёт через цепочку вызовов три вещи: сигнал отмены (cancellation), дедлайн/таймаут и request-scoped значения (request ID, user info). По идиоме это первый параметр каждой функции (`ctx context.Context`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Цепочка `HTTP handler → service → repository → DB` прокидывает один и тот же `ctx`, а проверка `ctx.Done()` в долгих операциях позволяет рано прерваться при отмене.",
+                "example": "`ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second); defer cancel()`, а внутри операции `select { case <-time.After(10*time.Second): ...; case <-ctx.Done(): return ctx.Err() }`.",
+                "when_to_apply": "Применяется во всех слоях серверного кода: при дисконнекте клиента или истечении дедлайна отмена каскадно доходит до запроса в БД.",
+                "edge_cases": "`context.Background()` — корневой context без таймаута и отмены; все ограничения добавляются явно через `WithTimeout`/`WithDeadline`/`WithCancel`.",
+                "related": "[[go-concurrency-interview#Q24]] WithCancel/WithTimeout/WithDeadline; [[go-concurrency-interview#Q25]] распространение context через goroutines; [[go-concurrency-interview#Q4]] остановка goroutine через ctx."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`context.Background()` создаёт context с дефолтным таймаутом 30 секунд, после которого операция автоматически отменяется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`context.Background()` — корневой context без таймаута и без отмены; никакого дефолтного дедлайна у него нет.",
+                "source_of_confusion": "Ожидание «разумного значения по умолчанию» приписывает Background несуществующий таймаут.",
+                "if_it_were_true": "Тогда любая операция на Background обрывалась бы через 30 секунд, но она будет выполняться сколько угодно без явного `WithTimeout`.",
+                "how_it_should_be": "Background не имеет таймаута; ограничения добавляют явно через WithTimeout/WithDeadline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем различаются WithCancel, WithTimeout и WithDeadline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`WithTimeout` и `WithDeadline` полностью идентичны, поэтому достаточно всегда использовать любой один из них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WithTimeout` принимает относительную длительность (`5*time.Second`), а `WithDeadline` — абсолютный момент `time.Time`; в части сценариев нужен именно absolute deadline.",
+                "source_of_confusion": "Оба ограничивают время, и разницу между относительным и абсолютным заданием упускают.",
+                "if_it_were_true": "Тогда дедлайн из upstream-запроса нельзя было бы передать как абсолютную точку, но `WithDeadline` существует ровно для этого.",
+                "how_it_should_be": "`WithTimeout` задаёт относительный срок, `WithDeadline` — абсолютный момент; они не взаимозаменяемы во всех случаях."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`defer cancel()` не нужен, если context отменяется по таймауту: ресурсы освобождаются автоматически по истечении дедлайна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `cancel()` связанные ресурсы (таймер, дочерние goroutines) держатся до истечения дедлайна; на высокой нагрузке это копит timers и течёт.",
+                "source_of_confusion": "Кажется, что таймаут «сам всё уберёт», и `cancel()` становится излишним.",
+                "if_it_were_true": "Тогда при 1000 rps без `cancel` накапливалось бы до 1000×5s одновременных timers, но `defer cancel()` освобождает их сразу при возврате.",
+                "how_it_should_be": "`defer cancel()` нужен всегда — он немедленно освобождает ресурсы, не дожидаясь дедлайна."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`context.WithValue` — основной способ отменять операции: чтобы остановить goroutine, кладут в context флаг отмены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WithValue` только хранит значения и не управляет отменой; отмена идёт через `cancel()` из `WithCancel`/`WithTimeout`/`WithDeadline`.",
+                "source_of_confusion": "Раз context умеет и значения, и отмену, их функции смешивают в одну.",
+                "if_it_were_true": "Тогда положенный во `WithValue` флаг останавливал бы goroutines, но они реагируют на `ctx.Done()`, а не на произвольное значение.",
+                "how_it_should_be": "Отмену задают через cancel-функцию деривативов; `WithValue` лишь переносит данные."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`WithCancel` даёт ручную отмену через вызов `cancel()`; `WithTimeout` отменяет по относительной длительности; `WithDeadline` — по абсолютному моменту времени. Во всех трёх случаях обязателен `defer cancel()`, иначе течёт goroutine/timer.",
+              "correct": true,
+              "sections": {
+                "explanation": "`cancel()` вызывают сразу после создания через `defer`, а полученный `ctx` пробрасывают в дочерние вызовы, чтобы отмена каскадно дошла до них.",
+                "example": "`ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second)); defer cancel()` задаёт абсолютный дедлайн, а `WithTimeout` принял бы относительные `5*time.Second`.",
+                "when_to_apply": "Применяется для ограничения времени операции и принудительной остановки: запрос к внешнему сервису, фоновая задача, обработка с дедлайном из upstream.",
+                "edge_cases": "Дочерний context отменяется вместе с родителем; пропуск `defer cancel()` при 1000 rps копит таймеры/goroutines и приводит к leak.",
+                "related": "[[go-concurrency-interview#Q23]] что такое context; [[go-concurrency-interview#Q25]] иерархия и распространение отмены; [[go-concurrency-interview#Q14]] timeout через time.After против WithTimeout."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как context распространяется через goroutines (иерархия отмены)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Context иерархичен и иммутабелен: отмена родителя отменяет всех его children, а отмена child НЕ влияет на parent и siblings. Передаётся context явно через параметры функций — автоматического наследования нет.",
+              "correct": true,
+              "sections": {
+                "explanation": "Дерево вида `Background → parent (cancel) → child1 (timeout), child2 (deadline)` отменяется сверху вниз: `cancelParent()` каскадно сигналит всем потомкам.",
+                "example": "`parent, cancelParent := context.WithCancel(...); child, _ := context.WithTimeout(parent, 5*time.Second)` — вызов `cancelParent()` отменит и `child`, не дожидаясь его таймаута.",
+                "when_to_apply": "Применяется в HTTP-обработчике: handler создаёт `ctx`, передаёт его в service и repository, и при дисконнекте клиента все дочерние `ctx` получают отмену.",
+                "edge_cases": "Отмена строго нисходящая: завершить родительский запрос, отменив дочерний sub-context, нельзя — это локальная отмена только для ветки потомка.",
+                "related": "[[go-concurrency-interview#Q24]] WithCancel/WithTimeout/WithDeadline; [[go-concurrency-interview#Q23]] что такое context; [[go-concurrency-interview#Q4]] остановка goroutine по ctx.Done()."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Отмена дочернего context отменяет и родительский context, распространяясь вверх по дереву.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cancellation идёт только сверху вниз (parent→child); отмена child не влияет на parent или siblings.",
+                "source_of_confusion": "Симметрию связи родитель-потомок ошибочно делают двусторонней.",
+                "if_it_were_true": "Тогда `cancelChild()` останавливал бы весь запрос, но parent и соседние ветви продолжат работу как ни в чём не бывало.",
+                "how_it_should_be": "Отмена распространяется только нисходяще; чтобы остановить весь запрос, отменяют именно родителя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Goroutines автоматически получают родительский context, поэтому передавать его вручную не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "context передают явно через параметры функций; автоматического наследования между goroutines нет.",
+                "source_of_confusion": "Аналогия с thread-local окружением рождает ожидание неявной передачи.",
+                "if_it_were_true": "Тогда новая goroutine сама знала бы `ctx` родителя, но без явной передачи она не отреагирует на отмену.",
+                "how_it_should_be": "context всегда передают явно первым параметром; неявного наследования goroutines не существует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В горячем пути ради производительности можно передавать `context.Background()` вместо производного context.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Background()` не имеет deadline и cancel, поэтому операцию нельзя будет отменить — при дисконнекте клиента запрос к БД продолжит выполняться.",
+                "source_of_confusion": "Кажется, что Background «легче» и потому предпочтительнее в hot-path.",
+                "if_it_were_true": "Тогда отмена при disconnect просто терялась бы, но именно из-за этого ресурсы тратятся впустую на ненужную работу.",
+                "how_it_should_be": "В цепочку пробрасывают производный context с отменой/дедлайном; Background обрывает propagation отмены."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен паттерн Worker Pool?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Worker Pool означает запуск отдельной goroutine на каждый job без какого-либо общего channel.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не worker pool: goroutine-на-каждый-job даёт неограниченный параллелизм; пул же фиксирует число воркеров, читающих из общего `jobs` channel.",
+                "source_of_confusion": "Идею «параллельно — значит goroutine на задачу» путают с ограниченным пулом.",
+                "if_it_were_true": "Тогда на 1M jobs запустилось бы 1M goroutines и перегрузило downstream, но пул ограничивает concurrency несколькими воркерами.",
+                "how_it_should_be": "Worker pool — это N фиксированных воркеров на общем channel, а не goroutine на каждый job."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Worker Pool: N воркеров читают задачи из общего `jobs` channel через `for j := range jobs`, producer кладёт задачи и затем закрывает `jobs`, а результаты собирают в `results` channel. Directional channels (`<-chan`, `chan<-`) дают compile-time safety.",
+              "correct": true,
+              "sections": {
+                "explanation": "Закрытие `jobs` после последнего задания корректно завершает `range` во всех воркерах, а `<-chan jobs` в сигнатуре воркера не даёт ему случайно закрыть входной channel.",
+                "example": "`for w := 1; w <= 3; w++ { go worker(w, jobs, results) }`, затем producer шлёт `jobs <- j` и `close(jobs)`; сигнатура `jobs <-chan int` не даёт воркеру закрыть вход.",
+                "when_to_apply": "Применяется для ограничения concurrency: CPU-bound обработка батча или rate-limited вызовы downstream, где нельзя плодить goroutine на каждый элемент.",
+                "edge_cases": "Размер пула подбирают под нагрузку: ~`GOMAXPROCS` для CPU-bound и больше для I/O-bound; закрывать `jobs` должен producer, а не воркер.",
+                "related": "[[go-concurrency-interview#Q27]] fan-out/fan-in поверх пула; [[go-concurrency-interview#Q17]] WaitGroup для ожидания воркеров; [[go-concurrency-interview#Q11]] range над jobs до close."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`close(jobs)` нужно вызывать внутри воркера после обработки его последнего job.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Закрывает channel producer (тот, кто отправляет), а не consumer/воркер; воркер не знает, сколько задач ещё придёт.",
+                "source_of_confusion": "Раз воркер «заканчивает» обработку, кажется логичным, что он же и закрывает channel.",
+                "if_it_were_true": "Тогда несколько воркеров закрыли бы `jobs` по очереди, но повторный `close` даёт panic «close of closed channel».",
+                "how_it_should_be": "`jobs` закрывает только producer после последнего задания; воркеры лишь читают через range."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обозначения `<-chan` и `chan<-` не влияют на функциональность и нужны только для стиля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Directional channels дают compile-time safety: передать `chan<-` туда, где ждут `<-chan`, не получится, что мешает воркеру закрыть входной channel.",
+                "source_of_confusion": "Раз оба варианта компилируются для bidirectional channel, направление считают косметикой.",
+                "if_it_were_true": "Тогда воркер мог бы случайно `close(jobs)`, но `jobs <-chan int` в сигнатуре запрещает это на этапе компиляции.",
+                "how_it_should_be": "Направленные channels — это compile-time гарантия корректного использования, а не стилистика."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроены паттерны Fan-out и Fan-in?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Fan-out требует отдельный input channel для каждого воркера; один общий channel использовать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один общий input channel, читаемый несколькими воркерами, — стандартный паттерн; отдельные channels на воркера лишь усложняют код.",
+                "source_of_confusion": "Кажется, что у каждого воркера должен быть «свой» источник данных.",
+                "if_it_were_true": "Тогда пришлось бы раздавать задачи по N каналам вручную, но Go channels уже thread-safe для чтения многими goroutines.",
+                "how_it_should_be": "Fan-out строится на одном shared input channel, который параллельно читают несколько воркеров."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Fan-in происходит автоматически, как только несколько goroutines начинают писать в один channel.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Писать в один channel из многих goroutines безопасно, но merge-паттерн нужен, чтобы корректно `close` выходной channel после завершения ВСЕХ источников.",
+                "source_of_confusion": "Физическую возможность писать в общий channel принимают за полноценный fan-in.",
+                "if_it_were_true": "Тогда не нужен был бы `WaitGroup` перед `close(out)`, но без него возможен преждевременный close при ещё работающих источниках.",
+                "how_it_should_be": "Fan-in требует merge с `WaitGroup`, который закрывает out только после завершения всех писателей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Fan-out: один input channel параллельно читают несколько воркеров (распределение работы). Fan-in: несколько output channels сливаются в один через merge. Функция `merge` запускает по goroutine на каждый источник и закрывает общий `out` только после `WaitGroup.Wait()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `merge` каждая goroutine копирует значения из своего `<-chan` в `out`, отдельная goroutine ждёт `wg.Wait()` и затем `close(out)` — так out закрывается ровно когда все источники иссякли.",
+                "example": "В `merge(channels ...<-chan int)` на каждый источник — `go func(c <-chan int){ defer wg.Done(); for v := range c { out <- v } }(ch)`, а отдельная goroutine делает `wg.Wait(); close(out)`.",
+                "when_to_apply": "Применяется для параллельной обработки одной очереди и сбора результатов из нескольких параллельных потоков в один.",
+                "edge_cases": "Без `WaitGroup` перед `close(out)` возможен преждевременный close при ещё работающих источниках; merge нужен именно для безопасного завершения, а не просто записи в общий channel.",
+                "related": "[[go-concurrency-interview#Q26]] worker pool как fan-out; [[go-concurrency-interview#Q28]] pipeline из stage-ов; [[go-concurrency-interview#Q17]] WaitGroup для координации merge."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Fan-in в Go не нужен: достаточно `WaitGroup.Wait()`, чтобы собрать результаты параллельных воркеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WaitGroup` лишь ждёт завершения, но НЕ собирает значения; для стриминга результатов, пока воркеры ещё работают, нужен merge channel.",
+                "source_of_confusion": "Ожидание и сбор результатов смешивают, считая `Wait()` достаточным.",
+                "if_it_were_true": "Тогда после `Wait()` все результаты оказывались бы где-то собранными, но `WaitGroup` ничего не агрегирует — он только считает goroutines.",
+                "how_it_should_be": "Для сбора значений нужен fan-in через merge channel; `WaitGroup` только синхронизирует завершение."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен паттерн Pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pipeline требует буферизовать все результаты каждого stage в slice перед передачей следующему stage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Буферизация в slice даёт O(N) памяти и убивает потоковость; streaming pipeline работает на O(1) через channel между stage-ами.",
+                "source_of_confusion": "Привычка собирать всё в коллекцию переносится на конвейер.",
+                "if_it_were_true": "Тогда теряется backpressure (блокировка channel при медленном потребителе), но именно потоковая передача — суть pipeline.",
+                "how_it_should_be": "Stage передают значения потоково через channel, без сборки всего в slice."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Stage-и pipeline в Go должны быть синхронными функциями, а не goroutines.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Синхронные stage выполнялись бы строго последовательно без overlap; pipeline специально использует goroutines, чтобы stage работали конкурентно.",
+                "source_of_confusion": "Простота синхронного вызова кажется достаточной для «конвейера».",
+                "if_it_were_true": "Тогда конвейер не давал бы параллелизма между этапами, но goroutine-stage обрабатывает следующий элемент, пока предыдущий идёт дальше.",
+                "how_it_should_be": "Каждый stage — это goroutine; конкурентность этапов и есть смысл pipeline."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ошибки из stage-ов в pipeline pattern обработать нельзя — поток значений не предусматривает передачу ошибок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ошибки обрабатывают через `errgroup` или отдельный error channel; pipeline с обработкой ошибок — стандартная практика.",
+                "source_of_confusion": "Фокус на потоке значений создаёт впечатление, что для ошибок места нет.",
+                "if_it_were_true": "Тогда любой сбой в stage оставался бы незамеченным, но error channel или errgroup корректно его пробрасывают.",
+                "how_it_should_be": "Ошибки в pipeline передают через отдельный error channel или errgroup; «нельзя» — неверно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Pipeline: каждый stage — это goroutine, соединённая channels с соседями; значения проходят через цепочку трансформаций (generate → square → ...). Каждый stage закрывает свой output channel (обычно `defer close(out)`), сигнализируя следующему об окончании потока.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это как Unix-конвейер `cat | grep | sort`, но в коде: `nums := generate(...); squares := square(nums)` — данные текут потоково между этапами.",
+                "example": "`nums := generate(1,2,3,4); squares := square(nums); for v := range squares { ... }` — каждый stage это goroutine с `defer close(out)`, печатая `1, 4, 9, 16` потоково.",
+                "when_to_apply": "Применяется для стриминговой трансформации данных без буферизации всего объёма в памяти, с естественным backpressure через блокировку channel.",
+                "edge_cases": "Если stage забыл `close(out)`, следующий `range` зависнет; ошибки в pipeline пробрасывают через errgroup или отдельный error channel.",
+                "related": "[[go-concurrency-interview#Q27]] fan-out/fan-in как родственные паттерны; [[go-concurrency-interview#Q29]] errgroup для ошибок в stage-ах; [[go-concurrency-interview#Q11]] range и close между stage-ами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое errgroup и как он обрабатывает ошибки в параллельных задачах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`golang.org/x/sync/errgroup` — расширение `WaitGroup` с обработкой ошибок: `g.Go(func() error {...})` запускает задачи параллельно, а `g.Wait()` возвращает первую ненулевую ошибку. `errgroup.WithContext` отменяет общий `ctx` при первой ошибке, давая fast-fail.",
+              "correct": true,
+              "sections": {
+                "explanation": "Типично: `g, ctx := errgroup.WithContext(...)`, несколько `g.Go(...)` с `fetch(ctx, url)`, и `if err := g.Wait(); err != nil` — при первой ошибке остальные goroutines получают отмену через `ctx`.",
+                "example": "`g, ctx := errgroup.WithContext(...); g.Go(func() error { return fetch(ctx, url1) }); g.Go(...); if err := g.Wait(); err != nil { ... }` — при первой ошибке ctx отменяется.",
+                "when_to_apply": "Применяется для параллельных HTTP-запросов или DB-запросов, где нужно прервать всё на первой ошибке, не дожидаясь остальных.",
+                "edge_cases": "Возвращается только первая ошибка — остальные теряются; чтобы собрать все, нужен собственный канал с `[]error`; ретраев errgroup сам не делает.",
+                "related": "[[go-concurrency-interview#Q17]] WaitGroup как база errgroup; [[go-concurrency-interview#Q24]] context для отмены при ошибке; [[go-concurrency-interview#Q28]] обработка ошибок в pipeline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`errgroup.Wait()` возвращает все ошибки из всех goroutines в виде агрегированного списка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "errgroup возвращает только первую ошибку; остальные теряются — для сбора всех нужен собственный канал с `[]error`.",
+                "source_of_confusion": "Ожидание, что «группа» соберёт всё, переносят на возвращаемое значение.",
+                "if_it_were_true": "Тогда `g.Wait()` отдавал бы `[]error`, но его сигнатура — `error`, и это именно первая возникшая ошибка.",
+                "how_it_should_be": "`Wait()` отдаёт первую ошибку; агрегацию всех ошибок реализуют отдельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "errgroup автоматически ретраит goroutine при ошибке, повторяя `g.Go`-функцию до успеха.",
+              "correct": false,
+              "sections": {
+                "what_actually": "errgroup не ретраит: `g.Go` выполняет функцию один раз; retry-логику реализуют внутри самой функции явно.",
+                "source_of_confusion": "Слово «group» наводит на мысль о встроенном управлении повторами.",
+                "if_it_were_true": "Тогда временная ошибка автоматически повторялась бы, но errgroup просто зафиксирует первую ошибку и отменит ctx.",
+                "how_it_should_be": "Повторы пишут вручную внутри функции; errgroup сам ничего не ретраит."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "errgroup идентичен `sync.WaitGroup`: оба из стандартной библиотеки и отличаются лишь именем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "errgroup живёт в `golang.org/x/sync` (не stdlib) и добавляет `g.Go(func() error)` + отмену ctx; `WaitGroup` обработки ошибок не имеет.",
+                "source_of_confusion": "Похожая роль «дождаться группы» приводит к выводу об эквивалентности.",
+                "if_it_were_true": "Тогда `import \"sync\"` хватило бы для errgroup, но нужен отдельный модуль `golang.org/x/sync/errgroup`.",
+                "how_it_should_be": "errgroup — отдельный пакет с error-handling и ctx-отменой; `WaitGroup` лишь считает goroutines."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое race condition в Go?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Race condition возможна только при записи; конкурентные чтения одной переменной всегда безопасны без синхронизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Memory model требует синхронизации даже при конкурентных чтениях, если хотя бы один доступ — запись; незащищённый read+write — undefined behavior.",
+                "source_of_confusion": "Интуитивно чтение кажется безвредным, раз оно ничего не меняет.",
+                "if_it_were_true": "Тогда `read` параллельно с `write` без sync был бы корректен, но это классический data race с непредсказуемым результатом.",
+                "how_it_should_be": "Race возникает при конкурентном доступе с участием записи; даже чтение рядом с записью требует синхронизации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Race condition — это конкурентный доступ нескольких goroutines к общим данным без синхронизации, когда хотя бы одна операция — запись. `counter++` не атомарен (это read, increment, write), поэтому goroutines затирают результаты друг друга, и итог становится случайным.",
+              "correct": true,
+              "sections": {
+                "explanation": "Например, 1000 goroutines с `go func(){counter++}()` без синхронизации дадут не 1000, а случайное число меньше из-за потерянных инкрементов.",
+                "example": "Цикл `for i := 0; i < 1000; i++ { go func(){ counter++ }() }` без синхронизации напечатает не 1000, а случайное меньшее число из-за потерянных инкрементов.",
+                "when_to_apply": "Применяется правило: любой shared mutable state защищают `sync.Mutex`, `atomic` или channel-дизайном, а тесты гоняют с флагом `-race`.",
+                "edge_cases": "`time.Sleep` не создаёт happens-before и race не лечит; компилятор races не ловит — нужен runtime race detector.",
+                "related": "[[go-concurrency-interview#Q31]] race detector для поиска гонок; [[go-concurrency-interview#Q21]] atomic против counter++; [[go-concurrency-interview#Q15]] Mutex для защиты данных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Race condition обнаруживается компилятором Go и приводит к ошибке компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компилятор races не находит; нужен runtime race detector (флаг `-race`) или ручной анализ кода.",
+                "source_of_confusion": "Ожидание от строгого языка, что опасные гонки отлавливаются статически.",
+                "if_it_were_true": "Тогда код с гонкой просто не собрался бы, но он спокойно компилируется, а гонка проявляется только в рантайме.",
+                "how_it_should_be": "Гонки ищет динамический race detector; компилятор их не диагностирует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Добавление `time.Sleep` в горячий путь предотвращает race condition за счёт внесённой задержки между доступами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Sleep` не устанавливает happens-before relationship; гонки возможны несмотря на задержки — корректность дают только sync-примитивы.",
+                "source_of_confusion": "Кажется, что «разнести во времени» доступы достаточно для безопасности.",
+                "if_it_were_true": "Тогда `Sleep` между goroutines убирал бы гонку, но при невезучем планировании доступы всё равно пересекутся.",
+                "how_it_should_be": "Корректность обеспечивают Mutex/atomic/channel, а не задержки через Sleep."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать race detector в Go?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Race detector обнаруживает все возможные гонки статически, без запуска кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Race detector — runtime-инструмент: он находит гонки только при фактическом исполнении, поэтому нетронутые тестами пути остаются непроверенными.",
+                "source_of_confusion": "Слово «detector» наводит на мысль о статическом анализе всего кода.",
+                "if_it_were_true": "Тогда достаточно было бы один раз «просканировать» проект, но без покрытия конкурентных путей тестами часть гонок не всплывёт.",
+                "how_it_should_be": "Race detector работает в рантайме и требует хорошего покрытия конкурентных путей тестами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`go test -race` замедляет тесты в 2-3 раза, поэтому в CI его можно не запускать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Замедление обычно 5-10x, но запуск в CI критичен: без него гонки утекают в production (data corruption, panics).",
+                "source_of_confusion": "Заниженную оценку накладных расходов используют как повод отказаться от запуска в CI.",
+                "if_it_were_true": "Тогда -race был бы лёгким и опциональным, но он дороже и при этом обязателен для надёжного CI.",
+                "how_it_should_be": "Race detector замедляет в 5-10x и должен запускаться в CI постоянно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`go test -race ./...` (а также `go run -race` и `go build -race`) запускает программу с runtime race detector. Он показывает конфликтующие goroutines с точными stacktrace (file:line чтения и предыдущей записи), замедляет выполнение в 5-10 раз, но обязателен в CI.",
+              "correct": true,
+              "sections": {
+                "explanation": "В выводе видно «WARNING: DATA RACE» с адресом и двумя стеками — где читали и где раньше писали, что позволяет точно локализовать конфликт.",
+                "example": "Вывод `WARNING: DATA RACE\\nRead at 0x... by goroutine 7\\nPrevious write at 0x... by goroutine 6` указывает точные file:line читателя и писателя, что позволяет найти конфликт.",
+                "when_to_apply": "Применяется в CI всегда (`go test -race ./...`) и локально при разработке конкурентного кода для раннего обнаружения гонок.",
+                "edge_cases": "Это динамический анализ: он ловит только реально исполненные пути, поэтому нужно хорошее тест-покрытие конкурентных сценариев.",
+                "related": "[[go-concurrency-interview#Q30]] что такое race condition; [[go-concurrency-interview#Q32]] goroutine leak и pprof; [[go-concurrency-interview#Q15]] Mutex для устранения найденных гонок."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Race detector отображает только места чтения; операции записи в отчёте не логируются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Detector показывает обе goroutines — и читателя, и писателя — с точными file:line, иначе конфликт нельзя было бы отладить.",
+                "source_of_confusion": "Кажется, что для гонки важно показать только «кто прочитал не то».",
+                "if_it_were_true": "Тогда из отчёта нельзя было бы понять, где произошла конфликтующая запись, но он явно печатает «Previous write at ...».",
+                "how_it_should_be": "Отчёт включает и read, и write со стеками обеих goroutines."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое goroutine leak и как его избежать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Goroutine leak автоматически обнаруживается и логируется Go runtime при возникновении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Runtime не логирует leaks; он детектирует только полный deadlock (все goroutines заблокированы), а частичная утечка остаётся незаметной.",
+                "source_of_confusion": "Наличие детекции deadlock переносят на любую заблокированную goroutine.",
+                "if_it_were_true": "Тогда висящая на channel goroutine сразу бы залогировалась, но runtime молчит, пока хоть кто-то ещё работает.",
+                "how_it_should_be": "Частичные утечки runtime не ловит; их ищут через pprof и leak-проверки в тестах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Goroutine leak не критичен: GC автоматически удаляет ненужные заблокированные goroutines.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GC не управляет goroutines; заблокированная goroutine живёт до конца программы, и при их накоплении сервис уходит в OOM.",
+                "source_of_confusion": "Сборку мусора для объектов ошибочно распространяют и на goroutines.",
+                "if_it_were_true": "Тогда зависшие goroutines тихо исчезали бы, но 100K leaking goroutines в long-running сервисе приведут к OOM.",
+                "how_it_should_be": "GC не освобождает goroutines; каждая заблокированная навсегда занимает ресурсы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`runtime.NumGoroutine() == 0` гарантирует, что в программе нет goroutine leak.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NumGoroutine()` считает все живые goroutines (включая фоновые); значение 0 означает завершение программы, а нормальный сервис всегда держит N фоновых goroutines.",
+                "source_of_confusion": "Нулевой счётчик принимают за «всё убрано», игнорируя штатные фоновые goroutines.",
+                "if_it_were_true": "Тогда здоровый сервис показывал бы 0, но у него всегда есть фоновые goroutines, и информативно baseline-сравнение, а не нулевая отметка.",
+                "how_it_should_be": "Для поиска утечек сравнивают NumGoroutine с baseline; ноль означает лишь завершение программы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Goroutine leak — это goroutine, заблокированная навсегда (например, чтение из channel, который никто не закроет и не наполнит); она занимает память и слот в scheduler до конца программы. Профилактика: передавать `context` и `defer cancel()`, проверять `ctx.Done()` в `select`, закрывать channels для `range`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Классика: `go func(){ v := <-ch }()`, где в `ch` никто не пишет и не закрывает его — goroutine висит вечно; то же бывает при `range` по channel без `close`.",
+                "example": "Утечка: `ch := make(chan int); go func(){ v := <-ch; use(v) }()` — если в `ch` никто не пишет и не закрывает его, goroutine висит вечно; помогает `pprof` goroutine-профиль.",
+                "when_to_apply": "Применяется диагностика в production через pprof goroutine-профиль (стектрейсы всех goroutines) и leak-проверки в тестах конкурентного кода.",
+                "edge_cases": "У каждой goroutine должен быть гарантированный exit-path; `runtime.NumGoroutine()` помогает заметить рост числа goroutines относительно baseline.",
+                "related": "[[go-concurrency-interview#Q4]] остановка goroutine через context; [[go-concurrency-interview#Q11]] range и забытый close; [[go-concurrency-interview#Q31]] инструменты диагностики конкурентного кода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое deadlock в Go и как он проявляется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Deadlock — ситуация, когда все goroutines заблокированы в circular wait и никто не может продвинуться. Go runtime детектирует ПОЛНЫЙ deadlock (все goroutines asleep) и завершает программу с fatal error. `sync.Mutex` не реентерабельный, поэтому двойной `Lock()` из одной goroutine — это deadlock.",
+              "correct": true,
+              "sections": {
+                "explanation": "Например, `ch := make(chan int); ch <- 1` без получателя даёт «fatal error: all goroutines are asleep - deadlock!», то же и при `mu.Lock(); mu.Lock()`.",
+                "example": "`ch := make(chan int); ch <- 1` без получателя даёт «fatal error: all goroutines are asleep - deadlock!»; то же и при `mu.Lock(); mu.Lock()` в одной goroutine.",
+                "when_to_apply": "Применяется на практике: избегать циклических зависимостей по channels и помнить про нереентерабельность Mutex при рефакторинге рекурсии.",
+                "edge_cases": "Runtime ловит только ПОЛНЫЙ deadlock; если часть goroutines ещё работает, частичная взаимоблокировка останется незамеченной до диагностики через pprof.",
+                "related": "[[go-concurrency-interview#Q15]] нереентерабельность Mutex; [[go-concurrency-interview#Q32]] частичные блокировки как goroutine leak; [[go-concurrency-interview#Q8]] send без receiver на unbuffered channel."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Go runtime автоматически разрешает deadlocks через preemption goroutines, перезапуская заблокированные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Go детектирует полный deadlock (все goroutines asleep) и завершает программу с fatal error; разрешить его автоматически нельзя — это логическая ошибка кода.",
+                "source_of_confusion": "Наличие preemptive scheduling трактуют как способность «расшить» взаимоблокировку.",
+                "if_it_were_true": "Тогда зависшая программа сама бы продолжила работу, но runtime вместо этого аварийно завершается.",
+                "how_it_should_be": "Deadlock не разрешается автоматически; runtime лишь обнаруживает полный deadlock и падает с fatal error."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Go `Mutex` реентерабельный, как Java `ReentrantLock`: одна goroutine может вызвать `Lock()` дважды без блокировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Go `Mutex` НЕ реентерабельный: повторный `Lock()` из той же goroutine немедленно даёт deadlock.",
+                "source_of_confusion": "Опыт `ReentrantLock` из Java переносят на Go без поправки.",
+                "if_it_were_true": "Тогда миграция Java-кода с рекурсивным захватом работала бы без изменений, но в Go второй `Lock()` навсегда заблокирует goroutine.",
+                "how_it_should_be": "Go `Mutex` нереентерабелен; рекурсивный захват нужно переписать, а не полагаться на повторный Lock."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Deadlock возможен только в программах с `Mutex`; код на одних channels deadlock-ов не создаёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Channels тоже приводят к deadlock (send без receiver, receive без sender); runtime детектирует оба случая.",
+                "source_of_confusion": "Считается, что channels «безопаснее» и потому не могут заблокировать всё.",
+                "if_it_were_true": "Тогда `ch <- 1` на unbuffered channel без получателя был бы безопасен, но он даёт «all goroutines are asleep».",
+                "how_it_should_be": "Deadlock возникает и на channels, и на Mutex; runtime ловит полный deadlock в обоих случаях."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем goroutines отличаются от Java threads?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Java threads и goroutines идентичны по производительности; разница только в синтаксисе запуска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java thread занимает ~1MB стека (1K threads ≈ 1GB RAM), а goroutine ~2KB (1M goroutines ≈ 2GB RAM) — разница в стоимости огромная.",
+                "source_of_confusion": "Внешнее сходство «единицы конкурентного исполнения» скрывает разницу в стоимости и модели планирования.",
+                "if_it_were_true": "Тогда 1M Java threads стоили бы как 1M goroutines, но первые исчерпают память на стеках, а вторые — нет.",
+                "how_it_should_be": "Goroutines радикально легче Java threads по стеку и переключению; дело не только в синтаксисе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Goroutines (~2KB стека, M:N scheduler, переключение в user-space) легче Java threads (~1MB стека, 1:1 с OS до Loom, переключение через kernel). Виртуальные потоки Java 21 (Project Loom) концептуально близки к goroutines, сократив разрыв.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сравнение по стоимости: 1K Java threads ≈ 1GB RAM на стеках, тогда как Go спокойно держит сотни тысяч goroutines на тех же ресурсах.",
+                "example": "1K Java threads по ~1MB стека ≈ 1GB RAM, тогда как Go в той же памяти держит сотни тысяч goroutines по ~2KB — отсюда дешёвый goroutine-per-request на серверах.",
+                "when_to_apply": "Применяется при объяснении, почему Go эффективен для high-concurrency серверов: дешёвые goroutines позволяют goroutine-per-request без OOM.",
+                "edge_cases": "С Java 21 virtual threads дают похожую M:N-модель, но это закрывает лишь один аспект; различия в API отмены (`context` против `Thread.interrupt()`) остаются.",
+                "related": "[[go-concurrency-interview#Q2]] goroutine против OS thread; [[go-concurrency-interview#Q3]] устройство M:N scheduler; [[go-concurrency-interview#Q35]] channels против Java BlockingQueue."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Виртуальные потоки Java 21 полностью заменяют goroutines и делают Go устаревшим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Virtual threads решают только аспект M:N-конкурентности; у Go есть и другие преимущества — встроенный tooling, `select`, channels, memory safety, — поэтому «obsolete» преувеличено.",
+                "source_of_confusion": "Появление похожей фичи в Java трактуют как полное вытеснение Go.",
+                "if_it_were_true": "Тогда сообществу Go не было бы смысла развиваться, но язык продолжает выигрывать в ряде сценариев независимо от Loom.",
+                "how_it_should_be": "Loom сократил разрыв по конкурентности, но не делает Go устаревшим — у него остаются другие сильные стороны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`context.Context` в Go — прямой эквивалент `ThreadLocal` в Java.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ThreadLocal` — per-thread хранилище, а `context` — это явная передача через параметры с механизмом отмены; роли разные.",
+                "source_of_confusion": "Сходство «контекста исполнения» рождает ложную аналогию с thread-local.",
+                "if_it_were_true": "Тогда замена `ThreadLocal` на `context` шла бы один-в-один, но без понимания propagation сломается cancellation.",
+                "how_it_should_be": "context — это явный механизм отмены и передачи значений, а не неявное per-thread хранилище как ThreadLocal."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 35,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Go channels отличаются от Java BlockingQueue?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Go channels и Java `BlockingQueue` идентичны, поэтому миграция между ними один-к-одному.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У channels есть `close`, `range` и `select`, которых нет у `BlockingQueue`; прямая замена сломает логику, опирающуюся на сигнал «channel closed».",
+                "source_of_confusion": "Обе абстракции — потокобезопасные очереди, отсюда вывод об эквивалентности.",
+                "if_it_were_true": "Тогда код, реагирующий на закрытие channel, перенёсся бы без правок, но у `BlockingQueue` понятия close попросту нет.",
+                "how_it_should_be": "Channels и BlockingQueue различаются семантикой close/range/select; миграция требует переосмысления, а не копирования."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Java `BlockingQueue` не поддерживает timeout при операциях put/take.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BlockingQueue` поддерживает `offer(e, timeout, unit)` и `poll(timeout, unit)` с таймаутом; ключевое отличие от channels — отсутствие multi-queue `select`, а не таймаутов.",
+                "source_of_confusion": "Незнание timeout-перегрузок `BlockingQueue` рождает ложное «отличие».",
+                "if_it_were_true": "Тогда главным преимуществом channels был бы timeout, но `BlockingQueue` его тоже умеет — отличается именно `select`.",
+                "how_it_should_be": "У `BlockingQueue` есть timeout-методы; настоящее отличие channels — мультиплексирование через select."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Channels добавляют семантику, которой нет у `BlockingQueue`: `close(ch)` сигнализирует окончание потока, `for v := range ch` авто-итерирует до закрытия, а `select` мультиплексирует сразу несколько channels. У `BlockingQueue` нет аналога `select`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Чтобы ждать несколько `BlockingQueue` одновременно, в Java заводят отдельные threads, тогда как Go решает это одним `select` в одной goroutine.",
+                "example": "Чтобы ждать два источника, Go пишет один `select { case v := <-q1: ...; case v := <-q2: ... }`, а на Java для двух `BlockingQueue` пришлось бы заводить отдельные потоки.",
+                "when_to_apply": "Применяется при миграции Java→Go: учитывают паттерны `close`/`range` и переводят ожидание нескольких источников на `select`.",
+                "edge_cases": "`BlockingQueue` тоже мощная (bounded/unbounded, timeout-методы), но именно `select` на channels даёт Go выразительность, недостижимую без дополнительных потоков.",
+                "related": "[[go-concurrency-interview#Q12]] что такое select; [[go-concurrency-interview#Q11]] range над channel; [[go-concurrency-interview#Q34]] goroutines против Java threads."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`sync.Map` в Go — это прямой аналог `ConcurrentHashMap` в Java, и именно в этом главное отличие channels от BlockingQueue.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вопрос про channels против `BlockingQueue`, а не про maps; к тому же `sync.Map` untyped (`any`), тогда как `ConcurrentHashMap` дженерик.",
+                "source_of_confusion": "Тему подменяют сравнением concurrent-структур данных, уходя от очередей.",
+                "if_it_were_true": "Тогда ответ был бы про maps, но речь идёт о channels и очередях, а отличие — в `select`/`close`/`range`.",
+                "how_it_should_be": "Сравнение должно касаться channels и BlockingQueue; ключевое отличие — наличие select у channels."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

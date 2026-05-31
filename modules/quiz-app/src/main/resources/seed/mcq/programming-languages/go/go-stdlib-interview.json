@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "go-stdlib-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "HTTP-сервер на стандартном `net/http` — как его написать и хватает ли stdlib для production?",
+          "options": [
+            {
+              "text": "`net/http` — production-ready сервер: `http.HandleFunc(\"/\", h)` регистрирует обработчик, `http.ListenAndServe(\":8080\", nil)` запускает сервер. Фреймворк для базовых задач не нужен.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обработчик имеет сигнатуру `func(w http.ResponseWriter, r *http.Request)`. `net/http` достаточно мощный, чтобы обслуживать реальные сервисы без `Gin`/`Fiber`: на нём построены `Docker`, `Kubernetes` и масса production-бэкендов.",
+                "example": "`func helloHandler(w http.ResponseWriter, r *http.Request) { fmt.Fprintf(w, \"Hello, %s!\", r.URL.Path[1:]) }` — затем `http.HandleFunc(\"/\", helloHandler)` и `http.ListenAndServe(\":8080\", nil)`.",
+                "when_to_apply": "Подходит для простых сервисов без сложного роутинга и для прототипов: меньше зависимостей, меньше cognitive load, проще аудит безопасности.",
+                "edge_cases": "Первый вызов `w.Write()` сам шлёт `WriteHeader(200)`, явный код 200 не нужен. `ListenAndServe` блокирует текущую горутину — это нормально для `main()`.",
+                "related": "[[go-stdlib-interview#Q2]] ServeMux и роутинг; [[go-stdlib-interview#Q5]] graceful shutdown сервера; [[go-stdlib-interview#Q3]] middleware-паттерны."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Для production обязателен фреймворк (`Gin`, `Fiber`): `net/http` слишком низкоуровневый, чтобы обслуживать реальную нагрузку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Docker`, `Kubernetes` и многие крупные Go-сервисы работают на чистом `net/http` без фреймворка — он вполне production-ready.",
+                "source_of_confusion": "Привычка из мира `Java`/`Spring` или `Node`/`Express`, где фреймворк фактически обязателен, переносится на Go.",
+                "if_it_were_true": "Тогда команда Go не использовала бы `net/http` в собственной инфраструктуре, но именно на нём построены ключевые проекты экосистемы.",
+                "how_it_should_be": "`net/http` достаточно для production; фреймворк добавляют только ради конкретного удобства, а не из необходимости."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`http.ListenAndServe` нельзя вызывать напрямую — он завершит программу мгновенно, поэтому его всегда запускают в `go goroutine()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ListenAndServe` блокирует горутину и держит сервер живым — для `main()` это правильное поведение, отдельная горутина не нужна.",
+                "source_of_confusion": "Кажется, что блокирующий вызов «вешает» программу, хотя именно блокировка `main` и держит процесс запущенным.",
+                "if_it_were_true": "Тогда запуск в `go func()` без `WaitGroup` сразу завершал бы `main` и сервер не успевал бы принять ни одного запроса.",
+                "how_it_should_be": "В `main` его вызывают напрямую; в отдельную горутину выносят только когда после запуска нужно делать что-то ещё (graceful shutdown)."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Обработчик обязан явно вызвать `w.WriteHeader(200)`, иначе клиент получит ответ со статусом `500`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Первый `w.Write()` автоматически вызывает `WriteHeader(http.StatusOK)`, если код ещё не выставлен; явный 200 — лишний код.",
+                "source_of_confusion": "Из других стеков переносится правило «всегда выставляй статус явно», хотя в Go есть удобный дефолт.",
+                "if_it_were_true": "Тогда пример `fmt.Fprintf(w, ...)` без `WriteHeader` возвращал бы 500, но он корректно отдаёт 200.",
+                "how_it_should_be": "`WriteHeader` вызывают только для не-200 статусов (редиректы, ошибки); для успешного ответа достаточно `Write`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`ServeMux` и роутинг в Go — как устроен и что изменилось в Go 1.22?",
+          "options": [
+            {
+              "text": "`http.DefaultServeMux` — рекомендуемый выбор для production: регистрируешь handler'ы через `http.HandleFunc` без создания собственного mux.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DefaultServeMux` глобален, и любой импортированный пакет (например `net/http/pprof`) может добавить в него свой route, создавая неожиданные конфликты.",
+                "source_of_confusion": "`http.HandleFunc` без аргумента-mux выглядит проще, поэтому его принимают за «правильный» способ.",
+                "if_it_were_true": "Тогда не было бы смысла в `NewServeMux`, но изоляция роутера ради безопасности — именно его назначение.",
+                "how_it_should_be": "В production создают собственный `NewServeMux`, чтобы контролировать набор зарегистрированных маршрутов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`http.NewServeMux()` создаёт изолированный роутер; с Go 1.22 он понимает метод+путь (`GET /users/{id}`) и path-параметры. До 1.22 методы не различались, и для этого брали сторонние роутеры (`Chi`, `Gorilla`).",
+              "correct": true,
+              "sections": {
+                "explanation": "`NewServeMux` предпочтительнее глобального `DefaultServeMux`, потому что в дефолтный любой импортированный пакет может тайком добавить handler (например `net/http/pprof`). Trailing slash задаёт subtree-паттерн.",
+                "example": "`mux.HandleFunc(\"GET /users\", listUsers)` и `mux.HandleFunc(\"GET /users/{id}\", getUser)` — раньше пришлось бы тянуть `Chi`, теперь хватает stdlib.",
+                "when_to_apply": "Для нового проекта на Go 1.22+ stdlib-роутера достаточно; сторонний берут только ради специфичных фич (групп middleware, регэкспов в путях).",
+                "edge_cases": "`/users/` (с косой) матчит весь поддеревом начинающийся путь, а `/users` — только точное совпадение; путаница приводит к тому, что `GET /users/123` не попадает в `/users`.",
+                "related": "[[go-stdlib-interview#Q1]] базовый HTTP-сервер; [[go-stdlib-interview#Q3]] middleware поверх mux; [[go-stdlib-interview#Q5]] graceful shutdown."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`ServeMux` всегда различал HTTP-методы: `\"/users\"` для `GET` и для `POST` — это два разных маршрута в любой версии Go.",
+              "correct": false,
+              "sections": {
+                "what_actually": "До Go 1.22 `ServeMux` не различал методы — один handler ловил все методы для пути; разграничение писали вручную внутри обработчика.",
+                "source_of_confusion": "В Go 1.22 синтаксис `\"GET /users\"` появился, и это легко принять за всегда существовавшее поведение.",
+                "if_it_were_true": "Тогда `POST` на read-only endpoint автоматически отсекался бы и до 1.22, но раньше он спокойно доходил до handler'а.",
+                "how_it_should_be": "Различие метод+путь появилось в Go 1.22; до этого метод проверяли через `if r.Method != http.MethodGet`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Паттерны `\"/users/\"` и `\"/users\"` идентичны — trailing slash на матчинг не влияет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`\"/users\"` матчит только точный путь, а `\"/users/\"` — subtree-паттерн, ловящий всё начинающееся с `/users/`.",
+                "source_of_confusion": "В обычных URL косая в конце кажется косметической, и это правило переносят на паттерны `ServeMux`.",
+                "if_it_were_true": "Тогда `GET /users/123` попадал бы в `\"/users\"`, но точный паттерн его не поймает — нужен subtree-вариант.",
+                "how_it_should_be": "Trailing slash осознанно выбирают: точный путь без неё, поддерево — с ней."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Middleware-паттерны в Go — как реализуются и как комбинируются?",
+          "options": [
+            {
+              "text": "Middleware в Go вешают через аннотации/декораторы на функцию, например `@Auth` над обработчиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Go нет аннотаций как в `Java`/`Spring`; middleware — обычные функции высшего порядка, оборачивающие `http.Handler`.",
+                "source_of_confusion": "Опыт `Spring`/`NestJS` с `@`-декораторами переносится на Go, где такого синтаксиса попросту нет.",
+                "if_it_were_true": "Тогда в stdlib был бы механизм аннотаций, но Go намеренно обходится явными функциями вместо магии.",
+                "how_it_should_be": "Cross-cutting concerns выражают функцией `func(http.Handler) http.Handler` и явной композицией."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`next.ServeHTTP` обязан вызываться в самом начале middleware, а весь остальной код — это cleanup после него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Позиция `next.ServeHTTP` и определяет логику: до него — pre-processing (auth, старт таймера), после — post-processing (тайминг, трансформация ответа).",
+                "source_of_confusion": "Аналогия с `try/finally` подсказывает «сначала действие, потом cleanup», хотя в middleware важна и pre-фаза.",
+                "if_it_were_true": "Тогда логирование длительности запроса было бы невозможно, но именно код после `next` его и считает.",
+                "how_it_should_be": "Вызов `next` ставят в нужную точку: pre-логика до, post-логика после."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Middleware — обычная функция `func(http.Handler) http.Handler`, которая оборачивает handler, добавляя cross-cutting логику (logging, auth, CORS). Композиция — через вложенные вызовы: `Logging(Auth(h))`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это классический decorator-паттерн без аннотаций: всё явно. Порядок обёртывания задаёт порядок выполнения outside-in — внешний middleware отрабатывает первым на входе и последним на выходе.",
+                "example": "`func Logging(next http.Handler) http.Handler { return http.HandlerFunc(func(w, r) { start := time.Now(); next.ServeHTTP(w, r); log.Printf(\"%v\", time.Since(start)) }) }`.",
+                "when_to_apply": "Применяют для logging, аутентификации, CORS, rate limiting — всего, что нужно повесить на множество маршрутов единообразно.",
+                "edge_cases": "Место вызова `next.ServeHTTP` важно: код до него — pre-processing (проверка токена), код после — post-processing (логирование длительности). Вызвать `next` только в начале — потерять post-обработку.",
+                "related": "[[go-stdlib-interview#Q2]] mux, на который вешают цепочку; [[go-stdlib-interview#Q1]] базовый handler; [[go-stdlib-interview#Q4]] timeout в HTTP-клиенте."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Каждый middleware должен запускать `next` в отдельной горутине, чтобы цепочка выполнялась параллельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Middleware выполняется последовательно в той же горутине, что и handler; параллелизм здесь не нужен и опасен.",
+                "source_of_confusion": "Слово «chain» наводит на мысль о конвейере с параллельными стадиями, хотя это просто вложенные вызовы.",
+                "if_it_were_true": "Тогда несколько горутин писали бы в один `http.ResponseWriter`, который не thread-safe, и возникла бы гонка данных.",
+                "how_it_should_be": "Цепочку выполняют синхронно в одной горутине; `ResponseWriter` трогает только один поток."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "HTTP-клиент с timeout — почему `http.DefaultClient` опасен и как настроить свой?",
+          "options": [
+            {
+              "text": "`http.DefaultClient` безопасен для production — у него стоит разумный дефолтный timeout около 30 секунд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `DefaultClient` timeout вообще не задан (нулевое значение = без ограничения); зависший сервер держит запрос бесконечно.",
+                "source_of_confusion": "Кажется логичным, что у дефолтного клиента есть «здравый» дефолт, но Go оставляет timeout на усмотрение разработчика.",
+                "if_it_were_true": "Тогда зависший upstream автоматически отваливался бы через 30 секунд, но под нагрузкой это даёт исчерпание горутин.",
+                "how_it_should_be": "В production всегда создают свой `Client` с явным `Timeout`, а `DefaultClient` не используют."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "На каждый HTTP-запрос нужно создавать новый `http.Client`, чтобы запросы были изолированы друг от друга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`http.Client` thread-safe и рассчитан на переиспользование; новый клиент на каждый запрос теряет connection pool.",
+                "source_of_confusion": "Привычка «новый объект на каждую операцию ради изоляции» переносится на клиент, который, наоборот, должен жить долго.",
+                "if_it_were_true": "Тогда `MaxIdleConns` не имел бы смысла, но pool существует именно для переиспользования соединений.",
+                "how_it_should_be": "Один `Client` создают на старте и переиспользуют; изоляцию запроса дают `context` и отдельный `Request`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`resp.Body.Close()` можно не вызывать, если `io.ReadAll` уже прочитал всё тело ответа до конца.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Close()` обязателен всегда: `ReadAll` читает данные, но не возвращает соединение в pool — это делает именно `Close`.",
+                "source_of_confusion": "Кажется, что «прочитал до EOF = освободил ресурс», хотя чтение и закрытие — разные действия.",
+                "if_it_were_true": "Тогда `defer resp.Body.Close()` был бы лишним после `ReadAll`, но без него соединения утекают и pool исчерпывается.",
+                "how_it_should_be": "Сразу после получения ответа ставят `defer resp.Body.Close()` независимо от того, читают ли тело."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`http.DefaultClient` не имеет timeout: зависший сервер навсегда подвесит запрос и приведёт к goroutine leak. Нужно создавать свой `http.Client` с `Timeout` и настроенным `Transport` один раз и переиспользовать.",
+              "correct": true,
+              "sections": {
+                "explanation": "`http.Client` thread-safe, поэтому его держат как пакетную переменную и переиспользуют — это сохраняет connection pool. Запрос строят через `http.NewRequestWithContext(ctx, ...)`, чтобы отмена ещё и через context работала.",
+                "example": "`client := &http.Client{ Timeout: 5*time.Second, Transport: &http.Transport{ MaxIdleConns: 100, MaxIdleConnsPerHost: 10 } }` — один на весь сервис.",
+                "when_to_apply": "Любой исходящий HTTP-вызов в production: внешние API, сервис-to-сервис, healthcheck'и зависимостей — везде свой клиент с timeout.",
+                "edge_cases": "`resp.Body.Close()` обязателен всегда, даже после `io.ReadAll`: без него соединение не вернётся в pool и наступит exhaustion. Создавать новый `Client` на каждый запрос — потеря pool и лишние TCP handshakes.",
+                "related": "[[go-stdlib-interview#Q5]] graceful shutdown сервера; [[go-stdlib-interview#Q17]] context для отмены запроса; [[go-stdlib-interview#Q26]] io.ReadAll для чтения Body."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Graceful shutdown HTTP-сервера в Go — как корректно остановить сервер?",
+          "options": [
+            {
+              "text": "`srv.Shutdown(ctx)` перестаёт принимать новые соединения и ждёт завершения активных запросов до истечения timeout. Сигнал ловят через `signal.Notify(quit, syscall.SIGTERM)` — это и даёт graceful-поведение в Kubernetes.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ListenAndServe` запускают в отдельной горутине, а `main` блокируется на `<-quit`. После SIGTERM создают `context.WithTimeout` и вызывают `Shutdown`, который дожидается доигрывания in-flight запросов.",
+                "example": "`ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second); defer cancel(); srv.Shutdown(ctx)` — клиенты дополучают свои ответы вместо обрыва.",
+                "when_to_apply": "Обязательно для zero-downtime деплоев в Kubernetes: под получает SIGTERM в grace period, и сервер должен корректно завершиться, не теряя запросов.",
+                "edge_cases": "`ListenAndServe` после `Shutdown` возвращает `http.ErrServerClosed` — это не ошибка, её отдельно проверяют. SIGTERM без `signal.Notify` убивает процесс мгновенно, обрывая активные запросы.",
+                "related": "[[go-stdlib-interview#Q1]] запуск сервера; [[go-stdlib-interview#Q4]] timeout в клиенте; [[go-stdlib-interview#Q17]] context.WithTimeout для shutdown."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "После закрытия HTTP-listener достаточно вызвать `os.Exit(0)` — это и есть graceful shutdown.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`os.Exit` немедленно завершает процесс, обрывая активные запросы; клиенты получают connection reset вместо нормального ответа.",
+                "source_of_confusion": "`os.Exit(0)` выглядит как «чистый выход», и закрытие listener кажется достаточным.",
+                "if_it_were_true": "Тогда in-flight запросы доигрывались бы сами, но процесс умирает раньше, и клиенты ловят 502 и data loss.",
+                "how_it_should_be": "Сначала `srv.Shutdown(ctx)` дожидается активных запросов, и только потом процесс завершается естественно."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`srv.Close()` и `srv.Shutdown()` эквивалентны — оба корректно останавливают сервер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Close` немедленно рвёт все соединения без ожидания, а `Shutdown` дожидается завершения активных запросов до timeout.",
+                "source_of_confusion": "Оба метода «останавливают сервер», поэтому их считают взаимозаменяемыми.",
+                "if_it_were_true": "Тогда для zero-downtime годился бы любой из них, но `Close` обрывает запросы и для деплоя не подходит.",
+                "how_it_should_be": "Для graceful-остановки берут `Shutdown`; `Close` — только для жёсткого немедленного завершения."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "SIGTERM обрабатывается Go runtime автоматически, поэтому `signal.Notify` для graceful shutdown не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `signal.Notify` SIGTERM завершает процесс мгновенно по дефолтному поведению ОС; graceful требует явной подписки на сигнал.",
+                "source_of_confusion": "Runtime действительно обрабатывает некоторые сигналы (например выводит stack на SIGQUIT), и это обобщают на SIGTERM.",
+                "if_it_were_true": "Тогда `<-quit` и `signal.Notify` были бы лишними, но без них перехватить SIGTERM и запустить `Shutdown` невозможно.",
+                "how_it_should_be": "SIGTERM явно перехватывают через `signal.Notify`, чтобы успеть вызвать `Shutdown` до завершения процесса."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`json.Marshal` и `json.Unmarshal` — как работают и в чём подвох с экспортируемыми полями?",
+          "options": [
+            {
+              "text": "`json.Unmarshal` по умолчанию возвращает ошибку, если в JSON есть поля, отсутствующие в структуре (strict mode).",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию Go молча игнорирует неизвестные поля; для строгого режима нужен `decoder.DisallowUnknownFields()`.",
+                "source_of_confusion": "Многие парсеры в других языках строгие по умолчанию, и это ожидание переносят на Go.",
+                "if_it_were_true": "Тогда опечатка в ключе JSON сразу давала бы ошибку, но в Go она просто молча игнорируется без `DisallowUnknownFields`.",
+                "how_it_should_be": "Строгий разбор включают явно через `Decoder.DisallowUnknownFields()`, иначе лишние поля проглатываются."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Только exported (с большой буквы) поля сериализуются и десериализуются; `Unmarshal` принимает указатель на структуру; неизвестные JSON-поля по умолчанию игнорируются. `Marshal` идёт Go→JSON, `Unmarshal` — JSON→Go.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поля с маленькой буквы (`name`) для `encoding/json` невидимы — они не попадут ни в вывод, ни в результат парсинга, причём без ошибки. Это частый источник тихой потери данных.",
+                "example": "`json.Marshal(User{Name: \"Alice\", Age: 30})` → `{\"name\":\"Alice\",\"age\":30}`; `json.Unmarshal([]byte(`{\"name\":\"Bob\"}`), &u)` заполняет `u.Name`.",
+                "when_to_apply": "Любая работа с JSON API: DTO делают с экспортируемыми полями и `json`-тегами для маппинга ключей.",
+                "edge_cases": "Для строгого режима с ошибкой на неизвестных полях нужен `decoder.DisallowUnknownFields()`. nil-указатель сериализуется в `null`, а не пропускается; для пропуска пустых значений нужен `omitempty`.",
+                "related": "[[go-stdlib-interview#Q7]] struct-теги и omitempty; [[go-stdlib-interview#Q8]] json.RawMessage; [[go-stdlib-interview#Q9]] streaming Decoder/Encoder."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Поля структуры с маленькой буквы сериализуются в JSON, просто с lowercase-именем ключа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unexported (lowercase) поля вообще не сериализуются — они невидимы для `encoding/json`, что даёт тихую потерю данных.",
+                "source_of_confusion": "Кажется, что Go просто берёт имя поля как ключ, не обращая внимания на регистр первой буквы.",
+                "if_it_were_true": "Тогда `name string` попадало бы в JSON как `\"name\"`, но на деле его там не будет вовсе.",
+                "how_it_should_be": "Чтобы поле попало в JSON, его делают экспортируемым (`Name`) и при необходимости задают `json:\"name\"`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`json.Marshal` всегда добавляет все поля, включая nil-указатели и пустые строки — пропусков не бывает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `omitempty` zero-значения действительно выводятся (`null`, `\"\"`, `0`); чтобы их пропускать, нужен тег `omitempty`.",
+                "source_of_confusion": "Половина утверждения верна (без тега всё выводится), поэтому вся фраза кажется правильной.",
+                "if_it_were_true": "Тогда `omitempty` не имел бы смысла, но он существует именно чтобы убирать пустые поля из вывода.",
+                "how_it_should_be": "Поведение настраивают тегом: с `omitempty` пустые значения пропускаются, без него — выводятся."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Struct-теги для JSON — что делают `omitempty`, `-` и `,string`?",
+          "options": [
+            {
+              "text": "`omitempty` пропускает только nil-указатели; значения `0` и `false` всё равно попадают в JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`omitempty` пропускает все zero-значения, включая `0`, `false`, `\"\"` и пустой slice, а не только nil.",
+                "source_of_confusion": "Слово «empty» ассоциируется с nil/отсутствием, а не с числовыми и булевыми нулями.",
+                "if_it_were_true": "Тогда поле `Count int json:\",omitempty\"` со значением 0 всё равно выводилось бы, но `omitempty` его уберёт.",
+                "how_it_should_be": "`omitempty` опускает любое zero-значение типа; чтобы 0 всегда выводился, тег просто не ставят."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`json:\"-\"` делает поле write-only: `Unmarshal` его читает, а `Marshal` исключает из вывода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`json:\"-\"` исключает поле из ОБОИХ направлений; для write-only/read-only нужны кастомные `MarshalJSON`/`UnmarshalJSON`.",
+                "source_of_confusion": "Знак `-` ассоциируется с «не выводить», и из этого делают вывод про одностороннюю невидимость.",
+                "if_it_were_true": "Тогда секрет с `json:\"-\"` можно было бы принимать из запроса, но он игнорируется и при `Unmarshal`.",
+                "how_it_should_be": "`-` полностью убирает поле из JSON; асимметрию реализуют кастомными методами сериализации."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`omitempty` пропускает zero-значения (0, false, \"\", nil, пустой slice); `-` полностью исключает поле из сериализации в обе стороны; `,string` кодирует число как JSON-строку для совместимости с JS, где `int64` теряет точность.",
+              "correct": true,
+              "sections": {
+                "explanation": "Теги — это строки в backtick'ах после поля. `Password string json:\"-\"` гарантирует, что секрет не утечёт в ответ. `,string` оборачивает число в кавычки: `{\"amount\":\"12345\"}`.",
+                "example": "`Email string json:\"email,omitempty\"` уберёт ключ при пустой строке; `Amount int64 json:\"amount,string\"` отдаст `\"12345\"` вместо `12345`.",
+                "when_to_apply": "В любых DTO: `-` для секретов и внутренних полей, `omitempty` для nullable-полей, `,string` для денег и больших id, уходящих во фронтенд на JS.",
+                "edge_cases": "Теги — это строки без статической проверки компилятором; опечатку поймает только `go vet` или runtime. `json:\"-\"` исключает поле в ОБЕ стороны, а не делает его write-only.",
+                "related": "[[go-stdlib-interview#Q6]] базовый Marshal/Unmarshal; [[go-stdlib-interview#Q10]] кастомные MarshalJSON; [[go-stdlib-interview#Q8]] RawMessage."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Struct-теги проверяются компилятором: опечатка в теге вызовет ошибку компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Теги — обычные строки без статической проверки; опечатку обнаружат только `go vet` или поведение в runtime, но не компилятор.",
+                "source_of_confusion": "Теги выглядят как часть синтаксиса языка, поэтому кажется, что компилятор их валидирует.",
+                "if_it_were_true": "Тогда `json:\"naem\"` ломал бы сборку, но код спокойно компилируется и тихо маппит не на тот ключ.",
+                "how_it_should_be": "Корректность тегов проверяют линтером `go vet`; компилятор воспринимает их как непрозрачные строки."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`json.RawMessage` — зачем нужен и когда применять отложенный парсинг?",
+          "options": [
+            {
+              "text": "`json.RawMessage` предназначен для бинарных данных (base64-байтов), встроенных внутрь JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RawMessage` хранит сырой JSON-фрагмент, а не base64; для бинарей используют `[]byte` с base64-тегом, иначе получится двойное кодирование.",
+                "source_of_confusion": "Слово «Raw» наводит на мысль о «сырых байтах», то есть о бинарном содержимом.",
+                "if_it_were_true": "Тогда `RawMessage` декодировал бы base64, но он лишь сохраняет JSON как есть, без преобразований.",
+                "how_it_should_be": "Для бинарных данных в JSON берут `[]byte` (Go сам кодирует/декодирует base64); `RawMessage` — для отложенного разбора JSON."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`json.RawMessage` автоматически определяет конкретный тип payload и десериализует его сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RawMessage` — просто `[]byte` с сырым JSON; Go тип не угадывает, диспетчеризацию делают вручную через switch по дискриминатору.",
+                "source_of_confusion": "Хочется, чтобы парсер «умно» разбирал полиморфные данные, но в Go это всегда явный код.",
+                "if_it_were_true": "Тогда `switch e.Type` был бы не нужен, но именно он и выбирает целевой тип для второго `Unmarshal`.",
+                "how_it_should_be": "Тип выбирают вручную по полю-дискриминатору, затем парсят `Payload` во второй проход."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`json.RawMessage` безопаснее, чем `map[string]interface{}`, для работы с неизвестным JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба подхода небезопасны без валидации; `RawMessage` эффективнее для дальнейшей передачи, а map — для доступа к произвольным полям, так что «безопаснее» некорректно.",
+                "source_of_confusion": "`RawMessage` выглядит «типизированнее» строки, и это путают с безопасностью.",
+                "if_it_were_true": "Тогда `RawMessage` валидировал бы структуру, но он лишь хранит сырые байты без проверок.",
+                "how_it_should_be": "Выбор между ними диктует задача: `RawMessage` — для проброса, map — для произвольного доступа к полям."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`json.RawMessage` сохраняет сырой JSON-фрагмент без немедленного парсинга; полезен для полиморфных событий с диспетчеризацией по полю `type` и для проксирования payload дальше без трансформации.",
+              "correct": true,
+              "sections": {
+                "explanation": "`RawMessage` — это по сути `[]byte` с отложенным декодированием. Сначала парсят внешнюю структуру, читают дискриминатор `type`, и только потом разбирают `Payload` в конкретный тип через второй `Unmarshal`.",
+                "example": "`type Event struct { Type string json:\"type\"; Payload json.RawMessage json:\"payload\" }` — затем `switch e.Type { case \"user_created\": json.Unmarshal(e.Payload, &p) }`.",
+                "when_to_apply": "Гетерогенные события, discriminated unions, прокси-сценарии (перебросить JSON как есть), и оптимизация, когда payload не нужен сразу.",
+                "edge_cases": "`RawMessage` сам тип не угадывает — диспетчеризацию пишут вручную (switch по `type`). Это не контейнер для base64-бинарных данных: для бинарей берут `[]byte` с base64-тегом.",
+                "related": "[[go-stdlib-interview#Q6]] базовый Unmarshal; [[go-stdlib-interview#Q9]] streaming Decoder; [[go-stdlib-interview#Q10]] кастомные методы сериализации."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Streaming JSON через `Decoder`/`Encoder` — когда и зачем использовать?",
+          "options": [
+            {
+              "text": "`json.NewDecoder`/`json.NewEncoder` работают потоково через `io.Reader`/`io.Writer`; эффективны для больших данных, так как не буферизуют всё целиком в память. Подходят для HTTP body и NDJSON.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Decoder` читает по мере необходимости, а не грузит весь reader в память — этим он выигрывает у `json.Unmarshal(io.ReadAll(...))`. Источником/приёмником может быть файл, HTTP body или сетевое соединение.",
+                "example": "`dec := json.NewDecoder(resp.Body); for { var item Item; if err := dec.Decode(&item); err == io.EOF { break }; process(item) }` — потоковый разбор последовательности.",
+                "when_to_apply": "Большие HTTP-ответы, NDJSON (newline-delimited JSON), длинные потоки записей — там, где держать всё в памяти дорого.",
+                "edge_cases": "`Encoder.Encode` добавляет только перевод строки после каждого объекта (формат NDJSON), а не запятые; для валидного JSON-массива скобки и запятые ставят вручную. Для мелких данных `Marshal`/`Unmarshal` проще.",
+                "related": "[[go-stdlib-interview#Q6]] Marshal/Unmarshal целиком; [[go-stdlib-interview#Q26]] io.Reader/Writer; [[go-stdlib-interview#Q8]] RawMessage для отложенного разбора."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`json.Decoder`/`Encoder` быстрее `json.Marshal`/`Unmarshal` для абсолютно любых данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для мелких payload `Marshal`/`Unmarshal` проще и сопоставимы по скорости; `Decoder` выигрывает только на больших/потоковых данных.",
+                "source_of_confusion": "«Streaming» звучит как «всегда эффективнее», и это обобщают на любые объёмы.",
+                "if_it_were_true": "Тогда `Marshal` был бы не нужен вовсе, но для маленьких структур он удобнее и не медленнее.",
+                "how_it_should_be": "Выбор зависит от размера: `Decoder` для крупных/потоковых данных, `Marshal` — для небольших."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`json.NewDecoder` сначала вычитывает весь `io.Reader` в память, и только потом начинает декодировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Decoder` читает по мере необходимости (streaming), не загружая весь reader сразу — в этом его главное преимущество.",
+                "source_of_confusion": "Кажется, что для разбора JSON нужно сначала иметь весь документ, как при `Unmarshal`.",
+                "if_it_were_true": "Тогда `Decoder` не экономил бы память против `Unmarshal(io.ReadAll(...))`, но именно ради экономии его и берут.",
+                "how_it_should_be": "`Decoder` потребляет поток инкрементально; всю-в-память буферизацию делает `io.ReadAll` + `Unmarshal`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Encoder.Encode` ставит запятые между объектами, чтобы получился валидный JSON-массив.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Encode` добавляет только `\\n` после каждого объекта (NDJSON); для массива скобки `[`/`]` и запятые форматируют вручную.",
+                "source_of_confusion": "Многократный вызов `Encode` визуально похож на формирование массива, и ждут запятых-разделителей.",
+                "if_it_were_true": "Тогда поток из `Encode` парсился бы как один JSON-массив, но это NDJSON — по объекту на строку.",
+                "how_it_should_be": "Для массива пишут `[`, объекты через запятую и `]` сами; `Encode` по умолчанию даёт NDJSON."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Кастомные `MarshalJSON` / `UnmarshalJSON` — как и зачем реализуют?",
+          "options": [
+            {
+              "text": "Кастомная сериализация требует реализовать полный интерфейс `Marshaler` из пакета `encoding`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`encoding/json` ищет конкретные методы `MarshalJSON`/`UnmarshalJSON`; отдельного интерфейса, который нужно явно реализовывать, нет.",
+                "source_of_confusion": "В пакете `encoding` действительно есть интерфейсы (`TextMarshaler` и т.п.), и их обобщают на JSON.",
+                "if_it_were_true": "Тогда без явной реализации интерфейса методы не подхватывались бы, но они работают автоматически по имени.",
+                "how_it_should_be": "Достаточно объявить методы с правильными именами и сигнатурами — json найдёт их сам."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`MarshalJSON() ([]byte, error)` определяют на value-receiver, `UnmarshalJSON([]byte) error` — на pointer-receiver (нужна мутация). Это задаёт кастомный формат сериализации для нестандартных типов (даты, IP, цвета).",
+              "correct": true,
+              "sections": {
+                "explanation": "`encoding/json` сам ищет методы с именами `MarshalJSON`/`UnmarshalJSON` — отдельный интерфейс реализовывать явно не нужно. `UnmarshalJSON` обязан быть на указателе, иначе изменения уйдут в копию и потеряются.",
+                "example": "`func (c Color) MarshalJSON() ([]byte, error) { return []byte(fmt.Sprintf(`\"#%02x%02x%02x\"`, c.R, c.G, c.B)), nil }` — цвет как `\"#RRGGBB\"`.",
+                "when_to_apply": "Когда нужен нестандартный wire-формат: даты в особом layout, IP-адреса, UUID, денежные суммы, доменные value-объекты.",
+                "edge_cases": "Если задан кастомный `MarshalJSON`, он полностью контролирует сериализацию: вложенные поля попадут в вывод только если их явно сериализовать внутри. `UnmarshalJSON` на value-receiver не сработает.",
+                "related": "[[go-stdlib-interview#Q6]] базовый Marshal/Unmarshal; [[go-stdlib-interview#Q7]] struct-теги; [[go-stdlib-interview#Q14]] парсинг времени по layout."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`UnmarshalJSON` можно объявить и на value-receiver — изменения структуры всё равно применятся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Value-receiver получает копию, и изменения не видны вызывающему; `UnmarshalJSON` обязан быть на pointer-receiver.",
+                "source_of_confusion": "`MarshalJSON` на value-receiver работает, и это правило ошибочно переносят на `UnmarshalJSON`.",
+                "if_it_were_true": "Тогда результат парсинга попадал бы в исходный объект, но он осел бы в копии и потерялся.",
+                "how_it_should_be": "`UnmarshalJSON` определяют на указателе, чтобы мутировать оригинал; `MarshalJSON` — на value."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`MarshalJSON` автоматически рекурсивно вызывается для всех вложенных полей структуры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомный `MarshalJSON` полностью контролирует вывод; вложенные поля сериализуются только если внутри явно вызвать `json.Marshal(field)`.",
+                "source_of_confusion": "Ожидается, что стандартная рекурсия по полям сохранится поверх кастомного метода.",
+                "if_it_were_true": "Тогда определив `MarshalJSON` для обёртки, получили бы и автоматический вывод полей, но контроль теперь полностью на методе.",
+                "how_it_should_be": "Внутри `MarshalJSON` сами решают, что и как сериализовать, при необходимости вызывая `json.Marshal` для частей."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`strings.Builder` vs конкатенация через `+=` — в чём разница по производительности?",
+          "options": [
+            {
+              "text": "`strings.Builder` и `+=` дают одинаковую производительность хотя бы для коротких строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже на десятке итераций `+=` создаёт N новых строк, а `Builder` с `Grow` обходится одной аллокацией — разница ощутима в tight loop.",
+                "source_of_confusion": "На двух-трёх конкатенациях разница незаметна, и вывод обобщают на циклы.",
+                "if_it_were_true": "Тогда `Builder` был бы нужен только для огромных строк, но он выигрывает уже на коротких циклах.",
+                "how_it_should_be": "В любом цикле конкатенации берут `Builder`; одиночные `+` для двух-трёх строк допустимы."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`fmt.Sprintf` всегда быстрее `strings.Builder` благодаря оптимизациям компилятора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`fmt.Sprintf` медленнее для чистой конкатенации из-за reflection overhead; `Builder` быстрее, а `Sprintf` хорош, когда нужно форматирование.",
+                "source_of_confusion": "`Sprintf` лаконичнее в коде, и удобство принимают за скорость.",
+                "if_it_were_true": "Тогда `Builder` не имел бы смысла, но в бенчмарках на склейку он стабильно обгоняет `Sprintf`.",
+                "how_it_should_be": "Для склейки без форматирования — `Builder`; `Sprintf` — когда действительно нужен форматированный вывод."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Конкатенация `+=` в цикле — O(n²): каждая операция создаёт новую строку. `strings.Builder` — O(n) с амортизированными аллокациями через внутренний `[]byte`. Для строк из множества частей берут Builder.",
+              "correct": true,
+              "sections": {
+                "explanation": "Строки в Go иммутабельны, поэтому `s += x` каждый раз выделяет и копирует новый буфер. `strings.Builder` накапливает байты во внутреннем срезе и копирует данные лишь при росте ёмкости.",
+                "example": "Вместо `s := \"\"; for ... { s += \"hello\" }` пишут `var sb strings.Builder; for ... { sb.WriteString(\"hello\") }; result := sb.String()`.",
+                "when_to_apply": "Любой цикл, собирающий строку из частей; при известном размере вызывают `sb.Grow(expected)` для одной аллокации. Для форматированного вывода — `fmt.Sprintf`.",
+                "edge_cases": "`strings.Builder` write-only (нет `Read`) и заточен под строки — чуть быстрее `bytes.Buffer`, у которого есть overhead на `Write([]byte)`. Для смешанной работы string+bytes берут `bytes.Buffer`.",
+                "related": "[[go-stdlib-interview#Q12]] bytes.Buffer для байтов; [[go-stdlib-interview#Q26]] io.Writer; [[go-stdlib-interview#Q6]] сериализация в строку."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`bytes.Buffer` всегда лучше `strings.Builder` для построения строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`strings.Builder` специализирован под строки и чуть быстрее `bytes.Buffer` (нет overhead на `Write([]byte)`); Buffer выигрывает лишь в смешанной string/bytes работе.",
+                "source_of_confusion": "`bytes.Buffer` старше и известнее, поэтому его считают универсально предпочтительным.",
+                "if_it_were_true": "Тогда `strings.Builder` не добавили бы в stdlib, но его внесли именно ради эффективной сборки строк.",
+                "how_it_should_be": "Для строкового результата берут `Builder`; `Buffer` — когда нужны и Read, и работа с `[]byte`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`bytes.Buffer` — зачем нужен и какие интерфейсы реализует?",
+          "options": [
+            {
+              "text": "`bytes.Buffer` thread-safe — его можно использовать из нескольких горутин без мьютекса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`bytes.Buffer` НЕ потокобезопасен; конкурентные записи приводят к data race, и нужен `sync.Mutex` либо отдельный буфер на горутину.",
+                "source_of_confusion": "Многие stdlib-типы кажутся «безопасными по умолчанию», и это ожидание переносят на Buffer.",
+                "if_it_were_true": "Тогда параллельные `WriteString` из разных горутин работали бы корректно, но `go test -race` показал бы гонку.",
+                "how_it_should_be": "Доступ к общему `Buffer` из нескольких горутин синхронизируют мьютексом или дают каждому свой буфер."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`bytes.Buffer` автоматически освобождает память после `Read`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Buffer` накапливает данные; `Read` продвигает read-offset, но память не отдаёт — для освобождения вызывают `Reset()`.",
+                "source_of_confusion": "Кажется логичным, что прочитанные данные сразу освобождаются, как в очереди.",
+                "if_it_were_true": "Тогда долгоживущий `Buffer` не рос бы в памяти, но без `Reset` накопленный объём остаётся.",
+                "how_it_should_be": "После переиспользования буфера вызывают `buf.Reset()`, чтобы вернуть ёмкость и не растить память."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`strings.Builder` и `bytes.Buffer` — это одна и та же структура под разными именами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`strings.Builder` write-only (нет `Read`), `bytes.Buffer` — read+write; оба используют `[]byte` внутри, но рассчитаны на разные сценарии.",
+                "source_of_confusion": "Оба строят данные на `[]byte` и внешне похожи по API записи.",
+                "if_it_were_true": "Тогда у `Builder` был бы метод `Read`, но его нет — он не предназначен для чтения.",
+                "how_it_should_be": "Их различают по задаче: `Builder` — собрать строку, `Buffer` — двунаправленный буфер байтов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`bytes.Buffer` реализует и `io.Reader`, и `io.Writer`, поэтому удобен как промежуточный буфер, который можно передавать в любые функции, ожидающие эти интерфейсы (json, gzip, тесты-моки).",
+              "correct": true,
+              "sections": {
+                "explanation": "Двойная природа Reader+Writer делает `Buffer` универсальным звеном pipeline: в него пишут (`WriteString`, `WriteByte`), из него читают, его подсовывают вместо файла или сети.",
+                "example": "`var buf bytes.Buffer; json.NewEncoder(&buf).Encode(myStruct); log.Printf(\"encoded: %s\", buf.String())` — энкодинг в память вместо файла.",
+                "when_to_apply": "Тест-моки для `io.Writer`, промежуточный буфер для json/gzip/шифрования, сбор вывода перед логированием — везде, где удобно работать через io-интерфейсы.",
+                "edge_cases": "`bytes.Buffer` НЕ thread-safe: конкурентные записи дают data race, нужен `sync.Mutex` или буфер на горутину. `Read` сдвигает offset, но память не освобождает — для сброса вызывают `Reset()`.",
+                "related": "[[go-stdlib-interview#Q11]] strings.Builder для строк; [[go-stdlib-interview#Q26]] io.Reader/Writer; [[go-stdlib-interview#Q9]] streaming Encoder."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`time.Time` и `time.Duration` — что это за типы и чем отличаются?",
+          "options": [
+            {
+              "text": "`time.Duration` — это `int64` число наносекунд, то есть интервал, а `time.Time` — конкретный момент времени. `Add(duration)` сдвигает момент, `Sub` возвращает разницу как `Duration`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Duration` — не datetime, а длительность: её всегда задают через константы `time.Second`, `time.Millisecond`, иначе легко ошибиться с порядком величины. Сравнивать моменты надо через `Equal`, а не `==`.",
+                "example": "`now := time.Now(); later := now.Add(5*time.Second); diff := later.Sub(now)` — `diff.Seconds()` даёт `5.0`. `2*time.Hour + 30*time.Minute` — корректный интервал.",
+                "when_to_apply": "Таймауты, дедлайны, измерение длительности операций — `Duration`; хранение и сравнение моментов событий — `Time` с методом `Equal`.",
+                "edge_cases": "`time.Time` содержит location, поэтому два одинаковых момента в разных timezone дают `==` false — нужен `t1.Equal(t2)`. `UnixMilli()` возвращает timestamp в мс, а не `Duration`.",
+                "related": "[[go-stdlib-interview#Q14]] парсинг времени по layout; [[go-stdlib-interview#Q15]] timezone и UTC; [[go-stdlib-interview#Q16]] таймеры и тикеры."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`time.Duration` — это число миллисекунд типа `int64`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Duration` измеряется в наносекундах: `5 * 1000` даст 5 микросекунд, а не 5 секунд; всегда используют константы `time.Second`/`time.Millisecond`.",
+                "source_of_confusion": "Во многих языках длительность задают в миллисекундах, и это переносят на Go.",
+                "if_it_were_true": "Тогда `time.Sleep(100)` спал бы 100 мс, но на деле это 100 наносекунд — почти мгновенно.",
+                "how_it_should_be": "Длительность задают умножением на единицу времени: `100 * time.Millisecond`, а не голым числом."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Два `time.Time` корректно сравнивать на равенство через оператор `==`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`time.Time` содержит location, поэтому один момент в разных timezone даёт `==` false; для сравнения момента используют `t1.Equal(t2)`.",
+                "source_of_confusion": "`==` интуитивно подходит для сравнения значений, и его применяют и к Time.",
+                "if_it_were_true": "Тогда `time.Now().UTC() == time.Now().Local()` для одного момента был бы true, но из-за loc он false.",
+                "how_it_should_be": "Моменты сравнивают методом `Equal`, который игнорирует представление и сравнивает саму точку во времени."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`time.Now().UnixMilli()` возвращает `Duration` в миллисекундах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`UnixMilli` возвращает Unix-timestamp в мс (`int64`), а не `Duration`; длительность в мс даёт `Duration.Milliseconds()`.",
+                "source_of_confusion": "И timestamp, и длительность выражают «миллисекунды», и эти понятия смешивают.",
+                "if_it_were_true": "Тогда результат `UnixMilli` можно было бы передать туда, где ждут `Duration`, но это timestamp от эпохи.",
+                "how_it_should_be": "`UnixMilli` — момент в мс от 1970 года; `Duration` получают из `Sub` или умножением на `time.Millisecond`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Парсинг времени в Go — в чём особенность формата layout?",
+          "options": [
+            {
+              "text": "Go использует формат `\"YYYY-MM-DD HH:MM:SS\"`, как большинство языков программирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Go reference time — `2006-01-02 15:04:05`; `Y/M/D` не работает и даёт ошибку парсинга или неверный результат.",
+                "source_of_confusion": "`YYYY-MM-DD` — почти универсальный стандарт, и его по привычке ждут и в Go.",
+                "if_it_were_true": "Тогда `time.Parse(\"YYYY-MM-DD\", s)` парсил бы дату, но Go воспринимает эти буквы буквально и ломается.",
+                "how_it_should_be": "Layout собирают из конкретных значений эталона `2006-01-02 15:04:05`, а не из буквенных плейсхолдеров."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Go использует reference time `Mon Jan 2 15:04:05 MST 2006` (мнемоника 1 2 3 4 5 6) вместо `YYYY-MM-DD`: layout задают конкретными значениями этого эталона, а не буквами-плейсхолдерами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это уникально для Go — команда хотела самодокументируемый формат. В layout `2006` = год, `01` = месяц, `02` = день, `15` = час в 24-часовом формате; мнемоника критична, чтобы не перепутать `15` (3pm) и `03` (3am).",
+                "example": "`time.Parse(\"2006-01-02 15:04:05\", \"2025-04-18 14:30:00\")`; `t.Format(time.RFC3339)` → `\"2025-04-18T14:30:00Z\"`; есть готовые `time.RFC3339`, `time.RFC1123`.",
+                "when_to_apply": "Любой разбор/форматирование дат: для API берут `time.RFC3339`, для нестандартного формата собирают layout из значений reference time.",
+                "edge_cases": "Без timezone в layout `Parse` трактует время как UTC; для tz нужен layout вида `2006-01-02T15:04:05Z07:00`, иначе будут off-by-hours ошибки.",
+                "related": "[[go-stdlib-interview#Q13]] Time и Duration; [[go-stdlib-interview#Q15]] timezone и UTC; [[go-stdlib-interview#Q10]] кастомный MarshalJSON для дат."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`2006` в layout означает 4-значный год, `01` — месяц, `02` — день, а мнемоника `1 2 3 4 5 6` необязательна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Значения верны, но мнемоника критична: `1 2 3 4 5 6` = month day hour min sec year; без неё путают `15` (3pm) и `03` (3am).",
+                "source_of_confusion": "Год/месяц/день угадываются интуитивно, поэтому мнемонику считают факультативной.",
+                "if_it_were_true": "Тогда можно было бы писать часы как угодно, но `15` и `03` дают разный 24/12-часовой формат.",
+                "how_it_should_be": "Мнемонику держат в голове целиком, особенно для часов: `15` — 24-часовой, `03` — с AM/PM."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`time.Parse(\"2006-01-02\", s)` автоматически определяет timezone из самой строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без указания tz в layout результат трактуется как UTC; чтобы учесть пояс, нужен layout с `Z07:00`.",
+                "source_of_confusion": "Кажется, что парсер «умно» извлечёт зону, даже если её нет в шаблоне.",
+                "if_it_were_true": "Тогда дата без зоны подхватывала бы локальный пояс, но Go без `Z07:00` молча считает её UTC.",
+                "how_it_should_be": "Timezone включают в layout (`2006-01-02T15:04:05Z07:00`), иначе получают UTC и off-by-hours."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Часовые пояса и UTC в Go — как правильно работать со временем?",
+          "options": [
+            {
+              "text": "`time.Now()` всегда возвращает время в UTC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`time.Now()` отдаёт локальное время сервера; для UTC нужен `time.Now().UTC()`, иначе при разных поясах серверов timestamp'ы рассинхронизируются.",
+                "source_of_confusion": "Хочется верить, что «системное время» уже нормализовано к UTC.",
+                "if_it_were_true": "Тогда `.UTC()` был бы лишним, но без него на сервере в другом поясе время поедет.",
+                "how_it_should_be": "К `time.Now()` явно применяют `.UTC()` везде, где время хранят или сравнивают между системами."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Сравнение двух `time.Time` через `==` корректно работает и для разных timezone.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`==` учитывает wall clock и location, поэтому один момент в разных поясах даёт false; `Equal` сравнивает саму точку времени.",
+                "source_of_confusion": "`==` привычен для сравнения значений, и его ошибочно применяют к Time с разными зонами.",
+                "if_it_were_true": "Тогда `t.UTC() == t.Local()` для одного момента было бы true, но из-за loc они не равны.",
+                "how_it_should_be": "Моменты сравнивают через `Equal`, который игнорирует представление пояса."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Хранят и обрабатывают время в UTC (`time.Now().UTC()`), а в local конвертируют только при отображении через `.In(loc)`. Для сравнения независимо от timezone используют `Equal()`, а не `==`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`time.Now()` возвращает локальное время сервера, поэтому для консистентности явно берут `.UTC()`. Два момента, представленные в разных поясах, через `Equal` дают true, потому что это одна точка во времени.",
+                "example": "`loc, _ := time.LoadLocation(\"America/New_York\"); t := time.Now().In(loc)` — только для UI; в БД и логике держат `time.Now().UTC()`.",
+                "when_to_apply": "Timestamp'ы в БД и между сервисами — всегда UTC; конвертацию в пояс пользователя делают на границе отображения.",
+                "edge_cases": "`time.Now()` не UTC, а локальное — при деплое на сервер с другим поясом получают рассогласованные timestamp'ы. `==` сравнивает и location, поэтому для момента нужен `Equal`.",
+                "related": "[[go-stdlib-interview#Q13]] Time и Duration; [[go-stdlib-interview#Q14]] layout и парсинг; [[go-stdlib-interview#Q16]] таймеры."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`time.LoadLocation` — блокирующая операция, поэтому location обязательно кешируют через `sync.Once`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LoadLocation` читает timezone-базу из файла, но в обычных условиях не блокирует; кеширование уместно, однако характеристика «блокирующая» преувеличена.",
+                "source_of_confusion": "Любое чтение из файла кажется потенциально «блокирующим», и из этого делают жёсткое правило.",
+                "if_it_were_true": "Тогда без `sync.Once` приложение зависало бы на каждом вызове, но на практике вызов быстрый.",
+                "how_it_should_be": "Часто используемую location можно кешировать ради микрооптимизации, но это не обязательное требование."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`time.NewTimer`, `time.Tick`, `time.After` — чем отличаются и где подвох?",
+          "options": [
+            {
+              "text": "`time.Tick` безопасно использовать в long-running горутинах без вызова `Stop`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`time.Tick` создаёт Ticker, который нельзя остановить, поэтому горутина с ним живёт вечно — это goroutine/resource leak.",
+                "source_of_confusion": "`time.Tick` короче, чем `NewTicker` + `Stop`, и кажется удобным «навсегда».",
+                "if_it_were_true": "Тогда `time.Tick` годился бы для долгих сервисов, но утёкший Ticker нельзя освободить.",
+                "how_it_should_be": "В long-running коде берут `NewTicker` с `defer ticker.Stop()`; `time.Tick` — лишь для коротких/процессных циклов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Timer.Stop()` возвращает канал, из которого можно прочитать сигнал об остановке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Stop()` возвращает `bool` (успели остановить или уже сработал); после него в `timer.C` может остаться pending-значение для дренирования.",
+                "source_of_confusion": "Логика «у таймера есть канал `C`» наводит на мысль, что и `Stop` отдаёт канал.",
+                "if_it_were_true": "Тогда писали бы `<-timer.Stop()`, но возвращается bool, и паттерн дренажа — `if !timer.Stop() { <-timer.C }`.",
+                "how_it_should_be": "Результат `Stop` проверяют как bool; при необходимости дренируют `timer.C`, чтобы убрать просочившееся значение."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`time.NewTimer` и `time.After` имеют одинаковую производительность во всех сценариях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба создают один Timer, но `time.After` в цикле плодит N таймеров, не освобождая их до срабатывания; `NewTimer` можно `Stop`/`Reset`.",
+                "source_of_confusion": "Под капотом оба используют Timer, поэтому кажется, что разницы нет.",
+                "if_it_were_true": "Тогда `time.After` в горячем цикле был бы безопасен, но он накапливает таймеры в памяти.",
+                "how_it_should_be": "В частых циклах берут переиспользуемый `NewTimer` с `Stop`/`Reset`; `time.After` оставляют для разового `select`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`NewTimer` — одноразовый таймер, отменяется через `Stop`; `NewTicker` — повторяющийся, требует `defer Stop()`; `time.After` — сахар для `select`, но в цикле даёт утечку памяти, так как каждый вызов создаёт новый Timer.",
+              "correct": true,
+              "sections": {
+                "explanation": "`time.After` создаёт Timer, который не освобождается GC до момента срабатывания. В горячем цикле это копит таймеры в памяти. Поэтому в hot path вместо `time.After` берут `NewTimer` с явным `Stop`.",
+                "example": "`ticker := time.NewTicker(time.Second); defer ticker.Stop(); for t := range ticker.C { ... }` — periodic-задача без утечки.",
+                "when_to_apply": "`NewTicker` + `defer Stop()` для периодических задач; `NewTimer` вместо `time.After` в долгоживущих циклах; `time.After` — только в разовом `select` с таймаутом.",
+                "edge_cases": "`time.Tick` создаёт Ticker, который нельзя остановить — в long-running горутине это утечка. `Timer.Stop()` возвращает bool, а после него в канале может остаться значение, которое надо дренировать.",
+                "related": "[[go-stdlib-interview#Q4]] timeout в HTTP-клиенте; [[go-stdlib-interview#Q13]] Duration; [[go-stdlib-interview#Q17]] context.WithTimeout."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`context.Context` — какие основные методы и как с ним работать?",
+          "options": [
+            {
+              "text": "`context` даёт канал `Done()` и метод `Err()` с причиной отмены; контекст создают через `WithCancel`/`WithTimeout`/`WithDeadline`, и `cancel` всегда вызывают через `defer`, чтобы освободить ресурсы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Корневой контекст — `context.Background()`; в долгих операциях слушают `<-ctx.Done()` внутри `select`, а при отмене возвращают `ctx.Err()` (`context.Canceled` или `context.DeadlineExceeded`).",
+                "example": "`ctx, cancel := context.WithTimeout(ctx, 5*time.Second); defer cancel(); select { case <-ctx.Done(): return ctx.Err(); case r := <-doWork(): return r }`.",
+                "when_to_apply": "Любая потенциально долгая операция — HTTP-запрос, SQL-запрос, ожидание канала — должна слушать `ctx.Done()`, чтобы поддерживать отмену и дедлайны.",
+                "edge_cases": "`ctx.Done()` возвращает канал; в `select` с другими case он не блокирует. `WithValue` — для request-scoped инфраструктурных данных (traceID), а не для бизнес-параметров.",
+                "related": "[[go-stdlib-interview#Q4]] context в HTTP-клиенте; [[go-stdlib-interview#Q16]] таймеры; [[go-stdlib-interview#Q25]] BeginTx с context."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`context.TODO()` и `context.Background()` полностью идентичны — можно выбирать любой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Семантически они разные: `Background()` — корень для всей программы (main, init), а `TODO()` — placeholder там, где контекст ещё не определён.",
+                "source_of_confusion": "Оба возвращают пустой непрерываемый контекст, и разницу считают чисто косметической.",
+                "if_it_were_true": "Тогда `TODO()` не нужен был бы как отдельная функция, но он маркирует места для будущей доработки и линтеров.",
+                "how_it_should_be": "`Background()` ставят в точке входа; `TODO()` — как временную заглушку, которую затем заменяют реальным контекстом."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`context.WithValue` лучше использовать для передачи бизнес-данных вроде `userID` и `orderID`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`context.Value` предназначен для request-scoped инфраструктуры (traceID, authToken); бизнес-данные передают явными параметрами функции.",
+                "source_of_confusion": "Контекст «протекает» через все вызовы, и через него соблазнительно протащить любые данные.",
+                "if_it_were_true": "Тогда сигнатуры функций были бы чище, но `ctx.Value` требует type assertion и теряет типобезопасность.",
+                "how_it_should_be": "Бизнес-данные передают аргументами; в контекст кладут только сквозные инфраструктурные значения."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`ctx.Done()` блокирует горутину до момента отмены контекста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ctx.Done()` возвращает канал; блокирует только чтение `<-ctx.Done()`, а в `select` с другими case он не блокирует.",
+                "source_of_confusion": "Вызов `Done()` путают с чтением из канала, отсюда вывод о блокировке.",
+                "if_it_were_true": "Тогда `ctx.Done()` нельзя было бы использовать в `select`, но именно там его и применяют без блокировки.",
+                "how_it_should_be": "`Done()` отдаёт канал; его слушают в `select` рядом с веткой результата, чтобы не потерять ответ операции."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`errors.New`, `errors.Is`, `errors.As` — как работают и чем различаются?",
+          "options": [
+            {
+              "text": "`err == ErrNotFound` и `errors.Is(err, ErrNotFound)` — полностью эквивалентны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`==` сравнивает только верхний уровень, а `errors.Is` проходит весь unwrap-chain; для обёрнутой ошибки `==` даст false, а `Is` — true.",
+                "source_of_confusion": "Для необёрнутой sentinel-ошибки оба способа совпадают, и это обобщают на все случаи.",
+                "if_it_were_true": "Тогда `fmt.Errorf(\"wrap: %w\", ErrNotFound)` сравнивался бы через `==` как ErrNotFound, но обёртка это ломает.",
+                "how_it_should_be": "Для проверки ошибки сквозь обёртки всегда берут `errors.Is`, а не `==`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`errors.Is` проверяет identity ошибки сквозь wrapping-цепочку (`%w`); `errors.As` находит конкретный тип ошибки в этой цепочке; `fmt.Errorf` с `%w` создаёт обёртку, сохраняющую оригинал.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sentinel-ошибки (`var ErrNotFound = errors.New(...)`) проверяют через `errors.Is`, а кастомные типы извлекают через `errors.As`. Обычное `==` сравнивает только верхний уровень и не видит обёрнутую ошибку.",
+                "example": "`err3 := fmt.Errorf(\"processing failed: %w\", ErrNotFound)` — затем `errors.Is(err3, ErrNotFound)` true; `var v *ValidationError; if errors.As(err, &v) { ... }`.",
+                "when_to_apply": "Sentinel + `errors.Is` для проверки известных ошибок; кастомные типы + `errors.As` для доступа к полям ошибки; `%w` для оборачивания с сохранением цепочки.",
+                "edge_cases": "`errors.As` принимает указатель на target-тип (`**ValidationError`), а не просто значение. `fmt.Errorf` без `%w` создаёт новую ошибку без wrapping, и `errors.Is` по ней вернёт false.",
+                "related": "[[go-stdlib-interview#Q19]] errors.Join для нескольких ошибок; [[go-stdlib-interview#Q22]] sql.ErrNoRows; [[go-stdlib-interview#Q17]] context.Canceled."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`errors.As` принимает `interface{}` и выполняет обычный type cast.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`errors.As` принимает указатель на target-тип (`**ValidationError`), возвращает bool и заполняет target; простой `.(type)` не работает на обёрнутых ошибках.",
+                "source_of_confusion": "По смыслу `As` похож на приведение типа, и его API представляют как cast.",
+                "if_it_were_true": "Тогда хватало бы `err.(*ValidationError)`, но через цепочку обёрток оно не извлечёт нужный тип.",
+                "how_it_should_be": "В `errors.As` передают `&target`, и он сам разворачивает цепочку, находя совпадающий тип."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`fmt.Errorf` без глагола `%w` тоже создаёт wrapping-цепочку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `%w` `fmt.Errorf` создаёт новую ошибку без обёртки; только `%w` сохраняет оригинал в chain для `errors.Is`/`As`.",
+                "source_of_confusion": "`%v` и `%w` визуально похожи, и кажется, что любой `Errorf` оборачивает.",
+                "if_it_were_true": "Тогда `errors.Is` находил бы оригинал и после `%v`, но без `%w` цепочки нет и проверка вернёт false.",
+                "how_it_should_be": "Для сохранения цепочки используют именно `%w`; `%v` лишь вставляет текст ошибки без wrapping."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`errors.Join` (Go 1.20+) — что делает и когда применять?",
+          "options": [
+            {
+              "text": "`errors.Join` доступна с Go 1.13 как часть механизма errors-wrapping.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`errors.Join` добавлена в Go 1.20; до этого использовали `multierr` или кастомные реализации, а в Go 1.13 её ещё нет.",
+                "source_of_confusion": "Wrapping через `%w` появился в 1.13, и `Join` ошибочно относят к тому же релизу.",
+                "if_it_were_true": "Тогда код на go 1.13 компилировался бы с `errors.Join`, но получит ошибку «undefined».",
+                "how_it_should_be": "Минимальная версия для `errors.Join` — Go 1.20; на более старых берут сторонний multierr."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`errors.Join(err1, err2)` полностью эквивалентен `fmt.Errorf(\"%w: %w\", err1, err2)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Несколько `%w` в `Errorf` тоже появились в Go 1.20, но семантика и `Error()`-вывод отличаются: `Join` разделяет через `\\n`, а `Errorf` — строкой формата.",
+                "source_of_confusion": "Оба умеют обернуть несколько ошибок, поэтому их считают взаимозаменяемыми.",
+                "if_it_were_true": "Тогда форматировать сообщение можно было бы любым из них одинаково, но вывод и структура у них разные.",
+                "how_it_should_be": "`Join` берут для списка независимых ошибок; `Errorf` с `%w` — когда нужен осмысленный текст с подстановкой."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`errors.Join` (Go 1.20+) объединяет несколько ошибок в одну; `errors.Is` затем проверяет каждую из объединённых. Удобно для batch-операций и валидации, где надо собрать все ошибки сразу.",
+              "correct": true,
+              "sections": {
+                "explanation": "Объединённая ошибка реализует `Unwrap() []error`, поэтому `errors.Is(joined, errN)` возвращает true для любой из вложенных. Текстом она выводит все сообщения через перевод строки.",
+                "example": "`var errs []error; for _, it := range items { if e := validate(it); e != nil { errs = append(errs, e) } }; if len(errs) > 0 { return errors.Join(errs...) }`.",
+                "when_to_apply": "Batch-валидация и пакетные операции, где нужно вернуть полный список проблем, а не падать на первой ошибке.",
+                "edge_cases": "`errors.Join` появилась только в Go 1.20 — до неё брали `multierr` (Uber). От `fmt.Errorf(\"%w: %w\")` она отличается семантикой и форматом вывода (через `\\n`).",
+                "related": "[[go-stdlib-interview#Q18]] errors.Is/As и wrapping; [[go-stdlib-interview#Q6]] валидация JSON; [[go-stdlib-interview#Q25]] ошибки транзакций."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`errors.Is(errors.Join(err1, err2), err1)` возвращает false.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`errors.Is` на joined-ошибке проверяет каждую из вложенных через `Unwrap() []error` и возвращает true для `err1`.",
+                "source_of_confusion": "Кажется, что после объединения отдельные ошибки «растворяются» и больше не находятся.",
+                "if_it_were_true": "Тогда нельзя было бы проверить наличие конкретной ошибки в batch, но `Is` именно это и умеет.",
+                "how_it_should_be": "`errors.Is` находит любую из объединённых ошибок; для `err1` он корректно вернёт true."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`log/slog` (structured logging) — что это за пакет и что умеет?",
+          "options": [
+            {
+              "text": "`log/slog` доступна с Go 1.13 как часть стандартного пакета `log`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`slog` добавлена в Go 1.21; до неё в stdlib был только `log` с plain-text выводом, а в 1.13 структурного логгера нет.",
+                "source_of_confusion": "Пакет `log` существует давно, и `slog` принимают за его старую часть.",
+                "if_it_were_true": "Тогда код на go 1.13 импортировал бы `log/slog`, но получит ошибку компиляции «package not found».",
+                "how_it_should_be": "`log/slog` требует Go 1.21+; на более старых версиях берут сторонний structured logger."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`slog` всегда автоматически форматирует вывод в JSON.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Default handler пишет в text-формате; для JSON нужен явный `slog.NewJSONHandler(os.Stdout, nil)`.",
+                "source_of_confusion": "Structured logging ассоциируется с JSON, и это считают форматом по умолчанию.",
+                "if_it_were_true": "Тогда логи сразу годились бы для агрегации, но без JSON-handler'а получают text-вывод.",
+                "how_it_should_be": "Для JSON явно конфигурируют `NewJSONHandler`; по умолчанию `slog` отдаёт человекочитаемый text."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`slog.Info` принимает только строки в качестве атрибутов; числа нужно конвертировать вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`slog` принимает любые значения как key-value пары; хелперы `slog.Int`/`slog.String`/`slog.Duration` лишь типизируют, а иначе работает `fmt.Sprint`.",
+                "source_of_confusion": "Пример с `\"user_id\", 42` выглядит как пары строк, и тип значения кажется ограниченным.",
+                "if_it_were_true": "Тогда `slog.Info(\"e\", \"id\", 42)` падал бы без конвертации, но он спокойно принимает число.",
+                "how_it_should_be": "Значения передают любого типа; для строгой типизации и групп используют `slog.Int`, `slog.Group` и т.п."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`log/slog` (Go 1.21+) — встроенный structured logger с key-value атрибутами, text/JSON handler'ами и методами вроде `InfoContext` для корреляции с трейсингом.",
+              "correct": true,
+              "sections": {
+                "explanation": "`slog` пишет логи парами ключ-значение: `slog.Info(\"user logged in\", \"user_id\", 42)`. Формат задаёт handler — text по умолчанию или `slog.NewJSONHandler` для агрегаторов. Глобальный логгер ставят через `slog.SetDefault`.",
+                "example": "`logger := slog.New(slog.NewJSONHandler(os.Stdout, nil)); slog.SetDefault(logger)` — затем `slog.InfoContext(ctx, \"query executed\", \"duration\", time.Since(start))`.",
+                "when_to_apply": "Новые проекты на Go 1.21+ — `slog` вместо `logrus`/`zap` для большинства задач; `InfoContext` для distributed tracing с прокидыванием traceID из контекста.",
+                "edge_cases": "Default handler даёт text, а не JSON — для агрегации логов нужен явный `slog.NewJSONHandler`. `slog` принимает любые значения как атрибуты; типизированные хелперы `slog.Int`/`slog.String` лишь дают точный тип.",
+                "related": "[[go-stdlib-interview#Q21]] slog vs zap vs logrus; [[go-stdlib-interview#Q17]] context для InfoContext; [[go-stdlib-interview#Q19]] errors.Join при логировании ошибок."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`log` vs `slog` vs `zap` vs `logrus` — как выбрать логгер?",
+          "options": [
+            {
+              "text": "`log/slog` — новый stdlib-стандарт (Go 1.21+); `zap`/`zerolog` быстрее при high-throughput за счёт zero-allocation API; `logrus` в maintenance mode и для новых проектов не рекомендуется.",
+              "correct": true,
+              "sections": {
+                "explanation": "`slog` покрывает большинство приложений и не тянет внешнюю зависимость. Когда логирование на критическом пути по производительности, берут `zap` (типизированные `zap.String`) или `zerolog` (zero-allocation). `logrus` исторически популярен, но активно не развивается.",
+                "example": "Новый сервис → `slog`; perf-critical путь с миллионами строк в секунду → `zap`/`zerolog`. Базовый `log` (с 2009) — лишь plain-text без структуры.",
+                "when_to_apply": "Дефолт для нового кода — `slog`; `zap`/`zerolog` подключают, когда профайлинг показал, что аллокации логгера реально мешают.",
+                "edge_cases": "Стандартного интерфейса `Logger` в stdlib до `slog` не было — у каждого логгера свой API, и миграция требует правок. `slog.Handler` — шаг к стандартизации backend'ов логирования.",
+                "related": "[[go-stdlib-interview#Q20]] что такое slog; [[go-stdlib-interview#Q17]] context для корреляции; [[go-stdlib-interview#Q11]] strings.Builder при ручном форматировании."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`logrus` — рекомендуемый стандарт для новых Go-проектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`logrus` в maintenance mode (без активной разработки); для нового кода рекомендуют `slog` (stdlib) или `zap`, а `logrus` добавляет лишнюю устаревшую зависимость.",
+                "source_of_confusion": "`logrus` долго был самым популярным structured-логгером, и его по инерции считают стандартом.",
+                "if_it_were_true": "Тогда команда Go не добавляла бы `slog` в stdlib, но именно его теперь рекомендуют по умолчанию.",
+                "how_it_should_be": "Новый проект начинают со `slog`; `logrus` оставляют только в существующих кодовых базах."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Все structured-логгеры совместимы через общий интерфейс `Logger` в stdlib.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Единого интерфейса `Logger` в stdlib до `slog` не было; у каждого логгера свой API, и переход между ними требует изменений кода.",
+                "source_of_confusion": "Логгеры похожи по возможностям, и кажется, что под ними один общий контракт.",
+                "if_it_were_true": "Тогда замена `zap` на `logrus` была бы бесшовной, но на деле меняется весь вызывающий код.",
+                "how_it_should_be": "Совместимость обеспечивают абстракцией над логгером или интерфейсом `slog.Handler`, а не магическим общим `Logger`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`zap` быстрее `slog` примерно в 100 раз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`zap` быстрее `slog` в 2-5 раз на zero-allocation API; разрыв в 100x — миф, и для большинства приложений разница теряется на фоне I/O latency.",
+                "source_of_confusion": "`zap` рекламируют как «самый быстрый», и преимущество гиперболизируют.",
+                "if_it_were_true": "Тогда `slog` был бы непригоден под нагрузкой, но он используется в production без проблем.",
+                "how_it_should_be": "Реальная разница — единицы раз; выбирать `zap` стоит лишь когда профайлинг это оправдывает."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `database/sql` в Go?",
+          "options": [
+            {
+              "text": "`sql.Open` немедленно устанавливает соединение с базой данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sql.Open` не коннектится — он лишь проверяет регистрацию драйвера; реальное соединение создаётся при первом запросе, а проверить связь можно через `db.PingContext`.",
+                "source_of_confusion": "Слово «Open» наводит на мысль о немедленном открытии TCP-соединения.",
+                "if_it_were_true": "Тогда ошибка подключения возвращалась бы из `Open`, но недоступную БД обнаружит только первый запрос или `Ping`.",
+                "how_it_should_be": "После `Open` для проверки доступности вызывают `db.PingContext(ctx)`; само соединение ленивое."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`database/sql` — абстракция; драйвер (`lib/pq`, `mysql`) импортируют blank-импортом (`_`); `sql.Open` не подключается сразу; `rows.Close()` обязателен, чтобы вернуть соединение в pool.",
+              "correct": true,
+              "sections": {
+                "explanation": "Пакет даёт единый интерфейс поверх любого SQL-драйвера. `sql.Open` лишь проверяет регистрацию драйвера — реальное соединение возникает при первом запросе. Для healthcheck'а коннективности используют `db.PingContext(ctx)`.",
+                "example": "`db, _ := sql.Open(\"postgres\", dsn); defer db.Close(); rows, _ := db.Query(\"SELECT id, name FROM users\"); defer rows.Close(); for rows.Next() { rows.Scan(&id, &name) }`.",
+                "when_to_apply": "Любая работа с реляционной БД в Go: `QueryRow` для одной строки, `Query` для множества, `Exec` для INSERT/UPDATE; драйвер выбирают под СУБД.",
+                "edge_cases": "`QueryRow` возвращает `*Row`, ошибку (включая `sql.ErrNoRows`) проверяют после `Scan()`. Параметры (`$1`, `?`) сами защищают от SQL-инъекций — ручное экранирование через `Sprintf` запрещено.",
+                "related": "[[go-stdlib-interview#Q23]] connection pool; [[go-stdlib-interview#Q24]] prepared statements; [[go-stdlib-interview#Q25]] транзакции и Rollback."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`QueryRow` возвращает ошибку только в случае отсутствия строк.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`QueryRow` возвращает `*Row`, а ошибка (включая `sql.ErrNoRows` и другие DB-ошибки) доступна после `Scan()` — её нужно проверять.",
+                "source_of_confusion": "Кажется, что единственная проблема одиночного запроса — «нет данных».",
+                "if_it_were_true": "Тогда после успешного `Scan` ошибок не было бы вовсе, но возможны и таймауты, и ошибки соединения.",
+                "how_it_should_be": "После `QueryRow(...).Scan(...)` всегда проверяют `err`, отличая `sql.ErrNoRows` от прочих ошибок."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Параметры запроса нужно экранировать вручную, чтобы предотвратить SQL-инъекции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`database/sql` с параметрами (`$1`, `?`) сам защищает от инъекций через prepared statements; ручное экранирование — антипаттерн, а `Sprintf` в запросе открывает дыру.",
+                "source_of_confusion": "Привычка из конкатенации строк в SQL заставляет «подстраховаться» ручным экранированием.",
+                "if_it_were_true": "Тогда параметризованные запросы были бы небезопасны, но они как раз и есть основной механизм защиты.",
+                "how_it_should_be": "Значения всегда передают параметрами плейсхолдеров; строку запроса никогда не собирают через `Sprintf`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Connection pool в Go — как устроен в `database/sql`?",
+          "options": [
+            {
+              "text": "`SetMaxOpenConns(0)` означает отсутствие соединений — полностью отключённый pool.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`0` означает unlimited (без лимита); это рискует упереться в `max_connections` Postgres и получить connection refused.",
+                "source_of_confusion": "Ноль интуитивно читается как «ничего», то есть как выключение пула.",
+                "if_it_were_true": "Тогда `SetMaxOpenConns(0)` блокировал бы все запросы, но на деле он снимает ограничение.",
+                "how_it_should_be": "Для безлимита оставляют `0` осознанно; чтобы ограничить — задают конкретное число под `max_connections` БД."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Каждый вызов `db.Query` создаёт новое соединение; pool используется только для транзакций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pool обслуживает все операции — `Query`, `Exec`, `QueryRow`, а не только транзакции; иначе каждый запрос открывал бы новое TCP-соединение.",
+                "source_of_confusion": "Транзакции явно «держат» соединение, и pool ассоциируют только с ними.",
+                "if_it_were_true": "Тогда обычные SELECT'ы постоянно создавали бы новые соединения и давали огромный overhead.",
+                "how_it_should_be": "Все операции берут соединение из общего пула; транзакция лишь удерживает его на время `tx`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`database/sql` имеет встроенный pool; `db` — это handle, а не соединение; незакрытые `Rows` держат соединение и приводят к pool exhaustion. Размер регулируют `SetMaxOpenConns`/`SetMaxIdleConns`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`db` управляет пулом: соединения автоматически берутся и возвращаются. Лимиты настраивают через `SetMaxOpenConns`, `SetMaxIdleConns`, `SetConnMaxLifetime`. За состоянием пула следят по `db.Stats()`.",
+                "example": "`db.SetMaxOpenConns(25); db.SetMaxIdleConns(5); db.SetConnMaxLifetime(5*time.Minute)` — и обязательный `defer rows.Close()` после каждого `Query`.",
+                "when_to_apply": "Настройку лимитов делают под ожидаемую нагрузку и лимит `max_connections` СУБД; мониторят `db.Stats()`, чтобы ловить нехватку соединений.",
+                "edge_cases": "`SetMaxOpenConns(0)` означает unlimited, а не отключённый pool — без лимита можно упереться в `max_connections` Postgres. `MaxIdleConns` автоматически ограничивается значением `MaxOpenConns`.",
+                "related": "[[go-stdlib-interview#Q22]] как работает database/sql; [[go-stdlib-interview#Q24]] prepared statements; [[go-stdlib-interview#Q25]] транзакции."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`SetMaxIdleConns` больше `SetMaxOpenConns` — допустимая и осмысленная настройка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MaxIdleConns` автоматически ограничивается значением `MaxOpenConns`; задавать idle > open избыточно (не падает, но эффективный лимит = min из двух).",
+                "source_of_confusion": "Параметры выглядят независимыми, и кажется, что idle можно задать выше open.",
+                "if_it_were_true": "Тогда реально удерживалось бы больше idle-соединений, чем открытых, что физически невозможно.",
+                "how_it_should_be": "`MaxIdleConns` держат не больше `MaxOpenConns`; лишнее значение просто игнорируется."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Prepared statements в Go — зачем нужны и когда явный `Prepare`?",
+          "options": [
+            {
+              "text": "Явный `Prepare` обязателен для защиты от SQL-инъекций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`db.Query($1, param)` уже использует prepared statements внутренне, и явный `Prepare` для защиты не нужен — он лишь добавит лишний round-trip к БД.",
+                "source_of_confusion": "Связь «prepared statement = безопасность» переносят на обязательность ручного `Prepare`.",
+                "if_it_were_true": "Тогда параметризованный `db.Query` без `Prepare` был бы уязвим, но он защищён точно так же.",
+                "how_it_should_be": "От инъекций защищают параметры плейсхолдеров; явный `Prepare` — это оптимизация, а не требование безопасности."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Prepared statements несовместимы с connection pool: `stmt` привязан к конкретному соединению.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`database/sql` прозрачно re-prepare'ит statement на другом соединении при необходимости — привязка к одному коннекту не нужна.",
+                "source_of_confusion": "На уровне протокола БД statement действительно живёт на соединении, и это переносят на абстракцию Go.",
+                "if_it_were_true": "Тогда `stmt` нельзя было бы использовать в многопоточном сервисе с пулом, но он работает прозрачно.",
+                "how_it_should_be": "Управление привязкой берёт на себя `database/sql`; разработчику достаточно держать один `*sql.Stmt`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`stmt.QueryRow` автоматически освобождает statement после выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`stmt.Close()` вызывают явно (через `defer`); без него prepared statement остаётся на сервере, и многие незакрытые `stmt` дают server-side resource exhaustion.",
+                "source_of_confusion": "Кажется, что после выполнения запроса связанный ресурс освобождается сам.",
+                "if_it_were_true": "Тогда `defer stmt.Close()` был бы не нужен, но без него серверные ресурсы утекают.",
+                "how_it_should_be": "Сразу после `Prepare` ставят `defer stmt.Close()`, чтобы освободить statement на сервере."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Prepared statement компилируется один раз и выполняется многократно; `db.Query`/`db.Exec` с параметрами используют их внутренне автоматически, поэтому явный `Prepare` нужен лишь для часто повторяемых hot-запросов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Преимущества — защита от SQL-инъекций, однократная компиляция запроса и скорость для повторов. Для не повторяющихся запросов хватает `db.Query` с параметрами; явный `stmt` оправдан, когда один и тот же запрос гоняют в цикле.",
+                "example": "`stmt, _ := db.Prepare(\"SELECT name FROM users WHERE id = $1\"); defer stmt.Close(); for _, id := range ids { stmt.QueryRow(id).Scan(&name) }`.",
+                "when_to_apply": "Явный `Prepare` — для горячих повторяемых запросов (цикл по множеству id); для разовых запросов достаточно `db.Query` с параметрами.",
+                "edge_cases": "`stmt.Close()` нужно вызывать явно (через `defer`), иначе prepared statement останется на сервере и накопит resource exhaustion. `database/sql` сам re-prepare'ит statement на другом соединении при необходимости.",
+                "related": "[[go-stdlib-interview#Q22]] базовый database/sql; [[go-stdlib-interview#Q23]] connection pool; [[go-stdlib-interview#Q25]] транзакции."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Транзакции и deferred Rollback в `database/sql` — какая идиома?",
+          "options": [
+            {
+              "text": "Идиома: `defer tx.Rollback()` сразу после `Begin`. Если `Commit` выполнен, `Rollback` становится no-op; если из функции случился ранний return из-за ошибки — `Rollback` откатит транзакцию.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Rollback` после успешного `Commit` возвращает `sql.ErrTxDone` и ничего не ломает — это и делает паттерн с `defer` безопасным. В конце явно вызывают `tx.Commit()`; при любой ошибке по пути сработает отложенный откат.",
+                "example": "`tx, _ := db.BeginTx(ctx, nil); defer tx.Rollback(); if _, err := tx.Exec(...); err != nil { return err }; return tx.Commit()`.",
+                "when_to_apply": "Любая многошаговая транзакция: `BeginTx` с context для таймаута, `defer Rollback` как safety net, явный `Commit` в конце успешного пути.",
+                "edge_cases": "`BeginTx(ctx, nil)` создаёт read-write транзакцию с дефолтным уровнем изоляции БД; для read-only нужен `&sql.TxOptions{ReadOnly: true}`. При panic Go сам транзакцию не откатывает — для надёжности нужен `recover` в defer.",
+                "related": "[[go-stdlib-interview#Q22]] database/sql; [[go-stdlib-interview#Q23]] connection pool; [[go-stdlib-interview#Q18]] errors.Is для sql.ErrTxDone."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`tx.Rollback()` после успешного `Commit` вызывает ошибку, ломающую программу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Rollback` после `Commit` — no-op, он возвращает `sql.ErrTxDone`; именно поэтому идиома `defer tx.Rollback()` безопасна.",
+                "source_of_confusion": "Кажется логичным, что откат уже завершённой транзакции должен быть ошибкой.",
+                "if_it_were_true": "Тогда `defer tx.Rollback()` требовал бы флага `if !committed`, но дизайн API делает это излишним.",
+                "how_it_should_be": "Паттерн `defer tx.Rollback()` ставят сразу после `Begin`; на успешном пути откат тихо ничего не делает."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`db.Exec` внутри транзакции автоматически откатится при panic.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Go runtime не откатывает транзакции при panic; откат сделает `defer tx.Rollback()`, если defer успеет выполниться, либо `recover` в defer.",
+                "source_of_confusion": "Хочется верить, что panic «безопасно» отменит незавершённую работу с БД.",
+                "if_it_were_true": "Тогда о Rollback при panic можно было бы не думать, но без defer/recover транзакция останется открытой.",
+                "how_it_should_be": "Надёжность при panic дают `defer tx.Rollback()` и при необходимости `recover` в этом же defer."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`BeginTx(ctx, nil)` по умолчанию создаёт read-only транзакцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`nil` options = дефолт (read-write, уровень изоляции по умолчанию БД); для read-only передают `&sql.TxOptions{ReadOnly: true}`.",
+                "source_of_confusion": "`nil` воспринимают как «минимальные права», то есть как read-only.",
+                "if_it_were_true": "Тогда `tx.Exec(\"INSERT ...\")` падал бы по умолчанию, но он спокойно выполняет запись.",
+                "how_it_should_be": "Read-only режим включают явно через `TxOptions{ReadOnly: true}`; `nil` означает обычную read-write транзакцию."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`io.Reader` и `io.Writer` — что это за интерфейсы и почему они важны?",
+          "options": [
+            {
+              "text": "`io.Reader` гарантирует, что `Read` прочитает ровно `len(p)` байт за вызов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Read` может вернуть `n < len(p)` без ошибки (partial read); для полного чтения нужен цикл или `io.ReadFull`.",
+                "source_of_confusion": "Интуитивно ждут, что `Read(p)` заполнит весь буфер `p` целиком.",
+                "if_it_were_true": "Тогда одного `Read` хватало бы для любого объёма, но из сети часто приходит часть данных, и буфер не полон.",
+                "how_it_should_be": "Чтение делают в цикле до EOF или используют `io.ReadFull`/`io.ReadAll`, не полагаясь на полный буфер за раз."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`io.Reader` (метод `Read`) и `io.Writer` (метод `Write`) — фундаментальные интерфейсы stdlib; их реализуют файлы, буферы, HTTP body, и они позволяют строить composable pipeline через `io.Copy`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это самые важные интерфейсы в стандартной библиотеке: единый контракт чтения/записи делает компоненты взаимозаменяемыми. `os.File` и `bytes.Buffer` реализуют оба; `http.Response.Body` — только Reader; `bufio` добавляет буферизацию.",
+                "example": "Функцию проектируют принимать `io.Reader` вместо `[]byte` ради streaming; `io.Copy(dst, src)` копирует без лишних аллокаций; `io.TeeReader` дублирует поток для логирования.",
+                "when_to_apply": "Везде, где работают с потоками данных: файлы, сеть, сжатие, шифрование — принимают/возвращают `io.Reader`/`io.Writer`, а не конкретные типы.",
+                "edge_cases": "`Read` может вернуть `n < len(p)` без ошибки (partial read) — для гарантированного чтения берут `io.ReadFull`. `bufio.Writer` буферизует и требует явный `Flush()`, иначе теряются последние байты.",
+                "related": "[[go-stdlib-interview#Q12]] bytes.Buffer как Reader+Writer; [[go-stdlib-interview#Q9]] streaming Decoder; [[go-stdlib-interview#Q27]] io.ReadAll и ioutil."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`http.Response.Body` реализует `io.ReadWriter` — в него можно и читать, и писать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Response.Body` — это `io.ReadCloser` (Reader + Closer); записать в него нельзя; для тела запроса берут `strings.NewReader` или `bytes.Buffer`.",
+                "source_of_confusion": "Body ассоциируется с «телом сообщения», и кажется, что в него можно писать ответ.",
+                "if_it_were_true": "Тогда `Body.Write(...)` формировал бы ответ, но Body предназначен только для чтения и закрытия.",
+                "how_it_should_be": "Из `Response.Body` читают и затем `Close`; для исходящего тела используют отдельный Reader."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`bufio.Writer` немедленно пишет в нижележащий Writer при каждом вызове `Write`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`bufio.Writer` буферизует и сбрасывает данные пакетами; нужен явный `Flush()`, иначе последние байты потеряются.",
+                "source_of_confusion": "Слово `Write` наводит на мысль о немедленной записи, хотя смысл `bufio` — отложить её.",
+                "if_it_were_true": "Тогда буферизация не давала бы выигрыша, но именно батчинг записей и есть цель `bufio`.",
+                "how_it_should_be": "После записи через `bufio.Writer` обязательно вызывают `Flush()` (часто через `defer`)."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Deprecation `io/ioutil` (Go 1.16+) — что устарело и чем заменить?",
+          "options": [
+            {
+              "text": "`ioutil` удалён в Go 1.18, и его использование вызывает ошибку компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ioutil` deprecated, но не удалён; существующий код продолжает компилироваться, потому что Go придерживается обратной совместимости.",
+                "source_of_confusion": "Слово deprecated смешивают с removed, отсюда вывод про compile error.",
+                "if_it_were_true": "Тогда апгрейд на 1.18 ломал бы массу старого кода, но Go так совместимость не нарушает.",
+                "how_it_should_be": "Старый код с `ioutil` работает; его мигрируют добровольно, а не из-за поломки сборки."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`io.ReadAll` и `ioutil.ReadAll` имеют разные сигнатуры и разное поведение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`io.ReadAll` — прямое переименование `ioutil.ReadAll` с идентичной сигнатурой `(r io.Reader) ([]byte, error)`; поведение то же.",
+                "source_of_confusion": "Перенос в другой пакет создаёт впечатление, что функцию заодно переписали.",
+                "if_it_were_true": "Тогда миграция требовала бы правки логики, но это чистое переименование без изменений.",
+                "how_it_should_be": "`ioutil.ReadAll` меняют на `io.ReadAll` один-в-один, не трогая остальной код."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`io/ioutil` deprecated с Go 1.16; функции переехали в пакеты `os` и `io` (`os.ReadFile`, `io.ReadAll`, `os.CreateTemp`); старый код всё ещё компилируется, но помечен deprecated.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это переименование без изменения логики: `ioutil.ReadFile`→`os.ReadFile`, `ioutil.ReadAll`→`io.ReadAll`, `ioutil.NopCloser`→`io.NopCloser`. Сигнатуры идентичны, замена прямая. `go vet` предупреждает об устаревшем использовании.",
+                "example": "Вместо `ioutil.ReadFile(path)` пишут `os.ReadFile(path)`; вместо `ioutil.TempFile` — `os.CreateTemp`; вместо `ioutil.ReadAll(r)` — `io.ReadAll(r)`.",
+                "when_to_apply": "В новом коде сразу используют `os`/`io`-варианты; старый код мигрируют постепенно, чтобы убрать deprecation-warning'и.",
+                "edge_cases": "`ioutil` deprecated, но не удалён — старый код продолжает компилироваться, ведь Go держит обратную совместимость. `io.ReadAll` — прямое переименование `ioutil.ReadAll` с той же сигнатурой.",
+                "related": "[[go-stdlib-interview#Q26]] io.Reader/Writer; [[go-stdlib-interview#Q28]] go:embed вместо чтения файлов; [[go-stdlib-interview#Q9]] streaming I/O."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Deprecation `ioutil` влияет на производительность: использование старого варианта медленнее нового.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Функции функционально идентичны и одинаковы по скорости; deprecated-код — это tech debt и предупреждения линтера, а не потеря perf.",
+                "source_of_confusion": "Deprecated иногда ассоциируют с «устаревшей медленной реализацией».",
+                "if_it_were_true": "Тогда замена дала бы прирост скорости, но разница лишь в имени пакета и warning'ах.",
+                "how_it_should_be": "Мигрируют ради чистоты и предупреждений линтера; на производительность выбор варианта не влияет."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`//go:embed` (Go 1.16+) — как встраивать статические файлы в бинарь?",
+          "options": [
+            {
+              "text": "`//go:embed` обновляет встроенные файлы в runtime без перекомпиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`embed` встраивает данные на этапе компиляции; изменения файлов в runtime не отражаются — для hot-reload нужен `os.ReadFile`.",
+                "source_of_confusion": "Кажется, что переменная «ссылается» на файл и подхватывает его изменения вживую.",
+                "if_it_were_true": "Тогда правка `config.yaml` рядом с бинарём меняла бы поведение, но встроенное содержимое зафиксировано в сборке.",
+                "how_it_should_be": "Для динамически меняющихся файлов читают их через `os.ReadFile`; `embed` — для неизменного контента."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`//go:embed` поддерживает удалённые URL для загрузки ресурсов при запуске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`embed` работает только с локальными файлами относительно `.go`-файла; никаких URL — для удалённых ресурсов нужен HTTP-клиент на старте.",
+                "source_of_confusion": "Слово «embed» обобщают до «подтянуть откуда угодно», включая сеть.",
+                "if_it_were_true": "Тогда `//go:embed https://...` скачивал бы файл при сборке, но синтаксис допускает только локальные пути.",
+                "how_it_should_be": "Встраивают только локальные файлы; удалённые ресурсы загружают кодом во время запуска."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`//go:embed` пропорционально увеличивает время запуска бинаря размеру встроенных файлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сам бинарь становится больше, но startup-время не растёт пропорционально: файлы лежат в памяти образа и доступны без I/O при ссылке на переменную.",
+                "source_of_confusion": "Логично предположить, что «больше данных = дольше грузить», как при чтении с диска.",
+                "if_it_were_true": "Тогда крупная фронтенд-статика заметно тормозила бы старт, но доступ к ней не требует чтения файлов.",
+                "how_it_should_be": "Встраивание увеличивает размер артефакта, но не добавляет I/O на старте; данные уже в памяти."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`//go:embed` встраивает файлы в бинарь на этапе компиляции: `embed.FS` для директорий, `[]byte`/`string` для одиночных файлов. Это даёт single-binary деплой без внешних файлов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Директива пишется прямо над package-level переменной (`//go:embed templates/*.html` над `var templates embed.FS`). Встроенную FS можно сразу отдавать через `http.FileServer(http.FS(...))`. Паттерны поддерживают globbing.",
+                "example": "`//go:embed config.yaml` над `var configData []byte`; `//go:embed templates/*.html` над `var templates embed.FS`; затем `fs.ReadDir(templates, \"templates\")`.",
+                "when_to_apply": "SQL-миграции, HTML-шаблоны, конфиги и фронтенд-статика, которые хотят упаковать в один исполняемый файл без раскладки внешних ресурсов рядом.",
+                "edge_cases": "`embed` работает только с локальными файлами относительно `.go` и только с `var` на package level — никаких URL. Встраивание не пропорционально замедляет startup: файлы лежат в памяти бинаря и доступны без I/O.",
+                "related": "[[go-stdlib-interview#Q1]] http.FileServer для статики; [[go-stdlib-interview#Q27]] os.ReadFile vs embed; [[go-stdlib-interview#Q26]] io.Reader/FS."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "`sort.Slice` vs `sort.Sort` — чем отличаются и что предпочесть в Go 1.21+?",
+          "options": [
+            {
+              "text": "`sort.Slice` — closure-based, проще: передаёшь функцию `less(i, j)`. `sort.Sort` — interface-based, требует реализовать `Len`/`Swap`/`Less`. В Go 1.21+ для большинства случаев предпочитают `slices.Sort`/`slices.SortFunc`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`sort.Slice` удобен для ad-hoc сортировки прямо на месте, но чуть медленнее из-за overhead замыкания. `sort.Sort` — старый способ для переиспользуемых library-типов. Современный generic-API `slices.SortFunc` типобезопасен и идиоматичнее.",
+                "example": "`sort.Slice(people, func(i, j int) bool { return people[i].Age < people[j].Age })` против объявления типа `ByAge` с тремя методами для `sort.Sort`.",
+                "when_to_apply": "`sort.Slice` — для одноразовой сортировки; `sort.Sort` — когда нужен переиспользуемый тип с порядком; `slices.SortFunc` с `cmp.Compare` — для нового типизированного кода.",
+                "edge_cases": "`sort.Slice` нестабильна — для сохранения порядка равных элементов берут `sort.SliceStable`. Обе сортируют срез in-place (меняют оригинал), нового среза не возвращают; для копии делают `slices.Clone` заранее.",
+                "related": "[[go-stdlib-interview#Q30]] пакет slices; [[go-stdlib-interview#Q12]] bytes.Buffer; [[go-stdlib-interview#Q13]] сравнение значений."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`sort.Slice` гарантирует стабильную сортировку — равные элементы сохраняют исходный порядок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sort.Slice` нестабильна; для стабильной сортировки нужен `sort.SliceStable`, иначе порядок равных элементов непредсказуем.",
+                "source_of_confusion": "Хочется, чтобы сортировка «по умолчанию» сохраняла порядок, как во многих языках по умолчанию stable.",
+                "if_it_were_true": "Тогда сортировка по одному полю сохраняла бы порядок по другому, но `sort.Slice` этого не гарантирует.",
+                "how_it_should_be": "Когда важна стабильность, используют `sort.SliceStable`; `sort.Slice` — когда порядок равных не важен."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`sort.Sort` всегда быстрее `sort.Slice`, поэтому его и следует предпочитать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sort.Sort` может быть чуть быстрее из-за отсутствия closure overhead, но разница минимальна; `sort.Slice` идиоматичнее для ad-hoc сортировок.",
+                "source_of_confusion": "Interface-based вариант кажется «более низкоуровневым» и потому заведомо быстрым.",
+                "if_it_were_true": "Тогда `sort.Slice` не имел бы смысла, но его добавили ради краткости при сопоставимой скорости.",
+                "how_it_should_be": "Выбирают по удобству: `sort.Slice`/`slices.SortFunc` для разовых задач; микрооптимизация через `sort.Sort` редко оправдана."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`sort.Slice` не изменяет оригинальный slice, а возвращает новый отсортированный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`sort.Slice` сортирует slice in-place (меняет оригинал) и ничего не возвращает; для копии делают `slices.Clone` перед сортировкой.",
+                "source_of_confusion": "Многие функции в других языках возвращают новую коллекцию, и это ожидание переносят на Go.",
+                "if_it_were_true": "Тогда исходный срез оставался бы нетронутым, но после `sort.Slice` он уже отсортирован.",
+                "how_it_should_be": "Сортировка идёт по месту; если оригинал нужен, его сначала клонируют через `slices.Clone`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Пакет `slices` в Go 1.21+ — что это и зачем?",
+          "options": [
+            {
+              "text": "`slices.Sort` работает для всех типов, включая struct, без передачи компаратора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`slices.Sort` работает только для ordered-типов (int, string, float); для struct нужен `slices.SortFunc` с кастомным компаратором, иначе compile error.",
+                "source_of_confusion": "Generic-функция кажется «универсальной для любого типа», что распространяют и на struct.",
+                "if_it_were_true": "Тогда `slices.Sort([]Person{...})` компилировался бы, но без `cmp.Ordered` constraint он не примет struct.",
+                "how_it_should_be": "Для упорядоченных скаляров берут `slices.Sort`; для struct и кастомного порядка — `slices.SortFunc`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`slices` (Go 1.21+) — generic, типобезопасный пакет с операциями `Sort`, `Contains`, `Min`, `Max`, `Clone` и др.; он заменяет `sort.Slice` и ручные циклы в большинстве случаев, работая без рефлексии.",
+              "correct": true,
+              "sections": {
+                "explanation": "Благодаря дженерикам функции типобезопасны и не используют reflection: `slices.Sort` для ordered-типов, `slices.SortFunc` с `cmp.Compare` для произвольных. Аналогичный пакет `maps` даёт `Keys`, `Values`, `Equal`, `Clone` для map.",
+                "example": "`slices.Contains([]string{\"a\",\"b\"}, \"a\")` → true; `slices.Sort([]int{3,1,2})`; `slices.SortFunc(people, func(a, b Person) int { return cmp.Compare(a.Age, b.Age) })`.",
+                "when_to_apply": "Новый код на Go 1.21+: `slices.Sort` вместо `sort.Slice`, `slices.Contains` вместо ручного range-цикла, `slices.Clone` для копии среза.",
+                "edge_cases": "`slices.Sort` работает только для ordered-типов (int, string, float); для struct нужен `slices.SortFunc` с компаратором, иначе compile error. С Go 1.23 `maps.Keys` возвращает `iter.Seq[K]`, а не `[]K` — для среза берут `slices.Collect`.",
+                "related": "[[go-stdlib-interview#Q29]] sort.Slice vs sort.Sort; [[go-stdlib-interview#Q13]] сравнение через cmp; [[go-stdlib-interview#Q12]] работа с коллекциями."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Пакет `slices` устарел с Go 1.22 и заменён на `go/slices`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пакета `go/slices` не существует; `slices` — актуальный стандартный пакет Go 1.21+, и он не deprecated.",
+                "source_of_confusion": "Существуют пакеты с префиксом `go/` (например `go/ast`), и по аналогии выдумывают `go/slices`.",
+                "if_it_were_true": "Тогда импорт `slices` давал бы deprecation-warning, но это полноценный действующий пакет.",
+                "how_it_should_be": "Используют именно `slices` (и `maps`); никакого `go/slices` в стандартной библиотеке нет."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`maps.Keys` возвращает `[]K` — готовый срез ключей map.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С Go 1.23 `maps.Keys` возвращает `iter.Seq[K]` (итератор, не срез); для среза оборачивают в `slices.Collect(maps.Keys(m))`.",
+                "source_of_confusion": "В большинстве языков аналог `keys()` отдаёт массив/список, и это ждут от Go.",
+                "if_it_were_true": "Тогда `ks := maps.Keys(m)` давал бы `[]K`, но присваивание срезу даст compile error на `iter.Seq`.",
+                "how_it_should_be": "Итератор `maps.Keys` материализуют в срез через `slices.Collect`, когда действительно нужен `[]K`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

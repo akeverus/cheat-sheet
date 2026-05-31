@@ -1,0 +1,1625 @@
+{
+  "topic_slug": "go-modules-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Go module?",
+          "options": [
+            {
+              "text": "Go module — это коллекция Go-пакетов с файлом `go.mod` в корне, имеющая уникальный module path и собственное versioning. Корень модуля — директория с `go.mod`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Модуль — единица версионирования и распространения: один `go.mod` описывает целое дерево пакетов, а его `module path` обычно совпадает с import path вроде `github.com/myorg/myapp`.",
+                "example": "Команда `go mod init github.com/myorg/myapp` создаёт `go.mod`, после чего каталоги `handler/`, `service/` внутри становятся пакетами одного модуля.",
+                "when_to_apply": "Применять каждый раз, когда начинаешь новый Go-проект: первый шаг — `go mod init` с реальным URL репозитория, чтобы зависимости разрешались детерминированно.",
+                "edge_cases": "Один модуль содержит много пакетов, но обычно в репозитории один `go.mod`; редкое исключение — multi-module monorepo с несколькими `go.mod`.",
+                "related": "[[go-modules-interview#Q3]] что лежит внутри go.mod; [[go-modules-interview#Q5]] команда go mod init; [[go-modules-interview#Q21]] соглашения по module path."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Go module — это отдельный `.go` файл с функцией `main` в `package main`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отдельный файл с `main` — это лишь точка входа исполняемого пакета, а модуль — целое дерево пакетов с `go.mod` в корне.",
+                "source_of_confusion": "Слова «модуль» и «main-файл» оба звучат как «единица программы», поэтому их легко перепутать на старте.",
+                "if_it_were_true": "Если бы это было так, в проекте не было бы общего `go.mod` и dependency graph, и `go get` некуда было бы записывать версии.",
+                "how_it_should_be": "Модуль — это `go.mod` плюс module path плюс граф зависимостей; `main.go` — лишь один файл внутри такого модуля."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Go module — это директория с `*.go` файлами одного пакета (package).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Директория с файлами одного пакета — это package, а модуль объединяет много таких пакетов под одним `go.mod`.",
+                "source_of_confusion": "Module и package — соседние уровни иерархии, и новички часто считают их синонимами.",
+                "if_it_were_true": "Если бы модуль равнялся пакету, то проект из десяти пакетов требовал бы десять `go.mod`, чего на практике не бывает.",
+                "how_it_should_be": "Один модуль содержит множество пакетов; граница модуля — `go.mod`, граница пакета — каталог с общим `package`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Go module — это файл `go.sum` с криптографическими хешами всех зависимостей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go.sum` хранит контрольные суммы зависимостей и не определяет модуль; определяет модуль файл `go.mod` с его module path.",
+                "source_of_confusion": "Оба файла лежат в корне рядом, поэтому их роли смешивают.",
+                "if_it_were_true": "Если бы модуль определялся через `go.sum`, то без зависимостей (пустой `go.sum`) модуля не существовало бы, что неверно.",
+                "how_it_should_be": "Модуль задаётся `go.mod`; `go.sum` лишь добавляет integrity-проверку поверх уже объявленного модуля."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем заменили GOPATH на модули?",
+          "options": [
+            {
+              "text": "`GOPATH` заменили, потому что он не поддерживал параллельную сборку нескольких пакетов одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GOPATH` собирал пакеты нормально; настоящая проблема была в отсутствии версионирования и воспроизводимости, а не в параллелизме сборки.",
+                "source_of_confusion": "Медленные сборки в больших проектах создают впечатление, будто дело в parallelism, хотя причина в другом.",
+                "if_it_were_true": "Если бы причина была в parallelism, модули ускоряли бы компиляцию, но они решают управление версиями, а не скорость билда.",
+                "how_it_should_be": "Модули ввели именно для версионирования и reproducible builds; скорость компиляции — отдельная история кеша сборки."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`GOPATH` требовал сторонних инструментов (`dep`, `glide`) и не давал воспроизводимых сборок: у каждого разработчика могла оказаться своя версия зависимостей, а `go get` всегда тянул master.",
+              "correct": true,
+              "sections": {
+                "explanation": "До модулей не было версионирования: одна версия каждой зависимости на всю систему в `$GOPATH/src`, конфликты между проектами и никакой гарантии одинакового билда у разных людей.",
+                "example": "Модули добавили точные версии в `go.mod`, хеш-проверку через `go.sum` и pseudo-versions, так что `go build` даёт идентичный результат у всех.",
+                "when_to_apply": "Объяснять это нужно, когда обосновываешь ценность `go.mod`/`go.sum`: они закрыли дыру отсутствия версионирования и воспроизводимости.",
+                "edge_cases": "Любая директория теперь может быть проектом (не только в `GOPATH`), и у каждого проекта свой dependency graph — это и было главным выигрышем.",
+                "related": "[[go-modules-interview#Q4]] go.sum и воспроизводимость; [[go-modules-interview#Q1]] что такое модуль; [[go-modules-interview#Q11]] как MVS делает выбор версий детерминированным."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`GOPATH` заменили, потому что он не работал на Windows из-за путей с обратным слешем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GOPATH` работал на всех ОС; реальная мотивация — отсутствие версионирования и воспроизводимых сборок, а не специфика Windows-путей.",
+                "source_of_confusion": "Проблемы с путями на Windows заметны и запоминаются, поэтому их ошибочно считают причиной перехода.",
+                "if_it_were_true": "Если бы дело было в слешах, хватило бы патча обработки путей, а не целой новой системы зависимостей.",
+                "how_it_should_be": "Модули появились ради версионирования и reproducibility; кроссплатформенность `GOPATH` отдельной проблемой не была."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`GOPATH` заменили, потому что он совсем не поддерживал приватные репозитории.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приватные репозитории при `GOPATH` использовались (через git-доступ); главной болью было отсутствие версионирования и воспроизводимости.",
+                "source_of_confusion": "Сложности с приватными модулями действительно были, и их легко принять за основную причину.",
+                "if_it_were_true": "Если бы причина сводилась к приватным репо, не понадобились бы `go.sum` и MVS, решающие именно версии и integrity.",
+                "how_it_should_be": "Приватные модули — лишь один из мотивов; ядро реформы — точные версии и одинаковые сборки у всех разработчиков."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "go.mod — что в нём содержится?",
+          "options": [
+            {
+              "text": "В `go.mod` хранится список всех `.go` файлов проекта с их build tags.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go.mod` не перечисляет файлы; набор файлов Go определяет сам, обходя каталоги, а `go.mod` описывает module path и зависимости.",
+                "source_of_confusion": "Манифесты в других экосистемах иногда перечисляют файлы, поэтому ждут того же от `go.mod`.",
+                "if_it_were_true": "Если бы файлы перечислялись вручную, добавление нового `.go` требовало бы правки `go.mod`, чего в Go не происходит.",
+                "how_it_should_be": "`go.mod` содержит директивы `module`, `go`, `require`, `replace`, `exclude`; build tags задаются через `//go:build` в самих файлах."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В `go.mod` лежат хеши всех зависимостей для проверки целостности при сборке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хеши хранит `go.sum`, а не `go.mod`; `go.mod` описывает версии зависимостей и переопределения, но не контрольные суммы.",
+                "source_of_confusion": "Оба файла относятся к зависимостям и лежат рядом, поэтому их содержимое смешивают.",
+                "if_it_were_true": "Если бы хеши были в `go.mod`, файл `go.sum` оказался бы не нужен, но он существует именно для integrity.",
+                "how_it_should_be": "`go.mod` — это manifest версий; integrity-проверку обеспечивает отдельный `go.sum` с хешами `h1:` и `/go.mod`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В `go.mod` хранятся module path, минимальная версия Go и директивы `require`/`replace`/`exclude` с версиями зависимостей (как direct, так и indirect).",
+              "correct": true,
+              "sections": {
+                "explanation": "Это manifest зависимостей: `module` задаёт путь, `go 1.21` — минимальную версию toolchain, `require` перечисляет зависимости с точными версиями, а `// indirect` помечает транзитивные.",
+                "example": "Типичный файл содержит `require github.com/gorilla/mux v1.8.0`, может иметь `replace github.com/old => github.com/new v1.2.3` и `exclude github.com/old/buggy v1.0.0`.",
+                "when_to_apply": "Редактировать `go.mod` (обычно через команды) нужно при каждом добавлении или удалении зависимости и при переопределениях источника.",
+                "edge_cases": "Транзитивные зависимости помечаются `// indirect`; ими управляет `go mod tidy`, и вручную их трогать не следует.",
+                "related": "[[go-modules-interview#Q4]] зачем нужен go.sum; [[go-modules-interview#Q12]] директива replace; [[go-modules-interview#Q26]] что значит indirect."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В `go.mod` хранится конфигурация компилятора: `GOOS`, `GOARCH`, `CGO_ENABLED`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go.mod` не задаёт параметры компиляции; `GOOS`/`GOARCH`/`CGO_ENABLED` — это переменные окружения и build constraints, а не директивы модуля.",
+                "source_of_confusion": "И то, и другое влияет на сборку, поэтому конфигурацию окружения путают с манифестом модуля.",
+                "if_it_were_true": "Если бы эти переменные жили в `go.mod`, кросс-компиляция фиксировалась бы в репозитории, а её, наоборот, задают на CI.",
+                "how_it_should_be": "Build constraints идут в файлах через `//go:build`, а `GOOS`/`GOARCH` — через окружение; `go.mod` к ним отношения не имеет."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "go.sum — для чего нужен?",
+          "options": [
+            {
+              "text": "`go.sum` фиксирует точные версии зависимостей как lock-файл в `npm`/`yarn`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роль lock-файла (фиксация выбранных версий) выполняет секция `require` в `go.mod`; `go.sum` — про integrity, а не про version pinning.",
+                "source_of_confusion": "В других экосистемах lock-файл и checksum-файл — одно и то же, отсюда перенос ожиданий на `go.sum`.",
+                "if_it_were_true": "Если бы `go.sum` фиксировал версии, удаление из него меняло бы выбранную версию, но он лишь сверяет хеши уже выбранного.",
+                "how_it_should_be": "Версии выбираются `go.mod` + MVS; `go.sum` подтверждает, что скачанный код соответствует ожидаемому хешу."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`go.sum` разрешает конфликты версий между транзитивными зависимостями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Конфликты версий разрешает алгоритм MVS на основе `go.mod`; `go.sum` лишь проверяет, что скачанное совпадает с ожидаемым хешем.",
+                "source_of_confusion": "И разрешение версий, и проверка хешей связаны с зависимостями, поэтому их функции смешивают.",
+                "if_it_were_true": "Если бы `go.sum` выбирал версии, его правка влияла бы на dependency graph, но она ломает только integrity-проверку.",
+                "how_it_should_be": "Выбор версий — это MVS; `go.sum` — tamper protection: расхождение хеша даёт ошибку сборки."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`go.sum` описывает API каждой зависимости для статического анализа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go.sum` содержит только криптографические хеши, а не описания API; static analysis работает с исходниками, а не с этим файлом.",
+                "source_of_confusion": "Слово «sum» наводит на мысль о сводке/описании, хотя речь о контрольных суммах.",
+                "if_it_were_true": "Если бы там был API, файл рос бы при изменении сигнатур функций, но он меняется только при смене версий зависимостей.",
+                "how_it_should_be": "`go.sum` хранит хеши `h1:` и `/go.mod` для проверки целостности; описания API там нет вовсе."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`go.sum` хранит криптографические хеши (`h1:` SHA-256) всех зависимостей, включая transitive, для защиты от подмены кода при сборке: при расхождении хеша `go build`/`download` падает с ошибкой.",
+              "correct": true,
+              "sections": {
+                "explanation": "Файл обеспечивает воспроизводимость и защиту от supply chain attacks: даже если репозиторий зависимости подменят, несовпадение хеша остановит сборку.",
+                "example": "Строка вида `github.com/gorilla/mux v1.8.0 h1:...` фиксирует хеш кода, а парная `/go.mod h1:...` — хеш самого манифеста зависимости.",
+                "when_to_apply": "Коммитить `go.sum` в git нужно вместе с `go.mod`, а редактировать руками — нет: он обновляется автоматически командами.",
+                "edge_cases": "Хеши покрывают и indirect-зависимости; их исключение было бы дырой в безопасности, поэтому tidy всегда держит их в `go.sum`.",
+                "related": "[[go-modules-interview#Q3]] go.mod как manifest; [[go-modules-interview#Q17]] GOPROXY и immutable-артефакты; [[go-modules-interview#Q19]] GOSUMDB как публичная база хешей."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делают команды go mod init, tidy, download?",
+          "options": [
+            {
+              "text": "`go mod init github.com/myorg/myapp` создаёт `go.mod` с именем модуля; `go mod tidy` добавляет используемые и удаляет неиспользуемые `require`, синхронизируя их с реальными импортами; `go mod download` кеширует зависимости локально в `$GOPATH/pkg/mod`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждая команда отвечает за свой этап: `init` создаёт манифест, `tidy` приводит зависимости в соответствие с импортами в коде, `download` лишь подтягивает их в кеш без правки `go.mod`.",
+                "example": "Перед коммитом обычно гоняют `go mod tidy`, чтобы `go.mod` отражал фактические импорты; `go mod download` полезен в CI для прогрева кеша.",
+                "when_to_apply": "`tidy` запускают перед каждым коммитом — это самая частая из трёх команд, гарантирующая, что манифест и код не разошлись.",
+                "edge_cases": "Рядом живут `go mod verify` (проверка хешей) и `go mod why` (зачем модуль в графе); их роли не пересекаются с init/tidy/download.",
+                "related": "[[go-modules-interview#Q6]] go get против go install; [[go-modules-interview#Q3]] структура go.mod; [[go-modules-interview#Q23]] обновление зависимостей."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`go mod init` создаёт `go.sum`; `go mod tidy` скачивает зависимости; `go mod download` обновляет `go.mod`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: `init` создаёт `go.mod` (не `go.sum`), `tidy` синхронизирует require с импортами, а `download` только кеширует и `go.mod` не меняет.",
+                "source_of_confusion": "Все три начинаются на `go mod`, поэтому их функции легко смешать по памяти.",
+                "if_it_were_true": "Если бы `init` создавал `go.sum`, в новом проекте без зависимостей он был бы непустым, но `go.sum` появляется только при первой зависимости.",
+                "how_it_should_be": "Правильно: `init` создаёт `go.mod`, `tidy` синхронизирует require, `download` кеширует — `go.mod` правят `tidy`/`get`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`go mod init`, `tidy`, `download` делают одно и то же — синхронизируют зависимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Команды решают разные задачи: создание манифеста, синхронизацию require с импортами и кеширование соответственно; это не синонимы.",
+                "source_of_confusion": "Все три относятся к управлению зависимостями, отсюда ложное ощущение взаимозаменяемости.",
+                "if_it_were_true": "Если бы они совпадали, не было бы смысла в трёх разных подкомандах с разными именами.",
+                "how_it_should_be": "`init` = создать `go.mod`, `tidy` = синхронизировать require↔imports, `download` = закешировать; путать их нельзя."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`go mod tidy` обновляет версии зависимостей до latest; `go mod download` проверяет хеши.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`tidy` НЕ повышает версии до latest — он лишь синхронизирует require с импортами; обновление делает `go get -u`, а хеши сверяет `go mod verify`.",
+                "source_of_confusion": "Кажется логичным, что «навести порядок» (`tidy`) включает обновление до свежих версий, но это не так.",
+                "if_it_were_true": "Если бы `tidy` обновлял до latest, каждый запуск менял бы версии и ломал воспроизводимость сборок.",
+                "how_it_should_be": "`tidy` только синхронизирует require; latest-обновление — это `go get -u`, а проверка хешей — `go mod verify`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем go get отличается от go install?",
+          "options": [
+            {
+              "text": "`go get` скачивает в кеш без изменения `go.mod`, а `go install` устанавливает binary в текущую директорию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go get` как раз изменяет `go.mod` (добавляет/обновляет зависимость), а `go install` ставит бинарь в `$GOPATH/bin`, а не в текущую папку.",
+                "source_of_confusion": "Скачивание-в-кеш без правки манифеста — это поведение `go mod download`, которое ошибочно приписывают `go get`.",
+                "if_it_were_true": "Если бы `go get` не трогал `go.mod`, добавить зависимость в проект было бы нечем, и пришлось бы править манифест руками.",
+                "how_it_should_be": "`go get` управляет зависимостями проекта (правит `go.mod`), а `go install` ставит исполняемый файл в `$GOPATH/bin`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`go get` изменяет `go.mod` (добавляет или обновляет зависимость проекта), а `go install` компилирует и устанавливает бинарь в `$GOPATH/bin`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение чёткое: `get` — про управление зависимостями текущего модуля, `install` — про установку готового инструмента в системный bin.",
+                "example": "`go get github.com/gorilla/mux` добавит библиотеку в `go.mod`, а `go install github.com/some/tool@latest` поставит CLI-утилиту, не трогая зависимости проекта.",
+                "when_to_apply": "Использовать `go get` для library-зависимостей, а `go install` — для установки CLI-инструментов вроде линтеров и генераторов.",
+                "edge_cases": "С Go 1.16+ `go install` требует именованной версии (`@latest`, `@v1.2.3`) — без `@` он работать не будет.",
+                "related": "[[go-modules-interview#Q5]] go mod init/tidy/download; [[go-modules-interview#Q23]] как обновлять зависимости; [[go-modules-interview#Q10]] установка по pseudo-version."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`go get` и `go install` — синонимы с Go 1.16; оба устанавливают binary в `PATH`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные команды: `go get` правит `go.mod` проекта, а `go install` ставит бинарь и зависимости проекта не трогает.",
+                "source_of_confusion": "Реформа 1.16 поменяла поведение обеих команд, что породило миф об их слиянии.",
+                "if_it_were_true": "Если бы они были синонимами, `go get tool` ставил бы бинарь в PATH, но он лишь добавляет модуль в `go.mod`.",
+                "how_it_should_be": "`get` = управление зависимостями, `install` = установка бинаря; смешение сломает dependency graph."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`go install` добавляет зависимость в `go.mod` и скачивает её, а `go get` устанавливает инструмент глобально.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Роли перепутаны: `install` ставит бинарь (для tools обязателен `@version`), а `go.mod` правит именно `go get`.",
+                "source_of_confusion": "Обе команды трогают модули и сеть, поэтому их назначения легко поменять местами.",
+                "if_it_were_true": "Если бы `install` правил `go.mod`, установка линтера засоряла бы зависимости проекта, чего разработчики специально избегают.",
+                "how_it_should_be": "`go get` управляет зависимостями проекта, `go install` ставит CLI-инструмент в `$GOPATH/bin` без правки `go.mod`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что показывает команда go list -m all?",
+          "options": [
+            {
+              "text": "`go list -m all` показывает все `.go` пакеты текущего модуля с их import paths.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Флаг `-m` переключает вывод на модули, а не пакеты; список пакетов даёт `go list ./...` без `-m`.",
+                "source_of_confusion": "Команда `go list` многоликая, и без учёта `-m` её путают с выводом пакетов.",
+                "if_it_were_true": "Если бы `-m all` печатал пакеты, в выводе были бы внутренние подпакеты модуля, но там перечислены модули с версиями.",
+                "how_it_should_be": "`go list -m all` показывает модули build graph; пакеты текущего модуля — это `go list ./...`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`go list -m all` показывает только прямые зависимости из секции `require` в `go.mod`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`-m all` включает и транзитивные зависимости всего build graph, а не только прямые из `require`.",
+                "source_of_confusion": "Кажется, что `all` означает «всё, что я объявил», тогда как оно означает «весь граф, включая чужие зависимости».",
+                "if_it_were_true": "Если бы выводились только прямые, нельзя было бы аудитить транзитивные CVE, ради чего команду и используют.",
+                "how_it_should_be": "Для только прямых зависимостей читают `go.mod` без `// indirect`; `-m all` даёт полный граф."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`go list -m all` показывает полный граф зависимостей текущего модуля — все прямые и транзитивные зависимости с их выбранными версиями.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это снимок всего build graph: команда печатает каждый модуль и версию, которую выбрал MVS, что удобно для аудита.",
+                "example": "`go list -m -u all` добавит информацию о доступных обновлениях, а `go list -m -versions github.com/gorilla/mux` покажет все версии конкретного модуля.",
+                "when_to_apply": "Применять для аудита зависимостей и поиска устаревших версий — особенно с флагом `-u`, подсвечивающим, где есть апдейты.",
+                "edge_cases": "Вывод включает и сам корневой модуль первой строкой, и все indirect-зависимости — это именно полный граф, а не подмножество.",
+                "related": "[[go-modules-interview#Q11]] как MVS выбирает версии в этом графе; [[go-modules-interview#Q26]] что значат indirect-записи; [[go-modules-interview#Q23]] обновление найденных устаревших версий."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`go list -m all` показывает все версии конкретного модуля, доступные на proxy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все доступные версии модуля печатает `go list -m -versions <module>`; `-m all` же показывает выбранные версии всего графа.",
+                "source_of_confusion": "Оба варианта используют `-m`, поэтому флаг `-versions` и слово `all` смешивают.",
+                "if_it_were_true": "Если бы `all` означал «все версии одного модуля», команда требовала бы имя модуля аргументом, но она его не требует.",
+                "how_it_should_be": "`-m all` = выбранные версии всех модулей графа; список версий одного модуля — это `-m -versions`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроено semantic versioning (SemVer) в Go?",
+          "options": [
+            {
+              "text": "Go использует формат `MAJOR.MINOR.PATCH` без префикса `v`, а major-bump разрешён без изменения import path.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Префикс `v` обязателен (`go.mod` не примет `1.8.0`), а major ≥ 2 требует суффикса `/v2` в import path, иначе импорты сломаются.",
+                "source_of_confusion": "В большинстве экосистем версии пишут без `v`, поэтому это правило кажется применимым и к Go.",
+                "if_it_were_true": "Если бы major-bump не менял import path, нельзя было бы держать v1 и v2 одновременно, но Go это специально разрешает.",
+                "how_it_should_be": "Правильно: `vMAJOR.MINOR.PATCH` с обязательным `v`, и для major ≥ 2 — суффикс `/vN` в module path."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Go требует только `MAJOR.MINOR`, а patch-версия опциональна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полный `MAJOR.MINOR.PATCH` обязателен: `go.sum` хранит хеш на конкретный patch, без него версия была бы неоднозначной.",
+                "source_of_confusion": "Иногда теги пишут как `v1.8`, что создаёт иллюзию необязательности patch-компонента.",
+                "if_it_were_true": "Если бы patch был опционален, две разные сборки `v1.8` могли бы отличаться, нарушая воспроизводимость.",
+                "how_it_should_be": "Версия в `go.mod` всегда трёхкомпонентная (`v1.8.0`), потому что hash в `go.sum` привязан к точному patch."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "SemVer в Go необязателен: можно использовать произвольный git-hash вместо версии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Произвольный hash в `go.mod` не примут — для нетегированного коммита Go генерирует строгую pseudo-version вида `v0.0.0-yyyymmddhhmmss-hash`.",
+                "source_of_confusion": "Pseudo-version содержит hash, отсюда вывод, будто можно подставить «голый» хеш.",
+                "if_it_were_true": "Если бы голый hash был валиден, `go mod tidy` не падал бы на нём, но он требует именно формат pseudo-version.",
+                "how_it_should_be": "Версии в Go всегда SemVer; для коммитов без тега Go сам строит pseudo-version, а сырой hash недопустим."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`vMAJOR.MINOR.PATCH` обязателен с префиксом `v`; патч — обратносовместимый багфикс, минор — обратносовместимая фича, а major ≥ 2 требует изменить import path, добавив суффикс `/v2`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Go строго требует SemVer: `v1.0.0 → v1.0.1` — bugfix, `→ v1.1.0` — новая фича без поломок, `→ v2.0.0` — breaking changes, и тогда меняется module path.",
+                "example": "Запись `require github.com/gorilla/mux v1.8.0` валидна, а `1.8.0` без `v` — нет; выпуск v2 означает новый путь `.../mux/v2`.",
+                "when_to_apply": "Применять при релизе: breaking change поднимает major и требует нового module path `/v2`, а совместимые правки — лишь minor или patch.",
+                "edge_cases": "Версии `v0.x.x` считаются pre-release и ничего не гарантируют по совместимости — на них SemVer-обещания не распространяются.",
+                "related": "[[go-modules-interview#Q9]] суффикс /v2 для major-версий; [[go-modules-interview#Q10]] pseudo-versions для нетегированных коммитов; [[go-modules-interview#Q24]] почему minor/patch не обновляются автоматически."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Major versions (/v2, /v3) — в чём особенности?",
+          "options": [
+            {
+              "text": "Для major-версий ≥ 2 module path должен включать суффикс (`.../mux/v2`, `.../mux/v3`); это позволяет одновременно использовать v1 и v2 в одном бинаре для постепенной миграции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку `v2` имеет другой import path, компилятор считает его отдельным пакетом, и потребители переходят на новую версию осознанно, меняя импорт.",
+                "example": "В коде `import \"github.com/gorilla/mux\"` — это v1, а `import \"github.com/gorilla/mux/v2\"` — v2; обе строки могут сосуществовать при миграции.",
+                "when_to_apply": "Применять при breaking API changes: выпуск нового major сопровождается суффиксом `/vN`, что даёт downstream плавный, а не одномоментный переход.",
+                "edge_cases": "В git это обычно отдельная ветка или каталог `/v2`, `/v3`; отдельный репозиторий заводить не нужно — достаточно суффикса и тега `v2.x.x`.",
+                "related": "[[go-modules-interview#Q8]] SemVer и правило major ≥ 2; [[go-modules-interview#Q25]] diamond dependency через разные major; [[go-modules-interview#Q23]] почему major не обновляется автоматически."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Major-версия ≥ 2 требует создать отдельный git-репозиторий с новым именем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отдельный репозиторий не нужен: достаточно суффикса `/v2` в module path и git-тега `v2.x.x` в том же репозитории.",
+                "source_of_confusion": "Раньше (до модулей) для нового major действительно заводили отдельный проект, и эта привычка осталась.",
+                "if_it_were_true": "Если бы требовался новый репозиторий, нельзя было бы держать ветку `/v2` рядом с v1, но это стандартная практика.",
+                "how_it_should_be": "Правильно: `/v2` в module path внутри того же репозитория плюс тег `v2.x.x`; лишние репозитории усложняют поддержку."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "При выпуске v2 все потребители автоматически обновляются через `go get -u ./...`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Major-версия намеренно breaking, поэтому `go get -u` не перепрыгнет на v2 без явной смены import path на `.../v2`.",
+                "source_of_confusion": "Флаг `-u` обновляет minor/patch, отсюда ложное ожидание, что он подтянет и новый major.",
+                "if_it_were_true": "Если бы `-u` тянул v2 автоматически, релиз major молча ломал бы чужие сборки, что противоречит дизайну модулей.",
+                "how_it_should_be": "Переход на v2 всегда ручной: правят импорт на `.../v2`; `go get -u` оставляет потребителя на v1."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Major-версии в Go не поддерживаются; нужно делать новый модуль с другим именем (`mylib-v2`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Major-версии поддерживаются официально через суффикс `/vN`; `mylib/v2`, а не `mylib-v2`, — корректный путь.",
+                "source_of_confusion": "Это была практика до модулей, и она ошибочно переносится на современный Go.",
+                "if_it_were_true": "Если бы major не поддерживались, не существовало бы правила про суффикс `/v2` в спецификации модулей.",
+                "how_it_should_be": "Правильно: `mylib/v2` как суффикс module path; имя вида `mylib-v2` нарушает convention и ломает discovery."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое pseudo-versions (v0.0.0-yyyymmddhhmmss-...)?",
+          "options": [
+            {
+              "text": "Pseudo-version — это любая версия с pre-release меткой, например `v1.0.0-beta`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pre-release (`-beta`) — это намеренный тег, а pseudo-version — автогенерируемая версия для коммита без тега вовсе.",
+                "source_of_confusion": "Обе формы содержат дефис после версии, поэтому их внешне путают.",
+                "if_it_were_true": "Если бы `v1.0.0-beta` был pseudo-version, его создавал бы Go автоматически, но beta-метку ставит мейнтейнер вручную.",
+                "how_it_should_be": "Pseudo-version имеет вид `v0.0.0-yyyymmddhhmmss-hash`; pre-release — это осознанный тег, а не автогенерация."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Pseudo-version — автогенерируемая версия вида `v0.0.0-20230401120000-abcdef123456` для коммитов, у которых нет git-тега: формат `vMAJOR.MINOR.PATCH-yyyymmddhhmmss-shortcommithash`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда у модуля нет подходящего тега, Go строит детерминированный идентификатор из timestamp коммита и короткого хеша, чтобы версия всё равно была сравнимой и воспроизводимой.",
+                "example": "`go get github.com/some/repo@main` подтянет последний коммит ветки и запишет в `go.mod` строку вроде `v0.0.0-20230401120000-abcdef123456`.",
+                "when_to_apply": "Применять при `go get repo@commitHash` или `@branch` и для нестабильных форков без релизов, когда нужна конкретная неотмеченная ревизия.",
+                "edge_cases": "Формат жёстко валидируется: при попытке вписать неверную pseudo-version руками `go mod tidy` выдаст `invalid pseudo-version`.",
+                "related": "[[go-modules-interview#Q8]] почему SemVer обязателен; [[go-modules-interview#Q6]] go get по ревизии; [[go-modules-interview#Q27]] pseudo-version для форка без тега."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Pseudo-version можно написать вручную в `go.mod` для любого коммита.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Формат pseudo-version жёстко валидируется Go: timestamp и hash должны соответствовать реальному коммиту, иначе будет ошибка.",
+                "source_of_confusion": "Раз строка выглядит как обычный текст, кажется, что её можно сочинить вручную.",
+                "if_it_were_true": "Если бы любую строку принимали, нельзя было бы гарантировать, что версия указывает на существующий коммит.",
+                "how_it_should_be": "Pseudo-version генерирует сам Go при `go get @hash`; ручной ввод неверного формата даёт `invalid pseudo-version`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Pseudo-version устарела с Go 1.18 и заменена workspace mode.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Workspace mode и pseudo-version решают разные задачи: первый — для локальной multi-module разработки, вторая — для нетегированных коммитов.",
+                "source_of_confusion": "Обе фичи относительно новые, отсюда ложное ощущение, что одна вытеснила другую.",
+                "if_it_were_true": "Если бы workspace заменял pseudo-version, нельзя было бы зафиксировать конкретный коммит чужого репозитория в `go.mod`.",
+                "how_it_should_be": "Pseudo-version по-прежнему актуальна для коммитов без тега; `go.work` — отдельный dev-инструмент."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Module Version Selection (MVS) в Go?",
+          "options": [
+            {
+              "text": "MVS выбирает максимальную версию среди всех требований (latest wins).",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Go действует Minimum Version Selection: выбирается минимальная версия, удовлетворяющая всем требованиям, а latest-wins — это поведение `npm`/`Maven`.",
+                "source_of_confusion": "Большинство менеджеров зависимостей берут latest, поэтому это правило ошибочно ждут и от Go.",
+                "if_it_were_true": "Если бы Go брал latest, добавление новой зависимости могло бы молча поднять чужие версии и внести breaking changes.",
+                "how_it_should_be": "MVS = минимальная достаточная версия, а не самая свежая; latest-wins — это про другие экосистемы."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "MVS выбирает случайную совместимую версию для максимального разнообразия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MVS детерминирован: при одинаковом графе он всегда выбирает одну и ту же минимальную версию, никакой случайности нет.",
+                "source_of_confusion": "Слово «selection» наводит на мысль о выборе из множества, который ошибочно считают произвольным.",
+                "if_it_were_true": "Если бы выбор был случайным, две сборки одного коммита могли бы отличаться, что разрушает reproducible builds.",
+                "how_it_should_be": "MVS всегда детерминирован: одинаковый dependency graph даёт одинаковый результат, и это ключевое свойство."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "MVS (Minimum Version Selection) выбирает минимальную версию каждого модуля, удовлетворяющую всем требованиям в dependency graph, включая транзитивные.",
+              "correct": true,
+              "sections": {
+                "explanation": "Алгоритм консервативен и детерминирован: для модуля берётся наименьшая версия, которая всё ещё устраивает все зависимости, что снижает риск неожиданных breaking changes.",
+                "example": "Если `A → B v1.2.0`, а транзитивно `C → B v1.5.0`, MVS выберет `B v1.5.0` — минимум, удовлетворяющий обоим путям одновременно.",
+                "when_to_apply": "Понимать MVS важно при добавлении зависимости: её транзитивные требования могут поднять версию общего модуля выше, чем ожидалось.",
+                "edge_cases": "В отличие от `npm`/`Maven` (где побеждает latest), MVS даёт воспроизводимые сборки и понятный, предсказуемый результат.",
+                "related": "[[go-modules-interview#Q25]] diamond dependency и MVS; [[go-modules-interview#Q13]] как exclude влияет на выбор; [[go-modules-interview#Q7]] просмотр выбранных версий через go list -m all."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "MVS всегда выбирает версию из `go.sum`, игнорируя транзитивные зависимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MVS учитывает весь граф, включая транзитивные требования; `go.sum` лишь хранит хеши, но не участвует в выборе версии.",
+                "source_of_confusion": "И MVS, и `go.sum` связаны с версиями зависимостей, поэтому их роли смешивают.",
+                "if_it_were_true": "Если бы транзитивные зависимости игнорировались, возникал бы version mismatch с зависимостями зависимостей при сборке.",
+                "how_it_should_be": "MVS = минимум по всему графу с учётом transitive; `go.sum` отвечает только за integrity скачанного."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Директива replace — когда её использовать?",
+          "options": [
+            {
+              "text": "`replace` обновляет `go.sum` новыми хешами для указанной версии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`replace` переопределяет источник модуля, а `go.sum` обновляется автоматически отдельно; ручная правка хешей под `replace` тут ни при чём.",
+                "source_of_confusion": "И `replace`, и `go.sum` касаются зависимостей, поэтому их функции путают.",
+                "if_it_were_true": "Если бы `replace` правил хеши, ручное вмешательство в `go.sum` ломало бы integrity-проверку.",
+                "how_it_should_be": "`replace` — про source override (путь/форк/версия); хеши в `go.sum` Go пересчитывает сам."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`replace` работает транзитивно — все downstream-зависимости автоматически увидят замену.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`replace` действует только в текущем модуле; downstream-потребитель не унаследует его и должен добавить свой `replace`.",
+                "source_of_confusion": "Логично ожидать, что override «протечёт» вниз по графу, но Go специально этого не делает.",
+                "if_it_were_true": "Если бы `replace` был транзитивен, production-сборка downstream молча получала бы чужой hotfix без ведома команды.",
+                "how_it_should_be": "`replace` — локальный override; чтобы downstream применил ту же замену, ему нужен собственный `replace`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`replace` нужна только для форков, а для локальной разработки используется `go mod vendor`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`vendor` копирует все зависимости в `vendor/`, а `replace` указывает альтернативный источник; для локального dev нужен именно `replace` (или `go.work`).",
+                "source_of_confusion": "Обе фичи связаны с подменой зависимостей, отсюда смешение их назначений.",
+                "if_it_were_true": "Если бы `vendor` заменял `replace`, нельзя было бы указать локальный путь `../lib` для тестирования правок.",
+                "how_it_should_be": "`replace` указывает источник (включая локальный путь), `vendor` лишь копирует уже выбранное — это разные инструменты."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`replace` переопределяет источник модуля: локальный путь для разработки (`=> ../lib`), форк с hotfix (`=> github.com/myfork/lib v1.0.1`) или конкретную версию; работает только в текущем модуле, не транзитивно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Директива говорит Go брать модуль из другого места: это удобно для локальной разработки незафинишенной зависимости и для корпоративных форков.",
+                "example": "Например, `replace github.com/old/lib => github.com/myfork/lib v1.0.1` подменяет upstream на форк, а `=> ../lib` — на локальную копию рядом в файловой системе.",
+                "when_to_apply": "Применять для local dev зависимости, временного hotfix до релиза upstream и использования организационного форка.",
+                "edge_cases": "Поскольку `replace` нетранзитивен, downstream-потребитель должен добавить свой собственный `replace`, иначе он соберётся без подмены.",
+                "related": "[[go-modules-interview#Q13]] директива exclude рядом с replace; [[go-modules-interview#Q27]] replace для форка зависимости; [[go-modules-interview#Q15]] go.work как dev-альтернатива replace."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делает директива exclude?",
+          "options": [
+            {
+              "text": "`exclude github.com/buggy/lib v1.0.0` запрещает использовать конкретную версию; MVS выберет следующую совместимую, минуя заблокированную.",
+              "correct": true,
+              "sections": {
+                "explanation": "Директива точечно исключает одну версию (например, с известным CVE или регрессией), не удаляя модуль из графа целиком.",
+                "example": "Если `exclude github.com/buggy/lib v1.0.0` стоит, а требуется `v1.0.0`, MVS поднимется до ближайшей подходящей версии вроде `v1.0.1`.",
+                "when_to_apply": "Применять при известной уязвимости или регрессии в конкретной версии, хотя на практике чаще проще `replace` на безопасную версию.",
+                "edge_cases": "`exclude`, как и `replace`, нетранзитивен: downstream должен добавить своё `exclude`, иначе продолжит тянуть уязвимую версию.",
+                "related": "[[go-modules-interview#Q11]] как MVS обходит исключённую версию; [[go-modules-interview#Q12]] replace как альтернатива exclude; [[go-modules-interview#Q4]] integrity-проверка зависимостей."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`exclude` полностью удаляет модуль из dependency graph.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`exclude` блокирует только указанную версию; остальные версии модуля остаются доступны, и MVS выберет другую.",
+                "source_of_confusion": "Слово «exclude» звучит как «убрать совсем», отсюда вывод об удалении модуля.",
+                "if_it_were_true": "Если бы модуль исчезал целиком, код, импортирующий его, перестал бы компилироваться, чего не происходит.",
+                "how_it_should_be": "`exclude` — это блокировка одной версии; модуль остаётся в графе, просто на другой версии."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`exclude` аналогичен `require` с указанием нижней границы версии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Go нет семантики `require >= X`; `exclude` — это точечная блокировка ровно одной версии, а не диапазона.",
+                "source_of_confusion": "Привычные диапазоны `>=` из других экосистем переносят на Go ошибочно.",
+                "if_it_were_true": "Если бы `exclude` задавал нижнюю границу, он влиял бы на все версии ниже, но он бьёт ровно по одной.",
+                "how_it_should_be": "`exclude` = pinpoint-блок одной версии; диапазонных границ в директивах Go-модулей нет."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`exclude` работает для всех downstream-проектов автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Как и `replace`, `exclude` нетранзитивен: downstream-потребитель должен добавить своё `exclude`, иначе ограничение на него не распространится.",
+                "source_of_confusion": "Кажется, что запрет «опасной» версии должен наследоваться вниз по графу, но Go этого не делает.",
+                "if_it_were_true": "Если бы `exclude` был транзитивен, downstream автоматически избегал бы уязвимой версии без собственной настройки, что неверно.",
+                "how_it_should_be": "`exclude` действует только в своём модуле; чтобы защитить downstream, он должен прописать собственное исключение."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое vendoring (go mod vendor)?",
+          "options": [
+            {
+              "text": "`go mod vendor` обновляет `go.mod`, поднимая все зависимости до latest-версий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go mod vendor` лишь копирует текущие выбранные версии в каталог `vendor/`; обновление версий делает `go get -u`.",
+                "source_of_confusion": "Команда «vendor» звучит как «привести к актуальному», что путают с обновлением версий.",
+                "if_it_were_true": "Если бы `vendor` обновлял до latest, он молча менял бы версии и ломал воспроизводимость при каждом запуске.",
+                "how_it_should_be": "`vendor` копирует уже выбранные версии без правки `go.mod`; апдейт версий — отдельная команда `go get -u`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`go mod vendor` копирует все зависимости в каталог `vendor/`; при наличии `vendor/` (и соответствии `go.mod`/`go.sum`) Go использует его вместо `GOPROXY`, что даёт воспроизводимые offline-сборки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Vendoring встраивает копии зависимостей прямо в репозиторий, поэтому сборка не зависит от доступности proxy и сети — код всегда под рукой и аудируется в одном месте.",
+                "example": "После `go mod vendor` появляется `vendor/modules.txt` и каталоги вроде `vendor/github.com/gorilla/mux/...`, которые Go подхватывает при `go build`.",
+                "when_to_apply": "Применять для air-gapped CI, security-аудита зависимостей в одном месте и корпоративных требований к offline-сборкам.",
+                "edge_cases": "Минусы — большой репозиторий и ручное обновление: после `go get` нужно явно запускать `go mod vendor`, иначе CI соберёт старые версии.",
+                "related": "[[go-modules-interview#Q17]] GOPROXY как альтернатива vendoring; [[go-modules-interview#Q5]] команда go mod vendor среди прочих; [[go-modules-interview#Q4]] соответствие go.sum при vendored-сборке."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`vendor/` используется только для air-gapped сред; в обычной разработке он игнорируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если каталог `vendor/` существует и согласован с `go.mod`/`go.sum`, Go автоматически использует его вместо `GOPROXY` всегда, а не только в air-gapped.",
+                "source_of_confusion": "Vendoring часто связывают именно с offline-сценариями, отсюда вывод о его игнорировании в обычном режиме.",
+                "if_it_were_true": "Если бы `vendor/` игнорировался, обновление `go.mod` без обновления `vendor/` не приводило бы к рассинхрону, но оно приводит.",
+                "how_it_should_be": "Наличие согласованного `vendor/` всегда переключает Go на vendored-код; его нужно держать в актуальном состоянии."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`vendor/` автоматически обновляется при каждом `go build`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`vendor/` не обновляется автоматически: после `go get` нужно вручную выполнить `go mod vendor`, иначе там останутся старые версии.",
+                "source_of_confusion": "Кажется логичным, что сборка синхронизирует vendored-копии, но `go build` их не трогает.",
+                "if_it_were_true": "Если бы `build` обновлял `vendor/`, сборка зависела бы от сети и теряла бы offline-воспроизводимость.",
+                "how_it_should_be": "Обновление `vendor/` всегда явное (`go mod vendor`); `go build` лишь читает уже скопированный код."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое go workspace mode (1.18+)?",
+          "options": [
+            {
+              "text": "Workspace mode — это аналог vendoring для multi-module проектов: он копирует все модули в каталог `workspace/`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Workspace ничего не копирует — он лишь указывает Go использовать локальные пути модулей вместо registry/proxy.",
+                "source_of_confusion": "И vendoring, и workspace связаны с локальными зависимостями, отсюда смешение их механики.",
+                "if_it_were_true": "Если бы workspace копировал код, изменения в одном модуле не были бы сразу видны другим, а они видны мгновенно.",
+                "how_it_should_be": "`go.work` через `use`-директивы переключает Go на локальные пути; копирования файлов, как при vendor, тут нет."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`go work` позволяет обновлять все модули одной командой, не заходя в каждый.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обновление зависимостей — это `go get`; workspace же про локальные cross-module правки без `replace` в каждом `go.mod`.",
+                "source_of_confusion": "Раз `go.work` объединяет несколько модулей, кажется, что он и обновляет их разом.",
+                "if_it_were_true": "Если бы `go work` обновлял версии, он менял бы `go.mod` каждого модуля, но он их версии не трогает.",
+                "how_it_should_be": "Workspace — это dev-overlay для одновременной разработки нескольких модулей; апдейт версий делает `go get`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Workspace mode (`go.work`) позволяет нескольким локальным модулям видеть друг друга без `replace`-директив в каждом `go.mod` — удобно для monorepo и одновременной разработки library и consumer.",
+              "correct": true,
+              "sections": {
+                "explanation": "Файл `go.work` в корне перечисляет локальные модули, и при сборке любого из них все они используют локальные версии остальных, без правки манифестов.",
+                "example": "`go work init ./module-a ./module-b` создаёт `go.work`, а `go work use ./module-c` добавляет третий модуль в workspace.",
+                "when_to_apply": "Применять в monorepo с несколькими `go.mod` и при разработке библиотеки вместе с её потребителем, когда нужны мгновенные cross-module правки.",
+                "edge_cases": "`go.work` — это dev-time override: его обычно не коммитят, а CII собирает без него, чтобы зависимости резолвились из реальных версий.",
+                "related": "[[go-modules-interview#Q16]] что лежит внутри go.work; [[go-modules-interview#Q12]] replace как альтернатива workspace; [[go-modules-interview#Q22]] структура multi-module проекта."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`go.work` заменяет `go.mod` в multi-module репозиториях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go.work` не заменяет `go.mod`: каждый модуль всё равно обязан иметь свой `go.mod`, а `go.work` лишь добавляет локальные override поверх.",
+                "source_of_confusion": "Раз `go.work` лежит в корне и описывает модули, его принимают за главный манифест.",
+                "if_it_were_true": "Если бы `go.work` заменял `go.mod`, удаление `go.mod` было бы допустимо, но оно даёт ошибку `no go.mod found`.",
+                "how_it_should_be": "Оба файла нужны: `go.mod` — обязательный манифест модуля, `go.work` — необязательный dev-инструмент поверх него."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "go.work — что внутри и как используется?",
+          "options": [
+            {
+              "text": "`go.work` коммитится в git наравне с `go.mod`, и CI использует его для multi-module сборок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go.work` — локальная dev-конфигурация с путями конкретного разработчика; его обычно держат в `.gitignore`, а CI собирает без него.",
+                "source_of_confusion": "Раз `go.work` похож на `go.mod`, кажется логичным коммитить и его.",
+                "if_it_were_true": "Если бы `go.work` коммитили, его пути (`./module-a`) сломали бы CI на машинах с другой структурой каталогов.",
+                "how_it_should_be": "`go.work` — dev-overlay, его добавляют в `.gitignore`; production-сборка должна видеть чистые зависимости без него."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`go.work` содержит секцию `require` как `go.mod` для определения версий workspace-модулей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Версии зависимостей хранятся в `go.mod` каждого модуля; в `go.work` секции `require` нет — там директивы `use` и опциональный `replace`.",
+                "source_of_confusion": "Оба файла описывают модули, поэтому ждут одинаковых секций.",
+                "if_it_were_true": "Если бы `require` работал в `go.work`, версии дублировались бы с `go.mod` и могли бы рассогласоваться.",
+                "how_it_should_be": "`go.work` управляет составом workspace через `use`; версии каждого модуля остаются в его собственном `go.mod`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`go.work` заменяет все `go.mod` файлы в workspace — они становятся ненужными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый модуль обязан иметь `go.mod`; `go.work` лишь добавляет локальные override поверх существующих манифестов.",
+                "source_of_confusion": "Раз `go.work` объединяет модули, кажется, что он делает их `go.mod` лишними.",
+                "if_it_were_true": "Если бы `go.mod` были не нужны, удаление любого из них проходило бы, но Go выдаст `no go.mod found`.",
+                "how_it_should_be": "`go.work` дополняет, а не заменяет `go.mod`: без `go.mod` модуль вообще не существует."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`go.work` содержит директивы `use` с путями к локальным модулям и опциональные `replace`; обычно лежит в `.gitignore`, так как это локальная конфигурация разработчика, а не CI.",
+              "correct": true,
+              "sections": {
+                "explanation": "Файл — dev-overlay: блок `use (./module-a ./module-b ./module-c)` подключает локальные модули, а строка `replace github.com/external/lib => github.com/myfork/lib v1.2.3` при необходимости переопределяет внешнюю зависимость для всего workspace.",
+                "example": "Типичный `go.work` начинается с `go 1.21`, затем идёт `use`-блок с относительными путями и опционально `replace`; CI этот файл не использует.",
+                "when_to_apply": "Применять так: добавить `go.work` в `.gitignore`, а CI настроить на сборку без него, чтобы зависимости резолвились из реальных версий каждого модуля.",
+                "edge_cases": "Поскольку пути в `go.work` локальны для машины разработчика, его коммит сломал бы сборку у других — поэтому его и игнорируют в git.",
+                "related": "[[go-modules-interview#Q15]] что такое workspace mode; [[go-modules-interview#Q12]] директива replace; [[go-modules-interview#Q22]] структура multi-module monorepo."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "GOPROXY — что это и как работает?",
+          "options": [
+            {
+              "text": "`GOPROXY` указывает URL прокси для скачивания модулей со списком fallback через запятую; значение `direct` означает обращение напрямую к git, если прокси не имеет модуля.",
+              "correct": true,
+              "sections": {
+                "explanation": "По умолчанию `GOPROXY=https://proxy.golang.org,direct`: сначала Go идёт в прокси, а при ответе 404 откатывается на прямое скачивание из git-репозитория.",
+                "example": "Можно задать `GOPROXY=off` для запрета любых загрузок в production-сборке или `GOPROXY=https://athens.mycorp:3000` для корпоративного кеша.",
+                "when_to_apply": "Применять `GOPROXY=off` ради безопасности и детерминизма prod-сборки, а корпоративный прокси (Athens, Artifactory) — для кеширования и контроля.",
+                "edge_cases": "Прокси даёт immutable-артефакты: даже если репозиторий удалён, кешированная версия остаётся доступной, плюс это защита от части supply chain атак.",
+                "related": "[[go-modules-interview#Q18]] GOPRIVATE как обход прокси; [[go-modules-interview#Q19]] GOSUMDB поверх прокси; [[go-modules-interview#Q20]] Athens как self-hosted GOPROXY."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`GOPROXY` — это переменная для настройки HTTP-proxy для всех сетевых запросов Go.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GOPROXY` управляет только загрузкой модулей; общий HTTP-трафик настраивается через `HTTP_PROXY`/`HTTPS_PROXY`.",
+                "source_of_confusion": "Слово «proxy» в имени наводит на мысль об универсальном сетевом прокси.",
+                "if_it_were_true": "Если бы `GOPROXY` влиял на весь трафик, `GOPROXY=off` блокировал бы и обычные HTTP-запросы, чего не происходит.",
+                "how_it_should_be": "`GOPROXY` специфичен для module downloads; общий прокси — это `HTTP_PROXY`/`HTTPS_PROXY`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`GOPROXY` используется только для приватных модулей, а публичные скачиваются напрямую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: по умолчанию через прокси идут все модули, а от прокси приватные модули отключает `GOPRIVATE`.",
+                "source_of_confusion": "Раз есть отдельная настройка для приватного доступа, кажется, что прокси создан именно под него.",
+                "if_it_were_true": "Если бы публичные шли мимо прокси, терялись бы кеш и защита от supply chain, ради которых прокси и нужен.",
+                "how_it_should_be": "`GOPROXY` по умолчанию обслуживает все модули; обход для приватных задаётся через `GOPRIVATE`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`GOPROXY=off` блокирует только загрузку новых модулей, а уже скачанные остаются доступны для обновления через сеть.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GOPROXY=off` блокирует все модульные операции, требующие сети; если модуля нет в кеше, сборка падает.",
+                "source_of_confusion": "Кажется, что «off» отключает лишь новые загрузки, оставляя сетевые апдейты для старого.",
+                "if_it_were_true": "Если бы `off` пускал часть сетевых запросов, он не обеспечивал бы детерминированную offline-сборку.",
+                "how_it_should_be": "При `GOPROXY=off` всё, что не в локальном кеше или `vendor/`, недоступно — никаких сетевых обращений."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "GOPRIVATE — зачем для приватных модулей?",
+          "options": [
+            {
+              "text": "`GOPRIVATE` требует запустить приватный Go-proxy (Athens), без него приватные модули недоступны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приватный прокси удобен, но необязателен: `GOPRIVATE` работает через прямой git-доступ, обходя публичный прокси.",
+                "source_of_confusion": "Раз речь о приватных модулях, кажется, что нужен и приватный прокси.",
+                "if_it_were_true": "Если бы прокси был обязателен, нельзя было бы скачать приватный модуль напрямую из git, а это штатный путь.",
+                "how_it_should_be": "`GOPRIVATE` лишь помечает модули как приватные и пускает Go прямо к git; Athens — опциональное удобство."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`GOPRIVATE` — паттерн модулей (например, `github.com/mycorp/*,gitlab.mycompany.com`), которые НЕ проксируются через `GOPROXY` и НЕ проверяются в `GOSUMDB`: Go идёт напрямую к git-репозиторию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Приватный код нельзя гнать через публичный прокси и сверять в публичной sumdb, поэтому `GOPRIVATE` помечает такие модули и переключает их на прямой git-доступ.",
+                "example": "Для этого нужна git-аутентификация, например `git config --global url.\"https://${TOKEN}@github.com/\".insteadOf \"https://github.com/\"` или SSH-вариант.",
+                "when_to_apply": "Применять для internal корпоративных модулей: задать паттерн в `GOPRIVATE` и настроить git-доступ через TOKEN или SSH.",
+                "edge_cases": "`GOPRIVATE` одновременно делает bypass прокси и bypass sumdb; без отдельной git-аутентификации скачивание упрётся в 401.",
+                "related": "[[go-modules-interview#Q17]] GOPROXY и его обход через GOPRIVATE; [[go-modules-interview#Q19]] почему приватные не идут в GOSUMDB; [[go-modules-interview#Q20]] Athens для приватного кеша."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`GOPRIVATE` — это список модулей, которые не могут быть импортированы другими проектами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GOPRIVATE` определяет, как Go скачивает модули, а не контролирует доступ; видимость модуля задаётся правами git-репозитория.",
+                "source_of_confusion": "Слово «private» ассоциируется с ограничением доступа, а не с механизмом загрузки.",
+                "if_it_were_true": "Если бы `GOPRIVATE` управлял доступом, удаление модуля из него делало бы код публичным, но права остаются за git.",
+                "how_it_should_be": "`GOPRIVATE` — про обход прокси и sumdb при скачивании; access control обеспечивают git-разрешения."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`GOPRIVATE` автоматически настраивает git-credentials для приватных репозиториев.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GOPRIVATE` не настраивает аутентификацию; для приватного git нужен отдельный `git config` с token или SSH.",
+                "source_of_confusion": "Раз `GOPRIVATE` обслуживает приватные модули, кажется, что он же и авторизует доступ.",
+                "if_it_were_true": "Если бы он настраивал credentials, скачивание не падало бы с 401 без `git config`, но оно падает.",
+                "how_it_should_be": "`GOPRIVATE` лишь помечает модули как приватные; git-аутентификацию настраивают вручную через `insteadOf` или SSH."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "GOSUMDB — что это за checksum database?",
+          "options": [
+            {
+              "text": "`GOSUMDB` — это база известных уязвимостей в Go-модулях, аналог CVE-database.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уязвимости проверяет `govulncheck`; `GOSUMDB` отвечает за криптографическую целостность, а не за CVE.",
+                "source_of_confusion": "И sumdb, и сканеры уязвимостей связаны с безопасностью зависимостей, отсюда путаница.",
+                "if_it_were_true": "Если бы `GOSUMDB` ловил CVE, его отключение оставляло бы проект без защиты от уязвимостей, но он про другое.",
+                "how_it_should_be": "`GOSUMDB` — это база хешей для tamper detection; поиск уязвимостей — задача `govulncheck`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`GOSUMDB` — это зеркало `proxy.golang.org` для ускорения загрузок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прокси и sumdb — разные сервисы: прокси кеширует модули, а sumdb хранит хеши для проверки целостности.",
+                "source_of_confusion": "Оба относятся к инфраструктуре модулей Google, поэтому их роли смешивают.",
+                "if_it_were_true": "Если бы sumdb был зеркалом прокси, он раздавал бы код модулей, но он отдаёт только хеши.",
+                "how_it_should_be": "`GOPROXY` кеширует и раздаёт модули, `GOSUMDB` лишь подтверждает их хеши — это независимые сервисы."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`GOSUMDB` (по умолчанию `sum.golang.org`) хранит хеши публичных модулей; приватные модули под `GOPRIVATE` в нём не проверяются, поскольку они не публикуются в sumdb.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это публичная база контрольных сумм всех публичных модулей: при скачивании Go сверяет хеш с записью в sumdb, что защищает от незаметной модификации репозитория.",
+                "example": "Значение можно сменить на корпоративное (`GOSUMDB=mycorp.com/sumdb`) или отключить (`GOSUMDB=off`), а приватные модули sumdb пропускает автоматически через `GOPRIVATE`.",
+                "when_to_apply": "Применять `GOSUMDB=off` стоит только при наличии корпоративной sumdb, а приватные модули — добавлять в `GOPRIVATE`, чтобы они не упирались в публичную базу.",
+                "edge_cases": "`GOSUMDB` обеспечивает tamper detection для публичного кода; для приватного он отключается, так как такие модули объективно не могут быть в публичной базе.",
+                "related": "[[go-modules-interview#Q4]] go.sum и проверка хешей локально; [[go-modules-interview#Q18]] GOPRIVATE как bypass sumdb; [[go-modules-interview#Q17]] GOPROXY рядом с GOSUMDB."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`GOSUMDB` обязателен для всех модулей, включая приватные, и отключить его нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Приватные модули не могут быть в публичной sumdb, и `GOPRIVATE` автоматически исключает их; саму проверку можно отключить через `GOSUMDB=off`.",
+                "source_of_confusion": "Раз sumdb важна для безопасности, кажется, что она обязательна всегда и для всего.",
+                "if_it_were_true": "Если бы sumdb была обязательна для приватных, корпоративные сборки падали бы, не найдя приватный модуль в публичной базе.",
+                "how_it_should_be": "`GOSUMDB` касается только публичных модулей; приватные обходят её через `GOPRIVATE`, а отключение задаётся `GOSUMDB=off`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Athens — что это за private Go proxy?",
+          "options": [
+            {
+              "text": "Athens — утилита для автоматического обновления Go-зависимостей, аналог Dependabot.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Athens — это proxy/cache для модулей; уведомления об обновлениях дают Dependabot/Renovate, а не Athens.",
+                "source_of_confusion": "Оба инструмента из экосистемы зависимостей, поэтому их назначения путают.",
+                "if_it_were_true": "Если бы Athens обновлял зависимости, он открывал бы PR с новыми версиями, но он лишь проксирует загрузки.",
+                "how_it_should_be": "Athens — private GOPROXY (кеш и контроль); автообновления — задача Dependabot/Renovate."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Athens нужен только для модулей v2+, а v1-модули скачиваются через `proxy.golang.org`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Athens проксирует все версии модулей; ограничения «только v2+» не существует.",
+                "source_of_confusion": "Раз major-версии особенные (суффикс `/v2`), кажется, что и прокси для них отдельный.",
+                "if_it_were_true": "Если бы Athens обслуживал только v2+, конфигурация `GOPROXY` требовала бы маршрутизации по версиям, чего нет.",
+                "how_it_should_be": "Athens кеширует и v1, и v2+ одинаково; разделять загрузки по major-версии не нужно."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Athens заменяет `go.sum`: с ним не нужна checksum-верификация.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Athens — прокси, а не замена контрольных сумм; верификация `go.sum` происходит всегда, независимо от прокси.",
+                "source_of_confusion": "Раз Athens контролирует загрузку зависимостей, кажется, что он берёт на себя и integrity.",
+                "if_it_were_true": "Если бы Athens отменял проверку хешей, подменённый артефакт в кеше прошёл бы незамеченным.",
+                "how_it_should_be": "Athens лишь раздаёт модули; `go.sum` и GOSUMDB продолжают проверять их целостность отдельно."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Athens — open-source Go module proxy для self-hosting; используется как корпоративный кеш, для air-gapped сборок и контроля над зависимостями.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это самостоятельно разворачиваемый GOPROXY: он кеширует модули внутри организации, ускоряет загрузки из удалённых офисов и сохраняет версии, даже если upstream-репозиторий удалят.",
+                "example": "Запуск `docker run -p 3000:3000 gomods/athens`, затем `GOPROXY=http://athens.mycorp:3000` направляет все загрузки через него.",
+                "when_to_apply": "Применять в корпоративной среде без прямого выхода в интернет и в air-gapped CI, где нужен предсказуемый локальный источник модулей.",
+                "edge_cases": "Альтернативы — `JFrog Artifactory` и `Sonatype Nexus` с Go-репозиторием; все они играют роль private GOPROXY и не отменяют проверку `go.sum`.",
+                "related": "[[go-modules-interview#Q17]] GOPROXY и значение его URL; [[go-modules-interview#Q14]] vendoring как другой способ offline-сборки; [[go-modules-interview#Q19]] GOSUMDB остаётся активной при Athens."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Module path — какие соглашения по именованию?",
+          "options": [
+            {
+              "text": "Module path должен совпадать с git repo URL (или содержать его как префикс), быть в lowercase и использовать дефисы вместо underscore — например `github.com/myorg/myapp` или `gitlab.mycorp.com/team/service`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это требование Go: import path обязан указывать, откуда брать код, поэтому module path привязывают к реальному адресу репозитория для детерминированного discovery.",
+                "example": "`go mod init github.com/myorg/myapp` задаёт корректный путь, а `example.com/internal/pkg` подходит для внутренних модулей с собственным доменом.",
+                "when_to_apply": "Применять при `go mod init`: брать реальный repo URL и проверять, что путь совпадает с тем, откуда `go get` будет скачивать модуль.",
+                "edge_cases": "Подчёркивания в путях избегают (используют `-`), а сам путь держат в lowercase, чтобы избежать проблем на разных файловых системах.",
+                "related": "[[go-modules-interview#Q17]] как GOPROXY находит модуль по пути; [[go-modules-interview#Q1]] module path как часть определения модуля; [[go-modules-interview#Q5]] go mod init с реальным URL."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Module path — это любая строка; Go не требует соответствия реальному URL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Формально Go не запрещает произвольную строку, но `GOPROXY` не найдёт модуль по фиктивному пути, и `go get` других проектов упадёт.",
+                "source_of_confusion": "Локально проект собирается и с выдуманным путём, что создаёт иллюзию свободы именования.",
+                "if_it_were_true": "Если бы путь был произвольным, discovery по import path стал бы невозможен, а он лежит в основе модулей.",
+                "how_it_should_be": "Module path = import path = repo URL: только так прокси и `go get` находят код детерминированно."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Module path обязан начинаться с доменного имени, и `github.com` обязателен для публичных модулей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Допустим любой домен: `example.com` или `gitlab.mycorp.com` валидны для внутренних модулей; жёсткого требования `github.com` нет.",
+                "source_of_confusion": "GitHub — самый частый хостинг, поэтому его ошибочно считают обязательным.",
+                "if_it_were_true": "Если бы `github.com` был обязателен, корпоративные модули на собственном GitLab были бы невозможны, но они работают.",
+                "how_it_should_be": "Любой домен подходит как префикс пути; `github.com` — лишь один из вариантов, а не требование."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Module path автоматически генерируется из имени директории при `go mod init`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go mod init` без аргумента не угадывает путь надёжно и часто создаёт `go.mod` без корректного module path, что ведёт к ошибке.",
+                "source_of_confusion": "Многие инструменты выводят имя из папки, отсюда ожидание того же от Go.",
+                "if_it_were_true": "Если бы путь брался из имени каталога, переименование папки молча меняло бы import path всего проекта.",
+                "how_it_should_be": "Module path задают явно аргументом `go mod init`; без него можно получить `no module declaration in go.mod`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова структура multi-module проекта?",
+          "options": [
+            {
+              "text": "Каждый сервис обязан быть в отдельном `go.mod` даже в одном репозитории.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для большинства случаев достаточно одного `go.mod` с множеством пакетов; отдельный `go.mod` на сервис — редкость для очень больших monorepo.",
+                "source_of_confusion": "Раз сервисы независимы, кажется логичным дать каждому свой модуль.",
+                "if_it_were_true": "Если бы каждый сервис требовал свой `go.mod`, обычные приложения с парой бинарей плодили бы лишние модули без нужды.",
+                "how_it_should_be": "Правильно: один модуль с пакетами по умолчанию; multi-module — только при явной необходимости."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Обычно используется один модуль с множеством пакетов; multi-module (несколько `go.mod`) — только для очень больших monorepo, где для локальной разработки добавляют `go.work`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Один `go.mod` проще в сопровождении: внутри него спокойно живут `cmd/`, `internal/`, `pkg/`, а несколько модулей оправданы лишь при реальной необходимости независимого версионирования частей.",
+                "example": "Variant 1 — `myapp/` с одним `go.mod` и каталогами `cmd/server`, `internal/service`; variant 2 — `mymonorepo/` с `go.work` и отдельными `go.mod` в `service-a/`, `shared-lib/`.",
+                "when_to_apply": "Применять стоит так: начинать с одного модуля, а каталог `internal/` использовать для пакетов, недоступных извне родительского модуля.",
+                "edge_cases": "Каталог `internal/` особенный: пакеты внутри импортируются только родительским модулем, что ограничивает их видимость на уровне module path.",
+                "related": "[[go-modules-interview#Q15]] go.work для multi-module dev; [[go-modules-interview#Q16]] что внутри go.work; [[go-modules-interview#Q1]] модуль как набор пакетов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Каталог `internal/` блокирует компиляцию кода с флагом `-race`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`internal/` ограничивает импорт пакетов по module path, но никак не влияет на компиляцию; код в нём собирается и тестируется обычным образом.",
+                "source_of_confusion": "Слово «internal» звучит как ограничение сборки, хотя речь о видимости импорта.",
+                "if_it_were_true": "Если бы `internal/` ломал `-race`, нельзя было бы запускать race-детектор на больших проектах, а его запускают повсеместно.",
+                "how_it_should_be": "`internal/` — это про границы импорта (доступ только родителю), а не про флаги компиляции вроде `-race`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Файл `go.work` нужен только при наличии более 5 модулей в репозитории.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go.work` нужен для любого multi-module репозитория при локальной разработке; порог в 5 модулей выдуман.",
+                "source_of_confusion": "Кажется, что workspace оправдан лишь при «многих» модулях, и число 5 звучит правдоподобно.",
+                "if_it_were_true": "Если бы порог был 5, разработка двух взаимозависимых модулей обходилась бы без `go.work`, но он нужен уже при первом cross-module изменении.",
+                "how_it_should_be": "`go.work` применяют с любого числа модулей (хоть двух), как только нужна одновременная локальная правка нескольких."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обновить зависимости?",
+          "options": [
+            {
+              "text": "`go mod tidy` обновляет все зависимости до latest-версии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`tidy` лишь синхронизирует `require` с реальными импортами и версии не повышает; для обновления нужен `go get -u`.",
+                "source_of_confusion": "Команда «навести порядок» создаёт впечатление, будто она и обновляет до свежих версий.",
+                "if_it_were_true": "Если бы `tidy` обновлял до latest, каждый его запуск менял бы версии и ломал воспроизводимость сборок.",
+                "how_it_should_be": "Обновление версий — это `go get -u`; `tidy` только приводит `go.mod` в соответствие с импортами."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`go mod download` обновляет зависимости до latest, и `go mod tidy` после него не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`download` лишь кеширует уже выбранные версии и не меняет `go.mod`; после `go get` обычно нужен `go mod tidy` для очистки.",
+                "source_of_confusion": "Раз `download` работает с сетью, кажется, что он подтягивает свежие версии.",
+                "if_it_were_true": "Если бы `download` обновлял версии, он молча менял бы `go.mod`, нарушая контроль над зависимостями.",
+                "how_it_should_be": "`download` = кеширование; обновление = `go get -u`, а очистка неиспользуемых = `go mod tidy`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`go get -u ./...` обновляет все зависимости до latest minor/patch; для конкретной версии используется `@vX.Y.Z`, а `go mod tidy` после этого очищает неиспользуемые записи.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обновление в Go всегда явное: `-u` поднимает совместимые minor/patch, `@v1.8.0` фиксирует точную версию, а `-u=patch` ограничивает апдейт только патчами.",
+                "example": "Например, `go get -u github.com/gorilla/mux` обновит один пакет, `go get github.com/gorilla/mux@v1.8.0` зафиксирует версию, а `go get -u ./...` пройдётся по всем.",
+                "when_to_apply": "Применять стоит регулярно: `go get -u ./...`, затем ревью diff и `go mod tidy`, чтобы не утянуть лишнего и убрать неиспользуемое.",
+                "edge_cases": "Обновление major (v1 → v2) не автоматическое: нужно вручную сменить import path на `.../v2`, иначе `go get -u` останется на v1.",
+                "related": "[[go-modules-interview#Q6]] go get против go install; [[go-modules-interview#Q9]] ручной переход на major /v2; [[go-modules-interview#Q24]] почему нет авто-обновления minor/patch."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Major-версия обновляется автоматически при `go get -u` без изменения import path.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Major-версия — breaking change, и `go get -u` на неё не перейдёт; нужно вручную поменять импорт на `.../v2`.",
+                "source_of_confusion": "Раз `-u` обновляет minor/patch, кажется, что он подтянет и major.",
+                "if_it_were_true": "Если бы major обновлялся автоматически, релиз v2 молча ломал бы сборку, что противоречит дизайну модулей.",
+                "how_it_should_be": "Переход на новый major всегда ручной (правка import path на `/v2`); `-u` остаётся в пределах текущего major."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Минорная и патч-версии — обновляются ли автоматически?",
+          "options": [
+            {
+              "text": "`go build` автоматически обновляет patch-версии зависимостей при наличии новых.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go build` никогда не изменяет `go.mod`; авто-обновление при сборке нарушило бы воспроизводимость.",
+                "source_of_confusion": "Кажется удобным, чтобы сборка подтягивала свежие багфиксы сама, но Go так не делает.",
+                "if_it_were_true": "Если бы `build` менял версии, один и тот же коммит собирался бы по-разному в разное время.",
+                "how_it_should_be": "Версии в `go.mod` зафиксированы; `go build` их не трогает, а обновление делают явно через `go get`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`go mod tidy` раз в день автоматически проверяет наличие новых версий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`tidy` — детерминированная операция без проверки апдейтов по сети; новые версии он не ищет.",
+                "source_of_confusion": "Раз `tidy` запускают часто, кажется, что он и следит за свежими версиями.",
+                "if_it_were_true": "Если бы `tidy` проверял апдейты, его результат зависел бы от момента запуска, теряя детерминизм.",
+                "how_it_should_be": "`tidy` лишь синхронизирует require с импортами; поиск новых версий — это `go get -u` или внешние боты."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "MVS автоматически поднимает минорные версии при добавлении новых зависимостей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MVS повышает версию модуля только если новая зависимость явно требует более высокую; безусловного апдейта minor он не делает.",
+                "source_of_confusion": "Раз MVS «выбирает версии», кажется, что он стремится к более свежим minor.",
+                "if_it_were_true": "Если бы MVS поднимал minor без причины, зависимости менялись бы при каждом добавлении пакета, ломая стабильность.",
+                "how_it_should_be": "MVS поднимает версию лишь по требованию графа; иначе зависимости остаются на месте до явного `go get -u`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Go не обновляет зависимости автоматически: версии зафиксированы в `go.mod`, а для автоматизации нужны внешние инструменты вроде Dependabot или Renovate.",
+              "correct": true,
+              "sections": {
+                "explanation": "Toolchain никогда не меняет версии сам — это сознательный выбор ради воспроизводимости; обновления приходят только через явный `go get` или PR от ботов.",
+                "example": "Dependabot (GitHub) или Renovate открывают PR при выходе новых версий, а в CI можно гонять `go get -u` раз в неделю с последующим ревью.",
+                "when_to_apply": "Применять стоит так: настроить Dependabot с auto-merge только для patch, а minor и major пропускать через обязательное ревью.",
+                "edge_cases": "Даже SemVer-совместимое обновление может внести breaking change на практике, поэтому деплоить без явного PR и ревью не следует.",
+                "related": "[[go-modules-interview#Q23]] команды ручного обновления; [[go-modules-interview#Q11]] почему MVS не поднимает версии сам; [[go-modules-interview#Q8]] SemVer как обещание совместимости."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое diamond dependency problem и как Go его решает?",
+          "options": [
+            {
+              "text": "В Go diamond dependency решается через major-версию в import path: `v1` и `v2` — это разные пакеты с точки зрения компилятора, поэтому их можно использовать одновременно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда разные пути ведут к разным major-версиям одной зависимости, суффикс `/v2` делает их отдельными пакетами, и конфликта, как в Java/npm, не возникает.",
+                "example": "`import \"example.com/d\"` тянет v1, а `import \"example.com/d/v2\"` — v2, и обе строки спокойно сосуществуют в одном бинаре.",
+                "when_to_apply": "Применять это удобно при миграции v1 → v2: можно держать обе версии, постепенно переводя код, а не переключать всё разом.",
+                "edge_cases": "Это работает только для разных major-версий (разные import paths); в пределах одного major MVS всё равно выбирает одну версию.",
+                "related": "[[go-modules-interview#Q9]] суффикс /v2 для major-версий; [[go-modules-interview#Q11]] MVS внутри одного major; [[go-modules-interview#Q23]] постепенная миграция на новый major."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Go решает diamond dependency как npm: берёт последнюю из требуемых версий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Go применяет MVS и выбирает минимальную достаточную версию; latest-wins — это поведение npm, а не Go.",
+                "source_of_confusion": "Привычка npm/Maven к latest-wins переносится на Go ошибочно.",
+                "if_it_were_true": "Если бы Go брал latest, добавление зависимости с более высоким требованием молча меняло бы версии всем.",
+                "how_it_should_be": "Внутри одного major Go берёт минимальную по MVS; разные major разводятся по import path."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Diamond dependency в Go неразрешим: нужно вручную указывать версию через `replace`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В большинстве случаев MVS выбирает версию автоматически, а разные major разводятся по import path; `replace` — крайняя мера.",
+                "source_of_confusion": "Раз diamond звучит как «конфликт», кажется, что без ручного вмешательства не обойтись.",
+                "if_it_were_true": "Если бы каждый diamond требовал `replace`, управление зависимостями стало бы крайне трудоёмким, чего на практике нет.",
+                "how_it_should_be": "Diamond решается штатно: MVS для одного major, отдельные import paths для разных major; `replace` нужен редко."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Go запрещает одному проекту использовать разные major-версии одного модуля одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Go намеренно разрешает держать v1 и v2 вместе через разные import paths — это и есть способ плавной миграции.",
+                "source_of_confusion": "Кажется, что две версии одного модуля обязаны конфликтовать, как в других экосистемах.",
+                "if_it_were_true": "Если бы это запрещалось, постепенный переход v1 → v2 был бы невозможен, что противоречит дизайну Go-модулей.",
+                "how_it_should_be": "Разные major-версии — разные пакеты по import path, и их одновременное использование разрешено специально."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Indirect зависимости — что это такое?",
+          "options": [
+            {
+              "text": "`// indirect` означает, что модуль deprecated и будет удалён в следующем релизе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`// indirect` — это пометка транзитивной зависимости, не признак устарелости; модуль просто не импортируется напрямую твоим кодом.",
+                "source_of_confusion": "Комментарий в `go.mod` создаёт впечатление предупреждения об удалении.",
+                "if_it_were_true": "Если бы indirect значил deprecated, ручное удаление таких строк было бы безопасным, но оно ломает transitive-requires.",
+                "how_it_should_be": "`// indirect` = транзитивная зависимость; устарелость модуля помечается иначе и к этой метке отношения не имеет."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`// indirect` означает, что модуль нужен только транзитивно — через другую зависимость, а не через прямой import в твоём коде; этими записями автоматически управляет `go mod tidy`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Пометка появляется, когда прямая зависимость тянет модуль через себя или когда он нужен лишь во время тестов: твой код его не импортирует напрямую.",
+                "example": "В `go.mod` это выглядит как `github.com/davecgh/go-spew v1.1.1 // indirect` рядом с прямой `github.com/gorilla/mux v1.8.0` без пометки.",
+                "when_to_apply": "Применять правило просто: не редактировать indirect вручную, а доверить расстановку `go mod tidy`, который добавит и уберёт нужное.",
+                "edge_cases": "Indirect-зависимости тоже попадают в `go.sum` и проверяются хешами — исключать их из integrity было бы дырой в безопасности.",
+                "related": "[[go-modules-interview#Q11]] как MVS учитывает транзитивные зависимости; [[go-modules-interview#Q5]] go mod tidy управляет indirect; [[go-modules-interview#Q3]] // indirect внутри go.mod."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Indirect-зависимости — это зависимости только в тестах; в production они не включаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Test-time зависимости — лишь один из случаев indirect; вообще все транзитивные зависимости помечаются `// indirect`.",
+                "source_of_confusion": "Раз тестовые зависимости часто оказываются indirect, их ошибочно отождествляют целиком.",
+                "if_it_were_true": "Если бы indirect значил «только тесты», исключение их из билда работало бы автоматически, но для этого нужны build tags.",
+                "how_it_should_be": "`// indirect` = транзитивная зависимость любого рода; отделение test-deps делается через build constraints, а не этой меткой."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Indirect-зависимости не включаются в `go.sum` и не проверяются checksums.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go.sum` содержит хеши всех зависимостей, включая indirect; исключение их из проверки было бы дырой в безопасности.",
+                "source_of_confusion": "Раз indirect «не прямые», кажется, что они и не проверяются.",
+                "if_it_were_true": "Если бы indirect не было в `go.sum`, подмена транзитивной зависимости прошла бы незамеченной.",
+                "how_it_should_be": "Все зависимости, включая indirect, покрыты хешами в `go.sum` и проверяются при сборке."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делать, если нужна форка зависимости?",
+          "options": [
+            {
+              "text": "Создать новый модуль с другим именем (`myorg/some-lib-patched`) и использовать прямой import этого имени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Форк с новым именем несовместим с indirect-зависимостями, которые ссылаются на оригинальный путь; правильный путь — `replace` на форк под старым именем.",
+                "source_of_confusion": "Кажется естественным просто опубликовать исправленный модуль под своим именем и импортировать его.",
+                "if_it_were_true": "Если бы это работало, любой пакет в графе, тянущий оригинал, продолжал бы использовать баг, и дерево зависимостей рассогласовалось бы.",
+                "how_it_should_be": "Нужен `replace github.com/some/lib => github.com/myorg/some-lib`, а не новый import path по всему дереву."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`go mod vendor` автоматически использует форк без изменения `go.mod`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`go mod vendor` копирует ровно то, что указано в `go.mod`; без `replace` форк туда не попадёт.",
+                "source_of_confusion": "Раз vendoring «фиксирует» зависимости, кажется, что в него можно подложить форк напрямую.",
+                "if_it_were_true": "Если бы vendor подхватывал форк сам, баг исчез бы из vendored-кода без `replace`, но он останется.",
+                "how_it_should_be": "Сначала `replace` на форк в `go.mod`, и только потом `go mod vendor` скопирует уже исправленный источник."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Директива `replace` в `go.mod` перенаправляет зависимость на форк; долгосрочно — PR в upstream или поддержка форка, а при отсутствии тега используют pseudo-version с конкретного коммита.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда в `github.com/some/lib` есть баг и upstream молчит, форкаешь репозиторий, правишь и через `replace` указываешь модулю брать код из форка вместо оригинала.",
+                "example": "Например, `replace github.com/some/lib => github.com/myorg/some-lib v1.0.1`, а если тега нет — `go get github.com/myorg/some-lib@abc1234` подтянет коммит как pseudo-version.",
+                "when_to_apply": "Применять при критическом hotfix, пока upstream не отреагировал; параллельно стоит отправить PR, а если его не примут — поддерживать форк.",
+                "edge_cases": "`replace` нетранзитивен: downstream-потребители должны добавить своё `replace`, а в корпоративной среде форки часто проксируют через Artifactory/Athens.",
+                "related": "[[go-modules-interview#Q12]] директива replace и её use cases; [[go-modules-interview#Q10]] pseudo-version для коммита без тега; [[go-modules-interview#Q20]] корпоративный прокси для форков."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Подождать, пока upstream примет PR; иного способа использовать форк немедленно нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`replace` существует именно для немедленного использования форка, не дожидаясь реакции upstream.",
+                "source_of_confusion": "Кажется, что «правильный» путь — только официальный PR, а форк до его принятия применять нельзя.",
+                "if_it_were_true": "Если бы ждать было обязательно, критический баг блокировал бы релиз неопределённо долго, что неприемлемо.",
+                "how_it_should_be": "Немедленное использование форка через `replace` — стандартная практика; PR в upstream идёт параллельно."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
