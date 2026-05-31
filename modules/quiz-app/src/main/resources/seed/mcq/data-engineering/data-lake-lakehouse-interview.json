@@ -1,0 +1,1685 @@
+{
+  "topic_slug": "data-lake-lakehouse-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Data Lake?",
+          "options": [
+            {
+              "text": "`Data Lake` — централизованное хранилище для сырых данных любого формата (structured, semi-structured, unstructured) на дешёвом object storage. Принцип `schema-on-read`: структура определяется при чтении, а не при записи, поэтому в озеро можно складывать `JSON`, `CSV`, `Parquet`, изображения и видео без заранее заданной схемы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главные принципы: `schema-on-read` против `schema-on-write` в DWH, любые форматы, дешёвое хранение (`S3` ~$0.023/GB/month против ~$23/TB у Snowflake) и decoupled storage and compute — данные хранятся долго, обрабатываются по требованию.",
+                "example": "В `S3` складывают сырые логи приложения в `JSON` без схемы, а позже `Spark` читает их через `schema-on-read` для ML-тренировки — pre-defined схема не нужна на этапе загрузки.",
+                "when_to_apply": "Применяют для raw data archive «на всякий случай», ML training на больших unstructured-датасетах, data exploration аналитиками и как ETL staging area перед загрузкой в warehouse.",
+                "edge_cases": "Без governance озеро деградирует в `data swamp`: никто не знает что в файлах, схемы плывут, копятся дубли — поэтому даже schema-on-read хранилищу нужен каталог.",
+                "related": "[[data-lake-lakehouse-interview#Q2]] Lake против Warehouse; [[data-lake-lakehouse-interview#Q3]] что такое Lakehouse; [[data-lake-lakehouse-interview#Q25]] data swamp."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Data Lake` хранит только structured данные с заранее определённой схемой по принципу `schema-on-write`, как обычная реляционная БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Озеро работает по `schema-on-read` и принимает любые форматы; `schema-on-write` с обязательной схемой при загрузке — это про Data Warehouse.",
+                "source_of_confusion": "И озеро, и warehouse называют «хранилищем данных», поэтому свойство строгой схемы ошибочно переносят на Lake.",
+                "if_it_were_true": "Тогда сырые логи и unstructured-данные отклонялись бы при загрузке без схемы, и ML-тренировка на raw-данных в озере была бы невозможна.",
+                "how_it_should_be": "В Data Lake данные кладут как есть, а структуру навешивают при чтении — это и есть `schema-on-read`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Data Lake` требует, чтобы дорогой compute-кластер был постоянно включён для самого факта хранения данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Storage и compute в озере decoupled: данные лежат в object storage сами по себе, а кластер поднимают только на время обработки.",
+                "source_of_confusion": "Legacy `HDFS` действительно coupled с compute через data locality, и эту особенность переносят на современное озеро.",
+                "if_it_were_true": "Тогда billing был бы в десятки раз выше дешёвого object storage, и хранить редко используемые данные стало бы невыгодно.",
+                "how_it_should_be": "Озеро на `S3` хранит данные независимо от compute; кластер запускают по требованию и гасят после задачи."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Data Lake` — это просто другое название Data Warehouse, развёрнутого поверх `Hadoop`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lake и DWH различаются по сути: озеро — raw + schema-on-read + дёшево, warehouse — structured + governed + schema-on-write + быстрые запросы.",
+                "source_of_confusion": "Ранние data lakes действительно строили на `Hadoop`/`HDFS`, поэтому Lake путают с Hadoop-вариантом DWH.",
+                "if_it_were_true": "Тогда терялись бы ключевые преимущества озера — дешевизна и гибкость, а `HDFS`-кластеры заменили бы decoupled `S3`.",
+                "how_it_should_be": "Data Lake и Data Warehouse — разные классы хранилищ с разными моделями схемы, цены и пользователей."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Data Lake отличается от Data Warehouse?",
+          "options": [
+            {
+              "text": "`Data Warehouse` использует `schema-on-read`, а `Data Lake` — `schema-on-write`: warehouse гибко читает любые форматы, а озеро требует схему при загрузке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: загрузка в DWH требует заранее известной схемы (`schema-on-write`), а Lake гибко читает raw-данные при запросе (`schema-on-read`).",
+                "source_of_confusion": "Термины `schema-on-read`/`schema-on-write` легко перепутать местами, особенно под давлением на собеседовании.",
+                "if_it_were_true": "Тогда в warehouse можно было бы лить unstructured-данные без схемы, но реально DWH отклоняет несовместимую загрузку.",
+                "how_it_should_be": "Lake = `schema-on-read`, DWH = `schema-on-write`; именно warehouse требует структуру при записи."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Data Lake` хранит raw-данные любого формата по `schema-on-read` на дешёвом storage и нужен Data Scientists для ML и exploration; `Data Warehouse` хранит structured, transformed данные по `schema-on-write`, governed и оптимизирован под быстрые BI-запросы для аналитиков.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевые оси сравнения: схема (on read против on write), тип данных (raw против structured), стоимость storage (очень дёшево против дорого), скорость запросов (медленно без оптимизации против fast optimized) и пользователи (Data Scientists против BI-аналитиков).",
+                "example": "ML-инженер читает сырые `JSON`-события из `S3` через `Spark` (Lake, schema-on-read), а BI-аналитик строит дашборд в `Snowflake` поверх очищенных structured-таблиц (DWH, schema-on-write).",
+                "when_to_apply": "Lake выбирают для ML/exploration и архива сырых данных, DWH — для BI/reporting и self-service аналитики; в 2024 идёт convergence — Lakehouse даёт DWH-фичи поверх озера.",
+                "edge_cases": "`plain Parquet` на `S3` без Lakehouse table format даёт медленные full-scans, поэтому optimized DWH (`Snowflake`, `Redshift`) выигрывает по query speed на BI-нагрузке.",
+                "related": "[[data-lake-lakehouse-interview#Q1]] что такое Data Lake; [[data-lake-lakehouse-interview#Q3]] Lakehouse как convergence; [[data-lake-lakehouse-interview#Q19]] medallion слои."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Data Lake` быстрее `Data Warehouse` на BI-аналитике без какой-либо дополнительной оптимизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`plain Parquet` на `S3` без table format даёт медленные full-scans; optimized DWH с индексами и clustering обгоняет сырое озеро по query speed.",
+                "source_of_confusion": "Дешевизна и масштаб озера создают впечатление, что оно ещё и быстрее по запросам.",
+                "if_it_were_true": "Тогда никто не строил бы дорогие DWH для BI, а просто запрашивал бы сырое `S3`.",
+                "how_it_should_be": "Для BI-скорости нужен либо DWH, либо Lakehouse table format с data skipping и compaction поверх озера."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Data Lake` полностью заменяет `Data Warehouse` для BI-аналитиков и self-service отчётности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BI-инструменты ждут structured, governed данные; raw-озеро без `Gold`-слоя и каталога не годится для self-service аналитики.",
+                "source_of_confusion": "Convergence Lake↔DWH через Lakehouse создаёт иллюзию, что озеро уже само по себе заменяет warehouse.",
+                "if_it_were_true": "Тогда аналитики строили бы дашборды прямо по сырым `JSON`-файлам, но без очистки и схемы это нерабочее.",
+                "how_it_should_be": "Для BI поверх озера нужен governed `Gold`-слой и каталог; иначе остаётся отдельный DWH."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Lakehouse?",
+          "options": [
+            {
+              "text": "`Lakehouse` — это просто другое название managed Data Warehouse в облаке, хранящего данные в проприетарном формате вендора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lakehouse реализован через open table formats (`Delta`/`Iceberg`/`Hudi`) поверх дешёвого `S3`, а не через proprietary DWH-storage.",
+                "source_of_confusion": "Lakehouse даёт warehouse-фичи (`ACID`, schema), поэтому его принимают за обычный cloud-DWH.",
+                "if_it_were_true": "Тогда данные были бы заперты в формате вендора, но `Parquet`+table format читаются многими движками без lock-in.",
+                "how_it_should_be": "Lakehouse = cheap object storage + table format metadata; данные остаются в открытом `Parquet` на `S3`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Lakehouse` требует отдельного `HDFS`-кластера для обеспечения транзакционности `ACID`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Транзакционность даёт table format metadata + transaction log поверх обычного `S3`; отдельный `HDFS` не нужен и устарел.",
+                "source_of_confusion": "Раньше big-data транзакции ассоциировались с `Hadoop`, отсюда миф про обязательный `HDFS`.",
+                "if_it_were_true": "Тогда пришлось бы поднимать дорогой Hadoop-кластер ради `ACID`, теряя decoupled-преимущество облака.",
+                "how_it_should_be": "`ACID` реализуется через `_delta_log`/snapshots на `S3` с optimistic concurrency, без `HDFS`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Lakehouse` (термин Databricks, 2020) — это комбинация дешёвого object storage (как у Data Lake) и warehouse-фич — `ACID`, schema, indexing — реализованных через `table formats` (`Delta Lake`, `Apache Iceberg`, `Apache Hudi`) поверх `Parquet`. Единый storage обслуживает и batch, и streaming без дублирования lake→DWH.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея: взять cheap `S3`-хранение и добавить транзакционность через table format metadata + transaction log, получив `ACID`, time travel и schema evolution без отдельного proprietary DWH-storage.",
+                "example": "Поверх `Parquet`-файлов на `S3` лежит `_delta_log`, и `Spark` делает `MERGE`/`UPSERT` с `ACID`-гарантиями — то, чего нет у plain Parquet, но без перехода в дорогой warehouse.",
+                "when_to_apply": "Применяют когда нужны `ACID` и time travel на `S3` без дублирования lake→DWH, единый storage для batch+streaming и дешёвое хранение при warehouse-удобстве.",
+                "edge_cases": "Зрелость и performance Lakehouse пока ниже, чем у optimized pure DWH (хотя близко), поэтому на тяжёлой low-latency BI иногда всё ещё выбирают `Snowflake`/`Redshift`.",
+                "related": "[[data-lake-lakehouse-interview#Q1]] Data Lake как основа; [[data-lake-lakehouse-interview#Q10]] Delta Lake как реализация; [[data-lake-lakehouse-interview#Q14]] ACID на S3."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Lakehouse` жертвует `ACID`-гарантиями ради дешёвого хранилища — транзакций в нём нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ACID` — ключевая фича Lakehouse через optimistic concurrency в transaction log; без неё Lakehouse теряет смысл.",
+                "source_of_confusion": "Дешёвый `S3` исторически был eventually consistent, поэтому кажется, что транзакциями пришлось пожертвовать.",
+                "if_it_were_true": "Тогда concurrent writers портили бы таблицу, и Lakehouse ничем не отличался бы от сырого озера.",
+                "how_it_should_be": "Lakehouse именно добавляет `ACID` поверх дешёвого storage — это и есть его главное отличие от Lake."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "S3, ADLS, GCS, HDFS — где хранят данные Lakehouse и что доминирует?",
+          "options": [
+            {
+              "text": "`HDFS` — предпочтительный storage для новых cloud-Lakehouse проектов: data locality делает его быстрее object storage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HDFS` требует выделенного Hadoop-кластера с data locality; object storage (`S3`/`ADLS`/`GCS`) дешевле, бесконечно масштабируется и decoupled от compute.",
+                "source_of_confusion": "Историческое преимущество data locality в Hadoop-эпоху создаёт иллюзию, что `HDFS` всё ещё быстрее.",
+                "if_it_were_true": "Тогда новые проекты строили бы Hadoop-кластеры вместо `S3`, но облачные платформы массово ушли на object storage.",
+                "how_it_should_be": "Для новых проектов берут cloud object storage; `HDFS` остаётся лишь в legacy on-prem."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`S3` до сих пор имеет только eventual consistency, что делает его непригодным для `ACID` в Lakehouse.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`S3` обеспечивает strong consistency для read-after-write с декабря 2020; table formats реализуют `ACID` именно поверх этой гарантии.",
+                "source_of_confusion": "Старые статьи про eventual consistency `S3` всё ещё гуляют по сети и вводят в заблуждение.",
+                "if_it_were_true": "Тогда `Delta`/`Iceberg` не могли бы давать `ACID` на `S3`, но они это делают в продакшене.",
+                "how_it_should_be": "`S3` уже strongly consistent, и Lakehouse table formats строят на этом транзакции."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`MinIO` — рекомендуемый production-storage для Lakehouse в облаке, предпочтительнее native `S3`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MinIO` — self-hosted S3-совместимое хранилище для on-prem или dev/test; в облаке первый выбор — native `S3`/`ADLS`/`GCS`.",
+                "source_of_confusion": "S3-совместимый API `MinIO` создаёт впечатление полной взаимозаменяемости с managed `S3` в облаке.",
+                "if_it_were_true": "Тогда команды сами хостили бы `MinIO` в облаке вместо managed-сервиса, беря на себя лишний ops.",
+                "how_it_should_be": "В cloud-production берут native object storage; `MinIO` — для self-hosted и локальной разработки."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Доминирует cloud object storage: `S3` (AWS, самый популярный, strong consistency с декабря 2020, ~$0.023/GB), `ADLS Gen2` (Azure, hierarchical namespace), `GCS` (Google, strong consistency). `HDFS` остаётся только в legacy on-prem Hadoop-инсталляциях, а `MinIO` — self-hosted S3-совместимая альтернатива для dev/on-prem.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cloud object storage победил с 2010-х: бесконечный scale, managed, дёшево и decoupled от compute; table formats реализуют `ACID` поверх strong consistency `S3`/`GCS`.",
+                "example": "Новый проект на AWS кладёт `Parquet` в `S3 Standard` за $0.023/GB и поднимает `Spark`-кластер по требованию; `HDFS`-кластер с DataNodes для этого не нужен.",
+                "when_to_apply": "`S3` выбирают на AWS, `ADLS Gen2` на Azure, `GCS` на GCP; `MinIO` — когда нет облака или для локального dev/test; `HDFS` — только при поддержке существующего legacy.",
+                "edge_cases": "До декабря 2020 `S3` имел eventual consistency, но это уже не мешает `ACID`: table formats строят транзакции поверх нынешней strong-consistency гарантии read-after-write.",
+                "related": "[[data-lake-lakehouse-interview#Q5]] object storage против HDFS; [[data-lake-lakehouse-interview#Q14]] ACID поверх S3; [[data-lake-lakehouse-interview#Q21]] storage tiers S3."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем object storage (S3) отличается от HDFS?",
+          "options": [
+            {
+              "text": "`Object storage` (`S3`) — key-value хранилище объектов с REST API, эмулированной иерархией через ключи, бесконечным managed-масштабированием, ценой ~$0.023/GB и decoupled от compute. `HDFS` — файловая система с реальными директориями, POSIX-like API, scaling через DataNodes, дорогим обслуживанием серверов и частым coupling с compute через data locality.",
+              "correct": true,
+              "sections": {
+                "explanation": "Object storage победил: decoupled storage+compute позволяет масштабировать их независимо, бесконечный scale и низкая цена перевешивают, а data locality `HDFS` перестала быть критичной при сети 10 Gbps.",
+                "example": "`Spark`-executor читает свой range из `Parquet` в `S3` параллельно с другими (range reads по row groups), не завися от расположения данных на конкретной ноде, как в `HDFS`.",
+                "when_to_apply": "`S3` берут для всех новых data lake/lakehouse проектов; `HDFS` остаётся лишь там, где уже есть legacy on-prem Hadoop-инфраструктура.",
+                "edge_cases": "Отсутствие реальных директорий и full FS-операций в `S3` не мешает Lakehouse: иерархия эмулируется ключами, а изменения идут append-only стилем (put новой версии вместо in-place edit).",
+                "related": "[[data-lake-lakehouse-interview#Q4]] где хранят данные; [[data-lake-lakehouse-interview#Q6]] Parquet и row groups; [[data-lake-lakehouse-interview#Q24]] small files problem."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Object storage` хуже `HDFS`, потому что не поддерживает реальную directory hierarchy, и это ломает Lakehouse.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для Lakehouse реальная иерархия не нужна: key-value с эмулированными путями достаточен, а infinite scale, дешевизна и managed-природа перевешивают.",
+                "source_of_confusion": "Привычка к POSIX-файловой системе создаёт ощущение, что без настоящих директорий хранилище неполноценно.",
+                "if_it_were_true": "Тогда `S3` не годился бы для data lake, но именно на нём построено большинство современных озёр.",
+                "how_it_should_be": "Lakehouse работает поверх key-value object storage; директории эмулируются префиксами ключей."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`HDFS` лучше для `Spark`-запросов из-за data locality — compute стоит рядом с данными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cloud-эра опровергла это: decoupled storage+compute (`S3` + отдельный `Spark`-кластер) масштабируется независимо, а data locality не критична при сети 10 Gbps.",
+                "source_of_confusion": "В Hadoop-эпоху data locality реально ускоряла джобы, и это правило по инерции переносят на облако.",
+                "if_it_were_true": "Тогда облачные платформы держались бы за `HDFS`, но они массово перешли на decoupled `S3`.",
+                "how_it_should_be": "Современный стек разделяет storage и compute; `S3` + кластер по требованию выигрывает у coupled `HDFS`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Object storage` не поддерживает параллельное чтение несколькими `Spark`-executor'ами — данные читаются последовательно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`S3` поддерживает параллельные range reads: `Parquet` разбит на row groups, и каждый executor читает свой range независимо.",
+                "source_of_confusion": "Отсутствие явной файловой системы создаёт впечатление, что параллельный доступ к объекту невозможен.",
+                "if_it_were_true": "Тогда `Spark` на `S3` упирался бы в один поток чтения, но в реальности он масштабирует чтение по executor'ам.",
+                "how_it_should_be": "Range reads по row groups дают полноценное параллельное чтение из object storage."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Parquet и зачем он нужен?",
+          "options": [
+            {
+              "text": "`Parquet` — row-oriented формат, оптимальный для streaming inserts в `Kafka` с минимальным overhead на сообщение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Parquet` columnar; row-oriented — это `Avro` или `CSV`; для per-message streaming `Parquet` создаёт overhead, потому что читает row целиком.",
+                "source_of_confusion": "Раз `Parquet` популярен в big data, кажется, что он подходит и для потоковых сообщений `Kafka`.",
+                "if_it_were_true": "Тогда `Kafka` писала бы сообщения в `Parquet`, но стандарт там — `Avro` с `Confluent Schema Registry`.",
+                "how_it_should_be": "Для streaming берут row-oriented `Avro`; `Parquet` — для batch-аналитики поверх колонок."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Apache Parquet` — columnar (колоночный) формат хранения, оптимизированный под analytics: читает только нужные колонки, сжимает по колонкам, поддерживает predicate pushdown через min/max статистику в footer (skip блоков). Схема embedded в файл, есть nested types (structs, arrays, maps) и компрессии `Snappy`/`Gzip`/`Zstd`/`Brotli`. De facto стандарт для аналитических файлов в Lake.",
+              "correct": true,
+              "sections": {
+                "explanation": "Колоночный layout позволяет при `SELECT id, name FROM wide_table` прочитать только два столбца, а footer-статистика пропускает целые row groups, не удовлетворяющие фильтру.",
+                "example": "`pq.read_table('data.parquet', columns=['id','name'])` читает лишь две колонки из широкой таблицы — это быстро, потому что остальные столбцы не трогаются с диска.",
+                "when_to_apply": "Применяют для аналитических запросов в Lake, где из широких таблиц выбираются конкретные колонки и важны сжатие и data skipping.",
+                "edge_cases": "Для per-message streaming в `Kafka` `Parquet` плох — он columnar, читает row целиком при updates; там лучше row-oriented `Avro` с меньшим overhead на сообщение.",
+                "related": "[[data-lake-lakehouse-interview#Q8]] Avro для streaming; [[data-lake-lakehouse-interview#Q9]] сравнение форматов; [[data-lake-lakehouse-interview#Q10]] Parquet под Delta Lake."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Parquet` не поддерживает schema evolution — при любом изменении схемы нужно перезаписать все данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Parquet` поддерживает добавление колонок, а Lakehouse table formats (`Iceberg`) расширяют schema evolution ещё дальше (reorder, type promotion).",
+                "source_of_confusion": "Limited schema evolution `Parquet` (по сравнению с `Avro`) преувеличивают до полного отсутствия.",
+                "if_it_were_true": "Тогда каждое добавление поля стоило бы перезаписи терабайтов, но реально новые колонки добавляются дёшево.",
+                "how_it_should_be": "`Parquet` умеет базовую schema evolution; полную дают table formats поверх него."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Parquet` лучше `Avro` для сообщений `Kafka` из-за меньшего размера на одно сообщение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Avro` row-oriented с меньшим overhead per message и интегрирован с `Confluent Schema Registry`; `Parquet` хорош для batch-аналитики, не для per-message streaming.",
+                "source_of_confusion": "Отличное сжатие `Parquet` на больших batch-файлах ошибочно проецируют на крошечные `Kafka`-сообщения.",
+                "if_it_were_true": "Тогда `Avro` не был бы стандартом `Kafka`, но именно он используется с Schema Registry повсеместно.",
+                "how_it_should_be": "Для `Kafka` берут `Avro`; колоночный `Parquet` выгоден на batch-сканах, а не на отдельных сообщениях."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ORC и где он применяется?",
+          "options": [
+            {
+              "text": "`ORC` более популярен, чем `Parquet`, в экосистеме `Spark`/`Databricks` в 2024.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Parquet` выиграл mind share и стал de facto стандартом; `ORC` используется в основном в `Hive`-centric проектах, а `Spark` по умолчанию пишет `Parquet`.",
+                "source_of_confusion": "Похожесть `ORC` и `Parquet` создаёт впечатление, что популярность у них одинаковая.",
+                "if_it_were_true": "Тогда `Spark` дефолтил бы в `ORC`, но его дефолтный формат записи — `Parquet`.",
+                "how_it_should_be": "В `Spark`/`Databricks` доминирует `Parquet`; `ORC` остаётся нишей `Hive`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`ORC` поддерживает schema evolution лучше, чем `Avro`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Schema evolution у `ORC` ограничена так же, как у `Parquet`; `Avro` специально создан для отличной schema evolution в `Kafka`/streaming.",
+                "source_of_confusion": "Раз `ORC` современный колоночный формат, кажется, что и со schema evolution у него всё лучше всех.",
+                "if_it_were_true": "Тогда `Kafka` использовала бы `ORC` для эволюции схем, но там стандарт — `Avro`.",
+                "how_it_should_be": "Лучшую schema evolution даёт `Avro`; у `ORC` она ограничена как у `Parquet`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Apache ORC` (Optimized Row Columnar) — колоночный формат, созданный для `Hive`. Как и `Parquet`, он columnar, со сжатием, predicate pushdown и embedded-схемой; в некоторых случаях даёт чуть лучшее сжатие и performance, но проиграл `Parquet` по mind share. В `Hive`-экосистеме — `ORC`, во всём остальном — `Parquet`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ORC` и `Parquet` очень похожи архитектурно (оба колоночные с data skipping), поэтому выбор между ними определяется не фичами, а экосистемой и привычками движка.",
+                "example": "В `Hive`-centric проекте или `Pig`-pipeline таблицы пишут в `ORC`, а тот же `Spark` по умолчанию пишет `Parquet` — два колоночных формата под разные стеки.",
+                "when_to_apply": "Применяют в `Hive`-centric проектах и `Pig`-pipeline'ах, где `ORC` исторически дефолт; для всего остального берут `Parquet`.",
+                "edge_cases": "`Hive ACID` поверх `ORC` ограничен; полноценный `ACID` на `S3` — задача `Delta`/`Iceberg`/`Hudi`, а не самого формата `ORC`.",
+                "related": "[[data-lake-lakehouse-interview#Q6]] Parquet как стандарт; [[data-lake-lakehouse-interview#Q8]] Avro и schema evolution; [[data-lake-lakehouse-interview#Q9]] сравнение форматов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`ORC` поддерживает полноценные `ACID`-транзакции сам по себе, без Lakehouse table format.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Hive ACID` поверх `ORC` ограничен; полноценный `ACID` на `S3` обеспечивают `Delta`/`Iceberg`/`Hudi`, а не формат `ORC`.",
+                "source_of_confusion": "Наличие `Hive ACID` поверх `ORC` создаёт иллюзию, что транзакционность встроена в сам формат.",
+                "if_it_were_true": "Тогда не понадобились бы table formats для `ACID` на озере, но именно они эту задачу и решают.",
+                "how_it_should_be": "`ORC` — формат хранения; полноценный `ACID` даёт table format поверх него."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Avro и для чего он используется?",
+          "options": [
+            {
+              "text": "`Avro` — колоночный формат, идеальный для analytics-запросов с column scans по широким таблицам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Avro` row-oriented; для analytics column scans нужен `Parquet`, а `Avro` читает row целиком даже ради одной колонки.",
+                "source_of_confusion": "Раз `Avro` популярен в big data, его ошибочно записывают в колоночные форматы для аналитики.",
+                "if_it_were_true": "Тогда `SELECT col FROM 1TB` в `Avro` был бы быстрым, но он читает всю строку и проигрывает `Parquet` в 10-100x.",
+                "how_it_should_be": "Для analytics берут колоночный `Parquet`; `Avro` — для streaming и RPC."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Avro` обязательно требует внешнего `Schema Registry` — без него формат вообще не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Avro` может embed-ить схему в сам файл (self-describing); `Schema Registry` — опция для централизованного управления схемами в `Kafka`, а не обязательное условие.",
+                "source_of_confusion": "Тесная связка `Avro` с `Confluent Schema Registry` в `Kafka` создаёт впечатление, что Registry неотделим.",
+                "if_it_were_true": "Тогда нельзя было бы записать standalone `.avro`-файл, но self-describing файлы существуют и читаются автономно.",
+                "how_it_should_be": "Схему можно положить внутрь `Avro`-файла; Registry нужен лишь для централизованной схемы в `Kafka`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Avro` лучше `Parquet` для batch-аналитики в Data Lake из-за меньшего размера файлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Avro` row-oriented и читает всю строку на каждую операцию; для analytics (`SELECT columns FROM 1TB`) `Parquet` в 10-100x быстрее за счёт колоночного layout.",
+                "source_of_confusion": "Компактное binary-представление `Avro` на сообщение проецируют на batch-аналитику больших таблиц.",
+                "if_it_were_true": "Тогда аналитические движки писали бы в `Avro`, но стандарт аналитики в Lake — `Parquet`.",
+                "how_it_should_be": "Для batch-аналитики берут колоночный `Parquet`; `Avro` выгоден в streaming, а не на column scans."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Apache Avro` — row-oriented (строковый) формат с отличной schema evolution: можно добавлять/удалять поля без перекомпиляции consumers. Схема embedded в файл или хранится в `Schema Registry`, представление — compact binary. Основное применение — сообщения `Kafka` с `Confluent Schema Registry`, streaming-данные и RPC (`Avro IDL`); для analytics column scans он плох, потому что row-oriented.",
+              "correct": true,
+              "sections": {
+                "explanation": "Строковый layout и встроенная эволюция схемы позволяют producer'у менять схему, не ломая consumers — критично для долгоживущих `Kafka`-топиков.",
+                "example": "Producer добавляет новое поле в `Avro`-сообщение, регистрирует схему в `Confluent Schema Registry`, и старые consumers продолжают читать сообщения без падения — backward-совместимость.",
+                "when_to_apply": "Применяют для `Kafka`-сообщений, streaming-pipeline'ов и RPC через `Avro IDL`, где важна эволюция схемы и минимальный overhead на сообщение.",
+                "edge_cases": "Внешний `Schema Registry` не обязателен: `Avro` может embed-ить схему в сам файл (self-describing); Registry — лишь опция для централизованного управления схемами в `Kafka`.",
+                "related": "[[data-lake-lakehouse-interview#Q6]] Parquet для analytics; [[data-lake-lakehouse-interview#Q9]] сравнение форматов; [[data-lake-lakehouse-interview#Q28]] streaming в Lakehouse."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем различаются Parquet, ORC и Avro?",
+          "options": [
+            {
+              "text": "`Parquet` — columnar для analytics в Lake (отличное сжатие, limited schema evolution, быстрые column scans). `ORC` — columnar для `Hive`-centric проектов. `Avro` — row-oriented для `Kafka` и streaming с excellent schema evolution и быстрым чтением строки целиком. Правило: `Parquet`=analytics, `Avro`=streaming, `ORC`=Hive.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор формата определяется движком и use-case: колоночные `Parquet`/`ORC` выигрывают на column scans, а строковый `Avro` — на per-row streaming и эволюции схемы.",
+                "example": "`SELECT 3 из 100 колонок` из 1TB-таблицы — берут `Parquet` (читает 3 колонки); поток событий в `Kafka` — берут `Avro` (меняет схему без breaking consumers).",
+                "when_to_apply": "Формат выбирают по движку и сценарию: аналитика в Lake → `Parquet`, потоки `Kafka`/`Flink` → `Avro`, `Hive`-стек → `ORC`.",
+                "edge_cases": "`Avro` хуже `Parquet` для batch-аналитики, потому что row-oriented читает всю строку даже для одной колонки; `ORC` и `Parquet` не свободно взаимозаменяемы — смена в `Hive` потребует пересоздания таблиц.",
+                "related": "[[data-lake-lakehouse-interview#Q6]] детали Parquet; [[data-lake-lakehouse-interview#Q7]] детали ORC; [[data-lake-lakehouse-interview#Q8]] детали Avro."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Avro` лучше `Parquet` для batch-аналитики в Data Lake благодаря row-oriented layout.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Avro` row-oriented и читает всю строку даже для одной колонки; `Parquet` columnar в 10-100x быстрее для `SELECT 3 из 100 колонок`.",
+                "source_of_confusion": "Хорошее сжатие `Avro` на сообщениях ошибочно проецируют на batch-аналитику больших таблиц.",
+                "if_it_were_true": "Тогда аналитические движки дефолтили бы в `Avro`, но в Lake стандарт аналитики — `Parquet`.",
+                "how_it_should_be": "Для batch-аналитики берут колоночный `Parquet`; `Avro` оптимален в streaming, а не на column scans."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`ORC` и `Parquet` полностью взаимозаменяемы в любом стеке — разница между ними непринципиальна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ORC` оптимизирован под `Hive`; у `Parquet` лучшая поддержка в `Spark`, `Trino`, `Pandas`, `DuckDB`; замена `ORC`→`Parquet` в `Hive` требует пересоздания таблиц.",
+                "source_of_confusion": "Архитектурная похожесть двух колоночных форматов создаёт иллюзию бесшовной взаимозамены.",
+                "if_it_were_true": "Тогда можно было бы менять формат без миграции, но смена в `Hive` ломает существующие таблицы.",
+                "how_it_should_be": "Формат выбирают под экосистему: `Parquet` для большинства движков, `ORC` для `Hive`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Для `Kafka` нужен `Parquet`, потому что он поддерживает streaming schema evolution.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Parquet` не поддерживает schema evolution без rewrite файлов; стандарт для `Kafka` — `Avro` с `Confluent Schema Registry`.",
+                "source_of_confusion": "Популярность `Parquet` в big data создаёт впечатление, что он годится и для потоков `Kafka`.",
+                "if_it_were_true": "Тогда producer'ы писали бы в `Parquet`, но эволюция схем в `Kafka` строится на `Avro`.",
+                "how_it_should_be": "Для `Kafka`-streaming берут `Avro`; `Parquet` — для batch-аналитики в Lake."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Delta Lake?",
+          "options": [
+            {
+              "text": "`Delta Lake` хранит транзакционный log прямо внутри самих `Parquet`-файлов с данными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Delta log хранится отдельно в `_delta_log/` как `JSON`-файлы операций; данные (`part-*.parquet`) и log физически разделены.",
+                "source_of_confusion": "Раз log и данные лежат в одном каталоге таблицы, кажется, что journal встроен в `Parquet`.",
+                "if_it_were_true": "Тогда чтение версии требовало бы парсинга всех `Parquet`-файлов, но движок читает компактный `_delta_log`.",
+                "how_it_should_be": "Journal лежит в `_delta_log/`; `Parquet`-файлы содержат только данные."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Delta Lake` — open-source table format от Databricks, превращающий `S3`/`ADLS` в transactional store: `ACID`-транзакции на object storage, time travel (query прошлых версий), schema evolution + enforcement и `MERGE`/`UPSERT`, которых нет в plain Parquet. Журнал операций хранится отдельно в `_delta_log/` как `JSON`-файлы; при query читается log + relevant `Parquet`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Структура таблицы: каталог `_delta_log/` с `00000000.json`, `00000001.json` и периодическими `.checkpoint.parquet`, рядом — `part-*.parquet` с данными; log и данные физически разделены.",
+                "example": "Структура `table/_delta_log/00000001.json` фиксирует версию 1, а `part-00000.parquet` хранит сами строки — движок читает journal, чтобы понять, какие `Parquet`-файлы актуальны.",
+                "when_to_apply": "Применяют для Lakehouse на `Databricks` или open-source `Delta`, когда нужны транзакционные `MERGE`/`UPSERT` и time travel поверх `S3`/`ADLS`.",
+                "edge_cases": "`VACUUM` удаляет файлы старше retention threshold (default 7 дней), а не все версии немедленно; time travel доступен в пределах retention, а threshold=0h небезопасен.",
+                "related": "[[data-lake-lakehouse-interview#Q3]] Lakehouse через table formats; [[data-lake-lakehouse-interview#Q11]] Iceberg как конкурент; [[data-lake-lakehouse-interview#Q14]] ACID на S3."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Delta Lake` не поддерживает streaming — это формат только для batch `Spark`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Delta Lake` unified: поддерживает `Structured Streaming` (`readStream`/`writeStream`) наряду с batch — это ключевое преимущество над plain Parquet.",
+                "source_of_confusion": "Ассоциация `Delta` с batch ETL в Databricks затмевает его streaming-возможности.",
+                "if_it_were_true": "Тогда `Delta Live Tables` для declarative streaming не существовало бы, но оно есть.",
+                "how_it_should_be": "`Delta` обслуживает и streaming, и batch на одной таблице — единый storage."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`VACUUM` в `Delta Lake` удаляет все исторические версии немедленно после вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`VACUUM` удаляет файлы старше retention threshold (default 7 дней); time travel доступен в пределах retention, немедленное удаление требует threshold=0h (небезопасно).",
+                "source_of_confusion": "Слово «vacuum» (очистка) создаёт впечатление мгновенного и полного удаления истории.",
+                "if_it_were_true": "Тогда любой `VACUUM` ломал бы time travel, но retention защищает недавние версии.",
+                "how_it_should_be": "`VACUUM` чистит лишь файлы старше retention, сохраняя возможность time travel в окне retention."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличается Apache Iceberg?",
+          "options": [
+            {
+              "text": "`Iceberg` — это storage format для `S3`, заменяющий собой `Parquet` как формат файлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Здесь путаница уровней: `Iceberg` — table format поверх `Parquet`/`ORC`, он не заменяет файловый формат, а управляет метаданными над ним.",
+                "source_of_confusion": "И `Parquet`, и `Iceberg` называют «форматами», поэтому смешивают уровень файла и уровень таблицы.",
+                "if_it_were_true": "Тогда `Iceberg` хранил бы байты данных сам, но он лишь описывает, какие `Parquet`-файлы образуют snapshot.",
+                "how_it_should_be": "`Iceberg` — table format поверх `Parquet`; файловый формат остаётся `Parquet`/`ORC`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Iceberg` требует `Databricks` runtime для записи в таблицу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: `Iceberg` создан как vendor-neutral альтернатива `Delta` и пишется `Spark`, `Trino`, `Flink` без привязки к `Databricks`.",
+                "source_of_confusion": "Раз `Delta` тесно связан с `Databricks`, эту привязку ошибочно переносят и на `Iceberg`.",
+                "if_it_were_true": "Тогда `Netflix` и `Apple` не выбрали бы `Iceberg` ради ухода от vendor lock-in.",
+                "how_it_should_be": "`Iceberg` пишется множеством движков; `Databricks`-runtime для него не требуется."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Apache Iceberg` (от Netflix, Apache top с 2020) — конкурент `Delta`: open table format с hidden partitioning (партиция по `day(ts)` без хранения в данных), snapshot isolation (каждое изменение — новый snapshot), богатой `Avro`-metadata со stats, лучшей в классе schema evolution и multi-engine support (`Spark`, `Trino`, `Flink`, `Snowflake` с 2024). В 2024 — лидер по adoption в non-Databricks мире.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Iceberg` — table format поверх `Parquet`/`ORC`, а не замена им; hidden partitioning означает, что partition spec вычисляется автоматически, и пользователь пишет фильтр по `ts`, не зная о партиции.",
+                "example": "Adoption: `Apple`, `Netflix`, `Stripe`, `Adobe`, `Pinterest` строят multi-vendor Lakehouse на `Iceberg`, чтобы избежать lock-in на `Databricks` и читать таблицы разными движками.",
+                "when_to_apply": "Применяют для multi-vendor Lakehouse без lock-in, когда таблицы читают `Trino`, `Snowflake`, `Spark` и `Flink` одновременно и нужна сильная schema evolution.",
+                "edge_cases": "Hidden partitioning не означает отсутствие партиционирования: оно есть, но скрыто от пользователя — partition spec (`day(ts)`) вычисляется автоматически по фильтру на `ts`.",
+                "related": "[[data-lake-lakehouse-interview#Q10]] Delta Lake; [[data-lake-lakehouse-interview#Q12]] Apache Hudi; [[data-lake-lakehouse-interview#Q13]] сравнение трёх форматов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Hidden partitioning в `Iceberg` означает, что данные вообще не партиционированы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Партиционирование есть, но скрыто от пользователя: partition spec (`day(ts)`) вычисляется автоматически, и пишут фильтр по `ts`, не зная о партиции.",
+                "source_of_confusion": "Слово «hidden» (скрытое) трактуют как «отсутствующее», а не как «невидимое для пользователя».",
+                "if_it_were_true": "Тогда запросы сканировали бы всю таблицу, но hidden partitioning как раз даёт partition pruning.",
+                "how_it_should_be": "Партиция существует и работает, просто spec задаётся декларативно и не требует partition-колонки в фильтре."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Apache Hudi?",
+          "options": [
+            {
+              "text": "`Hudi` и `Delta` — это одно и то же, просто два разных названия одного формата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные движки с разными форматами log: `Hudi` от `Uber` специализирован на UPSERT и streaming, `Delta` — от `Databricks` с `_delta_log`.",
+                "source_of_confusion": "Оба — table formats с `ACID` и time travel, поэтому их объединяют в один.",
+                "if_it_were_true": "Тогда `Hudi` MoR и `Delta` `_delta_log` имели бы идентичный формат, но они устроены по-разному.",
+                "how_it_should_be": "`Hudi` и `Delta` — разные форматы с разными механизмами хранения и сильными сторонами."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Merge-on-Read` (MoR) переписывает `Parquet`-файл целиком при каждом update.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полный rewrite делает `Copy-on-Write`; MoR пишет изменения в log и мержит их при чтении — быстрая запись, медленнее чтение.",
+                "source_of_confusion": "Слово «merge» в названии MoR трактуют как «переписать и слить», хотя merge происходит при чтении.",
+                "if_it_were_true": "Тогда MoR не давал бы выигрыша в скорости записи, но именно ради быстрой записи его и выбирают.",
+                "how_it_should_be": "MoR откладывает merge до чтения; полный rewrite файла — это CoW."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Copy-on-Write` в `Hudi` пропускает запись в delta-log ради оптимизации быстрой записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CoW наоборот переписывает `Parquet`-файл целиком при update: быстрее чтение, медленнее запись; быструю запись даёт MoR через log.",
+                "source_of_confusion": "Название «copy-on-write» ассоциируется с ленивым копированием и быстрой записью, что здесь неверно.",
+                "if_it_were_true": "Тогда CoW был бы оптимален для streaming-inserts, но для частых update'ов берут MoR.",
+                "how_it_should_be": "CoW оптимизирует чтение ценой записи; для быстрой записи в `Hudi` используют MoR."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Apache Hudi` (от Uber, Apache с 2017) — самый старый из трёх table format'ов, UPSERT-первый: оптимизирован под streaming inserts/updates. Два storage type: `Copy-on-Write` (CoW — переписывает `Parquet`-файлы целиком, как `Delta`/`Iceberg`) и `Merge-on-Read` (MoR — log + base files, быстрая запись, медленнее чтение). Есть indexing для UPSERT; силён в CDC-pipeline'ах и streaming-агрегациях.",
+              "correct": true,
+              "sections": {
+                "explanation": "CoW даёт быстрое чтение ценой медленной записи (полный rewrite файла), MoR — быструю запись (в log) ценой merge при чтении; indexing ускоряет поиск строк для UPSERT.",
+                "example": "В CDC-pipeline с частыми update'ами берут `Hudi` MoR: каждое изменение пишется в log быстро, а merge с base-файлами происходит при чтении — то, чего нет в plain Parquet.",
+                "when_to_apply": "Применяют где много update'ов: CDC-pipeline'ы, streaming-агрегации с частыми UPSERT; менее популярен, чем `Delta`/`Iceberg`, но силён в этих нишах.",
+                "edge_cases": "Путать CoW и MoR — частая ошибка: CoW переписывает `Parquet` целиком при update (быстрее чтение), а MoR пишет в log и мержит при чтении (быстрее запись, медленнее чтение).",
+                "related": "[[data-lake-lakehouse-interview#Q10]] Delta Lake; [[data-lake-lakehouse-interview#Q11]] Apache Iceberg; [[data-lake-lakehouse-interview#Q13]] сравнение трёх форматов."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать между Delta Lake, Apache Iceberg и Apache Hudi?",
+          "options": [
+            {
+              "text": "Если работаешь на `Databricks` — `Delta` (native). Если нужен multi-engine (`Trino`, `Snowflake`, `Spark`, `Flink`) — `Iceberg` (excellent multi-engine, лучшая schema evolution, hidden partitioning). Если streaming-heavy с UPSERT (CDC) — `Hudi`. Все три дают `ACID` и time travel, но различаются по vendor-neutrality, partitioning и merge-стратегии.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор определяется стеком: `Delta`=Databricks, `Iceberg`=open multi-vendor, `Hudi`=streaming-upsert; путать привязки (Iceberg на Databricks, Delta на Snowflake) — типичная ошибка.",
+                "example": "На `Snowflake` подключают `Iceberg` external tables (since 2023), а на `Databricks` пишут `Delta` native — обратная связка (`Iceberg`+Databricks, `Delta`+Snowflake) неверна.",
+                "when_to_apply": "Применяют при выборе table format под конкретный стек: native-движок, multi-engine-требование или streaming-CDC определяют формат.",
+                "edge_cases": "Time travel есть у всех трёх (Delta через `_delta_log`, Iceberg через snapshots, Hudi через timeline) — утверждать, что он только у одного, неверно; различия — в partitioning и merge.",
+                "related": "[[data-lake-lakehouse-interview#Q10]] Delta Lake; [[data-lake-lakehouse-interview#Q11]] Apache Iceberg; [[data-lake-lakehouse-interview#Q12]] Apache Hudi."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "На `Databricks` лучше использовать `Iceberg`, а на `Snowflake` — `Delta`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: `Databricks` → `Delta` (native), `Snowflake` → `Iceberg` (external tables since 2023); связки перепутаны местами.",
+                "source_of_confusion": "Оба вендора поддерживают оба формата, поэтому native-привязки легко перепутать.",
+                "if_it_were_true": "Тогда `Databricks` дефолтил бы в `Iceberg`, но его native-формат — `Delta`.",
+                "how_it_should_be": "`Databricks` → `Delta`, `Snowflake` → `Iceberg`; именно так идут native-связки."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Все три формата идентичны по фичам, поэтому выбор между ними не имеет значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Различия существенны: hidden partitioning у `Iceberg`, MoR-merge у `Hudi`, vendor-neutrality у `Iceberg`, native-привязка к `Databricks` у `Delta`.",
+                "source_of_confusion": "Общий набор `ACID` + time travel создаёт впечатление полной взаимозаменяемости.",
+                "if_it_were_true": "Тогда команды выбирали бы формат случайно, но стек диктует конкретный выбор.",
+                "how_it_should_be": "Форматы различаются по partitioning, merge и vendor-neutrality; выбор зависит от стека."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Hudi` — единственный из трёх форматов, который поддерживает time travel.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три поддерживают time travel: `Delta` через `_delta_log`, `Iceberg` через snapshots, `Hudi` через timeline.",
+                "source_of_confusion": "Сильная UPSERT/streaming-репутация `Hudi` создаёт впечатление, что и time travel — его эксклюзив.",
+                "if_it_were_true": "Тогда `Delta` и `Iceberg` не давали бы `VERSION AS OF`, но они оба это умеют.",
+                "how_it_should_be": "Time travel есть у всех трёх; различается лишь механизм версионирования."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализуются ACID-транзакции на S3?",
+          "options": [
+            {
+              "text": "`S3` поддерживает pessimistic locking, и `Delta` использует именно его для `ACID`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`S3` не имеет locks; `Delta` использует optimistic concurrency (read-modify-write с version check), а не pessimistic locking.",
+                "source_of_confusion": "Привычка к row-level locks в РСУБД заставляет искать locks и в object storage.",
+                "if_it_were_true": "Тогда writer'ы блокировали бы друг друга на запись, но OCC детектит конфликт лишь при commit.",
+                "how_it_should_be": "На `S3` используют optimistic concurrency без locks; конфликт решается retry."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`ACID` на `S3` строится на atomic rename + optimistic concurrency control через version numbers в `_delta_log`: writer читает version 5, делает изменения и пытается записать version 6; если двое претендуют на одну версию, побеждает один, а loser конфликта делает retry с новой версией. Это OCC без locks; durability даёт сам `S3` (11 nines), а isolation — snapshot isolation.",
+              "correct": true,
+              "sections": {
+                "explanation": "Шаги `ACID`: atomic writes новых файлов + atomic-запись `_delta_log` entry, concurrency через optimistic locking по version numbers, consistency (все readers видят один snapshot), isolation (snapshot) и durability от `S3`.",
+                "example": "Два writer'а читают version 5 и пытаются записать version 6; только один коммитит, второй детектит конфликт при commit и ретраит read-modify-write с version 6 как базой.",
+                "when_to_apply": "Применяют при concurrent writers на одну `Delta`/`Iceberg`-таблицу: OCC = read version → write next → conflict → retry без блокировок.",
+                "edge_cases": "`S3` не имеет locks: с 2020 у него strong consistency для read-after-write, и `ACID` реализуется поверх неё через transaction log, а не через pessimistic locking.",
+                "related": "[[data-lake-lakehouse-interview#Q4]] strong consistency S3; [[data-lake-lakehouse-interview#Q10]] _delta_log; [[data-lake-lakehouse-interview#Q15]] time travel поверх log."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`ACID` на `S3` в принципе невозможен, потому что `S3` eventually consistent.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С 2020 `S3` strong consistency для read-after-write; `ACID` реализуется через transaction log поверх этой гарантии.",
+                "source_of_confusion": "Старая репутация `S3` как eventually consistent всё ещё живёт в head-canon инженеров.",
+                "if_it_were_true": "Тогда `Delta`/`Iceberg` не давали бы `ACID` на `S3`, но они это делают в продакшене.",
+                "how_it_should_be": "`S3` уже strongly consistent, и transaction log обеспечивает `ACID` поверх него."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Concurrent writers в `Delta` всегда блокируют друг друга, поэтому нужен внешний lock-сервис.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Используется optimistic concurrency без locks; конфликт детектится при commit, и loser ретраит — внешний lock не нужен.",
+                "source_of_confusion": "Кажется, что одновременная запись в одну таблицу обязана сериализоваться через блокировку.",
+                "if_it_were_true": "Тогда нужен был бы `ZooKeeper`/`etcd` для locks, но OCC обходится version numbers в log.",
+                "how_it_should_be": "Writer'ы не блокируются заранее; конфликт версий ловится при commit и решается retry."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое time travel в Lakehouse?",
+          "options": [
+            {
+              "text": "`Time travel` хранит данные бесплатно — все версии живут вечно без дополнительных затрат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждая старая версия — дополнительный storage; после retention period нужен `VACUUM` для очистки, иначе расходы растут.",
+                "source_of_confusion": "Удобство `VERSION AS OF` создаёт ощущение, что история ничего не стоит.",
+                "if_it_were_true": "Тогда `VACUUM` был бы не нужен, но он именно для управления стоимостью хранения версий.",
+                "how_it_should_be": "Версии занимают место; retention + `VACUUM` балансируют доступность истории и стоимость."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Time travel` требует отдельного backup-хранилища, куда копируются прошлые версии таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Time travel работает на той же таблице через transaction log; отдельный backup не нужен — старые файлы уже лежат рядом.",
+                "source_of_confusion": "Идея «прошлых версий» ассоциируется с резервным копированием в отдельное место.",
+                "if_it_were_true": "Тогда нужна была бы вторая копия данных, но log просто ссылается на ещё не удалённые файлы.",
+                "how_it_should_be": "Прошлые версии доступны прямо из той же таблицы через log, без отдельного backup."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Time travel` — запрос прошлых версий таблицы через transaction log: `SELECT * FROM my_table VERSION AS OF 5` или `TIMESTAMP AS OF '2025-04-15 10:00:00'` (в `Spark` — `.option(\"versionAsOf\", 5)`). Применяется для audit (что было вчера), rollback (восстановить случайно удалённое), ML reproducibility (тренировка на той же версии) и A/B-сравнения. Цена — хранение старых версий, поэтому нужен регулярный `VACUUM`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Time travel работает поверх transaction log на той же таблице — отдельный backup не нужен; версии живут в пределах retention, после чего `VACUUM` их чистит.",
+                "example": "Аналитик восстанавливает случайно удалённые строки через `VERSION AS OF` предыдущей версии, а ML-инженер тренирует модель на фиксированном `TIMESTAMP AS OF` для воспроизводимости.",
+                "when_to_apply": "Применяют чтобы восстановить случайно удалённое, тренировать ML на конкретной версии данных, провести audit или сравнить текущую версию с предыдущей.",
+                "edge_cases": "Версии живут не вечно: каждая старая версия — дополнительный storage, и после retention period `VACUUM` их удаляет; `VERSION AS OF` поддерживают и `Delta`, и `Iceberg`, не только `Snowflake`.",
+                "related": "[[data-lake-lakehouse-interview#Q14]] transaction log и ACID; [[data-lake-lakehouse-interview#Q16]] schema evolution; [[data-lake-lakehouse-interview#Q18]] VACUUM после compaction."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`VERSION AS OF` доступен только в `Snowflake`; в `Delta`/`Iceberg` такого синтаксиса нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "И `Delta`, и `Iceberg` поддерживают `VERSION AS OF` и `TIMESTAMP AS OF`; это не эксклюзив `Snowflake`.",
+                "source_of_confusion": "SQL-синтаксис ассоциируется с warehouse, поэтому time travel приписывают только `Snowflake`.",
+                "if_it_were_true": "Тогда на `Delta` нельзя было бы запросить прошлую версию, но это базовая фича Lakehouse.",
+                "how_it_should_be": "`VERSION AS OF`/`TIMESTAMP AS OF` работают в `Delta` и `Iceberg` так же, как в warehouse."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое schema evolution и schema enforcement в Lakehouse?",
+          "options": [
+            {
+              "text": "Schema evolution в Lakehouse невозможна — при изменении схемы нужно создавать новую таблицу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ALTER TABLE ADD`/`RENAME`/`DROP COLUMN` поддерживаются; пересоздание таблицы не требуется.",
+                "source_of_confusion": "Опыт жёстких схем в старых системах создаёт ощущение, что любое изменение требует миграции.",
+                "if_it_were_true": "Тогда добавление поля стоило бы пересоздания таблицы, но это рутинная `ALTER`-операция.",
+                "how_it_should_be": "Схему меняют через `ALTER TABLE` на месте; новая таблица не нужна."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Schema enforcement просто игнорирует лишние колонки и пишет то, что подошло по схеме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Enforcement отклоняет write с ошибкой при несовпадении схемы; для авто-слияния нужен явный `mergeSchema=true`.",
+                "source_of_confusion": "Кажется, что система должна «дописать что смогла» вместо того, чтобы падать с ошибкой.",
+                "if_it_were_true": "Тогда несовместимые данные тихо просачивались бы в таблицу, но enforcement как раз это предотвращает.",
+                "how_it_should_be": "Несовместимый write отклоняется; слияние схем требует осознанного `mergeSchema=true`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`RENAME COLUMN` перезаписывает все данные таблицы на `S3` при переименовании колонки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Iceberg`/`Delta` это metadata-only операция: column ID не меняется, и данные на `S3` не переписываются.",
+                "source_of_confusion": "В классических СУБД переименование иногда дорого, и эту интуицию переносят на Lakehouse.",
+                "if_it_were_true": "Тогда rename терабайтной таблицы занимал бы часы, но это мгновенная metadata-правка.",
+                "how_it_should_be": "Rename — metadata-only через стабильный column ID; `Parquet`-файлы остаются нетронутыми."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Schema evolution` — изменение схемы таблицы через `ALTER TABLE ADD`/`RENAME`/`DROP`/`ALTER COLUMN` без пересоздания; `Iceberg` даёт самую полную поддержку (reorder, drop, type promotion), в `Delta` добавлялось постепенно. `Schema enforcement` отклоняет writes с несовместимыми данными: при `df.write.mode(\"append\")` несовпадение схемы df и таблицы даёт error, а `mergeSchema=true` нужен для авто-слияния.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эволюция и enforcement — две стороны одного: evolution позволяет менять схему контролируемо, а enforcement не даёт случайным несовместимым данным испортить таблицу.",
+                "example": "`ALTER TABLE my_table ADD COLUMN new_field STRING` добавляет колонку без миграции, а `RENAME COLUMN` в `Iceberg`/`Delta` — metadata-only операция (column ID не меняется, данные на `S3` не переписываются).",
+                "when_to_apply": "Применяют для добавления новых полей в существующую таблицу без миграции; `Iceberg` evolution > `Delta` > plain Parquet по полноте поддержки.",
+                "edge_cases": "`RENAME COLUMN` в `Iceberg`/`Delta` не переписывает данные на `S3` — это metadata-only через стабильный column ID; enforcement не игнорирует лишние колонки, а отклоняет write с ошибкой.",
+                "related": "[[data-lake-lakehouse-interview#Q11]] schema evolution в Iceberg; [[data-lake-lakehouse-interview#Q15]] time travel; [[data-lake-lakehouse-interview#Q17]] Z-Order и clustering."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Z-Order и data clustering?",
+          "options": [
+            {
+              "text": "`Z-Order` (в `Delta Lake`) / sort orders (в `Iceberg`) — multi-dimensional clustering: сортирует данные так, чтобы близкие values по нескольким columns хранились рядом (`OPTIMIZE my_table ZORDER BY (user_id, country)`). Эффект — queries по `user_id` и/или `country` быстрее, потому что data skipping пропускает больше irrelevant файлов. Полезно для highly selective queries по 2-3 columns на больших таблицах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Z-Order co-locate'ит связанные строки, чтобы min/max-статистика файлов была узкой и движок отбрасывал больше файлов при фильтре по нескольким колонкам.",
+                "example": "`OPTIMIZE my_table ZORDER BY (user_id, country)` располагает рядом строки с близкими `user_id`+`country`, и запрос `WHERE user_id=42 AND country='RU'` читает меньше `Parquet`-файлов.",
+                "when_to_apply": "Применяют для highly selective queries по 2-3 колонкам на больших таблицах, где обычное single-column partitioning не покрывает все измерения фильтрации.",
+                "edge_cases": "Z-Order — не партиционирование: он работает внутри партиций по non-partition columns; смысл именно в ускорении reads через file skipping, а `OPTIMIZE` идёт фоновой операцией.",
+                "related": "[[data-lake-lakehouse-interview#Q16]] schema evolution; [[data-lake-lakehouse-interview#Q18]] compaction через OPTIMIZE; [[data-lake-lakehouse-interview#Q24]] small files problem."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Z-Order` — это просто сортировка таблицы по одной колонке (`ORDER BY`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ORDER BY` делает single-column сортировку; `Z-Order` — multi-dimensional clustering, располагающий близкие значения по нескольким columns рядом.",
+                "source_of_confusion": "И сортировка, и Z-Order «упорядочивают» данные, поэтому их сводят к одному.",
+                "if_it_were_true": "Тогда фильтр по второй колонке не выигрывал бы, но Z-Order ускоряет запросы по нескольким columns сразу.",
+                "how_it_should_be": "Z-Order — многомерный clustering по 2-3 колонкам, а не одномерный `ORDER BY`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Z-Order` работает только по одной partition column таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Партиционирование и Z-Order — разные вещи: Z-Order работает внутри партиций по non-partition columns.",
+                "source_of_confusion": "И partitioning, и Z-Order влияют на data skipping, поэтому их область действия путают.",
+                "if_it_were_true": "Тогда Z-Order был бы бесполезен вне partition-колонки, но он как раз кластеризует по обычным колонкам.",
+                "how_it_should_be": "Z-Order кластеризует non-partition columns внутри партиций, дополняя partitioning."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Z-Order` повышает write latency, но никак не влияет на скорость reads.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл Z-Order именно в ускорении reads через file skipping; `OPTIMIZE` — фоновая операция, а выигрыш получают запросы.",
+                "source_of_confusion": "Раз `OPTIMIZE` стоит compute на запись, кажется, что вся цена ложится на запись без пользы для чтения.",
+                "if_it_were_true": "Тогда Z-Order не имел бы смысла, но его применяют именно ради быстрых selective reads.",
+                "how_it_should_be": "Z-Order ускоряет reads за счёт пропуска файлов; стоимость записи окупается на запросах."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое compaction и как решается small files problem?",
+          "options": [
+            {
+              "text": "`Compaction` делается через `DROP` таблицы + `INSERT` всех данных заново.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это перепишет всё целиком; `OPTIMIZE` мержит мелкие файлы инкрементально, а `VACUUM` чистит старые версии после retention.",
+                "source_of_confusion": "Кажется, что объединить файлы можно только полной перезаписью таблицы.",
+                "if_it_were_true": "Тогда compaction терабайтной таблицы был бы недопустимо дорогим, но `OPTIMIZE` работает инкрементально.",
+                "how_it_should_be": "Используют `OPTIMIZE`/`rewrite_data_files` для инкрементального merge без полной перезаписи."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Compaction` объединяет много мелких файлов в большие: `OPTIMIZE my_table WHERE date >= '2025-04-01'` (`Delta`) или `rewrite_data_files` (`Iceberg`), опционально с `ZORDER BY`. Streaming inserts создают тысячи small files (overhead на open/close), поэтому compaction нужно делать регулярно. `VACUUM` затем удаляет старые версии после retention period.",
+              "correct": true,
+              "sections": {
+                "explanation": "`OPTIMIZE` мержит мелкие файлы инкрементально, а не через DROP+INSERT всего; `VACUUM` чистит устаревшие версии, но уважает retention, чтобы не сломать time travel.",
+                "example": "После streaming-записи таблица фрагментируется на тысячи файлов по 1KB, и `OPTIMIZE my_table WHERE date >= '2025-04-01'` пересобирает их в несколько крупных `Parquet`-файлов.",
+                "when_to_apply": "Применяют после streaming-writes, когда таблица фрагментируется на тысячи small files; правило — `OPTIMIZE WHERE date >= ...` + периодический `VACUUM`.",
+                "edge_cases": "`VACUUM` не удаляет файлы немедленно после compaction — он уважает retention period (default 7 дней), иначе time travel сломается; small files реально вредят, несмотря на быстрый open `Parquet`.",
+                "related": "[[data-lake-lakehouse-interview#Q15]] time travel и retention; [[data-lake-lakehouse-interview#Q17]] OPTIMIZE с Z-Order; [[data-lake-lakehouse-interview#Q24]] детали small files problem."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`VACUUM` удаляет файлы немедленно сразу после compaction, без всякого retention.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`VACUUM` уважает retention period (default 7 дней); немедленное удаление сломало бы time travel на недавние версии.",
+                "source_of_confusion": "Логично ожидать, что после compaction старые файлы сразу не нужны и удаляются мгновенно.",
+                "if_it_were_true": "Тогда любой `VACUUM` обнулял бы историю, но retention защищает версии в окне.",
+                "how_it_should_be": "`VACUUM` удаляет лишь файлы старше retention, сохраняя time travel в пределах окна."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Small files — не проблема, потому что `Parquet` открывается очень быстро.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть overhead на open/close, `S3 LIST` и `Spark` task per file; 10000 файлов по 1KB убивают performance независимо от скорости открытия `Parquet`.",
+                "source_of_confusion": "Быстрое открытие одного `Parquet` создаёт иллюзию, что и тысячи файлов не страшны.",
+                "if_it_were_true": "Тогда compaction был бы не нужен, но его делают именно из-за деградации на множестве файлов.",
+                "how_it_should_be": "Тысячи small files деградируют запросы; их объединяют через `OPTIMIZE`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Medallion architecture (Bronze, Silver, Gold)?",
+          "options": [
+            {
+              "text": "`Bronze` хранит готовые BI-отчёты, а `Gold` — сырые необработанные данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: `Bronze` = raw данные как пришли, `Gold` = business-aggregations и BI marts.",
+                "source_of_confusion": "Ценность металлов (золото дороже бронзы) сбивает с толку относительно направления потока обработки.",
+                "if_it_were_true": "Тогда поток шёл бы от отчётов к сырью, но обработка идёт raw → cleaned → aggregated.",
+                "how_it_should_be": "`Bronze` — raw, `Gold` — агрегированные business marts; поток направлен от Bronze к Gold."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Silver` и `Gold` — это одно и то же, просто два разных названия одного слоя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Слои различны: `Silver` — atomic cleaned entities (dedup, join), `Gold` — aggregated business metrics для BI.",
+                "source_of_confusion": "Оба слоя «обработанные» относительно Bronze, поэтому их объединяют в один.",
+                "if_it_were_true": "Тогда хватило бы двух слоёв, но Medallion разделяет очистку и агрегацию намеренно.",
+                "how_it_should_be": "`Silver` — очищенные атомарные сущности, `Gold` — бизнес-агрегации поверх них."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Medallion` (Databricks) — стандартная архитектура Lakehouse из трёх слоёв `Delta`-таблиц: `Bronze` (raw, append-only, минимум transformations) → `Silver` (cleaned, deduplicated, joined, атомарные entities) → `Gold` (business-level aggregations, BI marts). Поток: source → Bronze → cleaning/dedupe → Silver → business logic/joins → Gold. Аналог dbt staging/intermediate/marts в Lakehouse-контексте.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый слой — отдельные таблицы с растущим уровнем обработки: Bronze хранит данные как пришли, Silver их чистит и объединяет, Gold агрегирует под BI.",
+                "example": "Сырые события из `Kafka` падают в `Bronze` append-only, затем дедуплицируются и джойнятся в `Silver`, а `Gold` хранит готовые business-метрики для дашборда.",
+                "when_to_apply": "Применяют для structured Lakehouse pipeline в `Databricks` (и на любом движке с `Delta`/`Iceberg`): Bronze=raw, Silver=clean, Gold=marts.",
+                "edge_cases": "`Medallion` — паттерн именования слоёв, а не Databricks-only фича: он работает на любом engine с `Delta`/`Iceberg`; Silver и Gold различны — Silver хранит atomic cleaned entities, Gold — aggregated business metrics.",
+                "related": "[[data-lake-lakehouse-interview#Q10]] Delta-таблицы слоёв; [[data-lake-lakehouse-interview#Q20]] Data Mesh; [[data-lake-lakehouse-interview#Q25]] data swamp без governance."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Medallion` требует исключительно `Databricks` — на open-source `Spark` он не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это паттерн именования слоёв; он работает на любом engine с `Delta`/`Iceberg`, не только на `Databricks`.",
+                "source_of_confusion": "Авторство термина у `Databricks` создаёт впечатление жёсткой привязки к платформе.",
+                "if_it_were_true": "Тогда open-source Lakehouse не мог бы иметь Bronze/Silver/Gold, но эти слои строят везде.",
+                "how_it_should_be": "Medallion — наименование слоёв, реализуемое на любом движке с table format."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Data Mesh?",
+          "options": [
+            {
+              "text": "`Data Mesh` — это программный продукт (software) для управления Lakehouse.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это socio-technical парадигма, а не tool; реализуется на `Iceberg`/`Delta` + `Unity`/`Glue` + governance-процессах.",
+                "source_of_confusion": "Звучные технические термины Data Mesh создают впечатление готового продукта, который можно «купить».",
+                "if_it_were_true": "Тогда внедрение сводилось бы к установке софта, но Mesh — про организацию ownership и процессов.",
+                "how_it_should_be": "Data Mesh — парадигма; её реализуют комбинацией table formats, каталога и governance."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Data Mesh` означает, что одна central команда владеет всеми pipelines организации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это data lake monolith — антипаттерн, от которого Mesh как раз отказывается в пользу domain ownership.",
+                "source_of_confusion": "Слово «mesh» (сеть) интуитивно ассоциируют с единым централизованным узлом.",
+                "if_it_were_true": "Тогда Mesh ничем не отличался бы от монолита, но его суть — distributed ownership.",
+                "how_it_should_be": "Data Mesh распределяет ownership по доменам; central команда даёт лишь платформу."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Data Mesh` полностью устраняет центральную инфраструктуру — каждый domain делает всё сам с нуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Остаётся self-serve platform team, а federated governance задаёт общие стандарты; central infra не исчезает.",
+                "source_of_confusion": "Акцент на decentralization трактуют как полное отсутствие централизованных компонентов.",
+                "if_it_were_true": "Тогда каждый domain строил бы платформу заново, но Mesh даёт общую self-serve инфраструктуру.",
+                "how_it_should_be": "Decentralized ownership сочетается с central self-serve platform и federated governance."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Data Mesh` (Zhamak Dehghani, 2019) — sociotechnical парадигма для decentralized data architecture с 4 принципами: domain ownership (каждый domain владеет своими данными), data as a product (команда отвечает за качество, документацию, SLA), self-serve data platform (централизованная инфраструктура для domain teams) и federated computational governance (общие стандарты, local control). Контраст с data lake monolith, где одна центральная команда делает всё.",
+              "correct": true,
+              "sections": {
+                "explanation": "Mesh = domain owns its data product + central platform; это не tool, а парадигма, реализуемая на `Iceberg`/`Delta` + `Unity`/`Glue` + governance-процессах.",
+                "example": "В большой org каждый business domain (orders, payments) владеет своими data products со своим SLA, а central platform team даёт self-serve инфраструктуру и federated стандарты.",
+                "when_to_apply": "Применяют в large org, где central data team стала bottleneck, а domains достаточно зрелые, чтобы владеть своими data products.",
+                "edge_cases": "Mesh легко превратить в data swamp без зрелости; central infra не исчезает — остаётся self-serve platform team, а federated governance задаёт общие стандарты.",
+                "related": "[[data-lake-lakehouse-interview#Q19]] medallion слои; [[data-lake-lakehouse-interview#Q25]] data swamp как риск; [[data-lake-lakehouse-interview#Q26]] каталоги и governance."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает storage tier optimization (hot/warm/cold) в S3?",
+          "options": [
+            {
+              "text": "`S3` имеет storage classes с разной latency и ценой: `Standard` (ms, $0.023, hot), `Standard-IA` (ms, $0.0125), `Glacier Instant` (ms, $0.004), `Glacier Flexible` (min-hr, $0.0036), `Glacier Deep Archive` (12 hr, $0.00099, compliance). `Lifecycle policies` автоматически перемещают объекты между классами по возрасту (30/90/365 дней → IA/Glacier/Deep), экономя до 80% на cold data.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tiers различаются по latency и цене, поэтому класс выбирают по access pattern + cost; lifecycle policy задаётся декларативно, и `S3` сам перемещает объекты по cron.",
+                "example": "`{\"Days\": 30, \"StorageClass\": \"STANDARD_IA\"}` → через 30 дней объект уходит в IA, через 90 — в `GLACIER_IR`, через 365 — в `DEEP_ARCHIVE`, без изменения кода приложения.",
+                "when_to_apply": "Применяют когда данные стареют по доступности: старше 30/90/365 дней → IA/Glacier/Deep Archive; hot=ms+дорого, cold=hours+дёшево.",
+                "edge_cases": "Tiers не одинаковы по latency: `Glacier Deep` = 12h retrieval против ms у `Standard`, поэтому `Deep Archive` не годится для hot OLAP queries; lifecycle не нужно триггерить руками.",
+                "related": "[[data-lake-lakehouse-interview#Q4]] S3 как storage; [[data-lake-lakehouse-interview#Q22]] engines поверх Lakehouse; [[data-lake-lakehouse-interview#Q24]] small files и cost."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Все `S3` storage tiers одинаковы по latency и отличаются только ценой за GB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Glacier Deep` = 12h retrieval против ms у `Standard`; tier выбирается по access pattern + cost, а не только по цене.",
+                "source_of_confusion": "Раз все классы — это «один `S3`», кажется, что latency у них общая.",
+                "if_it_were_true": "Тогда можно было бы запрашивать `Deep Archive` для OLAP без задержки, но retrieval там занимает часы.",
+                "how_it_should_be": "Tiers различаются по latency и цене; cold-классы дешевле, но медленнее на retrieval."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Lifecycle policy` нужно триггерить вручную из кода приложения при каждом перемещении объекта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`S3` сам по cron перемещает объекты по правилам lifecycle; код приложения при этом не меняется.",
+                "source_of_confusion": "Привычка управлять данными из приложения создаёт ощущение, что и tiering надо вызывать руками.",
+                "if_it_were_true": "Тогда пришлось бы писать планировщик перемещений, но `S3` делает это декларативно сам.",
+                "how_it_should_be": "Lifecycle policy задаётся один раз, и `S3` автоматически перемещает объекты по возрасту."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Glacier Deep Archive` отлично подходит для hot OLAP-запросов из-за низкой цены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retrieval из `Deep Archive` занимает 12 часов — это для compliance и rarely accessed данных, не для query.",
+                "source_of_confusion": "Самая низкая цена ($0.00099) создаёт соблазн положить туда часто запрашиваемые данные.",
+                "if_it_were_true": "Тогда OLAP-запрос ждал бы 12 часов retrieval, что несовместимо с интерактивной аналитикой.",
+                "how_it_should_be": "Hot OLAP держат в `Standard` (ms); `Deep Archive` — для архива и compliance."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие compute engines работают с Lakehouse?",
+          "options": [
+            {
+              "text": "Только `Spark` способен читать `Delta`/`Iceberg`/`Hudi`; остальные движки эти форматы не поддерживают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Trino`, `Flink`, `Snowflake`, `BigQuery`, `Athena`, `DuckDB` поддерживают `Iceberg`, а `Delta` читается `Spark`/`Trino`/`Athena`.",
+                "source_of_confusion": "Историческое первенство `Spark` в Lakehouse создаёт впечатление его монополии на чтение.",
+                "if_it_were_true": "Тогда multi-engine `Iceberg` не имел бы смысла, но именно широта движков — его преимущество.",
+                "how_it_should_be": "Lakehouse-форматы читаются десятком движков; `Iceberg` — самый широко поддерживаемый."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Spark` поддерживает все три (`Delta`, `Iceberg`, `Hudi`); `Databricks` — native `Delta`; `Snowflake`/`BigQuery` — `Iceberg` external tables (с 2023+); `Trino`/`Presto` — все три; `Flink` — `Iceberg`+`Hudi` для streaming; `Athena` — `Iceberg`+`Delta`; `ClickHouse` (с 2024) и `DuckDB` — `Iceberg`/`Delta`. Multi-engine support — главное преимущество `Iceberg` как самого open формата.",
+              "correct": true,
+              "sections": {
+                "explanation": "Широта движков делает `Iceberg` де-факто стандартом для multi-engine архитектур с одной physical-таблицей, читаемой разными системами.",
+                "example": "Одна `Iceberg`-таблица на `S3` читается и `Trino` для ad-hoc, и `Snowflake` через external tables, и `DuckDB` локально — без дублирования данных.",
+                "when_to_apply": "Применяют в multi-engine архитектурах с одной physical-таблицей: `Iceberg` даёт широчайший engine support и читается почти всем.",
+                "edge_cases": "Не только `Spark` читает эти форматы: `Trino`, `Flink`, `Snowflake`, `BigQuery`, `Athena`, `DuckDB` поддерживают `Iceberg`, а `Delta` читается `Spark`/`Trino`/`Athena`; `BigQuery` external tables работают с `Iceberg` на любом cloud storage.",
+                "related": "[[data-lake-lakehouse-interview#Q11]] Iceberg multi-engine; [[data-lake-lakehouse-interview#Q23]] Trino как federated engine; [[data-lake-lakehouse-interview#Q13]] выбор формата под движок."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`DuckDB` не поддерживает Lakehouse-форматы и работает только с локальными `CSV`/`Parquet`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DuckDB` читает и `Iceberg`, и `Delta` — это отлично подходит для local analytics на cloud-данных.",
+                "source_of_confusion": "Репутация `DuckDB` как «локальной аналитической БД» скрывает его поддержку table formats.",
+                "if_it_were_true": "Тогда `DuckDB` не годился бы для cloud-озёр, но он умеет читать `Iceberg`/`Delta` с `S3`.",
+                "how_it_should_be": "`DuckDB` поддерживает `Iceberg` и `Delta`, давая лёгкую local-аналитику поверх Lakehouse."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`BigQuery` нельзя подключить к `S3` — он работает только с native-таблицами на `GCS`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BigQuery` external tables работают с `Iceberg` на любом cloud storage, включая `S3`.",
+                "source_of_confusion": "Привязка `BigQuery` к Google-экосистеме создаёт впечатление, что вне `GCS` он данные не видит.",
+                "if_it_were_true": "Тогда cross-cloud аналитика через `BigQuery` была бы невозможна, но external tables это позволяют.",
+                "how_it_should_be": "`BigQuery` через external tables читает `Iceberg` на разных cloud storage, не только `GCS`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужны Trino / Presto для query на lake?",
+          "options": [
+            {
+              "text": "`Trino` — это столбцовая БД с собственным custom storage, куда заранее загружают данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Trino` — distributed SQL query engine без storage; он читает данные из external sources (`S3`, `Postgres`, `Kafka`) через connectors.",
+                "source_of_confusion": "Раз `Trino` выполняет SQL и быстр на аналитике, его принимают за полноценную БД с хранилищем.",
+                "if_it_were_true": "Тогда нужна была бы загрузка данных в `Trino`, но он читает из источников напрямую без ETL.",
+                "how_it_should_be": "`Trino` — engine без storage; данные остаются в источниках и читаются через connectors."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Trino` требует предварительной загрузки всех данных в свой кластер перед выполнением запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Trino` читает напрямую из source через connectors — никакого ETL и предзагрузки не нужно.",
+                "source_of_confusion": "Аналогия с warehouse, куда данные сначала грузят, переносится на federated-движок.",
+                "if_it_were_true": "Тогда ad-hoc query на 1TB ждал бы загрузки, но Trino стримит данные из source на лету.",
+                "how_it_should_be": "`Trino` запрашивает источники напрямую; предзагрузка в кластер не требуется."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Trino` (бывший `PrestoSQL`) — distributed SQL engine для federated queries: один запрос через несколько data sources (например, `JOIN` `postgres.public.users` с `s3.warehouse.orders`). Применяется для query на Lake (`Iceberg`, `Delta`, `Hudi`, plain Parquet), federated queries (mix БД, `S3`, `Kafka`) и ad-hoc анализа huge datasets. У Trino нет своего storage — он читает из external sources через ~30+ connectors. Managed-вариант — `Starburst`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Trino = SQL поверх любых connectors без storage: данные читаются напрямую из source, никакого ETL и предзагрузки в кластер не требуется.",
+                "example": "`SELECT u.name, COUNT(o.id) FROM postgres.public.users u JOIN s3.warehouse.orders o ON u.id=o.user_id GROUP BY u.name` — один `JOIN` через `Postgres` и `S3` в одном запросе.",
+                "when_to_apply": "Применяют для ad-hoc analytics на huge datasets без ETL и multi-source `JOIN` (`Postgres` + `S3` + `Kafka` в одном запросе).",
+                "edge_cases": "Trino не загружает данные в свой кластер перед запросом и не ограничен `Hive Metastore`: `Iceberg`, `Delta`, `Hudi` catalogs работают, а connectors покрывают 30+ источников; используется в `Netflix`, `LinkedIn`, `Pinterest`, `Slack`.",
+                "related": "[[data-lake-lakehouse-interview#Q22]] engines поверх Lakehouse; [[data-lake-lakehouse-interview#Q24]] small files и query; [[data-lake-lakehouse-interview#Q26]] каталоги для Trino."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Trino` поддерживает только `Hive Metastore` и не работает с другими каталогами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Iceberg`, `Delta`, `Hudi` catalogs все работают; у `Trino` 30+ connectors к разным data sources.",
+                "source_of_confusion": "Историческая связь `Presto` с `Hive` создаёт впечатление единственного поддерживаемого каталога.",
+                "if_it_were_true": "Тогда `Trino` не читал бы `Iceberg`-таблицы напрямую, но он поддерживает их catalog.",
+                "how_it_should_be": "`Trino` работает с множеством каталогов и коннекторов, не ограничиваясь `Hive Metastore`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём суть small files problem и как её решать?",
+          "options": [
+            {
+              "text": "Small files — это не проблема, потому что у `S3` нет никакого open-overhead на файл.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`S3 LIST` + `GET` на каждый файл создают network roundtrips, а `Spark` per-task overhead умножается на число файлов.",
+                "source_of_confusion": "managed-природа `S3` создаёт впечатление, что доступ к любому числу файлов бесплатен.",
+                "if_it_were_true": "Тогда тысячи мелких файлов не вредили бы, но они реально убивают performance запросов.",
+                "how_it_should_be": "`S3` имеет per-file overhead на `LIST`/`GET`; small files деградируют запросы и требуют compaction."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Решение small files problem — просто увеличить число executor cores в `Spark`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не решает root cause: больше parallelism не помогает, если bottleneck в metadata reads, а не в compute.",
+                "source_of_confusion": "Привычка лечить медленные джобы добавлением ресурсов переносится и на эту проблему.",
+                "if_it_were_true": "Тогда мощный кластер устранял бы деградацию, но overhead на metadata остаётся при любом числе cores.",
+                "how_it_should_be": "Root cause лечат compaction (`OPTIMIZE`) и правильным partitioning, а не наращиванием cores."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Медленные streaming inserts не создают small files — проблема только у быстрых записей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый micro-batch пишет файл; короткий interval (1 min) даёт много мелких файлов в день независимо от скорости.",
+                "source_of_confusion": "Кажется, что «медленный» поток пишет реже и потому не плодит файлы.",
+                "if_it_were_true": "Тогда streaming не приводил бы к фрагментации, но именно интервал записи определяет число файлов.",
+                "how_it_should_be": "Любой streaming с коротким интервалом плодит small files; помогает buffering батчей."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Много маленьких файлов (1-10 KB) в Lake деградируют performance: каждый file требует metadata read, `Spark` task overhead на каждый file и overhead на `S3 LIST`. Причины: streaming с короткими intervals, слишком детальное partitioning (по часу × user_id), delete-updates. Решения: compaction (`OPTIMIZE` в `Delta`, `rewrite_data_files` в `Iceberg`), не слишком granular partition-стратегия и buffering при streaming (collect ~hour batches).",
+              "correct": true,
+              "sections": {
+                "explanation": "Проблема в том, что число файлов растёт линейно при streaming-ingest, а overhead на metadata, `S3 LIST` и per-file task умножается на это число.",
+                "example": "Streaming с интервалом 1 минута пишет файл на каждый micro-batch → за день копятся тысячи мелких файлов; их сворачивают через `OPTIMIZE` и буферизацию батчей по часу.",
+                "when_to_apply": "Применяют после streaming-ingest, когда число файлов растёт линейно: target file size ~128MB-1GB, меньше — compaction, больше — repartition.",
+                "edge_cases": "Просто увеличить число executor cores не решает root cause (bottleneck в metadata reads, не в parallelism); `S3` не бесплатен по open-overhead — `LIST`+`GET` на каждый файл создают network roundtrips.",
+                "related": "[[data-lake-lakehouse-interview#Q18]] compaction через OPTIMIZE; [[data-lake-lakehouse-interview#Q23]] query через Trino; [[data-lake-lakehouse-interview#Q25]] data swamp."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое data swamp?",
+          "options": [
+            {
+              "text": "`Data swamp` — Data Lake без governance, превратившийся в неуправляемое болото: никто не знает что в каких файлах, schemas меняются неконтролируемо, копятся дубли/мусор/broken pipelines, нет lineage и documentation, есть compliance issues (где personal data?). Профилактика: `Catalog` (`Hive Metastore`, `AWS Glue`, `Unity`), data quality checks (`Great Expectations`, `dbt tests`), lineage tracking (`OpenLineage`, `Marquez`, `Datahub`), data contracts и обязательная documentation.",
+              "correct": true,
+              "sections": {
+                "explanation": "Swamp — деградировавшее состояние Lake, а не отдельная архитектура; причина — отсутствие governance, и лечится она каталогом + lineage + quality checks + contracts.",
+                "example": "Команда годами сливала сырые данные в `S3` bucket без каталога и тестов — теперь никто не знает, где лежат персональные данные, и compliance-аудит проваливается.",
+                "when_to_apply": "Профилактику применяют сразу при построении Lake: `Catalog` (`Glue`/`Unity`) + `Great Expectations` + `OpenLineage` + data contracts удерживают озеро от деградации.",
+                "edge_cases": "Одного `S3` bucket недостаточно — без governance он и превращается в swamp; lineage (`OpenLineage`, `Marquez`, `Datahub`) не влияет на runtime, поэтому отключать его ради скорости pipelines нельзя.",
+                "related": "[[data-lake-lakehouse-interview#Q1]] Data Lake как основа; [[data-lake-lakehouse-interview#Q20]] Data Mesh и governance; [[data-lake-lakehouse-interview#Q26]] каталоги против swamp."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Data swamp` — это новая архитектура, пришедшая на замену Lakehouse.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Swamp — антипаттерн, деградировавшее состояние Lake без governance, а не архитектура и тем более не замена Lakehouse.",
+                "source_of_confusion": "Звучный термин «swamp» рядом с «lake»/«lakehouse» создаёт впечатление ещё одного архитектурного класса.",
+                "if_it_were_true": "Тогда команды осознанно «строили бы swamp», но это нежелательное состояние, которого избегают.",
+                "how_it_should_be": "Data swamp — то, во что деградирует Lake без governance; его предотвращают, а не выбирают."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Достаточно просто иметь `S3` bucket — никакая governance для Data Lake не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно это и приводит к swamp; нужен catalog, lineage, quality checks и data contracts, чтобы озеро оставалось управляемым.",
+                "source_of_confusion": "Лёгкость создания bucket создаёт иллюзию, что озеро «само работает» без процессов.",
+                "if_it_were_true": "Тогда любое озеро было бы здоровым по умолчанию, но без governance оно превращается в болото.",
+                "how_it_should_be": "Lake требует каталога, lineage, тестов и контрактов; bucket без них деградирует в swamp."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Data lineage` отключают, чтобы он не замедлял production-pipelines.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lineage (`OpenLineage`, `Marquez`, `Datahub`) не влияет на runtime; без него ломаются debugging и compliance.",
+                "source_of_confusion": "Любую дополнительную систему интуитивно подозревают в накладных расходах на скорость.",
+                "if_it_were_true": "Тогда отключение lineage ускоряло бы pipelines, но он работает рядом, не замедляя их.",
+                "how_it_should_be": "Lineage держат включённым ради debugging и compliance; на runtime он не влияет."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужны метаданные и каталоги (AWS Glue, Hive Metastore, Unity Catalog)?",
+          "options": [
+            {
+              "text": "`Hive Metastore` — современный рекомендуемый стандарт для Lakehouse в 2024.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Hive Metastore` старый (Java, локальный); современный тренд — vendor-neutral `Iceberg REST Catalog`.",
+                "source_of_confusion": "Долгая история и распространённость `Hive Metastore` создают впечатление, что он по-прежнему дефолт.",
+                "if_it_were_true": "Тогда новые проекты строились бы на `Hive Metastore`, но индустрия движется к REST Catalog.",
+                "how_it_should_be": "Современный выбор — `Iceberg REST Catalog` или managed (`Glue`/`Unity`); `Hive Metastore` — legacy."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Catalog` — registry таблиц/баз с их schemas, locations, partitions (single source of truth для tables). Варианты: `Hive Metastore` (Apache, старый стандарт, Java), `AWS Glue` (managed, integration с `S3`), `Unity Catalog` (Databricks, modern, governance, lineage), `Iceberg REST Catalog` (vendor-neutral spec), `Apache Polaris` (Snowflake, с 2024), `Nessie` (git-like для data). В 2024 — convergence на `Iceberg REST Catalog` как open standard.",
+              "correct": true,
+              "sections": {
+                "explanation": "Catalog хранит metadata (schema, location, partitions), а не сами данные; выбирают его по экосистеме — `Glue` на AWS, `Unity` на Databricks, REST на multi-vendor.",
+                "example": "`SELECT * FROM glue_catalog.my_db.my_table` — движок спрашивает у каталога схему и расположение `Parquet`-файлов, а сами данные читает из `S3`.",
+                "when_to_apply": "Catalog выбирают по экосистеме: `Glue` на AWS, `Unity` на Databricks, `Iceberg REST Catalog` на multi-vendor; он — single source of truth для таблиц.",
+                "edge_cases": "`Hive Metastore` — старый (Java, локальный), тренд идёт к vendor-neutral `Iceberg REST Catalog`; `Unity Catalog` native для `Delta` и добавляет `Iceberg` через Uniform, а не работает только с `Iceberg`.",
+                "related": "[[data-lake-lakehouse-interview#Q23]] Trino и каталоги; [[data-lake-lakehouse-interview#Q25]] catalog против swamp; [[data-lake-lakehouse-interview#Q27]] выбор формата в 2026."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Unity Catalog` работает исключительно с `Iceberg` и не поддерживает `Delta`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Unity Catalog` native для `Delta` и добавляет support для `Iceberg` через Uniform; он не ограничен `Iceberg`.",
+                "source_of_confusion": "Растущая популярность `Iceberg` создаёт впечатление, что новые каталоги заточены только под него.",
+                "if_it_were_true": "Тогда `Databricks`-таблицы в `Delta` не каталогизировались бы в `Unity`, но он их native-носитель.",
+                "how_it_should_be": "`Unity Catalog` native для `Delta` и поддерживает `Iceberg` через Uniform."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Catalog` хранит сами данные таблиц и тем самым заменяет собой `S3`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Catalog хранит metadata (schema, location, partitions); данные остаются в object storage (`S3`).",
+                "source_of_confusion": "Слово «catalog» в контексте таблиц наводит на мысль, что он содержит и сами строки.",
+                "if_it_were_true": "Тогда object storage был бы не нужен, но catalog лишь ссылается на расположение `Parquet` в `S3`.",
+                "how_it_should_be": "Catalog — registry метаданных; данные физически лежат в `S3`/object storage."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой формат таблиц выбрать в 2026?",
+          "options": [
+            {
+              "text": "plain Parquet полностью устарел — в 2026 его нельзя использовать ни при каких условиях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для simple batch analytics без UPSERT plain Parquet всё ещё актуален и дешевле, чем overhead table format.",
+                "source_of_confusion": "Хайп вокруг table formats создаёт впечатление, что «голый» `Parquet` уже не место в современном стеке.",
+                "if_it_were_true": "Тогда любой batch-отчёт требовал бы `Iceberg`/`Delta`, но для простых случаев это лишний overhead.",
+                "how_it_should_be": "plain Parquet остаётся валидным для простого batch без UPSERT; table format нужен не везде."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Delta` — единственный по-настоящему open standard среди table formats.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Iceberg` более open (multi-vendor support), тогда как `Delta` привязан к roadmap `Databricks`.",
+                "source_of_confusion": "Open-source статус `Delta Lake` создаёт впечатление, что он и есть главный открытый стандарт.",
+                "if_it_were_true": "Тогда `Snowflake` и `BigQuery` стандартизировались бы на `Delta`, но они выбрали `Iceberg`.",
+                "how_it_should_be": "Самый open и multi-vendor — `Iceberg`; `Delta` сильнее всего в экосистеме `Databricks`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Decision tree: `Databricks` → `Delta` (native); max vendor-neutrality (`Trino`, `Snowflake`, `Spark`, `Flink`) → `Iceberg` (de facto standard в 2026); сильный focus на streaming upserts (CDC) → `Hudi`; pure batch analytics, simple use case → plain Parquet (ещё актуален!). Тренд 2024+: `Iceberg` становится де-факто стандартом в multi-vendor мире — `Snowflake`, `BigQuery`, `Athena`, `Databricks` все добавили `Iceberg` support.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор определяется стеком: `Iceberg` = open default, `Delta` = `Databricks`, `Hudi` = streaming UPSERT, plain Parquet = простой batch без table format overhead.",
+                "example": "Для multi-vendor аналитики берут `Iceberg` (читается `Snowflake`+`Trino`+`Spark`), а для одного простого batch-отчёта без UPSERT хватает plain Parquet — table format не нужен.",
+                "when_to_apply": "Применяют при выборе нового формата под конкретный stack: native-движок, vendor-neutrality, streaming-CDC или простой batch определяют формат.",
+                "edge_cases": "plain Parquet не устарел — для simple batch без UPSERT он актуален и дешевле table format overhead; `Hudi` не универсален — он оптимизирован под UPSERT-heavy, а не read-heavy multi-engine BI.",
+                "related": "[[data-lake-lakehouse-interview#Q13]] сравнение трёх форматов; [[data-lake-lakehouse-interview#Q26]] каталоги и convergence; [[data-lake-lakehouse-interview#Q28]] streaming в Lakehouse."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Hudi` подходит для всего и полностью устраняет нужду в `Iceberg`/`Delta`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Hudi` оптимизирован под UPSERT-heavy workloads; для read-heavy multi-engine BI он не лучший выбор.",
+                "source_of_confusion": "Сильные UPSERT/streaming-возможности `Hudi` создают впечатление его универсальности.",
+                "if_it_were_true": "Тогда multi-vendor BI строили бы на `Hudi`, но там выигрывает `Iceberg` с широким engine support.",
+                "how_it_should_be": "`Hudi` берут под streaming-UPSERT; для multi-engine BI лучше `Iceberg`, для Databricks — `Delta`."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сочетаются Streaming и Lakehouse?",
+          "options": [
+            {
+              "text": "Streaming в Lakehouse невозможен — `Delta`/`Iceberg`/`Hudi` поддерживают только batch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Delta`/`Iceberg`/`Hudi` все поддерживают streaming reads/writes; `Spark Structured Streaming` + `Delta` — стандартная связка.",
+                "source_of_confusion": "Ассоциация Lake с batch ETL затмевает streaming-возможности table formats.",
+                "if_it_were_true": "Тогда `Delta Live Tables` и `Hudi`+`Flink` для CDC не существовали бы, но они есть.",
+                "how_it_should_be": "Lakehouse-форматы поддерживают и streaming, и batch на одной таблице."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Streaming в Lakehouse требует отдельной таблицы, изолированной от batch-данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главное преимущество Lakehouse — unified storage: одна таблица обслуживает и streaming-writes, и batch-reads.",
+                "source_of_confusion": "Привычка держать hot-store отдельно от warehouse переносится на Lakehouse.",
+                "if_it_were_true": "Тогда пропало бы ключевое преимущество unified storage, ради которого Lakehouse и строят.",
+                "how_it_should_be": "Одна Lakehouse-таблица принимает streaming-writes и отдаёт batch+ad-hoc reads."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Hudi` + `Flink` — самая слабая и незрелая пара для CDC среди всех вариантов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: `Hudi`+`Flink` — самый зрелый стек для CDC благодаря MoR и indexing.",
+                "source_of_confusion": "Меньшая общая популярность `Hudi` относительно `Delta`/`Iceberg` создаёт впечатление слабости и в CDC.",
+                "if_it_were_true": "Тогда CDC-pipelines избегали бы `Hudi`+`Flink`, но эта пара как раз эталон для CDC.",
+                "how_it_should_be": "`Hudi`+`Flink` — зрелый выбор для CDC; MoR и indexing делают его сильным для частых upserts."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Lakehouse` + streaming = unified storage: один storage для streaming-writes и batch-reads. Инструменты: `Delta Live Tables` (Databricks, declarative streaming pipelines), `Iceberg` + `Flink` (сильная пара для streaming), `Hudi` + `Flink` (самый зрелый для CDC). Пример: `spark.readStream.format(\"kafka\")...writeStream.format(\"delta\")`. Преимущества: один storage для streaming+batch, low latency reads на streaming-таблицах, time travel в streaming-контексте. Это направление главного развития Lakehouse в 2024-2025.",
+              "correct": true,
+              "sections": {
+                "explanation": "Streaming и batch пишут и читают одну и ту же таблицу: `Delta`/`Iceberg`/`Hudi` поддерживают streaming reads/writes, поэтому отдельный hot store не нужен.",
+                "example": "`spark.readStream.format(\"kafka\")...writeStream.format(\"delta\").option(\"checkpointLocation\", \"...\").outputMode(\"append\").start(...)` пишет поток из `Kafka` прямо в `Delta`-таблицу, которую тут же читает batch.",
+                "when_to_apply": "Применяют для real-time analytics поверх Lakehouse без отдельного hot store: streaming-write → Lakehouse → batch+ad-hoc reads на той же таблице.",
+                "edge_cases": "Streaming не требует отдельной таблицы от batch — главное преимущество Lakehouse именно unified storage; `Hudi`+`Flink` — не слабая, а самая зрелая пара для CDC благодаря MoR и indexing.",
+                "related": "[[data-lake-lakehouse-interview#Q10]] Delta и streaming; [[data-lake-lakehouse-interview#Q12]] Hudi MoR для CDC; [[data-lake-lakehouse-interview#Q18]] compaction после streaming."
+              },
+              "label": "D",
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

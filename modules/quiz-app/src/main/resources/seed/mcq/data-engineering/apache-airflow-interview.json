@@ -1,0 +1,1685 @@
+{
+  "topic_slug": "apache-airflow-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Apache Airflow` — это workflow orchestration platform: workflows описываются как `DAG` (Directed Acyclic Graph) на Python. Применяется для batch ETL/ELT, оркестрации `Spark`/`Flink` jobs, ML pipelines и scheduled jobs (backups, reports), но не для real-time streaming.",
+              "correct": true,
+              "sections": {
+                "explanation": "Airflow координирует порядок, retries и мониторинг batch-задач, а саму обработку данных делегирует внешним системам (`Spark`, SQL, Python). Это оркестратор, а не compute engine.",
+                "example": "Daily ETL: `extract` забирает данные из источника, `transform` гоняет `Spark` job, `load` пишет в warehouse — три task с зависимостями `extract >> transform >> load` в одном `DAG`.",
+                "when_to_apply": "Когда нужно по расписанию запускать связанные batch-job с явными зависимостями, retry-политикой и наблюдаемостью через UI.",
+                "edge_cases": "Для real-time streaming Airflow не подходит — используют `Kafka Streams` или `Flink`; для интерактивных long-running workflows — `Jupyter`/`Streamlit`.",
+                "related": "[[apache-airflow-interview#Q2]] что такое DAG; [[apache-airflow-interview#Q3]] архитектура компонентов; [[apache-airflow-interview#Q27]] сравнение с Prefect/Dagster."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Apache Airflow` — это real-time streaming engine, аналог `Flink`, обрабатывающий события с миллисекундной задержкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Airflow — batch orchestration; для real-time streaming с низкой латентностью используют `Kafka Streams` или `Flink`, а не Airflow.",
+                "source_of_confusion": "И Airflow, и Flink работают с data pipelines, поэтому их ошибочно относят к одному классу инструментов.",
+                "if_it_were_true": "Тогда Airflow обрабатывал бы события по одному в реальном времени, но его scheduler думает в терминах cron-интервалов, а не потока событий.",
+                "how_it_should_be": "Airflow оркестрирует batch-job по расписанию; streaming — отдельная категория, и для неё есть Flink/Kafka Streams."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Apache Airflow` сам обрабатывает данные внутри task — это полноценный compute engine, заменяющий `Spark`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Airflow координирует tasks, но обработку делегирует `Spark`/SQL/Python; `XCom` не предназначен для передачи больших данных между задачами.",
+                "source_of_confusion": "Task в `PythonOperator` может выполнять код, и кажется, что Airflow и есть движок вычислений.",
+                "if_it_were_true": "Тогда не было бы смысла в `SparkSubmitOperator`, но именно он запускает внешний Spark, потому что Airflow не считает данные сам.",
+                "how_it_should_be": "Airflow — оркестратор: он запускает Spark/SQL job, а тяжёлые вычисления идут в этих внешних системах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Apache Airflow` подходит для интерактивных long-running workflows, где пользователь по шагам взаимодействует с процессом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для интерактивной работы есть `Jupyter`/`Streamlit`; Airflow заточен под scheduled batch с чёткой заранее заданной структурой DAG.",
+                "source_of_confusion": "Web UI Airflow позволяет вручную триггерить DAG, и это путают с интерактивным пошаговым взаимодействием.",
+                "if_it_were_true": "Тогда можно было бы вести диалоговую сессию внутри task, но Airflow выполняет задачи автономно без участия человека в процессе.",
+                "how_it_should_be": "Airflow — для автоматических scheduled batch-pipeline; интерактивные сценарии закрывают Jupyter и подобные инструменты."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `DAG` в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`DAG` может содержать циклы — они нужны, чтобы реализовать retry задачи через возврат к предыдущему шагу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Буква `A` в DAG — Acyclic: циклы запрещены. Retry настраивается параметром `retries=N`, а не зацикливанием графа.",
+                "source_of_confusion": "Retry интуитивно ассоциируется с «вернуться назад и повторить», что напоминает цикл в графе.",
+                "if_it_were_true": "Тогда scheduler не смог бы определить порядок выполнения, ведь цикл делает топологическую сортировку невозможной.",
+                "how_it_should_be": "DAG ацикличен; повтор задачи задаётся `retries`/`retry_delay`, а не ребром обратно в граф."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`DAG` (Directed Acyclic Graph) — это граф task с направленными зависимостями и без циклов, описанный как Python-файл. Стрелки задают порядок выполнения, циклы запрещены (иначе нельзя определить порядок), и DAG должен быть идемпотентным для безопасных re-run.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Airflow один DAG = один Python module, где объявлены task и их связи через `>>` или function calls. Acyclic гарантирует определённый порядок, Directed — направление потока.",
+                "example": "`extract_users >> [transform_users, transform_orders] >> load_to_warehouse >> send_notification` — fan-out на две трансформации и fan-in обратно в загрузку.",
+                "when_to_apply": "Когда нужно смоделировать batch pipeline с явными зависимостями шагов, которые можно безопасно перезапустить.",
+                "edge_cases": "Retry реализуется параметром `retries=N`, а НЕ циклом в графе — цикл сломал бы топологический порядок и сделал DAG невалидным.",
+                "related": "[[apache-airflow-interview#Q1]] Airflow как orchestrator; [[apache-airflow-interview#Q3]] компоненты, исполняющие DAG; [[apache-airflow-interview#Q9]] зависимости между tasks."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`DAG` — это неструктурированный список task без зависимостей, которые выполняются в произвольном порядке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Весь смысл DAG — именно направленные зависимости, задающие порядок; без них это не граф, а просто набор задач.",
+                "source_of_confusion": "DAG действительно содержит набор task, и связи между ними легко упустить из виду при поверхностном описании.",
+                "if_it_were_true": "Тогда `load` мог бы выполниться раньше `extract`, и данные были бы не готовы — pipeline терял бы смысл.",
+                "how_it_should_be": "DAG = задачи ПЛЮС направленные рёбра зависимостей, которые определяют корректный порядок выполнения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`DAG`-файл в Airflow — это `JSON` manifest, описывающий задачи декларативно, без Python-кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Airflow DAG — это Python module, который scheduler импортирует и исполняет; декларативные JSON/YAML подходы — у других инструментов.",
+                "source_of_confusion": "Декларативные альтернативы (`Dagster`, `Argo`) используют YAML/конфиги, и это переносят на Airflow.",
+                "if_it_were_true": "Тогда нельзя было бы использовать циклы Python для dynamic DAG generation, но именно гибкость Python — сильная сторона Airflow.",
+                "how_it_should_be": "DAG описывается Python-кодом; JSON/YAML-декларативность — это про Dagster/Prefect/Argo, не про Airflow DAG."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Из каких компонентов состоит архитектура `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Scheduler` сам исполняет tasks напрямую, и отдельный `Executor` в архитектуре не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scheduler только решает, что запустить; КАК запустить определяет Executor (`Local`/`Celery`/`K8s`), а исполняют Workers.",
+                "source_of_confusion": "Scheduler и Executor оба связаны с запуском, и их роли легко слить в одну сущность.",
+                "if_it_were_true": "Тогда нельзя было бы переключаться между `LocalExecutor` и `KubernetesExecutor` без переписывания Scheduler, но это просто смена конфигурации.",
+                "how_it_should_be": "Scheduler планирует, Executor выбирает стратегию запуска, Workers исполняют — это три разных компонента."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Workers` подключаются к `Web UI` напрямую, чтобы публиковать результаты выполнения tasks.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Workers пишут state в Metadata DB, а Web UI читает из неё; прямого канала Workers → Web UI нет.",
+                "source_of_confusion": "В UI видны результаты работы Workers, и кажется, что они шлют данные прямо в интерфейс.",
+                "if_it_were_true": "Тогда при выключенном Web UI Workers не могли бы сохранять результаты, но они продолжают писать в Metadata DB независимо от UI.",
+                "how_it_should_be": "Workers → Metadata DB → Web UI: интерфейс лишь отображает то, что воркеры записали в базу."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Архитектура Airflow: `Scheduler` (читает DAG-файлы и планирует runs), `Executor` (стратегия запуска tasks — Sequential/Local/Celery/K8s), `Workers` (фактически исполняют tasks), `Web UI` (мониторинг и ручной trigger) и `Metadata DB` (хранит state DAG runs, connections, variables). Scheduler и Executor — разные компоненты.",
+              "correct": true,
+              "sections": {
+                "explanation": "Scheduler решает ЧТО и КОГДА запускать, Executor определяет КАК это запустить, Workers выполняют, а вся информация о состоянии живёт в Metadata DB (`PostgreSQL`/`MySQL`).",
+                "example": "Scheduler находит готовый task → отдаёт Executor'у → `LocalExecutor` стартует процесс / `KubernetesExecutor` создаёт pod → Worker исполняет → результат пишется в Metadata DB → Web UI показывает статус.",
+                "when_to_apply": "При тюнинге производительности важно понимать разделение Scheduler vs Executor: они масштабируются и настраиваются по-разному.",
+                "edge_cases": "Без Metadata DB Airflow не работает: пропадает state DAG runs, нет recovery после рестарта и нечего показывать в UI.",
+                "related": "[[apache-airflow-interview#Q4]] зачем нужна metadata DB; [[apache-airflow-interview#Q11]] как Scheduler планирует runs; [[apache-airflow-interview#Q15]] какие бывают Executors."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Metadata DB` не нужна — Airflow stateless и хранит всё состояние в памяти Scheduler.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без Metadata DB нет state DAG runs, нет recovery после рестарта и нет данных для UI; база — критичная инфраструктура.",
+                "source_of_confusion": "Многие современные сервисы делают stateless, и это ожидание переносят на Airflow.",
+                "if_it_were_true": "Тогда после рестарта Scheduler Airflow забывал бы все running DAG runs, но на практике он восстанавливает их из Metadata DB.",
+                "how_it_should_be": "Metadata DB обязательна и хранит весь state; её бэкапят как critical infra, а не держат состояние в памяти."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем `Apache Airflow` нужна metadata DB и что в ней хранится?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`SQLite` — рекомендуемая metadata DB для production, потому что она встроенная и не требует отдельного сервера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SQLite` single-writer и не работает с `CeleryExecutor`; в production используют `PostgreSQL`/`MySQL`, а SQLite — только для dev/local.",
+                "source_of_confusion": "SQLite идёт «из коробки» в quickstart-туториалах, и это принимают за production-готовое решение.",
+                "if_it_were_true": "Тогда можно было бы запускать параллельные tasks на одной SQLite-базе, но её single-writer lock делает это невозможным.",
+                "how_it_should_be": "В prod — Postgres/MySQL с поддержкой concurrent writes; SQLite оставляют для локальной отладки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Metadata DB хранит сами данные задач — payload, который обрабатывают tasks (таблицы, файлы, dataframes).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полезные данные обрабатывают workers через `Spark`/SQL и пишут в warehouse/S3; metadata DB держит только state и metadata, не payload.",
+                "source_of_confusion": "Слово «data» в data pipeline создаёт впечатление, что вся обработка проходит через базу Airflow.",
+                "if_it_were_true": "Тогда терабайты данных лежали бы в metadata DB и убивали бы scheduler, но реальные данные хранятся вне Airflow.",
+                "how_it_should_be": "Payload идёт в S3/HDFS/warehouse; metadata DB хранит state runs, connections, variables, небольшие XCom."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`XComs` не хранятся в metadata DB — для них всегда нужен отдельный backend на `S3`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `XCom` хранится именно в metadata DB; вынести его на `S3` можно через custom XCom backend, но это опция, а не обязанность.",
+                "source_of_confusion": "Известно, что XCom не для больших данных, и из этого делают вывод, что он не в базе.",
+                "if_it_were_true": "Тогда без настроенного S3 XCom вообще не работал бы, но из коробки он прекрасно работает через metadata DB.",
+                "how_it_should_be": "XCom по умолчанию в metadata DB; custom backend (S3) — опциональная настройка для крупных payload."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Metadata DB хранит state DAG runs (started/success/failed), `Connections` (credentials), `Variables` (config), `XComs` (inter-task data) и pool configurations. В production рекомендуется `PostgreSQL` (или `MySQL`), а `SQLite` годится только для dev/local.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это источник правды о состоянии всего Airflow: scheduler, workers и UI читают/пишут именно сюда, поэтому база — критичная инфраструктура, требующая бэкапов.",
+                "example": "После выполнения task instance его статус `success` записывается в таблицу `task_instance`, а возвращённое значение через `XCom` — в таблицу `xcom` той же metadata DB.",
+                "when_to_apply": "Базу бэкапят как critical infra, накатывают миграции схемы через `alembic` и регулярно чистят (`airflow db clean`) от старых строк.",
+                "edge_cases": "`SQLite` single-writer и несовместим с `CeleryExecutor`/параллелизмом, поэтому в prod только `PostgreSQL`/`MySQL`.",
+                "related": "[[apache-airflow-interview#Q3]] место Metadata DB в архитектуре; [[apache-airflow-interview#Q19]] XCom хранится в metadata DB; [[apache-airflow-interview#Q20]] Connections и Variables."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как написать простейший `DAG` в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DAG пишут как Python-файл: `with DAG(...) as dag:` объявляет context manager, внутри создают operators (`PythonOperator`, `BashOperator`), а зависимости задают через `>>`. Ключевые параметры — `default_args`, `schedule_interval`, `start_date`, `catchup=False`; файл кладут в `dags/`, которую сканирует Scheduler.",
+              "correct": true,
+              "sections": {
+                "explanation": "Через context manager все операторы автоматически привязываются к DAG, а `extract >> transform >> load` задаёт порядок. `default_args` (retries, retry_delay, owner) применяются ко всем task.",
+                "example": "`with DAG(dag_id='my_etl', schedule_interval='@daily', start_date=datetime(2025,1,1), catchup=False) as dag: extract >> transform >> load` — daily ETL из трёх шагов.",
+                "when_to_apply": "Для типового batch pipeline: `@daily` расписание, retries в default_args, atomic task'и, соединённые bitshift-оператором.",
+                "edge_cases": "DAG-файл обязан лежать в `dags_folder` (обычно `dags/`) — Scheduler сканирует только её, файлы в произвольных папках игнорируются.",
+                "related": "[[apache-airflow-interview#Q6]] что такое operator; [[apache-airflow-interview#Q9]] зависимости через `>>`; [[apache-airflow-interview#Q12]] schedule_interval, start_date, catchup."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DAG-файл можно положить в любую папку проекта — Scheduler рекурсивно находит все DAG по всему диску.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scheduler сканирует только настроенную `dags_folder` (обычно `dags/`); файлы в других папках он не видит и не парсит.",
+                "source_of_confusion": "Привычка к авто-discovery в некоторых фреймворках создаёт ожидание, что Airflow найдёт DAG где угодно.",
+                "if_it_were_true": "Тогда любой `.py` с объектом DAG автоматически становился бы pipeline, но Airflow смотрит строго в dags_folder.",
+                "how_it_should_be": "DAG-файлы размещают в `dags/` (или в настроенной `dags_folder`), иначе Scheduler их не подхватит."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`catchup=True` — лучшая практика для всех новых DAG, чтобы Airflow гарантированно отработал каждый интервал.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`catchup=True` заполнит ВСЕ пропущенные runs от `start_date` и может перегрузить кластер; для новых DAG обычно ставят `catchup=False`.",
+                "source_of_confusion": "Хочется «ничего не пропустить», и кажется, что catchup всегда полезен.",
+                "if_it_were_true": "Тогда новый DAG со `start_date` двухлетней давности был бы безопасен, но он породил бы сотни одновременных runs.",
+                "how_it_should_be": "По умолчанию `catchup=False`; backfill за прошлые периоды запускают осознанно отдельной командой."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Retries в DAG не нужны — любые ошибки лучше сразу пробрасывать наверх и падать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Transient-ошибки (network, rate-limit) self-heal с `retries`; без них pipeline хрупкий и падает на временных сбоях.",
+                "source_of_confusion": "Принцип fail-fast звучит правильно, и retries воспринимают как маскировку проблем.",
+                "if_it_were_true": "Тогда единичный таймаут сети ронял бы весь nightly ETL, но retries с задержкой переживают такие всплески.",
+                "how_it_should_be": "Retries настраивают в `default_args` (`retries`, `retry_delay`) для устойчивости к временным сбоям."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое operator в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Operator выполняет свою работу сразу в момент создания объекта в DAG-файле, ещё при парсинге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Operator — это template; при парсинге он только объявляется, а реальная работа происходит в runtime, когда создаётся task instance.",
+                "source_of_confusion": "Создание объекта в Python обычно сразу что-то делает, и это переносят на operator.",
+                "if_it_were_true": "Тогда `BashOperator(bash_command='rm -rf /')` стирал бы данные при каждом парсинге DAG, но команда исполняется только в run.",
+                "how_it_should_be": "Operator = blueprint; работа выполняется task instance'ом в момент DAG run, а не при объявлении."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Operator` — это template для конкретной операции, причём один operator = один task. При выполнении operator порождает `task instance` (runtime-инстанс). Типы: Action (`PythonOperator`, `BashOperator`, `EmailOperator`), Transfer (`S3ToGCSOperator`) и Sensor (`FileSensor`, `ExternalTaskSensor`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Operator — это blueprint: при объявлении он лишь описывает задачу, а реальный запуск создаёт task instance со своим состоянием в metadata DB.",
+                "example": "`PythonOperator(task_id='my_task', python_callable=func)` объявляет шаг; в момент DAG run появляется task instance этого operator с конкретной `logical_date`.",
+                "when_to_apply": "Каждый логический шаг pipeline оформляют отдельным operator — так task atomic и независимо перезапускаем.",
+                "edge_cases": "Один operator — это один task; для повторов используют loop в DAG-коде или dynamic task mapping `.expand()`, а не один operator на несколько task.",
+                "related": "[[apache-airflow-interview#Q5]] operators внутри DAG; [[apache-airflow-interview#Q7]] частые operators; [[apache-airflow-interview#Q22]] Sensor как тип operator."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Один operator порождает множество tasks — это удобный способ размножить однотипные шаги.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один operator = один task в DAG; для множества однотипных task используют loop в DAG-коде или dynamic task mapping `.expand()`.",
+                "source_of_confusion": "Operator выглядит как «фабрика задач», и кажется, что из него можно получить сразу несколько task.",
+                "if_it_were_true": "Тогда не понадобился бы `.expand()` для динамического числа task, но именно он создаёт N task из одного template.",
+                "how_it_should_be": "Один operator = один task; размножение — через for-loop (статически) или `.expand()` (динамически)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`PythonOperator` и `Sensor` взаимозаменяемы — это просто два названия одного и того же механизма.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные категории: Sensor ждёт условие, периодически вызывая `poke()` (`poke_interval`), а `PythonOperator` однократно вызывает функцию и завершается.",
+                "source_of_confusion": "Оба наследуются от `BaseOperator`, и из общего предка делают вывод об эквивалентности.",
+                "if_it_were_true": "Тогда `PythonOperator` мог бы ждать появления файла часами, но он отработает один раз и завершится без ожидания.",
+                "how_it_should_be": "PythonOperator — одноразовое действие; Sensor — ожидание условия через повторные poke; это разные типы operator."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие operators в `Apache Airflow` используются чаще всего?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`BashOperator` и `PythonOperator` устарели в Airflow 2.x — их использовать не рекомендуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба активно используются: `PythonOperator` — основной для custom-логики, `BashOperator` — для shell-команд; ни один не deprecated.",
+                "source_of_confusion": "Появление TaskFlow API создаёт впечатление, что классические operators устарели.",
+                "if_it_were_true": "Тогда вызвать произвольный скрипт стало бы невозможно, но `BashOperator`/`PythonOperator` остаются базовыми инструментами.",
+                "how_it_should_be": "Классические operators живы и востребованы; TaskFlow лишь добавляет удобный синтаксис поверх той же модели."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`BranchPythonOperator` не нужен — ветвление проще делать обычным `if/else` прямо в DAG-коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`if/else` в DAG-коде выполняется при ПАРСИНГЕ, а не в runtime; для conditional execution по данным нужен `BranchPythonOperator`.",
+                "source_of_confusion": "В обычном Python `if/else` решает всё, и эту привычку переносят на DAG.",
+                "if_it_were_true": "Тогда ветка выбиралась бы по значению, известному только во время run, но при парсинге этого значения ещё нет.",
+                "how_it_should_be": "Для runtime-ветвления по результатам task используют `BranchPythonOperator`, а не top-level `if/else`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Частые operators: `PythonOperator`, `BashOperator`, DB-specific SQL operators, `KubernetesPodOperator`, `SparkSubmitOperator`, `S3ToGCSOperator`, `BranchPythonOperator`, `EmptyOperator`, `TriggerDagRunOperator`. Для cloud-сервисов (`Snowflake`, `BigQuery`, `Redshift`) ставят provider packages `apache-airflow-providers-*`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`PythonOperator`/`BashOperator` — generic-инструменты для custom-логики, а специализированные operators и provider packages закрывают интеграции с конкретными системами.",
+                "example": "`SparkSubmitOperator` запускает Spark job, `BranchPythonOperator` выбирает ветку DAG, `TriggerDagRunOperator` стартует другой DAG, а `BigQueryInsertJobOperator` из provider package — SQL в BigQuery.",
+                "when_to_apply": "Выбирают operator под задачу: generic для произвольной логики, специализированные — для cloud и внешних движков.",
+                "edge_cases": "`BranchPythonOperator` нужен для conditional execution в runtime — обычный `if/else` в DAG-коде выполняется при парсинге, а не при запуске.",
+                "related": "[[apache-airflow-interview#Q6]] что такое operator; [[apache-airflow-interview#Q8]] TaskFlow API как альтернатива; [[apache-airflow-interview#Q21]] hooks внутри operators."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все provider packages нужно всегда устанавливать вручную — ни один operator не идёт с Airflow из коробки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Базовые провайдеры (`HTTP`, частично `Postgres`) идут с Airflow; cloud-провайдеры ставят через `pip install apache-airflow-providers-*`.",
+                "source_of_confusion": "Cloud operators действительно требуют доустановки, и это обобщают на все providers.",
+                "if_it_were_true": "Тогда даже простой HTTP-запрос требовал бы отдельной установки, но `HttpOperator` доступен из коробки.",
+                "how_it_should_be": "Часть провайдеров встроена, специализированные cloud-операторы доустанавливают через provider packages по необходимости."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `TaskFlow API` (Airflow 2.0+)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`TaskFlow API` требует ручной передачи `XCom` через `xcom_push`/`xcom_pull` в каждой функции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главная фишка TaskFlow — АВТОМАТИЧЕСКИЙ XCom через return values; явные вызовы `xcom_push`/`xcom_pull` не нужны.",
+                "source_of_confusion": "Под капотом TaskFlow всё равно использует XCom, и думают, что его нужно дёргать руками.",
+                "if_it_were_true": "Тогда TaskFlow не давал бы преимущества в boilerplate, но именно автоматический обмен данными — его суть.",
+                "how_it_should_be": "Return value функции автоматически push'ится в XCom, а аргумент следующей функции автоматически pull'ится."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`TaskFlow API` несовместим с классическими operators — DAG обязан быть целиком на декораторах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TaskFlow и classical operators можно микшировать: `@task`-функции работают рядом с `BashOperator`/`PythonOperator` в одном DAG.",
+                "source_of_confusion": "Декораторный стиль выглядит обособленно, и кажется, что он не дружит с operator-объектами.",
+                "if_it_were_true": "Тогда миграция legacy-DAG на TaskFlow была бы «всё или ничего», но на деле её делают постепенно, шаг за шагом.",
+                "how_it_should_be": "В одном DAG спокойно соседствуют `@task`-функции и классические operators, связанные через `>>`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`TaskFlow API` доступен только в Airflow 1.x и был удалён в версии 2.0.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: TaskFlow появился именно в Airflow 2.0+, в 1.x его не было вовсе.",
+                "source_of_confusion": "Версии путают местами, и «современный» ошибочно ассоциируют со старым 1.x.",
+                "if_it_were_true": "Тогда апгрейд на 2.x ломал бы все TaskFlow DAG, но 2.x — это как раз дом TaskFlow API.",
+                "how_it_should_be": "TaskFlow — фича Airflow 2.0+; в 1.x доступны только классические operators."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TaskFlow API` (Airflow 2.0+) — современный синтаксис через декораторы `@dag` и `@task`, близкий к обычному Python-коду. `XCom` передаётся автоматически через return values функций, boilerplate меньше. В новых проектах TaskFlow предпочтительнее классических operators.",
+              "correct": true,
+              "sections": {
+                "explanation": "Декоратор `@task` превращает функцию в task, а вызовы функций (`load(transform(extract()))`) создают неявные зависимости и автоматический обмен данными через XCom.",
+                "example": "`@task def extract(): return {...}` и `@task def transform(data): ...` — `data = extract(); transform(data)` сам прокидывает результат через XCom без явных `xcom_push`/`xcom_pull`.",
+                "when_to_apply": "Для новых DAG в Airflow 2.x+ берут TaskFlow по умолчанию; классические operators оставляют для legacy.",
+                "edge_cases": "TaskFlow можно микшировать с classical operators: `@task`-функции спокойно работают с `BashOperator`/`PythonOperator` в одном DAG.",
+                "related": "[[apache-airflow-interview#Q5]] классический DAG; [[apache-airflow-interview#Q9]] зависимости в TaskFlow через вызовы; [[apache-airflow-interview#Q19]] XCom за кулисами TaskFlow."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как задаются зависимости между tasks в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Зависимости задают bitshift-операторами: `extract >> transform >> load`, `[a, b] >> c` для fan-in, либо методами `set_upstream`/`set_downstream`. В TaskFlow API зависимости неявные — через вызовы функций (`load(transform(extract()))`). Оператор `>>` создаёт edges в DAG.",
+              "correct": true,
+              "sections": {
+                "explanation": "`a >> b` означает «a перед b» и эквивалентно `b << a`. Список слева/справа от `>>` даёт fan-out/fan-in. В TaskFlow передача return value создаёт зависимость автоматически.",
+                "example": "`extract >> [transform_a, transform_b] >> load` — extract запускает обе трансформации параллельно, а load ждёт обе (fan-in).",
+                "when_to_apply": "Bitshift — для классических operators; function calls — для TaskFlow; оба способа в итоге создают рёбра графа.",
+                "edge_cases": "`>>` лишь настраивает зависимость в графе, но НЕ запускает task сразу — фактическое выполнение делает scheduler/executor в runtime.",
+                "related": "[[apache-airflow-interview#Q2]] DAG как граф зависимостей; [[apache-airflow-interview#Q8]] неявные зависимости в TaskFlow; [[apache-airflow-interview#Q10]] dynamic generation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запись `extract >> transform` немедленно вызывает `extract()` и выполняет задачу прямо в момент парсинга DAG.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`>>` только настраивает зависимость (ребро графа); фактическое выполнение делает scheduler/executor в runtime, а не парсинг.",
+                "source_of_confusion": "Оператор выглядит как действие, и кажется, что он сразу запускает задачу.",
+                "if_it_were_true": "Тогда DAG исполнялся бы при каждом сканировании файла Scheduler'ом, но парсинг лишь строит граф зависимостей.",
+                "how_it_should_be": "`>>` задаёт порядок; запуск task происходит позже, когда scheduler планирует DAG run."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оператор `<<` запрещён в Airflow — зависимости можно задавать только через `>>`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба оператора валидны: `a >> b` полностью эквивалентно `b << a`, это просто два направления записи одной связи.",
+                "source_of_confusion": "`>>` встречается в примерах чаще, и `<<` начинают считать недопустимым.",
+                "if_it_were_true": "Тогда `load << transform` бросал бы ошибку, но это легальная запись той же зависимости.",
+                "how_it_should_be": "Доступны оба: `>>` (downstream) и `<<` (upstream) описывают одно ребро в разных направлениях."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В TaskFlow API зависимости по-прежнему задаются явным `>>` между декорированными функциями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В TaskFlow зависимости НЕЯВНЫЕ — через вызовы функций и передачу return values; `>>` для них обычно не нужен.",
+                "source_of_confusion": "Привычка к bitshift из классического API заставляет искать `>>` и в TaskFlow.",
+                "if_it_were_true": "Тогда TaskFlow не упрощал бы код, но его суть в том, что `load(transform(extract()))` сам строит граф.",
+                "how_it_should_be": "В TaskFlow связи создаются вызовами функций; `>>` остаётся опцией, например для task без обмена данными."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сделать dynamic DAG generation в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Dynamic Task Mapping `.expand()` существует ещё с Airflow 1.x и доступен во всех версиях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dynamic Task Mapping появился только в Airflow 2.3+; в 1.x была доступна лишь статическая генерация через `for` loop.",
+                "source_of_confusion": "Loop-генерация работала всегда, и её путают с более новым `.expand()`.",
+                "if_it_were_true": "Тогда на Airflow 1.x можно было бы делать runtime-маппинг task, но там его попросту нет.",
+                "how_it_should_be": "`.expand()` — фича 2.3+; для старых версий доступна только статическая loop-генерация."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Два способа: статически через `for` loop при парсинге DAG (когда число tasks известно заранее) и Dynamic Task Mapping через `.expand()` (Airflow 2.3+), когда число tasks неизвестно до runtime. `.expand()` создаёт N task динамически по результату upstream-задачи.",
+              "correct": true,
+              "sections": {
+                "explanation": "`for i in range(10): PythonOperator(task_id=f'task_{i}', ...)` фиксирует число task при парсинге. `.expand(item=items)` откладывает создание task до runtime, когда `items` уже вычислен.",
+                "example": "`@task def get_items(): return [1,2,3,4,5]` и `process_item.expand(item=get_items())` — число task определится результатом `get_items()` во время выполнения.",
+                "when_to_apply": "`for` loop — когда количество шагов известно (фиксированные partitions); `.expand()` — для списка файлов/partition переменной длины.",
+                "edge_cases": "Loop в DAG-коде разворачивается при ПАРСИНГЕ и фиксирует число task; `.expand()` создаёт task в runtime после выполнения upstream — это принципиальная разница.",
+                "related": "[[apache-airflow-interview#Q5]] базовая структура DAG; [[apache-airflow-interview#Q8]] TaskFlow и @task; [[apache-airflow-interview#Q11]] как scheduler планирует runs."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Dynamic Task Mapping `.expand()` создаёт все task ещё при парсинге DAG, как обычный loop.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.expand()` создаёт tasks в RUNTIME, после выполнения upstream-задачи; именно поэтому он умеет работать с заранее неизвестным числом.",
+                "source_of_confusion": "Both механизма «генерируют task», и разницу момента создания упускают.",
+                "if_it_were_true": "Тогда `.expand()` не отличался бы от loop и был бы не нужен, но его ценность — в runtime-создании.",
+                "how_it_should_be": "`.expand()` откладывает создание task до runtime; loop фиксирует число task при парсинге."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обычный `for` loop в DAG-коде генерирует task динамически в runtime по мере выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Loop выполняется при ПАРСИНГЕ DAG, и число task фиксируется в момент создания DAG, а не в runtime.",
+                "source_of_confusion": "Слово «динамически» приписывают любому циклу, хотя он отрабатывает на этапе парсинга.",
+                "if_it_were_true": "Тогда не понадобился бы `.expand()` для runtime-зависимой длины, но именно loop неспособен на это.",
+                "how_it_should_be": "Loop = статическая генерация при парсинге; для runtime-зависимого числа task нужен `.expand()`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает scheduling в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Scheduler сам выполняет tasks на своей машине, без участия Executor и Workers.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scheduler отправляет tasks Executor'у, а исполняют их Workers; сам он только планирует и оркестрирует.",
+                "source_of_confusion": "Название «scheduler» ассоциируется с запуском, и его роль раздувают до исполнителя.",
+                "if_it_were_true": "Тогда нельзя было бы горизонтально масштабировать исполнение через Workers, но именно для этого роли разделены.",
+                "how_it_should_be": "Scheduler планирует и оркестрирует, Executor выбирает стратегию, Workers исполняют tasks."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Scheduler парсит DAG-файлы только один раз при старте и больше к ним не возвращается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scheduler периодически перечитывает DAG-файлы (`dag_dir_list_interval`, default ~5 мин), иначе новые/изменённые DAG не подхватились бы.",
+                "source_of_confusion": "Кажется, что парсинг — дорогая разовая операция при загрузке.",
+                "if_it_were_true": "Тогда добавленный DAG требовал бы рестарта Scheduler, но он появляется в UI сам через несколько минут.",
+                "how_it_should_be": "Scheduler регулярно пересканирует dags_folder, поэтому изменения видны без перезапуска."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Scheduler периодически сканирует DAG-файлы, по `schedule_interval` определяет next run, в нужный момент создаёт DAG run со статусом `running`, отправляет tasks Executor'у в порядке зависимостей и собирает результаты (`success`/`failed`). Сам Scheduler tasks НЕ выполняет — только планирует и оркестрирует.",
+              "correct": true,
+              "sections": {
+                "explanation": "Разделение ролей: Scheduler решает ЧТО и КОГДА, Executor — КАК запустить, Workers — исполняют. Это позволяет тюнить компоненты независимо.",
+                "example": "Daily DAG: scheduler видит, что интервал закрыт, создаёт DAG run, отдаёт готовые tasks (по dependencies) Executor'у, а после завершения всех помечает run `success`.",
+                "when_to_apply": "Понимание separation Scheduler vs Executor важно при тюнинге: bottleneck'и обычно в scheduler-парсинге, а не в Workers.",
+                "edge_cases": "Scheduler перечитывает DAG-файлы периодически (`dag_dir_list_interval`, default ~5 мин), а не один раз при старте — новые DAG подхватываются без рестарта.",
+                "related": "[[apache-airflow-interview#Q3]] Scheduler в архитектуре; [[apache-airflow-interview#Q12]] schedule_interval и catchup; [[apache-airflow-interview#Q15]] Executors как стратегия запуска."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все tasks одного DAG run обязательно выполняются на одном и том же worker.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `CeleryExecutor`/`KubernetesExecutor` каждый task может попасть на разные workers/pods — распределение решает Executor.",
+                "source_of_confusion": "Логически DAG — единое целое, и кажется, что его tasks держатся вместе.",
+                "if_it_were_true": "Тогда падение одного worker роняло бы весь DAG run, но distributed executor раскидывает task по узлам.",
+                "how_it_should_be": "В distributed executors task'и одного DAG распределяются по разным workers независимо."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `schedule_interval`, `start_date` и `catchup` в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DAG запускается в начале интервала: daily DAG со `start_date=2025-01-01` сделает первый run 1 января.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DAG запускается в КОНЦЕ интервала: daily DAG со start_date 2025-01-01 даёт первый run 2 января — для данных дня 1-го.",
+                "source_of_confusion": "Интуитивно «запуск за день» ассоциируется с началом этого дня.",
+                "if_it_were_true": "Тогда DAG считал бы данные ещё не закрытого дня, но Airflow специально ждёт окончания интервала.",
+                "how_it_should_be": "Execution происходит в конце интервала; `logical_date` указывает на обрабатываемое окно, run идёт после него."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`catchup=True` — безопасный default, который просто гарантирует, что ни один интервал не пропущен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`catchup=True` заполнит ВСЕ runs от `start_date` и может породить сотни одновременных runs; безопасный default — `catchup=False`.",
+                "source_of_confusion": "Желание «не пропустить ни одного запуска» делает catchup привлекательным.",
+                "if_it_were_true": "Тогда деплой DAG со старой start_date был бы безвреден, но он мгновенно создаст лавину backfill-runs.",
+                "how_it_should_be": "По умолчанию ставят `catchup=False`; историю досчитывают осознанно через backfill."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В качестве `start_date` удобно ставить `datetime.now()` — так DAG всегда начнётся «прямо сейчас».",
+              "correct": false,
+              "sections": {
+                "what_actually": "`start_date=datetime.now()` переоценивается при каждом парсинге, граница интервала постоянно сдвигается, и DAG НИКОГДА не стартует.",
+                "source_of_confusion": "`now()` кажется логичным «начни с текущего момента».",
+                "if_it_were_true": "Тогда DAG запускался бы немедленно, но плавающая start_date не даёт scheduler'у закрыть ни один интервал.",
+                "how_it_should_be": "Всегда фиксированная дата (`datetime(2025,1,1)`), а не динамический `now()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`schedule_interval` задаёт частоту (cron `0 2 * * *`, preset `@daily` или `timedelta`), `start_date` — начало, `catchup` управляет пропущенными runs: `True` выполнит ВСЕ missed от start_date, `False` — только последний. Важный подвох: DAG запускается в КОНЦЕ интервала, не в начале.",
+              "correct": true,
+              "sections": {
+                "explanation": "Airflow исполняет интервал по его завершении: daily DAG со `start_date=2025-01-01` сделает первый run 2 января (для данных 1-го). `catchup=False` по умолчанию защищает от лавины runs.",
+                "example": "`schedule_interval='@daily', start_date=datetime(2025,1,1), catchup=False` — каждый день один run, обрабатывающий предыдущие сутки, без заполнения истории.",
+                "when_to_apply": "Для новых DAG ставят `catchup=False`, чтобы не перегрузить кластер сотнями исторических runs при деплое.",
+                "edge_cases": "Нельзя задавать `start_date=datetime.now()` — оно переоценивается при каждом парсинге, и DAG никогда не стартует; нужна фиксированная дата.",
+                "related": "[[apache-airflow-interview#Q11]] как scheduler планирует; [[apache-airflow-interview#Q13]] backfill за период; [[apache-airflow-interview#Q14]] execution_date vs logical_date."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое backfill в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Backfill` — это выполнение DAG для исторических периодов через CLI: `airflow dags backfill -s 2025-01-01 -e 2025-01-31 my_dag`. Команда создаёт DAG runs для всех дат диапазона. Полезно после изменения логики или для пересчёта старых данных; требует идемпотентного DAG.",
+              "correct": true,
+              "sections": {
+                "explanation": "Backfill — ручная команда для конкретного диапазона, в отличие от автоматического catchup. Идемпотентность критична: иначе повторный счёт даст дубли.",
+                "example": "После багфикса в `transform` запускают `airflow dags backfill -s 2025-01-01 -e 2025-01-31 orders_etl`, чтобы пересчитать январь с исправленной логикой.",
+                "when_to_apply": "Когда нужно переcчитать прошлые runs после исправления кода или для заполнения исторического окна данных.",
+                "edge_cases": "На неидемпотентном DAG backfill формально отработает, но гарантированно даст дубли/коррупцию данных — идемпотентность обязательна.",
+                "related": "[[apache-airflow-interview#Q12]] catchup vs backfill; [[apache-airflow-interview#Q14]] logical_date в backfill; [[apache-airflow-interview#Q26]] идемпотентность как best practice."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Backfill и catchup — это одно и то же; разница только в названии команды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`catchup` автоматически заполняет пропущенные runs от `start_date`, а `backfill` — ручная CLI-команда для конкретного указанного диапазона.",
+                "source_of_confusion": "Оба механизма создают исторические runs, и их отождествляют.",
+                "if_it_were_true": "Тогда не было бы отдельной команды `airflow dags backfill`, но она существует именно для ручного диапазона.",
+                "how_it_should_be": "Catchup — автоматическое поведение по флагу; backfill — осознанная ручная команда за период."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Backfill выполняется автоматически через scheduler, без отдельной команды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backfill — отдельная CLI-команда; scheduler идёт только вперёд от now() и сам исторические периоды не пересчитывает.",
+                "source_of_confusion": "Scheduler управляет runs, и кажется, что и backfill — его автоматическая работа.",
+                "if_it_were_true": "Тогда любой DAG сам бы пересчитывал прошлое после правки кода, но это всегда делает инженер вручную.",
+                "how_it_should_be": "Backfill запускают командой `airflow dags backfill -s ... -e ...`; scheduler в прошлое не ходит."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Backfill корректно работает на любом DAG, даже без idempotency — Airflow сам предотвращает дубли.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без идемпотентности backfill формально отработает, но создаст дубли/коррупцию данных; Airflow не дедуплицирует за вас.",
+                "source_of_confusion": "Хочется верить, что инструмент защитит от повторного счёта автоматически.",
+                "if_it_were_true": "Тогда можно было бы безнаказанно гонять backfill на append-only load, но дубли в warehouse гарантированы.",
+                "how_it_should_be": "Backfill безопасен только на идемпотентном DAG (DELETE+INSERT / MERGE), иначе данные дублируются."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `execution_date` и `logical_date` в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`execution_date` — это реальное wall-clock время, когда scheduler фактически запустил DAG run.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`execution_date`/`logical_date` — это НАЧАЛО интервала, а не время запуска; daily DAG с logical_date 2025-01-01 реально стартовал 2 января.",
+                "source_of_confusion": "Слово «execution» наводит на мысль о моменте исполнения.",
+                "if_it_were_true": "Тогда фильтр `WHERE date = execution_date` брал бы не тот день, но logical_date намеренно указывает на окно данных.",
+                "how_it_should_be": "Это логическая дата интервала; фактический момент запуска всегда позже окончания интервала."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`execution_date` (legacy) переименован в `logical_date` начиная с Airflow 2.2+. Оба означают НАЧАЛО интервала, а не время фактического запуска. Для daily DAG `logical_date=2025-01-01` — это «обработка данных за 1 января», а сам run произошёл 2 января.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это логическая дата окна данных, а не wall-clock. Старое имя `execution_date` сохранено как deprecated alias в context для обратной совместимости.",
+                "example": "В `@task def f(**context): d = context['logical_date']` значение `2025-01-01` используют как фильтр `WHERE date = '2025-01-01'` — окно обрабатываемых данных.",
+                "when_to_apply": "`logical_date` берут для SQL-фильтров по дню обработки, чтобы DAG был идемпотентным и независимым от времени запуска.",
+                "edge_cases": "`logical_date` почти всегда в прошлом относительно фактического старта, а при backfill различие особенно велико — нельзя путать его с `datetime.now()`.",
+                "related": "[[apache-airflow-interview#Q12]] end-of-interval execution; [[apache-airflow-interview#Q13]] logical_date в backfill; [[apache-airflow-interview#Q26]] idempotency через logical_date."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`logical_date` всегда совпадает с `datetime.now()` в момент выполнения task.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`logical_date` указывает на начало интервала и обычно в ПРОШЛОМ относительно реального старта; при backfill различие ещё больше.",
+                "source_of_confusion": "Кажется естественным, что «дата выполнения» — это текущий момент.",
+                "if_it_were_true": "Тогда backfill за январь использовал бы майскую дату, но logical_date берёт именно дату обрабатываемого дня.",
+                "how_it_should_be": "logical_date = окно данных (часто в прошлом), а не wall-clock `now()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`execution_date` полностью удалён в Airflow 2.2+ и обращение к нему бросает ошибку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`execution_date` — deprecated alias, но всё ещё доступен в context для обратной совместимости; жёсткого удаления нет.",
+                "source_of_confusion": "Переименование в `logical_date` создаёт впечатление, что старое имя выпилили.",
+                "if_it_were_true": "Тогда все legacy-DAG, читающие `context['execution_date']`, мгновенно сломались бы при апгрейде, но они продолжают работать.",
+                "how_it_should_be": "`execution_date` сохранён как устаревший псевдоним; в новом коде используют `logical_date`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие executors бывают в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CeleryExecutor` работает без внешнего брокера — он сам организует очередь задач внутри Airflow.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`CeleryExecutor` требует внешний message broker (`Redis` или `RabbitMQ`) для очередей tasks; без него распределение невозможно.",
+                "source_of_confusion": "Celery воспринимают как «встроенную» очередь, забывая про обязательный брокер.",
+                "if_it_were_true": "Тогда не нужно было бы поднимать Redis/RabbitMQ в инфраструктуре, но именно брокер передаёт tasks workers.",
+                "how_it_should_be": "Celery всегда работает поверх Redis/RabbitMQ — брокер обязателен для распределения задач."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`SequentialExecutor` отлично подходит для production, обеспечивая предсказуемый порядок выполнения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SequentialExecutor` выполняет 1 task за раз — нет параллелизма; он только для dev/debug, в prod это узкое место.",
+                "source_of_confusion": "«Последовательность» звучит как надёжность и предсказуемость.",
+                "if_it_were_true": "Тогда нагруженный ETL отрабатывал бы по одной задаче подряд, но prod требует параллельного исполнения.",
+                "how_it_should_be": "Для prod берут Local/Celery/K8s; Sequential оставляют для локальной отладки с SQLite."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Основные executors: `SequentialExecutor` (1 task за раз, local debug), `LocalExecutor` (параллельно через multiprocessing на одной машине), `CeleryExecutor` (distributed через Celery + Redis/RabbitMQ), `KubernetesExecutor` (каждый task — pod в K8s, cloud-native) и `CeleryKubernetesExecutor` (hybrid). Правило: dev=Sequential, small=Local, prod=Celery/K8s.",
+              "correct": true,
+              "sections": {
+                "explanation": "Executor — это стратегия КАК запускать tasks. От него зависит масштабируемость: от одного процесса (Sequential) до автоскейлинга подов в Kubernetes.",
+                "example": "Для cloud production берут `KubernetesExecutor` (pod per task, изоляция), для небольшого standalone — `LocalExecutor` с Postgres.",
+                "when_to_apply": "Выбирают executor под масштаб и инфраструктуру: локальная отладка, маленький install или distributed prod.",
+                "edge_cases": "`SequentialExecutor` выполняет 1 task за раз и работает только с SQLite — для production это bottleneck без параллелизма.",
+                "related": "[[apache-airflow-interview#Q16]] Sequential vs Local; [[apache-airflow-interview#Q17]] CeleryExecutor; [[apache-airflow-interview#Q18]] KubernetesExecutor."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`KubernetesExecutor` требует постоянно работающих воркеров, как и `CeleryExecutor`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`KubernetesExecutor` создаёт ephemeral pod на каждый task — постоянные long-running workers НЕ нужны, это его главное преимущество.",
+                "source_of_confusion": "Опыт с Celery-воркерами переносят на K8s, ожидая постоянных процессов.",
+                "if_it_were_true": "Тогда платить пришлось бы за idle-воркеров, но K8sExecutor поднимает pod только под конкретный task.",
+                "how_it_should_be": "K8sExecutor — pod per task без idle-воркеров; постоянные процессы — это про CeleryExecutor."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `SequentialExecutor` отличается от `LocalExecutor` в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`LocalExecutor` работает только с `SQLite`, тогда как `SequentialExecutor` требует Postgres.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: `LocalExecutor` требует `Postgres`/`MySQL`, а `SQLite` совместим только с `SequentialExecutor`.",
+                "source_of_confusion": "Названия путают, и привязку к SQLite приписывают не тому executor'у.",
+                "if_it_were_true": "Тогда параллельный LocalExecutor работал бы на single-writer SQLite, но её блокировка этого не позволяет.",
+                "how_it_should_be": "Sequential+SQLite — для dev; Local+Postgres/MySQL — для параллельного исполнения на одной машине."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`LocalExecutor` масштабируется горизонтально — достаточно добавить ещё машины в пул.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LocalExecutor` масштабируется только ВЕРТИКАЛЬНО (CPU cores одной машины); для горизонтального scaling нужны `Celery`/`K8s`.",
+                "source_of_confusion": "Слово «executor» ассоциируется с кластером и горизонтальным ростом.",
+                "if_it_were_true": "Тогда не было бы нужды в CeleryExecutor, но именно он закрывает горизонтальное распределение по узлам.",
+                "how_it_should_be": "LocalExecutor — одна машина (vertical scaling); для нескольких узлов берут Celery или Kubernetes."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SequentialExecutor` вполне нормален для production — последовательность гарантирует целостность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SequentialExecutor` — 1 task за раз, это bottleneck; production требует параллелизма, поэтому Sequential только для dev.",
+                "source_of_confusion": "Кажется, что последовательное выполнение безопаснее и подходит для боевой среды.",
+                "if_it_were_true": "Тогда параллельные ETL не нужны были бы вовсе, но prod-нагрузки требуют одновременного исполнения задач.",
+                "how_it_should_be": "Production использует Local/Celery/K8s ради параллелизма; Sequential — исключительно отладка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`SequentialExecutor` выполняет 1 task за раз, работает только с `SQLite` и предназначен для dev/debug. `LocalExecutor` запускает параллельные tasks через multiprocessing на одной машине, требует `PostgreSQL`/`MySQL` и тянет до ~100 DAG. LocalExecutor масштабируется только вертикально (CPU cores).",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевая разница — параллелизм и база: Sequential+SQLite для отладки, Local+Postgres для небольшого standalone-инсталла без distributed compute.",
+                "example": "`executor = LocalExecutor` + `sql_alchemy_conn = postgresql+psycopg2://...` в `airflow.cfg` — параллельное исполнение на одной VM.",
+                "when_to_apply": "`LocalExecutor` — для маленьких installations (~100 DAG) на одной машине, когда не нужен горизонтальный кластер.",
+                "edge_cases": "`LocalExecutor` масштабируется только вертикально (число CPU cores на машине); для горизонтального scaling нужны `Celery`/`K8s`.",
+                "related": "[[apache-airflow-interview#Q15]] обзор всех executors; [[apache-airflow-interview#Q17]] CeleryExecutor для distributed; [[apache-airflow-interview#Q25]] лимиты по числу DAG."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает `CeleryExecutor` в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`CeleryExecutor` использует `Celery` + message broker (`Redis` или `RabbitMQ`): scheduler enqueue tasks в брокер, а Celery workers — long-running процессы на разных машинах — забирают и выполняют их. Horizontal scaling делается добавлением воркеров через `airflow celery worker`. Минусы: нужен брокер и сложнее обновлять библиотеки на long-running воркерах.",
+              "correct": true,
+              "sections": {
+                "explanation": "Распределение строится на брокере: scheduler кладёт задачи в очередь, воркеры её разбирают. Это даёт горизонтальное масштабирование на VM-кластерах.",
+                "example": "`Scheduler` → enqueue в `Redis` → три `Celery Worker` на разных машинах разбирают очередь; чтобы ускориться, поднимают четвёртый воркер.",
+                "when_to_apply": "Для distributed Airflow на VM-кластерах среднего масштаба (mid-scale prod), где есть кому администрировать брокер.",
+                "edge_cases": "Celery workers — long-running, поэтому обновление библиотек тяжелее, а необходимость брокера усложняет operations по сравнению с K8s в cloud.",
+                "related": "[[apache-airflow-interview#Q15]] обзор executors; [[apache-airflow-interview#Q16]] Local vs distributed; [[apache-airflow-interview#Q18]] KubernetesExecutor как альтернатива."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CeleryExecutor` не требует брокера — workers напрямую опрашивают scheduler за задачами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вся идея CeleryExecutor — распределение через message broker; `Redis`/`RabbitMQ` обязателен для очередей tasks.",
+                "source_of_confusion": "Celery кажется самодостаточным, и роль брокера упускают.",
+                "if_it_were_true": "Тогда workers создавали бы нагрузку на scheduler постоянным polling, но задачи проходят через брокер.",
+                "how_it_should_be": "Scheduler enqueue в Redis/RabbitMQ, воркеры читают из брокера — он обязательная часть схемы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Celery workers ephemeral — создаются заново на каждый task и уничтожаются после него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ephemeral pod per task — это `KubernetesExecutor`; Celery workers — long-running процессы, которые забирают много tasks из очереди.",
+                "source_of_confusion": "Модели Celery и K8s смешивают, приписывая Celery ephemeral-воркеров.",
+                "if_it_were_true": "Тогда не было бы команды `airflow celery worker` для постоянного процесса, но именно он держит воркер живым.",
+                "how_it_should_be": "Celery workers — постоянные процессы; ephemeral-исполнение per task — это про KubernetesExecutor."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`CeleryExecutor` проще в operations, чем `KubernetesExecutor`, потому что не зависит от инфраструктуры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Celery требует брокер в инфраструктуре, а обновление long-running воркеров сложнее; в cloud-native окружении K8sExecutor часто проще.",
+                "source_of_confusion": "Celery старше и привычнее, и это принимают за простоту эксплуатации.",
+                "if_it_were_true": "Тогда cloud-команды не переходили бы на K8sExecutor, но они выбирают его ради автоскейлинга и отсутствия брокера.",
+                "how_it_should_be": "Celery добавляет брокер и тяжёлые обновления воркеров; в K8s-окружении эксплуатация нередко проще."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему `KubernetesExecutor` рекомендуется для production в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`KubernetesExecutor` идеален для очень коротких tasks (~1 сек) благодаря мгновенному старту pod.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pod startup overhead 5-30 сек делает overhead больше полезной работы для коротких tasks; для них лучше Celery с тёплыми воркерами.",
+                "source_of_confusion": "K8s ассоциируется с эффективностью, и про холодный старт pod забывают.",
+                "if_it_were_true": "Тогда секундный task завершался бы мгновенно, но 5-30 сек запуска pod сводят выгоду на нет.",
+                "how_it_should_be": "K8sExecutor хорош для long-running tasks; для очень коротких берут Celery, чтобы избежать pod overhead."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`KubernetesExecutor` запускает каждый task как отдельный pod в K8s. Преимущества: полная изоляция task (свои dependencies, resource limits), auto-scaling через K8s, нет idle-воркеров (платишь только за running tasks), cloud-native deploy. Недостаток — pod startup overhead 5-30 сек, поэтому он не подходит для очень коротких tasks.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pod-per-task даёт изоляцию и эластичность: каждый task получает свой образ и ресурсы, а кластер масштабируется автоматически без long-running воркеров.",
+                "example": "Один task — pod с pandas и тяжёлыми библиотеками, другой — pod с минимальным образом; разные `pod_template_file` или `KubernetesPodOperator` с разными images.",
+                "when_to_apply": "Для cloud production на K8s и для long-running tasks (> минуты), где overhead запуска pod амортизируется полезной работой.",
+                "edge_cases": "Для очень коротких tasks (~1 сек) pod startup overhead 5-30 сек превышает полезную работу — там лучше Celery с тёплыми воркерами.",
+                "related": "[[apache-airflow-interview#Q15]] обзор executors; [[apache-airflow-interview#Q17]] CeleryExecutor для коротких tasks; [[apache-airflow-interview#Q24]] K8sExecutor в production deploy."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`KubernetesExecutor` требует постоянных long-running воркеров, как и `CeleryExecutor`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Главное преимущество K8sExecutor — ephemeral pods per task; постоянные long-running воркеры НЕ нужны, нет idle-стоимости.",
+                "source_of_confusion": "Привычка к Celery-воркерам заставляет ожидать постоянных процессов и в K8s.",
+                "if_it_were_true": "Тогда исчезла бы экономия на idle-ресурсах, но именно её и даёт pod-per-task модель.",
+                "how_it_should_be": "K8sExecutor поднимает pod только под задачу и гасит его после — постоянных воркеров нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`KubernetesExecutor` не поддерживает разные Docker images для разных tasks — образ один на весь кластер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Можно задать `pod_template_file` или `KubernetesPodOperator` с разными images — это и есть гибкость изоляции dependencies.",
+                "source_of_confusion": "Кажется, что executor фиксирует единый образ для всех task.",
+                "if_it_were_true": "Тогда task с конфликтующими зависимостями нельзя было бы развести по образам, но K8s именно это и позволяет.",
+                "how_it_should_be": "Каждый task может иметь свой образ через pod_template_file / KubernetesPodOperator — полная изоляция dependencies."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `XCom` в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`XCom` отлично подходит для передачи больших dataframes между tasks напрямую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "XCom хранится в metadata DB; большие данные положат базу и замедлят scheduler — XCom только для метаданных.",
+                "source_of_confusion": "XCom описывают как «передача данных», и масштаб данных не уточняют.",
+                "if_it_were_true": "Тогда гигабайтный dataframe сериализовался бы в строку таблицы `xcom`, но это убило бы metadata DB.",
+                "how_it_should_be": "Большие данные — в S3/HDFS, через XCom передают только path; XCom для метаданных."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`XCom` по умолчанию автоматически сохраняется на `S3`, а не в metadata DB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию XCom хранится в metadata DB; хранение на S3 требует настройки custom XCom backend.",
+                "source_of_confusion": "Совет «храните большие данные в S3» путают с местом хранения самого XCom.",
+                "if_it_were_true": "Тогда XCom не работал бы без сконфигурированного S3, но из коробки он использует metadata DB.",
+                "how_it_should_be": "XCom по умолчанию в metadata DB; S3-backend — опциональная кастомизация."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`XCom` (Cross-Communication) — механизм обмена метаданными между tasks. По умолчанию хранится в metadata DB, поэтому годится только для paths/IDs/статусов, а НЕ для больших payload. Для больших данных пишут в `S3`/`HDFS` и передают через XCom только path.",
+              "correct": true,
+              "sections": {
+                "explanation": "XCom рассчитан на маленькие значения: большие данные в metadata DB положат базу и замедлят scheduler. Push/pull можно делать явно или автоматически через TaskFlow.",
+                "example": "`extract` пишет файл в `s3://bucket/data.parquet` и возвращает этот path; `transform` получает path через XCom и читает файл из S3 — сами данные не идут через базу.",
+                "when_to_apply": "Передать file path, row count, status или ID между tasks; payload держать во внешнем хранилище.",
+                "edge_cases": "Custom XCom backend позволяет хранить XCom на S3, но по умолчанию это metadata DB; TaskFlow использует XCom за кулисами через return values.",
+                "related": "[[apache-airflow-interview#Q4]] XCom в metadata DB; [[apache-airflow-interview#Q8]] автоматический XCom в TaskFlow; [[apache-airflow-interview#Q20]] Connections и Variables."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TaskFlow API` вообще не использует `XCom` — он передаёт данные через память процесса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TaskFlow использует XCom за кулисами: return value автоматически push'ится, а аргумент функции автоматически pull'ится.",
+                "source_of_confusion": "TaskFlow выглядит как обычные вызовы функций, и XCom под капотом не виден.",
+                "if_it_were_true": "Тогда данные жили бы только в одном процессе и пропадали между tasks на разных воркерах, но XCom обеспечивает их передачу.",
+                "how_it_should_be": "TaskFlow прозрачно использует XCom через return values — обмен данными идёт именно через него."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Connections` и `Variables` в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Хранить API-ключи прямо в `Variables` — это рекомендуемая практика для удобного доступа из DAG.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Variables хранятся в metadata DB и видны в UI; для секретов используют Secrets Backend (`Vault`/`Secrets Manager`), а не Variables.",
+                "source_of_confusion": "Variables удобны и доступны из любого task, и их соблазнительно использовать под секреты.",
+                "if_it_were_true": "Тогда любой пользователь UI видел бы API-ключ в открытом виде, но именно поэтому секреты выносят наружу.",
+                "how_it_should_be": "Connections (encrypted) — для creds, Variables — для non-sensitive config, Secrets Backend — для секретов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Variables` умеют хранить только строки — структурированные данные через них передать нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Variables могут хранить JSON: `Variable.get('config', deserialize_json=True)` вернёт распарсенный объект, а не строку.",
+                "source_of_confusion": "По умолчанию `Variable.get` возвращает строку, и про JSON-режим забывают.",
+                "if_it_were_true": "Тогда нельзя было бы хранить конфиги-объекты, но флаг `deserialize_json=True` именно это и делает.",
+                "how_it_should_be": "Variables хранят и строки, и JSON (через `deserialize_json=True`) — структурированный конфиг поддерживается."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Connections` создаются исключительно из Python-кода внутри DAG — других способов нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Connections создают через UI, CLI (`airflow connections add`) или environment variables — Python-код не обязателен.",
+                "source_of_confusion": "В примерах часто показывают использование Connection из кода, а способы создания опускают.",
+                "if_it_were_true": "Тогда настройка подключений требовала бы правки DAG-файлов, но обычно это делают админы через UI/CLI.",
+                "how_it_should_be": "Connections заводят через UI, CLI или env vars; в коде их только используют по `conn_id`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Connections` — credentials для внешних систем (DB, API, S3), хранятся encrypted в metadata DB и используются через hooks (`PostgresHook(postgres_conn_id=...)`). `Variables` — конфигурация (`Variable.get('key')`), можно хранить JSON. Best practice: секреты НЕ держать в Variables, а выносить в Secrets Backend (`Vault`, `AWS Secrets Manager`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Connections отвечают за «как подключиться», Variables — за «какие параметры», а чувствительные секреты выносят во внешний Secrets Backend вместо Variables.",
+                "example": "`hook = PostgresHook(postgres_conn_id='my_postgres'); df = hook.get_pandas_df('SELECT * FROM users')` берёт креды из Connection; `Variable.get('config', deserialize_json=True)` читает JSON-конфиг.",
+                "when_to_apply": "`postgres_conn_id` — для подключения к БД, `Variable.get` — для конфигурации, Secrets Backend — для секретов и токенов.",
+                "edge_cases": "Variables хранятся в metadata DB и видны в UI — API-ключи там держать нельзя; их место в Secrets Backend (`Vault`/`Secrets Manager`).",
+                "related": "[[apache-airflow-interview#Q4]] хранение в metadata DB; [[apache-airflow-interview#Q19]] XCom vs Variables; [[apache-airflow-interview#Q21]] hooks используют Connections."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между Hook и Operator в `Apache Airflow` и когда что использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Hook` — низкоуровневый wrapper над external system (DB/API/S3), инкапсулирующий connection и базовые операции (`get_records`, `get_pandas_df`). `Operator` — высокоуровневый task в DAG, который обычно использует Hook внутри. Hook берут для custom Python-логики (внутри `PythonOperator`/`@task`), Operator — для declarative-шагов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Airflow разделяет транспортный слой (Hook) и слой описания pipeline (Operator): Hook знает как подключиться, Operator оборачивает это в task с `task_id`, retries и зависимостями.",
+                "example": "Custom-логика: `@task def f(): hook = PostgresHook('db'); df = hook.get_pandas_df('SELECT ...'); ...`. Атомарный шаг: `PostgresOperator(task_id='x', sql='INSERT ...')`.",
+                "when_to_apply": "Hook напрямую — когда нужны multi-step interaction и обработка результата на Python; Operator — когда задача атомарна и описывается одним declarative-параметром.",
+                "edge_cases": "Hook создаёт соединение на каждый вызов — при многих `hook.run()` лучше переиспользовать `hook.get_sqlalchemy_engine()`; для legacy-систем наследуются от `BaseHook`.",
+                "related": "[[apache-airflow-interview#Q6]] что такое Operator; [[apache-airflow-interview#Q20]] Connections, которые использует Hook; [[apache-airflow-interview#Q22]] Sensor как частный случай Operator."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hook — это event-listener для жизненного цикла Airflow, аналог Django signals или React hooks.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hook в Airflow — это connection wrapper над external system, а не lifecycle callback; для событий есть `on_success_callback`/`on_failure_callback`.",
+                "source_of_confusion": "В других фреймворках (React, Git, WordPress) «hook» означает event-callback, и семантику переносят на Airflow.",
+                "if_it_were_true": "Тогда можно было бы регистрировать глобальный обработчик ошибок через `@hook(on_failure)`, но для этого используют callbacks в default_args.",
+                "how_it_should_be": "Hook — это database/API connection helper; lifecycle-события обрабатывают через `*_callback`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hook и Operator — синонимы; термины можно использовать взаимозаменяемо в коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два разных уровня абстракции: Hook — низкоуровневый connection wrapper, Operator — task в DAG, обычно использующий Hook внутри.",
+                "source_of_confusion": "В документации они часто упоминаются вместе, а `PostgresOperator` действительно использует `PostgresHook`.",
+                "if_it_were_true": "Тогда можно было бы написать `PostgresHook(task_id='x')` в DAG напрямую, но Hook не наследует `BaseOperator` и упадёт.",
+                "how_it_should_be": "Hook — Python-объект для подключения; Operator — task в DAG; они не взаимозаменяемы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Operator всегда быстрее Hook, потому что использует оптимизированные C-расширения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "И Operator, и Hook — обычные Python-классы без C-расширений; performance определяется external system и executor overhead, а не выбором между ними.",
+                "source_of_confusion": "«Официальные» Operators кажутся специально оптимизированными.",
+                "if_it_were_true": "Тогда ETL писали бы только через Operators ради скорости, но аналитические pipelines часто берут PythonOperator + Hook ради гибкости.",
+                "how_it_should_be": "Operator — тонкая обёртка над Hook; скорость зависит от БД/API и executor, не от C-кода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое sensor в `Apache Airflow` и чем он отличается от обычного Operator?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sensor — это middleware между Scheduler и Executor, который проверяет состояние воркеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sensor — это task в DAG, выполняемый как обычный Operator на worker; к состоянию воркеров он отношения не имеет.",
+                "source_of_confusion": "В Prometheus/Kubernetes «sensor» иногда означает infrastructure health probe, и это переносят на Airflow.",
+                "if_it_were_true": "Тогда добавление sensor требовало бы конфигурации самого кластера, но sensor — это просто `from airflow.sensors.filesystem import FileSensor` в DAG.",
+                "how_it_should_be": "Sensor — прикладной task, ждущий бизнес-условие; за здоровьем воркеров следят отдельные health checks."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Sensor` — специальный тип Operator (наследник `BaseSensorOperator`), который периодически вызывает `poke()` каждые `poke_interval` секунд и завершается успехом только когда условие истинно (или срабатывает `timeout`). Используется для ожидания внешних событий: появления файла (`FileSensor`/`S3KeySensor`), завершения task в другом DAG (`ExternalTaskSensor`), SQL-условия (`SqlSensor`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Отличие от обычного Operator — метод `poke(context) -> bool`: вместо однократного выполнения sensor опрашивает условие в цикле до успеха или таймаута.",
+                "example": "`FileSensor(task_id='wait', filepath='/data/input.csv', poke_interval=60, timeout=3600, mode='reschedule')` ждёт файл, проверяя раз в минуту до часа.",
+                "when_to_apply": "Для cross-team dependencies (`ExternalTaskSensor`), late-arriving data (`S3KeySensor` на `_SUCCESS`-маркер), conditional refresh (`SqlSensor`).",
+                "edge_cases": "В `mode='poke'` (default) sensor занимает worker slot всё ожидание — десяток sensors с `timeout=24h` парализует кластер; нужен `mode='reschedule'`.",
+                "related": "[[apache-airflow-interview#Q6]] Sensor как тип operator; [[apache-airflow-interview#Q21]] Hooks vs Operators; [[apache-airflow-interview#Q23]] reschedule vs poke mode."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sensor — это аналог cron-job, который запускает DAG по расписанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запуск DAG по расписанию — работа Scheduler через `schedule_interval`; sensor ждёт условие ВНУТРИ уже запущенного DAG run.",
+                "source_of_confusion": "Оба механизма связаны со временем и ожиданием, и их роли путают.",
+                "if_it_were_true": "Тогда писали бы `Sensor(cron='0 2 * * *')` для запуска DAG, но это делается через `DAG(schedule_interval=...)`.",
+                "how_it_should_be": "Scheduler решает «когда стартовать DAG»; Sensor — «когда продолжить task внутри запущенного DAG»."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sensor нельзя использовать вместе с `TaskFlow API` — он только для классических operators.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sensor прекрасно сочетается с TaskFlow: его создают как обычный operator, а с Airflow 2.5+ есть даже декоратор `@task.sensor`.",
+                "source_of_confusion": "TaskFlow выглядит как pure-Python функции, и sensor кажется «из другого мира».",
+                "if_it_were_true": "Тогда TaskFlow-проекты дублировали бы `FileSensor` через `PythonOperator + sleep`, но sensor-классы работают в таких DAG без изменений.",
+                "how_it_should_be": "Sensor свободно живёт в TaskFlow DAG; `@task.sensor` даже позволяет писать его в TaskFlow-стиле."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем `mode='reschedule'` отличается от `mode='poke'` (default) для sensor в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`reschedule` запускает sensor на другом worker, а `poke` — на том же; разница только в расположении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В обоих режимах sensor может попасть на любой worker (это решает executor); разница — в поведении МЕЖДУ проверками: poke удерживает slot, reschedule освобождает.",
+                "source_of_confusion": "Слово «reschedule» напоминает routing/перенаправление на другой узел.",
+                "if_it_were_true": "Тогда проблема worker exhaustion никуда бы не делась, но именно освобождение slot — главное преимущество reschedule.",
+                "how_it_should_be": "reschedule = освободить slot и переподнять task позже; location выбирает executor в обоих режимах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`reschedule` работает быстрее, потому что между проверками не делает реальных вызовов `poke()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`reschedule` делает те же `poke()`-проверки (semantically identical), просто между ними убирает task со slot; по latency он даже чуть медленнее из-за scheduler queue overhead.",
+                "source_of_confusion": "«Освободить worker» интуитивно ассоциируется с «быстрее».",
+                "if_it_were_true": "Тогда reschedule был бы default для всех sensors, но default — `poke`, потому что для коротких ожиданий он быстрее.",
+                "how_it_should_be": "reschedule оптимизирует throughput кластера (свободные slots), а не latency одного sensor."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`poke` (default) удерживает worker slot всё время ожидания между проверками; `reschedule` освобождает slot между проверками — task переходит в статус `up_for_reschedule` и через `poke_interval` снова берётся executor'ом. `reschedule` обязателен для long-running sensors (часы/дни), иначе worker pool забьётся ждущими задачами.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `poke` sensor крутит `while not poke(): sleep(...)`, занимая slot весь timeout. В `reschedule` он делает один `poke()`, при `False` кидает `AirflowRescheduleException` и освобождает slot.",
+                "example": "`S3KeySensor(..., poke_interval=600, timeout=24*3600, mode='reschedule')` ждёт late-arriving data до суток, не занимая worker slot между десятиминутными проверками.",
+                "when_to_apply": "`poke` — короткие ожидания (< 10 минут); `reschedule` — ожидания > 30 минут, особенно cross-DAG `ExternalTaskSensor`; `deferrable=True` — ещё эффективнее через Triggerer.",
+                "edge_cases": "Для `reschedule` ставят `poke_interval >= 5 мин` (иначе overhead reschedule велик), а `poke()` должен быть чистой функцией — между вызовами state теряется.",
+                "related": "[[apache-airflow-interview#Q22]] что такое sensor; [[apache-airflow-interview#Q25]] sensors как bottleneck при scaling; [[apache-airflow-interview#Q26]] reschedule как best practice."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`reschedule` — это retry mode для упавших sensor, по сути аналог `retries=N`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`retries` срабатывает при failure (exception), а `reschedule` — при успешном `poke=False` (условие ещё не выполнено); это разные механизмы, их используют вместе.",
+                "source_of_confusion": "Оба приводят к «повторному выполнению» task, и их считают дубликатами.",
+                "if_it_were_true": "Тогда выбирали бы между `retries=10` и `mode='reschedule'`, но на практике их комбинируют: retries — для transient errors, reschedule — для долгого ожидания.",
+                "how_it_should_be": "retries — обработка ошибок (timeout считается заново), reschedule — стратегия ожидания (timeout идёт с первой попытки)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как deploy `Apache Airflow` в production и какая архитектура рекомендуется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Стандартный production setup — один `docker run apache/airflow standalone` на одной VM с `SQLite`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это dev/local setup: SQLite не поддерживает concurrent writes (только SequentialExecutor); prod требует Postgres/MySQL, distributed executor и отдельные процессы Scheduler/Webserver/Workers.",
+                "source_of_confusion": "`standalone` работает «из коробки» и показан в quickstart, но он явно помечен not-for-production.",
+                "if_it_were_true": "Тогда mid-size компании держали бы Airflow на одной t3.medium, но даже маленький Airflow требует нескольких контейнеров и Postgres.",
+                "how_it_should_be": "Production — managed сервис или Helm на K8s с Postgres, distributed executor и health-checks."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Production Airflow обязательно требует `Astronomer` SaaS — самостоятельный deploy невозможен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Astronomer — самый популярный managed-вариант, но не единственный: self-hosted на K8s через official Helm chart, а также MWAA (AWS) и Cloud Composer (GCP) — полноценные альтернативы.",
+                "source_of_confusion": "Astronomer активно маркетирует свой продукт, и его принимают за обязательный.",
+                "if_it_were_true": "Тогда каждая компания платила бы Astronomer, но большинство enterprise (банки, telco) запускают Airflow в своём K8s через Helm.",
+                "how_it_should_be": "Выбор managed vs self-hosted — про operational overhead, а не про техническую возможность; Helm-deploy валиден."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Production Airflow надо разворачивать через `docker-compose up` с одним контейнером всех компонентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`docker-compose` — dev/POC окружение: нет rolling updates, service discovery, network policies; prod требует K8s или managed сервиса с health-checks и horizontal scaling.",
+                "source_of_confusion": "В `docs/docker/docker-compose.yaml` есть готовый файл, выглядящий «production-ready».",
+                "if_it_were_true": "Тогда все prod-деплои были бы `docker-compose up -d`, но команды через 1-2 месяца мигрируют на K8s.",
+                "how_it_should_be": "docker-compose — для local dev; production живёт на Kubernetes или в managed-сервисе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Production deploy: managed (`Astronomer`/`MWAA`/`Cloud Composer`) или self-hosted на Kubernetes через official Helm chart. Рекомендуемая архитектура: `KubernetesExecutor` для compute, `PostgreSQL` для metadata, `S3`/`GCS` для remote-логов, Secrets Backend (`Vault`/`AWS Secrets Manager`) для creds, `Sentry`/`DataDog` для мониторинга. DAG синхронизируют из git через git-sync.",
+              "correct": true,
+              "sections": {
+                "explanation": "Production Airflow — это НАБОР сервисов (Scheduler, Webserver, Executor+Workers, Triggerer, Metadata DB), каждый с health-checks и horizontal scaling, а не одно приложение.",
+                "example": "`helm upgrade --install airflow apache-airflow/airflow -f values.yaml` с `executor: KubernetesExecutor`, внешним RDS Postgres, remote_logging в `s3://airflow-prod-logs/` и `VaultBackend` для секретов.",
+                "when_to_apply": "Managed (Astronomer/MWAA/Composer) — командам без platform engineering; Helm на K8s — enterprise со своим Kubernetes и DevOps-командой.",
+                "edge_cases": "HA scheduler доступен только с Airflow 2.0+; при scale webserver-реплик нужен Redis для shared session store, иначе пользователи теряют login.",
+                "related": "[[apache-airflow-interview#Q15]] выбор executor (K8s для prod); [[apache-airflow-interview#Q23]] reschedule для sensors в prod; [[apache-airflow-interview#Q25]] scaling DAG count."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сколько DAG'ов и tasks может выдержать один инстанс `Apache Airflow` и что становится bottleneck'ом?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Лимит зависит от executor и hardware: `LocalExecutor` ≈ 50-200 DAG / ~100 параллельных tasks; `CeleryExecutor` ≈ 1000+ DAG / тысячи tasks; `KubernetesExecutor` ограничен только ресурсами K8s. Первые bottleneck'и — Scheduler (DAG parsing), Metadata DB (рост таблицы `task_instance`) и Network для distributed. Крупные installations делят DAG по нескольким Airflow по доменам.",
+              "correct": true,
+              "sections": {
+                "explanation": "Scaling Airflow многомерный: важны DAG count, task instances в день, concurrent tasks и частота runs. Workers масштабируются легко; узкое место — scheduler и база.",
+                "example": "Для 3000 DAG тюнят `parsing_processes=16`, `min_file_process_interval=120`, индексы по `dag_id, execution_date` и регулярный `airflow db clean` для `task_instance`/`log`/`xcom`.",
+                "when_to_apply": "Один Airflow на компанию — до ~500 DAG; один на команду/домен — 500-3000; обязательно разделять dev/prod и не держать всё в одном инстансе.",
+                "edge_cases": "Тяжёлые top-level imports или DB-запросы в DAG-файле парсятся при каждом scan и убивают scheduler — top-level код DAG должен быть pure-functional.",
+                "related": "[[apache-airflow-interview#Q17]] CeleryExecutor scaling; [[apache-airflow-interview#Q18]] KubernetesExecutor; [[apache-airflow-interview#Q24]] production deploy с тюнингом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Airflow выдерживает миллионы DAG на одной машине без проблем — горизонтальное разделение не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один инстанс упирается в ~5000-10000 DAG: scheduler не успевает парсить файлы, metadata DB деградирует, UI тормозит; Airbnb/Lyft делят DAG по нескольким installations.",
+                "source_of_confusion": "Документация редко даёт жёсткие цифры, и кажется, что «просто добавь workers».",
+                "if_it_were_true": "Тогда создатели Airflow не разделяли бы свои installations, но даже они делят по командам.",
+                "how_it_should_be": "При росте DAG разделяют по доменам/командам на отдельные Airflow; один инстанс не безграничен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главный bottleneck — workers; добавляешь worker-ноды и любое число DAG работает без проблем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Workers — самый легко масштабируемый компонент; реальные bottleneck'и — Scheduler (DAG parsing), Metadata DB (рост `task_instance`) и Webserver.",
+                "source_of_confusion": "Интуитивно scaling = «больше воркеров», как в web-серверах.",
+                "if_it_were_true": "Тогда проблема решалась бы добавлением `airflow celery worker`, но при отстающем scheduler даже 100 workers простаивают.",
+                "how_it_should_be": "Workers — terminal nodes; bottleneck выше по pipeline — в scheduler и metadata DB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Жёсткий лимит — около 100 DAG, после чего Airflow физически перестаёт работать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100 DAG — это слабый LocalExecutor setup; CeleryExecutor держит 1000-5000 DAG, K8sExecutor — 5000-10000+ при правильном тюнинге.",
+                "source_of_confusion": "Новички видят торможение на паре сотен DAG и делают вывод о hard limit.",
+                "if_it_were_true": "Тогда крупные компании не вели бы 1000+ pipelines, но они работают на одном Airflow + правильная архитектура.",
+                "how_it_should_be": "Лимит зависит от executor и тюнинга (`parsing_processes`, retention); 100 — лишь ориентир для Local."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие best practices важнее всего для production DAG в `Apache Airflow`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главное — писать DAG как можно короче (1-2 task), чтобы минимизировать overhead scheduler.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Короткий DAG противоречит атомарности: при failure посередине нельзя re-run только проблемную часть; production DAG обычно 5-15 small atomic tasks.",
+                "source_of_confusion": "Меньше tasks = меньше overhead scheduler, и это переоценивают в ущерб recoverability.",
+                "if_it_were_true": "Тогда весь ETL писали бы как `BashOperator('python whole_pipeline.py')`, но тогда нельзя re-run только failed step.",
+                "how_it_should_be": "DAG разбивают на atomic tasks ради recoverability; granularity важнее экономии overhead."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Production DAG должны быть идемпотентными (безопасный re-run) и атомарными (task = одна операция). Также: не импортировать тяжёлые libs на top-level (медленный parsing), использовать Variables/Connections вместо hardcode, Pools для shared resources, настраивать retries и SLA, писать `pytest` на DAG, деплоить через CI/CD из git.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идемпотентность даёт тот же результат при повторном запуске без дублей; атомарность позволяет re-run только failed step. Без них backfill и retries опасны.",
+                "example": "Идемпотентная загрузка: `DELETE FROM analytics.orders WHERE date = '{{ ds }}'; INSERT INTO analytics.orders SELECT ... WHERE date = '{{ ds }}'` вместо append-only — повторный run не плодит дубли.",
+                "when_to_apply": "MERGE/UPSERT или DELETE+INSERT для warehouse loads, Pools для shared API rate limits, SLA alerts для tier-1 DAG.",
+                "edge_cases": "`datetime.now()` в DAG ломает идемпотентность — нужен `{{ ds }}`/`logical_date`; тяжёлые top-level imports вешают scheduler при частом парсинге.",
+                "related": "[[apache-airflow-interview#Q13]] backfill требует идемпотентности; [[apache-airflow-interview#Q20]] Connections/Variables для конфигурации; [[apache-airflow-interview#Q24]] deploy через git-sync."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Секреты удобнее хранить прямо в DAG-коде ради transparency и простоты ревью.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Секреты в DAG-коде категорически нельзя: DAG лежит в git (попадёт в историю) и виден в UI через вкладку Code; используют Connections + Secrets Backend.",
+                "source_of_confusion": "В туториалах для простоты показывают `password = 'test123'`, и это копируют в prod.",
+                "if_it_were_true": "Тогда SOC2/ISO27001 аудит проходил бы с паролями в репозитории, но это compliance violation.",
+                "how_it_should_be": "Creds — в Connections (encrypted) и Secrets Backend (Vault); в коде секретов быть не должно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DAG не нужно тестировать — Airflow сам проверяет валидность при парсинге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Airflow проверяет только syntax при парсинге, но не бизнес-логику и не корректность параметров; DAG может пройти парсинг и упасть в runtime.",
+                "source_of_confusion": "`airflow dags test` проверяет, что DAG парсится, и это наивно считают полным тестированием.",
+                "if_it_were_true": "Тогда ETL падал бы только в production, но крупные команды держат 30-50% test coverage на DAG-код.",
+                "how_it_should_be": "DAG покрывают `pytest` (структура, dependencies) и unit/integration-тестами для бизнес-логики."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевая концептуальная разница между `Airflow`, `Prefect` и `Dagster`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Airflow` и `Prefect` — это одно и то же; разница только в названии и логотипе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные продукты с разной философией: Airflow (2014) — DAG-first, статический; Prefect (2018) — flow/task-first, dynamic execution без top-level DAG-объекта.",
+                "source_of_confusion": "Оба — Python-оркестраторы для data pipelines, и на поверхности задачи похожи.",
+                "if_it_were_true": "Тогда Prefect не существовал бы как отдельный проект с тысячами звёзд, но он активно конкурирует с Airflow.",
+                "how_it_should_be": "Airflow и Prefect архитектурно различны: статический DAG vs динамический flow."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только `Dagster` подходит для production, а `Airflow` и `Prefect` — игрушки для прототипов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Airflow — доминирующий production orchestrator (Airbnb, Lyft, Twitter, тысячи enterprise); Prefect и Dagster — современные альтернативы, но все три production-ready.",
+                "source_of_confusion": "Маркетинг Dagster активно подчёркивает asset-first преимущества.",
+                "if_it_were_true": "Тогда Apache top-level Airflow не был бы стандартом de facto, но большинство вакансий Data Engineer требуют именно Airflow.",
+                "how_it_should_be": "Все три production-ready; Airflow доминирует в enterprise по числу установок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Разница в модели описания workflow: `Airflow` = DAG-first (статический Python DAG, операторы, data-agnostic); `Prefect` = flow/task-first (динамический Python API, async-friendly, modern UX); `Dagster` = asset-first (думает о data artifacts, типизация, software-defined assets). Выбор: Airflow для legacy/enterprise/community, Prefect для Python-heavy modern teams, Dagster для analytics с фокусом на data lineage.",
+              "correct": true,
+              "sections": {
+                "explanation": "Все три решают orchestration, но по-разному отвечают на «что является primitive»: task+зависимости (Airflow), flow как функция (Prefect) или произведённый data asset (Dagster).",
+                "example": "Airflow: `load(transform(extract()))` через `@task`. Prefect: тот же код в `@flow` без `>>`. Dagster: `@asset def cleaned_orders(raw_orders): ...` — зависимость через аргумент-asset.",
+                "when_to_apply": "Airflow — enterprise с established stack и большим hiring-пулом; Prefect — стартапы/ML с фокусом на dev experience; Dagster — analytics teams с data lineage и dbt.",
+                "edge_cases": "Airflow data-agnostic (знает task names, не «таблицу users»), поэтому data lineage требует external tools (DataHub, Marquez); Dagster даёт lineage из коробки.",
+                "related": "[[apache-airflow-interview#Q1]] Airflow как orchestrator; [[apache-airflow-interview#Q8]] TaskFlow как ответ на современные API; [[apache-airflow-interview#Q28]] минусы Airflow, которые решают альтернативы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все три инструмента — это просто `JSON`/`YAML` DSL-конфигурации, без Python-кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все три написаны на Python и используют Python как primary DSL; workflow описывается кодом, а не JSON/YAML.",
+                "source_of_confusion": "В managed-offerings (MWAA, Astronomer) есть YAML для deployment, и это путают с workflow definition.",
+                "if_it_were_true": "Тогда data engineers могли бы не знать Python, но все три требуют свободного владения им.",
+                "how_it_should_be": "YAML-only — это про Argo/Tekton (generic K8s workflow); Airflow/Prefect/Dagster определяют workflow на Python."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие минусы у `Apache Airflow` и какие из них фундаментальны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "У `Airflow` в 2025 нет минусов — все исторические проблемы исправлены в версии 2.x.",
+              "correct": false,
+              "sections": {
+                "what_actually": "2.x улучшил dev experience (TaskFlow, HA scheduler, deferrable sensors), но фундаментальные ограничения остались: XCom через metadata DB, scheduler-driven model, тяжёлый local dev.",
+                "source_of_confusion": "Активный roadmap создаёт впечатление, что «всё хорошо».",
+                "if_it_were_true": "Тогда Prefect/Dagster не имели бы рынка, но они растут именно за счёт фундаментальных Airflow weaknesses.",
+                "how_it_should_be": "Часть минусов архитектурные и встроены в дизайн; они не исчезают с релизами 2.x."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главный минус — `Airflow` медленнее `Spark` в 10× и потому не подходит для больших данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Airflow не обрабатывает данные сам — он orchestrator; сравнивать его со Spark бессмысленно, он запускает Spark job, а не заменяет его.",
+                "source_of_confusion": "Новички думают, что Airflow — compute engine, считающий данные.",
+                "if_it_were_true": "Тогда для больших данных был бы запрет на Airflow, но это стандартный способ оркестрировать Spark/BigQuery job терабайт-масштаба.",
+                "how_it_should_be": "Performance Airflow меряют в task throughput, а data crunching делает external system (Spark/BigQuery)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "У `Airflow` вообще нет недостатков — это идеальный инструмент для любых задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ни один инструмент не идеален: Airflow хорош для batch ETL, но не для streaming (Kafka/Flink), не для интерактивных queries (Jupyter/dbt), не для low-latency event processing.",
+                "source_of_confusion": "При долгой работе с Airflow перестаёшь замечать его ограничения («Maslow's hammer»).",
+                "if_it_were_true": "Тогда не было бы Prefect, Dagster, Argo, Kubeflow, Metaflow — их существование доказывает, что Airflow не покрывает все use cases.",
+                "how_it_should_be": "Знание trade-offs — основа senior/staff-уровня; Airflow — мощный batch-оркестратор, но не универсальный инструмент."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Основные минусы: slow local dev (нужен Docker+Postgres+scheduler для теста), тяжеловесность для маленьких задач, tight coupling tasks ↔ Airflow API (мешает unit-тестам), XCom не для больших данных, DAG parsing overhead на сотнях DAG, `poke` mode sensors съедает workers, не для streaming, исторический баггаж `execution_date` vs `logical_date`, сложности major upgrade. Фундаментальны — coupling и scheduler-driven model; остальное постепенно решается.",
+              "correct": true,
+              "sections": {
+                "explanation": "Минусы делятся на фундаментальные (архитектурные — coupling, cron-вместо-events, DAG-вместо-asset), сильно улучшенные в 2.x (HA scheduler, TaskFlow, deferrable sensors) и operational (тюнятся).",
+                "example": "Tight coupling: `@task def f(**context): Variable.get('key'); context['logical_date']` без Airflow-runtime не вызвать. Лучше вынести pure-функцию `fetch_orders_pure(api_key, date)` и тестировать её отдельно.",
+                "when_to_apply": "Минусы становятся deal-breaker для streaming/event-driven (бери Kafka/Flink), ML с большой передачей данных (Kubeflow/Metaflow), small startup без legacy (Prefect/Dagster).",
+                "edge_cases": "Major upgrade 1.x → 2.x может сломать DAG-файлы; provider packages имеют свои циклы релизов и конфликтуют с core — нужны constraint files.",
+                "related": "[[apache-airflow-interview#Q19]] XCom limits; [[apache-airflow-interview#Q23]] reschedule/deferrable как mitigation для poke; [[apache-airflow-interview#Q27]] Prefect/Dagster как альтернативы."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
