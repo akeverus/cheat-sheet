@@ -1,0 +1,1505 @@
+{
+  "topic_slug": "ansible-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Ansible` и для каких задач он применяется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ansible` — open-source инструмент IT-автоматизации (создан Michael DeHaan в 2012, куплен `Red Hat` в 2015). Покрывает configuration management, application deployment, orchestration, provisioning, continuous delivery, network и security automation. Ключевые черты: agentless (работает по `SSH`/`WinRM`), playbooks на `YAML`, idempotent-модули, push-модель (control node → managed nodes).",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея `Ansible` — описать желаемое состояние систем декларативно в `YAML` и применять его по `SSH` без установки агентов. Один control node толкает конфигурацию на managed nodes, повторный запуск безопасен за счёт идемпотентности.",
+                "example": "Одним playbook можно установить `nginx`, скопировать конфиг из `Jinja2`-шаблона и запустить сервис на всём пуле webservers: `ansible-playbook -i inventory deploy.yml`.",
+                "when_to_apply": "`Ansible` берут, когда нужно единообразно настраивать парк серверов, выкатывать приложения и оркестрировать многошаговые сценарии без агентов на каждом хосте.",
+                "edge_cases": "Для эфемерной cloud-инфраструктуры `Ansible` часто связывают с `Terraform`: `Terraform` создаёт ресурсы, `Ansible` их конфигурирует.",
+                "related": "[[ansible-interview#Q2]] почему agentless; [[ansible-interview#Q3]] идемпотентность; [[ansible-interview#Q22]] сравнение с `Terraform`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Ansible` — это монолитный CI/CD-сервер вроде `Jenkins`, который сам по себе хранит pipeline и собирает артефакты из исходников.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ansible` — это инструмент автоматизации конфигурации и деплоя по `SSH`, а не CI-сервер; сборку артефактов делают `Jenkins`/`GitLab CI`, а `Ansible` лишь интегрируется с ними как шаг.",
+                "source_of_confusion": "И `Ansible`, и CI-серверы автоматизируют действия, поэтому их роли в pipeline путают.",
+                "if_it_were_true": "Тогда не нужен был бы отдельный CI, но `Ansible` обычно вызывается уже из CI-стадии деплоя.",
+                "how_it_should_be": "`Ansible` — config management и orchestration; CI/CD-оркестрацию pipeline ведёт отдельный сервер, вызывающий `ansible-playbook`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Ansible` — это агентный инструмент, который требует установки демона на каждый управляемый узел, как `Puppet` и `Chef`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ansible` принципиально agentless: он подключается по `SSH`/`WinRM` и не ставит постоянный демон на узлы, в отличие от `Puppet`/`Chef`.",
+                "source_of_confusion": "Все три — config management, поэтому архитектурную модель `Ansible` ошибочно приравнивают к агентной.",
+                "if_it_were_true": "Тогда теряется главное преимущество `Ansible` — простота старта без установки агентов.",
+                "how_it_should_be": "`Ansible` работает push-моделью по `SSH` без агентов; агенты — это особенность `Puppet` и `Chef`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Ansible` — это исключительно инструмент provisioning облачной инфраструктуры с управлением state-файлом, как `Terraform`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Основная сила `Ansible` — configuration management, а не provisioning; он stateless и не ведёт state-файл, в отличие от `Terraform`.",
+                "source_of_confusion": "`Ansible` умеет создавать cloud-ресурсы модулями, поэтому его путают с провижинингом как главной функцией.",
+                "if_it_were_true": "Тогда `Ansible` не использовали бы вместе с `Terraform`, но их как раз связывают в паре.",
+                "how_it_should_be": "Provisioning со state — это про `Terraform`; `Ansible` настраивает уже существующие или созданные узлы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём преимущество agentless-подхода `Ansible` и какой у него trade-off?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главное преимущество agentless в том, что `Ansible` за счёт постоянного агента быстрее всех альтернатив на флотах в тысячи узлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: agentless означает отсутствие агента, а `SSH`-overhead делает `Ansible` скорее медленнее на огромных флотах, не быстрее.",
+                "source_of_confusion": "Слово «преимущество» подталкивает приписать agentless и выигрыш в скорости на больших масштабах.",
+                "if_it_were_true": "Тогда не было бы trade-off про `SSH`-overhead, но он явно есть на больших флотах.",
+                "how_it_should_be": "Agentless даёт простоту и меньший attack surface, а скорость на огромных флотах — слабое место, не сила."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Agentless означает, что `Ansible` работает через `SSH` (уже есть на Linux-серверах) и не требует установки/обновления агента на каждом узле: проще старт, меньше attack surface, нет отдельного цикла обновления агентов. Trade-off: `SSH`-overhead на каждую задачу (медленнее на огромных флотах) и сложнее state monitoring — нет агента, который сам репортит состояние.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Puppet`/`Chef` ставят агент на каждую node, что добавляет установку, обновления и риски безопасности. `Ansible` обходится `SSH`, поэтому начать проще, но платит производительностью при тысячах хостов.",
+                "example": "Чтобы пингануть весь парк, достаточно `ansible all -m ping` — без предварительной раскатки агентов на узлы.",
+                "when_to_apply": "Agentless выбирают, когда важны быстрый старт и минимум привилегированных компонентов на хостах; для гигантских флотов overhead компенсируют тюнингом forks и pipelining.",
+                "edge_cases": "На очень больших флотах `SSH`-overhead заметен, а отсутствие постоянного агента усложняет непрерывный мониторинг состояния — это решают pull-режимом `ansible-pull` или внешним мониторингом.",
+                "related": "[[ansible-interview#Q1]] что такое `Ansible`; [[ansible-interview#Q13]] `SSH` best practices; [[ansible-interview#Q17]] forks и параллелизм."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Agentless значит, что `Ansible` вообще не подключается к управляемым узлам, а применяет конфигурацию локально на control node.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ansible` именно подключается к узлам по `SSH`/`WinRM` (push-модель) — просто без постоянного агента; локального применения «на control node» нет.",
+                "source_of_confusion": "Из «нет агента» делают неверный вывод, что и подключения к узлам нет.",
+                "if_it_were_true": "Тогда конфиг не доходил бы до managed nodes, и автоматизация парка была бы невозможна.",
+                "how_it_should_be": "Agentless = нет демона на узле, но подключение по `SSH` к каждому узлу есть."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Agentless устраняет любые компромиссы: у подхода нет ни overhead, ни сложностей с мониторингом состояния.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Trade-off есть: `SSH`-overhead на каждую задачу и затруднённый state monitoring из-за отсутствия агента, который репортит назад.",
+                "source_of_confusion": "Преимущества agentless кажутся настолько явными, что про обратную сторону забывают.",
+                "if_it_were_true": "Тогда `Ansible` всегда побеждал бы агентные инструменты по всем осям, но это не так на огромных флотах.",
+                "how_it_should_be": "У agentless есть цена: overhead на `SSH` и более слабый непрерывный мониторинг состояния."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое идемпотентность в `Ansible` и зачем она нужна?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Идемпотентность означает, что playbook нельзя запускать повторно — второй запуск всегда приведёт к ошибке или дублированию изменений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: идемпотентность как раз делает повторный запуск безопасным, без дублирования изменений и ошибок.",
+                "source_of_confusion": "Термин звучит технически, и его смысл иногда переворачивают на противоположный.",
+                "if_it_were_true": "Тогда нельзя было бы гонять playbook регулярно для конвергенции, но это стандартная практика.",
+                "how_it_should_be": "Идемпотентность гарантирует, что повторный запуск даёт тот же результат и безопасен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Идемпотентность достигается тем, что `command` и `shell` по умолчанию проверяют состояние и не повторяют действие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`command`/`shell` как раз НЕ идемпотентны по умолчанию — они выполняются каждый раз; идемпотентны профильные модули вроде `package`, `service`, `copy`.",
+                "source_of_confusion": "Кажется, что любой модуль `Ansible` автоматически идемпотентен, включая запуск произвольных команд.",
+                "if_it_were_true": "Тогда не было бы предупреждения «осторожно с `command`/`shell`», но оно есть в best practices.",
+                "how_it_should_be": "Идемпотентны декларативные модули; `command`/`shell` требуют `creates`/`removes` или `when`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Idempotent означает, что повторный запуск задачи даёт тот же результат: модуль приводит систему к desired state и не делает изменений, если она уже в нём. Например, `package: name=nginx state=present` установит `nginx` только если его нет. Зачем: playbook безопасно перезапускать, система сходится к нужному состоянию (convergent), нет побочных эффектов при частичных сбоях.",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство модулей `Ansible` идемпотентны: они сначала проверяют текущее состояние и меняют только то, что отличается от целевого, помечая задачу `changed` лишь при реальном изменении.",
+                "example": "`command: /opt/setup.sh` НЕ идемпотентен — выполняется каждый раз; а `package`/`service`/`copy` идемпотентны и при повторном прогоне ничего лишнего не делают.",
+                "when_to_apply": "На идемпотентность опираются, чтобы безопасно перезапускать playbook после сбоя и гонять его регулярно для конвергенции к нужной конфигурации.",
+                "edge_cases": "`command` и `shell` по умолчанию не идемпотентны — их защищают параметрами `creates`/`removes` или условиями `when`, либо заменяют профильным модулем.",
+                "related": "[[ansible-interview#Q7]] модули; [[ansible-interview#Q15]] check mode для проверки изменений; [[ansible-interview#Q25]] частые проблемы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Идемпотентность — это про параллельный запуск задач на многих хостах одновременно через увеличение `forks`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные вещи: идемпотентность — про одинаковый результат при повторе, а параллелизм по хостам регулируется параметром `forks`.",
+                "source_of_confusion": "Оба понятия связаны с «повторами/масштабом», поэтому их смешивают.",
+                "if_it_were_true": "Тогда идемпотентность ломалась бы при низком `forks`, но эти свойства независимы.",
+                "how_it_should_be": "Идемпотентность — свойство модуля по состоянию; параллелизм хостов — это `forks`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются static и dynamic inventory в `Ansible`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Static inventory обязательно пишется в `JSON`, а dynamic inventory — это тот же файл, просто отредактированный вручную перед запуском.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Static inventory пишут в `INI` или `YAML` (не обязательно `JSON`), а dynamic генерируется автоматически из внешнего источника, а не правится руками.",
+                "source_of_confusion": "Inventory-плагины отдают данные в `JSON`, поэтому формат хранения static путают с форматом вывода.",
+                "if_it_were_true": "Тогда не было бы смысла в inventory-плагинах для облаков, но они автогенерируют список.",
+                "how_it_should_be": "Static — `INI`/`YAML`-файл вручную; dynamic — автогенерация из `AWS`/`K8s`/скрипта."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Dynamic inventory можно использовать только on-premise, а в облаке доступен исключительно static-список хостов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: именно облако (эфемерные инстансы) — главный кейс для dynamic inventory, а static удобен для стабильного on-prem.",
+                "source_of_confusion": "Слово «static» ассоциируется со «стабильным сервером», и из этого делают неверный вывод про облако.",
+                "if_it_were_true": "Тогда автоскейлинг был бы неуправляем `Ansible`, но dynamic inventory решает именно это.",
+                "how_it_should_be": "Dynamic inventory — для облака и автоскейлинга; static — для фиксированного парка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Разница только в синтаксисе: static и dynamic inventory описывают строго один и тот же фиксированный список хостов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разница в источнике данных: static — заранее заданный список, dynamic — список, генерируемый из внешнего API в момент запуска.",
+                "source_of_confusion": "Оба называются inventory, поэтому кажется, что отличается лишь форма записи.",
+                "if_it_were_true": "Тогда dynamic inventory не подтягивал бы новые инстансы автоматически, но он именно это делает.",
+                "how_it_should_be": "Static — фиксированный список; dynamic — динамически обнаруживаемый из источника."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Static inventory — это файл (`INI` или `YAML`) с фиксированным списком хостов и групп (например `[webservers]` с `web1`, `web2`, и `[production:children]`). Dynamic inventory генерируется из внешнего источника на лету: `AWS EC2`, `Azure`, `GCP`, `Kubernetes`, `Consul`/`Vault` или кастомный скрипт. Для эфемерных cloud-инстансов обычно нужен dynamic inventory, потому что список хостов постоянно меняется.",
+              "correct": true,
+              "sections": {
+                "explanation": "Статический inventory хорош, когда парк хостов стабилен и известен заранее. Динамический подтягивает актуальный список из API облака через inventory-плагин, например `plugin: aws_ec2` с `keyed_groups` по тегам.",
+                "example": "`ansible-inventory -i aws_ec2.yml --list` покажет хосты, автоматически обнаруженные в `us-east-1` и сгруппированные по `tags.Environment`.",
+                "when_to_apply": "Static берут для on-prem и стабильных сред; dynamic — для облака и автоскейлинга, где инстансы создаются и удаляются постоянно.",
+                "edge_cases": "Inventory drift (устаревший static-список) — частая проблема; динамический inventory её снимает, но требует доступа к API и корректных тегов.",
+                "related": "[[ansible-interview#Q9]] переменные group_vars/host_vars; [[ansible-interview#Q5]] структура playbook; [[ansible-interview#Q25]] частые проблемы вроде inventory drift."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Из каких основных элементов состоит структура `Ansible` playbook?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Playbook на `YAML` — это список plays. Каждый play задаёт `name`, целевую группу `hosts`, при необходимости `become: yes` (sudo) и `vars`, а внутри — список `tasks` (вызовы модулей по порядку) и `handlers` (особые задачи, срабатывающие по `notify`). Например, play на webservers ставит `nginx`, копирует конфиг из шаблона с `notify: Restart nginx` и гарантирует, что сервис запущен.",
+              "correct": true,
+              "sections": {
+                "explanation": "Play связывает «что делать» (tasks/handlers) с «где делать» (hosts) и «от кого» (become). Tasks выполняются сверху вниз, а handlers — один раз в конце play, если их вызвали через `notify`.",
+                "example": "`ansible-playbook -i inventory deploy.yml` запустит play `Deploy web servers` на группе webservers и применит все его tasks.",
+                "when_to_apply": "Структуру play используют, когда нужно описать повторяемый многошаговый сценарий настройки группы хостов, а не разовую команду.",
+                "edge_cases": "Один playbook может содержать несколько plays для разных групп хостов; порядок plays и tasks внутри строго последовательный.",
+                "related": "[[ansible-interview#Q6]] roles для структурирования; [[ansible-interview#Q8]] tasks и handlers; [[ansible-interview#Q11]] `Jinja2`-шаблоны в template-задачах."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Playbook пишется на `JSON` и состоит из единственного блока команд без понятий hosts, tasks и handlers.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Playbook пишут на `YAML`, и он структурирован: `hosts`, `vars`, `tasks`, `handlers` внутри одного или нескольких plays.",
+                "source_of_confusion": "`Ansible` отдаёт внутренние данные в `JSON`, и формат вывода путают с форматом playbook.",
+                "if_it_were_true": "Тогда не было бы `notify`/handlers и группировки по hosts, но это базовые элементы playbook.",
+                "how_it_should_be": "Playbook — `YAML` со списком plays, у каждого `hosts`, `tasks` и `handlers`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В playbook handlers выполняются в самом начале play до tasks, чтобы заранее подготовить сервисы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Handlers выполняются в конце play и только если их вызвали через `notify`, а не до tasks.",
+                "source_of_confusion": "Слово «handler» ассоциируется с обработчиком, который якобы готовит окружение заранее.",
+                "if_it_were_true": "Тогда нельзя было бы перезапустить сервис после изменения конфига, но именно для этого handlers и нужны.",
+                "how_it_should_be": "Handlers срабатывают в конце play по `notify`, обычно для restart после изменений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Поле `become` в play отвечает за выбор группы хостов, на которой запускается playbook.",
+              "correct": false,
+              "sections": {
+                "what_actually": "За выбор хостов отвечает `hosts`; `become: yes` включает повышение привилегий (sudo), а не таргетинг.",
+                "source_of_confusion": "Оба поля стоят рядом в начале play, поэтому их назначение смешивают.",
+                "if_it_were_true": "Тогда не нужен был бы отдельный `hosts`, но именно он задаёт цель play.",
+                "how_it_should_be": "`hosts` — куда применять; `become` — выполнять ли через sudo."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое role в `Ansible` и какова её структура?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Role — это одиночный `YAML`-файл со всеми задачами, переменными и шаблонами, собранными в один документ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Role — это структура каталогов (`tasks/`, `handlers/`, `templates/`, `defaults/`, `vars/`, `files/`, `meta/`), а не один файл.",
+                "source_of_confusion": "Маленькие роли иногда сводятся к одному `tasks/main.yml`, и это обобщают на «один файл».",
+                "if_it_were_true": "Тогда нельзя было бы раздельно хранить шаблоны и дефолты, но `Ansible` ждёт стандартные подкаталоги.",
+                "how_it_should_be": "Role — каталог со стандартными подпапками; точка входа задач — `tasks/main.yml`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Role — переиспользуемая структурированная единица: каталоги `tasks/`, `handlers/`, `templates/`, `files/`, плюс `defaults/main.yml` (низкоприоритетные дефолтные переменные), `vars/main.yml` (высокоприоритетные переменные) и `meta/main.yml` (зависимости). Подключается в play через ключ `roles:` (например `- nginx`, `- app-deploy`). Roles делают большие playbooks модульными и переиспользуются между проектами, в т.ч. через `Galaxy`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Role собирает всё нужное для одной функциональной части (например `nginx`) в стандартную структуру каталогов, так что её можно подключить одной строкой и переиспользовать.",
+                "example": "В play `roles: [nginx, app-deploy]` — `Ansible` сам подхватит `tasks/main.yml`, `handlers/main.yml` и `templates/` из каждой роли.",
+                "when_to_apply": "Roles применяют, когда playbook разрастается: его разбивают на роли по компонентам, чтобы переиспользовать и шарить через `Galaxy`.",
+                "edge_cases": "`defaults/` имеют самый низкий приоритет (легко переопределяются), а `vars/` — высокий; путаница в этих двух каталогах ведёт к неожиданным значениям переменных.",
+                "related": "[[ansible-interview#Q5]] структура playbook; [[ansible-interview#Q9]] precedence переменных; [[ansible-interview#Q18]] `Ansible Galaxy` для шаринга ролей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Переменные в `vars/main.yml` роли имеют самый низкий приоритет и легко переопределяются дефолтами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `defaults/main.yml` — низкий приоритет, а `vars/main.yml` — высокий и переопределяется сложнее.",
+                "source_of_confusion": "Слово «vars» звучит как «обычные дефолтные переменные», поэтому приоритет занижают.",
+                "if_it_were_true": "Тогда `defaults/` были бы бессмысленны, но именно они задуманы как легко переопределяемые.",
+                "how_it_should_be": "`defaults/` — низкий приоритет; `vars/` — высокий в иерархии precedence."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Roles нельзя переиспользовать между проектами — они жёстко привязаны к одному playbook и не шарятся через `Galaxy`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Roles как раз переиспользуемы между проектами и распространяются через `Ansible Galaxy` — это их главная ценность.",
+                "source_of_confusion": "Роль лежит внутри проекта, поэтому кажется, что она к нему привязана навсегда.",
+                "if_it_were_true": "Тогда не существовало бы `Galaxy` с десятками тысяч ролей, но он существует.",
+                "how_it_should_be": "Roles переиспользуемы и шарятся через `Galaxy` (`ansible-galaxy install`)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое modules в `Ansible` и какие у них категории?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Modules в `Ansible` — это файлы переменных окружения, которые задают значения для playbook, а не выполняют действия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Modules — это исполняемые единицы работы (вызовы действий), а переменные задаются через group_vars/host_vars/`vars`, а не модулями.",
+                "source_of_confusion": "Слово «module» в других системах иногда означает конфиг-блок, отсюда путаница.",
+                "if_it_were_true": "Тогда task не выполнял бы реальных действий, но именно модуль в task ставит пакеты и рестартит сервисы.",
+                "how_it_should_be": "Modules выполняют действия (`package`, `service`, `copy`); переменные — отдельный механизм."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Кастомные модули `Ansible` можно писать только на `YAML`, потому что весь `Ansible` основан исключительно на `YAML`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомные модули пишут на `Python` (и других языках), а `YAML` используется для playbooks, а не для логики модулей.",
+                "source_of_confusion": "Playbooks на `YAML` создают впечатление, что и модули должны быть на `YAML`.",
+                "if_it_were_true": "Тогда нельзя было бы реализовать сложную логику и работу с API внутри модуля, но это делают на `Python`.",
+                "how_it_should_be": "Playbooks — `YAML`; кастомные модули — `Python`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Modules — единицы работы (как функции), которых 3000+ встроенных. Категории: system (`file`, `service`, `user`, `package`), cloud (`ec2`, `gcp_compute`, `azure_rm`), net tools (`uri`, `get_url`), DB (`postgresql_db`, `mysql_user`), source control (`git`, `github`), files (`copy`, `template`, `lineinfile`), container (`docker_container`, `k8s`). Модуль вызывается в task и возвращает результат; кастомные модули пишутся на `Python`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый модуль инкапсулирует конкретное действие и обычно идемпотентен: проверяет состояние и меняет систему только при отличии от заданного. Task в playbook — это вызов модуля с параметрами.",
+                "example": "`service: name=nginx state=restarted` перезапустит сервис, `file: path=/etc/myapp.conf state=touch` создаст/обновит файл, `ec2_instance:` поднимет инстанс.",
+                "when_to_apply": "Профильный модуль выбирают всегда, когда он есть для задачи, вместо `command`/`shell` — ради идемпотентности и читаемости.",
+                "edge_cases": "Если профильного модуля нет, используют `command`/`shell`, но теряют идемпотентность; кастомный модуль на `Python` решает это для повторяющихся специфичных операций.",
+                "related": "[[ansible-interview#Q3]] идемпотентность модулей; [[ansible-interview#Q8]] tasks вызывают модули; [[ansible-interview#Q19]] collections как упаковка модулей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все модули `Ansible` по определению неидемпотентны и выполняют действие при каждом запуске без проверки состояния.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большинство модулей как раз идемпотентны: проверяют состояние и меняют только при отличии; неидемпотентны в основном `command`/`shell`.",
+                "source_of_confusion": "Опыт с `command`/`shell` обобщают на все модули.",
+                "if_it_were_true": "Тогда нельзя было бы безопасно перезапускать playbook, но идемпотентность модулей это позволяет.",
+                "how_it_should_be": "Профильные модули идемпотентны; осторожность нужна только с `command`/`shell`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются tasks и handlers в `Ansible`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Handlers выполняются в начале play раньше tasks, чтобы подготовить сервисы до внесения изменений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Handlers выполняются в конце play и только по `notify`, а не до tasks в начале.",
+                "source_of_confusion": "Кажется логичным «сначала подготовить сервис», и порядок выполнения переворачивают.",
+                "if_it_were_true": "Тогда нельзя было бы рестартить сервис после изменения его конфига, а это основная задача handlers.",
+                "how_it_should_be": "Сначала tasks вносят изменения, затем handlers по `notify` рестартят сервисы в конце."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Handler срабатывает столько раз, сколько task'ов его вызвали через `notify` — три вызова дадут три перезапуска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Handler срабатывает один раз в конце play независимо от числа `notify`, поэтому три вызова дадут один рестарт.",
+                "source_of_confusion": "Интуитивно «вызвали три раза — выполнится три раза», но дедупликация handlers ломает эту аналогию.",
+                "if_it_were_true": "Тогда терялся бы весь смысл handlers — избегать двойного рестарта.",
+                "how_it_should_be": "Сколько бы task'ов ни сделали `notify`, handler срабатывает один раз в конце play."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Handler сработает всегда при `notify`, даже если вызвавший его task не внёс никаких изменений (статус ok).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Handler триггерится только если у task статус `changed`; при `ok` (изменений нет) `notify` обработчик не запустит.",
+                "source_of_confusion": "Кажется, что `notify` — безусловный триггер, без учёта статуса задачи.",
+                "if_it_were_true": "Тогда сервис рестартился бы на каждом прогоне даже без изменений конфига, что неидемпотентно.",
+                "how_it_should_be": "`notify` срабатывает только при `changed`; без изменений handler не вызывается."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Tasks выполняются по порядку при каждом проходе play. Handlers — особые задачи, которые срабатывают ТОЛЬКО если их вызвали через `notify`, и выполняются ОДИН раз в конце play. Поэтому если несколько tasks (например обновление конфига и SSL-сертификата) делают `notify: Restart nginx`, обработчик `Restart nginx` сработает один раз в конце — без двойного рестарта.",
+              "correct": true,
+              "sections": {
+                "explanation": "Handlers решают проблему лишних перезапусков: какая бы из задач ни внесла изменение, нужный сервис рестартится один раз после всех изменений, а не после каждой задачи.",
+                "example": "Два task'а с `notify: Restart nginx` (изменение конфига и копирование сертификата) приведут к одному `Restart nginx` в конце play, а не к двум.",
+                "when_to_apply": "Handlers применяют для restart/reload сервисов после изменения их конфигурации, чтобы избежать многократных перезапусков в одном прогоне.",
+                "edge_cases": "Handler срабатывает только при статусе `changed` у вызвавшего task; если задача не внесла изменений, `notify` не триггерит обработчик.",
+                "related": "[[ansible-interview#Q5]] handlers в структуре play; [[ansible-interview#Q24]] best practice про handlers против двойного рестарта; [[ansible-interview#Q3]] идемпотентность и статус changed."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена precedence (приоритет) переменных в `Ansible`: group_vars, host_vars, playbook?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Приоритет от низкого к высокому: role defaults (`roles/*/defaults/main.yml`) → inventory file vars → `group_vars/all.yml` → `group_vars/<group>.yml` → `host_vars/<host>.yml` → playbook `vars` → role `vars` → `-e` extra vars (самый высокий). То есть более специфичный уровень (host) перебивает менее специфичный (group/all), а `-e` на CLI перебивает всё.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея — от общего к частному и от декларации к рантайму: defaults задают базу, group/host уточняют по принадлежности, а extra vars на запуске имеют абсолютный приоритет.",
+                "example": "`ansible-playbook deploy.yml -e \"version=2.0\"` переопределит `version` из любого `group_vars`/`host_vars`, потому что extra vars — на вершине иерархии.",
+                "when_to_apply": "Иерархию учитывают, когда значение переменной берётся «не оттуда»: проверяют уровни от extra vars вниз, чтобы понять, какой источник победил.",
+                "edge_cases": "`host_vars/<host>.yml` перебивает `group_vars/<group>.yml`, а тот — `group_vars/all.yml`; role `vars` сильнее playbook `vars`, что часто удивляет.",
+                "related": "[[ansible-interview#Q4]] inventory как источник vars; [[ansible-interview#Q6]] defaults vs vars в роли; [[ansible-interview#Q25]] путаница с precedence как частая проблема."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Extra vars `-e` имеют самый низкий приоритет, поэтому их легко перебить значениями из `group_vars`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Extra vars `-e` имеют САМЫЙ высокий приоритет и перебивают `group_vars`/`host_vars`, а не наоборот.",
+                "source_of_confusion": "`-e` выглядит как «дополнительная мелочь», и её приоритет занижают.",
+                "if_it_were_true": "Тогда нельзя было бы быстро переопределить переменную на запуске через CLI, но именно для этого `-e` и нужен.",
+                "how_it_should_be": "`-e` — вершина иерархии; перебивает все остальные источники переменных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`group_vars/all.yml` имеет более высокий приоритет, чем `host_vars/<host>.yml`, потому что охватывает все хосты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: более специфичный `host_vars/<host>.yml` перебивает общий `group_vars/all.yml`.",
+                "source_of_confusion": "Кажется, что «для всех» = «важнее», но в `Ansible` побеждает более узкая область.",
+                "if_it_were_true": "Тогда нельзя было бы задать особое значение конкретному хосту, но host_vars именно для этого.",
+                "how_it_should_be": "Чем специфичнее уровень (host > group > all), тем выше приоритет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Role defaults имеют самый высокий приоритет и перекрывают даже playbook `vars` и extra vars.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Role defaults — это САМЫЙ низкий приоритет; их перекрывают почти все остальные источники, включая playbook `vars` и `-e`.",
+                "source_of_confusion": "Слово «defaults» путают с «обязательными значениями по умолчанию, которые нельзя перебить».",
+                "if_it_were_true": "Тогда роли нельзя было бы кастомизировать переменными извне, но defaults как раз для лёгкого переопределения.",
+                "how_it_should_be": "Role defaults — низ иерархии, специально чтобы их легко переопределять."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое facts в `Ansible` и как они собираются?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Facts задаются вручную в playbook через `vars` и не имеют отношения к автоматическому сбору данных о хосте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Facts собираются автоматически с managed node (ОС, память, сеть); ручные значения в `vars` — это обычные переменные, не facts.",
+                "source_of_confusion": "И facts, и vars доступны как переменные в шаблонах, поэтому их источники смешивают.",
+                "if_it_were_true": "Тогда не было бы `gather_facts` и `ansible_*`-переменных, но они есть и заполняются автоматически.",
+                "how_it_should_be": "Facts — автособираемые данные хоста; `vars` — заданные вручную переменные."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Facts — информация, автоматически собираемая о managed nodes (ОС, память, CPU, сеть, hostname). Доступна через `ansible_facts['distribution']`, `ansible_facts['memtotal_mb']` и алиасы `ansible_distribution`, `ansible_memtotal_mb`, `ansible_processor_count`, `ansible_default_ipv4.address`, `ansible_hostname`. Сбор можно отключить ради скорости через `gather_facts: no`. Кастомные facts кладут файлами в `/etc/ansible/facts.d/` на managed node.",
+              "correct": true,
+              "sections": {
+                "explanation": "Перед выполнением play `Ansible` (по умолчанию) запускает сбор фактов, чтобы задачи и шаблоны могли ветвиться по реальным характеристикам хоста — например выбирать пакетный менеджер по дистрибутиву.",
+                "example": "`debug: msg=\"OS is {{ ansible_facts['distribution'] }}\"` выведет `Ubuntu`/`RHEL` без ручного указания ОС.",
+                "when_to_apply": "Facts используют для условной логики (`when` по ОС/версии) и для шаблонов, которым нужны параметры хоста вроде числа CPU.",
+                "edge_cases": "На огромных флотах сбор фактов заметно замедляет прогон — его отключают `gather_facts: no`, когда факты не нужны.",
+                "related": "[[ansible-interview#Q11]] facts в `Jinja2`-шаблонах; [[ansible-interview#Q9]] facts в иерархии переменных; [[ansible-interview#Q25]] gathering фактов как причина медленного прогона."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сбор facts нельзя отключить — `Ansible` всегда собирает их на каждом хосте перед запуском play.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сбор отключается через `gather_facts: no` — именно так ускоряют прогон на больших флотах, когда facts не нужны.",
+                "source_of_confusion": "Поскольку по умолчанию сбор включён, делают вывод, что он обязателен.",
+                "if_it_were_true": "Тогда нельзя было бы оптимизировать скорость на огромных парках, но `gather_facts: no` это позволяет.",
+                "how_it_should_be": "Сбор facts включён по умолчанию, но отключаем через `gather_facts: no`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кастомные facts задаются только через CLI-флаг `-e` и не могут жить файлами на самом хосте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомные facts кладут файлами в `/etc/ansible/facts.d/` на managed node; `-e` — это extra vars, не механизм custom facts.",
+                "source_of_confusion": "И `-e`, и custom facts «добавляют значения», поэтому механизмы путают.",
+                "if_it_were_true": "Тогда хост не мог бы сам объявлять свои локальные факты, но `facts.d` именно для этого.",
+                "how_it_should_be": "Custom facts — файлы в `/etc/ansible/facts.d/`; `-e` — отдельный механизм extra vars."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как `Ansible` использует `Jinja2`-шаблоны (модуль template)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Модуль `template` просто копирует файл байт-в-байт без подстановки переменных — для этого используется `copy`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`template` именно рендерит `Jinja2` с подстановкой переменных и facts; побайтовое копирование без рендера — это `copy`.",
+                "source_of_confusion": "`template` и `copy` оба кладут файл на хост, поэтому их функции смешивают.",
+                "if_it_were_true": "Тогда `{{ переменные }}` в `.j2` остались бы в файле как текст, но `template` их подставляет.",
+                "how_it_should_be": "`template` рендерит `Jinja2` с переменными; `copy` кладёт файл как есть."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Jinja2`-шаблоны в `Ansible` поддерживают только подстановку переменных и не умеют циклы и условия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Jinja2` поддерживает циклы `{% for %}`, условия `{% if %}` и фильтры, а не только подстановку переменных.",
+                "source_of_confusion": "Чаще всего видят простую подстановку `{{ var }}`, и про управляющие конструкции забывают.",
+                "if_it_were_true": "Тогда нельзя было бы сгенерировать блок `upstream` по списку backend'ов, но `{% for %}` это делает.",
+                "how_it_should_be": "`Jinja2` умеет переменные, циклы, условия и фильтры внутри шаблона."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Модуль `template` рендерит `Jinja2`-шаблон (`.j2`) с подстановкой переменных и facts и кладёт результат на хост (`src: nginx.conf.j2`, `dest: /etc/nginx/nginx.conf`). В шаблоне доступны `{{ ansible_processor_count }}`, `{{ nginx_port }}`, `{{ inventory_hostname }}`, а также циклы `{% for ... %}` и условия. Это мощно: переменные, циклы, conditionals и фильтры внутри конфигов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Шаблонизация позволяет один `.j2`-файл превратить в разные конфиги под каждый хост, подставляя его facts и переменные — например worker_processes по числу CPU.",
+                "example": "`worker_processes {{ ansible_processor_count }};` в `nginx.conf.j2` подставит реальное число ядер каждого хоста при рендере.",
+                "when_to_apply": "`template` берут для любых конфигов, зависящих от хоста или окружения: порты, имена, списки backend'ов через `{% for %}`.",
+                "edge_cases": "`template` рендерит на control node перед доставкой и идемпотентен по содержимому: если итоговый файл не изменился, задача будет `ok`, а не `changed`.",
+                "related": "[[ansible-interview#Q10]] facts в шаблонах; [[ansible-interview#Q5]] template-задача с notify; [[ansible-interview#Q9]] переменные для подстановки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`template` рендерит шаблон прямо на managed node, поэтому переменные control node ему недоступны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рендер происходит на control node перед доставкой, и переменные/facts при рендере доступны; на узел кладётся уже готовый файл.",
+                "source_of_confusion": "Раз файл оказывается на узле, кажется, что и рендер идёт там же.",
+                "if_it_were_true": "Тогда на узел пришлось бы ставить `Jinja2`, но agentless-модель этого не требует.",
+                "how_it_should_be": "Рендер — на control node; на узел доставляется уже отрендеренный конфиг."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Ansible Vault` и как им пользоваться?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ansible Vault` — это отдельный сетевой сервис хранения секретов, который надо развернуть, как `HashiCorp Vault`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ansible Vault` — встроенная утилита шифрования файлов/строк локально, а не сетевой сервис; сетевой сервис — это `HashiCorp Vault`.",
+                "source_of_confusion": "Одинаковое слово «Vault» у `Ansible` и `HashiCorp` ведёт к смешению.",
+                "if_it_were_true": "Тогда нельзя было бы просто `ansible-vault encrypt secrets.yml` без поднятия сервиса, но это работает офлайн.",
+                "how_it_should_be": "`Ansible Vault` — локальное шифрование файлов; централизованный сервис — `HashiCorp Vault`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Vault шифрует только целые файлы и не умеет зашифровать одну переменную-строку внутри playbook.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vault умеет и одну строку: `ansible-vault encrypt_string 'mypassword' --name 'db_password'` даёт зашифрованный inline-блок.",
+                "source_of_confusion": "Чаще показывают `encrypt secrets.yml`, поэтому про `encrypt_string` забывают.",
+                "if_it_were_true": "Тогда нельзя было бы держать один секрет inline в `vars`, но `encrypt_string` именно это позволяет.",
+                "how_it_should_be": "Vault шифрует и файлы (`encrypt`), и отдельные строки (`encrypt_string`)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Зашифрованный Vault-файл расшифровывается автоматически без всякого пароля при запуске playbook.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для расшифровки при запуске нужен пароль: `--ask-vault-pass` или `--vault-password-file`; без него playbook упадёт.",
+                "source_of_confusion": "Кажется, что раз файл подключён через `vars_files`, `Ansible` сам всё расшифрует.",
+                "if_it_were_true": "Тогда шифрование было бы бессмысленным — любой запустивший получал бы секреты.",
+                "how_it_should_be": "Расшифровка требует пароль/файл пароля/vault-id в момент запуска."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Ansible Vault` шифрует чувствительные данные (пароли, ключи) прямо в playbook-файлах. Команды: `ansible-vault encrypt secrets.yml`, `ansible-vault edit secrets.yml`, `ansible-vault decrypt secrets.yml`, а также `ansible-vault encrypt_string 'mypassword' --name 'db_password'` для одной строки. Зашифрованный файл подключают через `vars_files`, а при запуске дают пароль: `--ask-vault-pass` или `--vault-password-file ~/.vault_pass`. Best practice — vault-id для нескольких окружений.",
+              "correct": true,
+              "sections": {
+                "explanation": "Vault даёт хранить секреты в git в зашифрованном виде, а расшифровка происходит в момент запуска по паролю/файлу пароля или vault-id, привязанному к окружению.",
+                "example": "`ansible-vault encrypt_string 'mypassword' --name 'db_password'` выдаст зашифрованный блок, который можно вставить прямо в `vars` и закоммитить.",
+                "when_to_apply": "Vault используют, когда секреты должны лежать рядом с кодом в git, но в зашифрованном виде; для централизованных секретов интегрируют `HashiCorp Vault`.",
+                "edge_cases": "Управление самим vault-паролем (безопасный шеринг между людьми и CI) — типичная сложность; её решают `--vault-password-file` и vault-id, а не общим паролем в чате.",
+                "related": "[[ansible-interview#Q13]] `SSH` best practices и секреты; [[ansible-interview#Q24]] vault в best practices; [[ansible-interview#Q25]] управление vault-паролем как частая проблема."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие `SSH` best practices применяют при работе с `Ansible`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Используют `SSH`-ключи, а не пароли; bastion/jump hosts для приватных сетей; отдельного пользователя для `Ansible` (не root) с повышением через `become: yes`; режим `ansible-pull` для pull-based сценариев. В `ansible.cfg` ускоряют: `forks = 50`, `pipelining = True`, `ssh_args = -o ControlMaster=auto -o ControlPersist=60s`. `host_key_checking = False` — только для dev, НЕ для production.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку `Ansible` ходит по `SSH`, безопасность и скорость определяются настройкой `SSH`: ключи вместо паролей, переиспользование соединений (ControlPersist) и pipelining снижают накладные расходы.",
+                "example": "В `ansible.cfg` строка `ssh_args = -o ControlMaster=auto -o ControlPersist=60s` держит соединение открытым 60с, ускоряя множество задач на одном хосте.",
+                "when_to_apply": "Эти практики применяют в production: ключи, bastion, отдельный пользователь и `become` — базовая гигиена доступа к парку.",
+                "edge_cases": "`host_key_checking = False` удобно в dev, но в production это снимает защиту от MITM — его оставляют включённым и управляют known_hosts.",
+                "related": "[[ansible-interview#Q2]] agentless через `SSH`; [[ansible-interview#Q12]] секреты и `Ansible Vault`; [[ansible-interview#Q17]] forks для параллелизма."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Лучшая практика — везде, включая production, ставить `host_key_checking = False`, чтобы не возиться с known_hosts.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`host_key_checking = False` допустим только в dev; в production он отключает защиту от MITM, поэтому его не выключают.",
+                "source_of_confusion": "Отключение проверки убирает раздражающие промпты, и это ошибочно переносят в production.",
+                "if_it_were_true": "Тогда `Ansible` был бы уязвим к подмене хоста, но best practice прямо предупреждает против этого в prod.",
+                "how_it_should_be": "`host_key_checking = False` — только dev; в prod проверку ключей хоста оставляют включённой."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Рекомендуется подключаться по паролю под root, потому что это проще, чем настраивать `SSH`-ключи и `become`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Best practice — `SSH`-ключи (не пароли) и отдельный пользователь с `become: yes`, а не прямой вход под root по паролю.",
+                "source_of_confusion": "Вход под root по паролю кажется самым коротким путём к управлению хостом.",
+                "if_it_were_true": "Тогда не было бы рекомендаций про ключи, bastion и non-root пользователя, но они есть.",
+                "how_it_should_be": "Ключи вместо паролей, отдельный пользователь, sudo через `become`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Параметры `pipelining` и `ControlPersist` снижают безопасность и их следует всегда отключать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это оптимизации скорости (`pipelining = True`, `ControlPersist`), которые рекомендуют включать, а не отключать.",
+                "source_of_confusion": "Любые «тонкие настройки `SSH`» кажутся подозрительными с точки зрения безопасности.",
+                "if_it_were_true": "Тогда best practices не советовали бы их в `ansible.cfg`, но именно советуют для ускорения.",
+                "how_it_should_be": "`pipelining` и `ControlPersist` — рекомендуемые ускорители, их обычно включают."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем ad-hoc команды отличаются от playbooks в `Ansible`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ad-hoc команды — это многошаговые переиспользуемые сценарии в файле, а playbook — это разовая команда из CLI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: ad-hoc — разовая CLI-команда без файла, а playbook — многошаговый переиспользуемый сценарий в `YAML`.",
+                "source_of_confusion": "Термины путают местами, не привязывая их к «файл vs CLI».",
+                "if_it_were_true": "Тогда не имело бы смысла версионировать playbooks в git, но их как раз хранят как файлы.",
+                "how_it_should_be": "Ad-hoc — разовая CLI-команда; playbook — переиспользуемый `YAML`-сценарий."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Ad-hoc — разовая команда из CLI: `ansible all -m ping`, `ansible webservers -m service -a \"name=nginx state=restarted\" --become`, `ansible all -a \"uname -r\"`. Playbook — многошаговый переиспользуемый сценарий на `YAML`. Ad-hoc применяют для быстрых проверок (`ping`), разовых действий и исследования inventory; playbooks — для повторяемых задач, многошаговых workflow и автоматизации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ad-hoc — это «один модуль, один запуск, без файла», удобно для немедленных действий. Playbook кодифицирует процесс в файл, который версионируется и переиспользуется.",
+                "example": "Проверить доступность всего парка — `ansible all -m ping`; а вот полноценный деплой `nginx` с конфигом и handler уже описывают в playbook.",
+                "when_to_apply": "Ad-hoc берут для быстрой диагностики и одноразовых операций; playbook — когда сценарий нужно повторять, ревьюить и хранить в git.",
+                "edge_cases": "Ad-hoc-команды не версионируются и легко теряются — повторяемые действия лучше сразу оформлять playbook, чтобы не накапливать недокументированные ручные шаги.",
+                "related": "[[ansible-interview#Q5]] структура playbook; [[ansible-interview#Q7]] модули (`-m`) в ad-hoc; [[ansible-interview#Q24]] best practice держать playbooks в git."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ad-hoc команды не могут вызывать модули `Ansible` и умеют только выполнять сырые shell-команды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ad-hoc вызывает модули через `-m` (например `-m ping`, `-m service`), а не только сырые команды через `-a`.",
+                "source_of_confusion": "Пример `ansible all -a \"uname -r\"` выглядит как «только shell», и это обобщают.",
+                "if_it_were_true": "Тогда `ansible all -m ping` был бы невозможен, но это классический ad-hoc-вызов модуля.",
+                "how_it_should_be": "Ad-hoc поддерживает модули через `-m`; `-a` передаёт им аргументы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Ad-hoc и playbook полностью эквивалентны: разницы в применимости между ними нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разница есть: ad-hoc — для быстрых разовых проверок, playbook — для повторяемых многошаговых сценариев и автоматизации.",
+                "source_of_confusion": "Оба используют те же модули, поэтому кажется, что выбор между ними произволен.",
+                "if_it_were_true": "Тогда не было бы смысла в playbook-файлах, но именно они дают повторяемость и версионирование.",
+                "how_it_should_be": "Ad-hoc — разовые действия; playbook — повторяемые сценарии."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое check mode (dry-run) в `Ansible`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Check mode применяет изменения, но потом автоматически откатывает их, делая rollback после прогона.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Check mode вообще НЕ применяет изменения (это dry-run); никакого «применил и откатил» нет.",
+                "source_of_confusion": "Слово «проверка» наводит на мысль о пробном применении с откатом, как транзакция.",
+                "if_it_were_true": "Тогда был бы риск побочных эффектов на проде во время «проверки», но `--check` ничего не меняет.",
+                "how_it_should_be": "Check mode только показывает планируемые изменения, ничего не применяя."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В check mode все без исключения модули выполняются и точно сообщают свой результат, включая `command` и `shell`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Не все: `command`/`shell` обычно пропускаются в check mode, поэтому их эффект dry-run может не показать.",
+                "source_of_confusion": "Большинство модулей check mode поддерживают, и это ошибочно распространяют на все.",
+                "if_it_were_true": "Тогда check mode был бы полной гарантией, но из-за `command`/`shell` это не так.",
+                "how_it_should_be": "Большинство модулей поддерживают check mode; `command`/`shell` — нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Check mode (`ansible-playbook deploy.yml --check`) показывает, что БЫ изменилось, без реальных модификаций системы. Большинство модулей поддерживают check mode; некоторые (`command`/`shell`) пропускаются в этом режиме. В связке с `--diff` (`--check --diff`) показывает построчные различия файлов перед изменениями. Best practice — прогонять `--check --diff` перед production-деплоем.",
+              "correct": true,
+              "sections": {
+                "explanation": "Dry-run даёт предпросмотр: `Ansible` сравнивает текущее состояние с желаемым и репортит планируемые изменения, ничего не применяя — это снижает риск неожиданных правок в prod.",
+                "example": "`ansible-playbook deploy.yml --check --diff` покажет, какие задачи были бы `changed` и какие строки в конфиге поменялись бы.",
+                "when_to_apply": "Check mode применяют перед выкаткой на production, чтобы заранее увидеть масштаб изменений и поймать ошибки до их применения.",
+                "edge_cases": "`command`/`shell` в check mode обычно не выполняются, поэтому их «changed»-эффект dry-run может не отразить — это учитывают, не полагаясь на check как на полную гарантию.",
+                "related": "[[ansible-interview#Q3]] идемпотентность и статус changed; [[ansible-interview#Q24]] best practice про `check --diff`; [[ansible-interview#Q7]] модули и их поведение в check mode."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Флаг `--diff` нельзя сочетать с `--check`, поэтому увидеть различия файлов до применения невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--check --diff` отлично сочетаются и как раз показывают построчные различия файлов до изменений.",
+                "source_of_confusion": "Кажется, что diff требует реального применения, поэтому его «несовместимость» с dry-run выдумывают.",
+                "if_it_were_true": "Тогда best practice не советовал бы `check --diff` перед production, но он советует.",
+                "how_it_should_be": "`--check --diff` вместе показывают планируемые изменения и diff файлов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужны tags в `Ansible` и как их применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tags задают порядок выполнения задач: задачи с одинаковым тегом всегда выполняются строго раньше остальных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tags не меняют порядок — задачи идут сверху вниз; теги лишь фильтруют, какие задачи запускать или пропускать.",
+                "source_of_confusion": "Группировка по тегу создаёт иллюзию переупорядочивания выполнения.",
+                "if_it_were_true": "Тогда теги ломали бы последовательность play, но порядок задаётся их позицией в playbook.",
+                "how_it_should_be": "Tags только фильтруют (`--tags`/`--skip-tags`); порядок задаёт позиция задач."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Каждой задаче можно присвоить максимум один тег, поэтому `tags: ssl, security` — синтаксическая ошибка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Задаче можно присвоить несколько тегов (`tags: ssl, security`) — это валидно и часто используется.",
+                "source_of_confusion": "Слово «tag» в единственном числе наводит на мысль об одном теге на задачу.",
+                "if_it_were_true": "Тогда нельзя было бы запускать задачу и по `ssl`, и по `security`, но множественные теги это разрешают.",
+                "how_it_should_be": "У задачи может быть список тегов; фильтр сработает по любому из них."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Флаг `--skip-tags` не существует — пропустить часть задач по тегу в `Ansible` невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--skip-tags` существует: `ansible-playbook deploy.yml --skip-tags install` пропускает задачи с тегом `install`.",
+                "source_of_confusion": "Чаще показывают `--tags`, и про обратный по смыслу `--skip-tags` забывают.",
+                "if_it_were_true": "Тогда нельзя было бы исключить установочные шаги при частом передеплое конфига, но `--skip-tags` это делает.",
+                "how_it_should_be": "`--tags` запускает выбранные теги, `--skip-tags` исключает указанные."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Tags помечают задачи (`tags: nginx, install` или `tags: ssl, security`), чтобы запускать или пропускать их выборочно: `ansible-playbook deploy.yml --tags ssl` выполнит только задачи с тегом `ssl`, а `--skip-tags install` пропустит установочные шаги. Типичный кейс — быстрый передеплой только конфигурации без повторной установки пакетов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Теги дают гранулярность: большой playbook можно прогонять частями, не выполняя всё подряд, что экономит время при частых правках одной части (например только SSL/конфигов).",
+                "example": "`ansible-playbook deploy.yml --tags ssl` обновит только SSL-сертификаты, не трогая установку пакетов с тегом `install`.",
+                "when_to_apply": "Tags применяют, когда нужен частичный прогон playbook: обновить конфиг, пересоздать сертификаты или прогнать только security-задачи без полного деплоя.",
+                "edge_cases": "Один task может иметь несколько тегов; `--skip-tags` и `--tags` комбинируют, но при неаккуратной разметке легко случайно пропустить зависимую задачу.",
+                "related": "[[ansible-interview#Q5]] tasks в playbook; [[ansible-interview#Q15]] check mode для частичных прогонов; [[ansible-interview#Q24]] tags в best practices."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает параллельное выполнение (forks) в `Ansible`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Параметр `forks` задаёт, на скольких хостах `Ansible` выполняет задачу одновременно (по умолчанию 5). Настраивается в `ansible.cfg` (`forks = 50`) или на запуск (`--forks 100`). Эффект: `Ansible` распараллеливает задачи по N хостам. Тюнинг: больше флот → выше forks (но ограничено пропускной способностью `SSH`-соединений), мало памяти → ниже forks.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Ansible` идёт по задачам последовательно, но каждую задачу применяет параллельно к группе хостов размером до `forks`; так ускоряется прогон по большому парку.",
+                "example": "`ansible-playbook deploy.yml --forks 100` выполнит текущую задачу сразу на 100 хостах вместо дефолтных 5.",
+                "when_to_apply": "forks повышают для больших флотов, чтобы сократить время прогона, и понижают на машинах с ограниченной памятью или при лимите `SSH`-соединений.",
+                "edge_cases": "Слишком высокий forks упирается в лимиты `SSH`/файловых дескрипторов control node и ресурсы памяти — увеличивать его бесконечно нельзя.",
+                "related": "[[ansible-interview#Q13]] `SSH`-настройки и ControlPersist; [[ansible-interview#Q2]] `SSH`-overhead на больших флотах; [[ansible-interview#Q25]] медленный прогон из-за низких forks."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`forks` задаёт количество последовательных повторов одной задачи на каждом хосте для надёжности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`forks` — это степень параллелизма по числу ОДНОВРЕМЕННО обрабатываемых хостов, а не количество повторов задачи на хосте.",
+                "source_of_confusion": "Слово напоминает «retry», и параллелизм путают с повторами.",
+                "if_it_were_true": "Тогда увеличение forks замедляло бы прогон (больше повторов), но оно его ускоряет.",
+                "how_it_should_be": "`forks` — сколько хостов обрабатываются параллельно; по умолчанию 5."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Значение `forks` по умолчанию равно 100, поэтому на больших флотах его обычно не трогают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `forks = 5`, и на больших флотах его как раз поднимают (например до 50-100).",
+                "source_of_confusion": "Высокие примеры `--forks 100` запоминаются как «дефолт».",
+                "if_it_were_true": "Тогда не было бы жалоб на медленный прогон из-за низких forks, но это частая проблема.",
+                "how_it_should_be": "Дефолт `forks` — 5; для больших парков его увеличивают."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`forks` можно увеличивать неограниченно без последствий — `SSH` и память control node никогда не станут узким местом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Очень высокий `forks` упирается в лимиты `SSH`-соединений и памяти control node, поэтому его подбирают, а не задирают бесконечно.",
+                "source_of_confusion": "Кажется, что «больше параллелизма всегда лучше» без оглядки на ресурсы.",
+                "if_it_were_true": "Тогда не было бы совета понижать forks при нехватке памяти, но он есть.",
+                "how_it_should_be": "forks ограничены ресурсами control node и пропускной способностью `SSH`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `Ansible Galaxy`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ansible Galaxy` — это платный enterprise-продукт `Red Hat` с web-UI для запуска playbook, как `Ansible Tower`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Galaxy — бесплатный community-хаб ролей и коллекций; платный enterprise web-UI для запуска — это `Ansible Tower`/`AAP`.",
+                "source_of_confusion": "Оба продукта из экосистемы `Ansible`/`Red Hat`, поэтому их роли смешивают.",
+                "if_it_were_true": "Тогда `ansible-galaxy install` качал бы что-то из платного сервиса, но это публичный реестр ролей.",
+                "how_it_should_be": "Galaxy — реестр ролей/коллекций; web-UI оркестрации — это Tower/AAP."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Ansible Galaxy` — community-хаб для roles и collections. Роли ставят командой `ansible-galaxy install geerlingguy.nginx` или пачкой из файла: `ansible-galaxy install -r requirements.yml`. В `requirements.yml` указывают `roles` (с `name` и `version`) и `collections`. На Galaxy 40K+ ролей, но качество разное — смотрят звёзды и свежесть обновлений.",
+              "correct": true,
+              "sections": {
+                "explanation": "Galaxy экономит время: вместо написания ролей с нуля ставят готовые community-роли (например `geerlingguy.nginx`) и фиксируют их версии в `requirements.yml` для воспроизводимости.",
+                "example": "`ansible-galaxy install -r requirements.yml` поставит `geerlingguy.nginx` версии `3.1.4` и коллекцию `community.general`, перечисленные в файле.",
+                "when_to_apply": "Galaxy используют, когда нужна типовая роль (web-сервер, БД, мониторинг): берут проверенную community-роль вместо собственной реализации.",
+                "edge_cases": "Качество ролей на Galaxy сильно варьируется — перед использованием проверяют рейтинг, активность мейнтейнера и пинят версию, чтобы апдейт не сломал прод.",
+                "related": "[[ansible-interview#Q6]] roles как единица переиспользования; [[ansible-interview#Q19]] collections; [[ansible-interview#Q24]] пин версий в best practices."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все роли на Galaxy проходят официальную проверку `Red Hat`, поэтому качество и поддержка у них гарантированы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Galaxy — community-контент с разным качеством; гарантии нет, поэтому проверяют звёзды, свежесть и пинят версии.",
+                "source_of_confusion": "Официальный бренд `Ansible` создаёт ложное ощущение проверки всего контента.",
+                "if_it_were_true": "Тогда не нужно было бы советовать проверять рейтинг ролей, но это явная рекомендация.",
+                "how_it_should_be": "Контент Galaxy — community; качество оценивают сами по метаданным роли."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Galaxy умеет распространять только collections и не поддерживает установку отдельных ролей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Galaxy распространяет и roles, и collections; `ansible-galaxy install geerlingguy.nginx` ставит именно роль.",
+                "source_of_confusion": "Современный акцент на collections заслоняет тот факт, что роли — исходный и до сих пор основной контент Galaxy.",
+                "if_it_were_true": "Тогда не было бы `roles:` в `requirements.yml`, но он там есть.",
+                "how_it_should_be": "Galaxy хостит и роли, и коллекции; ставятся обе сущности через `ansible-galaxy`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое collections в `Ansible` (с версии 2.10)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Collections — это устаревший формат до `Ansible 2.10`, который полностью заменили отдельными ролями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: collections появились в `2.10` как современная упаковка и не заменены ролями — роли входят в коллекции.",
+                "source_of_confusion": "«До/после 2.10» путают, приписывая коллекциям статус legacy.",
+                "if_it_were_true": "Тогда не было бы `ansible-galaxy collection install`, но эта команда — актуальный способ установки.",
+                "how_it_should_be": "Collections — современная единица упаковки (с 2.10), включающая роли и модули."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Collections содержат только plugins и не могут включать modules и roles.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Collections включают modules, roles, plugins и docs одновременно — это полноценный пакет, а не только плагины.",
+                "source_of_confusion": "Слово «collection» звучит абстрактно, и состав сводят к одному типу содержимого.",
+                "if_it_were_true": "Тогда нельзя было бы вызвать `community.kubernetes.k8s` (это модуль из коллекции), но это работает.",
+                "how_it_should_be": "Коллекция упаковывает modules, roles, plugins и docs вместе."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Collections — современная единица упаковки (с `Ansible 2.10`): включают modules, roles, plugins и docs. Ставятся через `ansible-galaxy collection install community.kubernetes`, а в playbook вызываются по полному имени (`community.kubernetes.k8s:`). Базовая `ansible.builtin` — core-модули. Облачные коллекции: `amazon.aws`, `google.cloud`, `azure.azcollection`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Collections появились, чтобы вынести модули из монолитного ядра `Ansible` и версионировать их отдельно: теперь обновление модулей под конкретного вендора не привязано к релизу всего `Ansible`.",
+                "example": "`ansible-galaxy collection install community.kubernetes`, затем в задаче `community.kubernetes.k8s: name=my-pod` — модуль вызывается по полному FQCN-имени.",
+                "when_to_apply": "Collections используют для модулей вне core (облака, `Kubernetes`, сетевое оборудование), фиксируя их версии независимо от версии самого `Ansible`.",
+                "edge_cases": "Core-модули живут в `ansible.builtin` и доступны без установки; всё остальное нужно ставить коллекцией и обращаться по полному FQCN, иначе модуль не найдётся.",
+                "related": "[[ansible-interview#Q7]] модули как единицы работы; [[ansible-interview#Q18]] Galaxy как источник коллекций; [[ansible-interview#Q6]] roles внутри collections."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Модули из установленной коллекции можно вызывать коротким именем без указания коллекции, как core-модули.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модули коллекций вызывают по полному FQCN (`community.kubernetes.k8s`); коротким именем без префикса доступны лишь `ansible.builtin`.",
+                "source_of_confusion": "Привычка к коротким именам core-модулей переносится на модули коллекций.",
+                "if_it_were_true": "Тогда могли бы коллизии имён между коллекциями, но FQCN их как раз устраняет.",
+                "how_it_should_be": "Модули коллекций — по полному FQCN; короткие имена — только у `ansible.builtin`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются `AWX`, `Ansible Tower` и `Ansible Automation Platform`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`AWX` — это платная enterprise-версия с поддержкой, а `Ansible Tower` — бесплатный open-source upstream.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `AWX` — бесплатный open-source upstream, а `Tower` — платная enterprise-версия с поддержкой.",
+                "source_of_confusion": "Названия `AWX` и `Tower` путают местами относительно «платный/бесплатный».",
+                "if_it_were_true": "Тогда не было бы смысла в self-host `AWX` через `helm`, но он именно бесплатный self-hosted.",
+                "how_it_should_be": "`AWX` — бесплатный upstream; `Tower`/`AAP` — платный enterprise."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Эти платформы — это просто синонимы для CLI `ansible-playbook` и не добавляют web-UI, RBAC или scheduling.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AWX`/`Tower`/`AAP` добавляют web-UI, job scheduling, workflows, RBAC, API и дашборды поверх `Ansible`, а не дублируют CLI.",
+                "source_of_confusion": "Раз внутри они запускают тот же `Ansible`, кажется, что это «тот же CLI».",
+                "if_it_were_true": "Тогда не было бы ценности в централизации запуска для команды, но именно её они дают.",
+                "how_it_should_be": "Это платформы поверх `Ansible` с UI, RBAC, расписаниями и API."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`AAP` — это устаревший продукт, который `Red Hat` снял с поддержки в пользу только `AWX`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AAP` — текущее enterprise-предложение `Red Hat` (Tower + расширения), а `AWX` — бесплатный upstream, не замена `AAP`.",
+                "source_of_confusion": "Ребрендинг `Tower` → `AAP` создаёт впечатление, что один из продуктов «умер».",
+                "if_it_were_true": "Тогда у enterprise не было бы поддерживаемого варианта, но `AAP` его и обеспечивает.",
+                "how_it_should_be": "`AAP` — актуальный enterprise-бренд; `AWX` — его бесплатный upstream."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`AWX` — open-source UI/orchestration-платформа для `Ansible` (upstream бывшего Tower). `Ansible Tower` — платная enterprise-версия от `Red Hat` с поддержкой. `Ansible Automation Platform (AAP)` — текущее enterprise-предложение `Red Hat` (Tower + расширения). Возможности всех: web-UI, job scheduling, workflows (цепочки playbook), RBAC, API, нотификации, дашборды и логи. `AWX` self-host: `helm install awx awx-operator/awx`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это один продуктовый ряд: `AWX` — бесплатный upstream, `Tower` — его коммерциализированная версия, `AAP` — нынешний enterprise-бренд. Все дают централизованный запуск `Ansible` для команды.",
+                "example": "Self-host бесплатной версии: `helm install awx awx-operator/awx` развернёт `AWX` в `Kubernetes` с web-UI и RBAC.",
+                "when_to_apply": "Эти платформы берут, когда нужен централизованный запуск `Ansible` для команды/предприятия: расписания, RBAC, аудит и workflow вместо запуска с ноутбуков.",
+                "edge_cases": "`AWX` — upstream без официального enterprise-support; для SLA и поддержки берут платный `AAP` — это ключевое различие при выборе.",
+                "related": "[[ansible-interview#Q21]] workflows и schedules в этих платформах; [[ansible-interview#Q14]] запуск playbook вместо ad-hoc; [[ansible-interview#Q24]] CI/CD-интеграция."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое workflows и schedules в `AWX`/`Tower`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Workflow — цепочка нескольких playbook с условной логикой по успеху/провалу. Например: Stage 1 Provision EC2 (вызов `Terraform`) → on success Stage 2 Configure servers (playbook) → on success Stage 3 Deploy app → on failure Stage 4 (cleanup) Rollback. Schedules — cron-подобные расписания для периодических запусков playbook (compliance-проверки, бэкапы).",
+              "correct": true,
+              "sections": {
+                "explanation": "Workflows связывают разнородные шаги (инфраструктура, конфигурация, деплой) с ветвлением по результату, а schedules автоматизируют регулярные прогоны без ручного запуска.",
+                "example": "Workflow `Provision → Configure → Deploy` с веткой `on failure → Rollback`, а schedule раз в сутки гоняет compliance-плейбук ночью.",
+                "when_to_apply": "Workflows применяют для многоэтапных пайплайнов с условными переходами; schedules — для регулярных задач: бэкапов, аудита, проверки конфигураций.",
+                "edge_cases": "Ветка `on failure` (например Rollback) — ключ к надёжному workflow: без обработки провала промежуточный сбой оставит систему в полуразвёрнутом состоянии.",
+                "related": "[[ansible-interview#Q20]] платформы `AWX`/`Tower`/`AAP`; [[ansible-interview#Q22]] связка с `Terraform` для provisioning; [[ansible-interview#Q14]] запуск playbook."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Workflow — это одиночный playbook, выполняемый строго линейно без всякой условной логики по успеху или провалу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Workflow — это цепочка НЕСКОЛЬКИХ playbook с условными переходами (on success/on failure), а не один линейный playbook.",
+                "source_of_confusion": "Внутри playbook задачи тоже идут по порядку, и это смешивают с понятием workflow.",
+                "if_it_were_true": "Тогда не было бы ветки Rollback при провале, но именно условная логика — суть workflow.",
+                "how_it_should_be": "Workflow — цепочка playbook с ветвлением по результату каждого шага."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Schedules позволяют запускать playbook только вручную по нажатию кнопки и не поддерживают периодический запуск.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Schedules — это именно cron-подобные периодические расписания (бэкапы, compliance), а не ручной запуск кнопкой.",
+                "source_of_confusion": "Слово «schedule» иногда воспринимают как «запланировать вручную на потом».",
+                "if_it_were_true": "Тогда нельзя было бы автоматизировать ночные бэкапы, но schedules для этого и нужны.",
+                "how_it_should_be": "Schedules — cron-подобные автоматические периодические прогоны playbook."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В workflow невозможно вызывать `Terraform` или другие инструменты — допустимы только playbook одного типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Workflow может включать разнородные шаги, в т.ч. вызов `Terraform` для provisioning, а затем playbook для конфигурации.",
+                "source_of_confusion": "Раз это `Ansible`-платформа, кажется, что в шаги допускаются только playbook.",
+                "if_it_were_true": "Тогда нельзя было бы связать provisioning и configuration в один пайплайн, но workflow это делает.",
+                "how_it_should_be": "Workflow объединяет разнородные шаги: `Terraform`-provision + `Ansible`-configure + deploy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются `Ansible` и `Terraform` и как они дополняют друг друга?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ansible` stateful и ведёт state-файл инфраструктуры, а `Terraform` stateless и независим между прогонами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: `Terraform` stateful (state-файл), а `Ansible` stateless — каждый его прогон независим.",
+                "source_of_confusion": "Свойства stateful/stateless путают местами между двумя инструментами.",
+                "if_it_were_true": "Тогда `Ansible` имел бы встроенный drift detection как у `Terraform`, но у него он ограничен.",
+                "how_it_should_be": "`Terraform` — stateful со state-файлом; `Ansible` — stateless."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Ansible` — configuration management: stateless (каждый прогон независим), процедурный (задачи по порядку), идемпотентность по задачам, отлично для config management, слабее для provisioning, ограниченный drift detection. `Terraform` — infrastructure provisioning: stateful (state-файл), декларативный (desired state), идемпотентность по всей инфраструктуре, отличный provisioning и встроенный drift detection. Часто вместе: `Terraform` создаёт инфраструктуру, `Ansible` настраивает софт на ней.",
+              "correct": true,
+              "sections": {
+                "explanation": "Инструменты решают разные задачи: `Terraform` отвечает за «что должно существовать» (VM, сети, БД), `Ansible` — за «как это настроить внутри». Их связка покрывает весь жизненный цикл.",
+                "example": "`Terraform` создаёт EC2 → `Ansible` ставит `nginx` и копирует конфиг на созданный инстанс — классический pipeline provisioning + configuration.",
+                "when_to_apply": "`Terraform` берут для создания и учёта ресурсов со state и drift detection; `Ansible` — для настройки ОС и приложений на уже существующих хостах.",
+                "edge_cases": "`Ansible` stateless и со слабым drift detection — он не «помнит» инфраструктуру между прогонами, поэтому provisioning со state лучше отдавать `Terraform`.",
+                "related": "[[ansible-interview#Q1]] use cases `Ansible`; [[ansible-interview#Q3]] идемпотентность по задачам; [[ansible-interview#Q21]] workflow с вызовом `Terraform`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Terraform` — это процедурный инструмент config management, а `Ansible` — декларативный provisioning инфраструктуры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Terraform` декларативен и про provisioning, а `Ansible` процедурен (задачи по порядку) и силён в config management.",
+                "source_of_confusion": "Подходы (процедурный/декларативный) и роли (config/provisioning) перепутаны местами.",
+                "if_it_were_true": "Тогда `Ansible` имел бы лучший provisioning, но как раз `Terraform` тут excellent.",
+                "how_it_should_be": "`Terraform` — декларативный provisioning; `Ansible` — процедурный config management."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Ansible` и `Terraform` — прямые конкуренты, и использовать их вместе бессмысленно и избыточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Их как раз часто используют вместе: `Terraform` provisioning'ит инфраструктуру, `Ansible` конфигурирует софт на ней.",
+                "source_of_confusion": "Оба относят к «IaC», и из этого делают вывод о полной взаимозаменяемости.",
+                "if_it_were_true": "Тогда не существовало бы типового pipeline «Terraform creates EC2 → Ansible installs nginx», но он стандартен.",
+                "how_it_should_be": "Они дополняют друг друга: provisioning (`Terraform`) + configuration (`Ansible`)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются `Ansible`, `Puppet` и `Chef`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`Ansible`, `Puppet` и `Chef` все agentless и работают по `SSH` без установки агентов на узлы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Agentless только `Ansible`; `Puppet` и `Chef` agent-based и требуют установки агента (демона) на каждый узел.",
+                "source_of_confusion": "Все три — config management, и архитектуру `Ansible` ошибочно распространяют на остальные.",
+                "if_it_were_true": "Тогда исчезло бы главное отличие `Ansible`, но именно agentless выделяет его среди трёх.",
+                "how_it_should_be": "Agentless — `Ansible`; `Puppet`/`Chef` — agent-based."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Chef` использует язык `YAML` и push-модель, что делает его эквивалентным `Ansible` по архитектуре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Chef` использует `Ruby` и pull-модель с агентом; `YAML` и push — это про `Ansible`, не про `Chef`.",
+                "source_of_confusion": "Желание «уравнять» инструменты приводит к переносу свойств `Ansible` на `Chef`.",
+                "if_it_were_true": "Тогда `Chef` не относили бы к agent-based pull-инструментам, но он именно такой.",
+                "how_it_should_be": "`Chef` — `Ruby`, agent-based, pull; `Ansible` — `YAML`, agentless, push."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Ansible` — agentless (`SSH`), язык `YAML`, процедурный подход, push-модель, лёгкая кривая обучения, highest adoption в 2025, экосистема `Galaxy`. `Puppet` — agent-based, Puppet DSL (Ruby-like), декларативный, pull, экосистема `Forge`, declining. `Chef` — agent-based, `Ruby`, процедурный, pull, экосистема `Supermarket`, declining. `Ansible` победил в 2010-2020-х за счёт простоты и agentless; `Puppet`/`Chef` — legacy в большинстве организаций. `SaltStack` — четвёртый игрок, agent или agentless, быстрый.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевые оси сравнения — архитектура (agentless vs agent), язык, модель (push vs pull) и порог входа. `Ansible` выигрывает по простоте и отсутствию агентов, что и определило его доминирование.",
+                "example": "`Ansible` стартует с `YAML`-playbook по `SSH` без агентов, тогда как `Puppet`/`Chef` требуют развернуть агент на каждом узле и тянут конфиг pull-моделью.",
+                "when_to_apply": "Это сравнение приводят, обосновывая выбор `Ansible` для новых проектов и объясняя, почему `Puppet`/`Chef` встречаются как legacy.",
+                "edge_cases": "`SaltStack` — четвёртый вариант: умеет и agent, и agentless, и быстрый, поэтому его не сбрасывают со счетов при сравнении.",
+                "related": "[[ansible-interview#Q2]] преимущество agentless; [[ansible-interview#Q1]] что такое `Ansible`; [[ansible-interview#Q18]] `Galaxy` как экосистема."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "По состоянию на 2025 `Puppet` и `Chef` имеют наивысший adoption, а `Ansible` declining и почти не используется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: у `Ansible` highest adoption в 2025, а `Puppet`/`Chef` declining и считаются legacy.",
+                "source_of_confusion": "Историческая известность `Puppet`/`Chef` создаёт впечатление их лидерства сегодня.",
+                "if_it_were_true": "Тогда `Ansible` не называли бы стандартом config management, но именно он стандарт.",
+                "how_it_should_be": "`Ansible` лидирует по adoption; `Puppet`/`Chef` в упадке."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие best practices применяют для `Ansible` в production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Лучшая практика — использовать `command`/`shell` вместо профильных модулей, потому что так гибче и быстрее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Best practice ровно обратная: НЕ использовать `command`/`shell` при наличии профильного модуля, ради идемпотентности.",
+                "source_of_confusion": "Сырые команды кажутся универсальнее, и их предпочитают «для гибкости».",
+                "if_it_were_true": "Тогда теряется идемпотентность, и playbook становится небезопасным при повторе.",
+                "how_it_should_be": "Сначала профильный модуль; `command`/`shell` — только когда модуля нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для версий пакетов рекомендуется всегда ставить `state: latest`, чтобы система была максимально свежей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Best practice — пинить версии и избегать `latest`, потому что `latest` ломает воспроизводимость между хостами.",
+                "source_of_confusion": "«Свежее = лучше» подталкивает к `latest` без учёта воспроизводимости.",
+                "if_it_were_true": "Тогда на разных хостах оказывались бы одинаковые версии, но `latest` этого не гарантирует.",
+                "how_it_should_be": "Версии пакетов пинят; `latest` избегают, особенно в prod."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Секреты лучше хранить в playbook открытым текстом в git, чтобы команда легко их находила.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Секреты держат в `ansible-vault` (или интегрируют `HashiCorp Vault`), а не открытым текстом в git.",
+                "source_of_confusion": "Удобство доступа к секретам ошибочно ставят выше их защиты.",
+                "if_it_were_true": "Тогда любой с доступом к репозиторию получал бы пароли, что недопустимо.",
+                "how_it_should_be": "Секреты — в `Vault`/зашифрованном виде, не открытым текстом в git."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Тестировать идемпотентность (повторный запуск), бить большие playbooks на roles, соблюдать иерархию переменных (defaults → group_vars → host_vars), хранить секреты в `Vault` (или интегрировать `HashiCorp Vault`), держать playbooks в git, прогонять `check --diff` перед prod, использовать tags для гранулярных перезапусков, тестировать через `Molecule`, интегрировать в CI/CD, не использовать `command`/`shell` при наличии модуля, давать `name:` каждой задаче, не использовать `latest` для версий пакетов (пинить), применять handlers для рестартов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти практики делают автоматизацию повторяемой, безопасной и проверяемой: версионирование, тестирование (`Molecule`, check mode), управление секретами и пин версий снижают риск инцидентов в prod.",
+                "example": "Перед выкаткой гоняют `ansible-playbook deploy.yml --check --diff`, секреты держат в `ansible-vault`, а версии пакетов пинят вместо `state: latest`.",
+                "when_to_apply": "Свод применяют при настройке production-процесса `Ansible`: от структуры репозитория (roles, git) до CI/CD и тестирования playbook.",
+                "edge_cases": "`state: latest` для пакетов ломает воспроизводимость (на разных хостах окажутся разные версии) — поэтому версии пинят, особенно в prod.",
+                "related": "[[ansible-interview#Q3]] идемпотентность; [[ansible-interview#Q12]] `Vault` для секретов; [[ansible-interview#Q15]] `check --diff` перед prod."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие частые проблемы встречаются при работе с `Ansible`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Типичные проблемы: `SSH`-проблемы (firewall, ключи); ошибки `become`-привилегий (sudo не настроен); путаница с precedence переменных; нарушения идемпотентности (использование `command`); медленное выполнение (низкий forks, сбор фактов на огромном флоте); управление vault-паролем (безопасный шеринг); inventory drift (устаревшие списки хостов); сложность монолитных playbook; различия dev/prod (playbook падает в prod); отсутствие тестирования (ломает production).",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство проблем — про доступ (`SSH`/`become`), переменные (precedence), скорость (forks/facts) и эксплуатацию (vault, drift, тестирование); каждая имеет известное решение из best practices.",
+                "example": "Медленный прогон на большом флоте чинят повышением `forks` и `gather_facts: no`, а нарушения идемпотентности — заменой `command` на профильный модуль.",
+                "when_to_apply": "Этот чек-лист используют при диагностике сбоев и тормозов `Ansible`: проверяют `SSH`, sudo, precedence, forks и наличие тестов.",
+                "edge_cases": "«Playbook работает в dev, падает в prod» обычно вызвано разными переменными окружения или версиями — это ловят тестированием (`Molecule`) и `check --diff` до выката.",
+                "related": "[[ansible-interview#Q9]] precedence переменных; [[ansible-interview#Q17]] forks против медленного прогона; [[ansible-interview#Q24]] best practices как профилактика."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главная проблема `Ansible` в том, что он требует устанавливать агент на каждый узел и обновлять его.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Ansible` agentless — нет агента и его обновлений; типичные проблемы это `SSH`, `become`, precedence, forks и тестирование.",
+                "source_of_confusion": "Опыт агентных `Puppet`/`Chef` переносят на `Ansible`.",
+                "if_it_were_true": "Тогда исчезло бы преимущество agentless, но именно оно — сильная сторона `Ansible`.",
+                "how_it_should_be": "Агентов нет; реальные проблемы — доступ по `SSH`/sudo, переменные, скорость, тесты."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Медленное выполнение `Ansible` нельзя ускорить — параметр forks и отключение фактов на скорость не влияют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Скорость как раз тюнят: повышают `forks` и ставят `gather_facts: no`; низкий forks и сбор фактов — частые причины тормозов.",
+                "source_of_confusion": "Кажется, что `SSH`-overhead неустраним и оптимизаций нет.",
+                "if_it_were_true": "Тогда не существовало бы советов по forks и facts, но они стандартны.",
+                "how_it_should_be": "Скорость улучшают через forks, pipelining и отключение лишнего сбора фактов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Inventory drift невозможен в `Ansible`, потому что список хостов всегда автоматически актуален.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inventory drift (устаревший static-список хостов) — реальная частая проблема; её снимает dynamic inventory, но static не самообновляется.",
+                "source_of_confusion": "Dynamic inventory создаёт впечатление, что любой inventory всегда актуален.",
+                "if_it_were_true": "Тогда static-файлы никогда не устаревали бы, но они устаревают без ручного сопровождения.",
+                "how_it_should_be": "Static inventory может дрейфовать; актуальность даёт dynamic inventory."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
